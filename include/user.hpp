@@ -19,3 +19,4 @@ using view_space = Kokkos::HostSpace;
 
 using view_type = Kokkos::View<double**, Kokkos::LayoutRight, view_space>;
 view_type generate_view(size_t);
+view_type generate_view2(size_t);
