@@ -36,16 +36,27 @@ import kokkos
 #            print("     arr({}) = {}".format(i, arr[i]))
 
 
-kokkos.initialize()
-view = kokkos.array(
-    "python_allocated_view",
-    [10,10],
-    dtype=kokkos.double,
-    space=kokkos.HostSpace)
+def test():
+    # get the kokkos view
+    view = kokkos.array(
+        "python_allocated_view",
+        [10,10],
+        dtype=kokkos.double,
+        space=kokkos.HostSpace,
+    )
+    #for i in range(view.shape[0]):
+    #    view[i,] = i * (i % 2)
+    # wrap the buffer protocal as numpy array without copying the data
+    arr = np.array(view, copy=False)
+    #arr[:,:] = 0.0
+    #arr[:,1] = 1.0
+    # verify type id
+    # print("Numpy Array : {} (shape={})".format(type(arr).__name__, arr.shape))
+    # demonstrate the data is the same as what was printed by generate_view
+    print(view.space)
 
-# wrap the buffer protocal as numpy array without copying the data
-arr = np.array(view, copy=False)
 
-print(view.trait)
-
-kokkos.finalize()
+if __name__ == "__main__":
+    kokkos.initialize()
+    test()
+    kokkos.finalize()
