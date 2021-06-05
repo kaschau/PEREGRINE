@@ -1,4 +1,4 @@
-#include "user.hpp"
+#include "peregrine_computes.hpp"
 #include <pybind11/pybind11.h>
 #include <cstdlib>
 
@@ -10,7 +10,7 @@ namespace py = pybind11;
 //
 //--------------------------------------------------------------------------------------//
 
-PYBIND11_MODULE(perepute, m) {
+PYBIND11_MODULE(peregrine, m) {
   ///
   /// This is a python binding to the user-defined generate_view function
   /// declared in user.hpp which returns a Kokkos::View. This function is called
@@ -19,12 +19,6 @@ PYBIND11_MODULE(perepute, m) {
   //m.def("generate_view", &generate_view, "Generate a random view",
   //       py::arg("n") = 10);
 
-  m.def("add", &add, "Add a float to entire view",
-         py::arg("view"), py::arg("adder"));
-  m.def("add2", &add2, "Add a float to entire view",
-         py::arg("view"), py::arg("adder"),
-         py::arg("imin"), py::arg("jmin"), py::arg("kmin"),
-         py::arg("imax"), py::arg("jmax"), py::arg("kmax"));
   m.def("add3", &add3, "Add a float to entire view",
          py::arg("class"), py::arg("adder"));
 

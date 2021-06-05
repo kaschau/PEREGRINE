@@ -6,7 +6,7 @@ import numpy as np
 # The declaration and definition of generate_view are in user.hpp and user.cpp
 # The generate_view function will return a Kokkos::View and will be converted
 # to a numpy array
-from perepute import add2,add3,block
+from peregrine import add3,block
 
 # Importing this module is necessary to call kokkos init/finalize and
 # import the python bindings to Kokkos::View which generate_view will
