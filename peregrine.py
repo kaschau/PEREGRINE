@@ -18,19 +18,30 @@ import sys
 
 def test():
     nb = 100
-    nx,ny,nz = 100,100,100
+    nx,ny,nz = 10,10,2
     collection = []
     for i in range(10):
         collection.append(block())
         b = collection[-1]
-        b.nblki = 1
-        b.nx = 30
-        b.ny = 30
-        b.nz = 30
+        b.nblki = i
+        b.nx = nx
+        b.ny = ny
+        b.nz = nz
         b.x = kokkos.array("python_allocated_view",
                                         [b.nx,b.ny,b.nz],
                                         dtype=kokkos.double,
                                         space=kokkos.HostSpace)
+        b.x_np = np.array(b.x, copy=False)
+        b.y = kokkos.array("python_allocated_view",
+                                        [b.nx,b.ny,b.nz],
+                                        dtype=kokkos.double,
+                                        space=kokkos.HostSpace)
+        b.y_np = np.array(b.y, copy=False)
+        b.z = kokkos.array("python_allocated_view",
+                                        [b.nx,b.ny,b.nz],
+                                        dtype=kokkos.double,
+                                        space=kokkos.HostSpace)
+        b.z_np = np.array(b.z, copy=False)
 
     ts = time.time()
     for i,b in enumerate(collection):
@@ -39,10 +50,9 @@ def test():
         add3(b,float(i))
         add3(b,float(i))
     print(time.time()-ts, 'took this many seconds')
-    #print(arr)0
-    return collection
+
 
 if __name__ == "__main__":
     kokkos.initialize()
-    col = test()
-    #kokkos.finalize()
+    test()
+    kokkos.finalize()
