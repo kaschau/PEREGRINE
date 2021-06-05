@@ -56,10 +56,11 @@ void add2(threeDview kkview, double n,
   });
 }
 
-void add3(twoDview kkview, double n, int imin, int jmin, int imax, int jmax) {
+void add3(block b, double n ) {
 
-  for (int j=jmin; j<jmax; j++) {
-  for (int i=imin; i<imax; i++) {
-    kkview(i,j) += n;
-  }};
+  MDRange3 _range({{0,0,0}},{{b.nx,b.ny,b.nz}});
+  Kokkos::parallel_for("add3", _range, KOKKOS_LAMBDA(const int i, const int j, const int k) {
+      b.x(i,j,k) += n;
+  });
 }
+
