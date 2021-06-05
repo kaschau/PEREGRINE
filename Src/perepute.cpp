@@ -28,7 +28,7 @@ PYBIND11_MODULE(perepute, m) {
   m.def("add3", &add3, "Add a float to entire view",
          py::arg("class"), py::arg("adder"));
 
-  py::class_<block>(m, "block")
+  py::class_<block>(m, "block", py::dynamic_attr())
     .def(py::init<>())
 
     .def_readwrite("nblki", &block::nblki)
