@@ -6,7 +6,7 @@ import numpy as np
 # The declaration and definition of generate_view are in user.hpp and user.cpp
 # The generate_view function will return a Kokkos::View and will be converted
 # to a numpy array
-from perepute import add2,add3
+from perepute import add2,add3,block
 
 # Importing this module is necessary to call kokkos init/finalize and
 # import the python bindings to Kokkos::View which generate_view will
@@ -14,35 +14,35 @@ from perepute import add2,add3
 #
 import kokkos
 import time
+import sys
 
 def test():
-    nx,ny,nz = 1000,1000,1000
-    # get the kokkos view
-    view = kokkos.array(
-        "python_allocated_view",
-        [nx,ny,nz],
-        dtype=kokkos.double,
-        space=kokkos.HostSpace,
-    )
-    #for i in range(view.shape[0]):
-    #    view[i,] = i * (i % 2)
-    # wrap the buffer protocal as numpy array without copying the data
-    arr = np.array(view, copy=False)
-    #arr[:,:] = 0.0
-    #arr[:,1] = 1.0
-    # verify type id
-    # print("Numpy Array : {} (shape={})".format(type(arr).__name__, arr.shape))
-    # demonstrate the data is the same as what was printed by generate_view
-    #print(arr)
+    nb = 100
+    nx,ny,nz = 100,100,100
+    collection = []
+    for i in range(10):
+        collection.append(block())
+        b = collection[-1]
+        b.nblki = 1
+        b.nx = 30
+        b.ny = 30
+        b.nz = 30
+        b.x = kokkos.array("python_allocated_view",
+                                        [b.nx,b.ny,b.nz],
+                                        dtype=kokkos.double,
+                                        space=kokkos.HostSpace)
+
     ts = time.time()
-    add2(view,1.0,0,0,0,nx,ny,nz)
-    add2(view,1.0,0,0,0,nx,ny,nz)
-    add2(view,1.0,0,0,0,nx,ny,nz)
-    add2(view,1.0,0,0,0,nx,ny,nz)
+    for i,b in enumerate(collection):
+        add3(b,float(i))
+        add3(b,float(i))
+        add3(b,float(i))
+        add3(b,float(i))
     print(time.time()-ts, 'took this many seconds')
-    #print(arr)
+    #print(arr)0
+    return collection
 
 if __name__ == "__main__":
     kokkos.initialize()
-    test()
-    kokkos.finalize()
+    col = test()
+    #kokkos.finalize()

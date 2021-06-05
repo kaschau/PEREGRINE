@@ -26,11 +26,20 @@ PYBIND11_MODULE(perepute, m) {
          py::arg("imin"), py::arg("jmin"), py::arg("kmin"),
          py::arg("imax"), py::arg("jmax"), py::arg("kmax"));
   m.def("add3", &add3, "Add a float to entire view",
-         py::arg("view"), py::arg("adder"),
-         py::arg("imin"),
-         py::arg("jmin"),
-         py::arg("imax"),
-         py::arg("imax")) ;
+         py::arg("class"), py::arg("adder"));
+
+  py::class_<block>(m, "block")
+    .def(py::init<>())
+
+    .def_readwrite("nblki", &block::nblki)
+
+    .def_readwrite("nx", &block::nx)
+    .def_readwrite("ny", &block::ny)
+    .def_readwrite("nz", &block::nz)
+
+    .def_readwrite("x", &block::x)
+    .def_readwrite("y", &block::y)
+    .def_readwrite("z", &block::z);
 
   static auto _atexit = []() {
     if (Kokkos::is_initialized()) Kokkos::finalize();
