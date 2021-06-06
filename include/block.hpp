@@ -9,8 +9,17 @@
 struct block {
   int nblki;
   int ni,nj,nk;
+  int ns=1;
 
+  // Grid Arrays
   threeDview x,y,z;
+
+  // Conserved Variables
+  fourDview Qv;
+
+  // Primatives
+  threeDview T;
+  threeDview p;
 };
 
 #endif

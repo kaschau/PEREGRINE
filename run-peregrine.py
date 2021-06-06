@@ -17,28 +17,26 @@ def simulate():
     size = comm.Get_size()
 
     myblocks = pgpy.readers.read_blocks4procs(rank)
-    collection = []
+    CompBlocks = []
     for nblki in myblocks:
         b = pgc.block()
         b.nblki = nblki
-        collection.append(b)
+        CompBlocks.append(b)
 
-    pgpy.readers.read_grid(collection)
+    pgpy.readers.read_grid(CompBlocks)
+    pgpy.initialize_arrays(CompBlocks)
 
-    return collection
-    #print(collection[0].x_np)
-    #sys.exit()
 
-    #ts = time.time()
-    #for i,b in enumerate(collection):
-    #    pgc.add3(b,float(i))
-    #    pgc.add3(b,float(i))
-    #    pgc.add3(b,float(i))
-    #    pgc.add3(b,float(i))
-    #print(time.time()-ts, 'took this many seconds')
+    ts = time.time()
+    for b in CompBlocks:
+        pgc.add3(b,1.0)
+        pgc.add3(b,1.0)
+        pgc.add3(b,1.0)
+    print(time.time()-ts, 'took this many seconds')
+    return CompBlocks
 
 
 if __name__ == "__main__":
     kokkos.initialize()
-    collection = simulate()
+    CompBlocks = simulate()
     kokkos.finalize()
