@@ -1,10 +1,11 @@
 
 import kokkos
-from peregrinepy import KokkosLocation
+from peregrinepy import device_array,space
+np = device_array
 
-if KokkosLocation() == 'Default':
-    import numpy as np
-    space = kokkos.HostSpace
+#if KokkosLocation() == 'Default':
+#    import numpy as np
+#    space = kokkos.HostSpace
 
 def initialize_arrays(blocks):
 
