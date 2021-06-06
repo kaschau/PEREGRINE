@@ -16,7 +16,11 @@ static const std::string KokkosLocation = "Cuda";
 using exec_space = Kokkos::Experimental::HIP;
 using view_space = Kokkos::Experimental::HIPSpace;
 static const std::string KokkosLocation = "HIP";
-#else
+#elif defined(KOKKOS_ENABLE_OPENMP)
+using exec_space = Kokkos::OpenMP;
+using view_space = Kokkos::HostSpace;
+static const std::string KokkosLocation = "OpenMP";
+#elif defined(KOKKOS_ENABLE_DEAFULT)
 using exec_space = Kokkos::DefaultHostExecutionSpace;
 using view_space = Kokkos::HostSpace;
 static const std::string KokkosLocation = "Default";
