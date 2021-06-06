@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
 
 import kokkos
-from peregrinepy import KokkosLocation
-if KokkosLocation() == 'Default':
-    import numpy as np
-    space = kokkos.HostSpace
+from peregrinepy import device_array,space
+np = device_array
 import h5py
 
 
