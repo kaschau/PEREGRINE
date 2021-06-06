@@ -1,27 +1,36 @@
 #!/usr/bin/env python
-import numpy as np
 
-#
-# The python bindings for generate_view are in ex-generate.cpp
-# The declaration and definition of generate_view are in user.hpp and user.cpp
-# The generate_view function will return a Kokkos::View and will be converted
-# to a numpy array
-from peregrine import add3,block
+import sys
+sys.path.append('./Lib')
 
-# Importing this module is necessary to call kokkos init/finalize and
-# import the python bindings to Kokkos::View which generate_view will
-# return
-#
+import peregrine as pgc
+if pgc.KokkosLocation == 'Default':
+    import numpy as np
+#elif pgc.KokkosLocation.startswith('Cuda'):
+#    import cupy as np
+import peregrinepy as pgpy
+from mpi4py import MPI
+
 import kokkos
 import time
-import sys
 
-def test():
+def simulate():
+
+    # Initialize the parallel information for each rank
+    comm = MPI.COMM_WORLD
+    rank = comm.Get_rank()
+    size = comm.Get_size()
+
+    blk_collection = pgpy.init_grid(rank)
+    print(blk_collection)
+    sys.exit()
+
+
     nb = 100
     nx,ny,nz = 10,10,2
     collection = []
     for i in range(10):
-        collection.append(block())
+        collection.append(pgc.block())
         b = collection[-1]
         b.nblki = i
         b.nx = nx
@@ -45,14 +54,14 @@ def test():
 
     ts = time.time()
     for i,b in enumerate(collection):
-        add3(b,float(i))
-        add3(b,float(i))
-        add3(b,float(i))
-        add3(b,float(i))
+        pgc.add3(b,float(i))
+        pgc.add3(b,float(i))
+        pgc.add3(b,float(i))
+        pgc.add3(b,float(i))
     print(time.time()-ts, 'took this many seconds')
 
 
 if __name__ == "__main__":
     kokkos.initialize()
-    test()
+    simulate()
     kokkos.finalize()
