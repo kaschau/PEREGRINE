@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 
-import sys
-sys.path.append('./Lib')
-import peregrine as pgc
 import peregrinepy as pgpy
 from mpi4py import MPI
 
@@ -19,7 +16,7 @@ def simulate():
     myblocks = pgpy.readers.read_blocks4procs(rank)
     CompBlocks = []
     for nblki in myblocks:
-        b = pgc.block()
+        b = pgpy.block()
         b.nblki = nblki
         CompBlocks.append(b)
 
@@ -29,9 +26,9 @@ def simulate():
 
     ts = time.time()
     for b in CompBlocks:
-        pgc.add3(b,1.0)
-        pgc.add3(b,1.0)
-        pgc.add3(b,1.0)
+        pgpy.add3(b,1.0)
+        pgpy.add3(b,1.0)
+        pgpy.add3(b,1.0)
     print(time.time()-ts, 'took this many seconds')
     return CompBlocks
 
