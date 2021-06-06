@@ -26,9 +26,9 @@ def simulate():
 
     ts = time.time()
     for b in CompBlocks:
-        pgpy.add3(b,1.0)
-        pgpy.add3(b,1.0)
-        pgpy.add3(b,1.0)
+        pgpy.compute.add3(b,1.0)
+        pgpy.compute.add3(b,1.0)
+        pgpy.compute.add3(b,1.0)
     print(time.time()-ts, 'took this many seconds')
     return CompBlocks
 

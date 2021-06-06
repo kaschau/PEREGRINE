@@ -9,6 +9,7 @@ def KokkosLocation():
 
 #Now the rest of the stuff
 from .block import block
-from . import readers
 from .initialize_arrays import initialize_arrays
-from .add3 import add3
+
+from . import readers
+from . import compute
