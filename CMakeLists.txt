@@ -16,8 +16,7 @@ enable_language( C CXX )
 ###########################################################################
 project(peregrine_compute LANGUAGES C CXX)
 #Set the install path
-set(CMAKE_INSTALL_PREFIX ../Lib CACHE PATH "Install Directory" FORCE)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_INSTALL_PREFIX})
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Lib)
 
 #Add all da files
 file( GLOB peregrine_compute_src ${PROJECT_SOURCE_DIR}/Src/compute/*.cpp )
@@ -30,10 +29,9 @@ target_link_libraries(peregrine_compute PUBLIC Kokkos::kokkos)
 
 #Make the bindings for python import
 add_subdirectory(external/pybind11)
-pybind11_add_module(peregrine ${PROJECT_SOURCE_DIR}/Src/peregrine.cpp)
-target_include_directories(peregrine PUBLIC ${PROJECT_SOURCE_DIR}/include)
-target_link_libraries(peregrine PRIVATE peregrine_compute)
-target_include_directories(peregrine PUBLIC ${PROJECT_SOURCE_DIR}/include)
+pybind11_add_module(Peregrine ${PROJECT_SOURCE_DIR}/Src/Peregrine.cpp)
+target_include_directories(Peregrine PUBLIC ${PROJECT_SOURCE_DIR}/include)
+target_link_libraries(Peregrine PRIVATE peregrine_compute)
+target_include_directories(Peregrine PUBLIC ${PROJECT_SOURCE_DIR}/include)
 
-target_compile_options(peregrine PRIVATE -fvisibility=default)
-
+target_compile_options(Peregrine PRIVATE -fvisibility=default)

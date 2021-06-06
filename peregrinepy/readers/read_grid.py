@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
 import kokkos
-import peregrine as pgc
-if pgc.KokkosLocation == 'Default':
+from peregrinepy import KokkosLocation
+if KokkosLocation() == 'Default':
     import numpy as np
     space = kokkos.HostSpace
 import h5py

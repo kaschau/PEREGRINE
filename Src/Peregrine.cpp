@@ -1,6 +1,6 @@
 #include "peregrine_computes.hpp"
 #include "kokkos2peregrine.hpp"
-#include "block.hpp"
+#include "Block.hpp"
 #include <pybind11/pybind11.h>
 #include <cstdlib>
 
@@ -12,7 +12,7 @@ namespace py = pybind11;
 //
 //--------------------------------------------------------------------------------------//
 
-PYBIND11_MODULE(peregrine, m) {
+PYBIND11_MODULE(Peregrine, m) {
   m.doc() = "Module to expose compute units written in C++ with Kokkos";
   m.attr("KokkosLocation") = &KokkosLocation;
   ///
@@ -24,28 +24,28 @@ PYBIND11_MODULE(peregrine, m) {
   m.def("add3", &add3, "Add a float to entire threeDview",
          py::arg("Block object"), py::arg("Float to add"));
 
-  py::class_<block>(m, "block", py::dynamic_attr())
+  py::class_<Block>(m, "Block", py::dynamic_attr())
     .def(py::init<>())
 
-    .def_readwrite("nblki", &block::nblki)
+    .def_readwrite("nblki", &Block::nblki)
 
-    .def_readwrite("ni", &block::ni)
-    .def_readwrite("nj", &block::nj)
-    .def_readwrite("nk", &block::nk)
+    .def_readwrite("ni", &Block::ni)
+    .def_readwrite("nj", &Block::nj)
+    .def_readwrite("nk", &Block::nk)
 
-    .def_readwrite("ns", &block::ns)
+    .def_readwrite("ns", &Block::ns)
 
     // Grid Arrays
-    .def_readwrite("x", &block::x)
-    .def_readwrite("y", &block::y)
-    .def_readwrite("z", &block::z)
+    .def_readwrite("x", &Block::x)
+    .def_readwrite("y", &Block::y)
+    .def_readwrite("z", &Block::z)
 
     // Conserved Array
-    .def_readwrite("Qv", &block::Qv)
+    .def_readwrite("Qv", &Block::Qv)
 
     // Primtive Array
-    .def_readwrite("T", &block::T)
-    .def_readwrite("P", &block::p);
+    .def_readwrite("T", &Block::T)
+    .def_readwrite("P", &Block::p);
 
   static auto _atexit = []() {
     if (Kokkos::is_initialized()) Kokkos::finalize();
