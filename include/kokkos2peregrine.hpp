@@ -1,3 +1,5 @@
+#ifndef __kokkos2peregrine_H__
+#define __kokkos2peregrine_H__
 
 #include "Kokkos_Core.hpp"
 
@@ -5,15 +7,19 @@
 #if defined(KOKKOS_ENABLE_CUDA_UVM)
 using exec_space = Kokkos::Cuda;
 using view_space = Kokkos::CudaUVMSpace;
+static const std::string KokkosLocation = "CudaUVM";
 #elif defined(KOKKOS_ENABLE_CUDA)
 using exec_space = Kokkos::Cuda;
 using view_space = Kokkos::CudaSpace;
+static const std::string KokkosLocation = "Cuda";
 #elif defined(KOKKOS_ENABLE_HIP)
 using exec_space = Kokkos::Experimental::HIP;
 using view_space = Kokkos::Experimental::HIPSpace;
+static const std::string KokkosLocation = "HIP";
 #else
 using exec_space = Kokkos::DefaultHostExecutionSpace;
 using view_space = Kokkos::HostSpace;
+static const std::string KokkosLocation = "Default";
 #endif
 
 // define some shorthand for the Kokkos views and Range Policies
@@ -27,3 +33,5 @@ using MDRange2   = Kokkos::MDRangePolicy<exec_space,Kokkos::Rank<2>>;
 using MDRange3   = Kokkos::MDRangePolicy<exec_space,Kokkos::Rank<3>>;
 using MDRange4   = Kokkos::MDRangePolicy<exec_space,Kokkos::Rank<4>>;
 using MDRange5   = Kokkos::MDRangePolicy<exec_space,Kokkos::Rank<5>>;
+
+#endif
