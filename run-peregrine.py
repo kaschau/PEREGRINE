@@ -23,17 +23,16 @@ def simulate():
     pgpy.readers.read_grid(CompBlocks)
     pgpy.initialize_arrays(CompBlocks)
 
-
     ts = time.time()
     for b in CompBlocks:
         pgpy.compute.add3(b,1.0)
         pgpy.compute.add3(b,1.0)
         pgpy.compute.add3(b,1.0)
     print(time.time()-ts, 'took this many seconds')
-    return CompBlocks
+    #return CompBlocks
 
 
 if __name__ == "__main__":
     kokkos.initialize()
-    CompBlocks = simulate()
+    simulate()
     kokkos.finalize()
