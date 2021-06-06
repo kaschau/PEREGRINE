@@ -33,9 +33,19 @@ PYBIND11_MODULE(peregrine, m) {
     .def_readwrite("nj", &block::nj)
     .def_readwrite("nk", &block::nk)
 
+    .def_readwrite("ns", &block::ns)
+
+    // Grid Arrays
     .def_readwrite("x", &block::x)
     .def_readwrite("y", &block::y)
-    .def_readwrite("z", &block::z);
+    .def_readwrite("z", &block::z)
+
+    // Conserved Array
+    .def_readwrite("Qv", &block::Qv)
+
+    // Primtive Array
+    .def_readwrite("T", &block::T)
+    .def_readwrite("P", &block::p);
 
   static auto _atexit = []() {
     if (Kokkos::is_initialized()) Kokkos::finalize();
