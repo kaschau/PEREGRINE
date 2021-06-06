@@ -8,7 +8,7 @@
 // python wrapper
 struct block {
   int nblki;
-  int nx,ny,nz;
+  int ni,nj,nk;
 
   threeDview x,y,z;
 };

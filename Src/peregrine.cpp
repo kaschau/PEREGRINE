@@ -29,9 +29,9 @@ PYBIND11_MODULE(peregrine, m) {
 
     .def_readwrite("nblki", &block::nblki)
 
-    .def_readwrite("nx", &block::nx)
-    .def_readwrite("ny", &block::ny)
-    .def_readwrite("nz", &block::nz)
+    .def_readwrite("ni", &block::ni)
+    .def_readwrite("nj", &block::nj)
+    .def_readwrite("nk", &block::nk)
 
     .def_readwrite("x", &block::x)
     .def_readwrite("y", &block::y)

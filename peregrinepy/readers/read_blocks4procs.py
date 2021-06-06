@@ -3,11 +3,10 @@ if peregrine.KokkosLocation == 'Default':
     import numpy as np
 
 from mpi4py import MPI
-import kokkos
 
 comm = MPI.COMM_WORLD
 
-def init_grid(rank):
+def read_blocks4procs(rank):
 
     if rank == 0:
         with open('./Input/blocks4procs.inp') as f:
