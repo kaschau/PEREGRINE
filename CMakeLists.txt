@@ -16,7 +16,8 @@ enable_language( C CXX )
 ###########################################################################
 project(peregrine_compute LANGUAGES C CXX)
 #Set the install path
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Lib)
+set(CMAKE_INSTALL_PREFIX ../Lib CACHE PATH "Install Directory" FORCE)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_INSTALL_PREFIX})
 
 #Add all da files
 file( GLOB peregrine_compute_src ${PROJECT_SOURCE_DIR}/Src/compute/*.cpp )
