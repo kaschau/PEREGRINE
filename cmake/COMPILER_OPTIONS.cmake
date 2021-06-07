@@ -46,12 +46,6 @@ if( ${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU" )
 # Debug build type compiler flags
   set( CMAKE_CXX_FLAGS_DEBUG
        "-O0 \
-        -g \
-        -frounding-math \
-        -fsignaling-nans \
-        -fcheck=bounds \
-        -fcheck=mem \
-        -fbacktrace \
-        -ffpe-trap=invalid,zero,overflow" CACHE STRING "" FORCE )
+        -g " CACHE STRING "" FORCE )
 
 endif()

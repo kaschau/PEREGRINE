@@ -1,4 +1,4 @@
-#include "peregrine_computes.hpp"
+#include "compute.hpp"
 #include "kokkos2peregrine.hpp"
 #include "Block.hpp"
 #include <pybind11/pybind11.h>
@@ -23,6 +23,13 @@ PYBIND11_MODULE(Peregrine, m) {
 
   m.def("add3", &add3, "Add a float to entire threeDview",
          py::arg("Block object"), py::arg("Float to add"));
+
+
+  m.def("gen3Dview", &gen3Dview, "Generate a threeDview",
+         py::arg("name"), py::arg("ni"), py::arg("nk"),py::arg("nk"));
+  m.def("gen4Dview", &gen4Dview, "Generate a fourDview",
+         py::arg("name"), py::arg("ni"), py::arg("nk"),py::arg("nk"), py::arg("nl"));
+
 
   py::class_<Block>(m, "Block", py::dynamic_attr())
     .def(py::init<>())

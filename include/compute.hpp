@@ -1,5 +1,5 @@
-#ifndef __peregrine_computes_H__
-#define __peregrine_computes_H__
+#ifndef __compute_H__
+#define __compute_H__
 
 #include "Block.hpp"
 
