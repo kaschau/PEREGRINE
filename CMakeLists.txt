@@ -33,6 +33,9 @@ project(peregrine_compute LANGUAGES C CXX)
 #Set the install path
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Lib)
 
+#Turn off lto junk
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION OFF )
+
 #Add all da files
 file( GLOB peregrine_compute_src ${PROJECT_SOURCE_DIR}/Src/compute/*.cpp )
 add_library(peregrine_compute SHARED ${peregrine_compute_src})
