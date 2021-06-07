@@ -2,7 +2,7 @@
 #include "kokkos2peregrine.hpp"
 #include "Block.hpp"
 #include "Kokkos_Core.hpp"
-#include <cstdint>
+//#include <cstdint>
 
 void add3(Block b, double n ) {
 

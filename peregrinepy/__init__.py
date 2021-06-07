@@ -12,7 +12,7 @@ if KokkosLocation in ['Serial','OpenMP','Default']:
     import numpy as np
     globals()['device_array'] = np
     globals()['space'] = HostSpace
-if KokkosLocation == 'CudaUVM':
+elif KokkosLocation == 'CudaUVM':
     import numpy as np
     globals()['device_array'] = np
     globals()['space'] = CudaUVMSpace
