@@ -24,6 +24,7 @@ PYBIND11_MODULE(Peregrine, m) {
   m.def("add3", &add3, "Add a float to entire threeDview",
          py::arg("Block object"), py::arg("Float to add"));
 
+  m.def("finalize_kokkos", &finalize_kokkos, "finalize kokkos");
 
   m.def("gen3Dview", &gen3Dview, "Generate a threeDview",
          py::arg("name"), py::arg("ni"), py::arg("nk"),py::arg("nk"));

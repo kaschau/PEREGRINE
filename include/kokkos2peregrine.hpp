@@ -69,4 +69,11 @@ fourDview gen4Dview(std::string name, int ni, int nj, int nk, int nl) {
   return _v;
 }
 
+void finalize_kokkos() {
+  if (Kokkos::is_initialized()) {
+    std::cerr << "Finalizing Kokkos..." << std::endl;
+    Kokkos::finalize();
+  }
+}
+
 #endif
