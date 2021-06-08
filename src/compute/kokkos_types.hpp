@@ -38,42 +38,5 @@ using MDRange3   = Kokkos::MDRangePolicy<exec_space,Kokkos::Rank<3>>;
 using MDRange4   = Kokkos::MDRangePolicy<exec_space,Kokkos::Rank<4>>;
 using MDRange5   = Kokkos::MDRangePolicy<exec_space,Kokkos::Rank<5>>;
 
-//threeDview gen3Dview(std::string name, int ni, int nj, int nk) {
-  //if (!Kokkos::is_initialized()) {
-    //std::cerr << "[user-bindings]> Initializing Kokkos..." << std::endl;
-    //Kokkos::initialize();
-  //}
-  //threeDview _v(name, ni, nj, nk);
-  //MDRange3 _range({{0,0,0}},{{ni,nj,nk}});
-  //Kokkos::parallel_for("Gen3", _range, KOKKOS_LAMBDA(const int i,
-                                                     //const int j,
-                                                     //const int k) {
-    //_v(i,j,k) = 0.0;
-  //});
-  //return _v;
-//}
-//
-//fourDview gen4Dview(std::string name, int ni, int nj, int nk, int nl) {
-  //if (!Kokkos::is_initialized()) {
-    //std::cerr << "[user-bindings]> Initializing Kokkos..." << std::endl;
-    //Kokkos::initialize();
-  //}
-  //fourDview _v(name, ni, nj, nk, nl);
-  //MDRange4 _range({{0,0,0,0}},{{ni,nj,nk,nl}});
-  //Kokkos::parallel_for("Gen4", _range, KOKKOS_LAMBDA(const int i,
-                                                     //const int j,
-                                                     //const int k,
-                                                     //const int l) {
-    //_v(i,j,k,l) = 0.0;
-  //});
-  //return _v;
-//}
-
-//void finalize_kokkos() {
-  //if (Kokkos::is_initialized()) {
-    //std::cerr << "Finalizing Kokkos..." << std::endl;
-    //Kokkos::finalize();
-  //}
-//}
 
 #endif
