@@ -1,12 +1,14 @@
 
 from mpi4py import MPI
 
-comm = MPI.COMM_WORLD
 
-def read_blocks4procs(rank):
+def read_blocks4procs(config):
+
+    comm = MPI.COMM_WORLD
+    rank = comm.Get_rank()
 
     if rank == 0:
-        with open('./Input/blocks4procs.inp') as f:
+        with open(f"{config['io']['inputdir']}/blocks4procs.inp") as f:
             lines = [i for i in f.readlines() if not i.strip().startswith('#')]
             sendranks = [i+1 for i in range(len(lines[1::]))]
             for send,line in zip(sendranks,lines[1::]):
