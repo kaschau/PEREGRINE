@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
-import peregrinepy as pgpy
 from mpi4py import MPI
-
 import kokkos
+
+import peregrinepy as pgpy
 import time
 
 def simulate():
@@ -21,13 +21,12 @@ def simulate():
         CompBlocks.append(b)
 
     pgpy.readers.read_grid(CompBlocks)
-    pgpy.initialize_arrays(CompBlocks)
 
     ts = time.time()
     for b in CompBlocks:
-        pgpy.compute.add3(b,1.0)
-        pgpy.compute.add3(b,1.0)
-        pgpy.compute.add3(b,1.0)
+        pgpy.compute.add3D(b,1.0)
+        pgpy.compute.add3D(b,1.0)
+        pgpy.compute.add3D(b,1.0)
     print(time.time()-ts, 'took this many seconds')
     #return CompBlocks
 
