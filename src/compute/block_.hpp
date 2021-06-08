@@ -9,6 +9,7 @@
 struct block_ {
   int nblki;
   int ni,nj,nk;
+  int ngls;
   int ns=1;
 
   // Grid Arrays

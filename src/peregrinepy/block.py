@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from .compute_ import block_,gen3Dview
+from .compute_ import block_
 
 ''' block.py
 
@@ -42,9 +42,11 @@ class block(block_):
         super().__init__()
         self.nblki = nblki
 
+        #Grid Arrays
         self.x = None
         self.y = None
         self.z = None
+        #Grid Metrics
 
         self.connectivity = FrozenDict({'1':FrozenDict({'bc':'s1', 'connection':'0', 'orientation':'000'}),
                                         '2':FrozenDict({'bc':'s1', 'connection':'0', 'orientation':'000'}),
