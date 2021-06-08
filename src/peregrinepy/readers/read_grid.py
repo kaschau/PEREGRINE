@@ -9,7 +9,7 @@ else:
 import h5py
 
 
-def read_grid(blocks,config):
+def read_grid(mb,config):
     ''' This function reads in all the HDF5 grid files in :path: and adds the coordinate data to a supplied raptorpy.multiblock.grid object (or one of its descendants)
 
     Parameters
@@ -25,7 +25,7 @@ def read_grid(blocks,config):
     #At this point we can set the number of ghost layers
     ngls = 2
 
-    for blk in blocks:
+    for blk in mb:
         file_name = f"{config['io']['griddir']}/gv.{blk.nblki:06d}.h5"
 
         with h5py.File(file_name, 'r') as f:

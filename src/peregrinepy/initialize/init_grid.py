@@ -1,13 +1,8 @@
 from ..block import block
 from ..readers import read_grid
 
-def init_grid(myBlocks,config):
+def init_grid(compBlocks,config):
 
-    myCompBlocks = []
-    for nblki in myBlocks:
-        b = block(nblki)
-        myCompBlocks.append(b)
+    read_grid(compBlocks,config)
 
-    read_grid(myCompBlocks,config)
-
-    return myCompBlocks
+    return compBlocks
