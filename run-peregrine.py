@@ -28,6 +28,7 @@ def simulate():
         pgpy.compute.add3D(b,1.0)
         pgpy.compute.add3D(b,1.0)
     print(time.time()-ts, 'took this many seconds')
+    print(pgpy.np.max(CompBlocks[0].x_np))
     #return CompBlocks
 
 
