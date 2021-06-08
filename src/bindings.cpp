@@ -11,7 +11,7 @@ namespace py = pybind11;
 //
 //--------------------------------------------------------------------------------------//
 
-PYBIND11_MODULE(peregrinepy, m) {
+PYBIND11_MODULE(_compute, m) {
   m.doc() = "Module to expose compute units written in C++ with Kokkos";
   m.attr("KokkosLocation") = &KokkosLocation;
   ///

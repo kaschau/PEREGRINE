@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from peregrinepy import Block
+from ._compute import Block
 
 ''' block.py
 
