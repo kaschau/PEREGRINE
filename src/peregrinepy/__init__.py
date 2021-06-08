@@ -6,4 +6,5 @@ else:
     raise ValueError(f'Unknown KokkosLocation {compute.KokkosLocation}')
 
 from .block import block
+from . import initialize
 from . import readers

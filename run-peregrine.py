@@ -13,22 +13,16 @@ def simulate():
     rank = comm.Get_rank()
     size = comm.Get_size()
 
-    myblocks = pgpy.readers.read_blocks4procs(rank)
-    CompBlocks = []
-    for nblki in myblocks:
-        b = pgpy.block()
-        b.nblki = nblki
-        CompBlocks.append(b)
-
-    pgpy.readers.read_grid(CompBlocks)
+    myBlocks = pgpy.readers.read_blocks4procs(rank)
+    myCompBlocks = pgpy.initialize.grid(myBlocks)
 
     ts = time.time()
-    for b in CompBlocks:
+    for b in myCompBlocks:
         pgpy.compute.add3D(b,1.0)
         pgpy.compute.add3D(b,1.0)
         pgpy.compute.add3D(b,1.0)
     print(time.time()-ts, 'took this many seconds')
-    print(pgpy.np.max(CompBlocks[0].x_np))
+    print(pgpy.np.max(myCompBlocks[0].x_))
     #return CompBlocks
 
 
