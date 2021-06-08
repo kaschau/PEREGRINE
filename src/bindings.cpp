@@ -1,4 +1,3 @@
-#include "compute.hpp"
 #include "kokkos2peregrine.hpp"
 #include "Block.hpp"
 #include <pybind11/pybind11.h>
@@ -12,7 +11,7 @@ namespace py = pybind11;
 //
 //--------------------------------------------------------------------------------------//
 
-PYBIND11_MODULE(Peregrine, m) {
+PYBIND11_MODULE(peregrinepy, m) {
   m.doc() = "Module to expose compute units written in C++ with Kokkos";
   m.attr("KokkosLocation") = &KokkosLocation;
   ///
@@ -21,15 +20,15 @@ PYBIND11_MODULE(Peregrine, m) {
   /// from ex-numpy.py
   ///
 
-  m.def("add3", &add3, "Add a float to entire threeDview",
-         py::arg("Block object"), py::arg("Float to add"));
-
-  m.def("finalize_kokkos", &finalize_kokkos, "finalize kokkos");
-
-  m.def("gen3Dview", &gen3Dview, "Generate a threeDview",
-         py::arg("name"), py::arg("ni"), py::arg("nk"),py::arg("nk"));
-  m.def("gen4Dview", &gen4Dview, "Generate a fourDview",
-         py::arg("name"), py::arg("ni"), py::arg("nk"),py::arg("nk"), py::arg("nl"));
+  // m.def("add3", &add3, "Add a float to entire threeDview",
+         // py::arg("Block object"), py::arg("Float to add"));
+//
+  // m.def("finalize_kokkos", &finalize_kokkos, "finalize kokkos");
+//
+  // m.def("gen3Dview", &gen3Dview, "Generate a threeDview",
+         // py::arg("name"), py::arg("ni"), py::arg("nk"),py::arg("nk"));
+  // m.def("gen4Dview", &gen4Dview, "Generate a fourDview",
+         // py::arg("name"), py::arg("ni"), py::arg("nk"),py::arg("nk"), py::arg("nl"));
 
 
   py::class_<Block>(m, "Block", py::dynamic_attr())
