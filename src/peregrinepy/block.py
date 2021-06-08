@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from ._compute import Block
+from ._compute import Block,gen3Dview
 
 ''' block.py
 
@@ -10,6 +10,16 @@ Kyle Schau
 This module defines the top block class. This object is the most basic object that a multiblock datasets (see multiblock.py) can be composed of.
 
 '''
+class FrozenDict(dict):
+    __isfrozen = False
+
+    def __setitem__(self, key, value):
+        if self.__isfrozen and not key in self.keys():
+            raise KeyError('{} is not a valid input for connectivity information, check spelling and case'.format(key))
+        super(FrozenDict, self).__setitem__(key, value)
+
+    def _freeze(self):
+        self.__isfrozen = True
 
 
 class block(Block):
@@ -28,4 +38,21 @@ class block(Block):
         'orientation':'000' for all faces. NOTE: the face information is stored as strings for all entries, even 'connection'
 
     '''
-    test = 0
+    def __init__(self, nblki):
+        super().__init__()
+        self.nblki = nblki
+
+        self.x_ = None
+        self.y_ = None
+        self.z_ = None
+
+        self.connectivity = FrozenDict({'1':FrozenDict({'bc':'s1', 'connection':'0', 'orientation':'000'}),
+                                        '2':FrozenDict({'bc':'s1', 'connection':'0', 'orientation':'000'}),
+                                        '3':FrozenDict({'bc':'s1', 'connection':'0', 'orientation':'000'}),
+                                        '4':FrozenDict({'bc':'s1', 'connection':'0', 'orientation':'000'}),
+                                        '5':FrozenDict({'bc':'s1', 'connection':'0', 'orientation':'000'}),
+                                        '6':FrozenDict({'bc':'s1', 'connection':'0', 'orientation':'000'})})
+
+        for i in ['1','2','3','4','5','6']:
+                self.connectivity[i]._freeze()
+        self.connectivity._freeze()
