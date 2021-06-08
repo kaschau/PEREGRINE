@@ -1,16 +1,16 @@
 
 #include "Kokkos_Core.hpp"
 #include "kokkos_types.hpp"
-#include "Block.hpp"
+#include "block_.hpp"
 
-void add3D(Block b, double n ) {
+void add3D(block_ b, double n ) {
 
-  MDRange3 _range({{0,0,0}},{{b.ni,b.nj,b.nk}});
-  Kokkos::parallel_for("add3", _range, KOKKOS_LAMBDA(const int i, const int j, const int k) {
+  MDRange3 range({{0,0,0}},{{b.ni,b.nj,b.nk}});
+  Kokkos::parallel_for("add3", range, KOKKOS_LAMBDA(const int i, const int j, const int k) {
 
-      b.x(i,j,k) += n;
-      b.y(i,j,k) += n;
-      b.z(i,j,k) += n;
+      b.x_(i,j,k) += n;
+      b.y_(i,j,k) += n;
+      b.z_(i,j,k) += n;
 
   });
 }
@@ -21,14 +21,16 @@ threeDview gen3Dview(std::string name, int ni, int nj, int nk) {
     std::cerr << "[user-bindings]> Initializing Kokkos..." << std::endl;
     Kokkos::initialize();
   }
-  threeDview _v(name, ni, nj, nk);
-  MDRange3 _range({{0,0,0}},{{ni,nj,nk}});
-  Kokkos::parallel_for("Gen3", _range, KOKKOS_LAMBDA(const int i,
-                                                     const int j,
-                                                     const int k) {
-    _v(i,j,k) = 0.0;
+  threeDview v(name, ni, nj, nk);
+  MDRange3 range({{0,0,0}},{{ni,nj,nk}});
+  Kokkos::parallel_for("Gen3", range, KOKKOS_LAMBDA(const int i,
+                                                    const int j,
+                                                    const int k) {
+
+    v(i,j,k) = 0.0;
+
   });
-  return _v;
+  return v;
 }
 
 fourDview gen4Dview(std::string name, int ni, int nj, int nk, int nl) {
@@ -36,15 +38,17 @@ fourDview gen4Dview(std::string name, int ni, int nj, int nk, int nl) {
     std::cerr << "[user-bindings]> Initializing Kokkos..." << std::endl;
     Kokkos::initialize();
   }
-  fourDview _v(name, ni, nj, nk, nl);
-  MDRange4 _range({{0,0,0,0}},{{ni,nj,nk,nl}});
-  Kokkos::parallel_for("Gen4", _range, KOKKOS_LAMBDA(const int i,
-                                                     const int j,
-                                                     const int k,
-                                                     const int l) {
-    _v(i,j,k,l) = 0.0;
+  fourDview v(name, ni, nj, nk, nl);
+  MDRange4 range({{0,0,0,0}},{{ni,nj,nk,nl}});
+  Kokkos::parallel_for("Gen4", range, KOKKOS_LAMBDA(const int i,
+                                                    const int j,
+                                                    const int k,
+                                                    const int l) {
+
+    v(i,j,k,l) = 0.0;
+
   });
-  return _v;
+  return v;
 }
 
 void finalize_kokkos() {
