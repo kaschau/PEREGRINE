@@ -1,4 +1,4 @@
-from . import _compute as compute
+from . import compute_ as compute
 
 if compute.KokkosLocation in ['OpenMP','CudaUVM','Default']:
     import numpy as np

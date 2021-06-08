@@ -13,7 +13,7 @@ namespace py = pybind11;
 //
 //--------------------------------------------------------------------------------------//
 
-PYBIND11_MODULE(_compute, m) {
+PYBIND11_MODULE(compute_, m) {
   m.doc() = "Module to expose compute units written in C++ with Kokkos";
   m.attr("KokkosLocation") = &KokkosLocation;
   ///
@@ -33,28 +33,27 @@ PYBIND11_MODULE(_compute, m) {
         py::arg("name"), py::arg("ni"), py::arg("nk"),py::arg("nk"), py::arg("nl"));
 
 
-  py::class_<Block>(m, "Block", py::dynamic_attr())
+  py::class_<block_>(m, "block_", py::dynamic_attr())
     .def(py::init<>())
 
-    .def_readwrite("nblki", &Block::nblki)
+    .def_readwrite("nblki", &block_::nblki)
 
-    .def_readwrite("ni", &Block::ni)
-    .def_readwrite("nj", &Block::nj)
-    .def_readwrite("nk", &Block::nk)
+    .def_readwrite("ni", &block_::ni)
+    .def_readwrite("nj", &block_::nj)
+    .def_readwrite("nk", &block_::nk)
 
-    .def_readwrite("ns", &Block::ns)
+    .def_readwrite("ns", &block_::ns)
 
     // Grid Arrays
-    .def_readwrite("x", &Block::x)
-    .def_readwrite("y", &Block::y)
-    .def_readwrite("z", &Block::z)
+    .def_readwrite("x_", &block_::x_)
+    .def_readwrite("y_", &block_::y_)
+    .def_readwrite("z_", &block_::z_)
 
     // Conserved Array
-    .def_readwrite("Qv", &Block::Qv)
+    .def_readwrite("Q_", &block_::Q_)
+    // Primative Array
+    .def_readwrite("q_", &block_::q_);
 
-    // Primtive Array
-    .def_readwrite("T", &Block::T)
-    .def_readwrite("P", &Block::p);
 
   static auto _atexit = []() {
     if (Kokkos::is_initialized()) Kokkos::finalize();

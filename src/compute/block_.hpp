@@ -1,25 +1,23 @@
-#ifndef __Block_H__
-#define __Block_H__
+#ifndef __block__H__
+#define __block__H__
 
 #include "kokkos_types.hpp"
 
 // The struct that is sent to the Peregrine compute units. Holds all the data arrays
 // for each block. Also converted into python class for modifying in the
 // python wrapper
-struct Block {
+struct block_ {
   int nblki;
   int ni,nj,nk;
   int ns=1;
 
   // Grid Arrays
-  threeDview x,y,z;
+  threeDview x_,y_,z_;
 
   // Conserved Variables
-  fourDview Qv;
-
-  // Primatives
-  threeDview T;
-  threeDview p;
+  fourDview Q_;
+  // Primative Variables
+  threeDview q_;
 };
 
 #endif

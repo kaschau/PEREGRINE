@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from ._compute import Block,gen3Dview
+from .compute_ import block_,gen3Dview
 
 ''' block.py
 
@@ -22,7 +22,7 @@ class FrozenDict(dict):
         self.__isfrozen = True
 
 
-class block(Block):
+class block(block_):
     '''block object is the most basic object a raptorpy.multiblock.dataset (or one of its descendants) can be.
 
     Attributes
@@ -42,9 +42,9 @@ class block(Block):
         super().__init__()
         self.nblki = nblki
 
-        self.x_ = None
-        self.y_ = None
-        self.z_ = None
+        self.x = None
+        self.y = None
+        self.z = None
 
         self.connectivity = FrozenDict({'1':FrozenDict({'bc':'s1', 'connection':'0', 'orientation':'000'}),
                                         '2':FrozenDict({'bc':'s1', 'connection':'0', 'orientation':'000'}),
