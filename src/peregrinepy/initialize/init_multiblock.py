@@ -9,6 +9,9 @@ def init_multiblock(config):
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
 
+    ################################################################
+    ##### First we determine what bocks we are responsible for #####
+    ################################################################
     if rank == 0:
         blocks4procs = read_blocks4procs(config)
         sendranks = [i+1 for i in range(len(blocks4procs[1::]))]
@@ -18,7 +21,6 @@ def init_multiblock(config):
     else:
         myblocks = comm.recv(source=0, tag=1111)
 
-    print(myblocks)
     compBlocks = multiblock(len(myblocks))
 
     for i,nblki in enumerate(myblocks):
