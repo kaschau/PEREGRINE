@@ -36,7 +36,9 @@ project(compute_ LANGUAGES C CXX)
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION OFF )
 
 #Add all da files
-file( GLOB compute_src ${PROJECT_SOURCE_DIR}/src/compute/*.cpp )
+file( GLOB compute_src ${PROJECT_SOURCE_DIR}/src/compute/*.cpp
+                       ${PROJECT_SOURCE_DIR}/src/compute/grid/*.cpp)
+
 include_directories(${PROJECT_SOURCE_DIR}/src/compute)
 
 
