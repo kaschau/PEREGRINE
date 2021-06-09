@@ -38,6 +38,14 @@ class multiblock(UserList):
                 return blk
         raise ValueError(f'No block with nblki == {nblki} found.')
 
+    def index_by_nblki(self,nblki):
+        for i,b in enumerate(self):
+            if b.nblki == nblki:
+                break
+        else:
+            raise ValueError('No block with that nblki')
+        return i
+
     @property
     def nblks(self):
         return len(self)
