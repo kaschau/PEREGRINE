@@ -38,12 +38,12 @@ class block(block_):
 
 
 
-        self.connectivity = FrozenDict({'1':FrozenDict({'bc':'s1', 'neighbor':'0', 'orientation':'000','comm_proc':'0'}),
-                                        '2':FrozenDict({'bc':'s1', 'neighbor':'0', 'orientation':'000','comm_proc':'0'}),
-                                        '3':FrozenDict({'bc':'s1', 'neighbor':'0', 'orientation':'000','comm_proc':'0'}),
-                                        '4':FrozenDict({'bc':'s1', 'neighbor':'0', 'orientation':'000','comm_proc':'0'}),
-                                        '5':FrozenDict({'bc':'s1', 'neighbor':'0', 'orientation':'000','comm_proc':'0'}),
-                                        '6':FrozenDict({'bc':'s1', 'neighbor':'0', 'orientation':'000','comm_proc':'0'})})
+        self.connectivity = FrozenDict({'1':FrozenDict({'bc':'s1', 'neighbor':None, 'orientation':'000','comm_rank':None}),
+                                        '2':FrozenDict({'bc':'s1', 'neighbor':None, 'orientation':'000','comm_rank':None}),
+                                        '3':FrozenDict({'bc':'s1', 'neighbor':None, 'orientation':'000','comm_rank':None}),
+                                        '4':FrozenDict({'bc':'s1', 'neighbor':None, 'orientation':'000','comm_rank':None}),
+                                        '5':FrozenDict({'bc':'s1', 'neighbor':None, 'orientation':'000','comm_rank':None}),
+                                        '6':FrozenDict({'bc':'s1', 'neighbor':None, 'orientation':'000','comm_rank':None})})
 
         for i in ['1','2','3','4','5','6']:
             self.connectivity[i]._freeze()

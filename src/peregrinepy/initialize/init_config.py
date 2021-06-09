@@ -12,5 +12,6 @@ def init_config(file_path):
         config = None
 
     config = comm.bcast(config,root=0)
+    comm.Barrier()
 
     return config

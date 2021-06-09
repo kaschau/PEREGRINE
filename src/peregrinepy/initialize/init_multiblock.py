@@ -14,6 +14,7 @@ def init_multiblock(config):
     else:
         blocks4procs = None
     blocks4procs = comm.bcast(blocks4procs,root=0)
+    comm.Barrier()
 
     myblocks = blocks4procs[rank]
     mb = multiblock(len(myblocks),config)
@@ -31,6 +32,12 @@ def init_multiblock(config):
     else:
         conn = None
     conn = comm.bcast(conn,root=0)
+    for blk in mb:
+        for face in ['1','2','3','4','5','6']:
+            for k1 in blk.connectivity[face]:
+                blk.connectivity[face][k1] = conn[rank][face][k1]
+
+    comm.Barrier()
 
     ################################################################
     ##### Now we figure out which processor each block's neighbor
@@ -39,9 +46,13 @@ def init_multiblock(config):
 
     for blk in mb:
         for face in ['1','2','3','4','5','6']:
-            neighbor = int(blk.connectivity[face]['neighbor'])
+            neighbor = blk.connectivity[face]['neighbor']
+            if neighbor == None:
+                blk.connectivity[face]['comm_rank'] = None
+                continue
             for otherrank,proc in enumerate(blocks4procs):
                 if neighbor in proc:
-                    blk.connectivity[face]['comm_proc'] = otherrank
+                    blk.connectivity[face]['comm_rank'] = otherrank
 
+    comm.Barrier()
     return mb
