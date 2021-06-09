@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 
-def write_config_file(config, file_path = './'):
+def write_config_file(config,file_path='./'):
 
     '''This function write a RAPTOR input file dtms.inp from a raptorpy.files.input_file object
 
@@ -19,11 +19,11 @@ def write_config_file(config, file_path = './'):
 
     '''
 
-    with open('{}/dtms.inp'.format(file_path), 'w') as f:
+    with open(f'{file_path}/peregrine.py', 'w') as f:
 
         for key in config.keys():
 
-            f.write(' &{}\n'.format(key))
+            f.write('{}\n'.format(key))
 
             for key2 in config[key]:
 
@@ -31,21 +31,7 @@ def write_config_file(config, file_path = './'):
 
                 value = config[key][key2]
 
-                if isinstance(value, str):
-                    try :
-                        int(value)
-                        f.write('{}'.format(value))
-                    except ValueError:
-                        f.write('\'{}\''.format(value))
-
-                elif isinstance(value, float):
-                    f.write('{:1.16e}'.format(value))
-
-                elif isinstance(value, int):
-                    f.write('{}'.format(value))
-
-                else:
-                    print('Error, unrecognized value in config file: {}'.format(value))
+                f.write('{}'.format(value))
 
                 f.write(',\n')
 
