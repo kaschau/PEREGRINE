@@ -1,12 +1,9 @@
 # -*- coding: utf-8 -*-
 
 #import kokkos
-from ..compute_ import gen3Dview,KokkosLocation
-if KokkosLocation in ['OpenMP','CudaUVM','Default']:
-    import numpy as np
-else:
-    raise ValueError(f'Unknown KokkosLocation {KokkosLocation}')
+from ..compute_ import gen3Dview
 import h5py
+import numpy as np
 
 
 def read_grid(mb,config):
@@ -44,10 +41,10 @@ def read_grid(mb,config):
             blk.x_ = gen3Dview("x", ni+2*ngls,
                                     nj+2*ngls,
                                     nk+2*ngls)
-            blk.x  = np.array(blk.x_, copy=False)
-            blk.x[ngls:-ngls,
-                  ngls:-ngls,
-                  ngls:-ngls] = np.array(f['coordinates']['x']).reshape((ni, nj, nk))
+            blk.array['x'] = mb.np.array(blk.x_, copy=False)
+            blk.array['x'][ngls:-ngls,
+                           ngls:-ngls,
+                           ngls:-ngls] = np.array(f['coordinates']['x']).reshape((ni, nj, nk))
 
             #blk.y = kokkos.array("y",
             #                     [ni,nj,nk],
@@ -56,10 +53,10 @@ def read_grid(mb,config):
             blk.y_ = gen3Dview("y",ni+2*ngls,
                                    nj+2*ngls,
                                    nk+2*ngls)
-            blk.y  = np.array(blk.y_, copy=False)
-            blk.y[ngls:-ngls,
-                  ngls:-ngls,
-                  ngls:-ngls] = np.array(f['coordinates']['y']).reshape((ni, nj, nk))
+            blk.array['y'] = mb.np.array(blk.y_, copy=False)
+            blk.array['y'][ngls:-ngls,
+                           ngls:-ngls,
+                           ngls:-ngls] = np.array(f['coordinates']['y']).reshape((ni, nj, nk))
 
             #blk.z = kokkos.array("z",
             #                     [ni,nj,nk],
@@ -68,7 +65,7 @@ def read_grid(mb,config):
             blk.z_ = gen3Dview("z",ni+2*ngls,
                                    nj+2*ngls,
                                    nk+2*ngls)
-            blk.z  = np.array(blk.z_, copy=False)
-            blk.z[ngls:-ngls,
-                  ngls:-ngls,
-                  ngls:-ngls] = np.array(f['coordinates']['z']).reshape((ni, nj, nk))
+            blk.array['z'] = mb.np.array(blk.z_, copy=False)
+            blk.array['z'][ngls:-ngls,
+                           ngls:-ngls,
+                           ngls:-ngls] = np.array(f['coordinates']['z']).reshape((ni, nj, nk))

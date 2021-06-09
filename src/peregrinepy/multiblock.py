@@ -18,16 +18,25 @@ from .block import block
 class multiblock(UserList):
     '''A list of peregrinepy.block objects
     '''
-    def __init__(self, nblks):
+    __slots__ = ['np']
+
+    def __init__(self, nblks, config):
         temp = [block(i) for i in range(nblks)]
         super().__init__(temp)
 
+        # Here we set the python side wrappers
+        if config['Kokkos']['Space'] in ['OpenMP','CudaUVM','Default']:
+            import numpy as np
+        else:
+            raise ImportError(f"Unknown Kokkos Space, {config['Kokkos']['Space']}")
+        self.np = np
+
     def block_by_nblki(self,nblki):
         for blk in self:
-            if blk.nblki == int(nblki):
+            if blk.nblki == nblki:
                 return blk
 
-        raise ValueError('No block with nblki == {} found.'.format(nblki))
+        raise ValueError(f'No block with nblki == {nblki} found.')
 
     @property
     def nblks(self):

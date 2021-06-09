@@ -28,6 +28,7 @@ class config_file(FrozenDict):
         self['io'] = FrozenDict({'griddir'   : './Grid',
                                  'inputdir'  : './Input',
                                  'outputdir' : './Output'})
+        self['Kokkos'] = FrozenDict({'Space' : 'Default'})
 
         for key in self.keys():
             self[key]._freeze()
