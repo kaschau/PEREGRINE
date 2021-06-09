@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import h5py
+import numpy as np
 from lxml import etree
 from copy import deepcopy
 from ..misc import ProgressBar
@@ -62,12 +63,14 @@ def write_grid(mb, path='./', precision='double'):
             f['coordinates'].create_dataset('y', shape=(extent,), dtype=fdtype)
             f['coordinates'].create_dataset('z', shape=(extent,), dtype=fdtype)
 
+            ngls = blk.ngls
+            slices = np.s_[ngls:-ngls,ngls:-ngls,ngls:-ngls]
             dset = f['coordinates']['x']
-            dset[:] = blk.array['x'].ravel()
+            dset[:] = blk.array['x'][slices].ravel()
             dset = f['coordinates']['y']
-            dset[:] = blk.array['y'].ravel()
+            dset[:] = blk.array['y'][slices].ravel()
             dset = f['coordinates']['z']
-            dset[:] = blk.array['z'].ravel()
+            dset[:] = blk.array['z'][slices].ravel()
 
         block_elem = etree.Element('Grid')
         block_elem.set('Name','B{:06d}'.format(blk.nblki))
