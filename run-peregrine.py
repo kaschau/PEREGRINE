@@ -31,9 +31,8 @@ def simulate(config_file_path):
     #    pgpy.compute.add3D(b,1.0)
     #    pgpy.compute.add3D(b,1.0)
     #print(time.time()-ts, 'took this many seconds')
-    #if rank == 1:
-    print(mb[0].array['x'])
-    print(mb[0].connectivity)
+    if rank == 1:
+        print(mb[0].array['x'])
     #return CompBlocks
 
     # Finalise MPI
