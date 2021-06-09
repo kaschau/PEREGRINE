@@ -124,20 +124,30 @@ def cube(blk, origin, lengths, dimensions):
     y = np.linspace(origin[1], origin[1]+lengths[1], dimensions[1], dtype=np.float64)
     z = np.linspace(origin[2], origin[2]+lengths[2], dimensions[2], dtype=np.float64)
 
-    blk.array['x'], blk.array['y'], blk.array['z'] =  np.meshgrid(x,y,z, indexing='ij')
+    ngls = blk.ngls
+    shape = (blk.ni+2*ngls,
+             blk.nj+2*ngls,
+             blk.nk+2*ngls)
+
+    blk.array['x'] = np.zeros(shape)
+    blk.array['y'] = np.zeros(shape)
+    blk.array['z'] = np.zeros(shape)
+
+    slices = np.s_[ngls:-ngls,ngls:-ngls,ngls:-ngls]
+    blk.array['x'][slices], blk.array['y'][slices], blk.array['z'][slices] = np.meshgrid(x,y,z, indexing='ij')
 
 
-def multiblock_cube(mb_data, origin=[0,0,0], lengths=[1,1,1], mb_dimensions=[1,1,1], dimensions_perblock=[10,10,10]):
+def multiblock_cube(mb, origin=[0,0,0], lengths=[1,1,1], mb_dimensions=[1,1,1], dimensions_perblock=[10,10,10]):
 
     '''Function to populate the coordinate arrays of a raptorpy.multiblock.grid (or one of its descendants) in the shape of a cube
-       with prescribed location, extents, and discretization split into as manj  blocks as mb_data.nblks. Will also update
+       with prescribed location, extents, and discretization split into as manj  blocks as mb.nblks. Will also update
        connectivity of interblock faces. If the input multiblock object is a restart block the shape and size of the flow
        data arrays are also updated.
 
     Parameters
     ----------
 
-    mb_data : raptorpy.multiblock.grid (or one of its descendants)
+    mb : raptorpy.multiblock.grid (or one of its descendants)
 
     origin : list, tuple
        List/tuple of length 3 containing the location of the origin of the ENTIRE cube to be created
@@ -146,7 +156,7 @@ def multiblock_cube(mb_data, origin=[0,0,0], lengths=[1,1,1], mb_dimensions=[1,1
        List/tuple of length 3 containing the extents in x, y, and z of the ENTIRE cube relative to the origin
 
     mb_dimensions : list, tuple
-       List/tuple of length 3 containing number of blocks in x, y, and z. NOTE: product of mb_dimensions must equal mb_data.nblks!
+       List/tuple of length 3 containing number of blocks in x, y, and z. NOTE: product of mb_dimensions must equal mb.nblks!
 
     dimensions_perblock : list, tuple
        List/tuple of length 3 containing discretization (nx,nj,nk) in each dimension of each block to be created.
@@ -154,11 +164,11 @@ def multiblock_cube(mb_data, origin=[0,0,0], lengths=[1,1,1], mb_dimensions=[1,1
     Returns
     -------
     None
-        Updates elements in mb_data
+        Updates elements in mb
 
     '''
 
-    if np.product(mb_dimensions) != mb_data.nblks:
+    if np.product(mb_dimensions) != mb.nblks:
         raise ValueError('Warning, multiblock dimensions does not equal number of blocks!')
 
     blk_origins_x = np.linspace(origin[0], origin[0]+lengths[0], mb_dimensions[0]+1)
@@ -170,7 +180,7 @@ def multiblock_cube(mb_data, origin=[0,0,0], lengths=[1,1,1], mb_dimensions=[1,1
             for i in range(int(mb_dimensions[0])):
                 blk_number = k*mb_dimensions[1]*mb_dimensions[0] + j*mb_dimensions[0] + i
 
-                blk = mb_data[blk_number]
+                blk = mb[blk_number]
                 blk.nblki = blk_number
                 blk.ni = dimensions_perblock[0]
                 blk.nj = dimensions_perblock[1]
@@ -245,9 +255,12 @@ def annulus(blk, p1, p2, p3, sweep, thickness, dimensions):
     n12 = (p2-p1)/np.linalg.norm(p2-p1)
     n13 = (p3-p1)/np.linalg.norm(p3-p1)
 
-    blk.array['x'] = np.empty((dimensions[2],dimensions[1],dimensions[0]), dtype=np.float64)
-    blk.array['y'] = np.empty((dimensions[2],dimensions[1],dimensions[0]), dtype=np.float64)
-    blk.array['z'] = np.empty((dimensions[2],dimensions[1],dimensions[0]), dtype=np.float64)
+    shape = (blk.ni+2*blk.ngls,
+             blk.nj+2*blk.ngls,
+             blk.nk+2*blk.ngls)
+    blk.array['x'] =  np.zeros(shape)
+    blk.array['y'] =  np.zeros(shape)
+    blk.array['z'] =  np.zeros(shape)
 
     dx = np.linalg.norm(p2-p1)/(blk.ni-1)
     dr = thickness/(blk.nj-1)
@@ -297,17 +310,17 @@ def annulus(blk, p1, p2, p3, sweep, thickness, dimensions):
         blk.array['z'][:,:,k] = np.reshape(q[:,2], shape)
 
 
-def multiblock_annulus(mb_data, p1, p2, p3, sweep, thickness, mb_dimensions, dimensions_perblock, periodic=False):
+def multiblock_annulus(mb, p1, p2, p3, sweep, thickness, mb_dimensions, dimensions_perblock, periodic=False):
 
     '''Function to populate the coordinate arrays of a raptorpy.multiblock.grid (or one of its descendants) in the shape
-       of an annulus with prescribed location, extents, and discretization split into as manj blocks as mb_data.nblks.
+       of an annulus with prescribed location, extents, and discretization split into as manj blocks as mb.nblks.
        Will also update connectivity of interblock faces. If the input multiblock object is a restart block the shape
        and size of the flow data arrays are also updated.
 
     Parameters
     ----------
 
-    mb_data : raptorpy.multiblock.grid (or one of its descendants)
+    mb : raptorpy.multiblock.grid (or one of its descendants)
 
     p1 : list, tuple
        List/tuple of length 3 containing the location of the origin of the annulus to be created, i.e.
@@ -335,7 +348,7 @@ def multiblock_annulus(mb_data, p1, p2, p3, sweep, thickness, mb_dimensions, dim
 
     mb_dimensions : list, tuple
        List/tuple of length 3 containing number of blocks in axial direction, radial direction, and theta direction.
-       NOTE: product of mb_dimensions must equal mb_data.nblks!
+       NOTE: product of mb_dimensions must equal mb.nblks!
 
     dimensions : list, tuple
        List/tuple of length 3 containing discretization (ni,nj,nk) in each dimension of every block (all will be uniform). Where the "x,i,xi"
@@ -345,14 +358,14 @@ def multiblock_annulus(mb_data, p1, p2, p3, sweep, thickness, mb_dimensions, dim
     Returns
     -------
     None
-        Updates elements in mb_data
+        Updates elements in mb
 
     '''
     p1 = np.array(p1)
     p2 = np.array(p2)
     p3 = np.array(p3)
 
-    if np.product(mb_dimensions) != mb_data.nblks:
+    if np.product(mb_dimensions) != mb.nblks:
         raise ValueError('Error: multiblock dimensions does not equal number of blocks!')
 
     if np.dot(p2-p1, p3-p1) != 0.0:
@@ -403,7 +416,7 @@ def multiblock_annulus(mb_data, p1, p2, p3, sweep, thickness, mb_dimensions, dim
             for i in range(int(mb_dimensions[0])):
 
                 blk_number = k*mb_dimensions[1]*mb_dimensions[0] + j*mb_dimensions[0] + i
-                blk = mb_data[blk_number]
+                blk = mb[blk_number]
                 blk.nblki = blk_number
                 blk.ni = dimensions_perblock[0]
                 blk.nj = dimensions_perblock[1]

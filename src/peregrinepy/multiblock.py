@@ -23,7 +23,8 @@ class multiblock(UserList):
     def __init__(self, nblks, config):
         temp = [block(i) for i in range(nblks)]
         super().__init__(temp)
-
+        for b in self:
+            b.ngls = config['RunTime']['ngls']
         # Here we set the python side wrappers
         if config['Kokkos']['Space'] in ['OpenMP','CudaUVM','Default']:
             import numpy as np
