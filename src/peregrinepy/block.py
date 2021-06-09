@@ -29,23 +29,14 @@ class block(block_):
 
     '''
     def __init__(self, nblki):
+        __slots__ = list(block_.__dict__.keys()) + ['connectivity',
+                                                   'np',
+                                                   'array']
+
         super().__init__()
         self.nblki = nblki
 
-        # Python side data
-        self.pdata = FrozenDict()
-        # Kokkos side data
-        self.kdata = FrozenDict()
 
-        # Coordinate arrays
-        for d in ['x','y','z']:
-            self.pdata[f'{d}'] = None
-            self.kdata[f'{d}'] = None
-
-        #self.x = None
-        #self.y = None
-        #self.z = None
-        #Grid Metrics
 
         self.connectivity = FrozenDict({'1':FrozenDict({'bc':'s1', 'neighbor':'0', 'orientation':'000','comm_proc':'0'}),
                                         '2':FrozenDict({'bc':'s1', 'neighbor':'0', 'orientation':'000','comm_proc':'0'}),
@@ -58,6 +49,14 @@ class block(block_):
             self.connectivity[i]._freeze()
         self.connectivity._freeze()
 
-    ##def __setattr__(self,attr):
-    #    if
-    #    raise AttributeError('Trying to add to the block object.')
+        ################################################################################################################
+        ############## Data arrays
+        ################################################################################################################
+        # Python side data
+        self.array = FrozenDict()
+
+        # Coordinate arrays
+        for d in ['x','y','z']:
+            self.array[f'{d}'] = None
+
+        self.array._freeze()

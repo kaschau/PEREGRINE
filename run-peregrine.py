@@ -32,7 +32,7 @@ def simulate(config_file_path):
     #    pgpy.compute.add3D(b,1.0)
     #    pgpy.compute.add3D(b,1.0)
     #print(time.time()-ts, 'took this many seconds')
-    print(compBlocks[0].x)
+    print(compBlocks[0].array['x'])
     #return CompBlocks
 
     # Finalise MPI

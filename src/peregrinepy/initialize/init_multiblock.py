@@ -16,8 +16,9 @@ def init_multiblock(config):
     blocks4procs = comm.bcast(blocks4procs,root=0)
 
     myblocks = blocks4procs[rank]
-    mb = multiblock(len(myblocks))
+    mb = multiblock(len(myblocks),config)
 
+    #We have to overwrite the default value of nblki in parallel
     for i,nblki in enumerate(myblocks):
         mb[i].nblki = nblki
 
@@ -32,7 +33,8 @@ def init_multiblock(config):
     conn = comm.bcast(conn,root=0)
 
     ################################################################
-    ##### Now we figure out which processor each blocks neighbor is on
+    ##### Now we figure out which processor each block's neighbor
+    ##### is on
     ################################################################
 
     for blk in mb:
