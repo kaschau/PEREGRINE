@@ -1,8 +1,12 @@
 from ..block import block
 from ..readers import read_grid
+from ..mpicomm import mpiutils
 
-def init_grid(compBlocks,config):
+def init_grid(mb,config):
 
-    read_grid(compBlocks,config)
+    comm,rank,size = mpiutils.get_comm_rank_size()
+    read_grid(mb,config)
 
-    return compBlocks
+    comm.Barrier()
+
+    #return mb (dont need?)

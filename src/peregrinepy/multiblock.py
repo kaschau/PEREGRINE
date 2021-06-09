@@ -35,7 +35,6 @@ class multiblock(UserList):
         for blk in self:
             if blk.nblki == nblki:
                 return blk
-
         raise ValueError(f'No block with nblki == {nblki} found.')
 
     @property

@@ -20,11 +20,10 @@ def simulate(config_file_path):
     pgpy.mpicomm.mpiutils.register_finalize_handler()
 
     config = pgpy.initialize.init_config(config_file_path)
-    comm.Barrier()
-    compBlocks = pgpy.initialize.init_multiblock(config)
-    comm.Barrier()
-    pgpy.initialize.init_grid(compBlocks,config)
-    comm.Barrier()
+    #set here for now
+    config['RunTime']['ngls'] = 2
+    mb = pgpy.initialize.init_multiblock(config)
+    pgpy.initialize.init_grid(mb,config)
 
     #ts = time.time()
     #for b in myCompBlocks:
@@ -32,7 +31,9 @@ def simulate(config_file_path):
     #    pgpy.compute.add3D(b,1.0)
     #    pgpy.compute.add3D(b,1.0)
     #print(time.time()-ts, 'took this many seconds')
-    print(compBlocks[0].array['x'])
+    #if rank == 1:
+    print(mb[0].array['x'])
+    print(mb[0].connectivity)
     #return CompBlocks
 
     # Finalise MPI

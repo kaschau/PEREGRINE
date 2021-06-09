@@ -18,9 +18,7 @@ def read_grid(mb,config):
     None
 
     '''
-
-    #At this point we can set the number of ghost layers
-    ngls = 2
+    ngls = config['RunTime']['ngls']
 
     for blk in mb:
         file_name = f"{config['io']['griddir']}/gv.{blk.nblki:06d}.h5"
