@@ -1,6 +1,7 @@
 #!/usr/bin/env python
+import mpi4py.rc
+mpi4py.rc.initialize = False
 
-from mpi4py import MPI
 import kokkos
 
 import peregrinepy as pgpy
@@ -8,15 +9,22 @@ import time
 
 import sys
 def simulate(config_file_path):
+    # Import but do not initialise MPI
+    from mpi4py import MPI
 
-    # Initialize the parallel information for each rank
-    comm = MPI.COMM_WORLD
-    rank = comm.Get_rank()
-    size = comm.Get_size()
+    # Manually initialise MPI
+    MPI.Init()
+
+    comm,rank,size = pgpy.mpicomm.mpiutils.get_comm_rank_size()
+    # Ensure MPI is suitably cleaned up
+    pgpy.mpicomm.mpiutils.register_finalize_handler()
 
     config = pgpy.initialize.init_config(config_file_path)
+    comm.Barrier()
     compBlocks = pgpy.initialize.init_multiblock(config)
+    comm.Barrier()
     pgpy.initialize.init_grid(compBlocks,config)
+    comm.Barrier()
 
     #ts = time.time()
     #for b in myCompBlocks:
@@ -27,6 +35,8 @@ def simulate(config_file_path):
     print(compBlocks[0].x)
     #return CompBlocks
 
+    # Finalise MPI
+    MPI.Finalize()
 
 if __name__ == "__main__":
     config_file_path = sys.argv[1]

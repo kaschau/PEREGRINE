@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from .compute_ import block_
+from .misc import FrozenDict
 
 ''' block.py
 
@@ -10,17 +11,6 @@ Kyle Schau
 This module defines the top block class. This object is the most basic object that a multiblock datasets (see multiblock.py) can be composed of.
 
 '''
-class FrozenDict(dict):
-    __isfrozen = False
-
-    def __setitem__(self, key, value):
-        if self.__isfrozen and not key in self.keys():
-            raise KeyError('{} is not a valid input for connectivity information, check spelling and case'.format(key))
-        super(FrozenDict, self).__setitem__(key, value)
-
-    def _freeze(self):
-        self.__isfrozen = True
-
 
 class block(block_):
     '''block object is the most basic object a raptorpy.multiblock.dataset (or one of its descendants) can be.
@@ -42,19 +32,32 @@ class block(block_):
         super().__init__()
         self.nblki = nblki
 
-        #Grid Arrays
-        self.x = None
-        self.y = None
-        self.z = None
+        # Python side data
+        self.pdata = FrozenDict()
+        # Kokkos side data
+        self.kdata = FrozenDict()
+
+        # Coordinate arrays
+        for d in ['x','y','z']:
+            self.pdata[f'{d}'] = None
+            self.kdata[f'{d}'] = None
+
+        #self.x = None
+        #self.y = None
+        #self.z = None
         #Grid Metrics
 
-        self.connectivity = FrozenDict({'1':FrozenDict({'bc':'s1', 'connection':'0', 'orientation':'000'}),
-                                        '2':FrozenDict({'bc':'s1', 'connection':'0', 'orientation':'000'}),
-                                        '3':FrozenDict({'bc':'s1', 'connection':'0', 'orientation':'000'}),
-                                        '4':FrozenDict({'bc':'s1', 'connection':'0', 'orientation':'000'}),
-                                        '5':FrozenDict({'bc':'s1', 'connection':'0', 'orientation':'000'}),
-                                        '6':FrozenDict({'bc':'s1', 'connection':'0', 'orientation':'000'})})
+        self.connectivity = FrozenDict({'1':FrozenDict({'bc':'s1', 'neighbor':'0', 'orientation':'000','comm_proc':'0'}),
+                                        '2':FrozenDict({'bc':'s1', 'neighbor':'0', 'orientation':'000','comm_proc':'0'}),
+                                        '3':FrozenDict({'bc':'s1', 'neighbor':'0', 'orientation':'000','comm_proc':'0'}),
+                                        '4':FrozenDict({'bc':'s1', 'neighbor':'0', 'orientation':'000','comm_proc':'0'}),
+                                        '5':FrozenDict({'bc':'s1', 'neighbor':'0', 'orientation':'000','comm_proc':'0'}),
+                                        '6':FrozenDict({'bc':'s1', 'neighbor':'0', 'orientation':'000','comm_proc':'0'})})
 
         for i in ['1','2','3','4','5','6']:
-                self.connectivity[i]._freeze()
+            self.connectivity[i]._freeze()
         self.connectivity._freeze()
+
+    ##def __setattr__(self,attr):
+    #    if
+    #    raise AttributeError('Trying to add to the block object.')

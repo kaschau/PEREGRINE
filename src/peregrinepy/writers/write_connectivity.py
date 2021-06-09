@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
+import json
 
-
-def write_connectivity(mb, path='./'):
+def write_connectivity(mb, config):
     '''This function produces RAPTOR grid connectivity file (conn.inp) files from a raptorpy.multiblock.grid (or a descendant)
 
     Parameters
@@ -19,18 +19,10 @@ def write_connectivity(mb, path='./'):
 
     '''
 
-    with open('{}/conn.inp'.format(path), 'w') as conn_file:
+    conn = []
+    for blk in mb:
+        conn.append(blk.connectivity)
 
-        conn_file.write('{:>10d}\n'.format(len(mb)))
+    with open(f"{config['io']['inputdir']}/conn.json", 'w') as conn_file:
 
-        for blk in mb:
-            conn_file.write('B {:>8d} '.format(blk.nblki))
-            for j in range(6):
-                bc = blk.connectivity[str(j+1)]['bc'].replace(' ','')
-
-                connection = int(blk.connectivity[str(j+1)]['connection'])
-                orientation = blk.connectivity[str(j+1)]['orientation']
-                face_string = '{} {} {:>8d} {} '.format(bc[0], bc[1], connection, orientation)
-
-                conn_file.write(face_string)
-            conn_file.write('\n')
+        conn_file.write(json.dumps(conn, indent=4))

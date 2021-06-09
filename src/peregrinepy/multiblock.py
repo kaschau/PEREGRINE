@@ -32,4 +32,6 @@ class multiblock(UserList):
     @property
     def nblks(self):
         return len(self)
-
+    @property
+    def block_list(self):
+        return [b.nblki for b in self]
