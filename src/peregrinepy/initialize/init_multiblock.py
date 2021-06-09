@@ -1,30 +1,45 @@
 
-from mpi4py import MPI
-
 from ..multiblock import multiblock
-from ..readers import read_blocks4procs
+from ..readers import read_blocks4procs,read_connectivity
+from ..mpicomm import mpiutils
 
 def init_multiblock(config):
 
-    comm = MPI.COMM_WORLD
-    rank = comm.Get_rank()
-
+    comm,rank,size = mpiutils.get_comm_rank_size()
     ################################################################
     ##### First we determine what bocks we are responsible for #####
     ################################################################
     if rank == 0:
         blocks4procs = read_blocks4procs(config)
-        sendranks = [i+1 for i in range(len(blocks4procs[1::]))]
-        for send,line in zip(sendranks,blocks4procs[1::]):
-            comm.send(line, dest=send, tag=1111)
-        myblocks = blocks4procs[0]
     else:
-        myblocks = comm.recv(source=0, tag=1111)
+        blocks4procs = None
+    blocks4procs = comm.bcast(blocks4procs,root=0)
 
-    compBlocks = multiblock(len(myblocks))
+    myblocks = blocks4procs[rank]
+    mb = multiblock(len(myblocks))
 
     for i,nblki in enumerate(myblocks):
-        compBlocks[i].nblki = nblki
+        mb[i].nblki = nblki
 
 
-    return compBlocks
+    ################################################################
+    ##### Read in the connectivity
+    ################################################################
+    if rank == 0:
+        conn = read_connectivity(config)
+    else:
+        conn = None
+    conn = comm.bcast(conn,root=0)
+
+    ################################################################
+    ##### Now we figure out which processor each blocks neighbor is on
+    ################################################################
+
+    for blk in mb:
+        for face in ['1','2','3','4','5','6']:
+            neighbor = int(blk.connectivity[face]['neighbor'])
+            for otherrank,proc in enumerate(blocks4procs):
+                if neighbor in proc:
+                    blk.connectivity[face]['comm_proc'] = otherrank
+
+    return mb

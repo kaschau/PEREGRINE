@@ -11,3 +11,4 @@ from . import files
 from . import initialize
 from . import readers
 from . import writers
+from . import mpicomm
