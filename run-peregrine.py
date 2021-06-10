@@ -25,6 +25,11 @@ def simulate(config_file_path):
     mb = pgpy.initialize.init_multiblock(config)
     pgpy.initialize.init_grid(mb,config)
 
+    print('blk1')
+    print(mb[0].array['x'])
+    print('blk2')
+    print(mb[1].array['x'])
+
     ts = time.time()
     for b in mb:
         pgpy.compute.add3D(b,1.0)
