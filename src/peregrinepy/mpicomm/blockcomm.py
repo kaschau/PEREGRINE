@@ -133,27 +133,35 @@ def set_block_communication(mb,config):
     ### face send and recieves.
     ##########################################################
     for blk in mb:
-        blk.slice_s3['1'] = s_[ blk.ngls  +1:2*blk.ngls+1,:,:]
-        blk.slice_s3['2'] = s_[-blk.ngls*2-1::           ,:,:]
+        slice_s3 = {}
+        slice_s3['1'] = s_[ blk.ngls  +1:2*blk.ngls+1,:,:]
+        slice_s3['2'] = s_[-blk.ngls*2-1:-blk.ngls-1,:,:]
 
-        blk.slice_s3['3'] = s_[:,blk.ngls+1:2*blk.ngls+1,:]
-        blk.slice_s3['4'] = s_[:,-blk.ngls*2-1::,:]
+        slice_s3['3'] = s_[:,blk.ngls+1:2*blk.ngls+1,:]
+        slice_s3['4'] = s_[:,-blk.ngls*2-1:-blk.ngls-1,:]
 
-        blk.slice_s3['5'] = s_[:,:,blk.ngls+1:2*blk.ngls+1]
-        blk.slice_s3['6'] = s_[:,:,-blk.ngls*2-1::]
+        slice_s3['5'] = s_[:,:,blk.ngls+1:2*blk.ngls+1]
+        slice_s3['6'] = s_[:,:,-blk.ngls*2-1:-blk.ngls-1]
 
-        blk.slice_r3['1'] = s_[0:blk.ngls,:,:]
-        blk.slice_r3['2'] = s_[-blk.ngls::,:,:]
+        slice_r3 = {}
+        slice_r3['1'] = s_[0:blk.ngls,:,:]
+        slice_r3['2'] = s_[-blk.ngls::,:,:]
 
-        blk.slice_r3['3'] = s_[:,0:blk.ngls,:]
-        blk.slice_r3['4'] = s_[:,-blk.ngls::,:]
+        slice_r3['3'] = s_[:,0:blk.ngls,:]
+        slice_r3['4'] = s_[:,-blk.ngls::,:]
 
-        blk.slice_r3['5'] = s_[:,:,0:blk.ngls]
-        blk.slice_r3['6'] = s_[:,:,-blk.ngls::]
+        slice_r3['5'] = s_[:,:,0:blk.ngls]
+        slice_r3['6'] = s_[:,:,-blk.ngls::]
 
         for face in ['1','2','3','4','5','6']:
             neighbor = blk.connectivity[face]['neighbor']
-            if neighbor is not None:
+            if neighbor is None:
+                blk.slice_s3[face] = None
+                blk.slice_r3[face] = None
+            else:
+                blk.slice_s3[face] = slice_s3[face]
+                blk.slice_r3[face] = slice_r3[face]
+
                 orientation = blk.connectivity[face]['orientation']
                 #Positive i aligned blocks
                 if   orientation == '123':

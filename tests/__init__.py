@@ -1,1 +1,1 @@
-from . import MPI
+from . import communication
