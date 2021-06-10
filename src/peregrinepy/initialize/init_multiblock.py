@@ -35,7 +35,7 @@ def init_multiblock(config):
     for blk in mb:
         for face in ['1','2','3','4','5','6']:
             for k1 in blk.connectivity[face]:
-                blk.connectivity[face][k1] = conn[rank][face][k1]
+                blk.connectivity[face][k1] = conn[blk.nblki][face][k1]
 
     comm.Barrier()
 
