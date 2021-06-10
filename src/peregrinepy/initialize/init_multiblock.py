@@ -1,7 +1,7 @@
 
 from ..multiblock import multiblock
 from ..readers import read_blocks4procs,read_connectivity
-from ..mpicomm import mpiutils
+from ..mpicomm import mpiutils,blockcomm
 
 def init_multiblock(config):
 
@@ -15,6 +15,11 @@ def init_multiblock(config):
         blocks4procs = None
     blocks4procs = comm.bcast(blocks4procs,root=0)
     comm.Barrier()
+
+    if len(blocks4procs) != size:
+        if rank == 0:
+            print('ERROR!! Number of requested processors does not equal number of processors!')
+        comm.Abort()
 
     myblocks = blocks4procs[rank]
     mb = multiblock(len(myblocks),config)
@@ -34,7 +39,7 @@ def init_multiblock(config):
     conn = comm.bcast(conn,root=0)
     for blk in mb:
         for face in ['1','2','3','4','5','6']:
-            for k1 in blk.connectivity[face]:
+            for k1 in conn[blk.nblki][face].keys():
                 blk.connectivity[face][k1] = conn[blk.nblki][face][k1]
 
     comm.Barrier()
@@ -55,4 +60,10 @@ def init_multiblock(config):
                     blk.connectivity[face]['comm_rank'] = otherrank
 
     comm.Barrier()
+
+    ################################################################
+    ##### Now set the MPI communication info for each block
+    ################################################################
+    blockcomm.set_block_communication(mb,config)
+
     return mb

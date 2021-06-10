@@ -25,17 +25,29 @@ def simulate(config_file_path):
     mb = pgpy.initialize.init_multiblock(config)
     pgpy.initialize.init_grid(mb,config)
 
-    print('blk1')
-    print(mb[0].array['x'])
-    print('blk2')
-    print(mb[1].array['x'])
+    if rank == 0:
+        print('blk0')
+        print('x')
+        print(mb[0].array['x'][-2::,:,:])
+        print('y')
+        print(mb[0].array['y'][-2::,:,:])
+        print('z')
+        print(mb[0].array['z'][-2::,:,:])
+    #else:
+        print('blk1')
+        print('x')
+        print(mb[1].array['x'][0:2])
+        print('y')
+        print(mb[1].array['y'][0:2])
+        print('z')
+        print(mb[1].array['z'][0:2])
 
-    ts = time.time()
-    for b in mb:
-        pgpy.compute.add3D(b,1.0)
-        pgpy.compute.add3D(b,1.0)
-        pgpy.compute.add3D(b,1.0)
-    print(time.time()-ts, 'took this many seconds')
+    #ts = time.time()
+    #for b in mb:
+    #    pgpy.compute.add3D(b,1.0)
+    #    pgpy.compute.add3D(b,1.0)
+    #    pgpy.compute.add3D(b,1.0)
+    #print(time.time()-ts, 'took this many seconds')
     #return CompBlocks
 
     # Finalise MPI
