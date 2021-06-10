@@ -9,6 +9,7 @@ from .multiblock import multiblock
 from .block import block
 from . import files
 from . import grid
+from . import ghost
 from . import initialize
 from . import readers
 from . import writers
