@@ -7,10 +7,6 @@ def init_grid(mb,config):
 
     comm,rank,size = mpiutils.get_comm_rank_size()
 
-    #Here we set the number of ghost layers
-    for blk in mb:
-        blk.ngls = config['RunTime']['ngls']
-
     read_grid(mb,config)
     comm.Barrier()
 
