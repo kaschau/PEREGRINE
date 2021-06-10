@@ -15,26 +15,27 @@ def communicate(mb,varis):
         for _ in range(3):
             #Post sends
             for blk in mb:
+                sendbuffer = {}
                 for face in ['1','2','3','4','5','6']:
                     neighbor = blk.connectivity[face]['neighbor']
                     if neighbor is None:
                         continue
-                    comm_rank   = blk.connectivity[face]['comm_rank']
+                    comm_rank = blk.connectivity[face]['comm_rank']
                     orientation = blk.connectivity[face]['orientation']
                     tag = int(f'1{blk.nblki}020{neighbor}1')
-                    sendbuffer = blk.array[var][blk.slice_s3[face]]
-                    blk.orientB4send[face](sendbuffer)
-                    comm.Isend([sendbuffer, MPIDOUBLE], dest=comm_rank, tag=tag)
+                    sendbuffer[face] = mb.np.copy(blk.array[var][blk.slice_s3[face]])
+                    blk.orientB4send[face](sendbuffer[face])
+                    comm.Isend([sendbuffer[face], MPIDOUBLE], dest=comm_rank, tag=tag)
 
             comm.Barrier()
 
             #Post recieves
             for blk in mb:
                 for face in ['1','2','3','4','5','6']:
-                    neighbor    = blk.connectivity[face]['neighbor']
+                    neighbor = blk.connectivity[face]['neighbor']
                     if neighbor is None:
                         continue
-                    comm_rank   = blk.connectivity[face]['comm_rank']
+                    comm_rank = blk.connectivity[face]['comm_rank']
                     orientation = blk.connectivity[face]['orientation']
                     comm_rank   = blk.connectivity[face]['comm_rank']
                     tag = int(f'1{neighbor}020{blk.nblki}1')
@@ -50,7 +51,7 @@ def set_block_communication(mb,config):
     ##########################################################
     ### This chunk defines the reorientation functions that
     ### each block will execute on its halo buffer BEFORE
-    ### it sends it, so that when it arrives at it's
+    ### it sends so that when it arrives at it's
     ### neighbor, it is able to be put in place.
     ##########################################################
 
@@ -58,75 +59,75 @@ def set_block_communication(mb,config):
     def reorient123(temp):
         pass
     def reorient135(temp):
-        mb.np.rot90(temp,-1,(1,2))
+        temp[:] = mb.np.rot90(temp,-1,(1,2))
     def reorient156(temp):
-        mb.np.rot90(temp,-2,(1,2))
+        temp[:] = mb.np.rot90(temp,-2,(1,2))
     def reorient162(temp):
-        mb.np.rot90(temp, 1,(1,2))
+        temp[:] = mb.np.rot90(temp, 1,(1,2))
 
     #Positive j aligned blocks
     def reorient231(temp):
-        mb.np.rot90(temp,-1,(0,1))
-        mb.np.rot90(temp,-1,(1,2))
+        temp[:] = mb.np.rot90(temp,-1,(0,1))
+        temp[:] = mb.np.rot90(temp,-1,(1,2))
     def reorient216(temp):
-        mb.np.rot90(temp,-1,(0,1))
-        mb.np.rot90(temp,-2,(1,2))
+        temp[:] = mb.np.rot90(temp,-1,(0,1))
+        temp[:] = mb.np.rot90(temp,-2,(1,2))
     def reorient264(temp):
-        mb.np.rot90(temp,-1,(0,1))
-        mb.np.rot90(temp, 1,(1,2))
+        temp[:] = mb.np.rot90(temp,-1,(0,1))
+        temp[:] = mb.np.rot90(temp, 1,(1,2))
     def reorient243(temp):
-        mb.np.rot90(temp,-1,(0,1))
+        temp[:] = mb.np.rot90(temp,-1,(0,1))
 
     #Positive k aligned blocks
     def reorient312(temp):
-        mb.np.rot90(temp, 1,(0,2))
-        mb.np.rot90(temp, 1,(1,2))
+        temp[:] = mb.np.rot90(temp, 1,(0,2))
+        temp[:] = mb.np.rot90(temp, 1,(1,2))
     def reorient324(temp):
-        mb.np.rot90(temp, 1,(0,2))
+        temp[:] = mb.np.rot90(temp, 1,(0,2))
     def reorient345(temp):
-        mb.np.rot90(temp, 1,(0,2))
-        mb.np.rot90(temp,-1,(1,2))
+        temp[:] = mb.np.rot90(temp, 1,(0,2))
+        temp[:] = mb.np.rot90(temp,-1,(1,2))
     def reorient351(temp):
-        mb.np.rot90(temp, 1,(0,2))
-        mb.np.rot90(temp,-2,(1,2))
+        temp[:] = mb.np.rot90(temp, 1,(0,2))
+        temp[:] = mb.np.rot90(temp,-2,(1,2))
 
     #Negative i aligned blocks
     def reorient432(temp):
-        mb.np.rot90(temp,-2,(0,1))
-        mb.np.rot90(temp,-1,(1,2))
+        temp[:] = mb.np.rot90(temp,-2,(0,1))
+        temp[:] = mb.np.rot90(temp,-1,(1,2))
     def reorient453(temp):
-        mb.np.rot90(temp,-2,(0,1))
+        temp[:] = mb.np.rot90(temp,-2,(0,1))
     def reorient465(temp):
-        mb.np.rot90(temp,-2,(0,1))
-        mb.np.rot90(temp, 1,(1,2))
+        temp[:] = mb.np.rot90(temp,-2,(0,1))
+        temp[:] = mb.np.rot90(temp, 1,(1,2))
     def reorient426(temp):
-        mb.np.rot90(temp,-2,(0,2))
+        temp[:] = mb.np.rot90(temp,-2,(0,2))
 
     #Negative j aligned blocks
     def reorient513(temp):
-        mb.np.rot90(temp, 1,(0,1))
+        temp[:] = mb.np.rot90(temp, 1,(0,1))
     def reorient561(temp):
-        mb.np.rot90(temp, 1,(0,1))
-        mb.np.rot90(temp, 1,(1,2))
+        temp[:] = mb.np.rot90(temp, 1,(0,1))
+        temp[:] = mb.np.rot90(temp, 1,(1,2))
     def reorient546(temp):
-        mb.np.rot90(temp, 1,(0,1))
-        mb.np.rot90(temp,-2,(1,2))
+        temp[:] = mb.np.rot90(temp, 1,(0,1))
+        temp[:] = mb.np.rot90(temp,-2,(1,2))
     def reorient534(temp):
-        mb.np.rot90(temp, 1,(0,1))
-        mb.np.rot90(temp,-1,(1,2))
+        temp[:] = mb.np.rot90(temp, 1,(0,1))
+        temp[:] = mb.np.rot90(temp,-1,(1,2))
 
     #Negative k aligned blocks
     def reorient621(temp):
-        mb.np.rot90(temp,-1,(0,2))
+        temp[:] = mb.np.rot90(temp,-1,(0,2))
     def reorient642(temp):
-        mb.np.rot90(temp,-1,(0,2))
-        mb.np.rot90(temp, 1,(1,2))
+        temp[:] = mb.np.rot90(temp,-1,(0,2))
+        temp[:] = mb.np.rot90(temp, 1,(1,2))
     def reorient654(temp):
-        mb.np.rot90(temp,-1,(0,2))
-        mb.np.rot90(temp,-2,(1,2))
+        temp[:] = mb.np.rot90(temp,-1,(0,2))
+        temp[:] = mb.np.rot90(temp,-2,(1,2))
     def reorient615(temp):
-        mb.np.rot90(temp,-1,(0,2))
-        mb.np.rot90(temp, 1,(1,2))
+        temp[:] = mb.np.rot90(temp,-1,(0,2))
+        temp[:] = mb.np.rot90(temp, 1,(1,2))
 
     ##########################################################
     ### This chunk predefines the slice extents for each block
