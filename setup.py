@@ -85,5 +85,7 @@ setup(
     ext_modules=[CMakeExtension('peregrinepy/peregrinepy')],
     # add custom build_ext command
     cmdclass=dict(build_ext=CMakeBuild),
+    #Testing folder
+    test_suite='tests',
     zip_safe=False,
 )
