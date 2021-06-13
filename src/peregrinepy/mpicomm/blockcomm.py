@@ -15,7 +15,6 @@ def communicate(mb,varis):
         for _ in range(3):
             #Post sends
             for blk in mb:
-                sendbuffer = {}
                 for face in ['1','2','3','4','5','6']:
                     neighbor = blk.connectivity[face]['neighbor']
                     if neighbor is None:
@@ -23,11 +22,8 @@ def communicate(mb,varis):
                     comm_rank = blk.connectivity[face]['comm_rank']
                     orientation = blk.connectivity[face]['orientation']
                     tag = int(f'1{blk.nblki}020{neighbor}1')
-                    sendbuffer[face] = mb.np.copy(blk.array[var][blk.slice_s3[face]])
-                    blk.orientB4send[face](sendbuffer[face])
-                    comm.Isend([sendbuffer[face], MPIDOUBLE], dest=comm_rank, tag=tag)
-
-            comm.Barrier()
+                    blk.sendbuffer[face][:] = blk.orient[face](blk.array[var][blk.slice_s3[face]])
+                    comm.Isend([blk.sendbuffer[face], MPIDOUBLE], dest=comm_rank, tag=tag)
 
             #Post recieves
             for blk in mb:
@@ -39,95 +35,29 @@ def communicate(mb,varis):
                     orientation = blk.connectivity[face]['orientation']
                     comm_rank   = blk.connectivity[face]['comm_rank']
                     tag = int(f'1{neighbor}020{blk.nblki}1')
-                    comm.Irecv([blk.array[var][blk.slice_r3[face]], MPIDOUBLE], source=comm_rank, tag=tag)
+                    comm.Recv([blk.recvbuffer[face][:], MPIDOUBLE], source=comm_rank, tag=tag)
+                    blk.array[var][blk.slice_r3[face]] = blk.recvbuffer[face][:]
 
             comm.Barrier()
 
-
 def set_block_communication(mb,config):
 
-    comm,rank,size = get_comm_rank_size()
+    def orient123(temp):
+        return temp
+    def orient135(temp):
+        return mb.np.rot90(temp,1,(2,1))
+    def orient156(temp):
+        return mb.np.rot90(temp,2,(2,1))
+    def orient162(temp):
+        return mb.np.rot90(temp,1,(1,2))
+    def orient231(temp):
+        return mb.np.copy(mb.np.moveaxis(temp,(0,1,2),(1,2,0)))
 
-    ##########################################################
-    ### This chunk defines the reorientation functions that
-    ### each block will execute on its halo buffer BEFORE
-    ### it sends so that when it arrives at it's
-    ### neighbor, it is able to be put in place.
-    ##########################################################
+    def orient312(temp):
+        return mb.np.moveaxis(temp,(0,1,2),(2,0,1))
 
-    #Positive i aligned blocks
-    def reorient123(temp):
-        pass
-    def reorient135(temp):
-        temp[:] = mb.np.rot90(temp,-1,(1,2))
-    def reorient156(temp):
-        temp[:] = mb.np.rot90(temp,-2,(1,2))
-    def reorient162(temp):
-        temp[:] = mb.np.rot90(temp, 1,(1,2))
-
-    #Positive j aligned blocks
-    def reorient231(temp):
-        temp[:] = mb.np.rot90(temp,-1,(0,1))
-        temp[:] = mb.np.rot90(temp,-1,(1,2))
-    def reorient216(temp):
-        temp[:] = mb.np.rot90(temp,-1,(0,1))
-        temp[:] = mb.np.rot90(temp,-2,(1,2))
-    def reorient264(temp):
-        temp[:] = mb.np.rot90(temp,-1,(0,1))
-        temp[:] = mb.np.rot90(temp, 1,(1,2))
-    def reorient243(temp):
-        temp[:] = mb.np.rot90(temp,-1,(0,1))
-
-    #Positive k aligned blocks
-    def reorient312(temp):
-        temp[:] = mb.np.rot90(temp, 1,(0,2))
-        temp[:] = mb.np.rot90(temp, 1,(1,2))
-    def reorient324(temp):
-        temp[:] = mb.np.rot90(temp, 1,(0,2))
-    def reorient345(temp):
-        temp[:] = mb.np.rot90(temp, 1,(0,2))
-        temp[:] = mb.np.rot90(temp,-1,(1,2))
-    def reorient351(temp):
-        temp[:] = mb.np.rot90(temp, 1,(0,2))
-        temp[:] = mb.np.rot90(temp,-2,(1,2))
-
-    #Negative i aligned blocks
-    def reorient432(temp):
-        temp[:] = mb.np.rot90(temp,-2,(0,1))
-        temp[:] = mb.np.rot90(temp,-1,(1,2))
-    def reorient453(temp):
-        temp[:] = mb.np.rot90(temp,-2,(0,1))
-    def reorient465(temp):
-        temp[:] = mb.np.rot90(temp,-2,(0,1))
-        temp[:] = mb.np.rot90(temp, 1,(1,2))
-    def reorient426(temp):
-        temp[:] = mb.np.rot90(temp,-2,(0,2))
-
-    #Negative j aligned blocks
-    def reorient513(temp):
-        temp[:] = mb.np.rot90(temp, 1,(0,1))
-    def reorient561(temp):
-        temp[:] = mb.np.rot90(temp, 1,(0,1))
-        temp[:] = mb.np.rot90(temp, 1,(1,2))
-    def reorient546(temp):
-        temp[:] = mb.np.rot90(temp, 1,(0,1))
-        temp[:] = mb.np.rot90(temp,-2,(1,2))
-    def reorient534(temp):
-        temp[:] = mb.np.rot90(temp, 1,(0,1))
-        temp[:] = mb.np.rot90(temp,-1,(1,2))
-
-    #Negative k aligned blocks
-    def reorient621(temp):
-        temp[:] = mb.np.rot90(temp,-1,(0,2))
-    def reorient642(temp):
-        temp[:] = mb.np.rot90(temp,-1,(0,2))
-        temp[:] = mb.np.rot90(temp, 1,(1,2))
-    def reorient654(temp):
-        temp[:] = mb.np.rot90(temp,-1,(0,2))
-        temp[:] = mb.np.rot90(temp,-2,(1,2))
-    def reorient615(temp):
-        temp[:] = mb.np.rot90(temp,-1,(0,2))
-        temp[:] = mb.np.rot90(temp, 1,(1,2))
+    def orient432(temp):
+        return mb.np.flip(mb.np.moveaxis(temp,(0,1,2),(0,2,1)), axis=0)
 
     ##########################################################
     ### This chunk predefines the slice extents for each block
@@ -135,23 +65,32 @@ def set_block_communication(mb,config):
     ##########################################################
     for blk in mb:
         slice_s3 = {}
-        slice_s3['1'] = s_[ blk.ngls  +1:2*blk.ngls+1,:,:]
-        slice_s3['2'] = s_[-blk.ngls*2-1:-blk.ngls-1,:,:]
-
-        slice_s3['3'] = s_[:,blk.ngls+1:2*blk.ngls+1,:]
-        slice_s3['4'] = s_[:,-blk.ngls*2-1:-blk.ngls-1,:]
-
-        slice_s3['5'] = s_[:,:,blk.ngls+1:2*blk.ngls+1]
-        slice_s3['6'] = s_[:,:,-blk.ngls*2-1:-blk.ngls-1]
-
+        commfaceshape = {}
         slice_r3 = {}
-        slice_r3['1'] = s_[0:blk.ngls,:,:]
+
+        slice_s3['1']      = s_[ blk.ngls  +1 : 2*blk.ngls+1, :, :]
+        commfaceshape['1'] =   ( blk.ngls, blk.nj+2*blk.ngls, blk.nk+2*blk.ngls)
+        slice_r3['1']      = s_[0:blk.ngls,:,:]
+
+        slice_s3['2'] = s_[-blk.ngls*2-1 :  -blk.ngls-1, :, :]
+        commfaceshape['2'] = commfaceshape['1']
         slice_r3['2'] = s_[-blk.ngls::,:,:]
 
+        slice_s3['3'] = s_[:,blk.ngls+1:2*blk.ngls+1,:]
+        commfaceshape['3'] =   ( blk.ni+blk.ngls*2, blk.ngls, blk.nk+2*blk.ngls)
         slice_r3['3'] = s_[:,0:blk.ngls,:]
+
+        slice_s3['4'] = s_[:,-blk.ngls*2-1:-blk.ngls-1,:]
+        commfaceshape['4'] = commfaceshape['3']
         slice_r3['4'] = s_[:,-blk.ngls::,:]
 
+        slice_s3['5'] = s_[:,:,blk.ngls+1:2*blk.ngls+1]
+        commfaceshape['5'] =   ( blk.ni+blk.ngls*2, blk.nk+2*blk.ngls, blk.ngls)
         slice_r3['5'] = s_[:,:,0:blk.ngls]
+
+
+        slice_s3['6'] = s_[:,:,-blk.ngls*2-1:-blk.ngls-1]
+        commfaceshape['6'] = commfaceshape['5']
         slice_r3['6'] = s_[:,:,-blk.ngls::]
 
         for face in ['1','2','3','4','5','6']:
@@ -159,63 +98,32 @@ def set_block_communication(mb,config):
             if neighbor is None:
                 blk.slice_s3[face] = None
                 blk.slice_r3[face] = None
+                blk.sendbuffer[face] = None
+                blk.recvbuffer[face] = None
             else:
                 blk.slice_s3[face] = slice_s3[face]
                 blk.slice_r3[face] = slice_r3[face]
 
                 orientation = blk.connectivity[face]['orientation']
-                #Positive i aligned blocks
-                if   orientation == '123':
-                    blk.orientB4send[face] = reorient123
+                if orientation == '123':
+                    blk.orient[face] = orient123
                 elif orientation == '135':
-                    blk.orientB4send[face] = reorient135
+                    blk.orient[face] = orient135
                 elif orientation == '156':
-                    blk.orientB4send[face] = reorient156
+                    blk.orient[face] = orient156
                 elif orientation == '162':
-                    blk.orientB4send[face] = reorient162
-                #Positive j aligned blocks
+                    blk.orient[face] = orient162
                 elif orientation == '231':
-                    blk.orientB4send[face] = reorient231
-                elif orientation == '216':
-                    blk.orientB4send[face] = reorient216
-                elif orientation == '264':
-                    blk.orientB4send[face] = reorient264
-                elif orientation == '243':
-                    blk.orientB4send[face] = reorient243
-                #Positive k aligned blocks
-                elif orientation == '312':
-                    blk.orientB4send[face] = reorient312
-                elif orientation == '324':
-                    blk.orientB4send[face] = reorient324
-                elif orientation == '345':
-                    blk.orientB4send[face] = reorient345
-                elif orientation == '351':
-                    blk.orientB4send[face] = reorient351
+                    blk.orient[face] = orient231
 
-                #Negative i aligned blocks
+                elif orientation == '312':
+                    blk.orient[face] = orient312
+
                 elif orientation == '432':
-                    blk.orientB4send[face] = reorient432
-                elif orientation == '453':
-                    blk.orientB4send[face] = reorient453
-                elif orientation == '465':
-                    blk.orientB4send[face] = reorient465
-                elif orientation == '426':
-                    blk.orientB4send[face] = reorient426
-                #Negative j aligned blocks
-                elif orientation == '513':
-                    blk.orientB4send[face] = reorient513
-                elif orientation == '561':
-                    blk.orientB4send[face] = reorient561
-                elif orientation == '546':
-                    blk.orientB4send[face] = reorient546
-                elif orientation == '534':
-                    blk.orientB4send[face] = reorient534
-                #Negative k aligned blocks
-                elif orientation == '621':
-                    blk.orientB4send[face] = reorient621
-                elif orientation == '642':
-                    blk.orientB4send[face] = reorient642
-                elif orientation == '654':
-                    blk.orientB4send[face] = reorient654
-                elif orientation == '615':
-                    blk.orientB4send[face] = reorient615
+                    blk.orient[face] = orient432
+
+                temp = blk.orient[face](mb.np.empty(commfaceshape[face]))
+                blk.sendbuffer[face] = mb.np.ascontiguousarray(temp)
+                # We revieve the data in the correct shape already
+                temp = mb.np.empty(commfaceshape[face])
+                blk.recvbuffer[face] = mb.np.ascontiguousarray(mb.np.empty(commfaceshape[face]))
