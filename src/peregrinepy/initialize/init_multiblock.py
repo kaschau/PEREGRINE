@@ -2,7 +2,6 @@
 from ..multiblock import multiblock
 from ..readers import read_blocks4procs,read_connectivity,read_grid
 from ..mpicomm import mpiutils,blockcomm
-from . import init_grid
 
 def init_multiblock(config):
 
@@ -47,8 +46,6 @@ def init_multiblock(config):
             for k1 in conn[blk.nblki][face].keys():
                 blk.connectivity[face][k1] = conn[blk.nblki][face][k1]
 
-    comm.Barrier()
-
     ################################################################
     ##### Now we figure out which processor each block's neighbor
     ##### is on
@@ -63,8 +60,6 @@ def init_multiblock(config):
             for otherrank,proc in enumerate(blocks4procs):
                 if neighbor in proc:
                     blk.connectivity[face]['comm_rank'] = otherrank
-
-    comm.Barrier()
 
     ################################################################
     ##### Now set the MPI communication info for each block

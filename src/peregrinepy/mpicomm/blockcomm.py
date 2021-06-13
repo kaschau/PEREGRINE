@@ -51,7 +51,7 @@ def set_block_communication(mb,config):
     def orient162(temp):
         return mb.np.rot90(temp,1,(1,2))
     def orient231(temp):
-        return mb.np.copy(mb.np.moveaxis(temp,(0,1,2),(1,2,0)))
+        return mb.np.moveaxis(temp,(0,1,2),(1,2,0))
 
     def orient312(temp):
         return mb.np.moveaxis(temp,(0,1,2),(2,0,1))
