@@ -1,7 +1,8 @@
 
 from ..multiblock import multiblock
-from ..readers import read_blocks4procs,read_connectivity
+from ..readers import read_blocks4procs,read_connectivity,read_grid
 from ..mpicomm import mpiutils,blockcomm
+from . import init_grid
 
 def init_multiblock(config):
 
@@ -28,6 +29,10 @@ def init_multiblock(config):
     for i,nblki in enumerate(myblocks):
         mb[i].nblki = nblki
 
+    ################################################################
+    ##### Read in the grid
+    ################################################################
+    read_grid(mb,config)
 
     ################################################################
     ##### Read in the connectivity

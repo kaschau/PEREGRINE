@@ -41,12 +41,12 @@ class block(block_):
         ################################################################################################################
         ############## Connectivity
         ################################################################################################################
-        self.connectivity = FrozenDict({'1':FrozenDict({'bc':'s1', 'neighbor':None, 'orientation':'000','comm_rank':None}),
-                                        '2':FrozenDict({'bc':'s1', 'neighbor':None, 'orientation':'000','comm_rank':None}),
-                                        '3':FrozenDict({'bc':'s1', 'neighbor':None, 'orientation':'000','comm_rank':None}),
-                                        '4':FrozenDict({'bc':'s1', 'neighbor':None, 'orientation':'000','comm_rank':None}),
-                                        '5':FrozenDict({'bc':'s1', 'neighbor':None, 'orientation':'000','comm_rank':None}),
-                                        '6':FrozenDict({'bc':'s1', 'neighbor':None, 'orientation':'000','comm_rank':None})})
+        self.connectivity = FrozenDict({'1':FrozenDict({'bc':'s1', 'neighbor':None, 'orientation':None,'comm_rank':None}),
+                                        '2':FrozenDict({'bc':'s1', 'neighbor':None, 'orientation':None,'comm_rank':None}),
+                                        '3':FrozenDict({'bc':'s1', 'neighbor':None, 'orientation':None,'comm_rank':None}),
+                                        '4':FrozenDict({'bc':'s1', 'neighbor':None, 'orientation':None,'comm_rank':None}),
+                                        '5':FrozenDict({'bc':'s1', 'neighbor':None, 'orientation':None,'comm_rank':None}),
+                                        '6':FrozenDict({'bc':'s1', 'neighbor':None, 'orientation':None,'comm_rank':None})})
 
         for i in ['1','2','3','4','5','6']:
             self.connectivity[i]._freeze()
@@ -61,7 +61,9 @@ class block(block_):
         self.slice_r3 = {}
         self.slice_r4 = {}
 
-        self.orientB4send = {}
+        self.orient = {}
+        self.sendbuffer = {}
+        self.recvbuffer = {}
 
         ################################################################################################################
         ############## Data arrays

@@ -8,6 +8,7 @@ import peregrinepy as pgpy
 import time
 
 import sys
+from time import sleep
 def simulate(config_file_path):
     # Import but do not initialise MPI
     from mpi4py import MPI
@@ -23,7 +24,8 @@ def simulate(config_file_path):
     #set here for now
     config['RunTime']['ngls'] = 2
     mb = pgpy.initialize.init_multiblock(config)
-    pgpy.initialize.init_grid(mb,config)
+
+    pgpy.mpicomm.blockcomm.communicate(mb,['x','y','z'])
 
     if rank == 0:
         print('blk0')
@@ -33,14 +35,15 @@ def simulate(config_file_path):
         print(mb[0].array['y'][-2::,:,:])
         print('z')
         print(mb[0].array['z'][-2::,:,:])
-    #else:
+    else:
+        sleep(1)
         print('blk1')
         print('x')
-        print(mb[1].array['x'][0:2])
+        print(mb[0].array['x'][0:2])
         print('y')
-        print(mb[1].array['y'][0:2])
+        print(mb[0].array['y'][0:2])
         print('z')
-        print(mb[1].array['z'][0:2])
+        print(mb[0].array['z'][0:2])
 
     #ts = time.time()
     #for b in mb:

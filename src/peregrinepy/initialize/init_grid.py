@@ -5,15 +5,9 @@ from ..ghost import ghost_grid
 
 def init_grid(mb,config):
 
-    comm,rank,size = mpiutils.get_comm_rank_size()
-
-    read_grid(mb,config)
-    comm.Barrier()
-
+    pass
     #Generate the grid halos (extrapolate BC)
-    ghost_grid(mb,config)
+    #ghost_grid(mb,config)
 
     #Communicate halos
-    blockcomm.communicate(mb,['x','y','z'])
-
-
+    #blockcomm.communicate(mb,['x','y','z'])
