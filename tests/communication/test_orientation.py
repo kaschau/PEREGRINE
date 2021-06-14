@@ -8,7 +8,7 @@ np.random.seed(111)
 class twoblock123:
     def __init__(self):
        self.config = pg.files.config_file()
-       self.config['RunTime']['ngls'] = 1
+       self.config['RunTime']['ngls'] = 2
        self.mb = pg.multiblock(2,self.config)
 
        pg.grid.create.multiblock_cube(self.mb, mb_dimensions=[2,1,1],
@@ -179,7 +179,41 @@ def test_231():
 ##################################################################################
 ##### Test for all positive k aligned orientations
 ##################################################################################
+def test_321():
+    tb = twoblock123()
 
+    for blk in tb.mb:
+        blk.array['x'][:,:,:] = np.random.random((tb.shape))
+        blk.array['y'][:,:,:] = np.random.random((tb.shape))
+        blk.array['z'][:,:,:] = np.random.random((tb.shape))
+
+    #Reorient second block and update communication info
+    tb.mb[0].connectivity['2']['orientation'] = '312'
+
+    tb.mb[1].connectivity['1']['neighbor'] = None
+    tb.mb[1].connectivity['1']['bc'] = 's1'
+    tb.mb[1].connectivity['1']['orientation'] = None
+    tb.mb[1].connectivity['1']['comm_rank'] = None
+
+    tb.mb[1].connectivity['5']['neighbor'] = 0
+    tb.mb[1].connectivity['5']['bc'] = 'b0'
+    tb.mb[1].connectivity['5']['orientation'] = '231'
+    tb.mb[1].connectivity['5']['comm_rank'] = 0
+
+    pg.mpicomm.blockcomm.set_block_communication(tb.mb,tb.config)
+
+    #Execute communication
+    pg.mpicomm.blockcomm.communicate(tb.mb,['x','y','z'])
+
+    passfail = []
+    for var in ['x','y','z']:
+        passfail.append(compare_arrays(tb.mb[0].orient['2'](tb.mb[0].array[var][tb.mb[0].slice_s3['2']]),
+                                                            tb.mb[1].array[var][tb.mb[1].slice_r3['5']]))
+
+        passfail.append(compare_arrays(tb.mb[1].orient['5'](tb.mb[1].array[var][tb.mb[1].slice_s3['5']]),
+                                                            tb.mb[0].array[var][tb.mb[0].slice_r3['2']]))
+
+    assert (False not in passfail)
 
 ##################################################################################
 ##### Test for all negative i aligned orientations
@@ -208,14 +242,92 @@ def test_432():
     pg.mpicomm.blockcomm.set_block_communication(tb.mb,tb.config)
 
     #Execute communication
-    pg.mpicomm.blockcomm.communicate(tb.mb,['x'])
+    pg.mpicomm.blockcomm.communicate(tb.mb,['x','y','z'])
 
     passfail = []
-    for var in ['x']:
+    for var in ['x','y','z']:
         passfail.append(compare_arrays(tb.mb[0].orient['2'](tb.mb[0].array[var][tb.mb[0].slice_s3['2']]),
                                                             tb.mb[1].array[var][tb.mb[1].slice_r3['2']]))
 
         passfail.append(compare_arrays(tb.mb[1].orient['2'](tb.mb[1].array[var][tb.mb[1].slice_s3['2']]),
+                                                            tb.mb[0].array[var][tb.mb[0].slice_r3['2']]))
+
+    assert (False not in passfail)
+
+##################################################################################
+##### Test for all negative j aligned orientations
+##################################################################################
+def test_513():
+    tb = twoblock123()
+
+    for blk in tb.mb:
+        blk.array['x'][:,:,:] = np.random.random((tb.shape))
+        blk.array['y'][:,:,:] = np.random.random((tb.shape))
+        blk.array['z'][:,:,:] = np.random.random((tb.shape))
+
+    #Reorient second block and update communication info
+    tb.mb[0].connectivity['2']['orientation'] = '513'
+
+    tb.mb[1].connectivity['1']['neighbor'] = None
+    tb.mb[1].connectivity['1']['bc'] = 's1'
+    tb.mb[1].connectivity['1']['orientation'] = None
+    tb.mb[1].connectivity['1']['comm_rank'] = None
+
+    tb.mb[1].connectivity['4']['neighbor'] = 0
+    tb.mb[1].connectivity['4']['bc'] = 'b0'
+    tb.mb[1].connectivity['4']['orientation'] = '243'
+    tb.mb[1].connectivity['4']['comm_rank'] = 0
+
+    pg.mpicomm.blockcomm.set_block_communication(tb.mb,tb.config)
+
+    #Execute communication
+    pg.mpicomm.blockcomm.communicate(tb.mb,['x','y','z'])
+
+    passfail = []
+    for var in ['x','y','z']:
+        passfail.append(compare_arrays(tb.mb[0].orient['2'](tb.mb[0].array[var][tb.mb[0].slice_s3['2']]),
+                                                            tb.mb[1].array[var][tb.mb[1].slice_r3['4']]))
+
+        passfail.append(compare_arrays(tb.mb[1].orient['4'](tb.mb[1].array[var][tb.mb[1].slice_s3['4']]),
+                                                            tb.mb[0].array[var][tb.mb[0].slice_r3['2']]))
+
+    assert (False not in passfail)
+
+##################################################################################
+##### Test for all negative k aligned orientations
+##################################################################################
+def test_621():
+    tb = twoblock123()
+
+    for blk in tb.mb:
+        blk.array['x'][:,:,:] = np.random.random((tb.shape))
+        blk.array['y'][:,:,:] = np.random.random((tb.shape))
+        blk.array['z'][:,:,:] = np.random.random((tb.shape))
+
+    #Reorient second block and update communication info
+    tb.mb[0].connectivity['2']['orientation'] = '621'
+
+    tb.mb[1].connectivity['1']['neighbor'] = None
+    tb.mb[1].connectivity['1']['bc'] = 's1'
+    tb.mb[1].connectivity['1']['orientation'] = None
+    tb.mb[1].connectivity['1']['comm_rank'] = None
+
+    tb.mb[1].connectivity['6']['neighbor'] = 0
+    tb.mb[1].connectivity['6']['bc'] = 'b0'
+    tb.mb[1].connectivity['6']['orientation'] = '324'
+    tb.mb[1].connectivity['6']['comm_rank'] = 0
+
+    pg.mpicomm.blockcomm.set_block_communication(tb.mb,tb.config)
+
+    #Execute communication
+    pg.mpicomm.blockcomm.communicate(tb.mb,['x','y','z'])
+
+    passfail = []
+    for var in ['x','y','z']:
+        passfail.append(compare_arrays(tb.mb[0].orient['2'](tb.mb[0].array[var][tb.mb[0].slice_s3['2']]),
+                                                            tb.mb[1].array[var][tb.mb[1].slice_r3['6']]))
+
+        passfail.append(compare_arrays(tb.mb[1].orient['6'](tb.mb[1].array[var][tb.mb[1].slice_s3['6']]),
                                                             tb.mb[0].array[var][tb.mb[0].slice_r3['2']]))
 
     assert (False not in passfail)
