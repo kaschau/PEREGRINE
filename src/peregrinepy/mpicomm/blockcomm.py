@@ -50,14 +50,51 @@ def set_block_communication(mb,config):
         return mb.np.rot90(temp,2,(2,1))
     def orient162(temp):
         return mb.np.rot90(temp,1,(1,2))
+
     def orient231(temp):
         return mb.np.moveaxis(temp,(0,1,2),(1,2,0))
+    def orient216(temp):
+        return mb.np.rot90(mb.np.rot90(temp,1,(1,0)),2,(2,0))
+    def orient264(temp):
+        return mb.np.rot90(mb.np.rot90(temp,1,(1,0)),1,(2,0))
+    def orient243(temp):
+        return mb.np.rot90(temp,1,(1,0))
 
     def orient312(temp):
         return mb.np.moveaxis(temp,(0,1,2),(2,0,1))
+    def orient324(temp):
+        return mb.np.rot90(temp,1,(2,0))
+    def orient345(temp):
+        return mb.np.rot90(mb.np.rot90(temp,1,(2,0)),1,(1,0))
+    def orient351(temp):
+        return mb.np.rot90(mb.np.rot90(temp,1,(2,0)),2,(1,0))
 
     def orient432(temp):
-        return mb.np.flip(mb.np.moveaxis(temp,(0,1,2),(0,2,1)), axis=0)
+        return mb.np.rot90(mb.np.rot90(temp,1,(2,1)),2,(1,0))
+    def orient426(temp):
+        return mb.np.rot90(temp,1,(2,0))
+    def orient465(temp):
+        return mb.np.rot90(mb.np.rot90(temp,1,(1,2)),2,(0,1))
+    def orient453(temp):
+        return mb.np.rot90(temp,2,(0,1))
+
+    def orient513(temp):
+        return mb.np.rot90(temp,1,(0,1))
+    def orient534(temp):
+        return mb.np.rot90(mb.np.rot90(temp,1,(2,0)),1,(2,1))
+    def orient546(temp):
+        return mb.np.rot90(mb.np.rot90(temp,1,(1,0)),2,(1,2))
+    def orient561(temp):
+        return mb.np.rot90(mb.np.rot90(temp,1,(1,0)),1,(0,2))
+
+    def orient621(temp):
+        return mb.np.rot90(temp,1,(0,2))
+    def orient615(temp):
+        return mb.np.rot90(mb.np.rot90(temp,1,(1,0)),1,(2,1))
+    def orient654(temp):
+        return mb.np.rot90(mb.np.rot90(temp,1,(0,2)),2,(0,1))
+    def orient642(temp):
+        return mb.np.rot90(mb.np.rot90(temp,1,(0,2)),1,(1,0))
 
     ##########################################################
     ### This chunk predefines the slice extents for each block
@@ -113,15 +150,53 @@ def set_block_communication(mb,config):
                     blk.orient[face] = orient156
                 elif orientation == '162':
                     blk.orient[face] = orient162
+
                 elif orientation == '231':
                     blk.orient[face] = orient231
+                elif orientation == '216':
+                    blk.orient[face] = orient216
+                elif orientation == '264':
+                    blk.orient[face] = orient264
+                elif orientation == '243':
+                    blk.orient[face] = orient243
 
                 elif orientation == '312':
                     blk.orient[face] = orient312
+                elif orientation == '324':
+                    blk.orient[face] = orient324
+                elif orientation == '345':
+                    blk.orient[face] = orient345
+                elif orientation == '351':
+                    blk.orient[face] = orient351
 
                 elif orientation == '432':
                     blk.orient[face] = orient432
+                elif orientation == '426':
+                    blk.orient[face] = orient426
+                elif orientation == '465':
+                    blk.orient[face] = orient465
+                elif orientation == '453':
+                    blk.orient[face] = orient453
 
+                elif orientation == '513':
+                    blk.orient[face] = orient513
+                elif orientation == '534':
+                    blk.orient[face] = orient534
+                elif orientation == '546':
+                    blk.orient[face] = orient546
+                elif orientation == '561':
+                    blk.orient[face] = orient561
+
+                elif orientation == '621':
+                    blk.orient[face] = orient621
+                elif orientation == '615':
+                    blk.orient[face] = orient615
+                elif orientation == '654':
+                    blk.orient[face] = orient654
+                elif orientation == '642':
+                    blk.orient[face] = orient642
+
+                # We send the data in the correct shape already
                 temp = blk.orient[face](mb.np.empty(commfaceshape[face]))
                 blk.sendbuffer[face] = mb.np.ascontiguousarray(temp)
                 # We revieve the data in the correct shape already
