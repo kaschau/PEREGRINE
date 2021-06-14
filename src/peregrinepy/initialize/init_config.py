@@ -1,10 +1,10 @@
 from ..files import config_file
 from ..readers import read_config_file
-from ..mpicomm import mpiutils
+from ..mpicomm.mpiutils import get_comm_rank_size
 
 def init_config(file_path):
 
-    comm,rank,size = mpiutils.get_comm_rank_size()
+    comm,rank,size = get_comm_rank_size()
     if rank == 0:
         config = read_config_file(file_path)
 

@@ -8,10 +8,11 @@ np.random.seed(111)
 class twoblock123:
     def __init__(self):
        self.config = pg.files.config_file()
-       self.config['RunTime']['ngls'] = 2
+       ngls = 2
+       self.config['RunTime']['ngls'] = ngls
        self.mb = pg.multiblock(2,self.config)
 
-       pg.grid.create.multiblock_cube(self.mb, mb_dimensions=[2,1,1],
+       pg.grid.create.multiblock_cube(self.mb, ngls=ngls, mb_dimensions=[2,1,1],
                                       dimensions_perblock=[2,2,2])
 
        self.mb[0].connectivity['2']['comm_rank'] = 0
