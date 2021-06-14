@@ -5,7 +5,7 @@ from lxml import etree
 from copy import deepcopy
 from ..misc import ProgressBar
 
-def write_grid(mb, path='./', precision='double'):
+def write_grid(mb, ngls_save=0, path='./', precision='double'):
     '''This function produces an hdf5 file from a raptorpy.multiblock.grid (or a descendant) for viewing in Paraview.
 
     Parameters
@@ -58,13 +58,17 @@ def write_grid(mb, path='./', precision='double'):
             dset = f['dimensions']['nk']
             dset[0] = blk.nk
 
-            extent = blk.ni*blk.nj*blk.nk
+            extent = (blk.ni+ngls_save)*(blk.nj+ngls_save)*(blk.nk+ngls_save)
             f['coordinates'].create_dataset('x', shape=(extent,), dtype=fdtype)
             f['coordinates'].create_dataset('y', shape=(extent,), dtype=fdtype)
             f['coordinates'].create_dataset('z', shape=(extent,), dtype=fdtype)
 
             ngls = blk.ngls
-            slices = np.s_[ngls:-ngls,ngls:-ngls,ngls:-ngls]
+
+            slices = np.s_[ngls:ngls+blk.ni+ngls_save,
+                           ngls:ngls+blk.nj+ngls_save,
+                           ngls:ngls+blk.nk+ngls_save]
+
             dset = f['coordinates']['x']
             dset[:] = blk.array['x'][slices].ravel()
             dset = f['coordinates']['y']
@@ -77,14 +81,14 @@ def write_grid(mb, path='./', precision='double'):
 
         topology_elem = etree.SubElement(block_elem, 'Topology')
         topology_elem.set('TopologyType', '3DSMesh')
-        topology_elem.set('NumberOfElements', f'{blk.ni} {blk.nj} {blk.nk}')
+        topology_elem.set('NumberOfElements', f'{blk.ni+ngls_save} {blk.nj+ngls_save} {blk.nk+ngls_save}')
 
         geometry_elem = etree.SubElement(block_elem, 'Geometry')
         geometry_elem.set('GeometryType', 'X_Y_Z')
 
         data_x_elem = etree.SubElement(geometry_elem, 'DataItem')
         data_x_elem.set('ItemType', 'Hyperslab')
-        data_x_elem.set('Dimensions', f'{blk.nk} {blk.nj} {blk.ni}')
+        data_x_elem.set('Dimensions', f'{blk.ni+ngls_save} {blk.nj+ngls_save} {blk.nk+ngls_save}')
         data_x_elem.set('Type', 'HyperSlab')
         data_x1_elem = etree.SubElement(data_x_elem, 'DataItem')
         data_x1_elem.set('DataType', 'Int')
