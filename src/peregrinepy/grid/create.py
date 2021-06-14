@@ -94,7 +94,7 @@ def cubic_connectivity(conn, mb_dimensions, blk_number, i, j, k):
         conn['6']['orientation'] = '123'
 
 
-def cube(blk, origin, lengths, dimensions):
+def cube(blk, ngls, origin, lengths, dimensions):
 
     '''Function to populate the coordinate arrays of a provided peregrinepy.block in the shape of a cube with prescribed location, extents, and discretization.
     If the input multiblock object is a restart block the shape and size of the flow data arrays are also updated.
@@ -124,7 +124,6 @@ def cube(blk, origin, lengths, dimensions):
     y = np.linspace(origin[1], origin[1]+lengths[1], dimensions[1], dtype=np.float64)
     z = np.linspace(origin[2], origin[2]+lengths[2], dimensions[2], dtype=np.float64)
 
-    ngls = blk.ngls
     shape = (blk.ni+2*ngls,
              blk.nj+2*ngls,
              blk.nk+2*ngls)
@@ -137,7 +136,7 @@ def cube(blk, origin, lengths, dimensions):
     blk.array['x'][slices], blk.array['y'][slices], blk.array['z'][slices] = np.meshgrid(x,y,z, indexing='ij')
 
 
-def multiblock_cube(mb, origin=[0,0,0], lengths=[1,1,1], mb_dimensions=[1,1,1], dimensions_perblock=[10,10,10]):
+def multiblock_cube(mb, ngls, origin=[0,0,0], lengths=[1,1,1], mb_dimensions=[1,1,1], dimensions_perblock=[10,10,10]):
 
     '''Function to populate the coordinate arrays of a raptorpy.multiblock.grid (or one of its descendants) in the shape of a cube
        with prescribed location, extents, and discretization split into as manj  blocks as mb.nblks. Will also update
@@ -185,12 +184,13 @@ def multiblock_cube(mb, origin=[0,0,0], lengths=[1,1,1], mb_dimensions=[1,1,1], 
                 blk.ni = dimensions_perblock[0]
                 blk.nj = dimensions_perblock[1]
                 blk.nk = dimensions_perblock[2]
+                blk.ngls = ngls
 
                 origin = [blk_origins_x[i],blk_origins_y[j],blk_origins_z[k]]
                 lengths = [blk_origins_x[i+1]-blk_origins_x[i], blk_origins_y[j+1]-blk_origins_y[j], blk_origins_z[k+1]-blk_origins_z[k]]
                 dimensions = [dimensions_perblock[0], dimensions_perblock[1], dimensions_perblock[2]]
 
-                cube(blk, origin, lengths, dimensions)
+                cube(blk, ngls, origin, lengths, dimensions)
 
                 # Update connectivity
                 cubic_connectivity(blk.connectivity, mb_dimensions, blk_number, i, j, k)
