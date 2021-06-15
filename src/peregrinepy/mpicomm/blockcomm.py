@@ -19,8 +19,8 @@ def communicate(mb,varis):
                     neighbor = blk.connectivity[face]['neighbor']
                     if neighbor is None:
                         continue
-                    comm_rank = blk.connectivity[face]['comm_rank']
                     orientation = blk.connectivity[face]['orientation']
+                    comm_rank = blk.connectivity[face]['comm_rank']
                     tag = int(f'1{blk.nblki}020{neighbor}1')
                     blk.sendbuffer[face][:] = blk.orient[face](blk.array[var][blk.slice_s3[face]])
                     comm.Isend([blk.sendbuffer[face], MPIDOUBLE], dest=comm_rank, tag=tag)
@@ -31,7 +31,6 @@ def communicate(mb,varis):
                     neighbor = blk.connectivity[face]['neighbor']
                     if neighbor is None:
                         continue
-                    comm_rank = blk.connectivity[face]['comm_rank']
                     orientation = blk.connectivity[face]['orientation']
                     comm_rank   = blk.connectivity[face]['comm_rank']
                     tag = int(f'1{neighbor}020{blk.nblki}1')
@@ -42,65 +41,71 @@ def communicate(mb,varis):
 
 def set_block_communication(mb,config):
 
-    def orient123(temp):
+    def orient_T(temp):
+        return temp.T
+    def orient_Tf0(temp):
+        return mb.np.flip(temp.T,0)
+    def orient_Tf1(temp):
+        return mb.np.flip(temp.T,1)
+    def orient_Tf0f1(temp):
+        return mb.np.flip(mb.np.flip(temp,0),1)
+    def orient_f0(temp):
+        return mb.np.flip(temp,0)
+    def orient_f0f1(temp):
+        return mb.np.flip(mb.np.flip(temp,0),1)
+    def orient_f1(temp):
+        return mb.np.flip(temp,1)
+    def orient_na(temp):
         return temp
-    def orient135(temp):
-        return mb.np.moveaxis(mb.np.flip(temp,axis=1),(0,1),(1,0))
-    def orient156(temp):
-        return mb.np.rot90(temp,2)
-    def orient162(temp):
-        return mb.np.moveaxis(mb.np.flip(temp,axis=0),(0,1),(1,0))
 
-    def orient231(temp):
-        return mb.np.moveaxis(temp,(0,1,2),(1,2,0))
-    def orient216(temp):
-        return mb.np.rot90(mb.np.rot90(temp,1,(1,0)),2,(2,0))
-    def orient264(temp):
-        return mb.np.rot90(mb.np.rot90(temp,1,(1,0)),1,(2,0))
-    def orient243(temp):
-        return mb.np.rot90(temp,1,(1,0))
+    def get_neighbor_face(nface, orientation):
 
-    def orient312(temp):
-        return mb.np.moveaxis(temp,(0,1,2),(2,0,1))
-    def orient324(temp):
-        return mb.np.rot90(temp,1,(2,0))
-    def orient345(temp):
-        return mb.np.rot90(mb.np.rot90(temp,1,(2,0)),1,(1,0))
-    def orient351(temp):
-        return mb.np.rot90(mb.np.rot90(temp,1,(2,0)),2,(1,0))
+        direction = orientation[int(face_to_orient_place_mapping[nface])]
 
-    def orient432(temp):
-        return mb.np.rot90(mb.np.rot90(temp,1,(2,1)),2,(1,0))
-    def orient426(temp):
-        return mb.np.rot90(temp,1,(2,0))
-    def orient465(temp):
-        return mb.np.rot90(mb.np.rot90(temp,1,(1,2)),2,(0,1))
-    def orient453(temp):
-        return mb.np.rot90(temp,2,(0,1))
+        if nface in ['2','4','6']:
+            nface2 = orient_to_large_face_mapping[direction]
+        elif nface in ['1','3','5']:
+            nface2 = orient_to_small_face_mapping[direction]
 
-    def orient513(temp):
-        return mb.np.rot90(temp,1,(0,1))
-    def orient534(temp):
-        return mb.np.rot90(mb.np.rot90(temp,1,(2,0)),1,(2,1))
-    def orient546(temp):
-        return mb.np.rot90(mb.np.rot90(temp,1,(1,0)),2,(1,2))
-    def orient561(temp):
-        return mb.np.rot90(mb.np.rot90(temp,1,(1,0)),1,(0,2))
-
-    def orient621(temp):
-        return mb.np.rot90(temp,1,(0,2))
-    def orient615(temp):
-        return mb.np.rot90(mb.np.rot90(temp,1,(1,0)),1,(2,1))
-    def orient654(temp):
-        return mb.np.rot90(mb.np.rot90(temp,1,(0,2)),2,(0,1))
-    def orient642(temp):
-        return mb.np.rot90(mb.np.rot90(temp,1,(0,2)),1,(1,0))
-
+        return nface2
     ##########################################################
     ### This chunk predefines the slice extents for each block
     ### face send and recieves.
     ##########################################################
+    face_to_orient_place_mapping = { '1':'0', '2':'0', '3':'1', '4':'1', '5':'2', '6':'2'}
+    orient_to_small_face_mapping = { '1':'2', '2':'4', '3':'6', '4':'1', '5':'3', '6':'5'}
+    orient_to_large_face_mapping = { '1':'1', '2':'3', '3':'5', '4':'2', '5':'4', '6':'6'}
+
+    large_index_mapping = {0:'k', 1:'k', 2:'j'}
+    need_to_transpose = {'k':{'k':[1,2,4,5], 'j':[1,4]},
+                         'j':{'k':[1,2,4,5], 'j':[1,4]}}
+
+    #Get the neighbor orientation opposite of each face
+    comm,rank,size = get_comm_rank_size()
     for blk in mb:
+        for face in ['1','2','3','4','5','6']:
+            neighbor = blk.connectivity[face]['neighbor']
+            if neighbor is None:
+                continue
+            orientation = blk.connectivity[face]['orientation']
+            comm_rank   = blk.connectivity[face]['comm_rank']
+            tag = int(f'1{blk.nblki}020{neighbor}1')
+            comm.isend(orientation, dest=comm_rank, tag=tag)
+    neighbor_orientations = []
+    for blk in mb:
+        neighbor_orientations.append({})
+        for face in ['1','2','3','4','5','6']:
+            neighbor = blk.connectivity[face]['neighbor']
+            if neighbor is None:
+                continue
+            orientation = blk.connectivity[face]['orientation']
+            comm_rank   = blk.connectivity[face]['comm_rank']
+            tag = int(f'1{neighbor}020{blk.nblki}1')
+            neighbor_orientations[-1][face] = comm.recv(source=comm_rank, tag=tag)
+
+    comm.Barrier()
+
+    for blk,no in zip(mb,neighbor_orientations):
         slice_s3 = {}
         commfaceshape = {}
         slice_r3 = {}
@@ -141,59 +146,61 @@ def set_block_communication(mb,config):
                 blk.slice_r3[face] = slice_r3[face]
 
                 orientation = blk.connectivity[face]['orientation']
-                if orientation == '123':
-                    blk.orient[face] = orient123
-                elif orientation == '135':
-                    blk.orient[face] = orient135
-                elif orientation == '156':
-                    blk.orient[face] = orient156
-                elif orientation == '162':
-                    blk.orient[face] = orient162
+                neighbor = int(blk.connectivity[face]['neighbor'])
 
-                elif orientation == '231':
-                    blk.orient[face] = orient231
-                elif orientation == '216':
-                    blk.orient[face] = orient216
-                elif orientation == '264':
-                    blk.orient[face] = orient264
-                elif orientation == '243':
-                    blk.orient[face] = orient243
+                face2 = get_neighbor_face(face, orientation)
+                orientation2 = no[face]
 
-                elif orientation == '312':
-                    blk.orient[face] = orient312
-                elif orientation == '324':
-                    blk.orient[face] = orient324
-                elif orientation == '345':
-                    blk.orient[face] = orient345
-                elif orientation == '351':
-                    blk.orient[face] = orient351
+                face_orientations = [i for j,i in enumerate(orientation) if j != int(face_to_orient_place_mapping[face])]
+                normal_index = [j for j in range(3) if j == int(face_to_orient_place_mapping[face])][0]
+                face_orientations2 = [i for j,i in enumerate(orientation2) if j != int(face_to_orient_place_mapping[face2])]
+                normal_index2 = [j for j in range(3) if j == int(face_to_orient_place_mapping[face2])][0]
 
-                elif orientation == '432':
-                    blk.orient[face] = orient432
-                elif orientation == '426':
-                    blk.orient[face] = orient426
-                elif orientation == '465':
-                    blk.orient[face] = orient465
-                elif orientation == '453':
-                    blk.orient[face] = orient453
+                big_index = large_index_mapping[normal_index]
+                big_index2 = large_index_mapping[normal_index2]
 
-                elif orientation == '513':
-                    blk.orient[face] = orient513
-                elif orientation == '534':
-                    blk.orient[face] = orient534
-                elif orientation == '546':
-                    blk.orient[face] = orient546
-                elif orientation == '561':
-                    blk.orient[face] = orient561
+                print('!!!!!!')
+                print(blk.nblki)
+                print(int(face_orientations[1]) in need_to_transpose[big_index][big_index2])
+                print(face_orientations[1] in ['4','5','6'])
+                print(face_orientations[0] in ['4','5','6'])
+                print('!!!!!!')
 
-                elif orientation == '621':
-                    blk.orient[face] = orient621
-                elif orientation == '615':
-                    blk.orient[face] = orient615
-                elif orientation == '654':
-                    blk.orient[face] = orient654
-                elif orientation == '642':
-                    blk.orient[face] = orient642
+                #Do we need to transpoze?
+                if int(face_orientations[1]) in need_to_transpose[big_index][big_index2]:
+                    #Do we need to flip along 0 axis?
+                    if face_orientations[1] in ['4','5','6']:
+                        #Do we need to flip along 1 axis?
+                        if face_orientations[0] in ['4','5','6']:
+                            # Then do all three
+                            blk.orient[face] = orient_Tf0f1
+                        else:
+                            # Then do just T and flip0
+                            blk.orient[face] = orient_Tf0
+                    else:
+                        #Do we need to flip along 1 axis?
+                        if face_orientations[0] in ['4','5','6']:
+                            # Then do just T and flip1
+                            blk.orient[face] = orient_Tf1
+                        else:
+                            # Then do just T
+                            blk.orient[face] = orient_T
+                else:
+                    #Do we need to flip along 0 axis?
+                    if face_orientations[1] in ['4','5','6']:
+                        #Do we need to flip along 1 axis?
+                        if face_orientations[0] in ['4','5','6']:
+                            # Then do just flip0 and flip1
+                            blk.orient[face] = orient_f0f1
+                        else:
+                            # Then do just flip0
+                            blk.orient[face] = orient_f0
+                    elif face_orientations[0] in ['4','5','6']:
+                            # Then do just flip1
+                        blk.orient[face] = orient_f1
+                    else:
+                        # Then do nothing
+                        blk.orient[face] = orient_na
 
                 # We send the data in the correct shape already
                 temp = blk.orient[face](mb.np.empty(commfaceshape[face]))
