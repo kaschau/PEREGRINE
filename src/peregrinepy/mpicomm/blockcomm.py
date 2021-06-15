@@ -45,11 +45,11 @@ def set_block_communication(mb,config):
     def orient123(temp):
         return temp
     def orient135(temp):
-        return mb.np.rot90(temp,1,(2,1))
+        return mb.np.moveaxis(mb.np.flip(temp,axis=1),(0,1),(1,0))
     def orient156(temp):
-        return mb.np.rot90(temp,2,(2,1))
+        return mb.np.rot90(temp,2)
     def orient162(temp):
-        return mb.np.rot90(temp,1,(1,2))
+        return mb.np.moveaxis(mb.np.flip(temp,axis=0),(0,1),(1,0))
 
     def orient231(temp):
         return mb.np.moveaxis(temp,(0,1,2),(1,2,0))
@@ -105,30 +105,29 @@ def set_block_communication(mb,config):
         commfaceshape = {}
         slice_r3 = {}
 
-        slice_s3['1']      = s_[ blk.ngls  +1 : 2*blk.ngls+1, :, :]
-        commfaceshape['1'] =   ( blk.ngls, blk.nj+2*blk.ngls, blk.nk+2*blk.ngls)
-        slice_r3['1']      = s_[0:blk.ngls,:,:]
+        slice_s3['1']      = s_[ 2 , :, :]
+        commfaceshape['1'] =   ( blk.nj+2, blk.nk+2)
+        slice_r3['1']      = s_[0,:,:]
 
-        slice_s3['2'] = s_[-blk.ngls*2-1 :  -blk.ngls-1, :, :]
+        slice_s3['2'] = s_[-3 , :, :]
         commfaceshape['2'] = commfaceshape['1']
-        slice_r3['2'] = s_[-blk.ngls::,:,:]
+        slice_r3['2']      = s_[-1,:,:]
 
-        slice_s3['3'] = s_[:,blk.ngls+1:2*blk.ngls+1,:]
-        commfaceshape['3'] =   ( blk.ni+blk.ngls*2, blk.ngls, blk.nk+2*blk.ngls)
-        slice_r3['3'] = s_[:,0:blk.ngls,:]
+        slice_s3['3'] = s_[:,2,:]
+        commfaceshape['3'] =   ( blk.ni+2, blk.nk+2)
+        slice_r3['3'] = s_[:,0,:]
 
-        slice_s3['4'] = s_[:,-blk.ngls*2-1:-blk.ngls-1,:]
+        slice_s3['4'] = s_[:,-3,:]
         commfaceshape['4'] = commfaceshape['3']
-        slice_r3['4'] = s_[:,-blk.ngls::,:]
+        slice_r3['4'] = s_[:,-1,:]
 
-        slice_s3['5'] = s_[:,:,blk.ngls+1:2*blk.ngls+1]
-        commfaceshape['5'] =   ( blk.ni+blk.ngls*2, blk.nk+2*blk.ngls, blk.ngls)
-        slice_r3['5'] = s_[:,:,0:blk.ngls]
+        slice_s3['5'] = s_[:,:,2]
+        commfaceshape['5'] =   ( blk.ni+2, blk.nj+2)
+        slice_r3['5'] = s_[:,:,0]
 
-
-        slice_s3['6'] = s_[:,:,-blk.ngls*2-1:-blk.ngls-1]
+        slice_s3['6'] = s_[:,:,-3]
         commfaceshape['6'] = commfaceshape['5']
-        slice_r3['6'] = s_[:,:,-blk.ngls::]
+        slice_r3['6'] = s_[:,:,-1]
 
         for face in ['1','2','3','4','5','6']:
             neighbor = blk.connectivity[face]['neighbor']

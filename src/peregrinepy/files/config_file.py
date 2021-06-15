@@ -29,7 +29,6 @@ class config_file(FrozenDict):
                                  'inputdir'  : './Input',
                                  'outputdir' : './Output'})
         self['Kokkos'] = FrozenDict({'Space' : 'Default'})
-        self['RunTime'] = FrozenDict({'ngls' : 1})
 
         for key in self.keys():
             self[key]._freeze()
