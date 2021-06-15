@@ -41,6 +41,9 @@ def communicate(mb,varis):
 
 def set_block_communication(mb,config):
 
+    if mb[0].ni == 0:
+        raise ValueError('Must set grid before setting block communicaitons.')
+
     def orient_T(temp):
         return temp.T
     def orient_Tf0(temp):
@@ -158,13 +161,6 @@ def set_block_communication(mb,config):
 
                 big_index = large_index_mapping[normal_index]
                 big_index2 = large_index_mapping[normal_index2]
-
-                print('!!!!!!')
-                print(blk.nblki)
-                print(int(face_orientations[1]) in need_to_transpose[big_index][big_index2])
-                print(face_orientations[1] in ['4','5','6'])
-                print(face_orientations[0] in ['4','5','6'])
-                print('!!!!!!')
 
                 #Do we need to transpoze?
                 if int(face_orientations[1]) in need_to_transpose[big_index][big_index2]:
