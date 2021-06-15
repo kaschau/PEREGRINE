@@ -17,7 +17,8 @@ def communicate(mb,varis):
             for blk in mb:
                 for face in ['1','2','3','4','5','6']:
                     neighbor = blk.connectivity[face]['neighbor']
-                    if neighbor is None:
+                    bc = blk.connectivity[face]['bc']
+                    if bc != 'b0':
                         continue
                     orientation = blk.connectivity[face]['orientation']
                     comm_rank = blk.connectivity[face]['comm_rank']
@@ -29,7 +30,8 @@ def communicate(mb,varis):
             for blk in mb:
                 for face in ['1','2','3','4','5','6']:
                     neighbor = blk.connectivity[face]['neighbor']
-                    if neighbor is None:
+                    bc = blk.connectivity[face]['bc']
+                    if bc != 'b0':
                         continue
                     orientation = blk.connectivity[face]['orientation']
                     comm_rank   = blk.connectivity[face]['comm_rank']
