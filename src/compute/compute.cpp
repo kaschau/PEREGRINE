@@ -8,9 +8,9 @@ void add3D(block_ b, double n ) {
   MDRange3 range({{0,0,0}},{{b.ni,b.nj,b.nk}});
   Kokkos::parallel_for("add3", range, KOKKOS_LAMBDA(const int i, const int j, const int k) {
 
-      b.x_(i,j,k) += n;
-      b.y_(i,j,k) += n;
-      b.z_(i,j,k) += n;
+      b.x(i,j,k) += n;
+      b.y(i,j,k) += n;
+      b.z(i,j,k) += n;
 
   });
 }

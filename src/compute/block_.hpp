@@ -9,16 +9,13 @@
 struct block_ {
   int nblki;
   int ni,nj,nk;
-  int ngls;
-  int ns=1;
+  int ns;
 
   // Grid Arrays
-  threeDview x_,y_,z_;
+  threeDview x,y,z;
+  // Metric Arrays
+  threeDview xc,yc,zc;
 
-  // Conserved Variables
-  fourDview Q_;
-  // Primative Variables
-  threeDview q_;
 };
 
 #endif

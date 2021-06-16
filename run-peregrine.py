@@ -21,10 +21,10 @@ def simulate(config_file_path):
     pg.mpicomm.mpiutils.register_finalize_handler()
 
     config = pg.initialize.init_config(config_file_path)
-    #set here for now
-    config['RunTime']['ngls'] = 2
+
     mb = pg.initialize.init_multiblock(config)
 
+    pg.grid.generate_halo(mb,config)
     pg.mpicomm.blockcomm.communicate(mb,['x','y','z'])
 
     if rank == 0:
