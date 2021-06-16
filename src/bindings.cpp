@@ -37,9 +37,16 @@ PYBIND11_MODULE(compute_, m) {
     .def_readwrite("z", &block_::z)
 
     // Grid Metrics
+    // Cell Centers
     .def_readwrite("xc", &block_::xc)
     .def_readwrite("yc", &block_::yc)
-    .def_readwrite("zc", &block_::zc);
+    .def_readwrite("zc", &block_::zc)
+
+    // I face area vector
+    .def_readwrite("isx", &block_::isx)
+    .def_readwrite("isy", &block_::isy)
+    .def_readwrite("isz", &block_::isz)
+    .def_readwrite("iS" , &block_::iS );
 
 
   // Temporary creation stuff
@@ -58,8 +65,6 @@ PYBIND11_MODULE(compute_, m) {
   //  |----> metrics
   m.def("metrics", &metrics, "Compute grid metrics on primary grid",
         py::arg("block_ object"));
-
-
 
   m.def("add3D", &add3D, "Add a float to entire threeDview",
         py::arg("block_ object"), py::arg("Float to add"));
