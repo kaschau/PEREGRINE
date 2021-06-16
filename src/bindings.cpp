@@ -42,12 +42,23 @@ PYBIND11_MODULE(compute_, m) {
     .def_readwrite("yc", &block_::yc)
     .def_readwrite("zc", &block_::zc)
 
-    // I face area vector
+    // i face area vector
     .def_readwrite("isx", &block_::isx)
     .def_readwrite("isy", &block_::isy)
     .def_readwrite("isz", &block_::isz)
-    .def_readwrite("iS" , &block_::iS );
+    .def_readwrite("iS" , &block_::iS )
 
+    // j face area vector
+    .def_readwrite("jsx", &block_::jsx)
+    .def_readwrite("jsy", &block_::jsy)
+    .def_readwrite("jsz", &block_::jsz)
+    .def_readwrite("jS" , &block_::jS )
+
+    // k face area vector
+    .def_readwrite("ksx", &block_::ksx)
+    .def_readwrite("ksy", &block_::ksy)
+    .def_readwrite("ksz", &block_::ksz)
+    .def_readwrite("kS" , &block_::kS );
 
   // Temporary creation stuff
   m.def("gen3Dview", &gen3Dview, "Generate a threeDview",

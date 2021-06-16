@@ -79,7 +79,13 @@ class block(block_):
         # Cell centers
         for d in ['xc','yc','zc']:
             self.array[f'{d}'] = None
-        # I face area vectors
+        # i face area vectors
         for d in ['isx','isy','isz','iS']:
+            self.array[f'{d}'] = None
+        # j face area vectors
+        for d in ['jsx','jsy','jsz','jS']:
+            self.array[f'{d}'] = None
+        # j face area vectors
+        for d in ['ksx','ksy','ksz','kS']:
             self.array[f'{d}'] = None
         self.array._freeze()
