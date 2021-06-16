@@ -31,29 +31,30 @@ PYBIND11_MODULE(compute_, m) {
 
     .def_readwrite("ns", &block_::ns)
 
-    // Grid Arrays
+//----------------------------------------------------------------------------//
+//  Primary grid node coordinates
+//----------------------------------------------------------------------------//
     .def_readwrite("x", &block_::x)
     .def_readwrite("y", &block_::y)
     .def_readwrite("z", &block_::z)
 
-    // Grid Metrics
+//----------------------------------------------------------------------------//
+//  Primary metrics
+//----------------------------------------------------------------------------//
     // Cell Centers
     .def_readwrite("xc", &block_::xc)
     .def_readwrite("yc", &block_::yc)
     .def_readwrite("zc", &block_::zc)
-
     // i face area vector
     .def_readwrite("isx", &block_::isx)
     .def_readwrite("isy", &block_::isy)
     .def_readwrite("isz", &block_::isz)
     .def_readwrite("iS" , &block_::iS )
-
     // j face area vector
     .def_readwrite("jsx", &block_::jsx)
     .def_readwrite("jsy", &block_::jsy)
     .def_readwrite("jsz", &block_::jsz)
     .def_readwrite("jS" , &block_::jS )
-
     // k face area vector
     .def_readwrite("ksx", &block_::ksx)
     .def_readwrite("ksy", &block_::ksy)
