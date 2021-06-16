@@ -3,8 +3,9 @@ from ..compute_ import gen3Dview
 def init_grid_arrays(mb,config):
 
     for blk in mb:
-
-        # Cell centers
+#-------------------------------------------------------------------------------#
+#       Cell center coordinates
+#-------------------------------------------------------------------------------#
         blk.xc = gen3Dview("xc", blk.ni+1,
                                  blk.nj+1,
                                  blk.nk+1)
@@ -20,7 +21,9 @@ def init_grid_arrays(mb,config):
                                  blk.nk+1)
         blk.array['zc'] = mb.np.array(blk.zc, copy=False)
 
-        # i face area vectors
+#-------------------------------------------------------------------------------#
+#       i face vector components and areas
+#-------------------------------------------------------------------------------#
         blk.isx = gen3Dview("isx", blk.ni+2,
                                    blk.nj+1,
                                    blk.nk+1)
@@ -41,7 +44,9 @@ def init_grid_arrays(mb,config):
                                    blk.nk+1)
         blk.array['iS'] = mb.np.array(blk.iS, copy=False)
 
-        # j face area vectors
+#-------------------------------------------------------------------------------#
+#       j face vector components and areas
+#-------------------------------------------------------------------------------#
         blk.jsx = gen3Dview("jsx", blk.ni+1,
                                    blk.nj+2,
                                    blk.nk+1)
@@ -62,7 +67,9 @@ def init_grid_arrays(mb,config):
                                    blk.nk+1)
         blk.array['jS'] = mb.np.array(blk.jS, copy=False)
 
-        # k face area vectors
+#-------------------------------------------------------------------------------#
+#       k face vector components and areas
+#-------------------------------------------------------------------------------#
         blk.ksx = gen3Dview("ksx", blk.ni+1,
                                    blk.nj+1,
                                    blk.nk+2)
@@ -82,3 +89,7 @@ def init_grid_arrays(mb,config):
                                    blk.nj+1,
                                    blk.nk+2)
         blk.array['kS'] = mb.np.array(blk.kS, copy=False)
+
+#-------------------------------------------------------------------------------#
+#       k face vector components and areas
+#-------------------------------------------------------------------------------#
