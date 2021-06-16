@@ -32,14 +32,14 @@ PYBIND11_MODULE(compute_, m) {
     .def_readwrite("ns", &block_::ns)
 
     // Grid Arrays
-    .def_readwrite("x_", &block_::x_)
-    .def_readwrite("y_", &block_::y_)
-    .def_readwrite("z_", &block_::z_)
+    .def_readwrite("x", &block_::x)
+    .def_readwrite("y", &block_::y)
+    .def_readwrite("z", &block_::z)
 
-    // Conserved Array
-    .def_readwrite("Q_", &block_::Q_)
-    // Primative Array
-    .def_readwrite("q_", &block_::q_);
+    // Grid Metrics
+    .def_readwrite("xc", &block_::xc)
+    .def_readwrite("yc", &block_::yc)
+    .def_readwrite("zc", &block_::zc);
 
 
   // Temporary creation stuff

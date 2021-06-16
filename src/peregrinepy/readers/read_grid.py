@@ -34,10 +34,10 @@ def read_grid(mb,path='./'):
             #                     [ni,nj,nk],
             #                     dtype=kokkos.double,
             #                     space=space)
-            blk.x_ = gen3Dview("x", ni+2,
-                                    nj+2,
-                                    nk+2)
-            blk.array['x'] = mb.np.array(blk.x_, copy=False)
+            blk.x = gen3Dview("x", ni+2,
+                                   nj+2,
+                                   nk+2)
+            blk.array['x'] = mb.np.array(blk.x, copy=False)
             blk.array['x'][1:-1,
                            1:-1,
                            1:-1] = np.array(f['coordinates']['x']).reshape((ni, nj, nk))
@@ -46,10 +46,10 @@ def read_grid(mb,path='./'):
             #                     [ni,nj,nk],
             #                     dtype=kokkos.double,
             #                     space=space)
-            blk.y_ = gen3Dview("y",ni+2,
-                                   nj+2,
-                                   nk+2)
-            blk.array['y'] = mb.np.array(blk.y_, copy=False)
+            blk.y = gen3Dview("y",ni+2,
+                                  nj+2,
+                                  nk+2)
+            blk.array['y'] = mb.np.array(blk.y, copy=False)
             blk.array['y'][1:-1,
                            1:-1,
                            1:-1] = np.array(f['coordinates']['y']).reshape((ni, nj, nk))
@@ -58,10 +58,10 @@ def read_grid(mb,path='./'):
             #                     [ni,nj,nk],
             #                     dtype=kokkos.double,
             #                     space=space)
-            blk.z_ = gen3Dview("z",ni+2,
-                                   nj+2,
-                                   nk+2)
-            blk.array['z'] = mb.np.array(blk.z_, copy=False)
+            blk.z = gen3Dview("z",ni+2,
+                                  nj+2,
+                                  nk+2)
+            blk.array['z'] = mb.np.array(blk.z, copy=False)
             blk.array['z'][1:-1,
                            1:-1,
                            1:-1] = np.array(f['coordinates']['z']).reshape((ni, nj, nk))

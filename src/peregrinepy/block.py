@@ -29,9 +29,10 @@ class block(block_):
 
     '''
     def __init__(self, nblki):
-        __slots__ = list(block_.__dict__.keys()) + ['connectivity',
-                                                   'np',
-                                                   'array']
+        __slots__ = list(block_.__dict__.keys()) + ['nblki,'
+                                                    'connectivity',
+                                                    'np',
+                                                    'array']
 
         super().__init__()
         self.nblki = nblki
@@ -73,5 +74,7 @@ class block(block_):
 
         # Coordinate arrays
         for d in ['x','y','z']:
+            self.array[f'{d}'] = None
+        for d in ['xc','yc','zc']:
             self.array[f'{d}'] = None
         self.array._freeze()
