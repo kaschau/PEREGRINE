@@ -3,9 +3,9 @@
 ###########################################################################
 
 if( NOT KOKKOS_BACKEND )
-  set(KOKKOS_BACKEND "OpenMP" CACHE STRING "Choose Kokkos Backend." FORCE)
+  set(KOKKOS_BACKEND "Serial" CACHE STRING "Choose Kokkos Backend." FORCE)
   # Set the possible values of build type for cmake-gui
-  set_property(CACHE KOKKOS_BACKEND PROPERTY STRINGS "OpenMP" "Cuda-UVM" "Cuda" "HIP" "Serial" "Default")
+  set_property(CACHE KOKKOS_BACKEND PROPERTY STRINGS "Serial" "OpenMP" "Cuda-UVM" "Cuda" "HIP" "Default")
 endif()
 
 if( ${KOKKOS_BACKEND} STREQUAL "OpenMP" )
