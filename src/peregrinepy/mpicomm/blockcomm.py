@@ -1,5 +1,4 @@
 from .mpiutils import get_comm_rank_size
-from .reorient import *
 from mpi4py.MPI import DOUBLE as MPIDOUBLE
 from numpy import s_
 

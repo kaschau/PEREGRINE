@@ -49,3 +49,5 @@ pybind11_add_module(compute_ ${compute_src} ${PROJECT_SOURCE_DIR}/src/bindings.c
 #Link to Kokkos
 Find_Package(Kokkos REQUIRED)
 target_link_libraries(compute_ PUBLIC Kokkos::kokkos)
+
+message(STATUS "Kokkos Backend: " ${KOKKOS_BACKEND})
