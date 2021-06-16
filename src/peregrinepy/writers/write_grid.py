@@ -32,6 +32,7 @@ def write_grid(mb, path='./', precision='double',with_ngls=False):
         fdtype = '<f8'
 
     ngls = 1 if with_ngls else 0
+    print(ngls)
 
     xdmf_elem = etree.Element('Xdmf')
     xdmf_elem.set('Version', '2')
@@ -65,12 +66,16 @@ def write_grid(mb, path='./', precision='double',with_ngls=False):
             f['coordinates'].create_dataset('y', shape=(extent,), dtype=fdtype)
             f['coordinates'].create_dataset('z', shape=(extent,), dtype=fdtype)
 
+            if with_ngls:
+                s_ = np.s_[:,:,:]
+            else:
+                s_ = np.s_[1:-1,1:-1,1:-1]
             dset = f['coordinates']['x']
-            dset[:] = blk.array['x'].ravel()
+            dset[:] = blk.array['x'][s_].ravel()
             dset = f['coordinates']['y']
-            dset[:] = blk.array['y'].ravel()
+            dset[:] = blk.array['y'][s_].ravel()
             dset = f['coordinates']['z']
-            dset[:] = blk.array['z'].ravel()
+            dset[:] = blk.array['z'][s_].ravel()
 
         block_elem = etree.Element('Grid')
         block_elem.set('Name','B{:06d}'.format(blk.nblki))

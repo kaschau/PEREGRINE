@@ -14,7 +14,10 @@ struct block_ {
   // Grid Arrays
   threeDview x,y,z;
   // Metric Arrays
+  // Cell Centers
   threeDview xc,yc,zc;
+  // I face area vectors
+  threeDview isx,isy,isz,iS;
 
 };
 

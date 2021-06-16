@@ -75,6 +75,11 @@ class block(block_):
         # Coordinate arrays
         for d in ['x','y','z']:
             self.array[f'{d}'] = None
+        # Grid metrics
+        # Cell centers
         for d in ['xc','yc','zc']:
+            self.array[f'{d}'] = None
+        # I face area vectors
+        for d in ['isx','isy','isz','iS']:
             self.array[f'{d}'] = None
         self.array._freeze()
