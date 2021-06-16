@@ -5,7 +5,7 @@
 
 void metrics(block_ b) {
 
-    MDRange3 range({{0,0,0}},{{b.ni,b.nj,b.nk}});
+    MDRange3 range({{0,0,0}},{{b.ni+1,b.nj+1,b.nk+1}});
     Kokkos::parallel_for("add3", range, KOKKOS_LAMBDA(const int i,
                                                       const int j,
                                                       const int k) {
