@@ -16,8 +16,12 @@ struct block_ {
   // Metric Arrays
   // Cell Centers
   threeDview xc,yc,zc;
-  // I face area vectors
+  // i face area vectors
   threeDview isx,isy,isz,iS;
+  // j face area vectors
+  threeDview jsx,jsy,jsz,jS;
+  // k face area vectors
+  threeDview ksx,ksy,ksz,kS;
 
 };
 

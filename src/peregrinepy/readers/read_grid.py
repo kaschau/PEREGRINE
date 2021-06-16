@@ -23,9 +23,9 @@ def read_grid(mb,path='./'):
         file_name = f"{path}/gv.{blk.nblki:06d}.h5"
 
         with h5py.File(file_name, 'r') as f:
-            ni = list(f['dimensions']['nx'])[0]
-            nj = list(f['dimensions']['ny'])[0]
-            nk = list(f['dimensions']['nz'])[0]
+            ni = list(f['dimensions']['ni'])[0]
+            nj = list(f['dimensions']['nj'])[0]
+            nk = list(f['dimensions']['nk'])[0]
 
 
             blk.ni = ni; blk.nj = nj; blk.nk = nk
