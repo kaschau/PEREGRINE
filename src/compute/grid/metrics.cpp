@@ -53,6 +53,10 @@ void metrics(block_ b) {
                          pow(b.isy(i,j,k),2.0) +
                          pow(b.isz(i,j,k),2.0) );
 
+  b.inx(i,j,k) = b.isx(i,j,k)/b.iS(i,j,k);
+  b.iny(i,j,k) = b.isy(i,j,k)/b.iS(i,j,k);
+  b.inz(i,j,k) = b.isz(i,j,k)/b.iS(i,j,k);
+
   });
 
 
@@ -85,6 +89,10 @@ void metrics(block_ b) {
                          pow(b.jsy(i,j,k),2.0) +
                          pow(b.jsz(i,j,k),2.0) );
 
+  b.jnx(i,j,k) = b.jsx(i,j,k)/b.jS(i,j,k);
+  b.jny(i,j,k) = b.jsy(i,j,k)/b.jS(i,j,k);
+  b.jnz(i,j,k) = b.jsz(i,j,k)/b.jS(i,j,k);
+
   });
 
   // k face range
@@ -115,6 +123,10 @@ void metrics(block_ b) {
   b.kS (i,j,k) =   sqrt( pow(b.ksx(i,j,k),2.0) +
                          pow(b.ksy(i,j,k),2.0) +
                          pow(b.ksz(i,j,k),2.0) );
+
+  b.knx(i,j,k) = b.ksx(i,j,k)/b.kS(i,j,k);
+  b.kny(i,j,k) = b.ksy(i,j,k)/b.kS(i,j,k);
+  b.knz(i,j,k) = b.ksz(i,j,k)/b.kS(i,j,k);
 
   });
 

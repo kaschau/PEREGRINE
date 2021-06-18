@@ -29,7 +29,7 @@ PYBIND11_MODULE(compute_, m) {
     .def_readwrite("nj", &block_::nj)
     .def_readwrite("nk", &block_::nk)
 
-    .def_readwrite("ns", &block_::ns)
+    .def_readwrite("ne", &block_::ne)
 
 //----------------------------------------------------------------------------//
 //  Primary grid node coordinates
@@ -50,36 +50,60 @@ PYBIND11_MODULE(compute_, m) {
     .def_readwrite("isy", &block_::isy)
     .def_readwrite("isz", &block_::isz)
     .def_readwrite("iS" , &block_::iS )
+    .def_readwrite("inx", &block_::inx)
+    .def_readwrite("iny", &block_::iny)
+    .def_readwrite("inz", &block_::inz)
     // j face area vector
     .def_readwrite("jsx", &block_::jsx)
     .def_readwrite("jsy", &block_::jsy)
     .def_readwrite("jsz", &block_::jsz)
     .def_readwrite("jS" , &block_::jS )
+    .def_readwrite("jnx", &block_::jnx)
+    .def_readwrite("jny", &block_::jny)
+    .def_readwrite("jnz", &block_::jnz)
     // k face area vector
     .def_readwrite("ksx", &block_::ksx)
     .def_readwrite("ksy", &block_::ksy)
     .def_readwrite("ksz", &block_::ksz)
-    .def_readwrite("kS" , &block_::kS );
+    .def_readwrite("kS" , &block_::kS )
+    .def_readwrite("knx", &block_::knx)
+    .def_readwrite("kny", &block_::kny)
+    .def_readwrite("knz", &block_::knz)
 
-  // Temporary creation stuff
-  m.def("gen3Dview", &gen3Dview, "Generate a threeDview",
-        py::arg("name"), py::arg("ni"), py::arg("nk"),py::arg("nk"));
-  m.def("gen4Dview", &gen4Dview, "Generate a fourDview",
-        py::arg("name"), py::arg("ni"), py::arg("nk"),py::arg("nk"), py::arg("nl"));
+//----------------------------------------------------------------------------//
+//  Flow variables
+//----------------------------------------------------------------------------//
+    // Conservative variables
+    .def_readwrite("Q" , &block_::Q )
+    .def_readwrite("q" , &block_::q )
 
-  m.def("finalize_kokkos", &finalize_kokkos, "finalize kokkos");
+    // dQdt Array
+    .def_readwrite("dQ" , &block_::dQ )
+
+    // Flux Arrays
+    .def_readwrite("iF" , &block_::iF )
+    .def_readwrite("jF" , &block_::jF )
+    .def_readwrite("kF" , &block_::kF );
 
 ////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////  Compute Functions /////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
+
+//  // Generate views
+//  m.def("gen3Dview", &gen3Dview, "Generate a threeDview",
+//        py::arg("name"), py::arg("ni"), py::arg("nk"),py::arg("nk"));
+//  m.def("gen4Dview", &gen4Dview, "Generate a fourDview",
+//        py::arg("name"), py::arg("ni"), py::arg("nk"),py::arg("nk"), py::arg("nl"));
 
   // ./Grid
   //  |----> metrics
   m.def("metrics", &metrics, "Compute grid metrics on primary grid",
         py::arg("block_ object"));
 
-  m.def("add3D", &add3D, "Add a float to entire threeDview",
-        py::arg("block_ object"), py::arg("Float to add"));
+  // ./flux
+  //  |----> advective
+  m.def("advective", &advective, "Compute centered difference flux",
+        py::arg("block_ object"));
 
   static auto _atexit = []() {
     if (Kokkos::is_initialized()) Kokkos::finalize();

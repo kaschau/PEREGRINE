@@ -9,7 +9,7 @@
 struct block_ {
   int nblki;
   int ni,nj,nk;
-  int ns;
+  int ne=5;
 
   // Grid Arrays
   threeDview x,y,z;
@@ -17,11 +17,17 @@ struct block_ {
   // Cell Centers
   threeDview xc,yc,zc;
   // i face area vectors
-  threeDview isx,isy,isz,iS;
+  threeDview isx,isy,isz,iS,inx,iny,inz;
   // j face area vectors
-  threeDview jsx,jsy,jsz,jS;
+  threeDview jsx,jsy,jsz,jS,jnx,jny,jnz;
   // k face area vectors
-  threeDview ksx,ksy,ksz,kS;
+  threeDview ksx,ksy,ksz,kS,knx,kny,knz;
+
+  // Cons,Prim Arrays
+  fourDview Q,q,dQ;
+
+  // Flux Arrays
+  fourDview iF,jF,kF;
 
 };
 

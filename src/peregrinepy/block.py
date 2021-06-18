@@ -80,12 +80,21 @@ class block(block_):
         for d in ['xc','yc','zc']:
             self.array[f'{d}'] = None
         # i face area vectors
-        for d in ['isx','isy','isz','iS']:
+        for d in ['isx','isy','isz','iS','inx','iny','inz']:
             self.array[f'{d}'] = None
         # j face area vectors
-        for d in ['jsx','jsy','jsz','jS']:
+        for d in ['jsx','jsy','jsz','jS','jnx','jny','jnz']:
             self.array[f'{d}'] = None
-        # j face area vectors
-        for d in ['ksx','ksy','ksz','kS']:
+        # k face area vectors
+        for d in ['ksx','ksy','ksz','kS','knx','kny','knz']:
             self.array[f'{d}'] = None
+
+        # Flow variables
+        # Cons, prim
+        for d in ['Q','q','dQ']:
+            self.array[f'{d}'] = None
+        # Face fluxes
+        for d in ['iF','jF','kF']:
+            self.array[f'{d}'] = None
+
         self.array._freeze()
