@@ -1,10 +1,14 @@
 # -*- coding: utf-8 -*-
 
-#import kokkos
-from ..compute_ import gen3Dview
+from ..compute_ import KokkosLocation
+import kokkos
 import h5py
 import numpy as np
 
+if KokkosLocation in ['OpenMP','CudaUVM','Serial','Default']:
+    space = kokkos.HostSpace
+else:
+    raise ValueError()
 
 def read_grid(mb,path='./'):
     ''' This function reads in all the HDF5 grid files in :path: and adds the coordinate data to a supplied raptorpy.multiblock.grid object (or one of its descendants)
@@ -30,38 +34,11 @@ def read_grid(mb,path='./'):
 
             blk.ni = ni; blk.nj = nj; blk.nk = nk
 
-            #blk.x_ = kokkos.array("x",
-            #                     [ni,nj,nk],
-            #                     dtype=kokkos.double,
-            #                     space=space)
-            blk.x = gen3Dview("x", ni+2,
-                                   nj+2,
-                                   nk+2)
-            blk.array['x'] = mb.np.array(blk.x, copy=False)
-            blk.array['x'][1:-1,
-                           1:-1,
-                           1:-1] = np.array(f['coordinates']['x']).reshape((ni, nj, nk))
+            ccshape = [ni+2,nj+2,nk+2]
+            for name in ('x','y','z'):
+                setattr(blk,name, kokkos.array(name, shape=ccshape, dtype=kokkos.double, space=space, dynamic=False))
+                blk.array[name] = mb.np.array(getattr(blk,name), copy=False)
 
-            #blk.y = kokkos.array("y",
-            #                     [ni,nj,nk],
-            #                     dtype=kokkos.double,
-            #                     space=space)
-            blk.y = gen3Dview("y",ni+2,
-                                  nj+2,
-                                  nk+2)
-            blk.array['y'] = mb.np.array(blk.y, copy=False)
-            blk.array['y'][1:-1,
-                           1:-1,
-                           1:-1] = np.array(f['coordinates']['y']).reshape((ni, nj, nk))
-
-            #blk.z = kokkos.array("z",
-            #                     [ni,nj,nk],
-            #                     dtype=kokkos.double,
-            #                     space=space)
-            blk.z = gen3Dview("z",ni+2,
-                                  nj+2,
-                                  nk+2)
-            blk.array['z'] = mb.np.array(blk.z, copy=False)
-            blk.array['z'][1:-1,
-                           1:-1,
-                           1:-1] = np.array(f['coordinates']['z']).reshape((ni, nj, nk))
+                blk.array[name][1:-1,
+                                1:-1,
+                                1:-1] = np.array(f['coordinates'][name]).reshape((ni, nj, nk))

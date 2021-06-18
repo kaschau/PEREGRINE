@@ -8,16 +8,15 @@
 threeDview gen3Dview(std::string name, int ni, int nj, int nk);
 fourDview  gen4Dview(std::string name, int ni, int nj, int nk, int nl);
 
-void finalize_kokkos();
 
 ///////////////////////////////////////////////////////////
 ////////////////// Compute Functions //////////////////////
 ///////////////////////////////////////////////////////////
 
-// METRICS
+// Metrics
 void metrics(block_ b);
 
+// Advective Flux
+void advective(block_ b);
 
-//temp
-void add3D(block_ b, double n);
 #endif
