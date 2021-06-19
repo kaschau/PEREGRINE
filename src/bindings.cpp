@@ -104,6 +104,24 @@ PYBIND11_MODULE(compute_, m) {
   //  |----> advective
   m.def("advective", &advective, "Compute centered difference flux",
         py::arg("block_ object"));
+  m.def("apply_flux", &apply_flux, "Apply fluxes to RHS",
+        py::arg("block_ object"));
+
+  // ./estr
+  //  |----> total_energy
+  m.def("total_energy", &total_energy, "Compute total energy from primatives",
+        py::arg("block_ object"));
+
+
+
+
+
+
+
+
+
+
+
 
   static auto _atexit = []() {
     if (Kokkos::is_initialized()) Kokkos::finalize();
