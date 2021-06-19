@@ -7,33 +7,18 @@
 void apply_flux(std::vector<block_> mb) {
 for(block_ b : mb){
 
-  // i flux face range
-  MDRange3 range({1,1,1},{b.ni,b.nj,b.nk});
+  // integration cc range
+  MDRange4 range({1,1,1,0},{b.ni,b.nj,b.nk,b.ne});
   Kokkos::parallel_for("Apply current fluxes to RHS",
                        range,
                        KOKKOS_LAMBDA(const int i,
                                      const int j,
-                                     const int k) {
+                                     const int k,
+                                     const int l) {
 
     // Continuity
-    b.dQ(i,j,k,0) += b.iF(i  ,j,k,0) + b.jF(i,j  ,k,0) + b.kF(i,j,k  ,0);
-    b.dQ(i,j,k,0) -= b.iF(i+1,j,k,0) + b.jF(i,j+1,k,0) + b.kF(i,j,k+1,0);
-
-    // x momentum
-    b.dQ(i,j,k,1) += b.iF(i  ,j,k,1) + b.jF(i,j  ,k,1) + b.kF(i,j,k  ,1);
-    b.dQ(i,j,k,1) -= b.iF(i+1,j,k,1) + b.jF(i,j+1,k,1) + b.kF(i,j,k+1,1);
-
-    // y momentum
-    b.dQ(i,j,k,2) += b.iF(i  ,j,k,2) + b.jF(i,j  ,k,2) + b.kF(i,j,k  ,2);
-    b.dQ(i,j,k,2) -= b.iF(i+1,j,k,2) + b.jF(i,j+1,k,2) + b.kF(i,j,k+1,2);
-
-    // w momentum
-    b.dQ(i,j,k,3) += b.iF(i  ,j,k,3) + b.jF(i,j  ,k,3) + b.kF(i,j,k  ,3);
-    b.dQ(i,j,k,3) -= b.iF(i+1,j,k,3) + b.jF(i,j+1,k,3) + b.kF(i,j,k+1,3);
-
-    // Total energy
-    b.dQ(i,j,k,4) += b.iF(i  ,j,k,4) + b.jF(i,j  ,k,4) + b.kF(i,j,k  ,4);
-    b.dQ(i,j,k,4) -= b.iF(i+1,j,k,4) + b.jF(i,j+1,k,4) + b.kF(i,j,k+1,4);
+    b.dQ(i,j,k,l) += b.iF(i  ,j,k,l) + b.jF(i,j  ,k,l) + b.kF(i,j,k  ,l);
+    b.dQ(i,j,k,l) -= b.iF(i+1,j,k,l) + b.jF(i,j+1,k,l) + b.kF(i,j,k+1,l);
 
   });
 
