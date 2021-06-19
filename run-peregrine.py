@@ -36,13 +36,13 @@ def simulate(config_file_path):
     for blk in mb:
         # Prim
         blk.array['q'][:,:,:,0] = 101325.0
-        blk.array['q'][:,:,:,1] = mb.np.random.random(blk.array['q'][:,:,:,1].shape)
+        blk.array['q'][:,:,:,1] = 1.0 #mb.np.random.random(blk.array['q'][:,:,:,1].shape)
         blk.array['q'][:,:,:,2] = 0.0
         blk.array['q'][:,:,:,3] = 0.0
         blk.array['q'][:,:,:,4] = 300.0
 
         blk.array['Q'][:,:,:,0] = 1.2
-        blk.array['Q'][:,:,:,1] = 1.0
+        blk.array['Q'][:,:,:,1] = 1.2
         blk.array['Q'][:,:,:,2] = 0.0
         blk.array['Q'][:,:,:,3] = 0.0
 
@@ -56,16 +56,16 @@ def simulate(config_file_path):
 
 
     print('blk0')
-    print('dQ rho')
-    print(mb[0].array['dQ'][2,:,:,0])
-    print('dQ rhoU')
-    print(mb[0].array['dQ'][2,:,:,1])
-    print('dQ rhoV')
-    print(mb[0].array['dQ'][2,:,:,2])
-    print('dQ rhoW')
-    print(mb[0].array['dQ'][2,:,:,3])
-    print('dQ rhoE')
-    print(mb[0].array['dQ'][2,:,:,4])
+    print('Q rho')
+    print(mb[0].array['Q'][2,:,:,0])
+    print('Q rhoU')
+    print(mb[0].array['Q'][2,:,:,1])
+    print('Q rhoV')
+    print(mb[0].array['Q'][2,:,:,2])
+    print('Q rhoW')
+    print(mb[0].array['Q'][2,:,:,3])
+    print('Q rhoE')
+    print(mb[0].array['Q'][2,:,:,4])
 
     #ts = time.time()
     #for b in mb:

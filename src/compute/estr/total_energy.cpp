@@ -14,7 +14,7 @@ void total_energy(block_ b) {
                                      const int j,
                                      const int k) {
 
-  double cp = 1.006;
+  double cp = 1006.0;
 
   b.Q(i,j,k,4) = cp*b.q(i,j,k,4) + 0.5*b.Q(i,j,k,0)*sqrt(pow(b.q(i,j,k,1),2.0) +
                                                          pow(b.q(i,j,k,2),2.0) +
