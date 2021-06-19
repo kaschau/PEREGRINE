@@ -68,11 +68,6 @@ def init_arrays(mb,config):
 #-------------------------------------------------------------------------------#
 #       Fluxes
 #-------------------------------------------------------------------------------#
-        blk.iF = kokkos.array('iF', ifQshape, dtype=kokkos.double, space=space, dynamic=False)
-        blk.array['iF'] = mb.np.array(blk.iF, copy=False)
-
-        blk.jF = kokkos.array('jF', jfQshape, dtype=kokkos.double, space=space, dynamic=False)
-        blk.array['jF'] = mb.np.array(blk.jF, copy=False)
-
-        blk.kF = kokkos.array('kF', kfQshape, dtype=kokkos.double, space=space, dynamic=False)
-        blk.array['kF'] = mb.np.array(blk.kF, copy=False)
+        for shape,name in zip((ifQshape,jfQshape,kfQshape),('iF', 'jF', 'kF')):
+            setattr(blk,name, kokkos.array(name, shape=shape, dtype=kokkos.double, space=space, dynamic=False))
+            blk.array[name] = mb.np.array(getattr(blk,name), copy=False)
