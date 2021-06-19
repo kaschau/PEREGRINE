@@ -29,8 +29,7 @@ def simulate(config_file_path):
 
     pg.initialize.init_arrays(mb,config)
 
-    for blk in mb:
-        pg.compute.metrics(blk)
+    #pg.compute.metrics(mb)
 
     # init flow
     for blk in mb:
@@ -46,13 +45,14 @@ def simulate(config_file_path):
         blk.array['Q'][:,:,:,2] = 0.0
         blk.array['Q'][:,:,:,3] = 0.0
 
-    for blk in mb:
-        pg.compute.total_energy(blk)
-
-
-    for blk in mb:
-        pg.compute.advective(blk)
-        pg.compute.apply_flux(blk)
+    ts = time.time()
+    for i in range(100):
+        print(i)
+        pg.compute.metrics(mb)
+        pg.compute.total_energy(mb)
+        pg.compute.advective(mb)
+        pg.compute.apply_flux(mb)
+    print(time.time()-ts, 'took this many seconds')
 
 
     print('blk0')

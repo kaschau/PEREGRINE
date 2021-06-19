@@ -1,10 +1,11 @@
 #include "Kokkos_Core.hpp"
 #include "kokkos_types.hpp"
 #include "block_.hpp"
-#include <iostream>
+#include <vector>
 #include <math.h>
 
-void advective(block_ b) {
+void advective(std::vector<block_> mb) {
+for(block_ b : mb){
 
   // i flux face range
   MDRange3 range_i({1,1,1},{b.ni+1,b.nj,b.nk});
@@ -137,4 +138,4 @@ void advective(block_ b) {
 
   });
 
-}
+}};

@@ -3,11 +3,7 @@
 
 #include "kokkos_types.hpp"
 #include "block_.hpp"
-
-// Temporary creation functions
-threeDview gen3Dview(std::string name, int ni, int nj, int nk);
-fourDview  gen4Dview(std::string name, int ni, int nj, int nk, int nl);
-
+#include <vector>
 
 ///////////////////////////////////////////////////////////
 ////////////////// Compute Functions //////////////////////
@@ -15,16 +11,16 @@ fourDview  gen4Dview(std::string name, int ni, int nj, int nk, int nl);
 
 // ./grid
 //    |------> Metrics
-void metrics(block_ b);
+void metrics(std::vector<block_> mb);
 
 // ./flux
 //    |------> Advective
-void advective(block_ b);
-void apply_flux(block_ b);
+void advective(std::vector<block_> mb);
+void apply_flux(std::vector<block_> mb);
 
 // ./estr
 //    |------> total_energy
-void total_energy(block_ b);
+void total_energy(std::vector<block_> mb);
 
 
 
