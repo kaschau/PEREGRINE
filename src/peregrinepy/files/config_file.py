@@ -29,6 +29,7 @@ class config_file(FrozenDict):
                                  'inputdir'  : './Input',
                                  'outputdir' : './Output'})
         self['Kokkos'] = FrozenDict({'Space' : 'Default'})
+        self['solver'] = FrozenDict({'time_integration' : 'rk1'})
 
         for key in self.keys():
             self[key]._freeze()

@@ -93,6 +93,9 @@ class block(block_):
         # Cons, prim
         for d in ['Q','q','dQ']:
             self.array[f'{d}'] = None
+        # RK stages
+        for d in ['rhs0','rhs1','rhs2','rhs3']:
+            self.array[f'{d}'] = None
         # Face fluxes
         for d in ['iF','jF','kF']:
             self.array[f'{d}'] = None

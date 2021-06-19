@@ -79,9 +79,13 @@ PYBIND11_MODULE(compute_, m) {
     // Conservative variables
     .def_readwrite("Q" , &block_::Q )
     .def_readwrite("q" , &block_::q )
-
-    // dQdt Array
     .def_readwrite("dQ" , &block_::dQ )
+
+    // RK stages
+    .def_readwrite("rhs0" , &block_::rhs0 )
+    .def_readwrite("rhs1" , &block_::rhs1 )
+    .def_readwrite("rhs2" , &block_::rhs2 )
+    .def_readwrite("rhs3" , &block_::rhs3 )
 
     // Flux Arrays
     .def_readwrite("iF" , &block_::iF )
@@ -91,12 +95,6 @@ PYBIND11_MODULE(compute_, m) {
 ////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////  Compute Functions /////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-
-//  // Generate views
-//  m.def("gen3Dview", &gen3Dview, "Generate a threeDview",
-//        py::arg("name"), py::arg("ni"), py::arg("nk"),py::arg("nk"));
-//  m.def("gen4Dview", &gen4Dview, "Generate a fourDview",
-//        py::arg("name"), py::arg("ni"), py::arg("nk"),py::arg("nk"), py::arg("nl"));
 
   // ./Grid
   //  |----> metrics

@@ -26,6 +26,9 @@ struct block_ {
   // Cons,Prim Arrays
   fourDview Q,q,dQ;
 
+  // RHS stages
+  fourDview rhs0,rhs1,rhs2,rhs3;
+
   // Flux Arrays
   fourDview iF,jF,kF;
 
