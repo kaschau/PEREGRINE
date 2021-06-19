@@ -32,15 +32,17 @@ void advective(block_ b) {
     // Continuity
     b.iF(i,j,k,0) = 0.5*(b.Q(i,j,k,0)+b.Q(i,j,k,0))*U;
 
-    // x momentum rho*u*U+p
+    // x momentum rho*u*U+ p*Ax
     b.iF(i,j,k,1) = 0.5*(b.Q(i,j,k,0)+b.Q(i-1,j,k,0)) * 0.5*(b.q(i,j,k,1)+b.q(i-1,j,k,1)) * U
-                  + 0.5*(b.q(i,j,k,0)-b.q(i-1,j,k,0)) *      b.isx(i,j,k)                     ;
+                  + 0.5*(b.q(i,j,k,0)+b.q(i-1,j,k,0)) *      b.isx(i,j,k)                     ;
 
-    // y momentum rho*v*U
-    b.iF(i,j,k,2) = 0.5*(b.Q(i,j,k,0)+b.Q(i-1,j,k,0)) * 0.5*(b.q(i,j,k,2)+b.q(i-1,j,k,2)) * U ;
+    // y momentum rho*v*U+ p*Ay
+    b.iF(i,j,k,2) = 0.5*(b.Q(i,j,k,0)+b.Q(i-1,j,k,0)) * 0.5*(b.q(i,j,k,2)+b.q(i-1,j,k,2)) * U
+                  + 0.5*(b.q(i,j,k,0)+b.q(i-1,j,k,0)) *      b.isy(i,j,k)                     ;
 
-    // w momentum rho*w*U
+    // w momentum rho*w*U+ p*Az
     b.iF(i,j,k,3) = 0.5*(b.Q(i,j,k,0)+b.Q(i-1,j,k,0)) * 0.5*(b.q(i,j,k,3)+b.q(i-1,j,k,3)) * U ;
+                  + 0.5*(b.q(i,j,k,0)+b.q(i-1,j,k,0)) *      b.isz(i,j,k)                     ;
 
     // Total energy (rhoE+P)*U)
     b.iF(i,j,k,4) =(0.5*(b.Q(i,j,k,4)+b.Q(i-1,j,k,4)) + 0.5*(b.q(i,j,k,0)+b.q(i-1,j,k,0)))* U ;
@@ -76,13 +78,15 @@ void advective(block_ b) {
 
     // x momentum rho*u*V
     b.jF(i,j,k,1) = 0.5*(b.Q(i,j,k,0)+b.Q(i,j-1,k,0)) * 0.5*(b.q(i,j,k,1)+b.q(i,j-1,k,1)) * V ;
+                  + 0.5*(b.q(i,j,k,0)+b.q(i,j-1,k,0)) *      b.jsx(i,j,k)                     ;
 
     // y momentum rho*v*V+p
     b.jF(i,j,k,2) = 0.5*(b.Q(i,j,k,0)+b.Q(i,j-1,k,0)) * 0.5*(b.q(i,j,k,2)+b.q(i,j-1,k,2)) * V
-                  + 0.5*(b.q(i,j,k,0)-b.q(i,j-1,k,0)) *      b.jsx(i,j,k)                     ;
+                  + 0.5*(b.q(i,j,k,0)+b.q(i,j-1,k,0)) *      b.jsy(i,j,k)                     ;
 
     // w momentum rho*w*V
     b.jF(i,j,k,3) = 0.5*(b.Q(i,j,k,0)+b.Q(i,j-1,k,0)) * 0.5*(b.q(i,j,k,3)+b.q(i,j-1,k,3)) * V ;
+                  + 0.5*(b.q(i,j,k,0)+b.q(i,j-1,k,0)) *      b.jsz(i,j,k)                     ;
 
     // Total energy (rhoE+P)*V)
     b.jF(i,j,k,4) =(0.5*(b.Q(i,j,k,4)+b.Q(i,j-1,k,4)) + 0.5*(b.q(i,j,k,0)+b.q(i,j-1,k,0)))* V ;
@@ -118,13 +122,15 @@ void advective(block_ b) {
 
     // x momentum rho*u*W
     b.kF(i,j,k,1) = 0.5*(b.Q(i,j,k,0)+b.Q(i,j,k-1,0)) * 0.5*(b.q(i,j,k,1)+b.q(i,j,k-1,1)) * W ;
+                  + 0.5*(b.q(i,j,k,0)+b.q(i,j,k-1,0)) *      b.ksx(i,j,k)                     ;
 
     // y momentum rho*v*W
     b.kF(i,j,k,2) = 0.5*(b.Q(i,j,k,0)+b.Q(i,j,k-1,0)) * 0.5*(b.q(i,j,k,2)+b.q(i,j,k-1,2)) * W ;
+                  + 0.5*(b.q(i,j,k,0)+b.q(i,j,k-1,0)) *      b.ksy(i,j,k)                     ;
 
     // w momentum rho*w*W+p
     b.kF(i,j,k,3) = 0.5*(b.Q(i,j,k,0)+b.Q(i,j,k-1,0)) * 0.5*(b.q(i,j,k,3)+b.q(i,j,k-1,3)) * W ;
-                  + 0.5*(b.q(i,j,k,0)-b.q(i,j,k-1,0)) *      b.ksx(i,j,k)                     ;
+                  + 0.5*(b.q(i,j,k,0)+b.q(i,j,k-1,0)) *      b.ksz(i,j,k)                     ;
 
     // Total energy (rhoE+P)*W)
     b.kF(i,j,k,4) =(0.5*(b.Q(i,j,k,4)+b.Q(i,j,k-1,4)) + 0.5*(b.q(i,j,k,0)+b.q(i,j,k-1,0)))* W ;
