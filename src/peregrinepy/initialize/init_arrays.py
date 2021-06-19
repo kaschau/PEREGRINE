@@ -61,7 +61,21 @@ def init_arrays(mb,config):
 #       Conservative, Primative, dQ
 #-------------------------------------------------------------------------------#
         shape = cQshape
-        for name in ('Q', 'q', 'dQ'):
+        for name in ('Q', 'q'):
+            setattr(blk,name, kokkos.array(name, shape=shape, dtype=kokkos.double, space=space, dynamic=False))
+            blk.array[name] = mb.np.array(getattr(blk,name), copy=False)
+
+#-------------------------------------------------------------------------------#
+#       RK Stages
+#-------------------------------------------------------------------------------#
+        if config['solver']['time_integration'] == 'rk1':
+            stages = ('rhs0', 'rhs1')
+        elif config['solver']['time_integration'] == 'rk4':
+            stages = ('rhs0', 'rhs1', 'rhs2', 'rhs3')
+        else:
+            raise ValueError('Unknown time integrator')
+        shape = cQshape
+        for name in stages:
             setattr(blk,name, kokkos.array(name, shape=shape, dtype=kokkos.double, space=space, dynamic=False))
             blk.array[name] = mb.np.array(getattr(blk,name), copy=False)
 

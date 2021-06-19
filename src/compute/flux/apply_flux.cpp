@@ -16,7 +16,7 @@ for(block_ b : mb){
                                      const int k,
                                      const int l) {
 
-    // Continuity
+    // Add fluxes to RHS
     b.dQ(i,j,k,l) += b.iF(i  ,j,k,l) + b.jF(i,j  ,k,l) + b.kF(i,j,k  ,l);
     b.dQ(i,j,k,l) -= b.iF(i+1,j,k,l) + b.jF(i,j+1,k,l) + b.kF(i,j,k+1,l);
 
