@@ -13,10 +13,20 @@ fourDview  gen4Dview(std::string name, int ni, int nj, int nk, int nl);
 ////////////////// Compute Functions //////////////////////
 ///////////////////////////////////////////////////////////
 
-// Metrics
+// ./grid
+//    |------> Metrics
 void metrics(block_ b);
 
-// Advective Flux
+// ./flux
+//    |------> Advective
 void advective(block_ b);
+void apply_flux(block_ b);
+
+// ./estr
+//    |------> total_energy
+void total_energy(block_ b);
+
+
+
 
 #endif

@@ -34,36 +34,38 @@ def simulate(config_file_path):
 
     # init flow
     for blk in mb:
-        # Cons
+        # Prim
+        blk.array['q'][:,:,:,0] = 101325.0
+        blk.array['q'][:,:,:,1] = mb.np.random.random(blk.array['q'][:,:,:,1].shape)
+        blk.array['q'][:,:,:,2] = 0.0
+        blk.array['q'][:,:,:,3] = 0.0
+        blk.array['q'][:,:,:,4] = 300.0
+
         blk.array['Q'][:,:,:,0] = 1.2
-        blk.array['Q'][:,:,:,1] = 1.2
+        blk.array['Q'][:,:,:,1] = 1.0
         blk.array['Q'][:,:,:,2] = 0.0
         blk.array['Q'][:,:,:,3] = 0.0
 
-        # Prim
-        blk.array['q'][:,:,:,0] = 101325.0
-        blk.array['q'][:,:,:,1] = blk.array['Q'][:,:,:,1]/blk.array['Q'][:,:,:,0]
-        blk.array['q'][:,:,:,2] = blk.array['Q'][:,:,:,2]/blk.array['Q'][:,:,:,0]
-        blk.array['q'][:,:,:,3] = blk.array['Q'][:,:,:,3]/blk.array['Q'][:,:,:,0]
-
-        # Cons Energy
-        blk.array['Q'][:,:,:,4] = blk.array['q'][:,:,:,0]/(1.4-1)+0.5*blk.array['Q'][:,:,:,0]*mb.np.sqrt(blk.array['q'][:,:,:,1]**2+blk.array['q'][:,:,:,2]**2+blk.array['q'][:,:,:,3]**2)
+    for blk in mb:
+        pg.compute.total_energy(blk)
 
 
     for blk in mb:
         pg.compute.advective(blk)
+        pg.compute.apply_flux(blk)
+
 
     print('blk0')
-    print('iF rho')
-    print(mb[0].array['iF'][1,:,:,0])
-    print('iF rhoU')
-    print(mb[0].array['iF'][1,:,:,1])
-    print('iF rhoV')
-    print(mb[0].array['iF'][1,:,:,2])
-    print('iF rhoW')
-    print(mb[0].array['iF'][1,:,:,3])
-    print('iF rhoE')
-    print(mb[0].array['iF'][1,:,:,4])
+    print('dQ rho')
+    print(mb[0].array['dQ'][2,:,:,0])
+    print('dQ rhoU')
+    print(mb[0].array['dQ'][2,:,:,1])
+    print('dQ rhoV')
+    print(mb[0].array['dQ'][2,:,:,2])
+    print('dQ rhoW')
+    print(mb[0].array['dQ'][2,:,:,3])
+    print('dQ rhoE')
+    print(mb[0].array['dQ'][2,:,:,4])
 
     #ts = time.time()
     #for b in mb:
