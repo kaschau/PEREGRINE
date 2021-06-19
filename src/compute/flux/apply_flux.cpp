@@ -1,14 +1,15 @@
 #include "Kokkos_Core.hpp"
 #include "kokkos_types.hpp"
 #include "block_.hpp"
-#include <iostream>
+#include <vector>
 #include <math.h>
 
-void apply_flux(block_ b) {
+void apply_flux(std::vector<block_> mb) {
+for(block_ b : mb){
 
   // i flux face range
   MDRange3 range({1,1,1},{b.ni,b.nj,b.nk});
-  Kokkos::parallel_for("Apply current fluxes to LHS",
+  Kokkos::parallel_for("Apply current fluxes to RHS",
                        range,
                        KOKKOS_LAMBDA(const int i,
                                      const int j,
@@ -36,4 +37,4 @@ void apply_flux(block_ b) {
 
   });
 
-}
+}};

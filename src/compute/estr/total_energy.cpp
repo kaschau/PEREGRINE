@@ -1,11 +1,12 @@
 #include "Kokkos_Core.hpp"
 #include "kokkos_types.hpp"
 #include "block_.hpp"
-#include <iostream>
+#include <vector>
 #include <math.h>
 
-void total_energy(block_ b) {
+void total_energy(std::vector<block_> mb) {
 
+for(block_ b : mb){
   // cc range
   MDRange3 range_i({0,0,0},{b.ni+1,b.nj+1,b.nk+1});
   Kokkos::parallel_for("Compute total energy from primatives",
@@ -22,4 +23,4 @@ void total_energy(block_ b) {
 
   });
 
-};
+}};

@@ -3,7 +3,9 @@
 //#include "Block.hpp"
 #include "Kokkos_Core.hpp"
 #include "compute.hpp"
+#include "block_.hpp"
 #include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
 
 namespace py = pybind11;
 
@@ -20,6 +22,7 @@ PYBIND11_MODULE(compute_, m) {
 ////////////////////////////////////////////////////////////////////////////////
 ///////////////////  C++ Parent block_ class ///////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
+
   py::class_<block_>(m, "block_", py::dynamic_attr())
     .def(py::init<>())
 

@@ -1,10 +1,11 @@
 #include "Kokkos_Core.hpp"
 #include "kokkos_types.hpp"
 #include "block_.hpp"
-#include <iostream>
+#include <vector>
 #include <math.h>
 
-void metrics(block_ b) {
+void metrics(std::vector<block_> mb) {
+for(block_ b : mb){
 
   // Cell center range
   MDRange3 range_c({0,0,0},{b.ni+1,b.nj+1,b.nk+1});
@@ -130,4 +131,4 @@ void metrics(block_ b) {
 
   });
 
-}
+}};
