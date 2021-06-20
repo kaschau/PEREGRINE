@@ -1,6 +1,5 @@
 from .mpiutils import get_comm_rank_size
 from mpi4py.MPI import DOUBLE as MPIDOUBLE
-from numpy import s_
 
 
 def communicate(mb,varis):
@@ -14,33 +13,51 @@ def communicate(mb,varis):
         for _ in range(3):
             #Post sends
             for blk in mb:
+                if len(blk.array[var].shape) == 3:
+                    send = blk.sendbuffer3
+                    slice_s = blk.slice_s3
+                elif len(blk.array[var].shape) == 4:
+                    send = blk.sendbuffer4
+                    slice_s = blk.slice_s4
+                else:
+                    raise ValueError('what array?')
+
                 for face in ['1','2','3','4','5','6']:
                     neighbor = blk.connectivity[face]['neighbor']
-                    bc = blk.connectivity[face]['bc']
-                    if bc != 'b0':
+                    if neighbor is None:
                         continue
+                    bc = blk.connectivity[face]['bc']
                     orientation = blk.connectivity[face]['orientation']
                     comm_rank = blk.connectivity[face]['comm_rank']
                     tag = int(f'1{blk.nblki}020{neighbor}1')
-                    blk.sendbuffer[face][:] = blk.orient[face](blk.array[var][blk.slice_s3[face]])
-                    comm.Isend([blk.sendbuffer[face], MPIDOUBLE], dest=comm_rank, tag=tag)
+                    send[face][:] = blk.orient[face](blk.array[var][slice_s[face]])
+                    comm.Isend([send[face], MPIDOUBLE], dest=comm_rank, tag=tag)
 
             #Post recieves
             for blk in mb:
+                if len(blk.array[var].shape) == 3:
+                    recv = blk.recvbuffer3
+                    slice_r = blk.slice_r3
+                elif len(blk.array[var].shape) == 4:
+                    recv = blk.recvbuffer4
+                    slice_r = blk.slice_r4
+                else:
+                    raise ValueError('what array?')
                 for face in ['1','2','3','4','5','6']:
                     neighbor = blk.connectivity[face]['neighbor']
-                    bc = blk.connectivity[face]['bc']
-                    if bc != 'b0':
+                    if neighbor is None:
                         continue
+                    bc = blk.connectivity[face]['bc']
                     orientation = blk.connectivity[face]['orientation']
                     comm_rank   = blk.connectivity[face]['comm_rank']
                     tag = int(f'1{neighbor}020{blk.nblki}1')
-                    comm.Recv([blk.recvbuffer[face][:], MPIDOUBLE], source=comm_rank, tag=tag)
-                    blk.array[var][blk.slice_r3[face]] = blk.recvbuffer[face][:]
+                    comm.Recv([recv[face][:], MPIDOUBLE], source=comm_rank, tag=tag)
+                    blk.array[var][slice_r[face]] = recv[face][:]
 
             comm.Barrier()
 
 def set_block_communication(mb,config):
+    from numpy import s_
 
     if mb[0].ni == 0:
         raise ValueError('Must set grid before setting block communicaitons.')
@@ -110,44 +127,72 @@ def set_block_communication(mb,config):
     comm.Barrier()
 
     for blk,no in zip(mb,neighbor_orientations):
-        slice_s3 = {}
-        commfaceshape = {}
-        slice_r3 = {}
+        slice_sfp = {}
+        slice_sc  = {}
+        commfpshape = {}
+        commcshape = {}
+        slice_rfp = {}
+        slice_rc = {}
 
-        slice_s3['1']      = s_[ 2 , :, :]
-        commfaceshape['1'] =   ( blk.nj+2, blk.nk+2)
-        slice_r3['1']      = s_[0,:,:]
+        slice_sfp['1']      = s_[ 2 , :, :]
+        slice_sc['1']       = s_[ 1 , :, :, :]
+        commfpshape['1'] =   ( blk.nj+2, blk.nk+2)
+        commcshape['1']  =   ( blk.nj+1, blk.nk+1, blk.ne)
+        slice_rfp['1']      = s_[0,:,:]
+        slice_rc['1']       = s_[0,:,:,:]
 
-        slice_s3['2'] = s_[-3 , :, :]
-        commfaceshape['2'] = commfaceshape['1']
-        slice_r3['2']      = s_[-1,:,:]
+        slice_sfp['2']      = s_[-3 , :, :]
+        slice_sc['2']       = s_[-2 , :, :, :]
+        commfpshape['2'] = commfpshape['1']
+        commcshape['2']  = commcshape['1']
+        slice_rfp['2']      = s_[-1,:,:]
+        slice_rc['2']      = s_[-1,:,:,:]
 
-        slice_s3['3'] = s_[:,2,:]
-        commfaceshape['3'] =   ( blk.ni+2, blk.nk+2)
-        slice_r3['3'] = s_[:,0,:]
+        slice_sfp['3']      = s_[:,2,:]
+        slice_sc['3']       = s_[:,1,:,:]
+        commfpshape['3'] =   ( blk.ni+2, blk.nk+2, blk.ne)
+        commcshape['3']  =   ( blk.ni+1, blk.nk+1, blk.ne)
+        slice_rfp['3']      = s_[:,0,:]
+        slice_rc['3']       = s_[:,0,:,:]
 
-        slice_s3['4'] = s_[:,-3,:]
-        commfaceshape['4'] = commfaceshape['3']
-        slice_r3['4'] = s_[:,-1,:]
+        slice_sfp['4']      = s_[:,-3,:]
+        slice_sc['4']       = s_[:,-2,:,:]
+        commfpshape['4'] = commfpshape['3']
+        commcshape['4']  = commcshape['3']
+        slice_rfp['4']      = s_[:,-1,:]
+        slice_rc['4']       = s_[:,-1,:,:]
 
-        slice_s3['5'] = s_[:,:,2]
-        commfaceshape['5'] =   ( blk.ni+2, blk.nj+2)
-        slice_r3['5'] = s_[:,:,0]
+        slice_sfp['5']      = s_[:,:,2]
+        slice_sc['5']       = s_[:,:,1]
+        commfpshape['5'] =   ( blk.ni+2, blk.nj+2)
+        commcshape['5']  =   ( blk.ni+1, blk.nj+1, blk.ne)
+        slice_rfp['5']      = s_[:,:,0]
+        slice_rc['5']       = s_[:,:,0,:]
 
-        slice_s3['6'] = s_[:,:,-3]
-        commfaceshape['6'] = commfaceshape['5']
-        slice_r3['6'] = s_[:,:,-1]
+        slice_sfp['6']      = s_[:,:,-3]
+        slice_sc['6']       = s_[:,:,-2,:]
+        commfpshape['6'] = commfpshape['5']
+        commcshape['6']  = commcshape['5']
+        slice_rfp['6']      = s_[:,:,-1]
+        slice_rc['6']       = s_[:,:,-1,:]
 
         for face in ['1','2','3','4','5','6']:
             neighbor = blk.connectivity[face]['neighbor']
             if neighbor is None:
                 blk.slice_s3[face] = None
                 blk.slice_r3[face] = None
-                blk.sendbuffer[face] = None
-                blk.recvbuffer[face] = None
+                blk.slice_s4[face] = None
+                blk.slice_r4[face] = None
+                blk.sendbuffer3[face] = None
+                blk.recvbuffer3[face] = None
+                blk.sendbuffer4[face] = None
+                blk.recvbuffer4[face] = None
             else:
-                blk.slice_s3[face] = slice_s3[face]
-                blk.slice_r3[face] = slice_r3[face]
+                blk.slice_s3[face] = slice_sfp[face]
+                blk.slice_r3[face] = slice_rfp[face]
+
+                blk.slice_s4[face] = slice_sc[face]
+                blk.slice_r4[face] = slice_rc[face]
 
                 orientation = blk.connectivity[face]['orientation']
                 neighbor = int(blk.connectivity[face]['neighbor'])
@@ -200,8 +245,16 @@ def set_block_communication(mb,config):
                         blk.orient[face] = orient_na
 
                 # We send the data in the correct shape already
-                temp = blk.orient[face](mb.np.empty(commfaceshape[face]))
-                blk.sendbuffer[face] = mb.np.ascontiguousarray(temp)
+                # Face and point shape
+                temp = blk.orient[face](mb.np.empty(commfpshape[face]))
+                blk.sendbuffer3[face] = mb.np.ascontiguousarray(temp)
                 # We revieve the data in the correct shape already
-                temp = mb.np.empty(commfaceshape[face])
-                blk.recvbuffer[face] = mb.np.ascontiguousarray(mb.np.empty(commfaceshape[face]))
+                temp = mb.np.empty(commfpshape[face])
+                blk.recvbuffer3[face] = mb.np.ascontiguousarray(mb.np.empty(commfpshape[face]))
+
+                # Cell
+                temp = blk.orient[face](mb.np.empty(commcshape[face]))
+                blk.sendbuffer4[face] = mb.np.ascontiguousarray(temp)
+                # We revieve the data in the correct shape already
+                temp = mb.np.empty(commcshape[face])
+                blk.recvbuffer4[face] = mb.np.ascontiguousarray(mb.np.empty(commcshape[face]))

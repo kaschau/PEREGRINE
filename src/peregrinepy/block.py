@@ -55,13 +55,15 @@ class block(block_):
         ############## Communication
         ################################################################################################################
         self.slice_s3 = {}
-        self.slice_s4 = {}
         self.slice_r3 = {}
+        self.slice_s4 = {}
         self.slice_r4 = {}
 
         self.orient = {}
-        self.sendbuffer = {}
-        self.recvbuffer = {}
+        self.sendbuffer3 = {}
+        self.recvbuffer3 = {}
+        self.sendbuffer4 = {}
+        self.recvbuffer4 = {}
 
         ################################################################################################################
         ############## Data arrays

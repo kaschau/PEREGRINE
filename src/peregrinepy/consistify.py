@@ -1,4 +1,6 @@
 from .bcs import apply_bcs
+from .mpicomm.blockcomm import communicate
+from .compute_ import momentum, EOS_ideal, calEOS_perfect
 
 def consistify(mb, config):
 
@@ -8,6 +10,19 @@ def consistify(mb, config):
     # update halo values as needed, then communicate
     # everything
 
-    pass
+    #Update interior primatives
+    for blk in mb:
+        #Compute T from E
+        calEOS_perfect(blk,'0','Erho')
+        #Compute P from T and rho
+        EOS_ideal(blk,'0','rhoT')
+        #Compute u from rhou
+        momentum(blk,'0','rhou')
 
-    #communicate
+
+    #Apply boundary conditions
+    apply_bcs(mb,config)
+
+    #communicate Q halos
+    communicate(mb,'Q')
+    communicate(mb,'q')

@@ -34,22 +34,33 @@ def simulate(config_file_path):
     for blk in mb:
         # Prim
         blk.array['q'][1:-1,1:-1,1:-1,0] = 101325.0
-        blk.array['q'][1:-1,1:-1,1:-1,1] = 1.0 #mb.np.random.random(blk.array['q'][:,:,:,1].shape)
-        blk.array['q'][1:-1,1:-1,1:-1,2] = 0.0
-        blk.array['q'][1:-1,1:-1,1:-1,3] = 0.0
-        blk.array['q'][1:-1,1:-1,1:-1,4] = 300.0
+        blk.array['q'][1:-1,1:-1,1:-1,1] = mb.np.random.random(blk.array['q'][1:-1,1:-1,1:-1,1].shape)
+        #blk.array['q'][1:-1,1:-1,1:-1,2] = 0.0
+        #blk.array['q'][1:-1,1:-1,1:-1,3] = 0.0
+        blk.array['q'][1:-1,1:-1,1:-1,4] = mb.np.random.random(blk.array['q'][1:-1,1:-1,1:-1,1].shape)*300
 
         #blk.array['Q'][:,:,:,0] = 1.2
         #blk.array['Q'][:,:,:,1] = 1.2
         #blk.array['Q'][:,:,:,2] = 0.0
         #blk.array['Q'][:,:,:,3] = 0.0
 
+        #Get Density
+        pg.compute.EOS_ideal(blk,'0','PT')
+        #Get momentum
+        pg.compute.momentum(blk,'0','u')
+        #Get total energy
+        pg.compute.calEOS_perfect(blk,'0','PT')
 
-    print('BEFORE')
-    print(mb[0].array['Q'][0,:,:,1])
-    pg.bcs.apply_bcs(mb,config)
-    print('AFTER')
-    print(mb[0].array['Q'][0,:,:,1])
+        #Zero out prims
+        blk.array['q'][1:-1,1:-1,1:-1,0] = 0.0
+        blk.array['q'][1:-1,1:-1,1:-1,1] = 0.0
+        blk.array['q'][1:-1,1:-1,1:-1,4] = 0.0
+
+    #print('BEFORE')
+    #print(mb[0].array['Q'][0,:,:,1])
+    pg.consistify(mb,config)
+    #print('AFTER')
+    #print(mb[0].array['Q'][0,:,:,1])
 
     #ts = time.time()
     #for i in range(10):
@@ -61,26 +72,16 @@ def simulate(config_file_path):
     #print(time.time()-ts, 'took this many seconds')
 
 
-    #print('blk0')
-    #print('dQ rho')
-    #print(mb[0].array['dQ'][2,:,:,0])
-    #print('dQ rhoU')
-    #print(mb[0].array['dQ'][2,:,:,1])
-    #print('dQ rhoV')
-    #print(mb[0].array['dQ'][2,:,:,2])
-    #print('dQ rhoW')
-    #print(mb[0].array['dQ'][2,:,:,3])
-    #print('dQ rhoE')
-    #print(mb[0].array['dQ'][2,:,:,4])
 
     # Finalise MPI
     MPI.Finalize()
+    return mb
 
 if __name__ == "__main__":
     config_file_path = sys.argv[1]
     try:
         kokkos.initialize()
-        simulate(config_file_path)
+        test = simulate(config_file_path)
         kokkos.finalize()
 
     except Exception as e:

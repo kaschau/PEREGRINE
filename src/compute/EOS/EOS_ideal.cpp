@@ -25,4 +25,16 @@ void EOS_ideal(block_ b,
 
   });
   }
+  else if ( given.compare("rhoT") == 0 )
+  {
+  Kokkos::parallel_for("Compute total energy from primatives",
+                       range,
+                       KOKKOS_LAMBDA(const int i,
+                                     const int j,
+                                     const int k) {
+
+  b.q(i,j,k,0) = b.Q(i,j,k,0)*R*b.q(i,j,k,4);
+
+  });
+  }
 }
