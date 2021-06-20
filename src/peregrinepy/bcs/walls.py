@@ -18,4 +18,4 @@ def adiabatic_noslip_wall(blk,face):
     #Update momentum
     momentum(blk,face,'u')
     #Update total energy
-    calEOS_perfect(blk,face,'T')
+    calEOS_perfect(blk,face,'PT')
