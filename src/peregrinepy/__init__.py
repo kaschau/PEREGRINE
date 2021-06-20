@@ -14,4 +14,5 @@ from . import readers
 from . import writers
 from . import mpicomm
 
+from . import bcs
 from . import rk1

@@ -33,25 +33,30 @@ def simulate(config_file_path):
     # init flow
     for blk in mb:
         # Prim
-        blk.array['q'][:,:,:,0] = 101325.0
-        blk.array['q'][:,:,:,1] = 1.0 #mb.np.random.random(blk.array['q'][:,:,:,1].shape)
-        blk.array['q'][:,:,:,2] = 0.0
-        blk.array['q'][:,:,:,3] = 0.0
-        blk.array['q'][:,:,:,4] = 300.0
+        blk.array['q'][1:-1,1:-1,1:-1,0] = 101325.0
+        blk.array['q'][1:-1,1:-1,1:-1,1] = 1.0 #mb.np.random.random(blk.array['q'][:,:,:,1].shape)
+        blk.array['q'][1:-1,1:-1,1:-1,2] = 0.0
+        blk.array['q'][1:-1,1:-1,1:-1,3] = 0.0
+        blk.array['q'][1:-1,1:-1,1:-1,4] = 300.0
 
-        blk.array['Q'][:,:,:,0] = 1.2
-        blk.array['Q'][:,:,:,1] = 1.2
-        blk.array['Q'][:,:,:,2] = 0.0
-        blk.array['Q'][:,:,:,3] = 0.0
+        #blk.array['Q'][:,:,:,0] = 1.2
+        #blk.array['Q'][:,:,:,1] = 1.2
+        #blk.array['Q'][:,:,:,2] = 0.0
+        #blk.array['Q'][:,:,:,3] = 0.0
 
-    pg.compute.total_energy(mb)
+
+    print('BEFORE')
+    print(mb[0].array['Q'][0,:,:,1])
+    pg.bcs.apply_bcs(mb,config)
+    print('AFTER')
+    print(mb[0].array['Q'][0,:,:,1])
 
     #ts = time.time()
-    for i in range(10):
-        print(i)
-        pg.rk1.step(mb,0.01,config)
+    #for i in range(10):
+    #    print(i)
+    #    pg.rk1.step(mb,0.01,config)
 
-    pg.writers.write_restart(mb,config['io']['outputdir'])
+    #pg.writers.write_restart(mb,config['io']['outputdir'])
 
     #print(time.time()-ts, 'took this many seconds')
 
