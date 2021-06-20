@@ -31,13 +31,10 @@ class block(block_):
     def __init__(self, nblki):
         __slots__ = list(block_.__dict__.keys()) + ['nblki,'
                                                     'connectivity',
-                                                    'np',
                                                     'array']
 
         super().__init__()
         self.nblki = nblki
-
-
 
         ################################################################################################################
         ############## Connectivity
@@ -101,3 +98,4 @@ class block(block_):
             self.array[f'{d}'] = None
 
         self.array._freeze()
+

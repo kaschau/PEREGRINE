@@ -108,13 +108,24 @@ PYBIND11_MODULE(compute_, m) {
   m.def("apply_flux", &apply_flux, "Apply fluxes to RHS",
         py::arg("block_ object"));
 
-  // ./estr
-  //  |----> total_energy
-  m.def("total_energy", &total_energy, "Compute total energy from primatives",
-        py::arg("block_ object"));
+  // ./EOS
+  //  |----> EOS_ideal
+  m.def("EOS_ideal", &EOS_ideal, "Compute ideal-gas EOS, given vars",
+        py::arg("block_ object"),
+        py::arg("face"),
+        py::arg("given"));
+  //  |----> calEOS_perfect
+  m.def("calEOS_perfect", &calEOS_perfect, "Compute ideal-gas EOS, given vars",
+        py::arg("block_ object"),
+        py::arg("face"),
+        py::arg("given"));
 
-
-
+  // ./consistify
+  //  |----> momentum
+  m.def("momentum", &momentum, "Converg momentum to u,v,w or vice-versa",
+        py::arg("block_ object"),
+        py::arg("face"),
+        py::arg("given"));
 
 
 
