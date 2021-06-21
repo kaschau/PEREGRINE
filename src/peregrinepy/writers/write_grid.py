@@ -5,7 +5,7 @@ from lxml import etree
 from copy import deepcopy
 from ..misc import ProgressBar
 
-def write_grid(mb, path='./', precision='double',with_ngls=False):
+def write_grid(mb, path='./', precision='double'):
     '''This function produces an hdf5 file from a raptorpy.multiblock.grid (or a descendant) for viewing in Paraview.
 
     Parameters
@@ -31,9 +31,6 @@ def write_grid(mb, path='./', precision='double',with_ngls=False):
     else:
         fdtype = '<f8'
 
-    ngls = 1 if with_ngls else 0
-    print(ngls)
-
     xdmf_elem = etree.Element('Xdmf')
     xdmf_elem.set('Version', '2')
 
@@ -46,7 +43,7 @@ def write_grid(mb, path='./', precision='double',with_ngls=False):
 
     for blk in mb:
 
-        with h5py.File('{}/gv.{:06d}.h5'.format(path, blk.nblki), 'w') as f:
+        with h5py.File(f'{path}/gv.{blk.nblki:06d}.h5', 'w') as f:
             f.create_group('coordinates')
             f.create_group('dimensions')
 
@@ -61,15 +58,12 @@ def write_grid(mb, path='./', precision='double',with_ngls=False):
             dset = f['dimensions']['nk']
             dset[0] = blk.nk
 
-            extent = (blk.ni+2*ngls)*(blk.nj+2*ngls)*(blk.nk+2*ngls)
+            extent = (blk.ni)*(blk.nj)*(blk.nk)
             f['coordinates'].create_dataset('x', shape=(extent,), dtype=fdtype)
             f['coordinates'].create_dataset('y', shape=(extent,), dtype=fdtype)
             f['coordinates'].create_dataset('z', shape=(extent,), dtype=fdtype)
 
-            if with_ngls:
-                s_ = np.s_[:,:,:]
-            else:
-                s_ = np.s_[1:-1,1:-1,1:-1]
+            s_ = np.s_[1:-1,1:-1,1:-1]
             dset = f['coordinates']['x']
             dset[:] = blk.array['x'][s_].ravel()
             dset = f['coordinates']['y']
@@ -82,14 +76,14 @@ def write_grid(mb, path='./', precision='double',with_ngls=False):
 
         topology_elem = etree.SubElement(block_elem, 'Topology')
         topology_elem.set('TopologyType', '3DSMesh')
-        topology_elem.set('NumberOfElements', f'{blk.ni+2*ngls} {blk.nj+2*ngls} {blk.nk+2*ngls}')
+        topology_elem.set('NumberOfElements', f'{blk.ni} {blk.nj} {blk.nk}')
 
         geometry_elem = etree.SubElement(block_elem, 'Geometry')
         geometry_elem.set('GeometryType', 'X_Y_Z')
 
         data_x_elem = etree.SubElement(geometry_elem, 'DataItem')
         data_x_elem.set('ItemType', 'Hyperslab')
-        data_x_elem.set('Dimensions', f'{blk.ni+2*ngls} {blk.nj+2*ngls} {blk.nk+2*ngls}')
+        data_x_elem.set('Dimensions', f'{blk.ni} {blk.nj} {blk.nk}')
         data_x_elem.set('Type', 'HyperSlab')
         data_x1_elem = etree.SubElement(data_x_elem, 'DataItem')
         data_x1_elem.set('DataType', 'Int')
@@ -112,7 +106,7 @@ def write_grid(mb, path='./', precision='double',with_ngls=False):
 
         grid_elem.append(deepcopy(block_elem))
 
-        ProgressBar(blk.nblki+1, len(mb), f'Writing out block {blk.nblki}')
+        #ProgressBar(blk.nblki+1, len(mb), f'Writing out block {blk.nblki}')
 
     et = etree.ElementTree(xdmf_elem)
     save_file = '{}/gv.xmf'.format(path)

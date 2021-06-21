@@ -17,4 +17,7 @@ def step(mb,dt,config):
     for blk in mb:
         blk.array['Q'] += dt*blk.array['dQ']
 
+    for blk in mb:
+        blk.nrt += 1
+
     consistify(mb,config)
