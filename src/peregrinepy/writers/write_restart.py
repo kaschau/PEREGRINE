@@ -44,7 +44,7 @@ def write_restart(mb, path='./'):
         extent = blk.ni*blk.nj*blk.nk
         extent_cc = (blk.ni-1)*(blk.nj-1)*(blk.nk-1)
 
-        file_name = f'{path}/q.{blk.nrt:08d}.{blk.nblki:06d}.h5'
+        file_name = f'{path}/q.{mb.nrt:08d}.{blk.nblki:06d}.h5'
 
         with h5py.File(file_name, 'w') as qf:
             qf.create_group('results')
@@ -74,6 +74,9 @@ def write_restart(mb, path='./'):
 
         block_elem = etree.Element('Grid')
         block_elem.set('Name',f'B{blk.nblki:06d}')
+
+        time_elem = etree.SubElement(block_elem, 'Time')
+        time_elem.set('Value', f'{mb.tme}')
 
         topology_elem = etree.SubElement(block_elem, 'Topology')
         topology_elem.set('TopologyType', '3DSMesh')
@@ -125,13 +128,13 @@ def write_restart(mb, path='./'):
         data_res2_elem.set('Precision', '4')
         data_res2_elem.set('Format', 'HDF')
 
-        text = f'q.{blk.nrt:08d}.{blk.nblki:06d}.h5:/results/rho'
+        text = f'q.{mb.nrt:08d}.{blk.nblki:06d}.h5:/results/rho'
         data_res2_elem.text = text
 
         for j in range(5):
             block_elem.append(deepcopy(attribute_elem))
             block_elem[-1].set('Name', names[j])
-            text = f'q.{blk.nrt:08d}.{blk.nblki:06d}.h5:/results/{names[j]}'
+            text = f'q.{mb.nrt:08d}.{blk.nblki:06d}.h5:/results/{names[j]}'
             block_elem[-1][0][1].text = text
 
         grid_elem.append(deepcopy(block_elem))
@@ -139,5 +142,5 @@ def write_restart(mb, path='./'):
         #ProgressBar(blk.nblki+1, len(mb), 'Writing out block {}'.format(blk.nblki))
 
     et = etree.ElementTree(xdmf_elem)
-    save_file = f'{path}/q.{blk.nrt:06d}.xmf'
+    save_file = f'{path}/q.{mb.nrt:06d}.xmf'
     et.write(save_file, pretty_print=True, encoding="UTF-8", xml_declaration=True)

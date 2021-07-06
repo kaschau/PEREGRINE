@@ -48,6 +48,7 @@ PYBIND11_MODULE(compute_, m) {
     .def_readwrite("xc", &block_::xc)
     .def_readwrite("yc", &block_::yc)
     .def_readwrite("zc", &block_::zc)
+    .def_readwrite("J" , &block_::J )
     // i face area vector
     .def_readwrite("isx", &block_::isx)
     .def_readwrite("isy", &block_::isy)

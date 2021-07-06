@@ -13,7 +13,7 @@ void momentum(block_ b,
 
   if ( given.compare("rhou") == 0 )
   {
-  Kokkos::parallel_for("Compute total energy from primatives",
+  Kokkos::parallel_for("Compute u,v,w from momentum",
                        range,
                        KOKKOS_LAMBDA(const int i,
                                      const int j,
@@ -26,7 +26,7 @@ void momentum(block_ b,
   }
   else if ( given.compare("u") == 0 )
   {
-  Kokkos::parallel_for("Compute total energy from primatives",
+  Kokkos::parallel_for("Compute momentum from primatives",
                        range,
                        KOKKOS_LAMBDA(const int i,
                                      const int j,

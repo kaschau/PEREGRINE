@@ -24,14 +24,14 @@ for(block_ b : mb){
     vf = 0.5*(b.q(i,j,k,2)+b.q(i-1,j,k,2));
     wf = 0.5*(b.q(i,j,k,3)+b.q(i-1,j,k,3));
 
-    U = sqrt(pow(b.isx(i,j,k)*uf,2.0) +
-             pow(b.isy(i,j,k)*vf,2.0) +
-             pow(b.isz(i,j,k)*wf,2.0) );
+    U = b.isx(i,j,k)*uf +
+        b.isy(i,j,k)*vf +
+        b.isz(i,j,k)*wf ;
 
     //Compute fluxes
 
     // Continuity rho*Ui
-    b.iF(i,j,k,0) = 0.5*(b.Q(i,j,k,0)+b.Q(i,j,k,0))*U;
+    b.iF(i,j,k,0) = 0.5*(b.Q(i,j,k,0)+b.Q(i-1,j,k,0))*U;
 
     // x momentum rho*u*Ui+ p*Ax
     b.iF(i,j,k,1) = 0.5*(b.Q(i,j,k,0)+b.Q(i-1,j,k,0)) * 0.5*(b.q(i,j,k,1)+b.q(i-1,j,k,1)) * U
@@ -68,9 +68,9 @@ for(block_ b : mb){
     vf = 0.5*(b.q(i,j,k,2)+b.q(i,j-1,k,2));
     wf = 0.5*(b.q(i,j,k,3)+b.q(i,j-1,k,3));
 
-    V = sqrt(pow(b.jsx(i,j,k)*uf,2.0) +
-             pow(b.jsy(i,j,k)*vf,2.0) +
-             pow(b.jsz(i,j,k)*wf,2.0) );
+    V = b.jsx(i,j,k)*uf +
+        b.jsy(i,j,k)*vf +
+        b.jsz(i,j,k)*wf ;
 
     //Compute fluxes
 
@@ -112,9 +112,9 @@ for(block_ b : mb){
     vf = 0.5*(b.q(i,j,k,2)+b.q(i,j,k-1,2));
     wf = 0.5*(b.q(i,j,k,3)+b.q(i,j,k-1,3));
 
-    W = sqrt(pow(b.ksx(i,j,k)*uf,2.0) +
-             pow(b.ksy(i,j,k)*vf,2.0) +
-             pow(b.ksz(i,j,k)*wf,2.0) );
+    W = b.ksx(i,j,k)*uf +
+        b.ksy(i,j,k)*vf +
+        b.ksz(i,j,k)*wf ;
 
     //Compute fluxes
 

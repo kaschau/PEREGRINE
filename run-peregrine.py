@@ -33,17 +33,12 @@ def simulate(config_file_path):
     # init flow
     for blk in mb:
         # Prim
-        blk.array['q'][1:-1,1:-1,1:-1,0] = 101325.0
-        blk.array['q'][1:-1,1:-1,1:-1,1] = 10.0 #mb.np.random.random(blk.array['q'][1:-1,1:-1,1:-1,1].shape)
+        blk.array['q'][:,:,:,0] = 101325.0
+        blk.array['q'][:,:,:,1] = 10.0 #mb.np.random.random(blk.array['q'][1:-1,1:-1,1:-1,1].shape)
         #blk.array['q'][1:-1,1:-1,1:-1,2] = 0.0
         #blk.array['q'][1:-1,1:-1,1:-1,3] = 0.0
-        blk.array['q'][1:-1,1:-1,1:-1,4] = 300 #np.random.random(blk.array['q'][1:-1,1:-1,1:-1,1].shape)*300
-        blk.array['q'][3:6,1:-1,1:-1,4] = 600 #np.random.random(blk.array['q'][1:-1,1:-1,1:-1,1].shape)*300
-
-        #blk.array['Q'][:,:,:,0] = 1.2
-        #blk.array['Q'][:,:,:,1] = 1.2
-        #blk.array['Q'][:,:,:,2] = 0.0
-        #blk.array['Q'][:,:,:,3] = 0.0
+        blk.array['q'][:,:,:,4] = 300 #np.random.random(blk.array['q'][1:-1,1:-1,1:-1,1].shape)*300
+        blk.array['q'][3:6,:,:,4] = 350 #np.random.random(blk.array['q'][1:-1,1:-1,1:-1,1].shape)*300
 
         #Get Density
         pg.compute.EOS_ideal(blk,'0','PT')
@@ -60,15 +55,15 @@ def simulate(config_file_path):
     pg.consistify(mb,config)
     pg.writers.write_restart(mb,config['io']['outputdir'])
 
+    niterout = 1000
     #ts = time.time()
-    for i in range(10):
-        print(i)
-        pg.rk1.step(mb,0.01,config)
-        pg.writers.write_restart(mb,config['io']['outputdir'])
+    for i in range(10000):
+        print(mb.nrt,mb.tme)
+        pg.rk4.step(mb,1e-6,config)
+        if mb.nrt%niterout == 0:
+            pg.writers.write_restart(mb,config['io']['outputdir'])
 
     #print(time.time()-ts, 'took this many seconds')
-
-
 
     # Finalise MPI
     MPI.Finalize()
