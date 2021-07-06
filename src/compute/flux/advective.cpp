@@ -75,7 +75,7 @@ for(block_ b : mb){
     //Compute fluxes
 
     // Continuity rho*Vj
-    b.jF(i,j,k,0) = 0.5*(b.Q(i,j,k,0)+b.Q(i,j,k,0))*V;
+    b.jF(i,j,k,0) = 0.5*(b.Q(i,j,k,0)+b.Q(i,j-1,k,0))*V;
 
     // x momentum rho*u*Vj+ pAx
     b.jF(i,j,k,1) = 0.5*(b.Q(i,j,k,0)+b.Q(i,j-1,k,0)) * 0.5*(b.q(i,j,k,1)+b.q(i,j-1,k,1)) * V ;
@@ -119,7 +119,7 @@ for(block_ b : mb){
     //Compute fluxes
 
     // Continuity rho*Wk
-    b.kF(i,j,k,0) = 0.5*(b.Q(i,j,k,0)+b.Q(i,j,k,0))*W;
+    b.kF(i,j,k,0) = 0.5*(b.Q(i,j,k,0)+b.Q(i,j,k-1,0))*W;
 
     // x momentum rho*u*Wk+ pAx
     b.kF(i,j,k,1) = 0.5*(b.Q(i,j,k,0)+b.Q(i,j,k-1,0)) * 0.5*(b.q(i,j,k,1)+b.q(i,j,k-1,1)) * W ;
