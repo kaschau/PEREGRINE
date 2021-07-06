@@ -1,6 +1,6 @@
 from .mpiutils import get_comm_rank_size
 from mpi4py.MPI import DOUBLE as MPIDOUBLE
-
+import numpy as np
 
 def communicate(mb,varis):
     if not isinstance(varis,list):
@@ -65,17 +65,17 @@ def set_block_communication(mb,config):
     def orient_T(temp):
         return temp.T
     def orient_Tf0(temp):
-        return mb.np.flip(temp.T,0)
+        return np.flip(temp.T,0)
     def orient_Tf1(temp):
-        return mb.np.flip(temp.T,1)
+        return np.flip(temp.T,1)
     def orient_Tf0f1(temp):
-        return mb.np.flip(mb.np.flip(temp,0),1)
+        return np.flip(np.flip(temp,0),1)
     def orient_f0(temp):
-        return mb.np.flip(temp,0)
+        return np.flip(temp,0)
     def orient_f0f1(temp):
-        return mb.np.flip(mb.np.flip(temp,0),1)
+        return np.flip(np.flip(temp,0),1)
     def orient_f1(temp):
-        return mb.np.flip(temp,1)
+        return np.flip(temp,1)
     def orient_na(temp):
         return temp
 
@@ -246,15 +246,15 @@ def set_block_communication(mb,config):
 
                 # We send the data in the correct shape already
                 # Face and point shape
-                temp = blk.orient[face](mb.np.empty(commfpshape[face]))
-                blk.sendbuffer3[face] = mb.np.ascontiguousarray(temp)
+                temp = blk.orient[face](np.empty(commfpshape[face]))
+                blk.sendbuffer3[face] = np.ascontiguousarray(temp)
                 # We revieve the data in the correct shape already
-                temp = mb.np.empty(commfpshape[face])
-                blk.recvbuffer3[face] = mb.np.ascontiguousarray(mb.np.empty(commfpshape[face]))
+                temp = np.empty(commfpshape[face])
+                blk.recvbuffer3[face] = np.ascontiguousarray(np.empty(commfpshape[face]))
 
                 # Cell
-                temp = blk.orient[face](mb.np.empty(commcshape[face]))
-                blk.sendbuffer4[face] = mb.np.ascontiguousarray(temp)
+                temp = blk.orient[face](np.empty(commcshape[face]))
+                blk.sendbuffer4[face] = np.ascontiguousarray(temp)
                 # We revieve the data in the correct shape already
-                temp = mb.np.empty(commcshape[face])
-                blk.recvbuffer4[face] = mb.np.ascontiguousarray(mb.np.empty(commcshape[face]))
+                temp = np.empty(commcshape[face])
+                blk.recvbuffer4[face] = np.ascontiguousarray(np.empty(commcshape[face]))

@@ -130,5 +130,23 @@ for(block_ b : mb){
   b.knz(i,j,k) = b.ksz(i,j,k)/b.kS(i,j,k);
 
   });
+  // Cell center range
+  MDRange3 range_J({0,0,0},{b.ni+1,b.nj+1,b.nk+1});
+  Kokkos::parallel_for("Grid Metrics", range_J, KOKKOS_LAMBDA(const int i,
+                                                              const int j,
+                                                              const int k) {
+//----------------------------------------------------------------------------//
+//Cell Volumes
+//----------------------------------------------------------------------------//
+  b.J(i,j,k) = ( ( b.x(i+1,j+1,k+1) - b.x(i,j,k) )*( b.isx(i+1,j  ,k  )
+                                                   + b.jsx(i  ,j+1,k  )
+                                                   + b.ksx(i  ,j  ,k+1) )
+               + ( b.y(i+1,j+1,k+1) - b.y(i,j,k) )*( b.isy(i+1,j  ,k  )
+                                                   + b.jsy(i  ,j+1,k  )
+                                                   + b.ksy(i  ,j  ,k+1) )
+               + ( b.z(i+1,j+1,k+1) - b.z(i,j,k) )*( b.isz(i+1,j  ,k  )
+                                                   + b.jsz(i  ,j+1,k  )
+                                                   + b.ksz(i  ,j  ,k+1) ) )/3.e0;
+  });
 
 }};

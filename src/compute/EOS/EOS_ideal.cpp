@@ -4,10 +4,11 @@
 #include "compute.hpp"
 #include <math.h>
 #include <iostream>
+#include <stdexcept>
 
 void EOS_ideal(block_ b,
-               std::string face="0",
-               std::string given="PT") {
+               std::string face,
+               std::string given) {
 
   MDRange3 range = get_range3(b, face);
 
@@ -15,7 +16,7 @@ void EOS_ideal(block_ b,
 
   if ( given.compare("PT") == 0 )
   {
-  Kokkos::parallel_for("Compute total energy from primatives",
+  Kokkos::parallel_for("Compute density from P and T",
                        range,
                        KOKKOS_LAMBDA(const int i,
                                      const int j,
@@ -27,7 +28,7 @@ void EOS_ideal(block_ b,
   }
   else if ( given.compare("rhoT") == 0 )
   {
-  Kokkos::parallel_for("Compute total energy from primatives",
+  Kokkos::parallel_for("Compute pressure from rho and T",
                        range,
                        KOKKOS_LAMBDA(const int i,
                                      const int j,
@@ -36,5 +37,9 @@ void EOS_ideal(block_ b,
   b.q(i,j,k,0) = b.Q(i,j,k,0)*R*b.q(i,j,k,4);
 
   });
+  }
+  else
+  {
+  throw std::invalid_argument( "Invalid given string in EOSideal.");
   }
 }

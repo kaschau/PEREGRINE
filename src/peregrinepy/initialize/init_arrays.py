@@ -1,5 +1,6 @@
 from ..compute_ import KokkosLocation
 import kokkos
+import numpy as np
 
 if KokkosLocation in ['OpenMP','CudaUVM','Serial','Default']:
     space = kokkos.HostSpace
@@ -26,9 +27,9 @@ def init_arrays(mb,config):
 #       Cell center coordinates
 #-------------------------------------------------------------------------------#
         shape = ccshape
-        for name in ['xc', 'yc', 'zc']:
+        for name in ['xc', 'yc', 'zc','J']:
             setattr(blk,name, kokkos.array(name, shape=shape, dtype=kokkos.double, space=space, dynamic=False))
-            blk.array[name] = mb.np.array(getattr(blk,name), copy=False)
+            blk.array[name] = np.array(getattr(blk,name), copy=False)
 
 #-------------------------------------------------------------------------------#
 #       i face vector components and areas
@@ -36,7 +37,7 @@ def init_arrays(mb,config):
         shape = ifshape
         for name in ('isx', 'isy', 'isz', 'iS', 'inx', 'iny', 'inz'):
             setattr(blk,name, kokkos.array(name, shape=shape, dtype=kokkos.double, space=space, dynamic=False))
-            blk.array[name] = mb.np.array(getattr(blk,name), copy=False)
+            blk.array[name] = np.array(getattr(blk,name), copy=False)
 
 #-------------------------------------------------------------------------------#
 #       j face vector components and areas
@@ -44,7 +45,7 @@ def init_arrays(mb,config):
         shape = jfshape
         for name in ('jsx', 'jsy', 'jsz', 'jS', 'jnx', 'jny', 'jnz'):
             setattr(blk,name, kokkos.array(name, shape=shape, dtype=kokkos.double, space=space, dynamic=False))
-            blk.array[name] = mb.np.array(getattr(blk,name), copy=False)
+            blk.array[name] = np.array(getattr(blk,name), copy=False)
 
 #-------------------------------------------------------------------------------#
 #       k face vector components and areas
@@ -52,7 +53,7 @@ def init_arrays(mb,config):
         shape = kfshape
         for name in ('ksx', 'ksy', 'ksz', 'kS', 'knx', 'kny', 'knz'):
             setattr(blk,name, kokkos.array(name, shape=shape, dtype=kokkos.double, space=space, dynamic=False))
-            blk.array[name] = mb.np.array(getattr(blk,name), copy=False)
+            blk.array[name] = np.array(getattr(blk,name), copy=False)
 
 #################################################################################
 ######## Flow Arrays
@@ -61,9 +62,9 @@ def init_arrays(mb,config):
 #       Conservative, Primative, dQ
 #-------------------------------------------------------------------------------#
         shape = cQshape
-        for name in ('Q', 'q'):
+        for name in ('Q', 'q', 'dQ'):
             setattr(blk,name, kokkos.array(name, shape=shape, dtype=kokkos.double, space=space, dynamic=False))
-            blk.array[name] = mb.np.array(getattr(blk,name), copy=False)
+            blk.array[name] = np.array(getattr(blk,name), copy=False)
 
 #-------------------------------------------------------------------------------#
 #       RK Stages
@@ -77,11 +78,11 @@ def init_arrays(mb,config):
         shape = cQshape
         for name in stages:
             setattr(blk,name, kokkos.array(name, shape=shape, dtype=kokkos.double, space=space, dynamic=False))
-            blk.array[name] = mb.np.array(getattr(blk,name), copy=False)
+            blk.array[name] = np.array(getattr(blk,name), copy=False)
 
 #-------------------------------------------------------------------------------#
 #       Fluxes
 #-------------------------------------------------------------------------------#
         for shape,name in zip((ifQshape,jfQshape,kfQshape),('iF', 'jF', 'kF')):
             setattr(blk,name, kokkos.array(name, shape=shape, dtype=kokkos.double, space=space, dynamic=False))
-            blk.array[name] = mb.np.array(getattr(blk,name), copy=False)
+            blk.array[name] = np.array(getattr(blk,name), copy=False)

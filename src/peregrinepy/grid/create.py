@@ -19,7 +19,7 @@ def cubic_connectivity(conn, mb_dimensions, blk_number, i, j, k):
     if i == 0 and mb_dimensions[0] != 1:
         conn['1']['bc'] = 's1'
         conn['1']['neighbor'] = None
-        conn['1']['orientation'] = '000'
+        conn['1']['orientation'] = None
 
         conn['2']['bc'] = 'b0'
         conn['2']['neighbor'] = blk_number+1
@@ -31,7 +31,7 @@ def cubic_connectivity(conn, mb_dimensions, blk_number, i, j, k):
 
         conn['2']['bc'] = 's1'
         conn['2']['neighbor'] = None
-        conn['2']['orientation'] = '000'
+        conn['2']['orientation'] = None
     elif mb_dimensions[0] != 1:
         conn['1']['bc'] = 'b0'
         conn['1']['neighbor'] = blk_number-1
@@ -45,7 +45,7 @@ def cubic_connectivity(conn, mb_dimensions, blk_number, i, j, k):
     if j == 0 and mb_dimensions[1] != 1:
         conn['3']['bc'] = 's1'
         conn['3']['neighbor'] = None
-        conn['3']['orientation'] = '000'
+        conn['3']['orientation'] = None
 
         conn['4']['bc'] = 'b0'
         conn['4']['neighbor'] = blk_number+mb_dimensions[0]
@@ -57,7 +57,7 @@ def cubic_connectivity(conn, mb_dimensions, blk_number, i, j, k):
 
         conn['4']['bc'] = 's1'
         conn['4']['neighbor'] = None
-        conn['4']['orientation'] = '000'
+        conn['4']['orientation'] = None
     elif mb_dimensions[1] != 1:
         conn['3']['bc'] = 'b0'
         conn['3']['neighbor'] = blk_number-mb_dimensions[0]
@@ -71,7 +71,7 @@ def cubic_connectivity(conn, mb_dimensions, blk_number, i, j, k):
     if k == 0 and mb_dimensions[2] != 1:
         conn['5']['bc'] = 's1'
         conn['5']['neighbor'] = None
-        conn['5']['orientation'] = '000'
+        conn['5']['orientation'] = None
 
         conn['6']['bc'] = 'b0'
         conn['6']['neighbor'] = blk_number+mb_dimensions[0]*mb_dimensions[1]
@@ -83,7 +83,7 @@ def cubic_connectivity(conn, mb_dimensions, blk_number, i, j, k):
 
         conn['6']['bc'] = 's1'
         conn['6']['neighbor'] = None
-        conn['6']['orientation'] = '000'
+        conn['6']['orientation'] = None
     elif mb_dimensions[2] != 1:
         conn['5']['bc'] = 'b0'
         conn['5']['neighbor'] = blk_number-mb_dimensions[0]*mb_dimensions[1]

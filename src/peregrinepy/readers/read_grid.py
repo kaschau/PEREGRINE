@@ -37,7 +37,7 @@ def read_grid(mb,path='./'):
             ccshape = [ni+2,nj+2,nk+2]
             for name in ('x','y','z'):
                 setattr(blk,name, kokkos.array(name, shape=ccshape, dtype=kokkos.double, space=space, dynamic=False))
-                blk.array[name] = mb.np.array(getattr(blk,name), copy=False)
+                blk.array[name] = np.array(getattr(blk,name), copy=False)
 
                 blk.array[name][1:-1,
                                 1:-1,

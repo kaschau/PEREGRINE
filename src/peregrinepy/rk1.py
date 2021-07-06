@@ -4,20 +4,18 @@ from .consistify import consistify
 
 def step(mb,dt,config):
 
-    #Point dQ to the first rk stage and zero it out
+    #Zero it out dQ
     for blk in mb:
-        blk.dQ = blk.rhs0
-        blk.array['dQ'] = blk.array['rhs0']
         blk.array['dQ'][:,:,:,:] = 0.0
 
     RHS(mb,config)
-    #rhs is computed, it is stored in dQ (or rhs0).
+    #rhs is computed, it is stored in dQ
 
     #add it to current solution
     for blk in mb:
-        blk.array['Q'] += dt*blk.array['dQ']
+        blk.array['Q'][:] += dt*blk.array['dQ']
 
-    for blk in mb:
-        blk.nrt += 1
+    mb.nrt += 1
+    mb.tme += dt
 
     consistify(mb,config)

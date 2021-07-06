@@ -34,7 +34,6 @@ class block(block_):
                                                     'array']
 
         super().__init__()
-        self.nrt = 0
         self.nblki = nblki
 
         ################################################################################################################
@@ -77,7 +76,7 @@ class block(block_):
             self.array[f'{d}'] = None
         # Grid metrics
         # Cell centers
-        for d in ['xc','yc','zc']:
+        for d in ['xc','yc','zc','J']:
             self.array[f'{d}'] = None
         # i face area vectors
         for d in ['isx','isy','isz','iS','inx','iny','inz']:

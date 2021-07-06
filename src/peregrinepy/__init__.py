@@ -17,4 +17,4 @@ from . import mpicomm
 from . import bcs
 from .consistify import consistify
 
-from . import rk1
+from . import rk1,rk4
