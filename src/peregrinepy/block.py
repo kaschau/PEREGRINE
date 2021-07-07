@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from .compute_ import block_
 from .misc import FrozenDict
+import kokkos
+import numpy as np
 
 ''' block.py
 
@@ -39,12 +41,12 @@ class block(block_):
         ################################################################################################################
         ############## Connectivity
         ################################################################################################################
-        self.connectivity = FrozenDict({'1':FrozenDict({'bc':'s1', 'neighbor':None, 'orientation':None,'comm_rank':None}),
-                                        '2':FrozenDict({'bc':'s1', 'neighbor':None, 'orientation':None,'comm_rank':None}),
-                                        '3':FrozenDict({'bc':'s1', 'neighbor':None, 'orientation':None,'comm_rank':None}),
-                                        '4':FrozenDict({'bc':'s1', 'neighbor':None, 'orientation':None,'comm_rank':None}),
-                                        '5':FrozenDict({'bc':'s1', 'neighbor':None, 'orientation':None,'comm_rank':None}),
-                                        '6':FrozenDict({'bc':'s1', 'neighbor':None, 'orientation':None,'comm_rank':None})})
+        self.connectivity = FrozenDict({'1':FrozenDict({'bc':'s1', 'neighbor':None, 'orientation':None,'comm_rank':None,'nface':None}),
+                                        '2':FrozenDict({'bc':'s1', 'neighbor':None, 'orientation':None,'comm_rank':None,'nface':None}),
+                                        '3':FrozenDict({'bc':'s1', 'neighbor':None, 'orientation':None,'comm_rank':None,'nface':None}),
+                                        '4':FrozenDict({'bc':'s1', 'neighbor':None, 'orientation':None,'comm_rank':None,'nface':None}),
+                                        '5':FrozenDict({'bc':'s1', 'neighbor':None, 'orientation':None,'comm_rank':None,'nface':None}),
+                                        '6':FrozenDict({'bc':'s1', 'neighbor':None, 'orientation':None,'comm_rank':None,'nface':None})})
 
         for i in ['1','2','3','4','5','6']:
             self.connectivity[i]._freeze()
@@ -101,3 +103,90 @@ class block(block_):
 
         self.array._freeze()
 
+
+    def init_koarrays(self,config):
+        '''
+        Create the Kokkos work arrays and python side numpy wrappers
+        '''
+
+        if config['Kokkos']['Space'] in ['OpenMP','Serial','Default']:
+            space = kokkos.HostSpace
+        else:
+            raise ValueError('Are we ready for that?')
+
+        ccshape = [self.ni+1,self.nj+1,self.nk+1]
+        ifshape = [self.ni+2,self.nj+1,self.nk+1]
+        jfshape = [self.ni+1,self.nj+2,self.nk+1]
+        kfshape = [self.ni+1,self.nj+1,self.nk+2]
+
+        cQshape  = [self.ni+1,self.nj+1,self.nk+1,5]
+        ifQshape = [self.ni+2,self.nj+1,self.nk+1,5]
+        jfQshape = [self.ni+1,self.nj+2,self.nk+1,5]
+        kfQshape = [self.ni+1,self.nj+1,self.nk+2,5]
+
+        #################################################################################
+        ######## Grid Arrays
+        #################################################################################
+        #-------------------------------------------------------------------------------#
+        #       Cell center coordinates
+        #-------------------------------------------------------------------------------#
+        shape = ccshape
+        for name in ['xc', 'yc', 'zc','J']:
+            setattr(self,name, kokkos.array(name, shape=shape, dtype=kokkos.double, space=space, dynamic=False))
+            self.array[name] = np.array(getattr(self,name), copy=False)
+
+        #-------------------------------------------------------------------------------#
+        #       i face vector components and areas
+        #-------------------------------------------------------------------------------#
+        shape = ifshape
+        for name in ('isx', 'isy', 'isz', 'iS', 'inx', 'iny', 'inz'):
+            setattr(self,name, kokkos.array(name, shape=shape, dtype=kokkos.double, space=space, dynamic=False))
+            self.array[name] = np.array(getattr(self,name), copy=False)
+
+        #-------------------------------------------------------------------------------#
+        #       j face vector components and areas
+        #-------------------------------------------------------------------------------#
+        shape = jfshape
+        for name in ('jsx', 'jsy', 'jsz', 'jS', 'jnx', 'jny', 'jnz'):
+            setattr(self,name, kokkos.array(name, shape=shape, dtype=kokkos.double, space=space, dynamic=False))
+            self.array[name] = np.array(getattr(self,name), copy=False)
+
+        #-------------------------------------------------------------------------------#
+        #       k face vector components and areas
+        #-------------------------------------------------------------------------------#
+        shape = kfshape
+        for name in ('ksx', 'ksy', 'ksz', 'kS', 'knx', 'kny', 'knz'):
+            setattr(self,name, kokkos.array(name, shape=shape, dtype=kokkos.double, space=space, dynamic=False))
+            self.array[name] = np.array(getattr(self,name), copy=False)
+
+        #################################################################################
+        ######## Flow Arrays
+        #################################################################################
+        #-------------------------------------------------------------------------------#
+        #       Conservative, Primative, dQ
+        #-------------------------------------------------------------------------------#
+        shape = cQshape
+        for name in ('Q', 'q', 'dQ'):
+            setattr(self,name, kokkos.array(name, shape=shape, dtype=kokkos.double, space=space, dynamic=False))
+            self.array[name] = np.array(getattr(self,name), copy=False)
+
+        #-------------------------------------------------------------------------------#
+        #       RK Stages
+        #-------------------------------------------------------------------------------#
+        if config['solver']['time_integration'] == 'rk1':
+            stages = ('rhs0', 'rhs1')
+        elif config['solver']['time_integration'] == 'rk4':
+            stages = ('rhs0', 'rhs1', 'rhs2', 'rhs3')
+        else:
+            raise ValueError('Unknown time integrator')
+        shape = cQshape
+        for name in stages:
+            setattr(self,name, kokkos.array(name, shape=shape, dtype=kokkos.double, space=space, dynamic=False))
+            self.array[name] = np.array(getattr(self,name), copy=False)
+
+        #-------------------------------------------------------------------------------#
+        #       Fluxes
+        #-------------------------------------------------------------------------------#
+        for shape,name in zip((ifQshape,jfQshape,kfQshape),('iF', 'jF', 'kF')):
+            setattr(self,name, kokkos.array(name, shape=shape, dtype=kokkos.double, space=space, dynamic=False))
+            self.array[name] = np.array(getattr(self,name), copy=False)

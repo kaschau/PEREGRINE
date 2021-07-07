@@ -7,9 +7,10 @@ else:
 
 from .multiblock import multiblock
 from .block import block
+from .construct_mb import construct_mb
+
 from . import files
 from . import grid
-from . import initialize
 from . import readers
 from . import writers
 from . import mpicomm
