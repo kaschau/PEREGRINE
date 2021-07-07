@@ -28,8 +28,9 @@ def communicate(mb,varis):
                         continue
                     bc = blk.connectivity[face]['bc']
                     orientation = blk.connectivity[face]['orientation']
+                    nface = blk.connectivity[face]['nface']
                     comm_rank = blk.connectivity[face]['comm_rank']
-                    tag = int(f'1{blk.nblki}020{neighbor}1')
+                    tag = int(f'1{blk.nblki}2{neighbor}1{nface}')
                     send[face][:] = blk.orient[face](blk.array[var][slice_s[face]])
                     comm.Isend([send[face], MPIDOUBLE], dest=comm_rank, tag=tag)
 
@@ -50,7 +51,7 @@ def communicate(mb,varis):
                     bc = blk.connectivity[face]['bc']
                     orientation = blk.connectivity[face]['orientation']
                     comm_rank   = blk.connectivity[face]['comm_rank']
-                    tag = int(f'1{neighbor}020{blk.nblki}1')
+                    tag = int(f'1{neighbor}2{blk.nblki}1{face}')
                     comm.Recv([recv[face][:], MPIDOUBLE], source=comm_rank, tag=tag)
                     blk.array[var][slice_r[face]] = recv[face][:]
 
@@ -110,7 +111,9 @@ def set_block_communication(mb,config):
                 continue
             orientation = blk.connectivity[face]['orientation']
             comm_rank   = blk.connectivity[face]['comm_rank']
-            tag = int(f'1{blk.nblki}020{neighbor}1')
+            blk.connectivity[face]['nface'] = get_neighbor_face(face,orientation)
+            nface = blk.connectivity[face]['nface']
+            tag = int(f'1{blk.nblki}2{neighbor}1{nface}')
             comm.isend(orientation, dest=comm_rank, tag=tag)
     neighbor_orientations = []
     for blk in mb:
@@ -120,8 +123,9 @@ def set_block_communication(mb,config):
             if neighbor is None:
                 continue
             orientation = blk.connectivity[face]['orientation']
+            nface = blk.connectivity[face]['nface']
             comm_rank   = blk.connectivity[face]['comm_rank']
-            tag = int(f'1{neighbor}020{blk.nblki}1')
+            tag = int(f'1{neighbor}2{blk.nblki}1{face}')
             neighbor_orientations[-1][face] = comm.recv(source=comm_rank, tag=tag)
 
     comm.Barrier()
@@ -150,7 +154,7 @@ def set_block_communication(mb,config):
 
         slice_sfp['3']      = s_[:,2,:]
         slice_sc['3']       = s_[:,1,:,:]
-        commfpshape['3'] =   ( blk.ni+2, blk.nk+2, blk.ne)
+        commfpshape['3'] =   ( blk.ni+2, blk.nk+2)
         commcshape['3']  =   ( blk.ni+1, blk.nk+1, blk.ne)
         slice_rfp['3']      = s_[:,0,:]
         slice_rc['3']       = s_[:,0,:,:]
@@ -197,7 +201,7 @@ def set_block_communication(mb,config):
                 orientation = blk.connectivity[face]['orientation']
                 neighbor = int(blk.connectivity[face]['neighbor'])
 
-                face2 = get_neighbor_face(face, orientation)
+                face2 = blk.connectivity[face]['nface']#get_neighbor_face(face, orientation)
                 orientation2 = no[face]
 
                 face_orientations = [i for j,i in enumerate(orientation) if j != int(face_to_orient_place_mapping[face])]

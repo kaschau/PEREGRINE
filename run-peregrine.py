@@ -20,14 +20,15 @@ def simulate(config_file_path):
     # Ensure MPI is suitably cleaned up
     pg.mpicomm.mpiutils.register_finalize_handler()
 
-    config = pg.initialize.init_config(config_file_path)
+    config = pg.mpicomm.mpiread_config(config_file_path)
 
-    mb = pg.initialize.init_multiblock(config)
+    mb = pg.construct_mb(config)
 
     pg.grid.generate_halo(mb,config)
     pg.mpicomm.blockcomm.communicate(mb,['x','y','z'])
 
-    pg.initialize.init_arrays(mb,config)
+    for blk in mb:
+        blk.init_koarrays(config)
 
     pg.compute.metrics(mb)
     # init flow

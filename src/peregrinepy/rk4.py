@@ -8,7 +8,6 @@ def step(mb,dt,config):
     for blk in mb:
         blk.array['rhs0'][:] = blk.array['Q'][:]
 
-
     # First Stage
     for blk in mb:
         blk.array['dQ'][:,:,:,:] = 0.0

@@ -1,16 +1,15 @@
+from .multiblock import multiblock
+from .readers import read_blocks4procs,read_connectivity,read_grid
+from .mpicomm import mpiutils,blockcomm
 
-from ..multiblock import multiblock
-from ..readers import read_blocks4procs,read_connectivity,read_grid
-from ..mpicomm import mpiutils,blockcomm
-
-def init_multiblock(config):
+def construct_mb(config):
 
     comm,rank,size = mpiutils.get_comm_rank_size()
     ################################################################
     ##### First we determine what bocks we are responsible for #####
     ################################################################
     if rank == 0:
-        blocks4procs = read_blocks4procs(config)
+        blocks4procs = read_blocks4procs(config['io']['inputdir'])
     else:
         blocks4procs = None
     blocks4procs = comm.bcast(blocks4procs,root=0)
@@ -37,7 +36,7 @@ def init_multiblock(config):
     ##### Read in the connectivity
     ################################################################
     if rank == 0:
-        conn = read_connectivity(config)
+        conn = read_connectivity(None,config['io']['inputdir'])
     else:
         conn = None
     conn = comm.bcast(conn,root=0)
