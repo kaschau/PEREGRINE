@@ -11,7 +11,9 @@ void calEOS_perfect(block_ b,
 
   MDRange3 range = get_range3(b, face);
 
-  double cp = 1006.0;
+  const double cp = 1006.0;
+  const double R = 281.4583333333333;
+  const double cv = cp - R;
 
   if ( given.compare("PT") == 0 )
   {
@@ -21,7 +23,7 @@ void calEOS_perfect(block_ b,
                                      const int j,
                                      const int k) {
 
-  b.Q(i,j,k,4) = cp*b.q(i,j,k,4)*b.Q(i,j,k,0) + 0.5*(pow(b.Q(i,j,k,1),2.0) +
+  b.Q(i,j,k,4) = cv*b.q(i,j,k,4)*b.Q(i,j,k,0) + 0.5*(pow(b.Q(i,j,k,1),2.0) +
                                                      pow(b.Q(i,j,k,2),2.0) +
                                                      pow(b.Q(i,j,k,3),2.0))/
                                                          b.Q(i,j,k,0)      ;
@@ -38,7 +40,7 @@ void calEOS_perfect(block_ b,
   b.q(i,j,k,4) = ( b.Q(i,j,k,4) - 0.5*(pow(b.Q(i,j,k,1),2.0) +
                                        pow(b.Q(i,j,k,2),2.0) +
                                        pow(b.Q(i,j,k,3),2.0))/
-                                           b.Q(i,j,k,0)      )/ (cp*b.Q(i,j,k,0));
+                                           b.Q(i,j,k,0)      )/ (cv*b.Q(i,j,k,0));
   });
   }
   else
