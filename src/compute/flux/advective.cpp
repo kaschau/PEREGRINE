@@ -4,6 +4,10 @@
 #include <vector>
 #include <math.h>
 
+const double cp = 1006.0;
+const double R = 281.4583333333333;
+const double cv = cp - R;
+
 void advective(std::vector<block_> mb) {
 for(block_ b : mb){
 
@@ -46,7 +50,11 @@ for(block_ b : mb){
                   + 0.5*(b.q(i,j,k,0)+b.q(i-1,j,k,0)) *      b.isz(i,j,k)                   ;
 
     // Total energy (rhoE+ p)*Ui)
-    b.iF(i,j,k,4) =(0.5*(b.Q(i,j,k,4)+b.Q(i-1,j,k,4)) + 0.5*(b.q(i,j,k,0)+b.q(i-1,j,k,0)))* U ;
+    b.iF(i,j,k,4) =(0.5*(b.Q(i,j,k,0)+b.Q(i-1,j,k,0)) *(0.5*(b.q(i,j,k,4)+b.q(i-1,j,k,4))*cv
+                                                      + 0.5*(b.q(i,j,k,1)*b.q(i-1,j,k,1)  +
+                                                             b.q(i,j,k,2)*b.q(i-1,j,k,2)  +
+                                                             b.q(i,j,k,3)*b.q(i-1,j,k,3)) )
+                  + 0.5*(b.q(i,j,k,0)+b.q(i-1,j,k,0))                                   ) *U;
 
   });
 
@@ -90,7 +98,11 @@ for(block_ b : mb){
                   + 0.5*(b.q(i,j,k,0)+b.q(i,j-1,k,0)) *      b.jsz(i,j,k)                   ;
 
     // Total energy (rhoE+P)*Vj)
-    b.jF(i,j,k,4) =(0.5*(b.Q(i,j,k,4)+b.Q(i,j-1,k,4)) + 0.5*(b.q(i,j,k,0)+b.q(i,j-1,k,0)))* V ;
+    b.jF(i,j,k,4) =(0.5*(b.Q(i,j,k,0)+b.Q(i,j-1,k,0)) *(0.5*(b.q(i,j,k,4)+b.q(i,j-1,k,4))*cv
+                                                      + 0.5*(b.q(i,j,k,1)*b.q(i,j-1,k,1)  +
+                                                             b.q(i,j,k,2)*b.q(i,j-1,k,2)  +
+                                                             b.q(i,j,k,3)*b.q(i,j-1,k,3)) )
+                  + 0.5*(b.q(i,j,k,0)+b.q(i,j-1,k,0))                                   ) *V;
 
   });
 
@@ -134,7 +146,11 @@ for(block_ b : mb){
                   + 0.5*(b.q(i,j,k,0)+b.q(i,j,k-1,0)) *      b.ksz(i,j,k)                   ;
 
     // Total energy (rhoE+P)*Wk)
-    b.kF(i,j,k,4) =(0.5*(b.Q(i,j,k,4)+b.Q(i,j,k-1,4)) + 0.5*(b.q(i,j,k,0)+b.q(i,j,k-1,0)))* W ;
+    b.kF(i,j,k,4) =(0.5*(b.Q(i,j,k,0)+b.Q(i,j,k-1,0)) *(0.5*(b.q(i,j,k,4)+b.q(i,j,k-1,4))*cv
+                                                      + 0.5*(b.q(i,j,k,1)*b.q(i,j,k-1,1)  +
+                                                             b.q(i,j,k,2)*b.q(i,j,k-1,2)  +
+                                                             b.q(i,j,k,3)*b.q(i,j,k-1,3)) )
+                  + 0.5*(b.q(i,j,k,0)+b.q(i,j,k-1,0))                                   ) *W;
 
   });
 
