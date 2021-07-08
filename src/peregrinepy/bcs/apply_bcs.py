@@ -1,6 +1,6 @@
 from .inlets import subsonic_inlet
 from .exits import subsonic_exit
-from .walls import adiabatic_noslip_wall
+from .walls import *
 
 def apply_bcs(mb,config):
 
@@ -18,3 +18,5 @@ def apply_bcs(mb,config):
             bc = blk.connectivity[face]['bc']
             if bc == 's1':
                 adiabatic_noslip_wall(blk,face)
+            if bc == 's2':
+                adiabatic_slip_wall(blk,face)
