@@ -2,7 +2,6 @@
 #include "kokkos_types.hpp"
 #include "block_.hpp"
 #include <vector>
-#include <math.h>
 
 void apply_flux(std::vector<block_> mb) {
 for(block_ b : mb){
