@@ -1,7 +1,6 @@
 #include "kokkos_types.hpp"
 #include "block_.hpp"
 #include <string>
-#include <iostream>
 
 MDRange3 get_range3(block_ b, std::string face){
 

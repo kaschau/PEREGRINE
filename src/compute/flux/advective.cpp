@@ -2,7 +2,6 @@
 #include "kokkos_types.hpp"
 #include "block_.hpp"
 #include <vector>
-#include <math.h>
 
 const double cp = 1006.0;
 const double R = 281.4583333333333;
