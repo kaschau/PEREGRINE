@@ -20,8 +20,6 @@ for(block_ b : mb){
     double vf;
     double wf;
 
-    double ut;
-
     // Compute face normal volume flux vector
     uf = 0.5*(b.q(i,j,k,1)+b.q(i-1,j,k,1));
     vf = 0.5*(b.q(i,j,k,2)+b.q(i-1,j,k,2));
@@ -52,8 +50,15 @@ for(block_ b : mb){
     b.iF(i,j,k,4) =(0.5*(b.Q(i,j,k,0)+b.Q(i-1,j,k,0)) *(0.5*(b.q(i,j,k,4)+b.q(i-1,j,k,4))*cv
                                                       + 0.5*(b.q(i,j,k,1)*b.q(i-1,j,k,1)  +
                                                              b.q(i,j,k,2)*b.q(i-1,j,k,2)  +
-                                                             b.q(i,j,k,3)*b.q(i-1,j,k,3)) )
-                  + 0.5*(b.q(i,j,k,0)+b.q(i-1,j,k,0))                                   ) *U;
+                                                             b.q(i,j,k,3)*b.q(i-1,j,k,3)) ) ) * U;
+
+    b.iF(i,j,k,4)+= 0.5*(b.q(i-1,j,k,0)*(b.q(i  ,j,k,1)*b.isx(i,j,k)
+                                        +b.q(i  ,j,k,2)*b.isy(i,j,k)
+                                        +b.q(i  ,j,k,3)*b.isz(i,j,k) ) +
+                         b.q(i  ,j,k,0)*(b.q(i-1,j,k,1)*b.isx(i,j,k)
+                                        +b.q(i-1,j,k,2)*b.isy(i,j,k)
+                                        +b.q(i-1,j,k,3)*b.isz(i,j,k) ) );
+
 
   });
 
@@ -67,8 +72,6 @@ for(block_ b : mb){
     double uf;
     double vf;
     double wf;
-
-    double ut;
 
     // Compute face normal volume flux vector
     uf = 0.5*(b.q(i,j,k,1)+b.q(i,j-1,k,1));
@@ -100,8 +103,13 @@ for(block_ b : mb){
     b.jF(i,j,k,4) =(0.5*(b.Q(i,j,k,0)+b.Q(i,j-1,k,0)) *(0.5*(b.q(i,j,k,4)+b.q(i,j-1,k,4))*cv
                                                       + 0.5*(b.q(i,j,k,1)*b.q(i,j-1,k,1)  +
                                                              b.q(i,j,k,2)*b.q(i,j-1,k,2)  +
-                                                             b.q(i,j,k,3)*b.q(i,j-1,k,3)) )
-                  + 0.5*(b.q(i,j,k,0)+b.q(i,j-1,k,0))                                   ) *V;
+                                                             b.q(i,j,k,3)*b.q(i,j-1,k,3)) ) ) * V;
+    b.jF(i,j,k,4)+= 0.5*(b.q(i,j-1,k,0)*(b.q(i,j  ,k,1)*b.jsx(i,j,k)
+                                        +b.q(i,j  ,k,2)*b.jsy(i,j,k)
+                                        +b.q(i,j  ,k,3)*b.jsz(i,j,k) ) +
+                         b.q(i,j  ,k,0)*(b.q(i,j-1,k,1)*b.jsx(i,j,k)
+                                        +b.q(i,j-1,k,2)*b.jsy(i,j,k)
+                                        +b.q(i,j-1,k,3)*b.jsz(i,j,k) ) );
 
   });
 
@@ -115,8 +123,6 @@ for(block_ b : mb){
     double uf;
     double vf;
     double wf;
-
-    double ut;
 
     // Compute face normal volume flux vector
     uf = 0.5*(b.q(i,j,k,1)+b.q(i,j,k-1,1));
@@ -148,8 +154,13 @@ for(block_ b : mb){
     b.kF(i,j,k,4) =(0.5*(b.Q(i,j,k,0)+b.Q(i,j,k-1,0)) *(0.5*(b.q(i,j,k,4)+b.q(i,j,k-1,4))*cv
                                                       + 0.5*(b.q(i,j,k,1)*b.q(i,j,k-1,1)  +
                                                              b.q(i,j,k,2)*b.q(i,j,k-1,2)  +
-                                                             b.q(i,j,k,3)*b.q(i,j,k-1,3)) )
-                  + 0.5*(b.q(i,j,k,0)+b.q(i,j,k-1,0))                                   ) *W;
+                                                             b.q(i,j,k,3)*b.q(i,j,k-1,3)) ) ) * W;
+    b.kF(i,j,k,4)+= 0.5*(b.q(i,j,k-1,0)*(b.q(i,j,k  ,1)*b.ksx(i,j,k)
+                                        +b.q(i,j,k  ,2)*b.ksy(i,j,k)
+                                        +b.q(i,j,k  ,3)*b.ksz(i,j,k) ) +
+                         b.q(i,j,k  ,0)*(b.q(i,j,k-1,1)*b.ksx(i,j,k)
+                                        +b.q(i,j,k-1,2)*b.ksy(i,j,k)
+                                        +b.q(i,j,k-1,3)*b.ksz(i,j,k) ) );
 
   });
 
