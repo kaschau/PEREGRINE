@@ -1,4 +1,4 @@
-from .compute_ import advective,apply_flux
+from .compute import advective,apply_flux
 
 
 def RHS(mb,config):

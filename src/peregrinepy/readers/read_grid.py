@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from ..compute_ import KokkosLocation
+from ..compute import KokkosLocation
 import kokkos
 import h5py
 import numpy as np

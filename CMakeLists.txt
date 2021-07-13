@@ -29,7 +29,7 @@ include( ./cmake/PEREGRINE_OPTIONS.cmake )
 ###########################################################################
 #              BUILD PEREGRINE COMPUTE LIBRARY                            #
 ###########################################################################
-project(compute_ LANGUAGES C CXX)
+project(compute LANGUAGES C CXX)
 #Set the install path
 
 #Turn off lto junk
@@ -47,10 +47,10 @@ include_directories(${PROJECT_SOURCE_DIR}/src/compute)
 
 #Make the bindings for python import
 add_subdirectory(lib/pybind11)
-pybind11_add_module(compute_ ${compute_src} ${PROJECT_SOURCE_DIR}/src/bindings.cpp)
+pybind11_add_module(compute ${compute_src} ${PROJECT_SOURCE_DIR}/src/bindings.cpp)
 
 #Link to Kokkos
 Find_Package(Kokkos REQUIRED)
-target_link_libraries(compute_ PUBLIC Kokkos::kokkos)
+target_link_libraries(compute PUBLIC Kokkos::kokkos)
 
 message(STATUS "Kokkos Backend: " ${KOKKOS_BACKEND})
