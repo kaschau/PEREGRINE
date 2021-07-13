@@ -17,3 +17,9 @@ To generate compile_commands.json,
 
 ``` cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ../ ```
 
+
+## License
+
+PEREGRINE is released under the New BSD License (see the LICENSE file for details).
+Documentation is made available under a Creative Commons Attribution 4.0
+license (see <http://creativecommons.org/licenses/by/4.0/>).
