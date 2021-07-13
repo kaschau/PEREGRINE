@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
-from .compute_ import block_
-from .misc import FrozenDict
 import kokkos
 import numpy as np
+from ..compute_ import block_
+from .restart_block import restart_block
+from ..misc import FrozenDict
 
 ''' block.py
 
@@ -14,7 +15,7 @@ This module defines the top block class. This object is the most basic object th
 
 '''
 
-class block(block_):
+class solver_block(restart_block,block_):
     '''block object is the most basic object a raptorpy.multiblock.dataset (or one of its descendants) can be.
 
     Attributes
@@ -30,28 +31,27 @@ class block(block_):
         'orientation':'000' for all faces. NOTE: the face information is stored as strings for all entries, even 'connection'
 
     '''
-    def __init__(self, nblki):
-        __slots__ = list(block_.__dict__.keys()) + ['nblki,'
-                                                    'connectivity',
-                                                    'array']
 
-        super().__init__()
-        self.nblki = nblki
+    block_type = 'solver'
+    def __init__(self, nblki,ns):
+        restart_block.__init__(self,nblki,ns)
+        block_.__init__(self)
 
         ################################################################################################################
-        ############## Connectivity
+        ############## Solution Variables
         ################################################################################################################
-        self.connectivity = FrozenDict({'1':FrozenDict({'bc':'s1', 'neighbor':None, 'orientation':None,'comm_rank':None,'nface':None}),
-                                        '2':FrozenDict({'bc':'s1', 'neighbor':None, 'orientation':None,'comm_rank':None,'nface':None}),
-                                        '3':FrozenDict({'bc':'s1', 'neighbor':None, 'orientation':None,'comm_rank':None,'nface':None}),
-                                        '4':FrozenDict({'bc':'s1', 'neighbor':None, 'orientation':None,'comm_rank':None,'nface':None}),
-                                        '5':FrozenDict({'bc':'s1', 'neighbor':None, 'orientation':None,'comm_rank':None,'nface':None}),
-                                        '6':FrozenDict({'bc':'s1', 'neighbor':None, 'orientation':None,'comm_rank':None,'nface':None})})
+        # Conserved variables
+        for d in ['Q','dQ']:
+            self.array[f'{d}'] = None
+        # RK stages
+        for d in ['rhs0','rhs1','rhs2','rhs3']:
+            self.array[f'{d}'] = None
+        # Face fluxes
+        for d in ['iF','jF','kF']:
+            self.array[f'{d}'] = None
 
-        for i in ['1','2','3','4','5','6']:
-            self.connectivity[i]._freeze()
-        self.connectivity._freeze()
-
+        if self.block_type == 'solver':
+            self.array._freeze()
 
         ################################################################################################################
         ############## Communication
@@ -66,42 +66,6 @@ class block(block_):
         self.recvbuffer3 = {}
         self.sendbuffer4 = {}
         self.recvbuffer4 = {}
-
-        ################################################################################################################
-        ############## Data arrays
-        ################################################################################################################
-        # Python side data
-        self.array = FrozenDict()
-
-        # Coordinate arrays
-        for d in ['x','y','z']:
-            self.array[f'{d}'] = None
-        # Grid metrics
-        # Cell centers
-        for d in ['xc','yc','zc','J']:
-            self.array[f'{d}'] = None
-        # i face area vectors
-        for d in ['isx','isy','isz','iS','inx','iny','inz']:
-            self.array[f'{d}'] = None
-        # j face area vectors
-        for d in ['jsx','jsy','jsz','jS','jnx','jny','jnz']:
-            self.array[f'{d}'] = None
-        # k face area vectors
-        for d in ['ksx','ksy','ksz','kS','knx','kny','knz']:
-            self.array[f'{d}'] = None
-
-        # Flow variables
-        # Cons, prim
-        for d in ['Q','q','dQ']:
-            self.array[f'{d}'] = None
-        # RK stages
-        for d in ['rhs0','rhs1','rhs2','rhs3']:
-            self.array[f'{d}'] = None
-        # Face fluxes
-        for d in ['iF','jF','kF']:
-            self.array[f'{d}'] = None
-
-        self.array._freeze()
 
 
     def init_koarrays(self,config):
