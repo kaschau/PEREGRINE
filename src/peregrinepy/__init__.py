@@ -5,8 +5,7 @@ if compute.KokkosLocation in ['OpenMP','CudaUVM','Serial','Default']:
 else:
     raise ValueError(f'Unknown KokkosLocation {compute.KokkosLocation}')
 
-from .multiblock import multiblock
-from .block import block
+from . import multiblock
 from .construct_mb import construct_mb
 
 from . import files

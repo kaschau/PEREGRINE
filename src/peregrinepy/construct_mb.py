@@ -1,4 +1,4 @@
-from .multiblock import multiblock
+from . import multiblock
 from .readers import read_blocks4procs,read_connectivity,read_grid
 from .mpicomm import mpiutils,blockcomm
 
@@ -21,7 +21,7 @@ def construct_mb(config):
         comm.Abort()
 
     myblocks = blocks4procs[rank]
-    mb = multiblock(len(myblocks),config)
+    mb = multiblock.solver(len(myblocks),config)
 
     #We have to overwrite the default value of nblki in parallel
     for i,nblki in enumerate(myblocks):
