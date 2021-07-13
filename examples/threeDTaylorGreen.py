@@ -1,4 +1,15 @@
 #!/usr/bin/env python
+'''
+
+Test case from
+
+Preventing spurious pressure oscillations in split convective form discretization for compressible flows
+https://doi.org/10.1016/j.jcp.2020.110060
+
+Should reproduce results in Fig. 2 for the KEEP scheme (blue line)
+
+
+'''
 
 import mpi4py.rc
 mpi4py.rc.initialize = False
