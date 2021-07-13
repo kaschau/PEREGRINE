@@ -33,9 +33,11 @@ class solver_block(restart_block,block_):
     '''
 
     block_type = 'solver'
-    def __init__(self, nblki,ns):
-        restart_block.__init__(self,nblki,ns)
+    def __init__(self, nblki, ns):
+        # The c++ stuff must be instantiated first, so that inhereted python side
+        # attributes are assigned values, not defined in the upstream __init__s
         block_.__init__(self)
+        restart_block.__init__(self, nblki, ns)
 
         ################################################################################################################
         ############## Solution Variables
