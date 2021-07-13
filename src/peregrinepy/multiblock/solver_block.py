@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import kokkos
 import numpy as np
-from ..compute_ import block_
+from ..compute import block_
 from .restart_block import restart_block
 from ..misc import FrozenDict
 
