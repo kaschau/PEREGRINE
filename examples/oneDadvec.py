@@ -34,7 +34,7 @@ def simulate():
     pg.mpicomm.mpiutils.register_finalize_handler()
 
     config = pg.files.config_file()
-    mb = pg.multiblock.solver(1,config)
+    mb = pg.multiblock.generate_multiblock_solver(1,config)
     pg.grid.create.multiblock_cube(mb,
                                    mb_dimensions=[1,1,1],
                                    dimensions_perblock=[41,2,2],
@@ -75,7 +75,7 @@ def simulate():
     #Get total energy
     pg.compute.calEOS_perfect(blk,'0','PT')
 
-    pg.consistify(mb,config)
+    pg.consistify(mb)
 
     dt = 0.1 * 0.025
     niterout = 1100
@@ -98,7 +98,7 @@ def simulate():
             plt.savefig(f'{mb.nrt:04d}.png',dpi=400)
             plt.close()
 
-        pg.rk4.step(mb,dt,config)
+        mb.step(dt)
 
     # Finalise MPI
     MPI.Finalize()

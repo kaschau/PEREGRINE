@@ -21,7 +21,7 @@ def construct_mb(config):
         comm.Abort()
 
     myblocks = blocks4procs[rank]
-    mb = multiblock.solver(len(myblocks),config)
+    mb = multiblock.generate_multiblock_solver(len(myblocks),config)
 
     #We have to overwrite the default value of nblki in parallel
     for i,nblki in enumerate(myblocks):

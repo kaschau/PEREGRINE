@@ -106,8 +106,6 @@ PYBIND11_MODULE(compute, m) {
   //  |----> advective
   m.def("advective", &advective, "Compute centered difference flux",
         py::arg("block_ object"));
-  m.def("apply_flux", &apply_flux, "Apply fluxes to RHS",
-        py::arg("block_ object"));
 
   // ./EOS
   //  |----> EOS_ideal

@@ -14,6 +14,7 @@ python lists to create a list of peregrine.block object with added functionality
 
 from .restart import restart
 from .solver_block import solver_block
+from ..integrators import rk1,rk4
 
 class solver(restart):
     '''A list of peregrinepy.restart.restart_block objects. Inherits from peregrinepy.multiblock.grid
