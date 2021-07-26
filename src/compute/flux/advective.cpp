@@ -3,10 +3,6 @@
 #include "block_.hpp"
 #include <vector>
 
-const double cp = 1006.0;
-const double R = 281.4583333333333;
-const double cv = cp - R;
-
 void advective(std::vector<block_> mb) {
 for(block_ b : mb){
 
@@ -49,7 +45,18 @@ for(block_ b : mb){
                   + 0.5*(b.q(i,j,k,0)+b.q(i-1,j,k,0)) *      b.isz(i,j,k)                   ;
 
     // Total energy (rhoE+ p)*Ui)
-    b.iF(i,j,k,4) =(0.5*(b.Q(i,j,k,0)+b.Q(i-1,j,k,0)) *(0.5*(b.q(i,j,k,4)+b.q(i-1,j,k,4))*cv
+    double e;
+    double em;
+
+    e = b.Q(i  ,j,k,4)/b.Q(i  ,j,k,0) - 0.5*(pow(b.q(i  ,j,k,1),2.0) +
+                                             pow(b.q(i  ,j,k,2),2.0) +
+                                             pow(b.q(i  ,j,k,3),2.0));
+
+    em= b.Q(i-1,j,k,4)/b.Q(i-1,j,k,0) - 0.5*(pow(b.q(i-1,j,k,1),2.0) +
+                                             pow(b.q(i-1,j,k,2),2.0) +
+                                             pow(b.q(i-1,j,k,3),2.0));
+
+    b.iF(i,j,k,4) =(0.5*(b.Q(i,j,k,0)+b.Q(i-1,j,k,0)) *(0.5*(  e         +  em         )
                                                       + 0.5*(b.q(i,j,k,1)*b.q(i-1,j,k,1)  +
                                                              b.q(i,j,k,2)*b.q(i-1,j,k,2)  +
                                                              b.q(i,j,k,3)*b.q(i-1,j,k,3)) ) ) * U;
@@ -60,7 +67,6 @@ for(block_ b : mb){
                          b.q(i  ,j,k,0)*(b.q(i-1,j,k,1)*b.isx(i,j,k)
                                         +b.q(i-1,j,k,2)*b.isy(i,j,k)
                                         +b.q(i-1,j,k,3)*b.isz(i,j,k) ) );
-
 
   });
 
@@ -104,7 +110,18 @@ for(block_ b : mb){
                   + 0.5*(b.q(i,j,k,0)+b.q(i,j-1,k,0)) *      b.jsz(i,j,k)                   ;
 
     // Total energy (rhoE+P)*Vj)
-    b.jF(i,j,k,4) =(0.5*(b.Q(i,j,k,0)+b.Q(i,j-1,k,0)) *(0.5*(b.q(i,j,k,4)+b.q(i,j-1,k,4))*cv
+    double e;
+    double em;
+
+    e = b.Q(i,j  ,k,4)/b.Q(i,j  ,k,0) - 0.5*(pow(b.q(i,j  ,k,1),2.0) +
+                                             pow(b.q(i,j  ,k,2),2.0) +
+                                             pow(b.q(i,j  ,k,3),2.0));
+
+    em= b.Q(i,j-1,k,4)/b.Q(i,j-1,k,0) - 0.5*(pow(b.q(i,j-1,k,1),2.0) +
+                                             pow(b.q(i,j-1,k,2),2.0) +
+                                             pow(b.q(i,j-1,k,3),2.0));
+
+    b.jF(i,j,k,4) =(0.5*(b.Q(i,j,k,0)+b.Q(i,j-1,k,0)) *(0.5*(  e         +  em         )
                                                       + 0.5*(b.q(i,j,k,1)*b.q(i,j-1,k,1)  +
                                                              b.q(i,j,k,2)*b.q(i,j-1,k,2)  +
                                                              b.q(i,j,k,3)*b.q(i,j-1,k,3)) ) ) * V;
@@ -157,10 +174,22 @@ for(block_ b : mb){
                   + 0.5*(b.q(i,j,k,0)+b.q(i,j,k-1,0)) *      b.ksz(i,j,k)                   ;
 
     // Total energy (rhoE+P)*Wk)
-    b.kF(i,j,k,4) =(0.5*(b.Q(i,j,k,0)+b.Q(i,j,k-1,0)) *(0.5*(b.q(i,j,k,4)+b.q(i,j,k-1,4))*cv
+    double e;
+    double em;
+
+    e = b.Q(i,j,k  ,4)/b.Q(i,j,k  ,0) - 0.5*(pow(b.q(i,j,k  ,1),2.0) +
+                                             pow(b.q(i,j,k  ,2),2.0) +
+                                             pow(b.q(i,j,k  ,3),2.0));
+
+    em= b.Q(i,j,k-1,4)/b.Q(i,j,k-1,0) - 0.5*(pow(b.q(i,j,k-1,1),2.0) +
+                                             pow(b.q(i,j,k-1,2),2.0) +
+                                             pow(b.q(i,j,k-1,3),2.0));
+
+    b.kF(i,j,k,4) =(0.5*(b.Q(i,j,k,0)+b.Q(i,j,k-1,0)) *(0.5*(  e         +  em         )
                                                       + 0.5*(b.q(i,j,k,1)*b.q(i,j,k-1,1)  +
                                                              b.q(i,j,k,2)*b.q(i,j,k-1,2)  +
                                                              b.q(i,j,k,3)*b.q(i,j,k-1,3)) ) ) * W;
+
     b.kF(i,j,k,4)+= 0.5*(b.q(i,j,k-1,0)*(b.q(i,j,k  ,1)*b.ksx(i,j,k)
                                         +b.q(i,j,k  ,2)*b.ksy(i,j,k)
                                         +b.q(i,j,k  ,3)*b.ksz(i,j,k) ) +
