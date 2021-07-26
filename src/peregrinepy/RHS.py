@@ -1,7 +1,5 @@
-from .compute import advective,apply_flux
-
+from .compute import advective
 
 def RHS(mb):
 
     advective(mb)
-    apply_flux(mb)
