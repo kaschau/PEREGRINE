@@ -36,7 +36,7 @@ class config_file(FrozenDict):
         self['solver'] = FrozenDict({'time_integration' : 'rk4'
                                      })
 
-        self['thermochem'] = FrozenDict({'ctfile' : None,
+        self['thermochem'] = FrozenDict({'ctfile' : 'pure-debug.yaml',
                                          'EOS'    : 'ideal',
                                          'calEOS' : 'perfect'
                                          })
