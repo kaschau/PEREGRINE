@@ -6,7 +6,7 @@ from copy import deepcopy
 from ..misc import ProgressBar
 
 
-def write_restart(mb, path='./'):
+def write_restart(mb, path='./', grid_path='./', precision='double'):
     '''This function produces an hdf5 file from a raptorpy.multiblock.restart for viewing in Paraview.
 
     Parameters
@@ -27,7 +27,10 @@ def write_restart(mb, path='./'):
 
     '''
 
-    fdtype = 'float64'
+    if precision == 'double':
+        fdtype = 'float64'
+    else:
+        fdtype = 'float32'
 
     xdmf_elem = etree.Element('Xdmf')
     xdmf_elem.set('Version', '2')
@@ -100,13 +103,13 @@ def write_restart(mb, path='./'):
         data_x2_elem.set('Dimensions', f'{extent}')
         data_x2_elem.set('Precision', '4')
         data_x2_elem.set('Format', 'HDF')
-        data_x2_elem.text = f'gv.{blk.nblki:06d}.h5:/coordinates/x'
+        data_x2_elem.text = f'{grid_path}/gv.{blk.nblki:06d}.h5:/coordinates/x'
 
         geometry_elem.append(deepcopy(data_x_elem))
-        geometry_elem[-1][1].text = f'gv.{blk.nblki:06d}.h5:/coordinates/y'
+        geometry_elem[-1][1].text = f'{grid_path}/gv.{blk.nblki:06d}.h5:/coordinates/y'
 
         geometry_elem.append(deepcopy(data_x_elem))
-        geometry_elem[-1][1].text = f'gv.{blk.nblki:06d}.h5:/coordinates/z'
+        geometry_elem[-1][1].text = f'{grid_path}/gv.{blk.nblki:06d}.h5:/coordinates/z'
 
         #Attributes
         attribute_elem = etree.SubElement(block_elem, 'Attribute')

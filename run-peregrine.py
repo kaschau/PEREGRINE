@@ -54,7 +54,7 @@ def simulate(config_file_path):
         blk.array['q'][1:-1,1:-1,1:-1,4] = 0.0
 
     pg.consistify(mb)
-    pg.writers.write_restart(mb,config['io']['outputdir'])
+    pg.writers.write_restart(mb,config['io']['outputdir'],grid_path='../Grid')
 
     niterout = 1000
     #ts = time.time()
@@ -62,7 +62,7 @@ def simulate(config_file_path):
         print(mb.nrt,mb.tme)
         mb.step(1e-6)
         if mb.nrt%niterout == 0:
-            pg.writers.write_restart(mb,config['io']['outputdir'])
+            pg.writers.write_restart(mb,config['io']['outputdir'],grid_path='../Grid')
 
     #print(time.time()-ts, 'took this many seconds')
 
