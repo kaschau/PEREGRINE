@@ -4,6 +4,7 @@
 #include "Kokkos_Core.hpp"
 #include "compute.hpp"
 #include "block_.hpp"
+#include "thermdat_.hpp"
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
@@ -94,6 +95,16 @@ PYBIND11_MODULE(compute, m) {
     .def_readwrite("kF" , &block_::kF );
 
 ////////////////////////////////////////////////////////////////////////////////
+///////////////////  C++ Parent thermdat_ class ////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+  py::class_<thermdat_>(m, "thermdat_", py::dynamic_attr())
+    .def(py::init<>())
+
+    .def_readwrite("ns", &thermdat_::ns)
+    .def_readwrite("species_names", &thermdat_::species_names)
+    .def_readwrite("cp0", &thermdat_::cp0);
+////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////  Compute Functions /////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -125,7 +136,6 @@ PYBIND11_MODULE(compute, m) {
         py::arg("block_ object"),
         py::arg("face"),
         py::arg("given"));
-
 
 
 
