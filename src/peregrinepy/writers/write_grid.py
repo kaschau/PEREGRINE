@@ -63,7 +63,10 @@ def write_grid(mb, path='./', precision='double'):
             f['coordinates'].create_dataset('y', shape=(extent,), dtype=fdtype)
             f['coordinates'].create_dataset('z', shape=(extent,), dtype=fdtype)
 
-            s_ = np.s_[1:-1,1:-1,1:-1]
+            if blk.block_type == 'solver':
+                s_ = np.s_[1:-1,1:-1,1:-1]
+            else:
+                s_ = np.s_[:,:,:]
             dset = f['coordinates']['x']
             dset[:] = blk.array['x'][s_].ravel()
             dset = f['coordinates']['y']
@@ -96,13 +99,13 @@ def write_grid(mb, path='./', precision='double'):
         data_x2_elem.set('Dimensions', '{}'.format(extent))
         data_x2_elem.set('Precision', '4')
         data_x2_elem.set('Format', 'HDF')
-        data_x2_elem.text = 'gv.{:06d}.h5:/coordinates/x'.format(blk.nblki)
+        data_x2_elem.text = f'gv.{blk.nblki:06d}.h5:/coordinates/x'
 
         geometry_elem.append(deepcopy(data_x_elem))
-        geometry_elem[-1][1].text = 'gv.{:06d}.h5:/coordinates/y'.format(blk.nblki)
+        geometry_elem[-1][1].text = f'gv.{blk.nblki:06d}.h5:/coordinates/y'
 
         geometry_elem.append(deepcopy(data_x_elem))
-        geometry_elem[-1][1].text = 'gv.{:06d}.h5:/coordinates/z'.format(blk.nblki)
+        geometry_elem[-1][1].text = f'gv.{blk.nblki:06d}.h5:/coordinates/z'
 
         grid_elem.append(deepcopy(block_elem))
 

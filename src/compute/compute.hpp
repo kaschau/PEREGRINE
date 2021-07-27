@@ -18,7 +18,6 @@ void metrics(std::vector<block_> mb);
 // ./flux
 //    |------> Advective
 void advective(std::vector<block_> mb);
-void apply_flux(std::vector<block_> mb);
 
 // ./EOS
 //    |------> EOS_ideal

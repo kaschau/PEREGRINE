@@ -1,5 +1,5 @@
 from .face_slice import fs
-from ..compute_ import momentum, EOS_ideal, calEOS_perfect
+from ..compute import momentum, EOS_ideal, calEOS_perfect
 
 def subsonic_exit(blk,face):
 

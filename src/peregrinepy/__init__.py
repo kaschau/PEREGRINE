@@ -1,20 +1,9 @@
-from . import compute_ as compute
+# -*- coding: utf-8 -*-
 
-if compute.KokkosLocation in ['OpenMP','CudaUVM','Serial','Default']:
-    import numpy as np
-else:
-    raise ValueError(f'Unknown KokkosLocation {compute.KokkosLocation}')
-
-from . import multiblock
-from .construct_mb import construct_mb
-
-from . import files
+from ._version import __version__
 from . import grid
-from . import readers
 from . import writers
-from . import mpicomm
 
-from . import bcs
+from .construct_mb import construct_mb
 from .consistify import consistify
-
-from . import rk1,rk4
+from .RHS import RHS

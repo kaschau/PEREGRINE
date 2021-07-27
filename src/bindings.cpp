@@ -15,7 +15,7 @@ namespace py = pybind11;
 //
 //--------------------------------------------------------------------------------------//
 
-PYBIND11_MODULE(compute_, m) {
+PYBIND11_MODULE(compute, m) {
   m.doc() = "Module to expose compute units written in C++ with Kokkos";
   m.attr("KokkosLocation") = &KokkosLocation;
 
@@ -105,8 +105,6 @@ PYBIND11_MODULE(compute_, m) {
   // ./flux
   //  |----> advective
   m.def("advective", &advective, "Compute centered difference flux",
-        py::arg("block_ object"));
-  m.def("apply_flux", &apply_flux, "Apply fluxes to RHS",
         py::arg("block_ object"));
 
   // ./EOS

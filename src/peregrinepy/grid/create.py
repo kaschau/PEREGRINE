@@ -127,15 +127,21 @@ def cube(blk, origin, lengths, dimensions):
     y = np.linspace(origin[1], origin[1]+lengths[1], dimensions[1], dtype=np.float64)
     z = np.linspace(origin[2], origin[2]+lengths[2], dimensions[2], dtype=np.float64)
 
-    shape = (blk.ni+2,
-             blk.nj+2,
-             blk.nk+2)
+    if blk.block_type == 'solver':
+        shape = (blk.ni+2,
+                 blk.nj+2,
+                 blk.nk+2)
+        s_i = np.s_[1:-1,1:-1,1:-1]
+    else:
+        shape = (blk.ni,
+                 blk.nj,
+                 blk.nk)
+        s_i = np.s_[:,:,:]
 
     blk.array['x'] = np.zeros(shape)
     blk.array['y'] = np.zeros(shape)
     blk.array['z'] = np.zeros(shape)
 
-    s_i = np.s_[1:-1,1:-1,1:-1]
     blk.array['x'][s_i], blk.array['y'][s_i], blk.array['z'][s_i] = np.meshgrid(x,y,z, indexing='ij')
 
 
@@ -195,7 +201,9 @@ def multiblock_cube(mb, origin=[0,0,0], lengths=[1,1,1], mb_dimensions=[1,1,1], 
                 cubic_connectivity(blk.connectivity, mb_dimensions, blk_number, i, j, k)
 
 
-def annulus(blk, p1, p2, p3, sweep, thickness, dimensions):
+def annulus(blk, p1, p2, p13, sweep, thickness, dimensions):
+
+    raise ValueError('The annulus is jacked, needs to be updated.')
 
     '''Function to populate the coordinate arrays of a provided raptorpy.grid.grid_block in the shape of an annulus with prescribed location, extents, and discretization.
     If the input multiblock object is a restart block the shape and size of the flow data arrays are also updated.

@@ -34,7 +34,7 @@ def simulate():
 
     config = pg.files.config_file()
 
-    mb = pg.multiblock.solver(1,config)
+    mb = pg.multiblock.generate_multiblock_solver(1,config)
     pg.grid.create.multiblock_cube(mb,
                                    mb_dimensions=[1,1,1],
                                    dimensions_perblock=[65,65,65],
@@ -77,7 +77,7 @@ def simulate():
     #Get total energy
     pg.compute.calEOS_perfect(blk,'0','PT')
 
-    pg.consistify(mb,config)
+    pg.consistify(mb)
 
     dt = 0.1 * 2*np.pi/64
     niterout = 5000
@@ -109,7 +109,7 @@ def simulate():
             s.append(rS)
             t.append(mb.tme*M0)
 
-        pg.rk4.step(mb,dt,config)
+        mb.step(dt)
 
     plt.plot(t,ke/ke[0])
     plt.ylim([0,2.4])
