@@ -1,8 +1,8 @@
 from .bcs import apply_bcs
 from .mpicomm.blockcomm import communicate
-from .compute_ import momentum, EOS_ideal, calEOS_perfect
+from .compute import momentum, EOS_ideal, calEOS_perfect
 
-def consistify(mb, config):
+def consistify(mb):
 
     #We assume that the interior of the blocks have a
     # conservative Q variable field. We update the
@@ -21,7 +21,7 @@ def consistify(mb, config):
 
 
     #Apply boundary conditions
-    apply_bcs(mb,config)
+    apply_bcs(mb)
 
     #communicate Q halos
     communicate(mb,'Q')

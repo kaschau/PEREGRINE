@@ -3,14 +3,12 @@
 #include "block_.hpp"
 #include <vector>
 
-const double cp = 1006.0;
-const double R = 281.4583333333333;
-const double cv = cp - R;
-
 void advective(std::vector<block_> mb) {
 for(block_ b : mb){
 
-  // i flux face range
+//-------------------------------------------------------------------------------------------|
+// i flux face range
+//-------------------------------------------------------------------------------------------|
   MDRange3 range_i({1,1,1},{b.ni+1,b.nj,b.nk});
   Kokkos::parallel_for("Grid Metrics", range_i, KOKKOS_LAMBDA(const int i,
                                                               const int j,
@@ -47,7 +45,18 @@ for(block_ b : mb){
                   + 0.5*(b.q(i,j,k,0)+b.q(i-1,j,k,0)) *      b.isz(i,j,k)                   ;
 
     // Total energy (rhoE+ p)*Ui)
-    b.iF(i,j,k,4) =(0.5*(b.Q(i,j,k,0)+b.Q(i-1,j,k,0)) *(0.5*(b.q(i,j,k,4)+b.q(i-1,j,k,4))*cv
+    double e;
+    double em;
+
+    e = b.Q(i  ,j,k,4)/b.Q(i  ,j,k,0) - 0.5*(pow(b.q(i  ,j,k,1),2.0) +
+                                             pow(b.q(i  ,j,k,2),2.0) +
+                                             pow(b.q(i  ,j,k,3),2.0));
+
+    em= b.Q(i-1,j,k,4)/b.Q(i-1,j,k,0) - 0.5*(pow(b.q(i-1,j,k,1),2.0) +
+                                             pow(b.q(i-1,j,k,2),2.0) +
+                                             pow(b.q(i-1,j,k,3),2.0));
+
+    b.iF(i,j,k,4) =(0.5*(b.Q(i,j,k,0)+b.Q(i-1,j,k,0)) *(0.5*(  e         +  em         )
                                                       + 0.5*(b.q(i,j,k,1)*b.q(i-1,j,k,1)  +
                                                              b.q(i,j,k,2)*b.q(i-1,j,k,2)  +
                                                              b.q(i,j,k,3)*b.q(i-1,j,k,3)) ) ) * U;
@@ -59,10 +68,11 @@ for(block_ b : mb){
                                         +b.q(i-1,j,k,2)*b.isy(i,j,k)
                                         +b.q(i-1,j,k,3)*b.isz(i,j,k) ) );
 
-
   });
 
-  // j flux face range
+//-------------------------------------------------------------------------------------------|
+// j flux face range
+//-------------------------------------------------------------------------------------------|
   MDRange3 range_j({1,1,1},{b.ni,b.nj+1,b.nk});
   Kokkos::parallel_for("Grid Metrics", range_j, KOKKOS_LAMBDA(const int i,
                                                               const int j,
@@ -100,7 +110,18 @@ for(block_ b : mb){
                   + 0.5*(b.q(i,j,k,0)+b.q(i,j-1,k,0)) *      b.jsz(i,j,k)                   ;
 
     // Total energy (rhoE+P)*Vj)
-    b.jF(i,j,k,4) =(0.5*(b.Q(i,j,k,0)+b.Q(i,j-1,k,0)) *(0.5*(b.q(i,j,k,4)+b.q(i,j-1,k,4))*cv
+    double e;
+    double em;
+
+    e = b.Q(i,j  ,k,4)/b.Q(i,j  ,k,0) - 0.5*(pow(b.q(i,j  ,k,1),2.0) +
+                                             pow(b.q(i,j  ,k,2),2.0) +
+                                             pow(b.q(i,j  ,k,3),2.0));
+
+    em= b.Q(i,j-1,k,4)/b.Q(i,j-1,k,0) - 0.5*(pow(b.q(i,j-1,k,1),2.0) +
+                                             pow(b.q(i,j-1,k,2),2.0) +
+                                             pow(b.q(i,j-1,k,3),2.0));
+
+    b.jF(i,j,k,4) =(0.5*(b.Q(i,j,k,0)+b.Q(i,j-1,k,0)) *(0.5*(  e         +  em         )
                                                       + 0.5*(b.q(i,j,k,1)*b.q(i,j-1,k,1)  +
                                                              b.q(i,j,k,2)*b.q(i,j-1,k,2)  +
                                                              b.q(i,j,k,3)*b.q(i,j-1,k,3)) ) ) * V;
@@ -113,7 +134,9 @@ for(block_ b : mb){
 
   });
 
-  // k flux face range
+//-------------------------------------------------------------------------------------------|
+// k flux face range
+//-------------------------------------------------------------------------------------------|
   MDRange3 range_k({1,1,1},{b.ni,b.nj,b.nk+1});
   Kokkos::parallel_for("Grid Metrics", range_k, KOKKOS_LAMBDA(const int i,
                                                               const int j,
@@ -151,16 +174,49 @@ for(block_ b : mb){
                   + 0.5*(b.q(i,j,k,0)+b.q(i,j,k-1,0)) *      b.ksz(i,j,k)                   ;
 
     // Total energy (rhoE+P)*Wk)
-    b.kF(i,j,k,4) =(0.5*(b.Q(i,j,k,0)+b.Q(i,j,k-1,0)) *(0.5*(b.q(i,j,k,4)+b.q(i,j,k-1,4))*cv
+    double e;
+    double em;
+
+    e = b.Q(i,j,k  ,4)/b.Q(i,j,k  ,0) - 0.5*(pow(b.q(i,j,k  ,1),2.0) +
+                                             pow(b.q(i,j,k  ,2),2.0) +
+                                             pow(b.q(i,j,k  ,3),2.0));
+
+    em= b.Q(i,j,k-1,4)/b.Q(i,j,k-1,0) - 0.5*(pow(b.q(i,j,k-1,1),2.0) +
+                                             pow(b.q(i,j,k-1,2),2.0) +
+                                             pow(b.q(i,j,k-1,3),2.0));
+
+    b.kF(i,j,k,4) =(0.5*(b.Q(i,j,k,0)+b.Q(i,j,k-1,0)) *(0.5*(  e         +  em         )
                                                       + 0.5*(b.q(i,j,k,1)*b.q(i,j,k-1,1)  +
                                                              b.q(i,j,k,2)*b.q(i,j,k-1,2)  +
                                                              b.q(i,j,k,3)*b.q(i,j,k-1,3)) ) ) * W;
+
     b.kF(i,j,k,4)+= 0.5*(b.q(i,j,k-1,0)*(b.q(i,j,k  ,1)*b.ksx(i,j,k)
                                         +b.q(i,j,k  ,2)*b.ksy(i,j,k)
                                         +b.q(i,j,k  ,3)*b.ksz(i,j,k) ) +
                          b.q(i,j,k  ,0)*(b.q(i,j,k-1,1)*b.ksx(i,j,k)
                                         +b.q(i,j,k-1,2)*b.ksy(i,j,k)
                                         +b.q(i,j,k-1,3)*b.ksz(i,j,k) ) );
+
+  });
+
+
+//-------------------------------------------------------------------------------------------|
+// Apply fluxes to cc range
+//-------------------------------------------------------------------------------------------|
+  MDRange4 range({1,1,1,0},{b.ni,b.nj,b.nk,b.ne});
+  Kokkos::parallel_for("Apply current fluxes to RHS",
+                       range,
+                       KOKKOS_LAMBDA(const int i,
+                                     const int j,
+                                     const int k,
+                                     const int l) {
+
+    // Add fluxes to RHS
+    b.dQ(i,j,k,l) += b.iF(i  ,j,k,l) + b.jF(i,j  ,k,l) + b.kF(i,j,k  ,l);
+    b.dQ(i,j,k,l) -= b.iF(i+1,j,k,l) + b.jF(i,j+1,k,l) + b.kF(i,j,k+1,l);
+
+    // Divide by cell volume
+    b.dQ(i,j,k,l) /= b.J(i,j,k);
 
   });
 

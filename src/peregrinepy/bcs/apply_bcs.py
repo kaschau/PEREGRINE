@@ -2,7 +2,7 @@ from .inlets import subsonic_inlet
 from .exits import subsonic_exit
 from .walls import *
 
-def apply_bcs(mb,config):
+def apply_bcs(mb):
 
     #First we apply inlets and exits
     for blk in mb:

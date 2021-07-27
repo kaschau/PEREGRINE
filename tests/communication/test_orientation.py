@@ -8,7 +8,7 @@ np.random.seed(111)
 class twoblock123:
     def __init__(self):
        self.config = pg.files.config_file()
-       self.mb = pg.multiblock(2,self.config)
+       self.mb = pg.multiblock.solver(2,self.config)
 
        pg.grid.create.multiblock_cube(self.mb,
                                       mb_dimensions=[2,1,1],

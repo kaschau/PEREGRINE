@@ -1,14 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from ..compute_ import KokkosLocation
-import kokkos
 import h5py
 import numpy as np
-
-if KokkosLocation in ['OpenMP','CudaUVM','Serial','Default']:
-    space = kokkos.HostSpace
-else:
-    raise ValueError()
 
 def read_grid(mb,path='./'):
     ''' This function reads in all the HDF5 grid files in :path: and adds the coordinate data to a supplied raptorpy.multiblock.grid object (or one of its descendants)
@@ -34,11 +27,12 @@ def read_grid(mb,path='./'):
 
             blk.ni = ni; blk.nj = nj; blk.nk = nk
 
-            ccshape = [ni+2,nj+2,nk+2]
             for name in ('x','y','z'):
-                setattr(blk,name, kokkos.array(name, shape=ccshape, dtype=kokkos.double, space=space, dynamic=False))
-                blk.array[name] = np.array(getattr(blk,name), copy=False)
-
-                blk.array[name][1:-1,
-                                1:-1,
-                                1:-1] = np.array(f['coordinates'][name]).reshape((ni, nj, nk))
+                if blk.block_type == 'solver':
+                    blk.array[name] = np.empty((ni+2,nj+2,nk+2))
+                    blk.array[name][1:-1,
+                                    1:-1,
+                                    1:-1] = np.array(f['coordinates'][name]).reshape((ni, nj, nk))
+                else:
+                    blk.array[name] = np.empty((ni,nj,nk))
+                    blk.array[name] = np.array(f['coordinates'][name]).reshape((ni, nj, nk))
