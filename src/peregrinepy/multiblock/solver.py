@@ -14,11 +14,14 @@ python lists to create a list of peregrine.block object with added functionality
 
 from .restart import restart
 from .solver_block import solver_block
+import cantera as ct
 
 class solver(restart):
     '''A list of peregrinepy.restart.restart_block objects. Inherits from peregrinepy.multiblock.grid
     '''
     def __init__(self, nblks, config):
-        ns = config['temp']['ns']
+
+        gas = ct.Solution(config['thermochem']['ctfile'])
+        ns = gas.n_species
         temp = [solver_block(i,ns) for i in range(nblks)]
         super().__init__(nblks,ns,temp)
