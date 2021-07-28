@@ -12,9 +12,13 @@ class thermdat(thermdat_):
         gas = ct.Solution(config['thermochem']['ctfile'])
 
         self.ns = gas.n_species
+        self.R = ct.gas_constant
 
         # Species names string
         self.species_names = list(gas.species_names)
+
+        # Species MW
+        self.MW = list(gas.molecular_weights)
 
         #Set gas to STP
         gas.TP = 293.15,101325.0

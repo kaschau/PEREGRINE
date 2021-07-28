@@ -21,27 +21,14 @@ def read_restart(mb, config):
 
     '''
 
+
     for blk in mb:
+        variables = ['p','u','v','w','T'] + blk.species_names[0:-1]
 
         file_name = f"{config['io']['outputdir']}/restart.{blk.nrt:08d}.{blk.nblki:06d}.h5"
 
         with h5py.File(file_name, 'r') as f:
 
-            blk.qv = np.zeros((max(5,5 + blk.ns - 1), blk.nz-1, blk.ny-1, blk.nx-1))
-            for i in range(max(5,5 + blk.ns - 1)):
-                blk.qv[i,:,:,:] = np.array(f['results']['qv_{:02d}'.format(i+1)]).reshape((blk.nz-1, blk.ny-1, blk.nx-1))
-
-            try:
-                blk.qr = np.zeros((max(3,3 + blk.ns - 1), blk.nz-1, blk.ny-1, blk.nx-1))
-                for i in range(max(3.,3 + blk.ns - 1)):
-                    blk.qr[i,:,:,:] = np.array(f['results']['qr_{:02d}'.format(i)]).reshape((blk.nz-1, blk.ny-1, blk.nx-1))
-            except:
-                pass
-
-            try:
-                blk.qh = np.zeros((max(3,3 + blk.ns - 1), blk.nz-1, blk.ny-1, blk.nx-1))
-                for i in range(max(3,3 + blk.ns - 1)):
-                    blk.qh[i,:,:,:] = np.array(f['results']['qh_{:02d}'.format(i)]).reshape((blk.nz-1, blk.ny-1, blk.nx-1))
-            except:
-                pass
-
+            blk.q = np.zeros((blk.nx-1, blk.ny-1, blk.nz-1, 5+blk.ns-1))
+            for i,var in enumerate(variables):
+                blk.q[:,:,:,i] = np.array(f['results'][var]).reshape((blk.nx-1, blk.ny-1, blk.nz-1))

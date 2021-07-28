@@ -82,6 +82,8 @@ PYBIND11_MODULE(compute, m) {
     .def_readwrite("Q" , &block_::Q )
     .def_readwrite("q" , &block_::q )
     .def_readwrite("dQ" , &block_::dQ )
+    // Thermo variables
+    .def_readwrite("qh" , &block_::qh )
 
     // RK stages
     .def_readwrite("rhs0" , &block_::rhs0 )
@@ -103,6 +105,7 @@ PYBIND11_MODULE(compute, m) {
 
     .def_readwrite("ns", &thermdat_::ns)
     .def_readwrite("species_names", &thermdat_::species_names)
+    .def_readwrite("MW", &thermdat_::MW)
     .def_readwrite("cp0", &thermdat_::cp0);
 ////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////  Compute Functions /////////////////////////////////

@@ -18,11 +18,13 @@ class restart_block(grid_block):
     '''
 
     block_type = 'restart'
-    def __init__(self,nblki,ns):
+    def __init__(self,nblki,species_names=[]):
         super().__init__(nblki)
-        if ns < 1:
-            raise ValueError('Number of species must be >1')
-        self.ns = ns
+
+        self.species_names = species_names
+        self.ns = len(species_names)
+        if self.ns < 1:
+            raise ValueError('Number of species must be >=1')
 
         ################################################################################################################
         ############## Primative Variables
@@ -34,3 +36,10 @@ class restart_block(grid_block):
         if self.block_type == 'restart':
             self.array._freeze()
 
+    def init_restart_arrays(self):
+        '''
+        Create empty numpy arrays of correct size.
+        '''
+
+        cQshape  = [self.ni+1,self.nj+1,self.nk+1,5+self.ns-1]
+        self.array['q'] = np.empty((cQshape))
