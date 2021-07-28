@@ -9,7 +9,8 @@
 struct block_ {
   int nblki;
   int ni,nj,nk;
-  int ne=5;
+  int ne;
+  int ns;
 
   // Grid Arrays
   threeDview x,y,z;
@@ -25,6 +26,8 @@ struct block_ {
 
   // Cons,Prim Arrays
   fourDview Q,q,dQ;
+  // ESTR arrays
+  fourDview qh;
 
   // RHS stages
   fourDview rhs0,rhs1,rhs2,rhs3;

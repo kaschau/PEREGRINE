@@ -123,6 +123,8 @@ def cube(blk, origin, lengths, dimensions):
     blk.nj = dimensions[1]
     blk.nk = dimensions[2]
 
+    blk.init_grid_arrays()
+
     x = np.linspace(origin[0], origin[0]+lengths[0], dimensions[0], dtype=np.float64)
     y = np.linspace(origin[1], origin[1]+lengths[1], dimensions[1], dtype=np.float64)
     z = np.linspace(origin[2], origin[2]+lengths[2], dimensions[2], dtype=np.float64)
@@ -138,11 +140,12 @@ def cube(blk, origin, lengths, dimensions):
                  blk.nk)
         s_i = np.s_[:,:,:]
 
-    blk.array['x'] = np.zeros(shape)
-    blk.array['y'] = np.zeros(shape)
-    blk.array['z'] = np.zeros(shape)
-
     blk.array['x'][s_i], blk.array['y'][s_i], blk.array['z'][s_i] = np.meshgrid(x,y,z, indexing='ij')
+
+    if blk.block_type in ['restart_block', 'solver_block']:
+        blk.init_restart_arrays()
+    if blk.block_type == 'solver_block':
+        blk.init_solver_arrays()
 
 
 def multiblock_cube(mb, origin=[0,0,0], lengths=[1,1,1], mb_dimensions=[1,1,1], dimensions_perblock=[10,10,10]):

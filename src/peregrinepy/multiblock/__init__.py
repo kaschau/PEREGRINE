@@ -10,6 +10,9 @@ from .solver_block import solver_block
 
 from ..integrators import rk1,rk4
 
+import cantera as ct
+from pathlib import Path
+
 def generate_multiblock_solver(nblki, config):
     ti = config['solver']['time_integration']
     if ti == 'rk1':
@@ -20,4 +23,10 @@ def generate_multiblock_solver(nblki, config):
     name = 'solver'+ti
     mbsolver = type(name, (solver,tic), dict(name=name))
 
-    return mbsolver(nblki,config)
+    #Get the number of species from the ct file
+    relpath = str(Path(__file__).parent)
+    ct.add_directory(relpath)
+    gas = ct.Solution(config['thermochem']['ctfile'])
+    spn = gas.species_names
+
+    return mbsolver(nblki,spn)
