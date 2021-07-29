@@ -41,7 +41,6 @@ void cpg(block_ b,
   double gamma,cp=0.0,h;
   double Rmix=0.0;
 
-  ns = th.ns;
   p = b.q(i,j,k,0);
   u = b.q(i,j,k,1);
   v = b.q(i,j,k,2);
@@ -59,8 +58,8 @@ void cpg(block_ b,
   // Update mixture properties
   for (int n=0; n<=ns-1; n++)
   {
-    cp += Y[n]*th.cp0[n]/th.MW[n] * th.Ru;
-    Rmix += th.Ru/th.MW[n];
+    cp += Y[n]*th.cp0[n];
+    Rmix += Y[n]*th.Ru/th.MW[n];
   }
   // Compute mixuture enthalpy
   h = cp*T;
@@ -140,8 +139,8 @@ void cpg(block_ b,
   rho = b.Q(i,j,k,0);
   rhoinv = 1.0/b.Q(i,j,k,0);
   rhou = b.Q(i,j,k,1);
-  rhov = b.Q(i,j,k,1);
-  rhow = b.Q(i,j,k,1);
+  rhov = b.Q(i,j,k,2);
+  rhow = b.Q(i,j,k,3);
   // Compute TKE
   tke = 0.5*(pow(rhou,2.0) +
              pow(rhov,2.0) +
@@ -164,8 +163,8 @@ void cpg(block_ b,
   // Compute mixuture cp
   for (int n=0; n<=ns-1; n++)
   {
-    cp += Y[n]*th.cp0[n]/th.MW[n] * th.Ru;
-    Rmix += th.Ru/th.MW[n];
+    cp += Y[n]*th.cp0[n];
+    Rmix += Y[n]*th.Ru/th.MW[n];
   }
 
   // Compute mixuture temperature,pressure
