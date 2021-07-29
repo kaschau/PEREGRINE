@@ -7,120 +7,167 @@
 #include <numeric>
 #include <stdexcept>
 
-void calEOS_perfect(block_ b,
-                 thermdat_ th,
-               std::string face,
-               std::string given) {
+void cpg(block_ b,
+      thermdat_ th,
+    std::string face,
+    std::string given) {
 
   MDRange3 range = get_range3(b, face);
 
 
-  if ( given.compare("primatives") == 0 )
+  if ( given.compare("prims") == 0 )
   {
-  Kokkos::parallel_for("Compute total energy from temperature, momentum, density",
+  Kokkos::parallel_for("Compute all conserved quantities from primatives",
                        range,
                        KOKKOS_LAMBDA(const int i,
                                      const int j,
                                      const int k) {
-  // Here we assume that all primatives are up to date, i.e. p,u,v,w
-  double ys[th.ns];
-  double T,p,rho,rhoinv;
-  double rhou,rhov,rhow,tke;
+
+  // Updates all conserved quantities from primatives
+  // Along the way, we need to compute mixture properties
+  // gamma, cp, h
+  // So we store these as well.
+
+  int ns=th.ns;
+  double p;
+  double u,v,w,tke;
+  double T;
+  double Y[ns];
+
+  double rho,rhoinv;
+  double rhou,rhov,rhow;
+  double e,rhoE;
+  double rhoY[th.ns];
   double gamma,cp=0.0,h;
   double Rmix=0.0;
-  int ns;
 
-  T = b.q(i,j,k,4);
-  p = b.q(i,j,k,0);
-  rhou = b.Q(i,j,k,1);
-  rhov = b.Q(i,j,k,1);
-  rhow = b.Q(i,j,k,1);
   ns = th.ns;
-
+  p = b.q(i,j,k,0);
+  u = b.q(i,j,k,1);
+  v = b.q(i,j,k,2);
+  w = b.q(i,j,k,3);
+  T = b.q(i,j,k,4);
   // Compute nth species Y
-  ys[ns] = 1.0;
-  for (int n=1; n<ns; n++)
+  Y[ns-1] = 1.0;
+  for (int n=0; n<ns-1; n++)
   {
-    ys[n] = b.q(i,j,k,5+n);
-    ys[ns] -= ys[n];
+    Y[n] = b.q(i,j,k,5+n);
+    Y[ns] -= Y[n];
   }
-  ys[th.ns] = std::max(0.0,ys[ns]);
+  Y[ns-1] = std::max(0.0,Y[ns-1]);
 
-  // Compute mixuture cp
-  for (int n=0; n<=ns; n++)
+  // Update mixture properties
+  for (int n=0; n<=ns-1; n++)
   {
-    cp += ys[n]*th.cp0[n]/th.MW[n] * th.R;
-    Rmix += th.R/th.MW[n];
+    cp += Y[n]*th.cp0[n]/th.MW[n] * th.Ru;
+    Rmix += th.Ru/th.MW[n];
   }
-  // Compute density
-  rho = p/(Rmix*T);
   // Compute mixuture enthalpy
   h = cp*T;
   gamma = cp/(cp-Rmix);
 
+  // Compute density
+  rho = p/(Rmix*T);
+  rhoinv = 1.0/rho;
+
+  // Compute momentum
+  rhou = rho*u;
+  rhov = rho*v;
+  rhow = rho*w;
   // Compuute TKE
-  tke = 0.5*(pow(rhou,2.0) +
-             pow(rhov,2.0) +
-             pow(rhow,2.0))*
-                 rhoinv    ;
+  tke = 0.5*(pow(u,2.0) +
+             pow(v,2.0) +
+             pow(w,2.0))*
+                 rho    ;
+
+  // Compute internal, total, energy
+  e = h - p*rhoinv;
+  rhoE = rho*e + tke;
+
+  // Compute species mass
+  for (int n=0; n<=ns-1; n++)
+  {
+    rhoY[n] = Y[n]*rho;
+  }
 
   // Set values of new properties
+  // Density
+  b.Q(i,j,k,0) = rho;
+  // Momentum
+  b.Q(i,j,k,1) = rhou;
+  b.Q(i,j,k,2) = rhov;
+  b.Q(i,j,k,3) = rhow;
   // Total Energy
-  b.Q(i,j,k,4) = h - p*rhoinv + tke;
+  b.Q(i,j,k,4) = rhoE;
+  // Species mass
+  for (int n=0; n<ns-1; n++)
+  {
+    b.Q(i,j,k,5+n) = rhoY[n];
+  }
   // gamma,cp,h
   b.qh(i,j,k,0) = gamma;
   b.qh(i,j,k,1) = cp;
-  b.qh(i,j,k,2) = h;
+  b.qh(i,j,k,2) = rho*h;
 
   });
   }
-  else if ( given.compare("Erho") == 0 )
+  else if ( given.compare("cons") == 0 )
   {
-  Kokkos::parallel_for("Compute temperature from total energy, momentum, density",
+  Kokkos::parallel_for("Compute primatives from conserved quantities.",
                        range,
                        KOKKOS_LAMBDA(const int i,
                                      const int j,
                                      const int k) {
-  double ys[th.ns];
-  double T,p,rho;
-  double rhoE,e,rhoinv;
-  double rhou,rhov,rhow,tke;
+
+  // Updates all primatives from conserved quantities
+  // Along the way, we need to compute mixture properties
+  // gamma, cp, h
+  // So we store these as well.
+
+  int ns=th.ns;
+  double rho,rhoinv;
+  double rhou,rhov,rhow;
+  double e,rhoE;
+  double rhoY[ns];
+
+  double p;
+  double u,v,w,tke;
+  double T;
+  double Y[ns];
   double gamma,cp=0.0,h;
   double Rmix=0.0;
-  int ns;
 
-  rhoE = b.Q(i,j,k,4);
-  rhoinv = 1.0/b.Q(i,j,k,0);
   rho = b.Q(i,j,k,0);
+  rhoinv = 1.0/b.Q(i,j,k,0);
   rhou = b.Q(i,j,k,1);
   rhov = b.Q(i,j,k,1);
   rhow = b.Q(i,j,k,1);
-  ns = th.ns;
-
-  // Compuute TKE
+  // Compute TKE
   tke = 0.5*(pow(rhou,2.0) +
              pow(rhov,2.0) +
              pow(rhow,2.0))*
                  rhoinv    ;
+  rhoE = b.Q(i,j,k,4);
+
+  // Compute species mass fraction
+  Y[ns-1] = 1.0;
+  for (int n=0; n<ns-1; n++)
+  {
+    Y[n] = b.Q(i,j,k,5+n)/b.Q(i,j,k,0);
+    Y[ns] -= Y[n];
+  }
+  Y[ns-1] = std::max(0.0,Y[ns-1]);
 
   // Internal energy
-  e = rhoE*rhoinv - tke;
-
-  // Compute nth species Y
-  ys[ns] = 1.0;
-  for (int n=1; n<ns; n++)
-  {
-    ys[n] = b.q(i,j,k,5+n);
-    ys[ns] -= ys[n];
-  }
-  ys[ns] = std::max(0.0,ys[ns]);
+  e = (rhoE - tke)*rhoinv;
 
   // Compute mixuture cp
-  for (int n=0; n<=ns; n++)
+  for (int n=0; n<=ns-1; n++)
   {
-    cp += ys[n]*th.cp0[n]/th.MW[n] * th.R;
-    Rmix += th.R/th.MW[n];
+    cp += Y[n]*th.cp0[n]/th.MW[n] * th.Ru;
+    Rmix += th.Ru/th.MW[n];
   }
+
   // Compute mixuture temperature,pressure
   T = e/(cp-Rmix);
   p = rho*Rmix*T;
@@ -129,12 +176,17 @@ void calEOS_perfect(block_ b,
   h = e + p*rhoinv;
   gamma = cp/(cp-Rmix);
 
-
-
   // Set values of new properties
-  // Pressure, temperature
+  // Pressure, temperature, Y
   b.q(i,j,k,0) = p;
+  b.q(i,j,k,1) = rhou/rho;
+  b.q(i,j,k,2) = rhov/rho;
+  b.q(i,j,k,3) = rhow/rho;
   b.q(i,j,k,4) = T;
+  for (int n=0; n<ns-1; n++)
+  {
+    b.q(i,j,k,5+n) = Y[n];
+  }
   // gamma,cp,h
   b.qh(i,j,k,0) = gamma;
   b.qh(i,j,k,1) = cp;
@@ -144,6 +196,6 @@ void calEOS_perfect(block_ b,
   }
   else
   {
-  throw std::invalid_argument( "Invalid given string in calEOSperfect.");
+  throw std::invalid_argument( "Invalid given string in cpg.");
   }
 }

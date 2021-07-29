@@ -28,3 +28,7 @@ class restart(grid):
 
         self.nrt = 0
         self.tme = 0
+
+    def init_restart_arrays(self):
+        for blk in self:
+            blk.init_restart_arrays()

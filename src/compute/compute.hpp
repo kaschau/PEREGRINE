@@ -3,6 +3,7 @@
 
 #include "kokkos_types.hpp"
 #include "block_.hpp"
+#include "thermdat_.hpp"
 #include <vector>
 #include <string>
 
@@ -17,16 +18,10 @@ void metrics(std::vector<block_> mb);
 
 // ./flux
 //    |------> Advective
-void advective(std::vector<block_> mb);
+void advective(std::vector<block_> mb, thermdat_ th);
 
-// ./EOS
-//    |------> EOS_ideal
-void EOS_ideal(block_ b, std::string face, std::string given);
-//    |------> calEOS_perfect
-void calEOS_perfect(block_ b, std::string face, std::string given);
-
-// ./consistify
-//    |------> momentum
-void momentum(block_ b, std::string face, std::string given);
+// ./thermo
+//    |------> cpg
+void cpg(block_ b, thermdat_ th, std::string face, std::string given);
 
 #endif
