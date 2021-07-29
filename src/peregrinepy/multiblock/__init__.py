@@ -9,6 +9,7 @@ from .restart_block import restart_block
 from .solver_block import solver_block
 
 from ..integrators import rk1,rk4
+from ..thermo import thermdat
 
 import cantera as ct
 from pathlib import Path
@@ -24,9 +25,12 @@ def generate_multiblock_solver(nblki, config):
     mbsolver = type(name, (solver,tic), dict(name=name))
 
     #Get the number of species from the ct file
-    relpath = str(Path(__file__).parent)
+    relpath = str(Path(__file__).parent)+'/../thermo/'
     ct.add_directory(relpath)
     gas = ct.Solution(config['thermochem']['ctfile'])
     spn = gas.species_names
 
-    return mbsolver(nblki,spn)
+    cls = mbsolver(nblki,spn)
+    cls.thermdat = thermdat(config)
+
+    return cls

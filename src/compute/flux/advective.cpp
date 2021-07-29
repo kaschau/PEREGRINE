@@ -1,9 +1,10 @@
 #include "Kokkos_Core.hpp"
 #include "kokkos_types.hpp"
 #include "block_.hpp"
+#include "thermdat_.hpp"
 #include <vector>
 
-void advective(std::vector<block_> mb) {
+void advective(std::vector<block_> mb, thermdat_ th) {
 for(block_ b : mb){
 
 //-------------------------------------------------------------------------------------------|
@@ -67,6 +68,11 @@ for(block_ b : mb){
                          b.q(i  ,j,k,0)*(b.q(i-1,j,k,1)*b.isx(i,j,k)
                                         +b.q(i-1,j,k,2)*b.isy(i,j,k)
                                         +b.q(i-1,j,k,3)*b.isz(i,j,k) ) );
+    // Species
+    for (int n=0; n<th.ns-1; n++)
+    {
+      b.iF(i,j,k,5+n) = 0.5*(b.Q(i,j,k,5+n)+b.Q(i-1,j,k,5+n))*U;
+    }
 
   });
 
@@ -131,6 +137,11 @@ for(block_ b : mb){
                          b.q(i,j  ,k,0)*(b.q(i,j-1,k,1)*b.jsx(i,j,k)
                                         +b.q(i,j-1,k,2)*b.jsy(i,j,k)
                                         +b.q(i,j-1,k,3)*b.jsz(i,j,k) ) );
+    // Species
+    for (int n=0; n<th.ns-1; n++)
+    {
+      b.jF(i,j,k,5+n) = 0.5*(b.Q(i,j,k,5+n)+b.Q(i,j-1,k,5+n))*V;
+    }
 
   });
 
@@ -196,6 +207,11 @@ for(block_ b : mb){
                          b.q(i,j,k  ,0)*(b.q(i,j,k-1,1)*b.ksx(i,j,k)
                                         +b.q(i,j,k-1,2)*b.ksy(i,j,k)
                                         +b.q(i,j,k-1,3)*b.ksz(i,j,k) ) );
+    // Species
+    for (int n=0; n<th.ns-1; n++)
+    {
+      b.kF(i,j,k,5+n) = 0.5*(b.Q(i,j,k,5+n)+b.Q(i,j,k-1,5+n))*W;
+    }
 
   });
 

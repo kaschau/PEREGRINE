@@ -1,8 +1,8 @@
 from .face_slice import fs
-from ..compute import momentum, species, cpg
+from ..compute import cpg
 
 
-def adiabatic_noslip_wall(blk,face):
+def adiabatic_noslip_wall(blk,face,thermdat):
 
     p = blk.array['q'][:,:,:,0]
     p[fs[face]['s0_']] = p[fs[face]['s1_']]
@@ -13,14 +13,10 @@ def adiabatic_noslip_wall(blk,face):
     T = blk.array['q'][:,:,:,4]
     T[fs[face]['s0_']] = T[fs[face]['s1_']]
 
-    #Update density
-    cpg(blk,face,'PT')
-    #Update momentum
-    momentum(blk,face,'u')
-    #Update species mass
-    species(blk,face,'Y')
+    #Update conservatives
+    cpg(blk,thermdat,face,'prims')
 
-def adiabatic_slip_wall(blk,face):
+def adiabatic_slip_wall(blk,face,thermdat):
 
     p = blk.array['q'][:,:,:,0]
     p[fs[face]['s0_']] = p[fs[face]['s1_']]
@@ -49,9 +45,5 @@ def adiabatic_slip_wall(blk,face):
     T = blk.array['q'][:,:,:,4]
     T[fs[face]['s0_']] = T[fs[face]['s1_']]
 
-    #Update density
-    cpg(blk,face,'PT')
-    #Update momentum
-    momentum(blk,face,'u')
-    #Update species mass
-    species(blk,face,'Y')
+    #Update conservatives
+    cpg(blk,thermdat,face,'prims')

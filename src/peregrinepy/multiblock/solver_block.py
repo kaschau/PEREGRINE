@@ -33,13 +33,13 @@ class solver_block(restart_block,block_):
     '''
 
     block_type = 'solver'
-    def __init__(self, nblki, ns):
+    def __init__(self, nblki, sp_names):
         # The c++ stuff must be instantiated first, so that inhereted python side
         # attributes are assigned values, not defined in the upstream __init__s
         block_.__init__(self)
-        restart_block.__init__(self, nblki, ns)
+        restart_block.__init__(self, nblki, sp_names)
 
-        self.ne = 5+ns-1
+        self.ne = 5+self.ns-1
 
         ################################################################################################################
         ############## Solution Variables
@@ -47,7 +47,7 @@ class solver_block(restart_block,block_):
         # Conserved variables
         for d in ['Q','dQ']:
             self.array[f'{d}'] = None
-        # ESTR arrays
+        # thermo,trans arrays
         for d in ['qh']:
             self.array[f'{d}'] = None
         # RK stages
@@ -90,10 +90,10 @@ class solver_block(restart_block,block_):
         jfshape = [self.ni+1,self.nj+2,self.nk+1]
         kfshape = [self.ni+1,self.nj+1,self.nk+2]
 
-        cQshape  = [self.ni+1,self.nj+1,self.nk+1,5]
-        ifQshape = [self.ni+2,self.nj+1,self.nk+1,5]
-        jfQshape = [self.ni+1,self.nj+2,self.nk+1,5]
-        kfQshape = [self.ni+1,self.nj+1,self.nk+2,5]
+        cQshape  = [self.ni+1,self.nj+1,self.nk+1,5+self.ns-1]
+        ifQshape = [self.ni+2,self.nj+1,self.nk+1,5+self.ns-1]
+        jfQshape = [self.ni+1,self.nj+2,self.nk+1,5+self.ns-1]
+        kfQshape = [self.ni+1,self.nj+1,self.nk+2,5+self.ns-1]
 
         #################################################################################
         ######## Grid Arrays
@@ -171,7 +171,7 @@ class solver_block(restart_block,block_):
         #       Thermo
         #-------------------------------------------------------------------------------#
         shape = cQshape
-        for name in ('qh'):
+        for name in ['qh']:
             if self.array[name] is None:
                 setattr(self, name, kokkos.array(name, shape=shape, dtype=kokkos.double, space=space, dynamic=False))
                 self.array[name] = np.array(getattr(self, name), copy=False)

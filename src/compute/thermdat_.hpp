@@ -10,7 +10,7 @@
 struct thermdat_ {
 
   int ns;
-  double R;
+  double Ru;
 
   std::vector<std::string> species_names;
   std::vector<double> MW;

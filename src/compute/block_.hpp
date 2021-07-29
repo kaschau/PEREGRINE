@@ -26,7 +26,7 @@ struct block_ {
 
   // Cons,Prim Arrays
   fourDview Q,q,dQ;
-  // ESTR arrays
+  // thermo,trans arrays
   fourDview qh;
 
   // RHS stages

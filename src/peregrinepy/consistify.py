@@ -1,6 +1,6 @@
 from .bcs import apply_bcs
 from .mpicomm.blockcomm import communicate
-from .compute import momentum, cpg
+from .compute import cpg
 
 def consistify(mb):
 
@@ -12,12 +12,7 @@ def consistify(mb):
 
     #Update interior primatives
     for blk in mb:
-        #Compute thermoprops, p,T,cp,h etc.
-        cpg(blk,'0','Erho')
-        #Compute u from rhou
-        momentum(blk,'0','rhou')
-        #Compute Y from rhoY
-        momentum(blk,'0','rhou')
+        cpg(blk,mb.thermdat,'0','cons')
 
     #Apply boundary conditions
     apply_bcs(mb)
