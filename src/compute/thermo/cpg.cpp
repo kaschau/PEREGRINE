@@ -15,23 +15,23 @@ void calEOS_perfect(block_ b,
   MDRange3 range = get_range3(b, face);
 
 
-  if ( given.compare("PT") == 0 )
+  if ( given.compare("primatives") == 0 )
   {
   Kokkos::parallel_for("Compute total energy from temperature, momentum, density",
                        range,
                        KOKKOS_LAMBDA(const int i,
                                      const int j,
                                      const int k) {
-
+  // Here we assume that all primatives are up to date, i.e. p,u,v,w
   double ys[th.ns];
-  double T,p,rhoinv;
+  double T,p,rho,rhoinv;
   double rhou,rhov,rhow,tke;
-  double cp=0.0,h,Rmix=0.0;
+  double gamma,cp=0.0,h;
+  double Rmix=0.0;
   int ns;
 
   T = b.q(i,j,k,4);
   p = b.q(i,j,k,0);
-  rhoinv = 1.0/b.Q(i,j,k,0);
   rhou = b.Q(i,j,k,1);
   rhov = b.Q(i,j,k,1);
   rhow = b.Q(i,j,k,1);
@@ -39,9 +39,9 @@ void calEOS_perfect(block_ b,
 
   // Compute nth species Y
   ys[ns] = 1.0;
-  for (int n=0; n<ns; n++)
+  for (int n=1; n<ns; n++)
   {
-    ys[n] = b.Q(i,j,k,5+1+n)*rhoinv;
+    ys[n] = b.q(i,j,k,5+n);
     ys[ns] -= ys[n];
   }
   ys[th.ns] = std::max(0.0,ys[ns]);
@@ -52,8 +52,11 @@ void calEOS_perfect(block_ b,
     cp += ys[n]*th.cp0[n]/th.MW[n] * th.R;
     Rmix += th.R/th.MW[n];
   }
+  // Compute density
+  rho = p/(Rmix*T);
   // Compute mixuture enthalpy
   h = cp*T;
+  gamma = cp/(cp-Rmix);
 
   // Compuute TKE
   tke = 0.5*(pow(rhou,2.0) +
@@ -65,7 +68,7 @@ void calEOS_perfect(block_ b,
   // Total Energy
   b.Q(i,j,k,4) = h - p*rhoinv + tke;
   // gamma,cp,h
-  b.qh(i,j,k,0) = cp/(cp-Rmix);
+  b.qh(i,j,k,0) = gamma;
   b.qh(i,j,k,1) = cp;
   b.qh(i,j,k,2) = h;
 
@@ -105,9 +108,9 @@ void calEOS_perfect(block_ b,
 
   // Compute nth species Y
   ys[ns] = 1.0;
-  for (int n=0; n<ns; n++)
+  for (int n=1; n<ns; n++)
   {
-    ys[n] = b.Q(i,j,k,5+1+n)*rhoinv;
+    ys[n] = b.q(i,j,k,5+n);
     ys[ns] -= ys[n];
   }
   ys[ns] = std::max(0.0,ys[ns]);

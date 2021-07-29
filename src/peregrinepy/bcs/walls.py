@@ -1,5 +1,5 @@
 from .face_slice import fs
-from ..compute import momentum, EOS_ideal, calEOS_perfect
+from ..compute import momentum, species, cpg
 
 
 def adiabatic_noslip_wall(blk,face):
@@ -14,11 +14,11 @@ def adiabatic_noslip_wall(blk,face):
     T[fs[face]['s0_']] = T[fs[face]['s1_']]
 
     #Update density
-    EOS_ideal(blk,face,'PT')
+    cpg(blk,face,'PT')
     #Update momentum
     momentum(blk,face,'u')
-    #Update total energy
-    calEOS_perfect(blk,face,'PT')
+    #Update species mass
+    species(blk,face,'Y')
 
 def adiabatic_slip_wall(blk,face):
 
@@ -50,8 +50,8 @@ def adiabatic_slip_wall(blk,face):
     T[fs[face]['s0_']] = T[fs[face]['s1_']]
 
     #Update density
-    EOS_ideal(blk,face,'PT')
+    cpg(blk,face,'PT')
     #Update momentum
     momentum(blk,face,'u')
-    #Update total energy
-    calEOS_perfect(blk,face,'PT')
+    #Update species mass
+    species(blk,face,'Y')
