@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+ #!/usr/bin/env python
 '''
 
 Test case from
@@ -39,6 +39,9 @@ def simulate():
                                    mb_dimensions=[1,1,1],
                                    dimensions_perblock=[65,65,65],
                                    lengths=[2*np.pi for _ in range(3)])
+
+    mb.init_solver_arrays(config)
+
     blk = mb[0]
 
     for face in [str(i) for i in [1,2,3,4,5,6]]:
@@ -48,19 +51,15 @@ def simulate():
         blk.connectivity[str(face)]['comm_rank'] = 0
 
     pg.grid.generate_halo(mb,config)
-    ccshape = [blk.ni+2,blk.nj+2,blk.nk+2]
-    for name in ('x','y','z'):
-        setattr(blk,name, kokkos.array(blk.array[name], dtype=kokkos.double, space=kokkos.HostSpace, dynamic=False))
 
     pg.mpicomm.blockcomm.set_block_communication(mb,config)
 
-    blk.init_koarrays(config)
-
     pg.compute.metrics(mb)
+
     pg.writers.write_grid(mb,config['io']['outputdir'])
 
     R=281.4583333333333
-    cp = 1006.0
+    cp = 1000.0
     cv = cp-R
     M0 = 0.4
     rho0 = 1.0
@@ -70,13 +69,7 @@ def simulate():
     blk.array['q'][:,:,:,2] = -M0*np.cos(blk.array['xc'])*np.sin(blk.array['yc'])*np.cos(blk.array['zc'])
     blk.array['q'][:,:,:,4] = blk.array['q'][:,:,:,0]/(R*rho0)
 
-    #Get Density
-    pg.compute.EOS_ideal(blk,'0','PT')
-    #Get momentum
-    pg.compute.momentum(blk,'0','u')
-    #Get total energy
-    pg.compute.calEOS_perfect(blk,'0','PT')
-
+    pg.compute.cpg(blk,mb.thermdat,'0','prims')
     pg.consistify(mb)
 
     dt = 0.1 * 2*np.pi/64
