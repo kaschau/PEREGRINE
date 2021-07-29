@@ -57,7 +57,7 @@ def simulate():
         setattr(blk,name, kokkos.array(blk.array[name], dtype=kokkos.double, space=kokkos.HostSpace, dynamic=False))
 
     pg.mpicomm.blockcomm.set_block_communication(mb,config)
-    blk.init_koarrays(config)
+    #blk.init_koarrays(config)
 
     pg.compute.metrics(mb)
 
