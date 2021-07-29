@@ -69,7 +69,7 @@ def write_restart(mb, path='./', grid_path='./', precision='double'):
             qf['results'].create_dataset(dset_name, shape=(extent_cc,), dtype=fdtype)
             dset = qf['results'][dset_name]
             dset[:] = blk.array['Q'][1:-1,1:-1,1:-1,0].ravel()
-            names = ['P','u','v','w','T']+blk.species_names[0:-1]
+            names = ['p','u','v','w','T']+blk.species_names[0:-1]
             for j in range(len(names)):
                 dset_name = names[j]
                 qf['results'].create_dataset(dset_name, shape=(extent_cc,), dtype=fdtype)
@@ -143,10 +143,11 @@ def write_restart(mb, path='./', grid_path='./', precision='double'):
         text = f'q.{mb.nrt:08d}.{blk.nblki:06d}.h5:/results/rho'
         data_res2_elem.text = text
 
-        for j in range(5):
+        names = ['p','u','v','w','T']+blk.species_names
+        for name in names:
             block_elem.append(deepcopy(attribute_elem))
-            block_elem[-1].set('Name', names[j])
-            text = f'q.{mb.nrt:08d}.{blk.nblki:06d}.h5:/results/{names[j]}'
+            block_elem[-1].set('Name', name)
+            text = f'q.{mb.nrt:08d}.{blk.nblki:06d}.h5:/results/{name}'
             block_elem[-1][0][1].text = text
 
         grid_elem.append(deepcopy(block_elem))
