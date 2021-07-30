@@ -51,7 +51,7 @@ void cpg(block_ b,
   for (int n=0; n<ns-1; n++)
   {
     Y[n] = b.q(i,j,k,5+n);
-    Y[ns] -= Y[n];
+    Y[ns-1] -= Y[n];
   }
   Y[ns-1] = std::max(0.0,Y[ns-1]);
 
@@ -153,7 +153,7 @@ void cpg(block_ b,
   for (int n=0; n<ns-1; n++)
   {
     Y[n] = b.Q(i,j,k,5+n)/b.Q(i,j,k,0);
-    Y[ns] -= Y[n];
+    Y[ns-1] -= Y[n];
   }
   Y[ns-1] = std::max(0.0,Y[ns-1]);
 
