@@ -34,7 +34,7 @@ species:
    equation-of-state:
     model: ideal-gas
  - name: B
-   composition: {A: 1}
+   composition: {B: 1}
    thermo:
     model: constant-cp
     T0: 300.0 K
