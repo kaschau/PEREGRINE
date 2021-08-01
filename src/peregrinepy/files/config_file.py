@@ -27,11 +27,19 @@ class config_file(FrozenDict):
     def __init__(self):
         self['io'] = FrozenDict({'griddir'   : './Grid',
                                  'inputdir'  : './Input',
-                                 'outputdir' : './Output'})
-        self['Kokkos'] = FrozenDict({'Space' : 'Default'})
-        self['solver'] = FrozenDict({'time_integration' : 'rk4'})
+                                 'outputdir' : './Output'
+                                 })
 
-        self['temp'] = FrozenDict({'ns' : 1})
+        self['Kokkos'] = FrozenDict({'Space' : 'Default'
+                                     })
+
+        self['solver'] = FrozenDict({'time_integration' : 'rk4'
+                                     })
+
+        self['thermochem'] = FrozenDict({'ctfile' : 'pure-debug.yaml',
+                                         'EOS'    : 'ideal',
+                                         'calEOS' : 'perfect'
+                                         })
 
         for key in self.keys():
             self[key]._freeze()

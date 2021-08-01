@@ -33,17 +33,22 @@ class solver_block(restart_block,block_):
     '''
 
     block_type = 'solver'
-    def __init__(self, nblki, ns):
+    def __init__(self, nblki, sp_names):
         # The c++ stuff must be instantiated first, so that inhereted python side
         # attributes are assigned values, not defined in the upstream __init__s
         block_.__init__(self)
-        restart_block.__init__(self, nblki, ns)
+        restart_block.__init__(self, nblki, sp_names)
+
+        self.ne = 5+self.ns-1
 
         ################################################################################################################
         ############## Solution Variables
         ################################################################################################################
         # Conserved variables
         for d in ['Q','dQ']:
+            self.array[f'{d}'] = None
+        # thermo,trans arrays
+        for d in ['qh']:
             self.array[f'{d}'] = None
         # RK stages
         for d in ['rhs0','rhs1','rhs2','rhs3']:
@@ -70,7 +75,7 @@ class solver_block(restart_block,block_):
         self.recvbuffer4 = {}
 
 
-    def init_koarrays(self,config):
+    def init_solver_arrays(self,config):
         '''
         Create the Kokkos work arrays and python side numpy wrappers
         '''
@@ -85,10 +90,10 @@ class solver_block(restart_block,block_):
         jfshape = [self.ni+1,self.nj+2,self.nk+1]
         kfshape = [self.ni+1,self.nj+1,self.nk+2]
 
-        cQshape  = [self.ni+1,self.nj+1,self.nk+1,5]
-        ifQshape = [self.ni+2,self.nj+1,self.nk+1,5]
-        jfQshape = [self.ni+1,self.nj+2,self.nk+1,5]
-        kfQshape = [self.ni+1,self.nj+1,self.nk+2,5]
+        cQshape  = [self.ni+1,self.nj+1,self.nk+1,5+self.ns-1]
+        ifQshape = [self.ni+2,self.nj+1,self.nk+1,5+self.ns-1]
+        jfQshape = [self.ni+1,self.nj+2,self.nk+1,5+self.ns-1]
+        kfQshape = [self.ni+1,self.nj+1,self.nk+2,5+self.ns-1]
 
         #################################################################################
         ######## Grid Arrays
@@ -156,6 +161,17 @@ class solver_block(restart_block,block_):
         #-------------------------------------------------------------------------------#
         shape = cQshape
         for name in ('Q', 'q', 'dQ'):
+            if self.array[name] is None:
+                setattr(self, name, kokkos.array(name, shape=shape, dtype=kokkos.double, space=space, dynamic=False))
+                self.array[name] = np.array(getattr(self, name), copy=False)
+            else:
+                setattr(self, name, kokkos.array(self.array[name], dtype=kokkos.double, space=space, dynamic=False))
+
+        #-------------------------------------------------------------------------------#
+        #       Thermo
+        #-------------------------------------------------------------------------------#
+        shape = cQshape
+        for name in ['qh']:
             if self.array[name] is None:
                 setattr(self, name, kokkos.array(name, shape=shape, dtype=kokkos.double, space=space, dynamic=False))
                 self.array[name] = np.array(getattr(self, name), copy=False)

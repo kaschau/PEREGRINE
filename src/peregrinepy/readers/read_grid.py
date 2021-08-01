@@ -24,15 +24,19 @@ def read_grid(mb,path='./'):
             nj = list(f['dimensions']['nj'])[0]
             nk = list(f['dimensions']['nk'])[0]
 
-
             blk.ni = ni; blk.nj = nj; blk.nk = nk
+
+            blk.init_grid_arrays()
 
             for name in ('x','y','z'):
                 if blk.block_type == 'solver':
-                    blk.array[name] = np.empty((ni+2,nj+2,nk+2))
                     blk.array[name][1:-1,
                                     1:-1,
                                     1:-1] = np.array(f['coordinates'][name]).reshape((ni, nj, nk))
                 else:
-                    blk.array[name] = np.empty((ni,nj,nk))
-                    blk.array[name] = np.array(f['coordinates'][name]).reshape((ni, nj, nk))
+                    blk.array[name][:] = np.array(f['coordinates'][name]).reshape((ni, nj, nk))
+
+        if blk.block_type in ['restart_block', 'solver_block']:
+            blk.init_restart_arrays()
+        if blk.block_type == 'solver_block':
+            blk.init_solver_arrays()

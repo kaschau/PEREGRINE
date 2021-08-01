@@ -32,7 +32,6 @@ class grid_block(topology_block):
         ################################################################################################################
         # Python side data
         self.array = FrozenDict()
-
         # Coordinate arrays
         for d in ['x','y','z']:
             self.array[f'{d}'] = None
@@ -52,3 +51,12 @@ class grid_block(topology_block):
 
         if self.block_type == 'grid':
             self.array._freeze()
+
+    def init_grid_arrays(self):
+        '''
+        Create empty numpy arrays of correct size.
+        '''
+
+        xshape  = [self.ni+2,self.nj+2,self.nk+2]
+        for name in ['x','y','z']:
+            self.array[name] = np.empty((xshape))

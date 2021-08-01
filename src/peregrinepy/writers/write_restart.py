@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import h5py
+import numpy as np
 from lxml import etree
 from copy import deepcopy
 from ..misc import ProgressBar
@@ -68,12 +69,20 @@ def write_restart(mb, path='./', grid_path='./', precision='double'):
             qf['results'].create_dataset(dset_name, shape=(extent_cc,), dtype=fdtype)
             dset = qf['results'][dset_name]
             dset[:] = blk.array['Q'][1:-1,1:-1,1:-1,0].ravel()
-            names = ['P','u','v','w','T']
-            for j in range(5):
+            names = ['p','u','v','w','T']+blk.species_names[0:-1]
+            for j in range(len(names)):
                 dset_name = names[j]
                 qf['results'].create_dataset(dset_name, shape=(extent_cc,), dtype=fdtype)
                 dset = qf['results'][dset_name]
                 dset[:] = blk.array['q'][1:-1,1:-1,1:-1,j].ravel()
+            #Compute the nth species here
+            dset_name = blk.species_names[-1]
+            qf['results'].create_dataset(dset_name, shape=(extent_cc,), dtype=fdtype)
+            dset = qf['results'][dset_name]
+            if blk.ns > 1:
+                dset[:] = 1.0 - np.sum(blk.array['q'][1:-1,1:-1,1:-1,5::], axis=-1).ravel()
+            elif blk.ns == 1:
+                dset[:] = 1.0
 
         block_elem = etree.Element('Grid')
         block_elem.set('Name',f'B{blk.nblki:06d}')
@@ -134,15 +143,14 @@ def write_restart(mb, path='./', grid_path='./', precision='double'):
         text = f'q.{mb.nrt:08d}.{blk.nblki:06d}.h5:/results/rho'
         data_res2_elem.text = text
 
-        for j in range(5):
+        names = ['p','u','v','w','T']+blk.species_names
+        for name in names:
             block_elem.append(deepcopy(attribute_elem))
-            block_elem[-1].set('Name', names[j])
-            text = f'q.{mb.nrt:08d}.{blk.nblki:06d}.h5:/results/{names[j]}'
+            block_elem[-1].set('Name', name)
+            text = f'q.{mb.nrt:08d}.{blk.nblki:06d}.h5:/results/{name}'
             block_elem[-1][0][1].text = text
 
         grid_elem.append(deepcopy(block_elem))
-
-        #ProgressBar(blk.nblki+1, len(mb), 'Writing out block {}'.format(blk.nblki))
 
     et = etree.ElementTree(xdmf_elem)
     save_file = f'{path}/q.{mb.nrt:06d}.xmf'

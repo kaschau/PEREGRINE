@@ -24,3 +24,7 @@ class grid(topology):
             super().__init__(nblks,temp)
         else:
             super().__init__(nblks,ls)
+
+    def init_grid_arrays(self):
+        for blk in self:
+            blk.init_grid_arrays()

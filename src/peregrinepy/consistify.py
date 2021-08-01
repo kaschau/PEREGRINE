@@ -1,6 +1,6 @@
 from .bcs import apply_bcs
 from .mpicomm.blockcomm import communicate
-from .compute import momentum, EOS_ideal, calEOS_perfect
+from .compute import cpg
 
 def consistify(mb):
 
@@ -12,13 +12,7 @@ def consistify(mb):
 
     #Update interior primatives
     for blk in mb:
-        #Compute T from E
-        calEOS_perfect(blk,'0','Erho')
-        #Compute P from T and rho
-        EOS_ideal(blk,'0','rhoT')
-        #Compute u from rhou
-        momentum(blk,'0','rhou')
-
+        cpg(blk,mb.thermdat,'0','cons')
 
     #Apply boundary conditions
     apply_bcs(mb)
