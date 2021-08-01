@@ -1,14 +1,10 @@
 from .face_slice import fs
-from ..compute import momentum, EOS_ideal, calEOS_perfect
+from ..compute import cpg
 
-def subsonic_exit(blk,face):
+def subsonic_exit(blk,face,thermdat):
 
     q = blk.array['q'][:,:,:,1::]
     q[fs[face]['s0_']] = 2.0*q[fs[face]['s1_']] - q[fs[face]['s2_']]
 
-    #Update density
-    EOS_ideal(blk,face,'PT')
-    #Update momentum
-    momentum(blk,face,'u')
-    #Update total energy
-    calEOS_perfect(blk,face,'PT')
+    #Update conservatives
+    cpg(blk,thermdat,face,'prims')

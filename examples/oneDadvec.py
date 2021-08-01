@@ -19,8 +19,8 @@ import kokkos
 import peregrinepy as pg
 import numpy as np
 import matplotlib.pyplot as plt
-import time
 
+import time
 import sys
 
 def simulate():
@@ -35,10 +35,13 @@ def simulate():
 
     config = pg.files.config_file()
     mb = pg.multiblock.generate_multiblock_solver(1,config)
+    therm = pg.thermo.thermdat(config)
     pg.grid.create.multiblock_cube(mb,
                                    mb_dimensions=[1,1,1],
                                    dimensions_perblock=[41,2,2],
                                    lengths=[1,0.01,0.01])
+    mb.init_solver_arrays(config)
+
     blk = mb[0]
 
     blk.connectivity['1']['bc'] = 'b1'
@@ -52,12 +55,8 @@ def simulate():
     blk.connectivity['2']['comm_rank'] = 0
 
     pg.grid.generate_halo(mb,config)
-    ccshape = [blk.ni+2,blk.nj+2,blk.nk+2]
-    for name in ('x','y','z'):
-        setattr(blk,name, kokkos.array(blk.array[name], dtype=kokkos.double, space=kokkos.HostSpace, dynamic=False))
 
     pg.mpicomm.blockcomm.set_block_communication(mb,config)
-    blk.init_koarrays(config)
 
     pg.compute.metrics(mb)
 
@@ -68,13 +67,8 @@ def simulate():
     initial_T = 1.0/(R*initial_rho)
     blk.array['q'][1:-1,1,1,4] = initial_T
 
-    #Get Density
-    pg.compute.EOS_ideal(blk,'0','PT')
-    #Get momentum
-    pg.compute.momentum(blk,'0','u')
-    #Get total energy
-    pg.compute.calEOS_perfect(blk,'0','PT')
-
+    #Update cons
+    pg.compute.cpg(blk,mb.thermdat,'0','prims')
     pg.consistify(mb)
 
     dt = 0.1 * 0.025

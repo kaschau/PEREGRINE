@@ -1,9 +1,10 @@
 #include "Kokkos_Core.hpp"
 #include "kokkos_types.hpp"
 #include "block_.hpp"
+#include "thermdat_.hpp"
 #include <vector>
 
-void advective(std::vector<block_> mb) {
+void advective(std::vector<block_> mb, thermdat_ th) {
 for(block_ b : mb){
 
 //-------------------------------------------------------------------------------------------|
@@ -28,20 +29,22 @@ for(block_ b : mb){
         b.isz(i,j,k)*wf ;
 
     //Compute fluxes
+    double rho;
+    rho = 0.5*(b.Q(i,j,k,0)+b.Q(i-1,j,k,0));
 
     // Continuity rho*Ui
-    b.iF(i,j,k,0) = 0.5*(b.Q(i,j,k,0)+b.Q(i-1,j,k,0))*U;
+    b.iF(i,j,k,0) = rho * U;
 
     // x momentum rho*u*Ui+ p*Ax
-    b.iF(i,j,k,1) = 0.5*(b.Q(i,j,k,0)+b.Q(i-1,j,k,0)) * 0.5*(b.q(i,j,k,1)+b.q(i-1,j,k,1)) * U
+    b.iF(i,j,k,1) =                               rho * 0.5*(b.q(i,j,k,1)+b.q(i-1,j,k,1)) * U
                   + 0.5*(b.q(i,j,k,0)+b.q(i-1,j,k,0)) *      b.isx(i,j,k)                   ;
 
     // y momentum rho*v*Ui+ p*Ay
-    b.iF(i,j,k,2) = 0.5*(b.Q(i,j,k,0)+b.Q(i-1,j,k,0)) * 0.5*(b.q(i,j,k,2)+b.q(i-1,j,k,2)) * U
+    b.iF(i,j,k,2) =                               rho * 0.5*(b.q(i,j,k,2)+b.q(i-1,j,k,2)) * U
                   + 0.5*(b.q(i,j,k,0)+b.q(i-1,j,k,0)) *      b.isy(i,j,k)                   ;
 
     // w momentum rho*w*Ui+ p*Az
-    b.iF(i,j,k,3) = 0.5*(b.Q(i,j,k,0)+b.Q(i-1,j,k,0)) * 0.5*(b.q(i,j,k,3)+b.q(i-1,j,k,3)) * U
+    b.iF(i,j,k,3) =                               rho * 0.5*(b.q(i,j,k,3)+b.q(i-1,j,k,3)) * U
                   + 0.5*(b.q(i,j,k,0)+b.q(i-1,j,k,0)) *      b.isz(i,j,k)                   ;
 
     // Total energy (rhoE+ p)*Ui)
@@ -56,10 +59,10 @@ for(block_ b : mb){
                                              pow(b.q(i-1,j,k,2),2.0) +
                                              pow(b.q(i-1,j,k,3),2.0));
 
-    b.iF(i,j,k,4) =(0.5*(b.Q(i,j,k,0)+b.Q(i-1,j,k,0)) *(0.5*(  e         +  em         )
-                                                      + 0.5*(b.q(i,j,k,1)*b.q(i-1,j,k,1)  +
-                                                             b.q(i,j,k,2)*b.q(i-1,j,k,2)  +
-                                                             b.q(i,j,k,3)*b.q(i-1,j,k,3)) ) ) * U;
+    b.iF(i,j,k,4) =( rho *(0.5*(  e         +  em         )
+                         + 0.5*(b.q(i,j,k,1)*b.q(i-1,j,k,1)  +
+                                b.q(i,j,k,2)*b.q(i-1,j,k,2)  +
+                                b.q(i,j,k,3)*b.q(i-1,j,k,3)) ) ) * U;
 
     b.iF(i,j,k,4)+= 0.5*(b.q(i-1,j,k,0)*(b.q(i  ,j,k,1)*b.isx(i,j,k)
                                         +b.q(i  ,j,k,2)*b.isy(i,j,k)
@@ -67,6 +70,12 @@ for(block_ b : mb){
                          b.q(i  ,j,k,0)*(b.q(i-1,j,k,1)*b.isx(i,j,k)
                                         +b.q(i-1,j,k,2)*b.isy(i,j,k)
                                         +b.q(i-1,j,k,3)*b.isz(i,j,k) ) );
+    // Species
+    for (int n=0; n<th.ns-1; n++)
+    {
+      b.iF(i,j,k,5+n) = rho * 0.5*(b.q(i,j,k,5+n)+b.q(i-1,j,k,5+n)) * U;
+      //b.iF(i,j,k,5+n) = 0.5*(b.Q(i,j,k,5+n)+b.Q(i-1,j,k,5+n)) * U;
+    }
 
   });
 
@@ -93,20 +102,22 @@ for(block_ b : mb){
         b.jsz(i,j,k)*wf ;
 
     //Compute fluxes
+    double rho;
+    rho = 0.5*(b.Q(i,j,k,0)+b.Q(i,j-1,k,0));
 
     // Continuity rho*Vj
-    b.jF(i,j,k,0) = 0.5*(b.Q(i,j,k,0)+b.Q(i,j-1,k,0))*V;
+    b.jF(i,j,k,0) = rho * V;
 
     // x momentum rho*u*Vj+ pAx
-    b.jF(i,j,k,1) = 0.5*(b.Q(i,j,k,0)+b.Q(i,j-1,k,0)) * 0.5*(b.q(i,j,k,1)+b.q(i,j-1,k,1)) * V
+    b.jF(i,j,k,1) =                               rho * 0.5*(b.q(i,j,k,1)+b.q(i,j-1,k,1)) * V
                   + 0.5*(b.q(i,j,k,0)+b.q(i,j-1,k,0)) *      b.jsx(i,j,k)                   ;
 
     // y momentum rho*v*Vj+ pAy
-    b.jF(i,j,k,2) = 0.5*(b.Q(i,j,k,0)+b.Q(i,j-1,k,0)) * 0.5*(b.q(i,j,k,2)+b.q(i,j-1,k,2)) * V
+    b.jF(i,j,k,2) =                               rho * 0.5*(b.q(i,j,k,2)+b.q(i,j-1,k,2)) * V
                   + 0.5*(b.q(i,j,k,0)+b.q(i,j-1,k,0)) *      b.jsy(i,j,k)                   ;
 
     // w momentum rho*w*Vj+ pAz
-    b.jF(i,j,k,3) = 0.5*(b.Q(i,j,k,0)+b.Q(i,j-1,k,0)) * 0.5*(b.q(i,j,k,3)+b.q(i,j-1,k,3)) * V
+    b.jF(i,j,k,3) =                               rho * 0.5*(b.q(i,j,k,3)+b.q(i,j-1,k,3)) * V
                   + 0.5*(b.q(i,j,k,0)+b.q(i,j-1,k,0)) *      b.jsz(i,j,k)                   ;
 
     // Total energy (rhoE+P)*Vj)
@@ -121,16 +132,23 @@ for(block_ b : mb){
                                              pow(b.q(i,j-1,k,2),2.0) +
                                              pow(b.q(i,j-1,k,3),2.0));
 
-    b.jF(i,j,k,4) =(0.5*(b.Q(i,j,k,0)+b.Q(i,j-1,k,0)) *(0.5*(  e         +  em         )
-                                                      + 0.5*(b.q(i,j,k,1)*b.q(i,j-1,k,1)  +
-                                                             b.q(i,j,k,2)*b.q(i,j-1,k,2)  +
-                                                             b.q(i,j,k,3)*b.q(i,j-1,k,3)) ) ) * V;
+    b.jF(i,j,k,4) =( rho *(0.5*(  e         +  em         )
+                         + 0.5*(b.q(i,j,k,1)*b.q(i,j-1,k,1)  +
+                                b.q(i,j,k,2)*b.q(i,j-1,k,2)  +
+                                b.q(i,j,k,3)*b.q(i,j-1,k,3)) ) ) * V;
+
     b.jF(i,j,k,4)+= 0.5*(b.q(i,j-1,k,0)*(b.q(i,j  ,k,1)*b.jsx(i,j,k)
                                         +b.q(i,j  ,k,2)*b.jsy(i,j,k)
                                         +b.q(i,j  ,k,3)*b.jsz(i,j,k) ) +
                          b.q(i,j  ,k,0)*(b.q(i,j-1,k,1)*b.jsx(i,j,k)
                                         +b.q(i,j-1,k,2)*b.jsy(i,j,k)
                                         +b.q(i,j-1,k,3)*b.jsz(i,j,k) ) );
+    // Species
+    for (int n=0; n<th.ns-1; n++)
+    {
+      b.jF(i,j,k,5+n) = rho * 0.5*(b.q(i,j,k,5+n)+b.q(i,j-1,k,5+n)) * V;
+      //b.jF(i,j,k,5+n) = 0.5*(b.Q(i,j,k,5+n)+b.Q(i,j-1,k,5+n)) * V;
+    }
 
   });
 
@@ -157,20 +175,21 @@ for(block_ b : mb){
         b.ksz(i,j,k)*wf ;
 
     //Compute fluxes
-
+    double rho;
+    rho = 0.5*(b.Q(i,j,k,0)+b.Q(i,j,k-1,0));
     // Continuity rho*Wk
-    b.kF(i,j,k,0) = 0.5*(b.Q(i,j,k,0)+b.Q(i,j,k-1,0))*W;
+    b.kF(i,j,k,0) = rho * W;
 
     // x momentum rho*u*Wk+ pAx
-    b.kF(i,j,k,1) = 0.5*(b.Q(i,j,k,0)+b.Q(i,j,k-1,0)) * 0.5*(b.q(i,j,k,1)+b.q(i,j,k-1,1)) * W
+    b.kF(i,j,k,1) =                               rho * 0.5*(b.q(i,j,k,1)+b.q(i,j,k-1,1)) * W
                   + 0.5*(b.q(i,j,k,0)+b.q(i,j,k-1,0)) *      b.ksx(i,j,k)                   ;
 
     // y momentum rho*v*Wk+ pAy
-    b.kF(i,j,k,2) = 0.5*(b.Q(i,j,k,0)+b.Q(i,j,k-1,0)) * 0.5*(b.q(i,j,k,2)+b.q(i,j,k-1,2)) * W
+    b.kF(i,j,k,2) =                               rho * 0.5*(b.q(i,j,k,2)+b.q(i,j,k-1,2)) * W
                   + 0.5*(b.q(i,j,k,0)+b.q(i,j,k-1,0)) *      b.ksy(i,j,k)                   ;
 
     // w momentum rho*w*Wk+ pAz
-    b.kF(i,j,k,3) = 0.5*(b.Q(i,j,k,0)+b.Q(i,j,k-1,0)) * 0.5*(b.q(i,j,k,3)+b.q(i,j,k-1,3)) * W
+    b.kF(i,j,k,3) =                               rho * 0.5*(b.q(i,j,k,3)+b.q(i,j,k-1,3)) * W
                   + 0.5*(b.q(i,j,k,0)+b.q(i,j,k-1,0)) *      b.ksz(i,j,k)                   ;
 
     // Total energy (rhoE+P)*Wk)
@@ -185,10 +204,10 @@ for(block_ b : mb){
                                              pow(b.q(i,j,k-1,2),2.0) +
                                              pow(b.q(i,j,k-1,3),2.0));
 
-    b.kF(i,j,k,4) =(0.5*(b.Q(i,j,k,0)+b.Q(i,j,k-1,0)) *(0.5*(  e         +  em         )
-                                                      + 0.5*(b.q(i,j,k,1)*b.q(i,j,k-1,1)  +
-                                                             b.q(i,j,k,2)*b.q(i,j,k-1,2)  +
-                                                             b.q(i,j,k,3)*b.q(i,j,k-1,3)) ) ) * W;
+    b.kF(i,j,k,4) =( rho *(0.5*(  e         +  em         )
+                         + 0.5*(b.q(i,j,k,1)*b.q(i,j,k-1,1)  +
+                                b.q(i,j,k,2)*b.q(i,j,k-1,2)  +
+                                b.q(i,j,k,3)*b.q(i,j,k-1,3)) ) ) * W;
 
     b.kF(i,j,k,4)+= 0.5*(b.q(i,j,k-1,0)*(b.q(i,j,k  ,1)*b.ksx(i,j,k)
                                         +b.q(i,j,k  ,2)*b.ksy(i,j,k)
@@ -196,6 +215,12 @@ for(block_ b : mb){
                          b.q(i,j,k  ,0)*(b.q(i,j,k-1,1)*b.ksx(i,j,k)
                                         +b.q(i,j,k-1,2)*b.ksy(i,j,k)
                                         +b.q(i,j,k-1,3)*b.ksz(i,j,k) ) );
+    // Species
+    for (int n=0; n<th.ns-1; n++)
+    {
+      b.kF(i,j,k,5+n) = rho * 0.5*(b.q(i,j,k,5+n)+b.q(i,j,k-1,5+n)) * W;
+      //b.kF(i,j,k,5+n) = 0.5*(b.Q(i,j,k,5+n)+b.Q(i,j,k-1,5+n)) * W;
+    }
 
   });
 

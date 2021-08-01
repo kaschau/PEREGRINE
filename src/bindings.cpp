@@ -4,6 +4,7 @@
 #include "Kokkos_Core.hpp"
 #include "compute.hpp"
 #include "block_.hpp"
+#include "thermdat_.hpp"
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
@@ -80,19 +81,33 @@ PYBIND11_MODULE(compute, m) {
     // Conservative variables
     .def_readwrite("Q" , &block_::Q )
     .def_readwrite("q" , &block_::q )
-    .def_readwrite("dQ" , &block_::dQ )
+    .def_readwrite("dQ", &block_::dQ )
+    // Thermo variables
+    .def_readwrite("qh", &block_::qh )
 
     // RK stages
-    .def_readwrite("rhs0" , &block_::rhs0 )
-    .def_readwrite("rhs1" , &block_::rhs1 )
-    .def_readwrite("rhs2" , &block_::rhs2 )
-    .def_readwrite("rhs3" , &block_::rhs3 )
+    .def_readwrite("rhs0", &block_::rhs0 )
+    .def_readwrite("rhs1", &block_::rhs1 )
+    .def_readwrite("rhs2", &block_::rhs2 )
+    .def_readwrite("rhs3", &block_::rhs3 )
 
     // Flux Arrays
-    .def_readwrite("iF" , &block_::iF )
-    .def_readwrite("jF" , &block_::jF )
-    .def_readwrite("kF" , &block_::kF );
+    .def_readwrite("iF", &block_::iF )
+    .def_readwrite("jF", &block_::jF )
+    .def_readwrite("kF", &block_::kF );
 
+////////////////////////////////////////////////////////////////////////////////
+///////////////////  C++ Parent thermdat_ class ////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+  py::class_<thermdat_>(m, "thermdat_", py::dynamic_attr())
+    .def(py::init<>())
+
+    .def_readwrite("ns", &thermdat_::ns)
+    .def_readwrite("Ru", &thermdat_::Ru)
+    .def_readwrite("species_names", &thermdat_::species_names)
+    .def_readwrite("MW", &thermdat_::MW)
+    .def_readwrite("cp0", &thermdat_::cp0);
 ////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////  Compute Functions /////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -105,30 +120,16 @@ PYBIND11_MODULE(compute, m) {
   // ./flux
   //  |----> advective
   m.def("advective", &advective, "Compute centered difference flux",
-        py::arg("block_ object"));
-
-  // ./EOS
-  //  |----> EOS_ideal
-  m.def("EOS_ideal", &EOS_ideal, "Compute ideal-gas EOS, given vars",
         py::arg("block_ object"),
+        py::arg("thermdat_ object"));
+
+  // ./thermo
+  //  |----> cpg
+  m.def("cpg", &cpg, "Update primatives or conservatives",
+        py::arg("block_ object"),
+        py::arg("thermdat_ object"),
         py::arg("face"),
         py::arg("given"));
-  //  |----> calEOS_perfect
-  m.def("calEOS_perfect", &calEOS_perfect, "Compute ideal-gas EOS, given vars",
-        py::arg("block_ object"),
-        py::arg("face"),
-        py::arg("given"));
-
-  // ./consistify
-  //  |----> momentum
-  m.def("momentum", &momentum, "Converg momentum to u,v,w or vice-versa",
-        py::arg("block_ object"),
-        py::arg("face"),
-        py::arg("given"));
-
-
-
-
 
 
 
