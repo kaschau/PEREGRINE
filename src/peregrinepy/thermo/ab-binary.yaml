@@ -9,7 +9,7 @@ units: {length: m, time: s, quantity: kmol, mass: kg, energy: J}
 phases:
  - name: gas
    thermo: ideal-gas
-   elements: [A]
+   elements: [A,B]
    species: [A,B]
    state:
     T: 300.0
