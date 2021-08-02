@@ -9,20 +9,23 @@ units: {length: m, time: s, quantity: kmol, mass: kg, energy: J}
 phases:
  - name: gas
    thermo: ideal-gas
-   elements: [A, B]
-   species: [A, B]
+   elements: [A, B, C]
+   species: [A, B, C]
    state:
     T: 300.0
     P: 1.01325e+05
-    Y: {'A':1.0}
+    Y: {'A':0.5, 'B':0.5}
 
 elements:
  - symbol: A
-   atomic-weight: 29.54065178914549
-   atomic-number: 29
+   atomic-weight: 20
+   atomic-number: 20
  - symbol: B
-   atomic-weight: 29.54065178914549
-   atomic-number: 29
+   atomic-weight: 30
+   atomic-number: 30
+ - symbol: C
+   atomic-weight: 10
+   atomic-number: 10
 
 species:
  - name: A
@@ -30,7 +33,7 @@ species:
    thermo:
     model: constant-cp
     T0: 0.0 K
-    cp0: 29540.65178914549 J/kmol/K  # 1000*MW
+    cp0: 12345.0 J/kmol/K  # 1000*MW
    equation-of-state:
     model: ideal-gas
  - name: B
@@ -38,6 +41,14 @@ species:
    thermo:
     model: constant-cp
     T0: 0.0 K
-    cp0: 29540.65178914549 J/kmol/K  # 1000*MW
+    cp0: 54321.0 J/kmol/K  # 1000*MW
+   equation-of-state:
+    model: ideal-gas
+ - name: C
+   composition: {C: 1}
+   thermo:
+    model: constant-cp
+    T0: 0.0 K
+    cp0: 3152.0 J/kmol/K  # 1000*MW
    equation-of-state:
     model: ideal-gas

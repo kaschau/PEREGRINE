@@ -3,7 +3,7 @@ import pytest
 import peregrinepy as pg
 import numpy as np
 
-np.random.seed(111)
+#np.random.seed(111)
 
 class twoblock123:
     def __init__(self):
