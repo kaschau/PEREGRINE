@@ -26,7 +26,7 @@ species:
    composition: {A: 1}
    thermo:
     model: constant-cp
-    T0: 300.0 K
+    T0: 0.0 K
     cp0: 29540.65178914549 J/kmol/K  # 1000*MW
    equation-of-state:
     model: ideal-gas
