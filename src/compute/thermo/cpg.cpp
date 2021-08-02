@@ -189,7 +189,7 @@ void cpg(block_ b,
   // gamma,cp,h
   b.qh(i,j,k,0) = gamma;
   b.qh(i,j,k,1) = cp;
-  b.qh(i,j,k,2) = h;
+  b.qh(i,j,k,2) = rho*h;
 
   });
   }
