@@ -127,7 +127,13 @@ PYBIND11_MODULE(compute, m) {
 
   // ./thermo
   //  |----> cpg
-  m.def("cpg", &cpg, "Update primatives or conservatives",
+  m.def("cpg", &cpg, "Update primatives or conservatives with cpg assumption",
+        py::arg("block_ object"),
+        py::arg("thermdat_ object"),
+        py::arg("face"),
+        py::arg("given"));
+  //  |----> tpg
+  m.def("tpg", &tpg, "Update primatives or conservatives with tpg assumption",
         py::arg("block_ object"),
         py::arg("thermdat_ object"),
         py::arg("face"),

@@ -37,7 +37,7 @@ void cpg(block_ b,
   double rho,rhoinv;
   double rhou,rhov,rhow;
   double e,rhoE;
-  double rhoY[th.ns];
+  double rhoY[ns];
   double gamma,cp=0.0,h;
   double Rmix=0.0;
 

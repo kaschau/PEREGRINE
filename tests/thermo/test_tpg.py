@@ -16,7 +16,7 @@ def test_cpg():
     kokkos.initialize()
 
     relpath = str(Path(__file__).parent)
-    ctfile = relpath+'/ct_test_cpg.yaml'
+    ctfile = relpath+'/ct_test_tpg.yaml'
     gas = ct.Solution(ctfile)
     p = np.random.uniform(low=10000, high=100000)
     T = np.random.uniform(low=100  , high=1000)
@@ -27,7 +27,7 @@ def test_cpg():
 
     config = pg.files.config_file()
     config['thermochem']['ctfile'] = ctfile
-    config['thermochem']['eos'] = 'cpg'
+    config['thermochem']['eos'] = 'tpg'
 
     mb = pg.multiblock.generate_multiblock_solver(1,config)
     therm = pg.thermo.thermdat(config)
@@ -48,7 +48,7 @@ def test_cpg():
     blk.array['q'][:,:,:,5::] = Y[0:-1]
 
     #Update cons
-    pg.compute.cpg(blk,mb.thermdat,'0','prims')
+    pg.compute.tpg(blk,mb.thermdat,'0','prims')
 
     #test the properties
     pgcons = blk.array['Q'][1,1,1]
@@ -82,29 +82,29 @@ def test_cpg():
     pd.append(print_diff('cp', gas.cp, pgthrm[1]))
     pd.append(print_diff('h', gas.enthalpy_mass, pgthrm[2]/pgcons[0]))
 
-    #Go the other way
-    pg.consistify(mb)
-
-    print('********  Conservatives to Primatives ***************')
-    print(f'       {"Cantera":<15}  | {"PEREGRINE":<15} | {"%Error":<5}')
-    print('Conservatives')
-    pd.append(print_diff('rho', gas.density,pgcons[0]))
-    pd.append(print_diff('E', gas.int_energy_mass, pgcons[4]/pgcons[0]))
-    for i,n in enumerate(gas.species_names[0:-1]):
-        pd.append(print_diff('rho'+n,gas.Y[i]*gas.density,pgcons[5+i]))
-    pd.append(print_diff('rho'+gas.species_names[-1],gas.Y[-1]*gas.density,pgcons[0]-np.sum(pgcons[5::])))
-    print('Primatives')
-    pd.append(print_diff('p',gas.P,pgprim[0]))
-    pd.append(print_diff('T',gas.T,pgprim[4]))
-    for i,n in enumerate(gas.species_names[0:-1]):
-        pd.append(print_diff(n,gas.Y[i],pgprim[5+i]))
-    pd.append(print_diff(gas.species_names[-1],gas.Y[-1],1.0-np.sum(pgprim[5::])))
-    print('Mixture Properties')
-    pd.append(print_diff('gamma', gas.cp/gas.cv, pgthrm[0]))
-    pd.append(print_diff('cp', gas.cp, pgthrm[1]))
-    pd.append(print_diff('h', gas.enthalpy_mass, pgthrm[2]/pgcons[0]))
+#    #Go the other way
+#    pg.consistify(mb)
+#
+#    print('********  Conservatives to Primatives ***************')
+#    print(f'       {"Cantera":<15}  | {"PEREGRINE":<15} | {"%Error":<5}')
+#    print('Conservatives')
+#    pd.append(print_diff('rho', gas.density,pgcons[0]))
+#    pd.append(print_diff('E', gas.int_energy_mass, pgcons[4]/pgcons[0]))
+#    for i,n in enumerate(gas.species_names[0:-1]):
+#        pd.append(print_diff('rho'+n,gas.Y[i]*gas.density,pgcons[5+i]))
+#    pd.append(print_diff('rho'+gas.species_names[-1],gas.Y[-1]*gas.density,pgcons[0]-np.sum(pgcons[5::])))
+#    print('Primatives')
+#    pd.append(print_diff('p',gas.P,pgprim[0]))
+#    pd.append(print_diff('T',gas.T,pgprim[4]))
+#    for i,n in enumerate(gas.species_names[0:-1]):
+#        pd.append(print_diff(n,gas.Y[i],pgprim[5+i]))
+#    pd.append(print_diff(gas.species_names[-1],gas.Y[-1],1.0-np.sum(pgprim[5::])))
+#    print('Mixture Properties')
+#    pd.append(print_diff('gamma', gas.cp/gas.cv, pgthrm[0]))
+#    pd.append(print_diff('cp', gas.cp, pgthrm[1]))
+#    pd.append(print_diff('h', gas.enthalpy_mass, pgthrm[2]/pgcons[0]))
 
     kokkos.finalize()
 
     passfail = np.all(np.array(pd) < 0.0001)
-    assert passfail
+    assert False # passfail
