@@ -107,7 +107,9 @@ PYBIND11_MODULE(compute, m) {
     .def_readwrite("Ru", &thermdat_::Ru)
     .def_readwrite("species_names", &thermdat_::species_names)
     .def_readwrite("MW", &thermdat_::MW)
-    .def_readwrite("cp0", &thermdat_::cp0);
+    .def_readwrite("cp0", &thermdat_::cp0)
+    .def_readwrite("N7", &thermdat_::N7);
+
 ////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////  Compute Functions /////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////

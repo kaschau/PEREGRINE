@@ -37,8 +37,7 @@ class config_file(FrozenDict):
                                      })
 
         self['thermochem'] = FrozenDict({'ctfile' : 'pure-debug.yaml',
-                                         'EOS'    : 'ideal',
-                                         'calEOS' : 'perfect'
+                                         'eos'    : 'cpg'
                                          })
 
         for key in self.keys():
