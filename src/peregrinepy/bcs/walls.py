@@ -1,8 +1,6 @@
 from .face_slice import fs
-from ..compute import cpg
 
-
-def adiabatic_noslip_wall(blk,face,thermdat):
+def adiabatic_noslip_wall(eos,blk,face,thermdat):
 
     p = blk.array['q'][:,:,:,0]
     p[fs[face]['s0_']] = p[fs[face]['s1_']]
@@ -14,9 +12,9 @@ def adiabatic_noslip_wall(blk,face,thermdat):
     T[fs[face]['s0_']] = T[fs[face]['s1_']]
 
     #Update conservatives
-    cpg(blk,thermdat,face,'prims')
+    eos(blk,thermdat,face,'prims')
 
-def adiabatic_slip_wall(blk,face,thermdat):
+def adiabatic_slip_wall(eos,blk,face,thermdat):
 
     p = blk.array['q'][:,:,:,0]
     p[fs[face]['s0_']] = p[fs[face]['s1_']]
@@ -46,4 +44,4 @@ def adiabatic_slip_wall(blk,face,thermdat):
     T[fs[face]['s0_']] = T[fs[face]['s1_']]
 
     #Update conservatives
-    cpg(blk,thermdat,face,'prims')
+    eos(blk,thermdat,face,'prims')
