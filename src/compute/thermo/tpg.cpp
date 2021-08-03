@@ -220,7 +220,6 @@ void tpg(block_ b,
     }
   }
 
-
   // Compute mixuture properties
   for (int n=0; n<=ns-1; n++)
   {
@@ -232,16 +231,7 @@ void tpg(block_ b,
              th.N7[n][m+3]*pow(T,3.0) +
              th.N7[n][m+4]*pow(T,4.0) ;
 
-    hs[n]  = th.N7[n][m+0]                  +
-             th.N7[n][m+1]*    T      / 2.0 +
-             th.N7[n][m+2]*pow(T,2.0) / 3.0 +
-             th.N7[n][m+3]*pow(T,3.0) / 4.0 +
-             th.N7[n][m+4]*pow(T,4.0) / 5.0 +
-             th.N7[n][m+5]/    T            ;
-
-    Rmix +=        th.Ru  *Y[n]/th.MW[n];
     cp   += cps[n]*th.Ru  *Y[n]/th.MW[n];
-    h    +=  hs[n]*th.Ru*T*Y[n]/th.MW[n];
   }
 
   // Compute mixuture pressure
