@@ -58,7 +58,7 @@ def test_tpg():
 
     def print_diff(name,c,p):
         diff = np.abs(c-p)/p*100
-        print(f'{name:<6s}: {c:16.8f} | {p:16.8f} | {diff:4.2f}')
+        print(f'{name:<6s}: {c:16.8e} | {p:16.8e} | {diff:16.15e}')
 
         return diff
 
