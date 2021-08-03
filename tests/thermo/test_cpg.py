@@ -16,7 +16,7 @@ def test_cpg():
     kokkos.initialize()
 
     relpath = str(Path(__file__).parent)
-    ctfile = relpath+'/dummy_ct.yaml'
+    ctfile = relpath+'/ct_test_cpg.yaml'
     gas = ct.Solution(ctfile)
     p = np.random.uniform(low=10000, high=100000)
     T = np.random.uniform(low=100  , high=1000)

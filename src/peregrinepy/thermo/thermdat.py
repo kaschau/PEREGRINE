@@ -20,8 +20,21 @@ class thermdat(thermdat_):
         # Species MW
         self.MW = list(gas.molecular_weights)
 
-        #Set gas to STP
-        gas.TP = 293.15,101325.0
-        # Values for constant Cp
-        # J/(kg.K)
-        self.cp0 = list(gas.standard_cp_R*ct.gas_constant/gas.molecular_weights)
+
+        #Set either constant cp or NASA7 polynomial coefficients
+        if config['thermochem']['eos'] == 'cpg':
+            #Set gas to STP
+            gas.TP = 293.15,101325.0
+            # Values for constant Cp
+            # J/(kg.K)
+            cp0 = list(gas.standard_cp_R*ct.gas_constant/gas.molecular_weights)
+            if len(cp0) != range(gas.n_species):
+                raise ValueError('PEREGRINE ERROR: CPG info for all species (check cp0)')
+            self.cp0 = cp0
+        elif config['thermochem']['eos'] == 'tpg':
+            N7 = []
+            for n in range(gas.n_species):
+                N7.append(list(gas.species()[n].thermo.coeffs))
+            self.N7 = N7
+        else:
+            raise KeyError(f'PEREGRINE ERROR: Unknown EOS {config["thermochem"]["eos"]}')

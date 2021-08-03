@@ -7,7 +7,7 @@
 #include <numeric>
 #include <stdexcept>
 
-void cpg(block_ b,
+void tpg(block_ b,
       thermdat_ th,
     std::string face,
     std::string given) {
@@ -40,10 +40,6 @@ void cpg(block_ b,
   double rhoY[th.ns];
   double gamma,cp=0.0,h;
   double Rmix=0.0;
-
-  std::cout << th.N7[0][0] << "\n";
-  std::cout << th.N7[0][1] << "\n";
-  std::cout << th.N7[0][7] << "\n";
 
   p = b.q(i,j,k,0);
   u = b.q(i,j,k,1);
