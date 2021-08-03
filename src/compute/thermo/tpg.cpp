@@ -7,7 +7,7 @@
 #include <numeric>
 #include <stdexcept>
 
-void cpg(block_ b,
+void tpg(block_ b,
       thermdat_ th,
     std::string face,
     std::string given) {
@@ -38,8 +38,10 @@ void cpg(block_ b,
   double rhou,rhov,rhow;
   double e,rhoE;
   double rhoY[ns];
-  double gamma,cp=0.0,h;
+  double gamma,cp=0.0,h=0.0;
   double Rmix=0.0;
+
+  double cps[ns],hs[ns];
 
   p = b.q(i,j,k,0);
   u = b.q(i,j,k,1);
@@ -58,11 +60,27 @@ void cpg(block_ b,
   // Update mixture properties
   for (int n=0; n<=ns-1; n++)
   {
-    cp += Y[n]*th.cp0[n];
-    Rmix += Y[n]*th.Ru/th.MW[n];
+    int m = ( T <= th.N7[n][0] ) ? 8 : 1;
+
+    cps[n] = th.N7[n][m+0]            +
+             th.N7[n][m+1]*    T      +
+             th.N7[n][m+2]*pow(T,2.0) +
+             th.N7[n][m+3]*pow(T,3.0) +
+             th.N7[n][m+4]*pow(T,4.0) ;
+
+    hs[n]  = th.N7[n][m+0]                  +
+             th.N7[n][m+1]*    T      / 2.0 +
+             th.N7[n][m+2]*pow(T,2.0) / 3.0 +
+             th.N7[n][m+3]*pow(T,3.0) / 4.0 +
+             th.N7[n][m+4]*pow(T,4.0) / 5.0 +
+             th.N7[n][m+5]/    T            ;
+
+    Rmix +=        th.Ru  *Y[n]/th.MW[n];
+    cp   += cps[n]*th.Ru  *Y[n]/th.MW[n];
+    h    +=  hs[n]*th.Ru*T*Y[n]/th.MW[n];
   }
+
   // Compute mixuture enthalpy
-  h = cp*T;
   gamma = cp/(cp-Rmix);
 
   // Compute density
@@ -134,7 +152,9 @@ void cpg(block_ b,
   double T;
   double Y[ns];
   double gamma,cp=0.0,h;
-  double Rmix=0.0;
+  double Rmix;
+
+  double cps[ns],hs[ns];
 
   rho = b.Q(i,j,k,0);
   rhoinv = 1.0/b.Q(i,j,k,0);
@@ -160,19 +180,62 @@ void cpg(block_ b,
   // Internal energy
   e = (rhoE - tke)*rhoinv;
 
-  // Compute mixuture cp
-  for (int n=0; n<=ns-1; n++)
+  // Iterate on to find temperature
+  double Tmin=1, Tmax=10000;
+  int nitr=0, maxitr = 100;
+  double tol = 1e-8;
+  double error = 1e100;
+
+  // Dumb, slow bisection
+  while( (abs(error) > tol) || (nitr >= maxitr) )
   {
-    cp += Y[n]*th.cp0[n];
-    Rmix += Y[n]*th.Ru/th.MW[n];
+    T = (Tmax + Tmin)/2.0;
+    h = 0.0;
+    Rmix = 0.0;
+    for (int n=0; n<=ns-1; n++)
+    {
+      int m = ( T <= th.N7[n][0] ) ? 8 : 1;
+
+      hs[n]  = th.N7[n][m+0]                  +
+               th.N7[n][m+1]*    T      / 2.0 +
+               th.N7[n][m+2]*pow(T,2.0) / 3.0 +
+               th.N7[n][m+3]*pow(T,3.0) / 4.0 +
+               th.N7[n][m+4]*pow(T,4.0) / 5.0 +
+               th.N7[n][m+5]/    T            ;
+
+      Rmix +=        th.Ru  *Y[n]/th.MW[n];
+      h    +=  hs[n]*th.Ru*T*Y[n]/th.MW[n];
+    }
+
+    error = e - (h - Rmix*T);
+    nitr += 1;
+
+    if( error > 0.0 )
+    {
+      Tmin = T;
+    }else
+    {
+      Tmax = T;
+    }
   }
 
-  // Compute mixuture temperature,pressure
-  T = e/(cp-Rmix);
-  p = rho*Rmix*T;
+  // Compute mixuture properties
+  for (int n=0; n<=ns-1; n++)
+  {
+    int m = ( T <= th.N7[n][0] ) ? 8 : 1;
 
-  // Compute mixture enthalpy
-  h = e + p*rhoinv;
+    cps[n] = th.N7[n][m+0]            +
+             th.N7[n][m+1]*    T      +
+             th.N7[n][m+2]*pow(T,2.0) +
+             th.N7[n][m+3]*pow(T,3.0) +
+             th.N7[n][m+4]*pow(T,4.0) ;
+
+    cp   += cps[n]*th.Ru  *Y[n]/th.MW[n];
+  }
+
+  // Compute mixuture pressure
+  p = rho*Rmix*T;
+  // Compute mixture gamma
   gamma = cp/(cp-Rmix);
 
   // Set values of new properties

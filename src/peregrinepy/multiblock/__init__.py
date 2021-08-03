@@ -15,6 +15,8 @@ import cantera as ct
 from pathlib import Path
 
 def generate_multiblock_solver(nblki, config):
+
+    #Get the time integrator from config file
     ti = config['solver']['time_integration']
     if ti == 'rk1':
         tic = rk1
@@ -30,7 +32,19 @@ def generate_multiblock_solver(nblki, config):
     gas = ct.Solution(config['thermochem']['ctfile'])
     spn = gas.species_names
 
+    #Instantiate the combined mbsolver+timeint object
     cls = mbsolver(nblki,spn)
+
+    #Stick the thermdat object on
     cls.thermdat = thermdat(config)
+
+    #Stick the equation of state on
+    if config['thermochem']['eos'] == 'cpg':
+        from ..compute import cpg
+        cls.eos = cpg
+    elif config['thermochem']['eos'] == 'tpg':
+        from ..compute import tpg
+        cls.eos = tpg
+
 
     return cls

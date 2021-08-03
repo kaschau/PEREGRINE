@@ -107,7 +107,9 @@ PYBIND11_MODULE(compute, m) {
     .def_readwrite("Ru", &thermdat_::Ru)
     .def_readwrite("species_names", &thermdat_::species_names)
     .def_readwrite("MW", &thermdat_::MW)
-    .def_readwrite("cp0", &thermdat_::cp0);
+    .def_readwrite("cp0", &thermdat_::cp0)
+    .def_readwrite("N7", &thermdat_::N7);
+
 ////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////  Compute Functions /////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -125,7 +127,13 @@ PYBIND11_MODULE(compute, m) {
 
   // ./thermo
   //  |----> cpg
-  m.def("cpg", &cpg, "Update primatives or conservatives",
+  m.def("cpg", &cpg, "Update primatives or conservatives with cpg assumption",
+        py::arg("block_ object"),
+        py::arg("thermdat_ object"),
+        py::arg("face"),
+        py::arg("given"));
+  //  |----> tpg
+  m.def("tpg", &tpg, "Update primatives or conservatives with tpg assumption",
         py::arg("block_ object"),
         py::arg("thermdat_ object"),
         py::arg("face"),
