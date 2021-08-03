@@ -23,5 +23,7 @@ void advective(std::vector<block_> mb, thermdat_ th);
 // ./thermo
 //    |------> cpg
 void cpg(block_ b, thermdat_ th, std::string face, std::string given);
+//    |------> tpg
+void tpg(block_ b, thermdat_ th, std::string face, std::string given);
 
 #endif

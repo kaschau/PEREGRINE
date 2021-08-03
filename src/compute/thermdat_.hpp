@@ -16,6 +16,8 @@ struct thermdat_ {
   std::vector<double> MW;
   std::vector<double> cp0;
 
+  std::vector<std::vector<double>> N7;
+
 };
 
 #endif
