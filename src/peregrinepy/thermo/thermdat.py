@@ -28,7 +28,7 @@ class thermdat(thermdat_):
             # Values for constant Cp
             # J/(kg.K)
             cp0 = list(gas.standard_cp_R*ct.gas_constant/gas.molecular_weights)
-            if len(cp0) != range(gas.n_species):
+            if len(cp0) != gas.n_species:
                 raise ValueError('PEREGRINE ERROR: CPG info for all species (check cp0)')
             self.cp0 = cp0
         elif config['thermochem']['eos'] == 'tpg':
