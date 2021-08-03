@@ -82,32 +82,32 @@ def test_tpg():
     pd.append(print_diff('cp', gas.cp, pgthrm[1]))
     pd.append(print_diff('h', gas.enthalpy_mass, pgthrm[2]/pgcons[0]))
 
-    #Go the other way
-    pg.consistify(mb)
+    # #Go the other way
+    # pg.consistify(mb)
 
-    print('********  Conservatives to Primatives ***************')
-    print(f'       {"Cantera":<15}  | {"PEREGRINE":<15} | {"%Error":<5}')
-    print('Conservatives')
-    pd.append(print_diff('rho', gas.density,pgcons[0]))
-    pd.append(print_diff('e', gas.int_energy_mass, pgcons[4]/pgcons[0]))
-    for i,n in enumerate(gas.species_names[0:-1]):
-        pd.append(print_diff('rho'+n,gas.Y[i]*gas.density,pgcons[5+i]))
-    pd.append(print_diff('rho'+gas.species_names[-1],gas.Y[-1]*gas.density,pgcons[0]-np.sum(pgcons[5::])))
-    print('Primatives')
-    pd.append(print_diff('p',gas.P,pgprim[0]))
-    pd.append(print_diff('T',gas.T,pgprim[4]))
-    for i,n in enumerate(gas.species_names[0:-1]):
-        pd.append(print_diff(n,gas.Y[i],pgprim[5+i]))
-    pd.append(print_diff(gas.species_names[-1],gas.Y[-1],1.0-np.sum(pgprim[5::])))
-    print('Mixture Properties')
-    pd.append(print_diff('gamma', gas.cp/gas.cv, pgthrm[0]))
-    pd.append(print_diff('cp', gas.cp, pgthrm[1]))
-    pd.append(print_diff('h', gas.enthalpy_mass, pgthrm[2]/pgcons[0]))
+    # print('********  Conservatives to Primatives ***************')
+    # print(f'       {"Cantera":<15}  | {"PEREGRINE":<15} | {"%Error":<5}')
+    # print('Conservatives')
+    # pd.append(print_diff('rho', gas.density,pgcons[0]))
+    # pd.append(print_diff('e', gas.int_energy_mass, pgcons[4]/pgcons[0]))
+    # for i,n in enumerate(gas.species_names[0:-1]):
+    #     pd.append(print_diff('rho'+n,gas.Y[i]*gas.density,pgcons[5+i]))
+    # pd.append(print_diff('rho'+gas.species_names[-1],gas.Y[-1]*gas.density,pgcons[0]-np.sum(pgcons[5::])))
+    # print('Primatives')
+    # pd.append(print_diff('p',gas.P,pgprim[0]))
+    # pd.append(print_diff('T',gas.T,pgprim[4]))
+    # for i,n in enumerate(gas.species_names[0:-1]):
+    #     pd.append(print_diff(n,gas.Y[i],pgprim[5+i]))
+    # pd.append(print_diff(gas.species_names[-1],gas.Y[-1],1.0-np.sum(pgprim[5::])))
+    # print('Mixture Properties')
+    # pd.append(print_diff('gamma', gas.cp/gas.cv, pgthrm[0]))
+    # pd.append(print_diff('cp', gas.cp, pgthrm[1]))
+    # pd.append(print_diff('h', gas.enthalpy_mass, pgthrm[2]/pgcons[0]))
 
     kokkos.finalize()
 
-#    passfail = np.all(np.array(pd) < 0.0001)
-#    assert False # passfail
+    passfail = np.all(np.array(pd) < 0.0001)
+    assert  passfail
 
 if __name__ == '__main__':
     test_tpg()
