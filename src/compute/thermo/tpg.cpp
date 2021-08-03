@@ -190,7 +190,6 @@ void tpg(block_ b,
   while( (abs(error) > tol) || (nitr >= maxitr) )
   {
     T = (Tmax + Tmin)/2.0;
-    std::cout << nitr << ", " << Tmin << ", " << Tmax << ", " << T << ", " << abs(error) << "\n";
     h = 0.0;
     Rmix = 0.0;
     for (int n=0; n<=ns-1; n++)

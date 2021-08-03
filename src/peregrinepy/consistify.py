@@ -12,7 +12,7 @@ def consistify(mb):
 
     #Update interior primatives
     for blk in mb:
-        cpg(blk,mb.thermdat,'0','cons')
+        mb.eos(blk,mb.thermdat,'0','cons')
 
     #Apply boundary conditions
     apply_bcs(mb)
