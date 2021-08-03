@@ -41,10 +41,6 @@ void cpg(block_ b,
   double gamma,cp=0.0,h;
   double Rmix=0.0;
 
-  std::cout << th.N7[0][0] << "\n";
-  std::cout << th.N7[0][1] << "\n";
-  std::cout << th.N7[0][7] << "\n";
-
   p = b.q(i,j,k,0);
   u = b.q(i,j,k,1);
   v = b.q(i,j,k,2);
