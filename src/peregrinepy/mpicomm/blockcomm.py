@@ -57,7 +57,7 @@ def communicate(mb,varis):
 
             comm.Barrier()
 
-def set_block_communication(mb,config):
+def set_block_communication(mb):
     from numpy import s_
 
     if mb[0].ni == 0:

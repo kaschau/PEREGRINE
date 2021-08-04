@@ -37,7 +37,7 @@ def test_123():
         blk.array['z'] = np.random.random((tb.shape))
 
     #Reorient and update communication info
-    pg.mpicomm.blockcomm.set_block_communication(tb.mb,tb.config)
+    pg.mpicomm.blockcomm.set_block_communication(tb.mb)
     #Execute communication
     pg.mpicomm.blockcomm.communicate(tb.mb,['x','y','z'])
 
@@ -64,7 +64,7 @@ def test_135():
     blk0.connectivity['2']['orientation'] = '135'
     blk1.connectivity['1']['orientation'] = '162'
 
-    pg.mpicomm.blockcomm.set_block_communication(tb.mb,tb.config)
+    pg.mpicomm.blockcomm.set_block_communication(tb.mb)
 
     #Execute communication
     pg.mpicomm.blockcomm.communicate(tb.mb,['x','y','z'])
@@ -115,7 +115,7 @@ def test_231():
     tb.mb[1].connectivity['3']['orientation'] = '312'
     tb.mb[1].connectivity['3']['comm_rank'] = 0
 
-    pg.mpicomm.blockcomm.set_block_communication(tb.mb,tb.config)
+    pg.mpicomm.blockcomm.set_block_communication(tb.mb)
 
     #Execute communication
     pg.mpicomm.blockcomm.communicate(tb.mb,['x','y','z'])
@@ -166,7 +166,7 @@ def test_321():
     tb.mb[1].connectivity['5']['orientation'] = '231'
     tb.mb[1].connectivity['5']['comm_rank'] = 0
 
-    pg.mpicomm.blockcomm.set_block_communication(tb.mb,tb.config)
+    pg.mpicomm.blockcomm.set_block_communication(tb.mb)
 
     #Execute communication
     pg.mpicomm.blockcomm.communicate(tb.mb,['x','y','z'])

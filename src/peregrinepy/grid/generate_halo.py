@@ -1,6 +1,6 @@
 from numpy import s_
 
-def generate_halo(mb,config):
+def generate_halo(mb):
 
     for blk in mb:
 
