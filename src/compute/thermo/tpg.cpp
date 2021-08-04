@@ -38,8 +38,8 @@ void tpg(block_ b,
   double rhou,rhov,rhow;
   double e,rhoE;
   double rhoY[ns];
-  double gamma,cp=0.0,h=0.0;
-  double Rmix=0.0;
+  double gamma,cp,h;
+  double Rmix;
 
   double cps[ns],hs[ns];
 
@@ -58,6 +58,9 @@ void tpg(block_ b,
   Y[ns-1] = std::max(0.0,Y[ns-1]);
 
   // Update mixture properties
+  Rmix = 0.0;
+  h    = 0.0;
+  cp   = 0.0;
   for (int n=0; n<=ns-1; n++)
   {
     int m = ( T <= th.N7[n][0] ) ? 8 : 1;
@@ -151,7 +154,7 @@ void tpg(block_ b,
   double u,v,w,tke;
   double T;
   double Y[ns];
-  double gamma,cp=0.0,h;
+  double gamma,cp,h;
   double Rmix;
 
   double cps[ns],hs[ns];
@@ -186,12 +189,19 @@ void tpg(block_ b,
   double tol = 1e-8;
   double error = 1e100;
 
-  // Dumb, slow bisection
-  while( (abs(error) > tol) || (nitr >= maxitr) )
+  // Compute Rmix
+  Rmix = 0.0;
+  for (int n=0; n<=ns-1; n++)
   {
-    T = (Tmax + Tmin)/2.0;
+    Rmix += th.Ru  *Y[n]/th.MW[n];
+  }
+
+  // Newtons method to find T
+  T = ( b.q(i,j,k,4) < 1.0 ) ? 300.0 : b.q(i,j,k,4); // Initial guess of T
+  while( (abs(error) > tol) && (nitr < maxitr))
+  {
     h = 0.0;
-    Rmix = 0.0;
+    cp = 0.0;
     for (int n=0; n<=ns-1; n++)
     {
       int m = ( T <= th.N7[n][0] ) ? 8 : 1;
@@ -202,35 +212,19 @@ void tpg(block_ b,
                th.N7[n][m+3]*pow(T,3.0) / 4.0 +
                th.N7[n][m+4]*pow(T,4.0) / 5.0 +
                th.N7[n][m+5]/    T            ;
+      cps[n] = th.N7[n][m+0]            +
+               th.N7[n][m+1]*    T      +
+               th.N7[n][m+2]*pow(T,2.0) +
+               th.N7[n][m+3]*pow(T,3.0) +
+               th.N7[n][m+4]*pow(T,4.0) ;
 
-      Rmix +=        th.Ru  *Y[n]/th.MW[n];
       h    +=  hs[n]*th.Ru*T*Y[n]/th.MW[n];
+      cp   += cps[n]*th.Ru  *Y[n]/th.MW[n];
     }
 
+    T = T - (e - (h - Rmix*T))/(-cp - Rmix);
     error = e - (h - Rmix*T);
     nitr += 1;
-
-    if( error > 0.0 )
-    {
-      Tmin = T;
-    }else
-    {
-      Tmax = T;
-    }
-  }
-
-  // Compute mixuture properties
-  for (int n=0; n<=ns-1; n++)
-  {
-    int m = ( T <= th.N7[n][0] ) ? 8 : 1;
-
-    cps[n] = th.N7[n][m+0]            +
-             th.N7[n][m+1]*    T      +
-             th.N7[n][m+2]*pow(T,2.0) +
-             th.N7[n][m+3]*pow(T,3.0) +
-             th.N7[n][m+4]*pow(T,4.0) ;
-
-    cp   += cps[n]*th.Ru  *Y[n]/th.MW[n];
   }
 
   // Compute mixuture pressure

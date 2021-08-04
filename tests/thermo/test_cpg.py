@@ -83,6 +83,10 @@ def test_cpg():
     pd.append(print_diff('h', gas.enthalpy_mass, pgthrm[2]/pgcons[0]))
 
     #Go the other way
+    #Scramble the primatives
+    blk.array['q'][:,:,:,0] = 0.0
+    blk.array['q'][:,:,:,4] = 0.0
+    blk.array['q'][:,:,:,5::] = np.zeros(len(Y[0:-1]))
     pg.consistify(mb)
 
     print('********  Conservatives to Primatives ***************')

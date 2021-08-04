@@ -38,8 +38,8 @@ void cpg(block_ b,
   double rhou,rhov,rhow;
   double e,rhoE;
   double rhoY[ns];
-  double gamma,cp=0.0,h;
-  double Rmix=0.0;
+  double gamma,cp,h;
+  double Rmix;
 
   p = b.q(i,j,k,0);
   u = b.q(i,j,k,1);
@@ -56,10 +56,12 @@ void cpg(block_ b,
   Y[ns-1] = std::max(0.0,Y[ns-1]);
 
   // Update mixture properties
+  Rmix = 0.0;
+  cp   = 0.0;
   for (int n=0; n<=ns-1; n++)
   {
-    cp += Y[n]*th.cp0[n];
     Rmix += Y[n]*th.Ru/th.MW[n];
+    cp   += Y[n]*th.cp0[n];
   }
   // Compute mixuture enthalpy
   h = cp*T;
@@ -133,8 +135,8 @@ void cpg(block_ b,
   double u,v,w,tke;
   double T;
   double Y[ns];
-  double gamma,cp=0.0,h;
-  double Rmix=0.0;
+  double gamma,cp,h;
+  double Rmix;
 
   rho = b.Q(i,j,k,0);
   rhoinv = 1.0/b.Q(i,j,k,0);
@@ -161,10 +163,12 @@ void cpg(block_ b,
   e = (rhoE - tke)*rhoinv;
 
   // Compute mixuture cp
+  Rmix = 0.0;
+  cp   = 0.0;
   for (int n=0; n<=ns-1; n++)
   {
-    cp += Y[n]*th.cp0[n];
     Rmix += Y[n]*th.Ru/th.MW[n];
+    cp   += Y[n]*th.cp0[n];
   }
 
   // Compute mixuture temperature,pressure
