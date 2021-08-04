@@ -39,7 +39,7 @@ def test_cpg():
 
     blk = mb[0]
 
-    pg.grid.generate_halo(mb,config)
+    pg.grid.generate_halo(mb)
 
     pg.compute.metrics(mb)
 

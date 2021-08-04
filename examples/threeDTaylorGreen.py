@@ -50,9 +50,9 @@ def simulate():
         blk.connectivity[str(face)]['orientation'] = '123'
         blk.connectivity[str(face)]['comm_rank'] = 0
 
-    pg.grid.generate_halo(mb,config)
+    pg.grid.generate_halo(mb)
 
-    pg.mpicomm.blockcomm.set_block_communication(mb,config)
+    pg.mpicomm.blockcomm.set_block_communication(mb)
 
     pg.compute.metrics(mb)
 

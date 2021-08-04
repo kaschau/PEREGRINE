@@ -24,11 +24,11 @@ def simulate(config_file_path):
 
     mb = pg.construct_mb(config)
 
-    pg.grid.generate_halo(mb,config)
+    pg.grid.generate_halo(mb)
     pg.mpicomm.blockcomm.communicate(mb,['x','y','z'])
 
     for blk in mb:
-        blk.init_koarrays(config)
+        blk.init_solver_arrays(config)
 
     pg.compute.metrics(mb)
     # init flow
@@ -42,11 +42,7 @@ def simulate(config_file_path):
         blk.array['q'][3:6,:,:,4] = 350 #np.random.random(blk.array['q'][1:-1,1:-1,1:-1,1].shape)*300
 
         #Get Density
-        pg.compute.EOS_ideal(blk,'0','PT')
-        #Get momentum
-        pg.compute.momentum(blk,'0','u')
-        #Get total energy
-        pg.compute.calEOS_perfect(blk,'0','PT')
+        mb.eos(blk,mb.thermdat,'0','prims')
 
         #Zero out prims
         blk.array['q'][1:-1,1:-1,1:-1,0] = 0.0

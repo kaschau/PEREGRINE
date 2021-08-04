@@ -63,6 +63,6 @@ def construct_mb(config):
     ################################################################
     ##### Now set the MPI communication info for each block
     ################################################################
-    blockcomm.set_block_communication(mb,config)
+    blockcomm.set_block_communication(mb)
 
     return mb
