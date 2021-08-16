@@ -24,8 +24,7 @@ def simulate(config_file_path):
 
     mb = pg.construct_mb(config)
 
-    pg.grid.generate_halo(mb)
-    pg.mpicomm.blockcomm.communicate(mb,['x','y','z'])
+    pg.grid.unify_solver_grid(mb)
 
     for blk in mb:
         blk.init_solver_arrays(config)
