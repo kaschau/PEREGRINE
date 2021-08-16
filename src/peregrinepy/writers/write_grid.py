@@ -5,7 +5,7 @@ from lxml import etree
 from copy import deepcopy
 from ..misc import ProgressBar
 
-def write_grid(mb, path='./', precision='double'):
+def write_grid(mb, path='./', precision='double',with_halo=False):
     '''This function produces an hdf5 file from a raptorpy.multiblock.grid (or a descendant) for viewing in Paraview.
 
     Parameters
@@ -31,6 +31,11 @@ def write_grid(mb, path='./', precision='double'):
     else:
         fdtype = '<f8'
 
+    if with_halo:
+        ng = 2
+    else:
+        ng = 0
+
     xdmf_elem = etree.Element('Xdmf')
     xdmf_elem.set('Version', '2')
 
@@ -52,19 +57,22 @@ def write_grid(mb, path='./', precision='double'):
             f['dimensions'].create_dataset('nk', shape=(1,), dtype='int32')
 
             dset = f['dimensions']['ni']
-            dset[0] = blk.ni
+            dset[0] = blk.ni+ng
             dset = f['dimensions']['nj']
-            dset[0] = blk.nj
+            dset[0] = blk.nj+ng
             dset = f['dimensions']['nk']
-            dset[0] = blk.nk
+            dset[0] = blk.nk+ng
 
-            extent = (blk.ni)*(blk.nj)*(blk.nk)
+            extent = (blk.ni+ng)*(blk.nj+ng)*(blk.nk+ng)
             f['coordinates'].create_dataset('x', shape=(extent,), dtype=fdtype)
             f['coordinates'].create_dataset('y', shape=(extent,), dtype=fdtype)
             f['coordinates'].create_dataset('z', shape=(extent,), dtype=fdtype)
 
             if blk.block_type == 'solver':
-                s_ = np.s_[1:-1,1:-1,1:-1]
+                if with_halo:
+                    s_ = np.s_[:,:,:]
+                else:
+                    s_ = np.s_[1:-1,1:-1,1:-1]
             else:
                 s_ = np.s_[:,:,:]
             dset = f['coordinates']['x']
@@ -79,14 +87,14 @@ def write_grid(mb, path='./', precision='double'):
 
         topology_elem = etree.SubElement(block_elem, 'Topology')
         topology_elem.set('TopologyType', '3DSMesh')
-        topology_elem.set('NumberOfElements', f'{blk.ni} {blk.nj} {blk.nk}')
+        topology_elem.set('NumberOfElements', f'{blk.ni+ng} {blk.nj+ng} {blk.nk+ng}')
 
         geometry_elem = etree.SubElement(block_elem, 'Geometry')
         geometry_elem.set('GeometryType', 'X_Y_Z')
 
         data_x_elem = etree.SubElement(geometry_elem, 'DataItem')
         data_x_elem.set('ItemType', 'Hyperslab')
-        data_x_elem.set('Dimensions', f'{blk.ni} {blk.nj} {blk.nk}')
+        data_x_elem.set('Dimensions', f'{blk.ni+ng} {blk.nj+ng} {blk.nk+ng}')
         data_x_elem.set('Type', 'HyperSlab')
         data_x1_elem = etree.SubElement(data_x_elem, 'DataItem')
         data_x1_elem.set('DataType', 'Int')
