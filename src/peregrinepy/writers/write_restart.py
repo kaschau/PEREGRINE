@@ -51,19 +51,17 @@ def write_restart(mb, path='./', grid_path='./', precision='double'):
         file_name = f'{path}/q.{mb.nrt:08d}.{blk.nblki:06d}.h5'
 
         with h5py.File(file_name, 'w') as qf:
+
+            qf.create_group('iter')
+            qf['iter'].create_dataset('nrt', shape=(1,), dtype='int32')
+            qf['iter'].create_dataset('tme', shape=(1,), dtype='int32')
+
+            dset = qf['iter']['nrt']
+            dset[0] = blk.nrt
+            dset = qf['iter']['tme']
+            dset[0] = blk.tme
+
             qf.create_group('results')
-            qf.create_group('dimensions')
-
-            qf['dimensions'].create_dataset('ni', shape=(1,), dtype='int32')
-            qf['dimensions'].create_dataset('nj', shape=(1,), dtype='int32')
-            qf['dimensions'].create_dataset('nk', shape=(1,), dtype='int32')
-
-            dset = qf['dimensions']['ni']
-            dset[0] = blk.ni
-            dset = qf['dimensions']['nj']
-            dset[0] = blk.nj
-            dset = qf['dimensions']['nk']
-            dset[0] = blk.nk
 
             dset_name = 'rho'
             qf['results'].create_dataset(dset_name, shape=(extent_cc,), dtype=fdtype)
