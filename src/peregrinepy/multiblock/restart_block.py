@@ -21,6 +21,9 @@ class restart_block(grid_block):
     def __init__(self,nblki,species_names=[]):
         super().__init__(nblki)
 
+        self.nrt = 0
+        self.tme = 0
+
         self.species_names = species_names
         self.ns = len(species_names)
         if self.ns < 1:

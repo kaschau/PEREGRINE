@@ -83,7 +83,7 @@ def write_grid(mb, path='./', precision='double',with_halo=False):
             dset[:] = blk.array['z'][s_].ravel()
 
         block_elem = etree.Element('Grid')
-        block_elem.set('Name','B{:06d}'.format(blk.nblki))
+        block_elem.set('Name',f'B{blk.nblki:06d}')
 
         topology_elem = etree.SubElement(block_elem, 'Topology')
         topology_elem.set('TopologyType', '3DSMesh')
@@ -100,11 +100,11 @@ def write_grid(mb, path='./', precision='double',with_halo=False):
         data_x1_elem.set('DataType', 'Int')
         data_x1_elem.set('Dimensions', '3')
         data_x1_elem.set('Format', 'XML')
-        data_x1_elem.text = '0 1 {}'.format(extent)
+        data_x1_elem.text = f'0 1 {extent}'
         data_x2_elem = etree.SubElement(data_x_elem, 'DataItem')
         data_x2_elem.set('NumberType', 'Float')
         data_x2_elem.set('ItemType', 'Uniform')
-        data_x2_elem.set('Dimensions', '{}'.format(extent))
+        data_x2_elem.set('Dimensions', '{extent}')
         data_x2_elem.set('Precision', '4')
         data_x2_elem.set('Format', 'HDF')
         data_x2_elem.text = f'gv.{blk.nblki:06d}.h5:/coordinates/x'
@@ -117,8 +117,12 @@ def write_grid(mb, path='./', precision='double',with_halo=False):
 
         grid_elem.append(deepcopy(block_elem))
 
-        #ProgressBar(blk.nblki+1, len(mb), f'Writing out block {blk.nblki}')
+        if mb.mb_type in ['grid','restart']:
+            ProgressBar(blk.nblki+1, len(mb), f'Writing out block {blk.nblki}')
 
     et = etree.ElementTree(xdmf_elem)
-    save_file = '{}/gv.xmf'.format(path)
-    et.write(save_file, pretty_print=True, encoding="UTF-8", xml_declaration=True)
+    save_file = f'{path}/gv.xmf'
+
+    #Only the zeroth block writes out the file
+    if 0 in mb.block_list:
+        et.write(save_file, pretty_print=True, encoding="UTF-8", xml_declaration=True)
