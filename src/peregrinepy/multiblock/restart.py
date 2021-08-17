@@ -18,6 +18,7 @@ from .restart_block import restart_block
 class restart(grid):
     '''A list of peregrinepy.restart.restart_block objects. Inherits from peregrinepy.multiblock.grid
     '''
+    mb_type = 'restart'
     def __init__(self, nblks, sp_names, ls=[]):
 
         if ls == []:
@@ -32,3 +33,23 @@ class restart(grid):
     def init_restart_arrays(self):
         for blk in self:
             blk.init_restart_arrays()
+
+    # We will make the nrt and tme attribues of the restart containter
+    # properties with a setter so that setting the container value will
+    # also set the block object values as well.
+    @property
+    def nrt(self):
+        return self.__nrt
+    @nrt.setter
+    def nrt(self,val):
+        self.__nrt = val
+        for blk in self:
+            blk.nrt = val
+    @property
+    def tme(self):
+        return self.__tme
+    @tme.setter
+    def tme(self,val):
+        self.__tme = val
+        for blk in self:
+            blk.tme = val

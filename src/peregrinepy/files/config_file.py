@@ -29,9 +29,12 @@ class config_file(FrozenDict):
                                  'inputdir'  : './Input',
                                  'outputdir' : './Output'
                                  })
-
-        self['Kokkos'] = FrozenDict({'Space' : 'Default'
-                                     })
+        self['simulation'] = FrozenDict({'niter'       : 1,
+                                         'dt'          : 1e-3,
+                                         'restart_from': 0,
+                                         'animate'     : True,
+                                         'niterout'    : 10
+                                         })
 
         self['solver'] = FrozenDict({'time_integration' : 'rk4'
                                      })
@@ -39,6 +42,10 @@ class config_file(FrozenDict):
         self['thermochem'] = FrozenDict({'ctfile' : 'pure-debug.yaml',
                                          'eos'    : 'cpg'
                                          })
+
+        self['Kokkos'] = FrozenDict({'Space' : 'Default'
+                                     })
+
 
         for key in self.keys():
             self[key]._freeze()

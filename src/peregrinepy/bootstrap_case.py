@@ -1,15 +1,13 @@
-from . import multiblock
-from .readers import read_blocks4procs,read_connectivity,read_grid
-from .mpicomm import mpiutils,blockcomm
+import peregrinepy as pg
 
-def construct_mb(config):
+def bootstrap_case(config):
 
-    comm,rank,size = mpiutils.get_comm_rank_size()
+    comm,rank,size = pg.mpicomm.mpiutils.get_comm_rank_size()
     ################################################################
     ##### First we determine what bocks we are responsible for #####
     ################################################################
     if rank == 0:
-        blocks4procs = read_blocks4procs(config['io']['inputdir'])
+        blocks4procs = pg.readers.read_blocks4procs(config['io']['inputdir'])
     else:
         blocks4procs = None
     blocks4procs = comm.bcast(blocks4procs,root=0)
@@ -21,22 +19,17 @@ def construct_mb(config):
         comm.Abort()
 
     myblocks = blocks4procs[rank]
-    mb = multiblock.generate_multiblock_solver(len(myblocks),config)
+    mb = pg.multiblock.generate_multiblock_solver(len(myblocks),config)
 
     #We have to overwrite the default value of nblki in parallel
     for i,nblki in enumerate(myblocks):
         mb[i].nblki = nblki
 
     ################################################################
-    ##### Read in the grid
-    ################################################################
-    read_grid(mb,config['io']['griddir'])
-
-    ################################################################
     ##### Read in the connectivity
     ################################################################
     if rank == 0:
-        conn = read_connectivity(None,config['io']['inputdir'])
+        conn = pg.readers.read_connectivity(None,config['io']['inputdir'])
     else:
         conn = None
     conn = comm.bcast(conn,root=0)
@@ -61,8 +54,38 @@ def construct_mb(config):
                     blk.connectivity[face]['comm_rank'] = otherrank
 
     ################################################################
+    ##### Read in the grid
+    ################################################################
+    pg.readers.read_grid(mb,config['io']['griddir'])
+
+    ################################################################
     ##### Now set the MPI communication info for each block
     ################################################################
-    blockcomm.set_block_communication(mb)
+    pg.mpicomm.blockcomm.set_block_communication(mb)
+
+    ################################################################
+    ##### Initialize the solver arrays
+    ################################################################
+    mb.init_solver_arrays(config)
+
+    ################################################################
+    ##### Unify the grid via halo construction, compute metrics
+    ################################################################
+    pg.grid.unify_solver_grid(mb)
+    pg.compute.metrics(mb)
+
+    ################################################################
+    ##### Read in restart
+    ################################################################
+    pg.readers.read_restart(mb,
+                            config['io']['outputdir'],
+                            config['simulation']['restart_from'],
+                            config['simulation']['animate'])
+
+    #Generate conserved variables
+    mb.eos(blk,mb.thermdat,'0','cons')
+    #Consistify total flow field
+    pg.consistify(mb)
+
 
     return mb

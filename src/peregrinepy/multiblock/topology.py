@@ -18,6 +18,7 @@ from .topology_block import topology_block
 class topology(UserList):
     '''A list of peregrinepy.block objects
     '''
+    mb_type = 'topology'
     def __init__(self, nblks, ls=[]):
         if ls == []:
             temp = [topology_block(i) for i in range(nblks)]

@@ -54,9 +54,11 @@ def simulate():
 
     pg.mpicomm.blockcomm.set_block_communication(mb)
 
+    pg.grid.unify_solver_grid(mb)
+
     pg.compute.metrics(mb)
 
-    pg.writers.write_grid(mb,config['io']['outputdir'])
+    pg.writers.write_grid(mb,config['io']['griddir'])
 
     R=281.4583333333333
     cp = 1000.0
@@ -69,7 +71,7 @@ def simulate():
     blk.array['q'][:,:,:,2] = -M0*np.cos(blk.array['xc'])*np.sin(blk.array['yc'])*np.cos(blk.array['zc'])
     blk.array['q'][:,:,:,4] = blk.array['q'][:,:,:,0]/(R*rho0)
 
-    pg.compute.cpg(blk,mb.thermdat,'0','prims')
+    mb.eos(blk,mb.thermdat,'0','prims')
     pg.consistify(mb)
 
     dt = 0.1 * 2*np.pi/64
@@ -81,7 +83,7 @@ def simulate():
     while mb.tme*M0 < 120:
 
         if mb.nrt%niterout == 0:
-            pg.writers.write_restart(mb,config['io']['outputdir'])
+            pg.writers.write_restart(mb,config['io']['outputdir'],config['io']['griddir'])
 
         if mb.nrt%50 == 0:
             print(mb.tme*M0)
