@@ -54,9 +54,9 @@ def simulate():
     blk.connectivity['2']['orientation'] = '123'
     blk.connectivity['2']['comm_rank'] = 0
 
-    pg.grid.generate_halo(mb)
-
     pg.mpicomm.blockcomm.set_block_communication(mb)
+
+    pg.grid.unify_solver_grid(mb)
 
     pg.compute.metrics(mb)
 
@@ -68,7 +68,7 @@ def simulate():
     blk.array['q'][1:-1,1,1,4] = initial_T
 
     #Update cons
-    pg.compute.cpg(blk,mb.thermdat,'0','prims')
+    mb.eos(blk,mb.thermdat,'0','prims')
     pg.consistify(mb)
 
     dt = 0.1 * 0.025
