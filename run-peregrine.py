@@ -24,12 +24,6 @@ def simulate(config_file_path):
 
     mb = pg.construct_mb(config)
 
-    pg.grid.unify_solver_grid(mb)
-
-    for blk in mb:
-        blk.init_solver_arrays(config)
-
-    pg.compute.metrics(mb)
     # init flow
     for blk in mb:
         # Prim
