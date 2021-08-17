@@ -22,7 +22,7 @@ def simulate(config_file_path):
 
     config = pg.mpicomm.mpiread_config(config_file_path)
 
-    mb = pg.construct_mb(config)
+    mb = pg.bootstrap_case(config)
 
     # init flow
     for blk in mb:
@@ -43,17 +43,18 @@ def simulate(config_file_path):
         blk.array['q'][1:-1,1:-1,1:-1,4] = 0.0
 
     pg.consistify(mb)
-    pg.writers.write_restart(mb,config['io']['outputdir'],grid_path='../Grid')
+    pg.writers.write_restart(mb,path=config['io']['outputdir'],grid_path='../Grid')
 
-    niterout = 1000
-    #ts = time.time()
-    for i in range(10000):
+    config['simulation']['niter'] = 10000
+    config['simulation']['dt'] = 1e-6
+
+    for niter in range(config['simulation']['niter']):
         print(mb.nrt,mb.tme)
-        mb.step(1e-6)
-        if mb.nrt%niterout == 0:
-            pg.writers.write_restart(mb,config['io']['outputdir'],grid_path='../Grid')
 
-    #print(time.time()-ts, 'took this many seconds')
+        mb.step(config['simulation']['dt'])
+
+        if mb.nrt%config['simulation']['niterout'] == 0:
+            pg.writers.write_restart(mb,config['io']['outputdir'],grid_path='../Grid')
 
     # Finalise MPI
     MPI.Finalize()
