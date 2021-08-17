@@ -1,6 +1,8 @@
 from . import multiblock
 from .readers import read_blocks4procs,read_connectivity,read_grid
 from .mpicomm import mpiutils,blockcomm
+from . import grid
+from .compute import metrics
 
 def construct_mb(config):
 
@@ -26,11 +28,6 @@ def construct_mb(config):
     #We have to overwrite the default value of nblki in parallel
     for i,nblki in enumerate(myblocks):
         mb[i].nblki = nblki
-
-    ################################################################
-    ##### Read in the grid
-    ################################################################
-    read_grid(mb,config['io']['griddir'])
 
     ################################################################
     ##### Read in the connectivity
@@ -61,8 +58,24 @@ def construct_mb(config):
                     blk.connectivity[face]['comm_rank'] = otherrank
 
     ################################################################
+    ##### Read in the grid
+    ################################################################
+    read_grid(mb,config['io']['griddir'])
+
+    ################################################################
     ##### Now set the MPI communication info for each block
     ################################################################
     blockcomm.set_block_communication(mb)
+
+    ################################################################
+    ##### Initialize the solver arrays
+    ################################################################
+    mb.init_solver_arrays(config)
+
+    ################################################################
+    ##### Unify the grid via halo construction, compute metrics
+    ################################################################
+    grid.unify_solver_grid(mb)
+    metrics(mb)
 
     return mb
