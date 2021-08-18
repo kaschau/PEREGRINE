@@ -1,6 +1,5 @@
 from .bcs import apply_bcs
 from .mpicomm.blockcomm import communicate
-from .compute import cpg
 
 def consistify(mb):
 
