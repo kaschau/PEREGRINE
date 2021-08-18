@@ -9,9 +9,9 @@ for(block_ b : mb){
 
   // Cell center range
   MDRange3 range_c({0,0,0},{b.ni+1,b.nj+1,b.nk+1});
-  Kokkos::parallel_for("Grid Metrics", range_c, KOKKOS_LAMBDA(const int i,
-                                                              const int j,
-                                                              const int k) {
+  Kokkos::parallel_for("xc Grid Metrics", range_c, KOKKOS_LAMBDA(const int i,
+                                                                 const int j,
+                                                                 const int k) {
 //----------------------------------------------------------------------------//
 //Cell Centers
 //----------------------------------------------------------------------------//
@@ -27,9 +27,9 @@ for(block_ b : mb){
 
 // i face range
   MDRange3 range_i({0,0,0},{b.ni+2,b.nj+1,b.nk+1});
-  Kokkos::parallel_for("Grid Metrics", range_i, KOKKOS_LAMBDA(const int i,
-                                                              const int j,
-                                                              const int k) {
+  Kokkos::parallel_for("is Grid Metrics", range_i, KOKKOS_LAMBDA(const int i,
+                                                                 const int j,
+                                                                 const int k) {
 //----------------------------------------------------------------------------//
 // i face area vector
 //----------------------------------------------------------------------------//
@@ -63,7 +63,7 @@ for(block_ b : mb){
 
   // j face range
   MDRange3 range_j({0,0,0},{b.ni+1,b.nj+2,b.nk+1});
-  Kokkos::parallel_for("Grid Metrics", range_j, KOKKOS_LAMBDA(const int i,
+  Kokkos::parallel_for("js Grid Metrics", range_j, KOKKOS_LAMBDA(const int i,
                                                               const int j,
                                                               const int k) {
 //----------------------------------------------------------------------------//
@@ -98,7 +98,7 @@ for(block_ b : mb){
 
   // k face range
   MDRange3 range_k({0,0,0},{b.ni+1,b.nj+1,b.nk+2});
-  Kokkos::parallel_for("Grid Metrics", range_k, KOKKOS_LAMBDA(const int i,
+  Kokkos::parallel_for("ks Grid Metrics", range_k, KOKKOS_LAMBDA(const int i,
                                                               const int j,
                                                               const int k) {
 //----------------------------------------------------------------------------//
@@ -132,7 +132,7 @@ for(block_ b : mb){
   });
   // Cell center range
   MDRange3 range_J({0,0,0},{b.ni+1,b.nj+1,b.nk+1});
-  Kokkos::parallel_for("Grid Metrics", range_J, KOKKOS_LAMBDA(const int i,
+  Kokkos::parallel_for("J Grid Metrics", range_J, KOKKOS_LAMBDA(const int i,
                                                               const int j,
                                                               const int k) {
 //----------------------------------------------------------------------------//

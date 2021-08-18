@@ -11,9 +11,9 @@ for(block_ b : mb){
 // i flux face range
 //-------------------------------------------------------------------------------------------|
   MDRange3 range_i({1,1,1},{b.ni+1,b.nj,b.nk});
-  Kokkos::parallel_for("Grid Metrics", range_i, KOKKOS_LAMBDA(const int i,
-                                                              const int j,
-                                                              const int k) {
+  Kokkos::parallel_for("i face conv fluxes", range_i, KOKKOS_LAMBDA(const int i,
+                                                                    const int j,
+                                                                    const int k) {
     double U;
     double uf;
     double vf;
@@ -83,9 +83,9 @@ for(block_ b : mb){
 // j flux face range
 //-------------------------------------------------------------------------------------------|
   MDRange3 range_j({1,1,1},{b.ni,b.nj+1,b.nk});
-  Kokkos::parallel_for("Grid Metrics", range_j, KOKKOS_LAMBDA(const int i,
-                                                              const int j,
-                                                              const int k) {
+  Kokkos::parallel_for("j face conv fluxes", range_j, KOKKOS_LAMBDA(const int i,
+                                                                    const int j,
+                                                                    const int k) {
 
     double V;
     double uf;
@@ -156,9 +156,9 @@ for(block_ b : mb){
 // k flux face range
 //-------------------------------------------------------------------------------------------|
   MDRange3 range_k({1,1,1},{b.ni,b.nj,b.nk+1});
-  Kokkos::parallel_for("Grid Metrics", range_k, KOKKOS_LAMBDA(const int i,
-                                                              const int j,
-                                                              const int k) {
+  Kokkos::parallel_for("k face conv fluxes", range_k, KOKKOS_LAMBDA(const int i,
+                                                                    const int j,
+                                                                    const int k) {
 
     double W;
     double uf;

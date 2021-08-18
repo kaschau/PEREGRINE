@@ -124,6 +124,10 @@ PYBIND11_MODULE(compute, m) {
   m.def("advective", &advective, "Compute centered difference flux",
         py::arg("block_ object"),
         py::arg("thermdat_ object"));
+  //  |----> viscous
+  m.def("diffusive", &diffusive, "Compute centered diffusive flux",
+        py::arg("block_ object"),
+        py::arg("thermdat_ object"));
 
   // ./thermo
   //  |----> cpg
