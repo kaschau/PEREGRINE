@@ -1,4 +1,4 @@
-from .compute import advective,diffusive
+from .compute import dQzero,advective,diffusive
 
 def RHS(mb):
 
