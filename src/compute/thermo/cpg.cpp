@@ -17,7 +17,7 @@ void cpg(block_ b,
 
   if ( given.compare("prims") == 0 )
   {
-  Kokkos::parallel_for("Compute all conserved quantities from primatives",
+  Kokkos::parallel_for("Compute all conserved quantities from primatives via cpg",
                        range,
                        KOKKOS_LAMBDA(const int i,
                                      const int j,
@@ -114,7 +114,7 @@ void cpg(block_ b,
   }
   else if ( given.compare("cons") == 0 )
   {
-  Kokkos::parallel_for("Compute primatives from conserved quantities.",
+  Kokkos::parallel_for("Compute primatives from conserved quantities via cpg",
                        range,
                        KOKKOS_LAMBDA(const int i,
                                      const int j,

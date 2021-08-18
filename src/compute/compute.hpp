@@ -19,6 +19,8 @@ void metrics(std::vector<block_> mb);
 // ./flux
 //    |------> Advective
 void advective(std::vector<block_> mb, thermdat_ th);
+//    |------> Diffusive
+void diffusive(std::vector<block_> mb, thermdat_ th);
 
 // ./thermo
 //    |------> cpg
