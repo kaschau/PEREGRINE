@@ -17,6 +17,8 @@ MDRange3 get_range3(block_ b, std::string face);
 void metrics(std::vector<block_> mb);
 
 // ./flux
+//    |------> dQzero
+void dQzero(std::vector<block_> mb);
 //    |------> Advective
 void advective(std::vector<block_> mb, thermdat_ th);
 //    |------> Diffusive

@@ -120,6 +120,9 @@ PYBIND11_MODULE(compute, m) {
         py::arg("block_ object"));
 
   // ./flux
+  //  |----> dQzero
+  m.def("dQzero", &dQzero, "Zero out RHS",
+        py::arg("block_ object"));
   //  |----> advective
   m.def("advective", &advective, "Compute centered difference flux",
         py::arg("block_ object"),
