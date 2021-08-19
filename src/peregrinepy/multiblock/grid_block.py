@@ -62,6 +62,9 @@ class grid_block(topology_block):
         Create empty numpy arrays of correct size.
         '''
 
-        xshape  = [self.ni+2,self.nj+2,self.nk+2]
+        if self.block_type == 'solver':
+            xshape  = [self.ni+2,self.nj+2,self.nk+2]
+        else:
+            xshape  = [self.ni,self.nj,self.nk]
         for name in ['x','y','z']:
             self.array[name] = np.empty((xshape))

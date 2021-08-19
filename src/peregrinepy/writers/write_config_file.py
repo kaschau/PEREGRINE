@@ -19,7 +19,7 @@ def write_config_file(config,file_path='./'):
 
     '''
 
-    with open(f'{file_path}/peregrine.py', 'w') as f:
+    with open(f'{file_path}/peregrine.inp', 'w') as f:
 
         for key in config.keys():
 
@@ -33,6 +33,6 @@ def write_config_file(config,file_path='./'):
 
                 f.write('{}'.format(value))
 
-                f.write(',\n')
+                f.write('\n')
 
-            f.write(' /\n')
+            f.write('\n')

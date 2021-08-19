@@ -63,10 +63,11 @@ def write_restart(mb, path='./', grid_path='./', precision='double'):
 
             qf.create_group('results')
 
-            dset_name = 'rho'
-            qf['results'].create_dataset(dset_name, shape=(extent_cc,), dtype=fdtype)
-            dset = qf['results'][dset_name]
-            dset[:] = blk.array['Q'][1:-1,1:-1,1:-1,0].ravel()
+            if blk.block_type == 'solver':
+                dset_name = 'rho'
+                qf['results'].create_dataset(dset_name, shape=(extent_cc,), dtype=fdtype)
+                dset = qf['results'][dset_name]
+                dset[:] = blk.array['Q'][1:-1,1:-1,1:-1,0].ravel()
             names = ['p','u','v','w','T']+blk.species_names[0:-1]
             for j in range(len(names)):
                 dset_name = names[j]
@@ -118,9 +119,14 @@ def write_restart(mb, path='./', grid_path='./', precision='double'):
         geometry_elem.append(deepcopy(data_x_elem))
         geometry_elem[-1][1].text = f'{grid_path}/gv.{blk.nblki:06d}.h5:/coordinates/z'
 
+        if blk.block_type == 'solver':
+            names = ['rho','p','u','v','w','T']+blk.species_names
+        else:
+            names = ['p','u','v','w','T']+blk.species_names
+        name = names[0]
         #Attributes
         attribute_elem = etree.SubElement(block_elem, 'Attribute')
-        attribute_elem.set('Name', 'rho')
+        attribute_elem.set('Name', name)
         attribute_elem.set('AttributeType', 'Scalar')
         attribute_elem.set('Center', 'Cell')
         data_res_elem = etree.SubElement(attribute_elem, 'DataItem')
@@ -138,11 +144,10 @@ def write_restart(mb, path='./', grid_path='./', precision='double'):
         data_res2_elem.set('Precision', '4')
         data_res2_elem.set('Format', 'HDF')
 
-        text = f'q.{mb.nrt:08d}.{blk.nblki:06d}.h5:/results/rho'
+        text = f'q.{mb.nrt:08d}.{blk.nblki:06d}.h5:/results/{name}'
         data_res2_elem.text = text
 
-        names = ['p','u','v','w','T']+blk.species_names
-        for name in names:
+        for name in names[1::]:
             block_elem.append(deepcopy(attribute_elem))
             block_elem[-1].set('Name', name)
             text = f'q.{mb.nrt:08d}.{blk.nblki:06d}.h5:/results/{name}'
