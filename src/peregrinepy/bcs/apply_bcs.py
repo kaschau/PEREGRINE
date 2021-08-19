@@ -20,3 +20,5 @@ def apply_bcs(mb):
                 adiabatic_noslip_wall(mb.eos,blk,face,mb.thermdat)
             if bc == 's2':
                 adiabatic_slip_wall(mb.eos,blk,face,mb.thermdat)
+            if bc == 's3':
+                adiabatic_moving_wall(mb.eos,blk,face,mb.thermdat)

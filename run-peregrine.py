@@ -24,32 +24,13 @@ def simulate(config_file_path):
 
     mb = pg.bootstrap_case(config)
 
-    # init flow
-    for blk in mb:
-        # Prim
-        blk.array['q'][:,:,:,0] = 101325.0
-        blk.array['q'][:,:,:,1] = 10.0 #mb.np.random.random(blk.array['q'][1:-1,1:-1,1:-1,1].shape)
-        #blk.array['q'][1:-1,1:-1,1:-1,2] = 0.0
-        #blk.array['q'][1:-1,1:-1,1:-1,3] = 0.0
-        blk.array['q'][:,:,:,4] = 300 #np.random.random(blk.array['q'][1:-1,1:-1,1:-1,1].shape)*300
-        blk.array['q'][3:6,:,:,4] = 350 #np.random.random(blk.array['q'][1:-1,1:-1,1:-1,1].shape)*300
-
-        #Get Density
-        mb.eos(blk,mb.thermdat,'0','prims')
-
-        #Zero out prims
-        blk.array['q'][1:-1,1:-1,1:-1,0] = 0.0
-        blk.array['q'][1:-1,1:-1,1:-1,1] = 0.0
-        blk.array['q'][1:-1,1:-1,1:-1,4] = 0.0
-
     pg.consistify(mb)
     pg.writers.write_restart(mb,path=config['io']['outputdir'],grid_path='../Grid')
 
-    config['simulation']['niter'] = 10000
-    config['simulation']['dt'] = 1e-6
-
     for niter in range(config['simulation']['niter']):
-        print(mb.nrt,mb.tme)
+
+        if mb.nrt%config['simulation']['niterprint'] == 0:
+            print(mb.nrt,mb.tme)
 
         mb.step(config['simulation']['dt'])
 

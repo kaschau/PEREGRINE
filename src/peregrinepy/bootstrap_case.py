@@ -83,9 +83,10 @@ def bootstrap_case(config):
                             config['simulation']['animate'])
 
     #Generate conserved variables
-    mb.eos(blk,mb.thermdat,'0','cons')
+    for blk in mb:
+        mb.eos(blk,mb.thermdat,'0','prims')
+
     #Consistify total flow field
     pg.consistify(mb)
-
 
     return mb
