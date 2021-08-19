@@ -1,5 +1,6 @@
 from .bcs import apply_bcs
 from .mpicomm.blockcomm import communicate
+from .compute import dqdxyz
 
 def consistify(mb):
 
@@ -16,6 +17,11 @@ def consistify(mb):
     #Apply boundary conditions
     apply_bcs(mb)
 
-    #communicate Q halos
-    communicate(mb,'Q')
-    communicate(mb,'q')
+    #Update spatial derivatives
+    dqdxyz(mb)
+
+    #communicate halos
+    communicate(mb,['Q','q'])
+
+    #only needed for diffusion on
+    communicate(mb,['dqdx','dqdy','dqdz'])

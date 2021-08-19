@@ -19,6 +19,8 @@ void metrics(std::vector<block_> mb);
 // ./flux
 //    |------> dQzero
 void dQzero(std::vector<block_> mb);
+//    |------> dqdxyz
+void dqdxyz(std::vector<block_> mb);
 //    |------> Advective
 void advective(std::vector<block_> mb, thermdat_ th);
 //    |------> Diffusive

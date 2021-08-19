@@ -50,6 +50,16 @@ PYBIND11_MODULE(compute, m) {
     .def_readwrite("yc", &block_::yc)
     .def_readwrite("zc", &block_::zc)
     .def_readwrite("J" , &block_::J )
+      // Cell center metrics
+    .def_readwrite("dEdx" , &block_::dEdx )
+    .def_readwrite("dEdy" , &block_::dEdy )
+    .def_readwrite("dEdz" , &block_::dEdz )
+    .def_readwrite("dNdx" , &block_::dNdx )
+    .def_readwrite("dNdy" , &block_::dNdy )
+    .def_readwrite("dNdz" , &block_::dNdz )
+    .def_readwrite("dXdx" , &block_::dXdx )
+    .def_readwrite("dXdy" , &block_::dXdy )
+    .def_readwrite("dXdz" , &block_::dXdz )
     // i face area vector
     .def_readwrite("isx", &block_::isx)
     .def_readwrite("isy", &block_::isy)
@@ -78,10 +88,14 @@ PYBIND11_MODULE(compute, m) {
 //----------------------------------------------------------------------------//
 //  Flow variables
 //----------------------------------------------------------------------------//
-    // Conservative variables
+    // Conservative,primative variables
     .def_readwrite("Q" , &block_::Q )
     .def_readwrite("q" , &block_::q )
     .def_readwrite("dQ", &block_::dQ )
+    // Spatial derivative of prim array
+    .def_readwrite("dqdx", &block_::dqdx )
+    .def_readwrite("dqdy", &block_::dqdy )
+    .def_readwrite("dqdz", &block_::dqdz )
     // Thermo variables
     .def_readwrite("qh", &block_::qh )
 
@@ -122,14 +136,17 @@ PYBIND11_MODULE(compute, m) {
   // ./flux
   //  |----> dQzero
   m.def("dQzero", &dQzero, "Zero out RHS",
-        py::arg("block_ object"));
+        py::arg("list of block_ object"));
+  //  |----> dqdx
+  m.def("dqdxyz", &dqdxyz, "Spatial derivatives of prims",
+        py::arg("list of block_ object"));
   //  |----> advective
   m.def("advective", &advective, "Compute centered difference flux",
-        py::arg("block_ object"),
+        py::arg("list of block_ object"),
         py::arg("thermdat_ object"));
   //  |----> viscous
   m.def("diffusive", &diffusive, "Compute centered diffusive flux",
-        py::arg("block_ object"),
+        py::arg("list of block_ object"),
         py::arg("thermdat_ object"));
 
   // ./thermo
