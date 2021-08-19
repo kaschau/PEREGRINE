@@ -26,17 +26,25 @@ for(block_ b : mb){
     double dx,dy,dz;
 
     const double c23 = 2.0/3.0;
-    const double mu = 1.48e-5;
+    const double mu = 1.48e-3;
 
     // continuity
     b.iF(i,j,k,0) = 0.0;
 
-    // x momentum
-    dx =    b.xc(i,j,k)   -b.xc(i-1,j,k);
-    dudx = ( b.q(i,j,k,1) - b.q(i-1,j,k,1) ) / dx ;
-    dvdx = ( b.q(i,j,k,2) - b.q(i-1,j,k,2) ) / dx ;
-    dwdx = ( b.q(i,j,k,3) - b.q(i-1,j,k,3) ) / dx ;
+    // Derivatives on face
+    dudx = 0.5*(b.dqdx(i,j,k,1) + b.dqdx(i-1,j,k,1) );
+    dvdx = 0.5*(b.dqdx(i,j,k,2) + b.dqdx(i-1,j,k,2) );
+    dwdx = 0.5*(b.dqdx(i,j,k,3) + b.dqdx(i-1,j,k,3) );
 
+    dudy = 0.5*(b.dqdy(i,j,k,1) + b.dqdy(i-1,j,k,1) );
+    dvdy = 0.5*(b.dqdy(i,j,k,2) + b.dqdy(i-1,j,k,2) );
+    dwdy = 0.5*(b.dqdy(i,j,k,3) + b.dqdy(i-1,j,k,3) );
+
+    dudz = 0.5*(b.dqdz(i,j,k,1) + b.dqdz(i-1,j,k,1) );
+    dvdz = 0.5*(b.dqdz(i,j,k,2) + b.dqdz(i-1,j,k,2) );
+    dwdz = 0.5*(b.dqdz(i,j,k,3) + b.dqdz(i-1,j,k,3) );
+
+    // x momentum
     txx = c23*mu*(2.0*dudx - dvdy - dwdz);
     txy =     mu*(    dvdx + dudy       );
     txz =     mu*(    dvdx        + dwdy);
@@ -46,11 +54,6 @@ for(block_ b : mb){
                         txz * b.isz(i,j,k) );
 
     // y momentum
-    dy =    b.yc(i,j,k)   -b.yc(i-1,j,k);
-    dudy = ( b.q(i,j,k,1) - b.q(i-1,j,k,1) ) / dy ;
-    dvdy = ( b.q(i,j,k,2) - b.q(i-1,j,k,2) ) / dy ;
-    dwdy = ( b.q(i,j,k,3) - b.q(i-1,j,k,3) ) / dy ;
-
     tyx = txy;
     tyy = c23*mu*(-dudx +2.0*dvdy - dwdz);
     tyz =     mu*(           dwdy + dvdz);
@@ -60,11 +63,6 @@ for(block_ b : mb){
                         tyz * b.isz(i,j,k) );
 
     // z momentum
-    dz =    b.zc(i,j,k)   -b.zc(i-1,j,k);
-    dudz = ( b.q(i,j,k,1) - b.q(i-1,j,k,1) ) / dz ;
-    dvdz = ( b.q(i,j,k,2) - b.q(i-1,j,k,2) ) / dz ;
-    dwdz = ( b.q(i,j,k,3) - b.q(i-1,j,k,3) ) / dz ;
-
     tzx = txz;
     tzy = tyz;
     tzz = c23*mu*(-dudx - dvdy +2.0*dwdz);
@@ -103,17 +101,25 @@ for(block_ b : mb){
     double dx,dy,dz;
 
     const double c23 = 2.0/3.0;
-    const double mu = 1.48e-5;
+    const double mu = 1.48e-3;
 
     // continuity
     b.jF(i,j,k,0) = 0.0;
 
-    // x momentum
-    dx =    b.xc(i,j,k)   -b.xc(i,j-1,k);
-    dudx = ( b.q(i,j,k,1) - b.q(i,j-1,k,1) ) / dx ;
-    dvdx = ( b.q(i,j,k,2) - b.q(i,j-1,k,2) ) / dx ;
-    dwdx = ( b.q(i,j,k,3) - b.q(i,j-1,k,3) ) / dx ;
+    // Spatial derivative on face
+    dudx = 0.5*(b.dqdx(i,j,k,1) + b.dqdx(i,j-1,k,1) );
+    dvdx = 0.5*(b.dqdx(i,j,k,2) + b.dqdx(i,j-1,k,2) );
+    dwdx = 0.5*(b.dqdx(i,j,k,3) + b.dqdx(i,j-1,k,3) );
 
+    dudy = 0.5*(b.dqdy(i,j,k,1) + b.dqdy(i,j-1,k,1) );
+    dvdy = 0.5*(b.dqdy(i,j,k,2) + b.dqdy(i,j-1,k,2) );
+    dwdy = 0.5*(b.dqdy(i,j,k,3) + b.dqdy(i,j-1,k,3) );
+
+    dudz = 0.5*(b.dqdz(i,j,k,1) + b.dqdz(i,j-1,k,1) );
+    dvdz = 0.5*(b.dqdz(i,j,k,2) + b.dqdz(i,j-1,k,2) );
+    dwdz = 0.5*(b.dqdz(i,j,k,3) + b.dqdz(i,j-1,k,3) );
+
+    // x momentum
     txx = c23*mu*(2.0*dudx - dvdy - dwdz);
     txy =     mu*(    dvdx + dudy       );
     txz =     mu*(    dvdx        + dwdy);
@@ -123,11 +129,6 @@ for(block_ b : mb){
                         txz * b.jsz(i,j,k) );
 
     // y momentum
-    dy =    b.yc(i,j,k)   -b.yc(i,j-1,k);
-    dudy = ( b.q(i,j,k,1) - b.q(i,j-1,k,1) ) / dy ;
-    dvdy = ( b.q(i,j,k,2) - b.q(i,j-1,k,2) ) / dy ;
-    dwdy = ( b.q(i,j,k,3) - b.q(i,j-1,k,3) ) / dy ;
-
     tyx = txy;
     tyy = c23*mu*(-dudx +2.0*dvdy - dwdz);
     tyz =     mu*(           dwdy + dvdz);
@@ -137,11 +138,6 @@ for(block_ b : mb){
                         tyz * b.jsz(i,j,k) );
 
     // z momentum
-    dz =    b.zc(i,j,k)   -b.zc(i,j-1,k);
-    dudz = ( b.q(i,j,k,1) - b.q(i,j-1,k,1) ) / dz ;
-    dvdz = ( b.q(i,j,k,2) - b.q(i,j-1,k,2) ) / dz ;
-    dwdz = ( b.q(i,j,k,3) - b.q(i,j-1,k,3) ) / dz ;
-
     tzx = txz;
     tzy = tyz;
     tzz = c23*mu*(-dudx - dvdy +2.0*dwdz);
@@ -180,17 +176,25 @@ for(block_ b : mb){
     double dx,dy,dz;
 
     const double c23 = 2.0/3.0;
-    const double mu = 1.48e-5;
+    const double mu = 1.48e-3;
 
     // continuity
     b.kF(i,j,k,0) = 0.0;
 
-    // x momentum
-    dx =    b.xc(i,j,k)   -b.xc(i,j,k-1);
-    dudx = ( b.q(i,j,k,1) - b.q(i,j,k-1,1) ) / dx ;
-    dvdx = ( b.q(i,j,k,2) - b.q(i,j,k-1,2) ) / dx ;
-    dwdx = ( b.q(i,j,k,3) - b.q(i,j,k-1,3) ) / dx ;
+    // Spatial derivative on face
+    dudx = 0.5*(b.dqdx(i,j,k,1) + b.dqdx(i,j,k-1,1) );
+    dvdx = 0.5*(b.dqdx(i,j,k,2) + b.dqdx(i,j,k-1,2) );
+    dwdx = 0.5*(b.dqdx(i,j,k,3) + b.dqdx(i,j,k-1,3) );
 
+    dudy = 0.5*(b.dqdy(i,j,k,1) + b.dqdy(i,j,k-1,1) );
+    dvdy = 0.5*(b.dqdy(i,j,k,2) + b.dqdy(i,j,k-1,2) );
+    dwdy = 0.5*(b.dqdy(i,j,k,3) + b.dqdy(i,j,k-1,3) );
+
+    dudz = 0.5*(b.dqdz(i,j,k,1) + b.dqdz(i,j,k-1,1) );
+    dvdz = 0.5*(b.dqdz(i,j,k,2) + b.dqdz(i,j,k-1,2) );
+    dwdz = 0.5*(b.dqdz(i,j,k,3) + b.dqdz(i,j,k-1,3) );
+
+    // x momentum
     txx = c23*mu*(2.0*dudx - dvdy - dwdz);
     txy =     mu*(    dvdx + dudy       );
     txz =     mu*(    dvdx        + dwdy);
@@ -200,11 +204,6 @@ for(block_ b : mb){
                         txz * b.ksz(i,j,k) );
 
     // y momentum
-    dy =    b.yc(i,j,k)   -b.yc(i,j,k-1);
-    dudy = ( b.q(i,j,k,1) - b.q(i,j,k-1,1) ) / dy ;
-    dvdy = ( b.q(i,j,k,2) - b.q(i,j,k-1,2) ) / dy ;
-    dwdy = ( b.q(i,j,k,3) - b.q(i,j,k-1,3) ) / dy ;
-
     tyx = txy;
     tyy = c23*mu*(-dudx +2.0*dvdy - dwdz);
     tyz =     mu*(           dwdy + dvdz);
@@ -214,11 +213,6 @@ for(block_ b : mb){
                         tyz * b.ksz(i,j,k) );
 
     // z momentum
-    dz =    b.zc(i,j,k)   -b.zc(i,j,k-1);
-    dudz = ( b.q(i,j,k,1) - b.q(i,j,k-1,1) ) / dz ;
-    dvdz = ( b.q(i,j,k,2) - b.q(i,j,k-1,2) ) / dz ;
-    dwdz = ( b.q(i,j,k,3) - b.q(i,j,k-1,3) ) / dz ;
-
     tzx = txz;
     tzy = tyz;
     tzz = c23*mu*(-dudx - dvdy +2.0*dwdz);
@@ -251,11 +245,8 @@ for(block_ b : mb){
                                      const int l) {
 
     // Add fluxes to RHS
-    b.dQ(i,j,k,l) += b.iF(i  ,j,k,l) + b.jF(i,j  ,k,l) + b.kF(i,j,k  ,l);
-    b.dQ(i,j,k,l) -= b.iF(i+1,j,k,l) + b.jF(i,j+1,k,l) + b.kF(i,j,k+1,l);
-
-    // Divide by cell volume
-    b.dQ(i,j,k,l) /= b.J(i,j,k);
+    b.dQ(i,j,k,l) += ( b.iF(i  ,j,k,l) + b.jF(i,j  ,k,l) + b.kF(i,j,k  ,l) ) / b.J(i,j,k);
+    b.dQ(i,j,k,l) -= ( b.iF(i+1,j,k,l) + b.jF(i,j+1,k,l) + b.kF(i,j,k+1,l) ) / b.J(i,j,k);
 
   });
 

@@ -39,6 +39,11 @@ class grid_block(topology_block):
         # Cell centers
         for d in ['xc','yc','zc','J']:
             self.array[f'{d}'] = None
+        # Cell center metrics
+        for d in ['dEdx','dEdy','dEdz',
+                  'dNdx','dNdy','dNdz',
+                  'dXdx','dXdy','dXdz']:
+            self.array[f'{d}'] = None
         # i face area vectors
         for d in ['isx','isy','isz','iS','inx','iny','inz']:
             self.array[f'{d}'] = None

@@ -237,11 +237,8 @@ for(block_ b : mb){
                                      const int l) {
 
     // Add fluxes to RHS
-    b.dQ(i,j,k,l) += b.iF(i  ,j,k,l) + b.jF(i,j  ,k,l) + b.kF(i,j,k  ,l);
-    b.dQ(i,j,k,l) -= b.iF(i+1,j,k,l) + b.jF(i,j+1,k,l) + b.kF(i,j,k+1,l);
-
-    // Divide by cell volume
-    b.dQ(i,j,k,l) /= b.J(i,j,k);
+    b.dQ(i,j,k,l) += ( b.iF(i  ,j,k,l) + b.jF(i,j  ,k,l) + b.kF(i,j,k  ,l) ) / b.J(i,j,k);
+    b.dQ(i,j,k,l) -= ( b.iF(i+1,j,k,l) + b.jF(i,j+1,k,l) + b.kF(i,j,k+1,l) ) / b.J(i,j,k);
 
   });
 

@@ -47,6 +47,9 @@ class solver_block(restart_block,block_):
         # Conserved variables
         for d in ['Q','dQ']:
             self.array[f'{d}'] = None
+        # Spatial derivative of primative array
+        for d in ['dqdx','dqdy','dqdz']:
+            self.array[f'{d}'] = None
         # thermo,trans arrays
         for d in ['qh']:
             self.array[f'{d}'] = None
@@ -110,10 +113,19 @@ class solver_block(restart_block,block_):
                 setattr(self, name, kokkos.array(self.array[name], dtype=kokkos.double, space=space, dynamic=False))
 
         #-------------------------------------------------------------------------------#
-        #       Cell center coordinates
+        #       Cell center
         #-------------------------------------------------------------------------------#
         shape = ccshape
-        for name in ['xc', 'yc', 'zc','J']:
+        for name in ('xc', 'yc', 'zc','J'):
+            if self.array[name] is None:
+                setattr(self, name, kokkos.array(name, shape=shape, dtype=kokkos.double, space=space, dynamic=False))
+                self.array[name] = np.array(getattr(self, name), copy=False)
+            else:
+                setattr(self, name, kokkos.array(self.array[name], dtype=kokkos.double, space=space, dynamic=False))
+        # Cell center metrics
+        for name in ('dEdx','dEdy','dEdz',
+                     'dNdx','dNdy','dNdz',
+                     'dXdx','dXdy','dXdz'):
             if self.array[name] is None:
                 setattr(self, name, kokkos.array(name, shape=shape, dtype=kokkos.double, space=space, dynamic=False))
                 self.array[name] = np.array(getattr(self, name), copy=False)
@@ -161,6 +173,17 @@ class solver_block(restart_block,block_):
         #-------------------------------------------------------------------------------#
         shape = cQshape
         for name in ('Q', 'q', 'dQ'):
+            if self.array[name] is None:
+                setattr(self, name, kokkos.array(name, shape=shape, dtype=kokkos.double, space=space, dynamic=False))
+                self.array[name] = np.array(getattr(self, name), copy=False)
+            else:
+                setattr(self, name, kokkos.array(self.array[name], dtype=kokkos.double, space=space, dynamic=False))
+
+        #-------------------------------------------------------------------------------#
+        #       Spatial derivative of primative array
+        #-------------------------------------------------------------------------------#
+        shape = cQshape
+        for name in ('dqdx','dqdy','dqdz'):
             if self.array[name] is None:
                 setattr(self, name, kokkos.array(name, shape=shape, dtype=kokkos.double, space=space, dynamic=False))
                 self.array[name] = np.array(getattr(self, name), copy=False)
