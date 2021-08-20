@@ -54,7 +54,7 @@ def write_restart(mb, path='./', grid_path='./', precision='double'):
 
             qf.create_group('iter')
             qf['iter'].create_dataset('nrt', shape=(1,), dtype='int32')
-            qf['iter'].create_dataset('tme', shape=(1,), dtype='int32')
+            qf['iter'].create_dataset('tme', shape=(1,), dtype='float64')
 
             dset = qf['iter']['nrt']
             dset[0] = blk.nrt
