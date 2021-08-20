@@ -14,14 +14,17 @@ def consistify(mb):
     for blk in mb:
         mb.eos(blk,mb.thermdat,'0','cons')
 
-    #Apply boundary conditions
-    apply_bcs(mb)
-
-    #Update spatial derivatives
-    dqdxyz(mb)
+    #Apply euler boundary conditions
+    apply_bcs(mb,'euler')
 
     #communicate halos
     communicate(mb,['Q','q'])
 
-    #only needed for diffusion on
+    #Update spatial derivatives
+    dqdxyz(mb)
+
+    #Apply viscous boundary conditions
+    apply_bcs(mb,'viscous')
+
+    #communicate viscous halos
     communicate(mb,['dqdx','dqdy','dqdz'])
