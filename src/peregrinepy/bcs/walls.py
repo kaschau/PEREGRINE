@@ -69,9 +69,9 @@ def adiabatic_slip_wall(eos,blk,face,thermdat,terms):
         dvelodx = blk.array['dqdx'][:,:,:,1:4]
         dvelody = blk.array['dqdx'][:,:,:,1:4]
         dvelodz = blk.array['dqdx'][:,:,:,1:4]
-        dvelodx[fs[face['s0_']]] = - dvelodx[fs[face]['s1_']]
-        dvelody[fs[face['s0_']]] = - dvelody[fs[face]['s1_']]
-        dvelodz[fs[face['s0_']]] = - dvelodz[fs[face]['s1_']]
+        dvelodx[fs[face]['s0_']] = - dvelodx[fs[face]['s1_']]
+        dvelody[fs[face]['s0_']] = - dvelody[fs[face]['s1_']]
+        dvelodz[fs[face]['s0_']] = - dvelodz[fs[face]['s1_']]
         #negate temp and species gradient (so gradient evaluates to zero on wall)
         dTNdx = blk.array['dqdx'][:,:,:,4::]
         dTNdy = blk.array['dqdy'][:,:,:,4::]
