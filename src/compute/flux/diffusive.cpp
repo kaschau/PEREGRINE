@@ -30,7 +30,7 @@ for(block_ b : mb){
     double dNdx,dNdy,dNdz;
 
     const double c23 = 2.0/3.0;
-    const double mu = 1.48e-3;
+    const double mu = 1.48e-5*100;
     const double kappa  = 0.02638;
     const double Dij = 1e-4;
 
@@ -53,7 +53,7 @@ for(block_ b : mb){
     // x momentum
     txx = c23*mu*(2.0*dudx - dvdy - dwdz);
     txy =     mu*(    dvdx + dudy       );
-    txz =     mu*(    dvdx        + dwdy);
+    txz =     mu*(    dwdx        + dudy);
 
     b.iF(i,j,k,1) = - ( txx * b.isx(i,j,k) +
                         txy * b.isy(i,j,k) +
@@ -134,7 +134,7 @@ for(block_ b : mb){
     double dNdx,dNdy,dNdz;
 
     const double c23 = 2.0/3.0;
-    const double mu = 1.48e-3;
+    const double mu = 1.48e-5*100;
     const double kappa  = 0.02638;
     const double Dij = 1e-4;
 
@@ -157,7 +157,7 @@ for(block_ b : mb){
     // x momentum
     txx = c23*mu*(2.0*dudx - dvdy - dwdz);
     txy =     mu*(    dvdx + dudy       );
-    txz =     mu*(    dvdx        + dwdy);
+    txz =     mu*(    dwdx        + dudy);
 
     b.jF(i,j,k,1) = - ( txx * b.jsx(i,j,k) +
                         txy * b.jsy(i,j,k) +
@@ -238,7 +238,7 @@ for(block_ b : mb){
     double dNdx,dNdy,dNdz;
 
     const double c23 = 2.0/3.0;
-    const double mu = 1.48e-3;
+    const double mu = 1.48e-5*100;
     const double kappa  = 0.02638;
     const double Dij = 1e-4;
 
@@ -261,7 +261,7 @@ for(block_ b : mb){
     // x momentum
     txx = c23*mu*(2.0*dudx - dvdy - dwdz);
     txy =     mu*(    dvdx + dudy       );
-    txz =     mu*(    dvdx        + dwdy);
+    txz =     mu*(    dwdx        + dudy);
 
     b.kF(i,j,k,1) = - ( txx * b.ksx(i,j,k) +
                         txy * b.ksy(i,j,k) +
