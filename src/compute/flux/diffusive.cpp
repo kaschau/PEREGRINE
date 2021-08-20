@@ -27,6 +27,8 @@ for(block_ b : mb){
     double uf,vf,wf;
     double q;
 
+    double dNdx,dNdy,dNdz;
+
     const double c23 = 2.0/3.0;
     const double mu = 1.48e-3;
     const double kappa  = 0.02638;
@@ -98,9 +100,13 @@ for(block_ b : mb){
     // Species
     for (int n=0; n<th.ns-1; n++)
     {
-      b.iF(i,j,k,5+n) = -Dij*( dqdx * b.isx(i,j,k) +
-                               dqdy * b.isy(i,j,k) +
-                               dqdz * b.isz(i,j,k) );
+      dNdx = 0.5 * ( b.dqdx(i,j,k,5+n) + b.dqdx(i-1,j,k,5+n) );
+      dNdy = 0.5 * ( b.dqdy(i,j,k,5+n) + b.dqdy(i-1,j,k,5+n) );
+      dNdz = 0.5 * ( b.dqdz(i,j,k,5+n) + b.dqdz(i-1,j,k,5+n) );
+
+      b.iF(i,j,k,5+n) = -Dij*( dNdx * b.isx(i,j,k) +
+                               dNdy * b.isy(i,j,k) +
+                               dNdz * b.isz(i,j,k) );
     }
 
   });
@@ -125,9 +131,12 @@ for(block_ b : mb){
     double uf,vf,wf;
     double q;
 
+    double dNdx,dNdy,dNdz;
+
     const double c23 = 2.0/3.0;
     const double mu = 1.48e-3;
     const double kappa  = 0.02638;
+    const double Dij = 1e-4;
 
     // continuity
     b.jF(i,j,k,0) = 0.0;
@@ -195,9 +204,13 @@ for(block_ b : mb){
     // Species
     for (int n=0; n<th.ns-1; n++)
     {
-      b.jF(i,j,k,5+n) = -Dij*( dqdx * b.jsx(i,j,k) +
-                               dqdy * b.jsy(i,j,k) +
-                               dqdz * b.jsz(i,j,k) );
+      dNdx = 0.5 * ( b.dqdx(i,j,k,5+n) + b.dqdx(i,j-1,k,5+n) );
+      dNdy = 0.5 * ( b.dqdy(i,j,k,5+n) + b.dqdy(i,j-1,k,5+n) );
+      dNdz = 0.5 * ( b.dqdz(i,j,k,5+n) + b.dqdz(i,j-1,k,5+n) );
+
+      b.jF(i,j,k,5+n) = -Dij*( dNdx * b.jsx(i,j,k) +
+                               dNdy * b.jsy(i,j,k) +
+                               dNdz * b.jsz(i,j,k) );
     }
 
   });
@@ -222,9 +235,12 @@ for(block_ b : mb){
     double uf,vf,wf;
     double q;
 
+    double dNdx,dNdy,dNdz;
+
     const double c23 = 2.0/3.0;
     const double mu = 1.48e-3;
     const double kappa  = 0.02638;
+    const double Dij = 1e-4;
 
     // continuity
     b.kF(i,j,k,0) = 0.0;
@@ -292,9 +308,13 @@ for(block_ b : mb){
     // Species
     for (int n=0; n<th.ns-1; n++)
     {
-      b.kF(i,j,k,5+n) = -Dij*( dqdx * b.ksx(i,j,k) +
-                               dqdy * b.ksy(i,j,k) +
-                               dqdz * b.ksz(i,j,k) );
+      dNdx = 0.5 * ( b.dqdx(i,j,k,5+n) + b.dqdx(i,j,k-1,5+n) );
+      dNdy = 0.5 * ( b.dqdy(i,j,k,5+n) + b.dqdy(i,j,k-1,5+n) );
+      dNdz = 0.5 * ( b.dqdz(i,j,k,5+n) + b.dqdz(i,j,k-1,5+n) );
+
+      b.kF(i,j,k,5+n) = -Dij*( dNdx * b.ksx(i,j,k) +
+                               dNdy * b.ksy(i,j,k) +
+                               dNdz * b.ksz(i,j,k) );
     }
 
   });
