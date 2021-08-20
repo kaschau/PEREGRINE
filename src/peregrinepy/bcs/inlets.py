@@ -11,6 +11,6 @@ def subsonic_inlet(eos,blk,face,thermdat,terms):
 
     elif terms == 'viscous':
         #neumann all gradients
-        blk.array['dqdx'][fs[face['s0_']]] = blk.array['dqdx'][fs[face]['s1_']]
-        blk.array['dqdy'][fs[face['s0_']]] = blk.array['dqdy'][fs[face]['s1_']]
-        blk.array['dqdz'][fs[face['s0_']]] = blk.array['dqdz'][fs[face]['s1_']]
+        blk.array['dqdx'][fs[face]['s0_']] = blk.array['dqdx'][fs[face]['s1_']]
+        blk.array['dqdy'][fs[face]['s0_']] = blk.array['dqdy'][fs[face]['s1_']]
+        blk.array['dqdz'][fs[face]['s0_']] = blk.array['dqdz'][fs[face]['s1_']]

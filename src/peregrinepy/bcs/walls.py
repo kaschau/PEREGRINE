@@ -20,16 +20,16 @@ def adiabatic_noslip_wall(eos,blk,face,thermdat,terms):
         dvelodx = blk.array['dqdx'][:,:,:,1:4]
         dvelody = blk.array['dqdx'][:,:,:,1:4]
         dvelodz = blk.array['dqdx'][:,:,:,1:4]
-        dvelodx[fs[face['s0_']]] = 2.0*dvelodx[fs[face]['s1_']] - dvelodx[fs[face]['s2_']]
-        dvelody[fs[face['s0_']]] = 2.0*dvelody[fs[face]['s1_']] - dvelody[fs[face]['s2_']]
-        dvelodz[fs[face['s0_']]] = 2.0*dvelodz[fs[face]['s1_']] - dvelodz[fs[face]['s2_']]
+        dvelodx[fs[face]['s0_']] = 2.0*dvelodx[fs[face]['s1_']] - dvelodx[fs[face]['s2_']]
+        dvelody[fs[face]['s0_']] = 2.0*dvelody[fs[face]['s1_']] - dvelody[fs[face]['s2_']]
+        dvelodz[fs[face]['s0_']] = 2.0*dvelodz[fs[face]['s1_']] - dvelodz[fs[face]['s2_']]
         #negate temp and species gradient (so gradient evaluates to zero on wall)
         dTNdx = blk.array['dqdx'][:,:,:,4::]
-        dTNdy = blk.array['dqdx'][:,:,:,4::]
-        dTNdz = blk.array['dqdx'][:,:,:,4::]
-        dTNdx[fs[face['s0_']]] = - dTNdx[fs[face]['s1_']]
-        dTNdy[fs[face['s0_']]] = - dTNdy[fs[face]['s1_']]
-        dTNdz[fs[face['s0_']]] = - dTNdz[fs[face]['s1_']]
+        dTNdy = blk.array['dqdy'][:,:,:,4::]
+        dTNdz = blk.array['dqdz'][:,:,:,4::]
+        dTNdx[fs[face]['s0_']] = - dTNdx[fs[face]['s1_']]
+        dTNdy[fs[face]['s0_']] = - dTNdy[fs[face]['s1_']]
+        dTNdz[fs[face]['s0_']] = - dTNdz[fs[face]['s1_']]
 
 def adiabatic_slip_wall(eos,blk,face,thermdat,terms):
 
@@ -74,11 +74,11 @@ def adiabatic_slip_wall(eos,blk,face,thermdat,terms):
         dvelodz[fs[face['s0_']]] = - dvelodz[fs[face]['s1_']]
         #negate temp and species gradient (so gradient evaluates to zero on wall)
         dTNdx = blk.array['dqdx'][:,:,:,4::]
-        dTNdy = blk.array['dqdx'][:,:,:,4::]
-        dTNdz = blk.array['dqdx'][:,:,:,4::]
-        dTNdx[fs[face['s0_']]] = - dTNdx[fs[face]['s1_']]
-        dTNdy[fs[face['s0_']]] = - dTNdy[fs[face]['s1_']]
-        dTNdz[fs[face['s0_']]] = - dTNdz[fs[face]['s1_']]
+        dTNdy = blk.array['dqdy'][:,:,:,4::]
+        dTNdz = blk.array['dqdz'][:,:,:,4::]
+        dTNdx[fs[face]['s0_']] = - dTNdx[fs[face]['s1_']]
+        dTNdy[fs[face]['s0_']] = - dTNdy[fs[face]['s1_']]
+        dTNdz[fs[face]['s0_']] = - dTNdz[fs[face]['s1_']]
 
 def adiabatic_moving_wall(eos,blk,face,thermdat,terms):
 
@@ -119,13 +119,13 @@ def adiabatic_moving_wall(eos,blk,face,thermdat,terms):
         dvelodx = blk.array['dqdx'][:,:,:,1:4]
         dvelody = blk.array['dqdx'][:,:,:,1:4]
         dvelodz = blk.array['dqdx'][:,:,:,1:4]
-        dvelodx[fs[face['s0_']]] = 2.0*dvelodx[fs[face]['s1_']] - dvelodx[fs[face]['s2_']]
-        dvelody[fs[face['s0_']]] = 2.0*dvelody[fs[face]['s1_']] - dvelody[fs[face]['s2_']]
-        dvelodz[fs[face['s0_']]] = 2.0*dvelodz[fs[face]['s1_']] - dvelodz[fs[face]['s2_']]
+        dvelodx[fs[face]['s0_']] = 2.0*dvelodx[fs[face]['s1_']] - dvelodx[fs[face]['s2_']]
+        dvelody[fs[face]['s0_']] = 2.0*dvelody[fs[face]['s1_']] - dvelody[fs[face]['s2_']]
+        dvelodz[fs[face]['s0_']] = 2.0*dvelodz[fs[face]['s1_']] - dvelodz[fs[face]['s2_']]
         #negate temp and species gradient (so gradient evaluates to zero on wall)
         dTNdx = blk.array['dqdx'][:,:,:,4::]
-        dTNdy = blk.array['dqdx'][:,:,:,4::]
-        dTNdz = blk.array['dqdx'][:,:,:,4::]
-        dTNdx[fs[face['s0_']]] = - dTNdx[fs[face]['s1_']]
-        dTNdy[fs[face['s0_']]] = - dTNdy[fs[face]['s1_']]
-        dTNdz[fs[face['s0_']]] = - dTNdz[fs[face]['s1_']]
+        dTNdy = blk.array['dqdy'][:,:,:,4::]
+        dTNdz = blk.array['dqdz'][:,:,:,4::]
+        dTNdx[fs[face]['s0_']] = - dTNdx[fs[face]['s1_']]
+        dTNdy[fs[face]['s0_']] = - dTNdy[fs[face]['s1_']]
+        dTNdz[fs[face]['s0_']] = - dTNdz[fs[face]['s1_']]
