@@ -18,7 +18,13 @@ def apply_bcs(mb,terms):
             bc = blk.connectivity[face]['bc']
             if bc == 's1':
                 adiabatic_noslip_wall(mb.eos,blk,face,mb.thermdat,terms)
-            if bc == 's2':
+            elif bc == 's2':
                 adiabatic_slip_wall(mb.eos,blk,face,mb.thermdat,terms)
-            if bc == 's3':
+            elif bc == 's3':
                 adiabatic_moving_wall(mb.eos,blk,face,mb.thermdat,terms)
+            #elif bc == 's4':
+            #    isoT_noslip_wall(mb.eos,blk,face,mb.thermdat,terms)
+            #elif bc == 's5':
+            #    isoT_slip_wall(mb.eos,blk,face,mb.thermdat,terms)
+            elif bc == 's6':
+                isoT_moving_wall(mb.eos,blk,face,mb.thermdat,terms)
