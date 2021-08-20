@@ -23,10 +23,14 @@ for(block_ b : mb){
     double tyx,tyy,tyz;
     double tzx,tzy,tzz;
 
-    double dx,dy,dz;
+    double dTdx,dTdy,dTdz;
+    double uf,vf,wf;
+    double q;
 
     const double c23 = 2.0/3.0;
     const double mu = 1.48e-3;
+    const double kappa  = 0.02638;
+    const double Dij = 1e-4;
 
     // continuity
     b.iF(i,j,k,0) = 0.0;
@@ -72,12 +76,31 @@ for(block_ b : mb){
                         tzz * b.isz(i,j,k) );
 
     // energy
-    b.iF(i,j,k,4) = 0.0;
+    //   heat conduction
+    dTdx = 0.5 * ( b.dqdx(i,j,k,4) + b.dqdx(i-1,j,k,4) );
+    dTdy = 0.5 * ( b.dqdy(i,j,k,4) + b.dqdy(i-1,j,k,4) );
+    dTdz = 0.5 * ( b.dqdz(i,j,k,4) + b.dqdz(i-1,j,k,4) );
+
+    q =  kappa*( dTdx * b.isx(i,j,k) +
+                 dTdy * b.isy(i,j,k) +
+                 dTdz * b.isz(i,j,k) );
+
+    // flow work
+    // Compute face normal volume flux vector
+    uf = 0.5*(b.q(i,j,k,1)+b.q(i-1,j,k,1));
+    vf = 0.5*(b.q(i,j,k,2)+b.q(i-1,j,k,2));
+    wf = 0.5*(b.q(i,j,k,3)+b.q(i-1,j,k,3));
+
+    b.iF(i,j,k,4) = ( uf*txx*b.isx(i,j,k) +
+                      vf*txy*b.isy(i,j,k) +
+                      wf*txz*b.isz(i,j,k) ) - q;
 
     // Species
     for (int n=0; n<th.ns-1; n++)
     {
-      b.iF(i,j,k,5+n) = 0.0;
+      b.iF(i,j,k,5+n) = -Dij*( dqdx * b.isx(i,j,k) +
+                               dqdy * b.isy(i,j,k) +
+                               dqdz * b.isz(i,j,k) );
     }
 
   });
@@ -98,10 +121,13 @@ for(block_ b : mb){
     double tyx,tyy,tyz;
     double tzx,tzy,tzz;
 
-    double dx,dy,dz;
+    double dTdx,dTdy,dTdz;
+    double uf,vf,wf;
+    double q;
 
     const double c23 = 2.0/3.0;
     const double mu = 1.48e-3;
+    const double kappa  = 0.02638;
 
     // continuity
     b.jF(i,j,k,0) = 0.0;
@@ -147,12 +173,31 @@ for(block_ b : mb){
                         tzz * b.jsz(i,j,k) );
 
     // energy
-    b.jF(i,j,k,4) = 0.0;
+    //   heat conduction
+    dTdx = 0.5 * ( b.dqdx(i,j,k,4) + b.dqdx(i,j-1,k,4) );
+    dTdy = 0.5 * ( b.dqdy(i,j,k,4) + b.dqdy(i,j-1,k,4) );
+    dTdz = 0.5 * ( b.dqdz(i,j,k,4) + b.dqdz(i,j-1,k,4) );
+
+    q =  kappa*( dTdx * b.jsx(i,j,k) +
+                 dTdy * b.jsy(i,j,k) +
+                 dTdz * b.jsz(i,j,k) );
+
+    // flow work
+    // Compute face normal volume flux vector
+    uf = 0.5*(b.q(i,j,k,1)+b.q(i,j-1,k,1));
+    vf = 0.5*(b.q(i,j,k,2)+b.q(i,j-1,k,2));
+    wf = 0.5*(b.q(i,j,k,3)+b.q(i,j-1,k,3));
+
+    b.jF(i,j,k,4) = ( uf*txx*b.jsx(i,j,k) +
+                      vf*txy*b.jsy(i,j,k) +
+                      wf*txz*b.jsz(i,j,k) ) - q;
 
     // Species
     for (int n=0; n<th.ns-1; n++)
     {
-      b.jF(i,j,k,5+n) = 0.0;
+      b.jF(i,j,k,5+n) = -Dij*( dqdx * b.jsx(i,j,k) +
+                               dqdy * b.jsy(i,j,k) +
+                               dqdz * b.jsz(i,j,k) );
     }
 
   });
@@ -173,10 +218,13 @@ for(block_ b : mb){
     double tyx,tyy,tyz;
     double tzx,tzy,tzz;
 
-    double dx,dy,dz;
+    double dTdx,dTdy,dTdz;
+    double uf,vf,wf;
+    double q;
 
     const double c23 = 2.0/3.0;
     const double mu = 1.48e-3;
+    const double kappa  = 0.02638;
 
     // continuity
     b.kF(i,j,k,0) = 0.0;
@@ -222,12 +270,31 @@ for(block_ b : mb){
                         tzz * b.ksz(i,j,k) );
 
     // energy
-    b.kF(i,j,k,4) = 0.0;
+    //   heat conduction
+    dTdx = 0.5 * ( b.dqdx(i,j,k,4) + b.dqdx(i,j,k-1,4) );
+    dTdy = 0.5 * ( b.dqdy(i,j,k,4) + b.dqdy(i,j,k-1,4) );
+    dTdz = 0.5 * ( b.dqdz(i,j,k,4) + b.dqdz(i,j,k-1,4) );
+
+    q =  kappa*( dTdx * b.ksx(i,j,k) +
+                 dTdy * b.ksy(i,j,k) +
+                 dTdz * b.ksz(i,j,k) );
+
+    // flow work
+    // Compute face normal volume flux vector
+    uf = 0.5*(b.q(i,j,k,1)+b.q(i,j,k-1,1));
+    vf = 0.5*(b.q(i,j,k,2)+b.q(i,j,k-1,2));
+    wf = 0.5*(b.q(i,j,k,3)+b.q(i,j,k-1,3));
+
+    b.kF(i,j,k,4) = ( uf*txx*b.ksx(i,j,k) +
+                      vf*txy*b.ksy(i,j,k) +
+                      wf*txz*b.ksz(i,j,k) ) - q;
 
     // Species
     for (int n=0; n<th.ns-1; n++)
     {
-      b.kF(i,j,k,5+n) = 0.0;
+      b.kF(i,j,k,5+n) = -Dij*( dqdx * b.ksx(i,j,k) +
+                               dqdy * b.ksy(i,j,k) +
+                               dqdz * b.ksz(i,j,k) );
     }
 
   });
