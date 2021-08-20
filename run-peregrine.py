@@ -12,6 +12,8 @@ import sys
 def simulate(config_file_path):
     # Import but do not initialise MPI
     from mpi4py import MPI
+    import numpy as np
+    np.seterr(all='raise')
 
     # Manually initialise MPI
     MPI.Init()
