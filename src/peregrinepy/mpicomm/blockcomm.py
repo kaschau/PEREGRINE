@@ -1,5 +1,6 @@
 from .mpiutils import get_comm_rank_size
 from mpi4py.MPI import DOUBLE as MPIDOUBLE
+from mpi4py.MPI import Request
 import numpy as np
 
 def communicate(mb,varis):
@@ -9,53 +10,68 @@ def communicate(mb,varis):
     comm,rank,size = get_comm_rank_size()
 
     for var in varis:
-        #Communicate 3 times, first updates faces, second updates edges, third updates corners
-        for _ in range(3):
-            #Post sends
-            for blk in mb:
-                if len(blk.array[var].shape) == 3:
-                    send = blk.sendbuffer3
-                    slice_s = blk.slice_s3
-                elif len(blk.array[var].shape) == 4:
-                    send = blk.sendbuffer4
-                    slice_s = blk.slice_s4
-                else:
-                    raise ValueError('what array?')
+        reqs = []
+        #Post non-blocking recieves
+        for blk in mb:
+            if len(blk.array[var].shape) == 3:
+                recv = blk.recvbuffer3
+                slice_r = blk.slice_r3
+            elif len(blk.array[var].shape) == 4:
+                recv = blk.recvbuffer4
+                slice_r = blk.slice_r4
+            else:
+                raise ValueError('what array?')
+            for face in ['1','2','3','4','5','6']:
+                neighbor = blk.connectivity[face]['neighbor']
+                if neighbor is None:
+                    continue
+                bc = blk.connectivity[face]['bc']
+                orientation = blk.connectivity[face]['orientation']
+                comm_rank   = blk.connectivity[face]['comm_rank']
+                tag = int(f'1{neighbor}2{blk.nblki}1{face}')
+                ssize = recv[face].size
+                reqs.append(comm.Irecv([recv[face][:], ssize, MPIDOUBLE], source=comm_rank, tag=tag))
 
-                for face in ['1','2','3','4','5','6']:
-                    neighbor = blk.connectivity[face]['neighbor']
-                    if neighbor is None:
-                        continue
-                    bc = blk.connectivity[face]['bc']
-                    orientation = blk.connectivity[face]['orientation']
-                    nface = blk.connectivity[face]['nface']
-                    comm_rank = blk.connectivity[face]['comm_rank']
-                    tag = int(f'1{blk.nblki}2{neighbor}1{nface}')
-                    send[face][:] = blk.orient[face](blk.array[var][slice_s[face]])
-                    comm.Isend([send[face], MPIDOUBLE], dest=comm_rank, tag=tag)
+        #Post non-blocking sends
+        for blk in mb:
+            if len(blk.array[var].shape) == 3:
+                send = blk.sendbuffer3
+                slice_s = blk.slice_s3
+            elif len(blk.array[var].shape) == 4:
+                send = blk.sendbuffer4
+                slice_s = blk.slice_s4
+            else:
+                raise ValueError('what array?')
 
-            #Post recieves
-            for blk in mb:
-                if len(blk.array[var].shape) == 3:
-                    recv = blk.recvbuffer3
-                    slice_r = blk.slice_r3
-                elif len(blk.array[var].shape) == 4:
-                    recv = blk.recvbuffer4
-                    slice_r = blk.slice_r4
-                else:
-                    raise ValueError('what array?')
-                for face in ['1','2','3','4','5','6']:
-                    neighbor = blk.connectivity[face]['neighbor']
-                    if neighbor is None:
-                        continue
-                    bc = blk.connectivity[face]['bc']
-                    orientation = blk.connectivity[face]['orientation']
-                    comm_rank   = blk.connectivity[face]['comm_rank']
-                    tag = int(f'1{neighbor}2{blk.nblki}1{face}')
-                    comm.Recv([recv[face][:], MPIDOUBLE], source=comm_rank, tag=tag)
-                    blk.array[var][slice_r[face]] = recv[face][:]
+            for face in ['1','2','3','4','5','6']:
+                neighbor = blk.connectivity[face]['neighbor']
+                if neighbor is None:
+                    continue
+                bc = blk.connectivity[face]['bc']
+                orientation = blk.connectivity[face]['orientation']
+                nface = blk.connectivity[face]['nface']
+                comm_rank = blk.connectivity[face]['comm_rank']
+                tag = int(f'1{blk.nblki}2{neighbor}1{nface}')
+                send[face][:] = blk.orient[face](blk.array[var][slice_s[face]])
+                ssize = send[face].size
+                comm.Send([send[face], ssize, MPIDOUBLE], dest=comm_rank, tag=tag)
 
-            comm.Barrier()
+        #wait and assign
+        Request.Waitall(reqs)
+        for blk in mb:
+            if len(blk.array[var].shape) == 3:
+                recv = blk.recvbuffer3
+                slice_r = blk.slice_r3
+            elif len(blk.array[var].shape) == 4:
+                recv = blk.recvbuffer4
+                slice_r = blk.slice_r4
+            for face in ['1','2','3','4','5','6']:
+                neighbor = blk.connectivity[face]['neighbor']
+                if neighbor is None:
+                    continue
+                blk.array[var][slice_r[face]] = recv[face][:]
+
+    comm.Barrier()
 
 def set_block_communication(mb):
     from numpy import s_
