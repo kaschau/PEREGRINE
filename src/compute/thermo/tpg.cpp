@@ -9,8 +9,8 @@
 
 void tpg(block_ b,
       thermdat_ th,
-    std::string face,
-    std::string given) {
+           int  face,
+   std::string  given) {
 
   MDRange3 range = get_range3(b, face);
 
