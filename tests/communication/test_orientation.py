@@ -15,8 +15,10 @@ class twoblock123:
                                       dimensions_perblock=[6,4,2],
                                       lengths=[2,1,1])
 
-       self.mb[0].connectivity['2']['comm_rank'] = 0
-       self.mb[1].connectivity['1']['comm_rank'] = 0
+       blk0 = self.mb[0]
+       blk1 = self.mb[1]
+       blk0.get_face(2).comm_rank = 0
+       blk1.get_face(1).comm_rank = 0
 
        self.shape = self.mb[0].array['x'].shape
 
@@ -39,14 +41,18 @@ def test_123():
     #Reorient and update communication info
     pg.mpicomm.blockcomm.set_block_communication(tb.mb)
     #Execute communication
-    pg.mpicomm.blockcomm.communicate(tb.mb,['x','y','z'])
+    pg.mpicomm.blockcomm.communicate3(tb.mb,['x','y','z'])
+
+    blk0 = tb.mb[0]
+    blk1 = tb.mb[1]
 
     passfail = []
     for var in ['x','y','z']:
-        passfail.append(compare_arrays(tb.mb[0].array[var][tb.mb[0].slice_s3['2']],
-                                       tb.mb[1].array[var][tb.mb[1].slice_r3['1']]))
-        passfail.append(compare_arrays(tb.mb[0].array[var][tb.mb[0].slice_r3['2']],
-                                       tb.mb[1].array[var][tb.mb[1].slice_s3['1']]))
+
+        passfail.append(compare_arrays(blk0.array[var][blk0.get_face(2).slice_s3],
+                                       blk1.array[var][blk1.get_face(1).slice_r3]))
+        passfail.append(compare_arrays(blk0.array[var][blk0.get_face(2).slice_r3],
+                                       blk1.array[var][blk1.get_face(1).slice_s3]))
 
     assert (False not in passfail)
 
@@ -61,27 +67,27 @@ def test_135():
     blk1.nk = tb.shape[1]-2
 
     #Reorient second block and update communication info
-    blk0.connectivity['2']['orientation'] = '135'
-    blk1.connectivity['1']['orientation'] = '162'
+    blk0.get_face_conn(2)['orientation'] = '135'
+    blk1.get_face_conn(1)['orientation'] = '162'
 
     pg.mpicomm.blockcomm.set_block_communication(tb.mb)
 
     #Execute communication
-    pg.mpicomm.blockcomm.communicate(tb.mb,['x','y','z'])
+    pg.mpicomm.blockcomm.communicate3(tb.mb,['x','y','z'])
 
-    check0 = True
-    check1 = True
     passfail=[]
     for var in ['x','y','z']:
+        check0 = True
+        check1 = True
         for k in range(tb.shape[2]):
             for j in range(tb.shape[1]):
-                check0 = np.equal(blk0.array[var][-3,j,k],
-                                    blk1.array[var][ 0,-(k+1),j])
-                check1 = np.equal(blk0.array[var][-1,j,k],
-                                    blk1.array[var][ 2,-(k+1),j])
+                check0 = (blk0.array[var][-3,j,k] == blk1.array[var][ 0,-(k+1),j])
+                check1 = (blk0.array[var][-1,j,k] == blk1.array[var][ 2,-(k+1),j])
                 if not check0 or not check1:
+                    print(blk0.array[var][-3,j,k],blk1.array[var][ 0,-(k+1),j])
                     break
             if not check0 or not check1:
+                print(blk0.array[var][-1,j,k], blk1.array[var][ 2,-(k+1),j])
                 break
         passfail.append(check0)
         passfail.append(check1)
@@ -103,22 +109,22 @@ def test_231():
     blk1.nk = tb.shape[1]-2
 
     #Reorient second block and update communication info
-    tb.mb[0].connectivity['2']['orientation'] = '231'
+    blk0.get_face_conn(2)['orientation'] = '231'
 
-    tb.mb[1].connectivity['1']['neighbor'] = None
-    tb.mb[1].connectivity['1']['bc'] = 's1'
-    tb.mb[1].connectivity['1']['orientation'] = None
-    tb.mb[1].connectivity['1']['comm_rank'] = None
+    blk1.get_face_conn(1)['neighbor'] = None
+    blk1.get_face_conn(1)['bctype'] = 's1'
+    blk1.get_face_conn(1)['orientation'] = None
+    blk1.get_face(1).comm_rank = None
 
-    tb.mb[1].connectivity['3']['neighbor'] = 0
-    tb.mb[1].connectivity['3']['bc'] = 'b0'
-    tb.mb[1].connectivity['3']['orientation'] = '312'
-    tb.mb[1].connectivity['3']['comm_rank'] = 0
+    blk1.get_face_conn(3)['neighbor'] = 0
+    blk1.get_face_conn(3)['bctype'] = 'b0'
+    blk1.get_face_conn(3)['orientation'] = '312'
+    blk1.get_face(3).comm_rank = 0
 
     pg.mpicomm.blockcomm.set_block_communication(tb.mb)
 
     #Execute communication
-    pg.mpicomm.blockcomm.communicate(tb.mb,['x','y','z'])
+    pg.mpicomm.blockcomm.communicate3(tb.mb,['x','y','z'])
 
     check0 = True
     check1 = True
@@ -127,9 +133,9 @@ def test_231():
         for k in range(tb.shape[2]):
             for j in range(tb.shape[1]):
                 check0 = np.equal(blk0.array[var][-3,j,k],
-                                    blk1.array[var][k,0,j])
+                                  blk1.array[var][k,0,j])
                 check1 = np.equal(blk0.array[var][-1,j,k],
-                                    blk1.array[var][k,2,j])
+                                  blk1.array[var][k,2,j])
                 if not check0 or not check1:
                     break
             if not check0 or not check1:
@@ -154,22 +160,22 @@ def test_321():
     blk1.nk = tb.shape[0]-2
 
     #Reorient second block and update communication info
-    tb.mb[0].connectivity['2']['orientation'] = '312'
+    blk0.get_face_conn(2)['orientation'] = '312'
 
-    tb.mb[1].connectivity['1']['neighbor'] = None
-    tb.mb[1].connectivity['1']['bc'] = 's1'
-    tb.mb[1].connectivity['1']['orientation'] = None
-    tb.mb[1].connectivity['1']['comm_rank'] = None
+    blk1.get_face_conn(1)['neighbor'] = None
+    blk1.get_face_conn(1)['bctype'] = 's1'
+    blk1.get_face_conn(1)['orientation'] = None
+    blk1.get_face(1).comm_rank = None
 
-    tb.mb[1].connectivity['5']['neighbor'] = 0
-    tb.mb[1].connectivity['5']['bc'] = 'b0'
-    tb.mb[1].connectivity['5']['orientation'] = '231'
-    tb.mb[1].connectivity['5']['comm_rank'] = 0
+    blk1.get_face_conn(5)['neighbor'] = 0
+    blk1.get_face_conn(5)['bctype'] = 'b0'
+    blk1.get_face_conn(5)['orientation'] = '231'
+    blk1.get_face(5).comm_rank = 0
 
     pg.mpicomm.blockcomm.set_block_communication(tb.mb)
 
     #Execute communication
-    pg.mpicomm.blockcomm.communicate(tb.mb,['x','y','z'])
+    pg.mpicomm.blockcomm.communicate3(tb.mb,['x','y','z'])
 
     check0 = True
     check1 = True
@@ -218,7 +224,7 @@ def test_321():
 #    pg.mpicomm.blockcomm.set_block_communication(tb.mb,tb.config)
 #
 #    #Execute communication
-#    pg.mpicomm.blockcomm.communicate(tb.mb,['x','y','z'])
+#    pg.mpicomm.blockcomm.communicate3(tb.mb,['x','y','z'])
 #
 #    passfail = []
 #    for var in ['x','y','z']:
@@ -257,7 +263,7 @@ def test_321():
 #    pg.mpicomm.blockcomm.set_block_communication(tb.mb,tb.config)
 #
 #    #Execute communication
-#    pg.mpicomm.blockcomm.communicate(tb.mb,['x','y','z'])
+#    pg.mpicomm.blockcomm.communicate3(tb.mb,['x','y','z'])
 #
 #    passfail = []
 #    for var in ['x','y','z']:
@@ -296,7 +302,7 @@ def test_321():
 #    pg.mpicomm.blockcomm.set_block_communication(tb.mb,tb.config)
 #
 #    #Execute communication
-#    pg.mpicomm.blockcomm.communicate(tb.mb,['x','y','z'])
+#    pg.mpicomm.blockcomm.communicate3(tb.mb,['x','y','z'])
 #
 #    passfail = []
 #    for var in ['x','y','z']:

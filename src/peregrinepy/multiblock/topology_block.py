@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from ..misc import FrozenDict
+from .face import face
 
 ''' block.py
 
@@ -19,30 +20,28 @@ class topology_block():
     nblki : int
         Block number (not the index, so the first block has nblki = 1)
 
-    connectivity : dict
-        The connectivity attribute holds the connectivity information for the instance of the block object. It is actually a dictionary
-        of dictionaries where the keys of the outer dictionary are numbers 1-6 representing the faces of the block. Each value of the outer
-        dict is yet another dictionary holding the face information 'bc': boundary condition type, 'connection': the block connected to,
-        and 'orientation': the orientation of the connection (in RAPTOR format). The default for these values is 'bc':'s1', 'connection':'0',
-        'orientation':'000' for all faces. NOTE: the face information is stored as strings for all entries, even 'connection'
-
     '''
     def __init__(self, nblki):
 
         self.nblki = nblki
 
-        ################################################################################################################
-        ############## Connectivity
-        ################################################################################################################
-        self.connectivity = FrozenDict({'1':FrozenDict({'bc':'s1', 'neighbor':None, 'orientation':None,'comm_rank':None,'nface':None}),
-                                        '2':FrozenDict({'bc':'s1', 'neighbor':None, 'orientation':None,'comm_rank':None,'nface':None}),
-                                        '3':FrozenDict({'bc':'s1', 'neighbor':None, 'orientation':None,'comm_rank':None,'nface':None}),
-                                        '4':FrozenDict({'bc':'s1', 'neighbor':None, 'orientation':None,'comm_rank':None,'nface':None}),
-                                        '5':FrozenDict({'bc':'s1', 'neighbor':None, 'orientation':None,'comm_rank':None,'nface':None}),
-                                        '6':FrozenDict({'bc':'s1', 'neighbor':None, 'orientation':None,'comm_rank':None,'nface':None})})
+        self.faces = []
+        for fn in [1,2,3,4,5,6]:
+            self.faces.append(face(fn))
 
-        for i in ['1','2','3','4','5','6']:
-            self.connectivity[i]._freeze()
-        self.connectivity._freeze()
+    def get_face(self, nface):
+        assert (1<=nface<=6), 'nface must be between (1,6)'
+        return self.faces[int(nface)-1]
 
+    def get_face_conn(self,nface):
+        assert (1<=nface<=6), 'nface must be between (1,6)'
+        return self.faces[int(nface)-1].connectivity
 
+    def connectivity(self):
+        conn = {}
+        for face in self.faces:
+            conn[f'Face{face.nface}'] = {}
+            f = conn[f'Face{face.nface}']
+            for key in face.connectivity.keys():
+                f[key] = face.connectivity[key]
+        return conn

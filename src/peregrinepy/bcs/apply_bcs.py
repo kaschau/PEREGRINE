@@ -6,25 +6,25 @@ def apply_bcs(mb,terms):
 
     #First we apply inlets and exits
     for blk in mb:
-        for face in ['1','2','3','4','5','6']:
-            bc = blk.connectivity[face]['bc']
+        for face in blk.faces:
+            bc = face.connectivity['bctype']
             if bc == 'i1':
-                subsonic_inlet(mb.eos,blk,face,mb.thermdat,terms)
+                subsonic_inlet(mb.eos,blk,face.nface,mb.thermdat,terms)
             elif bc == 'e1':
-                subsonic_exit(mb.eos,blk,face,mb.thermdat,terms)
+                subsonic_exit(mb.eos,blk,face.nface,mb.thermdat,terms)
     # Then we apply walls
     for blk in mb:
-        for face in ['1','2','3','4','5','6']:
-            bc = blk.connectivity[face]['bc']
+        for face in blk.faces:
+            bc = face.connectivity['bctype']
             if bc == 's1':
-                adiabatic_noslip_wall(mb.eos,blk,face,mb.thermdat,terms)
+                adiabatic_noslip_wall(mb.eos,blk,face.nface,mb.thermdat,terms)
             elif bc == 's2':
-                adiabatic_slip_wall(mb.eos,blk,face,mb.thermdat,terms)
+                adiabatic_slip_wall(mb.eos,blk,face.nface,mb.thermdat,terms)
             elif bc == 's3':
-                adiabatic_moving_wall(mb.eos,blk,face,mb.thermdat,terms)
+                adiabatic_moving_wall(mb.eos,blk,face.nface,mb.thermdat,terms)
             #elif bc == 's4':
-            #    isoT_noslip_wall(mb.eos,blk,face,mb.thermdat,terms)
+            #    isoT_noslip_wall(mb.eos,blk,face.nface,mb.thermdat,terms)
             #elif bc == 's5':
-            #    isoT_slip_wall(mb.eos,blk,face,mb.thermdat,terms)
+            #    isoT_slip_wall(mb.eos,blk,face.nface,mb.thermdat,terms)
             elif bc == 's6':
-                isoT_moving_wall(mb.eos,blk,face,mb.thermdat,terms)
+                isoT_moving_wall(mb.eos,blk,face.nface,mb.thermdat,terms)

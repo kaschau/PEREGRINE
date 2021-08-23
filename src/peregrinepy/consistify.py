@@ -1,5 +1,5 @@
 from .bcs import apply_bcs
-from .mpicomm.blockcomm import communicate
+from .mpicomm.blockcomm import communicate4
 from .compute import dqdxyz
 
 def consistify(mb):
@@ -12,13 +12,13 @@ def consistify(mb):
 
     #Update interior primatives
     for blk in mb:
-        mb.eos(blk,mb.thermdat,'0','cons')
+        mb.eos(blk,mb.thermdat,0,'cons')
 
     #Apply euler boundary conditions
     apply_bcs(mb,'euler')
 
     #communicate halos
-    communicate(mb,['Q','q'])
+    communicate4(mb,['Q','q'])
 
     #Update spatial derivatives
     dqdxyz(mb)
@@ -27,4 +27,4 @@ def consistify(mb):
     apply_bcs(mb,'viscous')
 
     #communicate viscous halos
-    communicate(mb,['dqdx','dqdy','dqdz'])
+    communicate4(mb,['dqdx','dqdy','dqdz'])
