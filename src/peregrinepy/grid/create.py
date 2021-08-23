@@ -13,85 +13,109 @@ This module holds functions for creating grid_block objects of various forms.
 
 import numpy as np
 
-def cubic_connectivity(conn, mb_dimensions, blk_number, i, j, k):
+def cubic_connectivity(blk, mb_dimensions, blk_number, i, j, k):
 
     # i faces
     if i == 0 and mb_dimensions[0] != 1:
-        conn['1']['bc'] = 's1'
-        conn['1']['neighbor'] = None
-        conn['1']['orientation'] = None
+        conn = blk.get_face_conn(1)
+        conn['bctype'] = 'adiabatic_noslip_wall'
+        conn['neighbor'] = None
+        conn['orientation'] = None
 
-        conn['2']['bc'] = 'b0'
-        conn['2']['neighbor'] = blk_number+1
-        conn['2']['orientation'] = '123'
+        conn = blk.get_face_conn(2)
+        conn['bctype'] = 'b0'
+        conn['neighbor'] = blk_number+1
+        conn['orientation'] = '123'
+
     elif i == mb_dimensions[0]-1 and mb_dimensions[0] != 1:
-        conn['1']['bc'] = 'b0'
-        conn['1']['neighbor'] = blk_number-1
-        conn['1']['orientation'] = '123'
+        conn = blk.get_face_conn(1)
+        conn['bctype'] = 'b0'
+        conn['neighbor'] = blk_number-1
+        conn['orientation'] = '123'
 
-        conn['2']['bc'] = 's1'
-        conn['2']['neighbor'] = None
-        conn['2']['orientation'] = None
+        conn = blk.get_face_conn(2)
+        conn['bctype'] = 'adiabatic_noslip_wall'
+        conn['neighbor'] = None
+        conn['orientation'] = None
+
     elif mb_dimensions[0] != 1:
-        conn['1']['bc'] = 'b0'
-        conn['1']['neighbor'] = blk_number-1
-        conn['1']['orientation'] = '123'
+        conn = blk.get_face_conn(1)
+        conn['bctype'] = 'b0'
+        conn['neighbor'] = blk_number-1
+        conn['orientation'] = '123'
 
-        conn['2']['bc'] = 'b0'
-        conn['2']['neighbor'] = blk_number+1
-        conn['2']['orientation'] = '123'
+        conn = blk.get_face_conn(2)
+        conn['bctype'] = 'b0'
+        conn['neighbor'] = blk_number+1
+        conn['orientation'] = '123'
 
     # j faces
     if j == 0 and mb_dimensions[1] != 1:
-        conn['3']['bc'] = 's1'
-        conn['3']['neighbor'] = None
-        conn['3']['orientation'] = None
+        conn = blk.get_face_conn(3)
+        conn['bctype'] = 'adiabatic_noslip_wall'
+        conn['neighbor'] = None
+        conn['orientation'] = None
 
-        conn['4']['bc'] = 'b0'
-        conn['4']['neighbor'] = blk_number+mb_dimensions[0]
-        conn['4']['orientation'] = '123'
+        conn = blk.get_face_conn(4)
+        conn['bctype'] = 'b0'
+        conn['neighbor'] = blk_number+mb_dimensions[0]
+        conn['orientation'] = '123'
+
     elif j == mb_dimensions[1]-1 and mb_dimensions[1] != 1:
-        conn['3']['bc'] = 'b0'
-        conn['3']['neighbor'] = blk_number-mb_dimensions[0]
-        conn['3']['orientation'] = '123'
+        conn = blk.get_face_conn(3)
+        conn['bctype'] = 'b0'
+        conn['neighbor'] = blk_number-mb_dimensions[0]
+        conn['orientation'] = '123'
 
-        conn['4']['bc'] = 's1'
-        conn['4']['neighbor'] = None
-        conn['4']['orientation'] = None
+        conn = blk.get_face_conn(4)
+        conn['bctype'] = 'adiabatic_noslip_wall'
+        conn['neighbor'] = None
+        conn['orientation'] = None
+
     elif mb_dimensions[1] != 1:
-        conn['3']['bc'] = 'b0'
-        conn['3']['neighbor'] = blk_number-mb_dimensions[0]
-        conn['3']['orientation'] = '123'
+        conn = blk.get_face_conn(3)
+        conn['bctype'] = 'b0'
+        conn['neighbor'] = blk_number-mb_dimensions[0]
+        conn['orientation'] = '123'
 
-        conn['4']['bc'] = 'b0'
-        conn['4']['neighbor'] = blk_number+mb_dimensions[0]
-        conn['4']['orientation'] = '123'
+        conn = blk.get_face_conn(4)
+        conn['bctype'] = 'b0'
+        conn['neighbor'] = blk_number+mb_dimensions[0]
+        conn['orientation'] = '123'
 
     # k faces
     if k == 0 and mb_dimensions[2] != 1:
-        conn['5']['bc'] = 's1'
-        conn['5']['neighbor'] = None
-        conn['5']['orientation'] = None
+        conn = blk.get_face_conn(5)
+        conn['bctype'] = 'adiabatic_noslip_wall'
+        conn['neighbor'] = None
+        conn['orientation'] = None
 
-        conn['6']['bc'] = 'b0'
-        conn['6']['neighbor'] = blk_number+mb_dimensions[0]*mb_dimensions[1]
-        conn['6']['orientation'] = '123'
+        conn = blk.get_face_conn(6)
+        conn['bctype'] = 'b0'
+        conn['neighbor'] = blk_number+mb_dimensions[0]*mb_dimensions[1]
+        conn['orientation'] = '123'
+
     elif k == mb_dimensions[2]-1 and mb_dimensions[2] != 1:
-        conn['5']['bc'] = 'b0'
-        conn['5']['neighbor'] = blk_number-mb_dimensions[0]*mb_dimensions[1]
-        conn['5']['orientation'] = '123'
+        conn = blk.get_face_conn(5)
+        conn['bctype'] = 'b0'
+        conn['neighbor'] = blk_number-mb_dimensions[0]*mb_dimensions[1]
+        conn['orientation'] = '123'
 
-        conn['6']['bc'] = 's1'
-        conn['6']['neighbor'] = None
-        conn['6']['orientation'] = None
+        conn = blk.get_face_conn(6)
+        conn['bctype'] = 'adiabatic_noslip_wall'
+        conn['neighbor'] = None
+        conn['orientation'] = None
+
     elif mb_dimensions[2] != 1:
-        conn['5']['bc'] = 'b0'
-        conn['5']['neighbor'] = blk_number-mb_dimensions[0]*mb_dimensions[1]
-        conn['5']['orientation'] = '123'
+        conn = blk.get_face_conn(5)
+        conn['bctype'] = 'b0'
+        conn['neighbor'] = blk_number-mb_dimensions[0]*mb_dimensions[1]
+        conn['orientation'] = '123'
 
-        conn['6']['bc'] = 'b0'
-        conn['6']['neighbor'] = blk_number+mb_dimensions[0]*mb_dimensions[1]
-        conn['6']['orientation'] = '123'
+        conn = blk.get_face_conn(6)
+        conn['bctype'] = 'b0'
+        conn['neighbor'] = blk_number+mb_dimensions[0]*mb_dimensions[1]
+        conn['orientation'] = '123'
 
 
 def cube(blk, origin, lengths, dimensions):
@@ -201,7 +225,7 @@ def multiblock_cube(mb, origin=[0,0,0], lengths=[1,1,1], mb_dimensions=[1,1,1], 
                 cube(blk, origin, lengths, dimensions)
 
                 # Update connectivity
-                cubic_connectivity(blk.connectivity, mb_dimensions, blk_number, i, j, k)
+                cubic_connectivity(blk, mb_dimensions, blk_number, i, j, k)
 
 
 def annulus(blk, p1, p2, p13, sweep, thickness, dimensions):

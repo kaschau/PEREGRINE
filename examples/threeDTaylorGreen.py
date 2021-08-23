@@ -44,11 +44,11 @@ def simulate():
 
     blk = mb[0]
 
-    for face in [str(i) for i in [1,2,3,4,5,6]]:
-        blk.connectivity[str(face)]['bc'] = 'b1'
-        blk.connectivity[str(face)]['neighbor'] = 0
-        blk.connectivity[str(face)]['orientation'] = '123'
-        blk.connectivity[str(face)]['comm_rank'] = 0
+    for face in blk.faces:
+        face.connectivity['bctype'] = 'b1'
+        face.connectivity['neighbor'] = 0
+        face.connectivity['orientation'] = '123'
+        face.comm_rank = 0
 
     pg.grid.generate_halo(mb)
 
@@ -71,7 +71,7 @@ def simulate():
     blk.array['q'][:,:,:,2] = -M0*np.cos(blk.array['xc'])*np.sin(blk.array['yc'])*np.cos(blk.array['zc'])
     blk.array['q'][:,:,:,4] = blk.array['q'][:,:,:,0]/(R*rho0)
 
-    mb.eos(blk,mb.thermdat,'0','prims')
+    mb.eos(blk, mb.thermdat, 0, 'prims')
     pg.consistify(mb)
 
     dt = 0.1 * 2*np.pi/64
