@@ -15,28 +15,16 @@ def bootstrap_case(config):
 
     if len(blocks4procs) != size:
         if rank == 0:
-            print('ERROR!! Number of requested processors does not equal number of processors!')
+            print('ERROR!! Number of requested processors in blocks4procs does not equal number of processors!')
         comm.Abort()
 
     myblocks = blocks4procs[rank]
-    mb = pg.multiblock.generate_multiblock_solver(len(myblocks),config)
-
-    #We have to overwrite the default value of nblki in parallel
-    for i,nblki in enumerate(myblocks):
-        mb[i].nblki = nblki
+    mb = pg.multiblock.generate_multiblock_solver(len(myblocks),config, myblocks)
 
     ################################################################
     ##### Read in the connectivity
     ################################################################
-    if rank == 0:
-        conn = pg.readers.read_connectivity(None,config['io']['inputdir'])
-    else:
-        conn = None
-    conn = comm.bcast(conn,root=0)
-    for blk in mb:
-        for face in ['1','2','3','4','5','6']:
-            for k1 in conn[blk.nblki][face].keys():
-                blk.connectivity[face][k1] = conn[blk.nblki][face][k1]
+    pg.readers.read_connectivity(mb, config['io']['inputdir'])
 
     ################################################################
     ##### Now we figure out which processor each block's neighbor
@@ -44,14 +32,14 @@ def bootstrap_case(config):
     ################################################################
 
     for blk in mb:
-        for face in ['1','2','3','4','5','6']:
-            neighbor = blk.connectivity[face]['neighbor']
+        for face in blk.faces:
+            neighbor = face.connectivity['neighbor']
             if neighbor == None:
-                blk.connectivity[face]['comm_rank'] = None
+                face.comm_rank = None
                 continue
             for otherrank,proc in enumerate(blocks4procs):
                 if neighbor in proc:
-                    blk.connectivity[face]['comm_rank'] = otherrank
+                    face.comm_rank = otherrank
 
     ################################################################
     ##### Read in the grid
@@ -84,7 +72,7 @@ def bootstrap_case(config):
 
     #Generate conserved variables
     for blk in mb:
-        mb.eos(blk,mb.thermdat,'0','prims')
+        mb.eos(blk, mb.thermdat, 0, 'prims')
 
     #Consistify total flow field
     pg.consistify(mb)

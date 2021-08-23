@@ -63,21 +63,6 @@ class solver_block(restart_block,block_):
         if self.block_type == 'solver':
             self.array._freeze()
 
-        ################################################################################################################
-        ############## Communication
-        ################################################################################################################
-        self.slice_s3 = {}
-        self.slice_r3 = {}
-        self.slice_s4 = {}
-        self.slice_r4 = {}
-
-        self.orient = {}
-        self.sendbuffer3 = {}
-        self.recvbuffer3 = {}
-        self.sendbuffer4 = {}
-        self.recvbuffer4 = {}
-
-
     def init_solver_arrays(self,config):
         '''
         Create the Kokkos work arrays and python side numpy wrappers

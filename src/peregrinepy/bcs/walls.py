@@ -40,15 +40,15 @@ def adiabatic_slip_wall(eos,blk,face,thermdat,terms):
         u = blk.array['q'][:,:,:,1]
         v = blk.array['q'][:,:,:,2]
         w = blk.array['q'][:,:,:,3]
-        if face in ['1','2']:
+        if face in [1,2]:
             nx = blk.array['inx']
             ny = blk.array['iny']
             nz = blk.array['inz']
-        elif face in ['3','4']:
+        elif face in [3,4]:
             nx = blk.array['jnx']
             ny = blk.array['jny']
             nz = blk.array['jnz']
-        elif face in ['5','6']:
+        elif face in [5,6]:
             nx = blk.array['knx']
             ny = blk.array['kny']
             nz = blk.array['knz']
@@ -89,15 +89,15 @@ def adiabatic_moving_wall(eos,blk,face,thermdat,terms):
         u = blk.array['q'][:,:,:,1]
         v = blk.array['q'][:,:,:,2]
         w = blk.array['q'][:,:,:,3]
-        if face in ['1','2']:
+        if face in [1,2]:
             nx = blk.array['inx']
             ny = blk.array['iny']
             nz = blk.array['inz']
-        elif face in ['3','4']:
+        elif face in [3,4]:
             nx = blk.array['jnx']
             ny = blk.array['jny']
             nz = blk.array['jnz']
-        elif face in ['5','6']:
+        elif face in [5,6]:
             nx = blk.array['knx']
             ny = blk.array['kny']
             nz = blk.array['knz']
@@ -138,15 +138,15 @@ def isoT_moving_wall(eos,blk,face,thermdat,terms):
         u = blk.array['q'][:,:,:,1]
         v = blk.array['q'][:,:,:,2]
         w = blk.array['q'][:,:,:,3]
-        if face in ['1','2']:
+        if face in [1,2]:
             nx = blk.array['inx']
             ny = blk.array['iny']
             nz = blk.array['inz']
-        elif face in ['3','4']:
+        elif face in [3,4]:
             nx = blk.array['jnx']
             ny = blk.array['jny']
             nz = blk.array['jnz']
-        elif face in ['5','6']:
+        elif face in [5,6]:
             nx = blk.array['knx']
             ny = blk.array['kny']
             nz = blk.array['knz']
