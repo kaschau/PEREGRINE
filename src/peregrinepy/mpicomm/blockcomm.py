@@ -104,11 +104,14 @@ def set_block_communication(mb):
     ### Define the possible reorientation routines
     ##########################################################
     def orient_T(temp):
-        return temp.T
+        axes = (1,0,2) if temp.ndim==3 else (1,0)
+        return np.transpose(temp,axes)
     def orient_Tf0(temp):
-        return np.flip(temp.T,0)
+        axT = (1,0,2) if temp.ndim==3 else (1,0)
+        return np.flip(np.transpose(temp,axT), 0)
     def orient_Tf1(temp):
-        return np.flip(temp.T,1)
+        axT = (1,0,2) if temp.ndim==3 else (1,0)
+        return np.flip(np.transpose(temp,axT),1)
     def orient_Tf0f1(temp):
         return np.flip(np.flip(temp,0),1)
     def orient_f0(temp):

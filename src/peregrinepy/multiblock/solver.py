@@ -20,6 +20,7 @@ class solver(restart):
     '''
     mb_type = 'solver'
     def __init__(self, nblks, sp_names):
+        assert (type(sp_names) is list), f'sp_names must me a list not {type(sp_names)}'
 
         temp = [solver_block(i,sp_names) for i in range(nblks)]
         super().__init__(nblks,sp_names,temp)
