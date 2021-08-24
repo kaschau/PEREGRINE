@@ -63,18 +63,18 @@ def bootstrap_case(config):
     pg.compute.metrics(mb)
 
     ################################################################
+    ##### Read in boundary conditions
+    ################################################################
+    pg.readers.read_bcs(mb,
+                        config['io']['inputdir'])
+
+    ################################################################
     ##### Read in restart
     ################################################################
     pg.readers.read_restart(mb,
                             config['io']['outputdir'],
                             config['simulation']['restart_from'],
                             config['simulation']['animate'])
-
-    ################################################################
-    ##### Read in rboundary conditions
-    ################################################################
-    pg.readers.read_bcs(mb,
-                        config['io']['inputdir'])
 
     #Generate conserved variables
     for blk in mb:

@@ -1,6 +1,8 @@
 from .face_slice import fs
 
-def constant_velocity_subsonic_inlet(eos,blk,nface,thermdat,terms):
+def constant_velocity_subsonic_inlet(eos,blk,face,thermdat,terms):
+
+    nface = face.nface
 
     if terms == 'euler':
         p = blk.array['q'][:,:,:,0]
