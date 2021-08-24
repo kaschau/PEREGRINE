@@ -1,0 +1,8 @@
+---
+
+dummy_wall:
+  type: adiabatic_moving_wall
+  values:
+    u: 1.0
+    v: 0.0
+    w: 0.0
