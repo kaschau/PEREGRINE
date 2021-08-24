@@ -25,6 +25,10 @@ class solver(restart):
         temp = [solver_block(i,sp_names) for i in range(nblks)]
         super().__init__(nblks,sp_names,temp)
 
+        self.config = None
+        self.thermdat = None
+        self.eos = None
+
     def init_solver_arrays(self,config):
         for blk in self:
             blk.init_solver_arrays(config)

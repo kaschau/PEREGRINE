@@ -20,11 +20,12 @@ def consistify(mb):
     #communicate halos
     communicate(mb,['Q','q'])
 
-    #Update spatial derivatives
-    dqdxyz(mb)
+    if mb.config['RHS']['diffusion']:
+        #Update spatial derivatives
+        dqdxyz(mb)
 
-    #Apply viscous boundary conditions
-    apply_bcs(mb,'viscous')
+        #Apply viscous boundary conditions
+        apply_bcs(mb,'viscous')
 
-    #communicate viscous halos
-    communicate(mb,['dqdx','dqdy','dqdz'])
+        #communicate viscous halos
+        communicate(mb,['dqdx','dqdy','dqdz'])

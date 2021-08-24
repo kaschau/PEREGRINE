@@ -33,6 +33,7 @@ def simulate():
     pg.mpicomm.mpiutils.register_finalize_handler()
 
     config = pg.files.config_file()
+    config['RHS']['diffusion'] = False
 
     mb = pg.multiblock.generate_multiblock_solver(1,config)
     pg.grid.create.multiblock_cube(mb,
