@@ -84,7 +84,7 @@ def adiabatic_slip_wall(eos,blk,face,thermdat,terms):
         dTNdy[fs[nface]['s0_']] = - dTNdy[fs[nface]['s1_']]
         dTNdz[fs[nface]['s0_']] = - dTNdz[fs[nface]['s1_']]
 
-def adiabatic_moving_wall(eos,blk,face,thermdat,terms):
+def adiabatic_moving_wall(eos, blk, face, thermdat, terms):
 
     nface = face.nface
 
@@ -109,15 +109,15 @@ def adiabatic_moving_wall(eos,blk,face,thermdat,terms):
             nz = blk.array['knz']
         else:
             raise ValueError('Unknown nface')
-        u[fs[nface]['s0_']] = face.bc['values']['u']
-        v[fs[nface]['s0_']] = v[fs[nface]['s1_']] - 2.0*v[fs[nface]['s1_']] * ny[fs[nface]['s1_']]
-        w[fs[nface]['s0_']] = w[fs[nface]['s1_']] - 2.0*w[fs[nface]['s1_']] * nz[fs[nface]['s1_']]
+        u[fs[nface]['s0_']] = 2.0*face.bc['values']['u'] - u[fs[nface]['s1_']]
+        v[fs[nface]['s0_']] = 2.0*face.bc['values']['v'] - v[fs[nface]['s1_']]
+        w[fs[nface]['s0_']] = 2.0*face.bc['values']['w'] - w[fs[nface]['s1_']]
 
         T = blk.array['q'][:,:,:,4]
         T[fs[nface]['s0_']] = T[fs[nface]['s1_']]
 
         #Update conservatives
-        eos(blk,thermdat, nface,'prims')
+        eos(blk, thermdat, nface, 'prims')
 
     elif terms == 'viscous':
         #extrapolate velocity gradient
@@ -127,6 +127,7 @@ def adiabatic_moving_wall(eos,blk,face,thermdat,terms):
         dvelodx[fs[nface]['s0_']] = 2.0*dvelodx[fs[nface]['s1_']] - dvelodx[fs[nface]['s2_']]
         dvelody[fs[nface]['s0_']] = 2.0*dvelody[fs[nface]['s1_']] - dvelody[fs[nface]['s2_']]
         dvelodz[fs[nface]['s0_']] = 2.0*dvelodz[fs[nface]['s1_']] - dvelodz[fs[nface]['s2_']]
+
         #negate temp and species gradient (so gradient evaluates to zero on wall)
         dTNdx = blk.array['dqdx'][:,:,:,4::]
         dTNdy = blk.array['dqdy'][:,:,:,4::]
