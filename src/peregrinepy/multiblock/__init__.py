@@ -41,6 +41,10 @@ def generate_multiblock_solver(nblks, config, myblocks=None):
         for blk,nblki in zip(cls,myblocks):
             blk.nblki = nblki
 
+    #TODO: Do this better in the future
+    #Stick the config file one
+    cls.config = config
+
     #Stick the thermdat object on
     cls.thermdat = thermdat(config)
 

@@ -7,4 +7,5 @@ def RHS(mb):
 
     advective(mb,mb.thermdat)
 
-    diffusive(mb,mb.thermdat)
+    if mb.config['RHS']['diffusion']:
+        diffusive(mb,mb.thermdat)

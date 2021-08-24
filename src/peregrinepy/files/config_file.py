@@ -40,6 +40,9 @@ class config_file(FrozenDict):
         self['solver'] = FrozenDict({'time_integration' : 'rk4'
                                      })
 
+        self['RHS'] = FrozenDict({'diffusion' : True
+                                     })
+
         self['thermochem'] = FrozenDict({'ctfile' : 'pure-debug.yaml',
                                          'eos'    : 'cpg'
                                          })
