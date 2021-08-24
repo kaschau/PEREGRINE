@@ -8,9 +8,12 @@ from ..bcs import face_slice
 fs = face_slice.fs
 
 def unify_solver_grid(mb):
+
     generate_halo(mb)
 
-    mpicomm.blockcomm.communicate3(mb,['x','y','z'])
+    # Lets just be clean and create the edges and corners
+    for _ in range(3):
+        mpicomm.blockcomm.communicate(mb,['x','y','z'])
 
     comm,rank,size = mpicomm.mpiutils.get_comm_rank_size()
 
@@ -27,6 +30,7 @@ def unify_solver_grid(mb):
                     orientation = face.connectivity['orientation']
                     comm_rank   = face.comm_rank
                     tag = int(f'1{neighbor}2{blk.nblki}1{face.nface}')
+
                     ssize = face.recvbuffer3.size
                     reqs.append(comm.Irecv([face.recvbuffer3[:], ssize, MPIDOUBLE], source=comm_rank, tag=tag))
 

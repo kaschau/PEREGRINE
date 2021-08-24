@@ -41,32 +41,19 @@ def test_123():
 
     #Reorient and update communication info
     pg.mpicomm.blockcomm.set_block_communication(tb.mb)
-    #Execute communication3
-    pg.mpicomm.blockcomm.communicate3(tb.mb,['x','y','z'])
-    #Execute communication4
-    pg.mpicomm.blockcomm.communicate4(tb.mb,['q'])
+    #Execute communication
+    pg.mpicomm.blockcomm.communicate(tb.mb,['x','y','z','q'])
 
     passfail=[]
-    for var in ['x','y','z']:
+    for var,shape,off in zip(['x','y','z','q'],
+                              [tb.xshape,tb.xshape,tb.xshape,tb.qshape],
+                              [0,0,0,1]):
         check0 = True
         check1 = True
-        for k in range(tb.xshape[2]):
-            for j in range(tb.xshape[1]):
-                check0 = np.all(blk0.array[var][-3,j,k] == blk1.array[var][ 0,j,k])
-                check1 = np.all(blk0.array[var][-1,j,k] == blk1.array[var][ 2,j,k])
-                if not check0 or not check1:
-                    break
-            if not check0 or not check1:
-                break
-        passfail.append(check0)
-        passfail.append(check1)
-    for var in ['q']:
-        check0 = True
-        check1 = True
-        for k in range(tb.qshape[2]):
-            for j in range(tb.qshape[1]):
-                check0 = np.all(blk0.array[var][-2,j,k] == blk1.array[var][ 0,j,k])
-                check1 = np.all(blk0.array[var][-1,j,k] == blk1.array[var][ 1,j,k])
+        for k in range(shape[2]):
+            for j in range(shape[1]):
+                check0 = np.all(blk0.array[var][-3+off,j,k] == blk1.array[var][ 0,j,k])
+                check1 = np.all(blk0.array[var][-1,j,k] == blk1.array[var][2-off,j,k])
                 if not check0 or not check1:
                     break
             if not check0 or not check1:
@@ -93,35 +80,20 @@ def test_135():
 
     pg.mpicomm.blockcomm.set_block_communication(tb.mb)
 
-    #Execute communication3
-    pg.mpicomm.blockcomm.communicate3(tb.mb,['x','y','z'])
-    #Execute communication4
-    pg.mpicomm.blockcomm.communicate4(tb.mb,['q'])
+    #Execute communication
+    pg.mpicomm.blockcomm.communicate(tb.mb,['x','y','z','q'])
 
     passfail=[]
-    for var in ['x','y','z']:
+    for var,shape,off in zip(['x','y','z','q'],
+                              [tb.xshape,tb.xshape,tb.xshape,tb.qshape],
+                              [0,0,0,1]):
         check0 = True
         check1 = True
-        for k in range(tb.xshape[2]):
-            for j in range(tb.xshape[1]):
-                check0 = (blk0.array[var][-3,j,k] == blk1.array[var][ 0,-(k+1),j])
-                check1 = (blk0.array[var][-1,j,k] == blk1.array[var][ 2,-(k+1),j])
+        for k in range(shape[2]):
+            for j in range(shape[1]):
+                check0 = np.all(blk0.array[var][-3+off,j,k] == blk1.array[var][ 0,-(k+1),j])
+                check1 = np.all(blk0.array[var][-1,j,k] == blk1.array[var][2-off,-(k+1),j])
                 if not check0 or not check1:
-                    break
-            if not check0 or not check1:
-                break
-        passfail.append(check0)
-        passfail.append(check1)
-
-    for var in ['q']:
-        check0 = True
-        check1 = True
-        for k in range(tb.qshape[2]):
-            for j in range(tb.qshape[1]):
-                check0 = np.all(blk0.array[var][-2,j,k] == blk1.array[var][ 0,-(k+1),j])
-                check1 = np.all(blk0.array[var][-1,j,k] == blk1.array[var][ 1,-(k+1),j])
-                if not check0 or not check1:
-                    #print(blk0.array[var][-2,j,k],blk1.array[var][ 0,-(k+1),j])
                     break
             if not check0 or not check1:
                 break
