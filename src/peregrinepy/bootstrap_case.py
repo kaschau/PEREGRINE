@@ -70,6 +70,12 @@ def bootstrap_case(config):
                             config['simulation']['restart_from'],
                             config['simulation']['animate'])
 
+    ################################################################
+    ##### Read in rboundary conditions
+    ################################################################
+    pg.readers.read_bcs(mb,
+                        config['io']['inputdir'])
+
     #Generate conserved variables
     for blk in mb:
         mb.eos(blk, mb.thermdat, 0, 'prims')

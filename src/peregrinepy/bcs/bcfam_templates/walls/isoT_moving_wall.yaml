@@ -1,0 +1,9 @@
+---
+
+dummy_wall:
+  type: isoT_moving_wall
+  values:
+    u: 1.0
+    v: 0.0
+    w: 0.0
+    T: 300.0
