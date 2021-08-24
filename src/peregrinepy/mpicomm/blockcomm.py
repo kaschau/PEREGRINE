@@ -1,7 +1,9 @@
 from .mpiutils import get_comm_rank_size
 from mpi4py.MPI import DOUBLE as MPIDOUBLE
+from mpi4py.MPI import Request
 import numpy as np
 
+#Communicate arrays
 def communicate(mb,varis):
     if not isinstance(varis,list):
         varis = [varis]
@@ -9,66 +11,69 @@ def communicate(mb,varis):
     comm,rank,size = get_comm_rank_size()
 
     for var in varis:
-        #Communicate 3 times, first updates faces, second updates edges, third updates corners
-        for _ in range(3):
-            #Post sends
-            for blk in mb:
-                if len(blk.array[var].shape) == 3:
-                    send = blk.sendbuffer3
-                    slice_s = blk.slice_s3
-                elif len(blk.array[var].shape) == 4:
-                    send = blk.sendbuffer4
-                    slice_s = blk.slice_s4
-                else:
-                    raise ValueError('what array?')
+        reqs = []
+        #Post non-blocking recieves
+        for blk in mb:
+            ndim = blk.array[var].ndim
+            for face in blk.faces:
+                neighbor = face.connectivity['neighbor']
+                if neighbor is None:
+                    continue
+                orientation = face.connectivity['orientation']
+                comm_rank   = face.comm_rank
+                tag = int(f'1{neighbor}2{blk.nblki}1{face.nface}')
 
-                for face in ['1','2','3','4','5','6']:
-                    neighbor = blk.connectivity[face]['neighbor']
-                    if neighbor is None:
-                        continue
-                    bc = blk.connectivity[face]['bc']
-                    orientation = blk.connectivity[face]['orientation']
-                    nface = blk.connectivity[face]['nface']
-                    comm_rank = blk.connectivity[face]['comm_rank']
-                    tag = int(f'1{blk.nblki}2{neighbor}1{nface}')
-                    send[face][:] = blk.orient[face](blk.array[var][slice_s[face]])
-                    comm.Isend([send[face], MPIDOUBLE], dest=comm_rank, tag=tag)
+                recv = face.recvbuffer4 if ndim == 4 else face.recvbuffer3
+                ssize = recv.size
+                reqs.append(comm.Irecv([recv, ssize, MPIDOUBLE], source=comm_rank, tag=tag))
 
-            #Post recieves
-            for blk in mb:
-                if len(blk.array[var].shape) == 3:
-                    recv = blk.recvbuffer3
-                    slice_r = blk.slice_r3
-                elif len(blk.array[var].shape) == 4:
-                    recv = blk.recvbuffer4
-                    slice_r = blk.slice_r4
-                else:
-                    raise ValueError('what array?')
-                for face in ['1','2','3','4','5','6']:
-                    neighbor = blk.connectivity[face]['neighbor']
-                    if neighbor is None:
-                        continue
-                    bc = blk.connectivity[face]['bc']
-                    orientation = blk.connectivity[face]['orientation']
-                    comm_rank   = blk.connectivity[face]['comm_rank']
-                    tag = int(f'1{neighbor}2{blk.nblki}1{face}')
-                    comm.Recv([recv[face][:], MPIDOUBLE], source=comm_rank, tag=tag)
-                    blk.array[var][slice_r[face]] = recv[face][:]
+        #Post non-blocking sends
+        for blk in mb:
+            ndim = blk.array[var].ndim
+            for face in blk.faces:
+                neighbor = face.connectivity['neighbor']
+                if neighbor is None:
+                    continue
+                orientation = face.connectivity['orientation']
+                comm_rank = face.comm_rank
+                tag = int(f'1{blk.nblki}2{neighbor}1{face.neighbor_face}')
 
-            comm.Barrier()
+                send,slice_s = (face.sendbuffer4,face.slice_s4) if ndim == 4 else (face.sendbuffer3,face.slice_s3)
+                send[:] = face.orient(blk.array[var][slice_s])
+                ssize = send.size
+                comm.Send([send, ssize, MPIDOUBLE], dest=comm_rank, tag=tag)
+
+        #wait and assign
+        Request.Waitall(reqs)
+        for blk in mb:
+            ndim = blk.array[var].ndim
+            for face in blk.faces:
+                neighbor = face.connectivity['neighbor']
+                if neighbor is None:
+                    continue
+                recv,slice_r = (face.recvbuffer4,face.slice_r4) if ndim == 4 else (face.recvbuffer3,face.slice_r3)
+                blk.array[var][slice_r] = recv
+
+        comm.Barrier()
+
 
 def set_block_communication(mb):
+    assert (0 not in [mb[0].ni, mb[0].nj, mb[0].nk]), 'Must get grid before setting block communicaitons.'
+
     from numpy import s_
 
-    if mb[0].ni == 0:
-        raise ValueError('Must set grid before setting block communicaitons.')
-
+    ##########################################################
+    ### Define the possible reorientation routines
+    ##########################################################
     def orient_T(temp):
-        return temp.T
+        axes = (1,0,2) if temp.ndim==3 else (1,0)
+        return np.transpose(temp,axes)
     def orient_Tf0(temp):
-        return np.flip(temp.T,0)
+        axT = (1,0,2) if temp.ndim==3 else (1,0)
+        return np.flip(np.transpose(temp,axT), 0)
     def orient_Tf1(temp):
-        return np.flip(temp.T,1)
+        axT = (1,0,2) if temp.ndim==3 else (1,0)
+        return np.flip(np.transpose(temp,axT),1)
     def orient_Tf0f1(temp):
         return np.flip(np.flip(temp,0),1)
     def orient_f0(temp):
@@ -80,53 +85,56 @@ def set_block_communication(mb):
     def orient_na(temp):
         return temp
 
-    def get_neighbor_face(nface, orientation):
 
-        direction = orientation[int(face_to_orient_place_mapping[nface])]
-
-        if nface in ['2','4','6']:
-            nface2 = orient_to_large_face_mapping[direction]
-        elif nface in ['1','3','5']:
-            nface2 = orient_to_small_face_mapping[direction]
-
-        return nface2
     ##########################################################
-    ### This chunk predefines the slice extents for each block
-    ### face send and recieves.
+    ### Define the mapping based on orientation
     ##########################################################
-    face_to_orient_place_mapping = { '1':'0', '2':'0', '3':'1', '4':'1', '5':'2', '6':'2'}
-    orient_to_small_face_mapping = { '1':'2', '2':'4', '3':'6', '4':'1', '5':'3', '6':'5'}
-    orient_to_large_face_mapping = { '1':'1', '2':'3', '3':'5', '4':'2', '5':'4', '6':'6'}
+    face_to_orient_place_mapping = { 1:0, 2:0, 3:1, 4:1, 5:2, 6:2}
+    orient_to_small_face_mapping = { 1:2, 2:4, 3:6, 4:1, 5:3, 6:5}
+    orient_to_large_face_mapping = { 1:1, 2:3, 3:5, 4:2, 5:4, 6:6}
 
     large_index_mapping = {0:'k', 1:'k', 2:'j'}
     need_to_transpose = {'k':{'k':[1,2,4,5], 'j':[1,4]},
                          'j':{'k':[1,2,4,5], 'j':[1,4]}}
 
-    #Get the neighbor orientation opposite of each face
+    def get_neighbor_face(nface, orientation):
+        assert (1<=nface<=6), 'nface must be between (1,6)'
+
+        direction = int(orientation[face_to_orient_place_mapping[nface]])
+
+        if nface in [2,4,6]:
+            nface2 = orient_to_large_face_mapping[direction]
+        elif nface in [1,3,5]:
+            nface2 = orient_to_small_face_mapping[direction]
+
+        return nface2
+
+    ##########################################################
+    ### Get the neighbor orientation opposite of each face
+    ##########################################################
     comm,rank,size = get_comm_rank_size()
     for blk in mb:
-        for face in ['1','2','3','4','5','6']:
-            neighbor = blk.connectivity[face]['neighbor']
+        for face in blk.faces:
+            neighbor = face.connectivity['neighbor']
             if neighbor is None:
                 continue
-            orientation = blk.connectivity[face]['orientation']
-            comm_rank   = blk.connectivity[face]['comm_rank']
-            blk.connectivity[face]['nface'] = get_neighbor_face(face,orientation)
-            nface = blk.connectivity[face]['nface']
-            tag = int(f'1{blk.nblki}2{neighbor}1{nface}')
+            orientation = face.connectivity['orientation']
+            comm_rank   = face.comm_rank
+            face.neighbor_face = get_neighbor_face(face.nface, orientation)
+            tag = int(f'1{blk.nblki}2{neighbor}1{face.neighbor_face}')
             comm.isend(orientation, dest=comm_rank, tag=tag)
     neighbor_orientations = []
     for blk in mb:
         neighbor_orientations.append({})
-        for face in ['1','2','3','4','5','6']:
-            neighbor = blk.connectivity[face]['neighbor']
+        for face in blk.faces:
+            neighbor = face.connectivity['neighbor']
             if neighbor is None:
                 continue
-            orientation = blk.connectivity[face]['orientation']
-            nface = blk.connectivity[face]['nface']
-            comm_rank   = blk.connectivity[face]['comm_rank']
-            tag = int(f'1{neighbor}2{blk.nblki}1{face}')
-            neighbor_orientations[-1][face] = comm.recv(source=comm_rank, tag=tag)
+            orientation = face.connectivity['orientation']
+            nface = face.neighbor_face
+            comm_rank   = face.comm_rank
+            tag = int(f'1{neighbor}2{blk.nblki}1{face.nface}')
+            neighbor_orientations[-1][face.nface] = comm.recv(source=comm_rank, tag=tag)
 
     comm.Barrier()
 
@@ -138,127 +146,120 @@ def set_block_communication(mb):
         slice_rfp = {}
         slice_rc = {}
 
-        slice_sfp['1']      = s_[ 2 , :, :]
-        slice_sc['1']       = s_[ 1 , :, :, :]
-        commfpshape['1'] =   ( blk.nj+2, blk.nk+2)
-        commcshape['1']  =   ( blk.nj+1, blk.nk+1, blk.ne)
-        slice_rfp['1']      = s_[0,:,:]
-        slice_rc['1']       = s_[0,:,:,:]
+        slice_sfp[1]      = s_[ 2 , :, :]
+        slice_sc[1]       = s_[ 1 , :, :, :]
+        commfpshape[1] =   ( blk.nj+2, blk.nk+2)
+        commcshape[1]  =   ( blk.nj+1, blk.nk+1, blk.ne)
+        slice_rfp[1]      = s_[0,:,:]
+        slice_rc[1]       = s_[0,:,:,:]
 
-        slice_sfp['2']      = s_[-3 , :, :]
-        slice_sc['2']       = s_[-2 , :, :, :]
-        commfpshape['2'] = commfpshape['1']
-        commcshape['2']  = commcshape['1']
-        slice_rfp['2']      = s_[-1,:,:]
-        slice_rc['2']      = s_[-1,:,:,:]
+        slice_sfp[2]      = s_[-3 , :, :]
+        slice_sc[2]       = s_[-2 , :, :, :]
+        commfpshape[2] = commfpshape[1]
+        commcshape[2]  = commcshape[1]
+        slice_rfp[2]      = s_[-1,:,:]
+        slice_rc[2]      = s_[-1,:,:,:]
 
-        slice_sfp['3']      = s_[:,2,:]
-        slice_sc['3']       = s_[:,1,:,:]
-        commfpshape['3'] =   ( blk.ni+2, blk.nk+2)
-        commcshape['3']  =   ( blk.ni+1, blk.nk+1, blk.ne)
-        slice_rfp['3']      = s_[:,0,:]
-        slice_rc['3']       = s_[:,0,:,:]
+        slice_sfp[3]      = s_[:,2,:]
+        slice_sc[3]       = s_[:,1,:,:]
+        commfpshape[3] =   ( blk.ni+2, blk.nk+2)
+        commcshape[3]  =   ( blk.ni+1, blk.nk+1, blk.ne)
+        slice_rfp[3]      = s_[:,0,:]
+        slice_rc[3]       = s_[:,0,:,:]
 
-        slice_sfp['4']      = s_[:,-3,:]
-        slice_sc['4']       = s_[:,-2,:,:]
-        commfpshape['4'] = commfpshape['3']
-        commcshape['4']  = commcshape['3']
-        slice_rfp['4']      = s_[:,-1,:]
-        slice_rc['4']       = s_[:,-1,:,:]
+        slice_sfp[4]      = s_[:,-3,:]
+        slice_sc[4]       = s_[:,-2,:,:]
+        commfpshape[4] = commfpshape[3]
+        commcshape[4]  = commcshape[3]
+        slice_rfp[4]      = s_[:,-1,:]
+        slice_rc[4]       = s_[:,-1,:,:]
 
-        slice_sfp['5']      = s_[:,:,2]
-        slice_sc['5']       = s_[:,:,1]
-        commfpshape['5'] =   ( blk.ni+2, blk.nj+2)
-        commcshape['5']  =   ( blk.ni+1, blk.nj+1, blk.ne)
-        slice_rfp['5']      = s_[:,:,0]
-        slice_rc['5']       = s_[:,:,0,:]
+        slice_sfp[5]      = s_[:,:,2]
+        slice_sc[5]       = s_[:,:,1]
+        commfpshape[5] =   ( blk.ni+2, blk.nj+2)
+        commcshape[5]  =   ( blk.ni+1, blk.nj+1, blk.ne)
+        slice_rfp[5]      = s_[:,:,0]
+        slice_rc[5]       = s_[:,:,0,:]
 
-        slice_sfp['6']      = s_[:,:,-3]
-        slice_sc['6']       = s_[:,:,-2,:]
-        commfpshape['6'] = commfpshape['5']
-        commcshape['6']  = commcshape['5']
-        slice_rfp['6']      = s_[:,:,-1]
-        slice_rc['6']       = s_[:,:,-1,:]
+        slice_sfp[6]      = s_[:,:,-3]
+        slice_sc[6]       = s_[:,:,-2,:]
+        commfpshape[6] = commfpshape[5]
+        commcshape[6]  = commcshape[5]
+        slice_rfp[6]      = s_[:,:,-1]
+        slice_rc[6]       = s_[:,:,-1,:]
 
-        for face in ['1','2','3','4','5','6']:
-            neighbor = blk.connectivity[face]['neighbor']
+        for face in blk.faces:
+            neighbor = face.connectivity['neighbor']
             if neighbor is None:
-                blk.slice_s3[face] = None
-                blk.slice_r3[face] = None
-                blk.slice_s4[face] = None
-                blk.slice_r4[face] = None
-                blk.sendbuffer3[face] = None
-                blk.recvbuffer3[face] = None
-                blk.sendbuffer4[face] = None
-                blk.recvbuffer4[face] = None
+                pass
             else:
-                blk.slice_s3[face] = slice_sfp[face]
-                blk.slice_r3[face] = slice_rfp[face]
+                face.slice_s3 = slice_sfp[face.nface]
+                face.slice_r3 = slice_rfp[face.nface]
 
-                blk.slice_s4[face] = slice_sc[face]
-                blk.slice_r4[face] = slice_rc[face]
+                face.slice_s4 = slice_sc[face.nface]
+                face.slice_r4 = slice_rc[face.nface]
 
-                orientation = blk.connectivity[face]['orientation']
-                neighbor = int(blk.connectivity[face]['neighbor'])
+                orientation = face.connectivity['orientation']
+                neighbor = face.connectivity['neighbor']
 
-                face2 = blk.connectivity[face]['nface']#get_neighbor_face(face, orientation)
-                orientation2 = no[face]
+                face2 = face.neighbor_face
+                orientation2 = no[face.nface]
 
-                face_orientations = [i for j,i in enumerate(orientation) if j != int(face_to_orient_place_mapping[face])]
-                normal_index = [j for j in range(3) if j == int(face_to_orient_place_mapping[face])][0]
-                face_orientations2 = [i for j,i in enumerate(orientation2) if j != int(face_to_orient_place_mapping[face2])]
-                normal_index2 = [j for j in range(3) if j == int(face_to_orient_place_mapping[face2])][0]
+                face_orientations = [int(i) for j,i in enumerate(orientation) if j != face_to_orient_place_mapping[face.nface]]
+                normal_index = [j for j in range(3) if j == face_to_orient_place_mapping[face.nface]][0]
+                face_orientations2 = [int(i) for j,i in enumerate(orientation2) if j != face_to_orient_place_mapping[face2]]
+                normal_index2 = [j for j in range(3) if j == face_to_orient_place_mapping[face2]][0]
 
                 big_index = large_index_mapping[normal_index]
                 big_index2 = large_index_mapping[normal_index2]
 
                 #Do we need to transpoze?
-                if int(face_orientations[1]) in need_to_transpose[big_index][big_index2]:
+                if face_orientations[1] in need_to_transpose[big_index][big_index2]:
                     #Do we need to flip along 0 axis?
-                    if face_orientations[1] in ['4','5','6']:
+                    if face_orientations[1] in [4,5,6]:
                         #Do we need to flip along 1 axis?
-                        if face_orientations[0] in ['4','5','6']:
+                        if face_orientations[0] in [4,5,6]:
                             # Then do all three
-                            blk.orient[face] = orient_Tf0f1
+                            face.orient = orient_Tf0f1
                         else:
                             # Then do just T and flip0
-                            blk.orient[face] = orient_Tf0
+                            face.orient = orient_Tf0
                     else:
                         #Do we need to flip along 1 axis?
-                        if face_orientations[0] in ['4','5','6']:
+                        if face_orientations[0] in [4,5,6]:
                             # Then do just T and flip1
-                            blk.orient[face] = orient_Tf1
+                            face.orient = orient_Tf1
                         else:
                             # Then do just T
-                            blk.orient[face] = orient_T
+                            face.orient = orient_T
                 else:
                     #Do we need to flip along 0 axis?
-                    if face_orientations[1] in ['4','5','6']:
+                    if face_orientations[1] in [4,5,6]:
                         #Do we need to flip along 1 axis?
-                        if face_orientations[0] in ['4','5','6']:
+                        if face_orientations[0] in [4,5,6]:
                             # Then do just flip0 and flip1
-                            blk.orient[face] = orient_f0f1
+                            face.orient = orient_f0f1
                         else:
                             # Then do just flip0
-                            blk.orient[face] = orient_f0
-                    elif face_orientations[0] in ['4','5','6']:
+                            face.orient = orient_f0
+                    elif face_orientations[0] in [4,5,6]:
                             # Then do just flip1
-                        blk.orient[face] = orient_f1
+                        face.orient = orient_f1
                     else:
                         # Then do nothing
-                        blk.orient[face] = orient_na
+                        face.orient = orient_na
 
                 # We send the data in the correct shape already
                 # Face and point shape
-                temp = blk.orient[face](np.empty(commfpshape[face]))
-                blk.sendbuffer3[face] = np.ascontiguousarray(temp)
+                temp = face.orient(np.empty(commfpshape[face.nface]))
+                face.sendbuffer3 = np.ascontiguousarray(temp)
                 # We revieve the data in the correct shape already
-                temp = np.empty(commfpshape[face])
-                blk.recvbuffer3[face] = np.ascontiguousarray(np.empty(commfpshape[face]))
+                temp = np.empty(commfpshape[face.nface])
+                face.recvbuffer3 = np.ascontiguousarray(np.empty(commfpshape[face.nface]))
 
                 # Cell
-                temp = blk.orient[face](np.empty(commcshape[face]))
-                blk.sendbuffer4[face] = np.ascontiguousarray(temp)
+                temp = face.orient(np.empty(commcshape[face.nface]))
+                face.sendbuffer4 = np.ascontiguousarray(temp)
                 # We revieve the data in the correct shape already
-                temp = np.empty(commcshape[face])
-                blk.recvbuffer4[face] = np.ascontiguousarray(np.empty(commcshape[face]))
+                temp = np.empty(commcshape[face.nface])
+                face.recvbuffer4 = np.ascontiguousarray(np.empty(commcshape[face.nface]))

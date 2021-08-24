@@ -26,6 +26,8 @@ class topology(UserList):
         else:
             super().__init__(ls)
 
+        self.total_blocks = None
+
     @property
     def nblks(self):
         return len(self)

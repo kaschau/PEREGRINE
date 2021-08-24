@@ -9,15 +9,15 @@
 
 void tpg(block_ b,
       thermdat_ th,
-    std::string face,
-    std::string given) {
+           int  face,
+   std::string  given) {
 
   MDRange3 range = get_range3(b, face);
 
 
   if ( given.compare("prims") == 0 )
   {
-  Kokkos::parallel_for("Compute all conserved quantities from primatives",
+  Kokkos::parallel_for("Compute all conserved quantities from primatives via tgp",
                        range,
                        KOKKOS_LAMBDA(const int i,
                                      const int j,
@@ -133,7 +133,7 @@ void tpg(block_ b,
   }
   else if ( given.compare("cons") == 0 )
   {
-  Kokkos::parallel_for("Compute primatives from conserved quantities.",
+  Kokkos::parallel_for("Compute primatives from conserved quantities via tpg",
                        range,
                        KOKKOS_LAMBDA(const int i,
                                      const int j,
@@ -252,6 +252,6 @@ void tpg(block_ b,
   }
   else
   {
-  throw std::invalid_argument( "Invalid given string in cpg.");
+  throw std::invalid_argument( "Invalid given string in tpg.");
   }
 }

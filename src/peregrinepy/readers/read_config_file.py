@@ -17,7 +17,7 @@ def read_config_file(file_path):
             nocomment = line.strip().split('#')[0]
             key,val = tuple(nocomment.replace(' ','').split('='))
             try: #convert numbers to floats or ints
-                if '.' in val:
+                if '.' in val or 'e' in val:
                     config[header][key] = float(val)
                 else:
                     config[header][key] = int(val)

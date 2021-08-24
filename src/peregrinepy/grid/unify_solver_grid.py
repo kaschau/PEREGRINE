@@ -1,5 +1,5 @@
-from ..mpicomm import mpiutils
 from mpi4py.MPI import DOUBLE as MPIDOUBLE
+from mpi4py.MPI import Request
 
 from . import generate_halo
 from .. import mpicomm
@@ -8,44 +8,54 @@ from ..bcs import face_slice
 fs = face_slice.fs
 
 def unify_solver_grid(mb):
+
     generate_halo(mb)
 
-    mpicomm.blockcomm.communicate(mb,['x','y','z'])
+    # Lets just be clean and create the edges and corners
+    for _ in range(3):
+        mpicomm.blockcomm.communicate(mb,['x','y','z'])
 
-    comm,rank,size = mpiutils.get_comm_rank_size()
-    #Take care of periodic BCs
+    comm,rank,size = mpicomm.mpiutils.get_comm_rank_size()
+
     for var in ['x','y','z']:
         for _ in range(3):
-            #Post sends
+            reqs = []
+            #Post non-blocking recieves
             for blk in mb:
-                send = blk.sendbuffer3
-                slice_s = blk.slice_s3
-                for face in ['1','2','3','4','5','6']:
-                    bc = blk.connectivity[face]['bc']
+                for face in blk.faces:
+                    bc = face.connectivity['bctype']
                     if bc != 'b1':
                         continue
-                    neighbor = blk.connectivity[face]['neighbor']
-                    orientation = blk.connectivity[face]['orientation']
-                    nface = blk.connectivity[face]['nface']
-                    comm_rank = blk.connectivity[face]['comm_rank']
-                    tag = int(f'1{blk.nblki}2{neighbor}1{nface}')
-                    send[face][:] = blk.orient[face]( blk.array[var][fs[face]['s2_']]
-                                                     -blk.array[var][fs[face]['s1_']])
-                    comm.Isend([send[face], MPIDOUBLE], dest=comm_rank, tag=tag)
+                    neighbor = face.connectivity['neighbor']
+                    orientation = face.connectivity['orientation']
+                    comm_rank   = face.comm_rank
+                    tag = int(f'1{neighbor}2{blk.nblki}1{face.nface}')
 
-            #Post recieves
+                    ssize = face.recvbuffer3.size
+                    reqs.append(comm.Irecv([face.recvbuffer3[:], ssize, MPIDOUBLE], source=comm_rank, tag=tag))
+
+            #Post non-blocking sends
             for blk in mb:
-                recv = blk.recvbuffer3
-                slice_r = blk.slice_r3
-                for face in ['1','2','3','4','5','6']:
-                    bc = blk.connectivity[face]['bc']
+                for face in blk.faces:
+                    bc = face.connectivity['bctype']
                     if bc != 'b1':
                         continue
-                    neighbor = blk.connectivity[face]['neighbor']
-                    orientation = blk.connectivity[face]['orientation']
-                    comm_rank   = blk.connectivity[face]['comm_rank']
-                    tag = int(f'1{neighbor}2{blk.nblki}1{face}')
-                    comm.Recv([recv[face][:], MPIDOUBLE], source=comm_rank, tag=tag)
-                    blk.array[var][fs[face]['s0_']] = blk.array[var][fs[face]['s1_']] + recv[face][:]
+                    neighbor = face.connectivity['neighbor']
+                    orientation = face.connectivity['orientation']
+                    comm_rank = face.comm_rank
+                    tag = int(f'1{blk.nblki}2{neighbor}1{face.neighbor_face}')
+                    face.sendbuffer3[:] = face.orient( blk.array[var][fs[face.nface]['s2_']]
+                                                      -blk.array[var][fs[face.nface]['s1_']])
+                    ssize = face.sendbuffer3.size
+                    comm.Send([face.sendbuffer3, ssize, MPIDOUBLE], dest=comm_rank, tag=tag)
 
-            comm.Barrier()
+            #wait and assign
+            Request.Waitall(reqs)
+            for blk in mb:
+                for face in blk.faces:
+                    neighbor = face.connectivity['neighbor']
+                    if neighbor is None:
+                        continue
+                    blk.array[var][fs[face.nface]['s0_']] = blk.array[var][fs[face.nface]['s1_']] + face.recvbuffer3[:]
+
+    comm.Barrier()

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-import json
+import yaml
+from ..mpicomm import mpiutils
 
 def read_connectivity(mb,path_to_file):
     '''This function parses a RAPTOR connectivity file given by file_path and adds the connectivity information to the supplied raptorpy.multiblock object
@@ -18,16 +19,21 @@ def read_connectivity(mb,path_to_file):
         Adds the connectivity information to mb
 
     '''
+    comm,rank,size = mpiutils.get_comm_rank_size()
 
-    with open(f'{path_to_file}/conn.json', 'r') as conn_file:
-        conn = json.load(conn_file)
-    if mb is None:
-        return conn
+    #only the zeroth block reads in the file
+    if 0 in mb.block_list:
+        with open(f'{path_to_file}/conn.yaml', 'r') as conn_file:
+            conn = yaml.load(conn_file, Loader=yaml.FullLoader)
     else:
-        nblks = len(conn)
-        if nblks != mb.nblks:
-            raise ValueError('WARNING! Number of blocks in dataset does not equal number of blocks in connectivity file.')
-        for blk in mb:
-            for face in ['1','2','3','4','5','6']:
-                for k1 in conn[blk.nblki][face].keys():
-                    blk.connectivity[face][k1] = conn[blk.nblki][face][k1]
+        conn = None
+    conn = comm.bcast(conn,root=0)
+
+    for blk in mb:
+        myconn = conn[f'Block{blk.nblki}']
+        for face in blk.faces:
+            for k1 in face.connectivity.keys():
+                val = myconn[f'Face{face.nface}'][k1]
+                face.connectivity[k1] = val
+
+    mb.total_blocks = conn['Total_Blocks']

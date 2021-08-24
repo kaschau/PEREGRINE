@@ -10,12 +10,7 @@ class rk1:
 
     def step(self, dt):
 
-        #Zero it out dQ
-        for blk in self:
-            blk.array['dQ'][:] = 0.0
-
         RHS(self)
-        #rhs is computed, it is stored in dQ
 
         #add it to current solution
         for blk in self:

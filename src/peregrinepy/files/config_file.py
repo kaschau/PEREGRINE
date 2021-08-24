@@ -33,10 +33,14 @@ class config_file(FrozenDict):
                                          'dt'          : 1e-3,
                                          'restart_from': 0,
                                          'animate'     : True,
-                                         'niterout'    : 10
+                                         'niterout'    : 10,
+                                         'niterprint'  : 1
                                          })
 
         self['solver'] = FrozenDict({'time_integration' : 'rk4'
+                                     })
+
+        self['RHS'] = FrozenDict({'diffusion' : True
                                      })
 
         self['thermochem'] = FrozenDict({'ctfile' : 'pure-debug.yaml',

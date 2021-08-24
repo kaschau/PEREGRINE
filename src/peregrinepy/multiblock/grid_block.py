@@ -39,6 +39,11 @@ class grid_block(topology_block):
         # Cell centers
         for d in ['xc','yc','zc','J']:
             self.array[f'{d}'] = None
+        # Cell center metrics
+        for d in ['dEdx','dEdy','dEdz',
+                  'dNdx','dNdy','dNdz',
+                  'dXdx','dXdy','dXdz']:
+            self.array[f'{d}'] = None
         # i face area vectors
         for d in ['isx','isy','isz','iS','inx','iny','inz']:
             self.array[f'{d}'] = None
@@ -57,6 +62,9 @@ class grid_block(topology_block):
         Create empty numpy arrays of correct size.
         '''
 
-        xshape  = [self.ni+2,self.nj+2,self.nk+2]
+        if self.block_type == 'solver':
+            xshape  = [self.ni+2,self.nj+2,self.nk+2]
+        else:
+            xshape  = [self.ni,self.nj,self.nk]
         for name in ['x','y','z']:
             self.array[name] = np.empty((xshape))

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import json
+import yaml
 
 def write_connectivity(mb, path='./'):
     '''This function produces RAPTOR grid connectivity file (conn.inp) files from a raptorpy.multiblock.grid (or a descendant)
@@ -19,10 +19,10 @@ def write_connectivity(mb, path='./'):
 
     '''
 
-    conn = []
+    conn = {}
+    conn['Total_Blocks'] = len(mb)
     for blk in mb:
-        conn.append(blk.connectivity)
+        conn[f'Block{blk.nblki}'] = blk.connectivity()
 
-    with open(f"{path}/conn.json", 'w') as conn_file:
-
-        conn_file.write(json.dumps(conn, indent=4))
+    with open(f"{path}/conn.yaml", 'w') as f:
+        yaml.dump(conn, f, sort_keys=False)
