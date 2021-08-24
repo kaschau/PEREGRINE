@@ -166,10 +166,8 @@ def cube(blk, origin, lengths, dimensions):
 
     blk.array['x'][s_i], blk.array['y'][s_i], blk.array['z'][s_i] = np.meshgrid(x,y,z, indexing='ij')
 
-    if blk.block_type in ['restart_block', 'solver_block']:
+    if blk.block_type in ['restart', 'solver']:
         blk.init_restart_arrays()
-    if blk.block_type == 'solver_block':
-        blk.init_solver_arrays()
 
 
 def multiblock_cube(mb, origin=[0,0,0], lengths=[1,1,1], mb_dimensions=[1,1,1], dimensions_perblock=[10,10,10]):
