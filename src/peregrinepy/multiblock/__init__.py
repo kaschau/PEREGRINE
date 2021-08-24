@@ -14,7 +14,7 @@ from ..thermo import thermdat
 import cantera as ct
 from pathlib import Path
 
-def generate_multiblock_solver(nblki, config):
+def generate_multiblock_solver(nblks, config, myblocks=None):
 
     #Get the time integrator from config file
     ti = config['solver']['time_integration']
@@ -33,7 +33,17 @@ def generate_multiblock_solver(nblki, config):
     spn = gas.species_names
 
     #Instantiate the combined mbsolver+timeint object
-    cls = mbsolver(nblki,spn)
+    cls = mbsolver(nblks,spn)
+
+    #In parallel we need to overwrite the generated block numbers
+    if myblocks != None:
+        assert (len(myblocks)==nblks),'You passed a quantity of block number assignments that != nblks'
+        for blk,nblki in zip(cls,myblocks):
+            blk.nblki = nblki
+
+    #TODO: Do this better in the future
+    #Stick the config file one
+    cls.config = config
 
     #Stick the thermdat object on
     cls.thermdat = thermdat(config)

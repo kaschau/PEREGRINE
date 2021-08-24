@@ -34,6 +34,7 @@ def simulate():
     pg.mpicomm.mpiutils.register_finalize_handler()
 
     config = pg.files.config_file()
+    config['RHS']['diffusion'] = False
     mb = pg.multiblock.generate_multiblock_solver(1,config)
     therm = pg.thermo.thermdat(config)
     pg.grid.create.multiblock_cube(mb,
@@ -43,16 +44,18 @@ def simulate():
     mb.init_solver_arrays(config)
 
     blk = mb[0]
+    for face in blk.faces:
+        face.connectivity['bctype'] = 's2'
 
-    blk.connectivity['1']['bc'] = 'b1'
-    blk.connectivity['1']['neighbor'] = 0
-    blk.connectivity['1']['orientation'] = '123'
-    blk.connectivity['1']['comm_rank'] = 0
+    blk.get_face_conn(1)['bctype'] = 'b1'
+    blk.get_face_conn(1)['neighbor'] = 0
+    blk.get_face_conn(1)['orientation'] = '123'
+    blk.get_face(1).comm_rank = 0
 
-    blk.connectivity['2']['bc'] = 'b1'
-    blk.connectivity['2']['neighbor'] = 0
-    blk.connectivity['2']['orientation'] = '123'
-    blk.connectivity['2']['comm_rank'] = 0
+    blk.get_face_conn(2)['bctype'] = 'b1'
+    blk.get_face_conn(2)['neighbor'] = 0
+    blk.get_face_conn(2)['orientation'] = '123'
+    blk.get_face(2).comm_rank = 0
 
     pg.mpicomm.blockcomm.set_block_communication(mb)
 
@@ -68,7 +71,7 @@ def simulate():
     blk.array['q'][1:-1,1,1,4] = initial_T
 
     #Update cons
-    mb.eos(blk,mb.thermdat,'0','prims')
+    mb.eos(blk, mb.thermdat, 0 ,'prims')
     pg.consistify(mb)
 
     dt = 0.1 * 0.025

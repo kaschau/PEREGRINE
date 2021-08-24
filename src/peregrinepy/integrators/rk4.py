@@ -15,8 +15,6 @@ class rk4:
             blk.array['rhs0'][:] = blk.array['Q'][:]
 
         # First Stage
-        for blk in self:
-            blk.array['dQ'][:,:,:,:] = 0.0
 
         RHS(self)
 
@@ -27,8 +25,6 @@ class rk4:
         consistify(self)
 
         # Second Stage
-        for blk in self:
-            blk.array['dQ'][:,:,:,:] = 0.0
 
         RHS(self)
 
@@ -39,8 +35,6 @@ class rk4:
         consistify(self)
 
         # Third Stage
-        for blk in self:
-            blk.array['dQ'][:,:,:,:] = 0.0
 
         RHS(self)
 
@@ -51,8 +45,6 @@ class rk4:
         consistify(self)
 
         # Fourth Stage
-        for blk in self:
-            blk.array['dQ'][:,:,:,:] = 0.0
 
         RHS(self)
 

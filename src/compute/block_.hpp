@@ -17,6 +17,9 @@ struct block_ {
   // Metric Arrays
   // Cell Centers
   threeDview xc,yc,zc,J;
+  threeDview dEdx,dEdy,dEdz;
+  threeDview dNdx,dNdy,dNdz;
+  threeDview dXdx,dXdy,dXdz;
   // i face area vectors
   threeDview isx,isy,isz,iS,inx,iny,inz;
   // j face area vectors
@@ -26,6 +29,8 @@ struct block_ {
 
   // Cons,Prim Arrays
   fourDview Q,q,dQ;
+  // Spatial derivative of prim array
+  fourDview dqdx,dqdy,dqdz;
   // thermo,trans arrays
   fourDview qh;
 
