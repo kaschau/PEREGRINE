@@ -8,19 +8,23 @@ def apply_bcs(mb,terms):
     for blk in mb:
         for face in blk.faces:
             bc = face.connectivity['bctype']
-            if bc == 'constant_velocity_subsonic_inlet':
-                constant_velocity_subsonic_inlet(mb.eos,blk,face.nface,mb.thermdat,terms)
+            if bc in ['b0','b1']:
+                continue
+            elif bc == 'constant_velocity_subsonic_inlet':
+                constant_velocity_subsonic_inlet(mb.eos,blk,face,mb.thermdat,terms)
             elif bc == 'constant_pressure_subsonic_outlet':
-                constant_pressure_subsonic_exit(mb.eos,blk,face.nface,mb.thermdat,terms)
+                constant_pressure_subsonic_exit(mb.eos,blk,face,mb.thermdat,terms)
     # Then we apply walls
     for blk in mb:
         for face in blk.faces:
             bc = face.connectivity['bctype']
-            if bc == 'adiabatic_no_slip_wall':
-                adiabatic_noslip_wall(mb.eos,blk,face.nface,mb.thermdat,terms)
-            elif bc == 'adiabatic_no_slip_wall':
-                adiabatic_slip_wall(mb.eos,blk,face.nface,mb.thermdat,terms)
+            if bc in ['b0','b1']:
+                continue
+            elif bc == 'adiabatic_noslip_wall':
+                adiabatic_noslip_wall(mb.eos,blk,face,mb.thermdat,terms)
+            elif bc == 'adiabatic_slip_wall':
+                adiabatic_slip_wall(mb.eos,blk,face,mb.thermdat,terms)
             elif bc == 'adiabatic_moving_wall':
-                adiabatic_moving_wall(mb.eos,blk,face.nface,mb.thermdat,terms)
+                adiabatic_moving_wall(mb.eos,blk,face,mb.thermdat,terms)
             elif bc == 'isoT_moving_wall':
-                isoT_moving_wall(mb.eos,blk,face.nface,mb.thermdat,terms)
+                isoT_moving_wall(mb.eos,blk,face,mb.thermdat,terms)

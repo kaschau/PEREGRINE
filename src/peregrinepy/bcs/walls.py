@@ -1,6 +1,8 @@
 from .face_slice import fs
 
-def adiabatic_noslip_wall(eos,blk,nface,thermdat,terms):
+def adiabatic_noslip_wall(eos,blk,face,thermdat,terms):
+
+    nface = face.nface
 
     if terms == 'euler':
         p = blk.array['q'][:,:,:,0]
@@ -31,7 +33,9 @@ def adiabatic_noslip_wall(eos,blk,nface,thermdat,terms):
         dTNdy[fs[nface]['s0_']] = - dTNdy[fs[nface]['s1_']]
         dTNdz[fs[nface]['s0_']] = - dTNdz[fs[nface]['s1_']]
 
-def adiabatic_slip_wall(eos,blk,nface,thermdat,terms):
+def adiabatic_slip_wall(eos,blk,face,thermdat,terms):
+
+    nface = face.nface
 
     if terms == 'euler':
         p = blk.array['q'][:,:,:,0]
@@ -80,7 +84,9 @@ def adiabatic_slip_wall(eos,blk,nface,thermdat,terms):
         dTNdy[fs[nface]['s0_']] = - dTNdy[fs[nface]['s1_']]
         dTNdz[fs[nface]['s0_']] = - dTNdz[fs[nface]['s1_']]
 
-def adiabatic_moving_wall(eos,blk,nface,thermdat,terms):
+def adiabatic_moving_wall(eos,blk,face,thermdat,terms):
+
+    nface = face.nface
 
     if terms == 'euler':
         p = blk.array['q'][:,:,:,0]
@@ -103,7 +109,7 @@ def adiabatic_moving_wall(eos,blk,nface,thermdat,terms):
             nz = blk.array['knz']
         else:
             raise ValueError('Unknown nface')
-        u[fs[nface]['s0_']] = 5.0
+        u[fs[nface]['s0_']] = face.bc['values']['u']
         v[fs[nface]['s0_']] = v[fs[nface]['s1_']] - 2.0*v[fs[nface]['s1_']] * ny[fs[nface]['s1_']]
         w[fs[nface]['s0_']] = w[fs[nface]['s1_']] - 2.0*w[fs[nface]['s1_']] * nz[fs[nface]['s1_']]
 
@@ -111,7 +117,7 @@ def adiabatic_moving_wall(eos,blk,nface,thermdat,terms):
         T[fs[nface]['s0_']] = T[fs[nface]['s1_']]
 
         #Update conservatives
-        eos(blk,thermdat,nface,'prims')
+        eos(blk,thermdat, nface,'prims')
 
     elif terms == 'viscous':
         #extrapolate velocity gradient
@@ -129,7 +135,9 @@ def adiabatic_moving_wall(eos,blk,nface,thermdat,terms):
         dTNdy[fs[nface]['s0_']] = - dTNdy[fs[nface]['s1_']]
         dTNdz[fs[nface]['s0_']] = - dTNdz[fs[nface]['s1_']]
 
-def isoT_moving_wall(eos,blk,nface,thermdat,terms):
+def isoT_moving_wall(eos,blk,face,thermdat,terms):
+
+    nface = face.nface
 
     if terms == 'euler':
         p = blk.array['q'][:,:,:,0]

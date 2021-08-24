@@ -1,6 +1,8 @@
 from .face_slice import fs
 
-def constant_pressure_subsonic_exit(eos,blk,nface,thermdat,terms):
+def constant_pressure_subsonic_exit(eos,blk,face,thermdat,terms):
+
+    nface = face.nface
 
     if terms == 'euler':
         q = blk.array['q'][:,:,:,1::]
