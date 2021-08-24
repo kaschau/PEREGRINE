@@ -3,8 +3,8 @@ from mpi4py.MPI import DOUBLE as MPIDOUBLE
 from mpi4py.MPI import Request
 import numpy as np
 
-#Communicate 3D arrays
-def communicate3(mb,varis):
+#Communicate arrays
+def communicate(mb,varis):
     if not isinstance(varis,list):
         varis = [varis]
 
@@ -14,6 +14,7 @@ def communicate3(mb,varis):
         reqs = []
         #Post non-blocking recieves
         for blk in mb:
+            ndim = blk.array[var].ndim
             for face in blk.faces:
                 neighbor = face.connectivity['neighbor']
                 if neighbor is None:
@@ -21,12 +22,14 @@ def communicate3(mb,varis):
                 orientation = face.connectivity['orientation']
                 comm_rank   = face.comm_rank
                 tag = int(f'1{neighbor}2{blk.nblki}1{face.nface}')
-                ssize = face.recvbuffer3.size
-                reqs.append(comm.Irecv([face.recvbuffer3[:], ssize, MPIDOUBLE], source=comm_rank, tag=tag))
+
+                recv = face.recvbuffer4 if ndim == 4 else face.recvbuffer3
+                ssize = recv.size
+                reqs.append(comm.Irecv([recv, ssize, MPIDOUBLE], source=comm_rank, tag=tag))
 
         #Post non-blocking sends
         for blk in mb:
-            assert (len(blk.array[var].shape) == 3), 'Trying to communicate the wrong size array with wrong communicate3'
+            ndim = blk.array[var].ndim
             for face in blk.faces:
                 neighbor = face.connectivity['neighbor']
                 if neighbor is None:
@@ -34,66 +37,25 @@ def communicate3(mb,varis):
                 orientation = face.connectivity['orientation']
                 comm_rank = face.comm_rank
                 tag = int(f'1{blk.nblki}2{neighbor}1{face.neighbor_face}')
-                face.sendbuffer3[:] = face.orient(blk.array[var][face.slice_s3])
-                ssize = face.sendbuffer3.size
-                comm.Send([face.sendbuffer3, ssize, MPIDOUBLE], dest=comm_rank, tag=tag)
+
+                send,slice_s = (face.sendbuffer4,face.slice_s4) if ndim == 4 else (face.sendbuffer3,face.slice_s3)
+                send[:] = face.orient(blk.array[var][slice_s])
+                ssize = send.size
+                comm.Send([send, ssize, MPIDOUBLE], dest=comm_rank, tag=tag)
 
         #wait and assign
         Request.Waitall(reqs)
         for blk in mb:
+            ndim = blk.array[var].ndim
             for face in blk.faces:
                 neighbor = face.connectivity['neighbor']
                 if neighbor is None:
                     continue
-                blk.array[var][face.slice_r3] = face.recvbuffer3[:]
+                recv,slice_r = (face.recvbuffer4,face.slice_r4) if ndim == 4 else (face.recvbuffer3,face.slice_r3)
+                blk.array[var][slice_r] = recv
 
-    comm.Barrier()
+        comm.Barrier()
 
-#Communicate 4D arrays
-def communicate4(mb,varis):
-    if not isinstance(varis,list):
-        varis = [varis]
-
-    comm,rank,size = get_comm_rank_size()
-
-    for var in varis:
-        reqs = []
-        #Post non-blocking recieves
-        for blk in mb:
-            for face in blk.faces:
-                neighbor = face.connectivity['neighbor']
-                if neighbor is None:
-                    continue
-                orientation = face.connectivity['orientation']
-                comm_rank   = face.comm_rank
-                tag = int(f'1{neighbor}2{blk.nblki}1{face.nface}')
-                ssize = face.recvbuffer4.size
-                reqs.append(comm.Irecv([face.recvbuffer4[:], ssize, MPIDOUBLE], source=comm_rank, tag=tag))
-
-        #Post non-blocking sends
-        for blk in mb:
-            assert (len(blk.array[var].shape) == 4), 'Trying to communicate the wrong size array with communicate4'
-            for face in blk.faces:
-                neighbor = face.connectivity['neighbor']
-                if neighbor is None:
-                    continue
-                orientation = face.connectivity['orientation']
-                comm_rank = face.comm_rank
-                tag = int(f'1{blk.nblki}2{neighbor}1{face.neighbor_face}')
-                face.sendbuffer4[:] = face.orient(blk.array[var][face.slice_s4])
-                ssize = face.sendbuffer4.size
-                comm.Send([face.sendbuffer4, ssize, MPIDOUBLE], dest=comm_rank, tag=tag)
-
-        #wait and assign
-        Request.Waitall(reqs)
-        for blk in mb:
-            for face in blk.faces:
-                neighbor = face.connectivity['neighbor']
-                if neighbor is None:
-                    continue
-                blk.array[var][face.slice_r4] = face.recvbuffer4[:]
-
-    comm.Barrier()
 
 def set_block_communication(mb):
     assert (0 not in [mb[0].ni, mb[0].nj, mb[0].nk]), 'Must get grid before setting block communicaitons.'

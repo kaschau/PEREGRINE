@@ -1,5 +1,5 @@
 from .bcs import apply_bcs
-from .mpicomm.blockcomm import communicate4
+from .mpicomm.blockcomm import communicate
 from .compute import dqdxyz
 
 def consistify(mb):
@@ -18,7 +18,7 @@ def consistify(mb):
     apply_bcs(mb,'euler')
 
     #communicate halos
-    communicate4(mb,['Q','q'])
+    communicate(mb,['Q','q'])
 
     #Update spatial derivatives
     dqdxyz(mb)
@@ -27,4 +27,4 @@ def consistify(mb):
     apply_bcs(mb,'viscous')
 
     #communicate viscous halos
-    communicate4(mb,['dqdx','dqdy','dqdz'])
+    communicate(mb,['dqdx','dqdy','dqdz'])
