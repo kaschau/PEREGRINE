@@ -1,0 +1,6 @@
+---
+
+dummy_exit:
+  bctype: constant_pressure_subsonic_outlet
+  values:
+    p: 101325.0

@@ -32,9 +32,9 @@ def read_grid(mb,path='./'):
                 if blk.block_type == 'solver':
                     blk.array[name][1:-1,
                                     1:-1,
-                                    1:-1] = np.array(f['coordinates'][name]).reshape((ni, nj, nk))
+                                    1:-1] = np.array(f['coordinates'][name]).reshape((ni, nj, nk), order='F')
                 else:
-                    blk.array[name][:] = np.array(f['coordinates'][name]).reshape((ni, nj, nk))
+                    blk.array[name][:] = np.array(f['coordinates'][name]).reshape((ni, nj, nk), order='F')
 
         if blk.block_type in ['restart_block', 'solver_block']:
             blk.init_restart_arrays()

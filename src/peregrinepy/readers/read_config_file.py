@@ -1,32 +1,19 @@
+import yaml
 from ..files import config_file
+from ..mpicomm import mpiutils
 
-def read_config_file(file_path):
+def read_config_file(file_path='./'):
+
+    comm,rank,size = mpiutils.get_comm_rank_size()
+
+    #only the zeroth block reads in the file
+    with open(f'{file_path}', 'r') as conn_file:
+        connin = yaml.load(conn_file, Loader=yaml.FullLoader)
 
     config = config_file()
 
-    with open(file_path,'r') as f:
-        for line in [i for i in f.readlines() if not i.replace(' ','').startswith('#') and i.strip() != '']:
-            if '=' not in line.strip():
-                header = line.strip()
-                try:
-                    section = config[header]
-                    continue
-                except KeyError:
-                    raise ValueError('Section header {} not part of standard config file, exiting.'.format(header))
-
-            nocomment = line.strip().split('#')[0]
-            key,val = tuple(nocomment.replace(' ','').split('='))
-            try: #convert numbers to floats or ints
-                if '.' in val or 'e' in val:
-                    config[header][key] = float(val)
-                else:
-                    config[header][key] = int(val)
-            except ValueError:
-                if val in ['True','true','t','T']:
-                    config[header][key] = True
-                elif val in ['False','true','f','F']:
-                    config[header][key] = False
-                else:
-                    config[header][key] = val
+    for k1 in connin.keys():
+        for k2 in connin[k1].keys():
+            config[k1][k2] = connin[k1][k2]
 
     return config

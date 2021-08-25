@@ -67,13 +67,13 @@ def write_restart(mb, path='./', grid_path='./', precision='double'):
                 dset_name = 'rho'
                 qf['results'].create_dataset(dset_name, shape=(extent_cc,), dtype=fdtype)
                 dset = qf['results'][dset_name]
-                dset[:] = blk.array['Q'][1:-1,1:-1,1:-1,0].ravel()
+                dset[:] = blk.array['Q'][1:-1,1:-1,1:-1,0].ravel(order='F')
             names = ['p','u','v','w','T']+blk.species_names[0:-1]
             for j in range(len(names)):
                 dset_name = names[j]
                 qf['results'].create_dataset(dset_name, shape=(extent_cc,), dtype=fdtype)
                 dset = qf['results'][dset_name]
-                dset[:] = blk.array['q'][1:-1,1:-1,1:-1,j].ravel()
+                dset[:] = blk.array['q'][1:-1,1:-1,1:-1,j].ravel(order='F')
             #Compute the nth species here
             dset_name = blk.species_names[-1]
             qf['results'].create_dataset(dset_name, shape=(extent_cc,), dtype=fdtype)
@@ -91,14 +91,14 @@ def write_restart(mb, path='./', grid_path='./', precision='double'):
 
         topology_elem = etree.SubElement(block_elem, 'Topology')
         topology_elem.set('TopologyType', '3DSMesh')
-        topology_elem.set('NumberOfElements', f'{blk.ni} {blk.nj} {blk.nk}')
+        topology_elem.set('NumberOfElements', f'{blk.nk} {blk.nj} {blk.ni}')
 
         geometry_elem = etree.SubElement(block_elem, 'Geometry')
         geometry_elem.set('GeometryType', 'X_Y_Z')
 
         data_x_elem = etree.SubElement(geometry_elem, 'DataItem')
         data_x_elem.set('ItemType', 'Hyperslab')
-        data_x_elem.set('Dimensions', f'{blk.ni} {blk.nj} {blk.nk}')
+        data_x_elem.set('Dimensions', f'{blk.nk} {blk.nj} {blk.ni}')
         data_x_elem.set('Type', 'HyperSlab')
         data_x1_elem = etree.SubElement(data_x_elem, 'DataItem')
         data_x1_elem.set('DataType', 'Int')
@@ -131,7 +131,7 @@ def write_restart(mb, path='./', grid_path='./', precision='double'):
         attribute_elem.set('Center', 'Cell')
         data_res_elem = etree.SubElement(attribute_elem, 'DataItem')
         data_res_elem.set('ItemType', 'Hyperslab')
-        data_res_elem.set('Dimensions', f'{blk.ni-1} {blk.nj-1} {blk.nk-1}')
+        data_res_elem.set('Dimensions', f'{blk.nk-1} {blk.nj-1} {blk.ni-1}')
         data_res_elem.set('Type', 'HyperSlab')
         data_res1_elem = etree.SubElement(data_res_elem, 'DataItem')
         data_res1_elem.set('DataType', 'Int')

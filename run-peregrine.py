@@ -26,7 +26,6 @@ def simulate(config_file_path):
 
     mb = pg.bootstrap_case(config)
 
-    pg.consistify(mb)
     pg.writers.write_restart(mb,path=config['io']['outputdir'],grid_path='../Grid')
 
     for niter in range(config['simulation']['niter']):

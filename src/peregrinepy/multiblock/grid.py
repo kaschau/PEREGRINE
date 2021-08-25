@@ -18,6 +18,7 @@ from .grid_block import grid_block
 class grid(topology):
     '''A list of raptorpy.grid.grid_block objects. Inherits from raptorpy.multiblock.dataset
     '''
+    mb_type = 'grid'
     def __init__(self, nblks, ls=[]):
         if ls == []:
             temp = [grid_block(i) for i in range(nblks)]
