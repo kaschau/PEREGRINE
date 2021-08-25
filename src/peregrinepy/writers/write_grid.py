@@ -31,7 +31,7 @@ def write_grid(mb, path='./', precision='double',with_halo=False):
     else:
         fdtype = '<f8'
 
-    if with_halo:
+    if with_halo and mb.mb_type == 'solver':
         ng = 2
     else:
         ng = 0
