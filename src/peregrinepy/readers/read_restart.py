@@ -36,7 +36,7 @@ def read_restart(mb, path='./', nrt=0, animate=True):
             blk.tme = list(f['iter']['tme'])[0]
 
             for i,var in enumerate(variables):
-                blk.array['q'][1:-1,1:-1,1:-1,i] = np.array(f['results'][var]).reshape((blk.ni-1, blk.nj-1, blk.nk-1))
+                blk.array['q'][1:-1,1:-1,1:-1,i] = np.array(f['results'][var]).reshape((blk.ni-1, blk.nj-1, blk.nk-1), order='F')
 
 
     #Set the mb values as well
