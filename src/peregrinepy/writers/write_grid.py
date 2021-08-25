@@ -31,7 +31,7 @@ def write_grid(mb, path='./', precision='double',with_halo=False):
     else:
         fdtype = '<f8'
 
-    if with_halo:
+    if with_halo and mb.mb_type == 'solver':
         ng = 2
     else:
         ng = 0
@@ -76,25 +76,25 @@ def write_grid(mb, path='./', precision='double',with_halo=False):
             else:
                 s_ = np.s_[:,:,:]
             dset = f['coordinates']['x']
-            dset[:] = blk.array['x'][s_].ravel()
+            dset[:] = blk.array['x'][s_].ravel(order='F')
             dset = f['coordinates']['y']
-            dset[:] = blk.array['y'][s_].ravel()
+            dset[:] = blk.array['y'][s_].ravel(order='F')
             dset = f['coordinates']['z']
-            dset[:] = blk.array['z'][s_].ravel()
+            dset[:] = blk.array['z'][s_].ravel(order='F')
 
         block_elem = etree.Element('Grid')
         block_elem.set('Name',f'B{blk.nblki:06d}')
 
         topology_elem = etree.SubElement(block_elem, 'Topology')
         topology_elem.set('TopologyType', '3DSMesh')
-        topology_elem.set('NumberOfElements', f'{blk.ni+ng} {blk.nj+ng} {blk.nk+ng}')
+        topology_elem.set('NumberOfElements', f'{blk.nk+ng} {blk.nj+ng} {blk.ni+ng}')
 
         geometry_elem = etree.SubElement(block_elem, 'Geometry')
         geometry_elem.set('GeometryType', 'X_Y_Z')
 
         data_x_elem = etree.SubElement(geometry_elem, 'DataItem')
         data_x_elem.set('ItemType', 'Hyperslab')
-        data_x_elem.set('Dimensions', f'{blk.ni+ng} {blk.nj+ng} {blk.nk+ng}')
+        data_x_elem.set('Dimensions', f'{blk.nk+ng} {blk.nj+ng} {blk.ni+ng}')
         data_x_elem.set('Type', 'HyperSlab')
         data_x1_elem = etree.SubElement(data_x_elem, 'DataItem')
         data_x1_elem.set('DataType', 'Int')
@@ -104,7 +104,7 @@ def write_grid(mb, path='./', precision='double',with_halo=False):
         data_x2_elem = etree.SubElement(data_x_elem, 'DataItem')
         data_x2_elem.set('NumberType', 'Float')
         data_x2_elem.set('ItemType', 'Uniform')
-        data_x2_elem.set('Dimensions', '{extent}')
+        data_x2_elem.set('Dimensions', f'{extent}')
         data_x2_elem.set('Precision', '4')
         data_x2_elem.set('Format', 'HDF')
         data_x2_elem.text = f'gv.{blk.nblki:06d}.h5:/coordinates/x'

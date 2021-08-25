@@ -1,0 +1,6 @@
+---
+
+dummy_wall:
+  bctype: isoT_noslip_wall
+  values:
+    T: 300.0
