@@ -11,8 +11,8 @@ def adiabatic_noslip_wall(eos,blk,face,thermdat,terms):
         u = blk.array['q'][:,:,:,1:4]
         u[fs[nface]['s0_']] = -u[fs[nface]['s1_']]
 
-        T = blk.array['q'][:,:,:,4]
-        T[fs[nface]['s0_']] = T[fs[nface]['s1_']]
+        TN = blk.array['q'][:,:,:,4::]
+        TN[fs[nface]['s0_']] = TN[fs[nface]['s1_']]
 
         #Update conservatives
         eos(blk,thermdat,nface,'prims')
@@ -62,8 +62,8 @@ def adiabatic_slip_wall(eos,blk,face,thermdat,terms):
         v[fs[nface]['s0_']] = v[fs[nface]['s1_']] - 2.0*v[fs[nface]['s1_']] * ny[fs[nface]['s1_']]
         w[fs[nface]['s0_']] = w[fs[nface]['s1_']] - 2.0*w[fs[nface]['s1_']] * nz[fs[nface]['s1_']]
 
-        T = blk.array['q'][:,:,:,4]
-        T[fs[nface]['s0_']] = T[fs[nface]['s1_']]
+        TN = blk.array['q'][:,:,:,4::]
+        TN[fs[nface]['s0_']] = TN[fs[nface]['s1_']]
 
         #Update conservatives
         eos(blk,thermdat,nface,'prims')
@@ -113,8 +113,8 @@ def adiabatic_moving_wall(eos, blk, face, thermdat, terms):
         v[fs[nface]['s0_']] = 2.0*face.bc['values']['v'] - v[fs[nface]['s1_']]
         w[fs[nface]['s0_']] = 2.0*face.bc['values']['w'] - w[fs[nface]['s1_']]
 
-        T = blk.array['q'][:,:,:,4]
-        T[fs[nface]['s0_']] = T[fs[nface]['s1_']]
+        TN = blk.array['q'][:,:,:,4::]
+        TN[fs[nface]['s0_']] = TN[fs[nface]['s1_']]
 
         #Update conservatives
         eos(blk, thermdat, nface, 'prims')
@@ -161,12 +161,17 @@ def isoT_moving_wall(eos,blk,face,thermdat,terms):
             nz = blk.array['knz']
         else:
             raise ValueError('Unknown nface')
-        u[fs[nface]['s0_']] = 5.0
-        v[fs[nface]['s0_']] = v[fs[nface]['s1_']] - 2.0*v[fs[nface]['s1_']] * ny[fs[nface]['s1_']]
-        w[fs[nface]['s0_']] = w[fs[nface]['s1_']] - 2.0*w[fs[nface]['s1_']] * nz[fs[nface]['s1_']]
+        u[fs[nface]['s0_']] = 2.0*face.bc['values']['u'] - u[fs[nface]['s1_']]
+        v[fs[nface]['s0_']] = 2.0*face.bc['values']['v'] - v[fs[nface]['s1_']]
+        w[fs[nface]['s0_']] = 2.0*face.bc['values']['w'] - w[fs[nface]['s1_']]
 
+        #Match species
+        N = blk.array['q'][:,:,:,4::]
+        N[fs[nface]['s0_']] =  N[fs[nface]['s1_']]
+
+        #Set tempeerature
         T = blk.array['q'][:,:,:,4]
-        T[fs[nface]['s0_']] = 1000.0
+        T[fs[nface]['s0_']] = 2.0*face.bc['values']['T'] - T[fs[nface]['s1_']]
 
         #Update conservatives
         eos(blk,thermdat,nface,'prims')
