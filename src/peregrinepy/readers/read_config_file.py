@@ -16,4 +16,7 @@ def read_config_file(file_path='./'):
         for k2 in connin[k1].keys():
             config[k1][k2] = connin[k1][k2]
 
+    #ensure common problem variables are typed correctly
+    config['simulation']['dt'] = float(config['simulation']['dt'])
+
     return config
