@@ -33,6 +33,7 @@ def read_bcs(mb,path_to_file):
     bcs = comm.bcast(bcs, root=0)
 
     if bcs is None:
+        print('No bcfams.yaml found, using defaults.')
         return
 
     for blk in mb:
