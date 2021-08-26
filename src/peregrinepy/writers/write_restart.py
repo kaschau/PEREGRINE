@@ -156,5 +156,5 @@ def write_restart(mb, path='./', grid_path='./', precision='double'):
         grid_elem.append(deepcopy(block_elem))
 
     et = etree.ElementTree(xdmf_elem)
-    save_file = f'{path}/q.{mb.nrt:06d}.xmf'
+    save_file = f'{path}/q.{mb.nrt:08d}.xmf'
     et.write(save_file, pretty_print=True, encoding="UTF-8", xml_declaration=True)
