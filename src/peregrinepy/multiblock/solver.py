@@ -29,6 +29,9 @@ class solver(restart):
         self.thermdat = None
         self.eos = None
 
+        #Parallel output
+        self.parallel_xmf = None
+
     def init_solver_arrays(self,config):
         for blk in self:
             blk.init_solver_arrays(config)

@@ -76,6 +76,13 @@ def bootstrap_case(config):
                             config['simulation']['restart_from'],
                             config['simulation']['animate'])
 
+    ################################################################
+    ##### Register parallel writer
+    ################################################################
+    pg.writers.parallel_writer.register_parallel_xdmf(mb,
+                                                      config['io']['outputdir'],
+                                                      grid_path=f'../{config["io"]["griddir"]}')
+
     #Generate conserved variables
     for blk in mb:
         mb.eos(blk, mb.thermdat, 0, 'prims')

@@ -87,7 +87,7 @@ def write_restart(mb, path='./', grid_path='./', precision='double'):
         block_elem.set('Name',f'B{blk.nblki:06d}')
 
         time_elem = etree.SubElement(block_elem, 'Time')
-        time_elem.set('Value', f'{mb.tme}')
+        time_elem.set('Value', str(mb.tme))
 
         topology_elem = etree.SubElement(block_elem, 'Topology')
         topology_elem.set('TopologyType', '3DSMesh')
