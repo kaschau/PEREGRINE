@@ -1,4 +1,4 @@
-from .face_slice import fs
+
 
 def constant_velocity_subsonic_inlet(eos,blk,face,thermdat,terms):
 
@@ -7,28 +7,28 @@ def constant_velocity_subsonic_inlet(eos,blk,face,thermdat,terms):
     if terms == 'euler':
         #extrapolate pressure
         p = blk.array['q'][:,:,:,0]
-        p[fs[nface]['s0_']] = 2.0*p[fs[nface]['s1_']] - p[fs[nface]['s2_']]
+        p[face.s0_] = 2.0*p[face.s1_] - p[face.s2_]
 
         #apply velo on face
         u = blk.array['q'][:,:,:,1]
         v = blk.array['q'][:,:,:,2]
         w = blk.array['q'][:,:,:,3]
-        u[fs[nface]['s0_']] = 2.0*face.bc['values']['u'] - u[fs[nface]['s1_']]
-        v[fs[nface]['s0_']] = 2.0*face.bc['values']['v'] - v[fs[nface]['s1_']]
-        w[fs[nface]['s0_']] = 2.0*face.bc['values']['w'] - w[fs[nface]['s1_']]
+        u[face.s0_] = 2.0*face.bcvals['u'] - u[face.s1_]
+        v[face.s0_] = 2.0*face.bcvals['v'] - v[face.s1_]
+        w[face.s0_] = 2.0*face.bcvals['w'] - w[face.s1_]
 
         T = blk.array['q'][:,:,:,4]
-        T[fs[nface]['s0_']] = 2.0*face.bc['values']['T'] - T[fs[nface]['s1_']]
+        T[face.s0_] = 2.0*face.bcvals['T'] - T[face.s1_]
 
         for sn,n in enumerate(thermdat.species_names[0:-1]):
             N = blk.array['q'][:,:,:,5+n]
-            N[fs[nface]['s0_']] = 2.0*face.bc['values'][sn[n]] - N[fs[nface]['s1_']]
+            N[face.s0_] = 2.0*face.bcvals[sn[n]] - N[face.s1_]
 
         #Update conserved
         eos(blk,thermdat,nface,'prims')
 
     elif terms == 'viscous':
         #neumann all gradients
-        blk.array['dqdx'][fs[nface]['s0_']] = blk.array['dqdx'][fs[nface]['s1_']]
-        blk.array['dqdy'][fs[nface]['s0_']] = blk.array['dqdy'][fs[nface]['s1_']]
-        blk.array['dqdz'][fs[nface]['s0_']] = blk.array['dqdz'][fs[nface]['s1_']]
+        blk.array['dqdx'][face.s0_] = blk.array['dqdx'][face.s1_]
+        blk.array['dqdy'][face.s0_] = blk.array['dqdy'][face.s1_]
+        blk.array['dqdz'][face.s0_] = blk.array['dqdz'][face.s1_]

@@ -39,7 +39,7 @@ def write_restart(mb, path='./', grid_path='./', precision='double'):
     domain_elem = etree.SubElement(xdmf_elem, 'Domain')
 
     grid_elem = etree.SubElement(domain_elem, 'Grid')
-    grid_elem.set('Name','peregrine Output')
+    grid_elem.set('Name','PEREGRINE Output')
     grid_elem.set('GridType', 'Collection')
     grid_elem.set('CollectionType','Spatial')
 
@@ -87,7 +87,7 @@ def write_restart(mb, path='./', grid_path='./', precision='double'):
         block_elem.set('Name',f'B{blk.nblki:06d}')
 
         time_elem = etree.SubElement(block_elem, 'Time')
-        time_elem.set('Value', f'{mb.tme}')
+        time_elem.set('Value', str(mb.tme))
 
         topology_elem = etree.SubElement(block_elem, 'Topology')
         topology_elem.set('TopologyType', '3DSMesh')
@@ -156,5 +156,5 @@ def write_restart(mb, path='./', grid_path='./', precision='double'):
         grid_elem.append(deepcopy(block_elem))
 
     et = etree.ElementTree(xdmf_elem)
-    save_file = f'{path}/q.{mb.nrt:06d}.xmf'
+    save_file = f'{path}/q.{mb.nrt:08d}.xmf'
     et.write(save_file, pretty_print=True, encoding="UTF-8", xml_declaration=True)

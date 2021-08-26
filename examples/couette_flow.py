@@ -73,10 +73,9 @@ def simulate():
         blk.get_face_conn(face)['bctype'] = 'adiabatic_slip_wall'
         blk.get_face(face).comm_rank = 0
 
-    blk.get_face(4).bc = {'bctype':'adiabatic_moving_wall',
-                          'values':{'u':5.0,
-                                    'v':0.0,
-                                    'w':0.0}}
+    blk.get_face(4).bcvals = {'u':5.0,
+                              'v':0.0,
+                              'w':0.0}
 
     pg.grid.generate_halo(mb)
 
