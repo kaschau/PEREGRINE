@@ -169,7 +169,7 @@ class solver_block(restart_block,block_):
         #-------------------------------------------------------------------------------#
         #       Thermo
         #-------------------------------------------------------------------------------#
-        shape = cQshape
+        shape  = [self.ni+1,self.nj+1,self.nk+1,4]
         for name in ['qh']:
             if self.array[name] is None:
                 setattr(self, name, kokkos.array(name, shape=shape, dtype=kokkos.double, space=space, dynamic=False))

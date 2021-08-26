@@ -38,7 +38,7 @@ void tpg(block_ b,
   double rhou,rhov,rhow;
   double e,rhoE;
   double rhoY[ns];
-  double gamma,cp,h;
+  double gamma,cp,h,c;
   double Rmix;
 
   double cps[ns],hs[ns];
@@ -86,6 +86,9 @@ void tpg(block_ b,
   // Compute mixuture enthalpy
   gamma = cp/(cp-Rmix);
 
+  // Mixture speed of sound
+  c = pow( gamma*Rmix*T , 2.0 );
+
   // Compute density
   rho = p/(Rmix*T);
   rhoinv = 1.0/rho;
@@ -124,10 +127,11 @@ void tpg(block_ b,
   {
     b.Q(i,j,k,5+n) = rhoY[n];
   }
-  // gamma,cp,h
+  // gamma,cp,h,c
   b.qh(i,j,k,0) = gamma;
   b.qh(i,j,k,1) = cp;
   b.qh(i,j,k,2) = rho*h;
+  b.qh(i,j,k,3) = c;
 
   });
   }
@@ -154,7 +158,7 @@ void tpg(block_ b,
   double u,v,w,tke;
   double T;
   double Y[ns];
-  double gamma,cp,h;
+  double gamma,cp,h,c;
   double Rmix;
 
   double cps[ns],hs[ns];
@@ -232,6 +236,9 @@ void tpg(block_ b,
   // Compute mixture gamma
   gamma = cp/(cp-Rmix);
 
+  // Mixture speed of sound
+  c = pow( gamma*Rmix*T , 2.0 );
+
   // Set values of new properties
   // Pressure, temperature, Y
   b.q(i,j,k,0) = p;
@@ -243,10 +250,11 @@ void tpg(block_ b,
   {
     b.q(i,j,k,5+n) = Y[n];
   }
-  // gamma,cp,h
+  // gamma,cp,h,c
   b.qh(i,j,k,0) = gamma;
   b.qh(i,j,k,1) = cp;
   b.qh(i,j,k,2) = rho*h;
+  b.qh(i,j,k,3) = c;
 
   });
   }

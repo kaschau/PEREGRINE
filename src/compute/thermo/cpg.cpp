@@ -38,7 +38,7 @@ void cpg(block_ b,
   double rhou,rhov,rhow;
   double e,rhoE;
   double rhoY[ns];
-  double gamma,cp,h;
+  double gamma,cp,h,c;
   double Rmix;
 
   p = b.q(i,j,k,0);
@@ -66,6 +66,9 @@ void cpg(block_ b,
   // Compute mixuture enthalpy
   h = cp*T;
   gamma = cp/(cp-Rmix);
+
+  // Mixture speed of soung
+  c = pow( gamma*Rmix*T , 2.0 );
 
   // Compute density
   rho = p/(Rmix*T);
@@ -105,10 +108,11 @@ void cpg(block_ b,
   {
     b.Q(i,j,k,5+n) = rhoY[n];
   }
-  // gamma,cp,h
+  // gamma,cp,h,c
   b.qh(i,j,k,0) = gamma;
   b.qh(i,j,k,1) = cp;
   b.qh(i,j,k,2) = rho*h;
+  b.qh(i,j,k,3) = c;
 
   });
   }
@@ -135,7 +139,7 @@ void cpg(block_ b,
   double u,v,w,tke;
   double T;
   double Y[ns];
-  double gamma,cp,h;
+  double gamma,cp,h,c;
   double Rmix;
 
   rho = b.Q(i,j,k,0);
@@ -179,6 +183,9 @@ void cpg(block_ b,
   h = e + p*rhoinv;
   gamma = cp/(cp-Rmix);
 
+  // Mixture speed of soung
+  c = pow( gamma*Rmix*T , 2.0 );
+
   // Set values of new properties
   // Pressure, temperature, Y
   b.q(i,j,k,0) = p;
@@ -190,10 +197,11 @@ void cpg(block_ b,
   {
     b.q(i,j,k,5+n) = Y[n];
   }
-  // gamma,cp,h
+  // gamma,cp,h,c
   b.qh(i,j,k,0) = gamma;
   b.qh(i,j,k,1) = cp;
   b.qh(i,j,k,2) = rho*h;
+  b.qh(i,j,k,3) = c;
 
   });
   }
