@@ -29,27 +29,23 @@ of the block class called "array", i.e.
 
 Gives access to the primative variables.
 
-| Name       | Index | Variables       | Units |
-| :--------: | :---: | ---------       | ----- |
-|  **q**     |       | **Primatives**  |       |
-|            |   0   | pressure        | Pa    |
-|            | 1,2,3 | u,v,w           |  m/s  |
-|            |   4   | temperature     |  K    |
-|            | 5..ne | mass fraction   |  []   |
-|  **Q**     |       | **Conserved**   |       |
-|            |   0   | density         | kg/m^3|
+| Name       | Index | Variables       | Units        |
+| :--------: | :---: | ---------       | -----        |
+|**q**       |       | **Primatives**  |              |
+|            |   0   | pressure        | Pa           |
+|            | 1,2,3 | u,v,w           | m/s          |
+|            |   4   | temperature     | K            |
+|            | 5..ne | mass fraction   | []           |
+|**Q**       |       | **Conserved**   |              |
+|            |   0   | density         | kg/m^3       |
 |            | 1,2,3 | momentum        | kg m / s.m^3 |
-|            |   4   | total energy    |   J   |
-|            | 5..ne | species mass    | kg/m^3|
-|  **qh**    |       | **Thermo**      |       |
-|            |   0   |   gamma         |  []   |
-|            |   1   |  cp             |  J/kg.K |
-|            |   2   | enthalpy        | J/m^3.K |
-|            |   3   |    c            | m/s   |
-
-
-
-
+|            |   4   | total energy    | J            |
+|            | 5..ne | species mass    | kg/m^3       |
+|**qh**      |       | **Thermo**      |              |
+|            |   0   | gamma           | []           |
+|            |   1   | cp              | J/kg.K       |
+|            |   2   | enthalpy        | J/m^3        |
+|            |   3   | c               | m/s          |
 
 
 ## License
