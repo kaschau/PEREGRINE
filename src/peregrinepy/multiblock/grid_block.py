@@ -59,7 +59,7 @@ class grid_block(topology_block):
 
     def init_grid_arrays(self):
         '''
-        Create empty numpy arrays of correct size.
+        Create zeroed numpy arrays of correct size.
         '''
 
         if self.block_type == 'solver':
@@ -67,4 +67,4 @@ class grid_block(topology_block):
         else:
             xshape  = [self.ni,self.nj,self.nk]
         for name in ['x','y','z']:
-            self.array[name] = np.empty((xshape))
+            self.array[name] = np.zeros((xshape))

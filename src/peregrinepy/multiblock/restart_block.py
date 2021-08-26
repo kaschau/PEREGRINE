@@ -41,8 +41,8 @@ class restart_block(grid_block):
 
     def init_restart_arrays(self):
         '''
-        Create empty numpy arrays of correct size.
+        Create zeroed numpy arrays of correct size.
         '''
 
         cQshape  = (self.ni+1,self.nj+1,self.nk+1,5+self.ns-1)
-        self.array['q'] = np.empty((cQshape))
+        self.array['q'] = np.zeros((cQshape))
