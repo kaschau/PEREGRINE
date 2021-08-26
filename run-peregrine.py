@@ -26,18 +26,18 @@ def simulate(config_file_path):
 
     mb = pg.bootstrap_case(config)
 
-    pg.writers.write_restart(mb,path=config['io']['outputdir'],grid_path='../Grid')
+    pg.writers.parallel_writer.parallel_write_restart(mb,path=config['io']['outputdir'])
 
     for niter in range(config['simulation']['niter']):
 
         if mb.nrt%config['simulation']['niterprint'] == 0:
-            if 0 in mb.block_list:
+            if rank == 0:
                 print(mb.nrt,mb.tme)
 
         mb.step(config['simulation']['dt'])
 
         if mb.nrt%config['simulation']['niterout'] == 0:
-            pg.writers.write_restart(mb,config['io']['outputdir'],grid_path='../Grid')
+            pg.writers.parallel_writer.parallel_write_restart(mb,config['io']['outputdir'])
 
     # Finalise MPI
     MPI.Finalize()
