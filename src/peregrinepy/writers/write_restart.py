@@ -39,7 +39,7 @@ def write_restart(mb, path='./', grid_path='./', precision='double'):
     domain_elem = etree.SubElement(xdmf_elem, 'Domain')
 
     grid_elem = etree.SubElement(domain_elem, 'Grid')
-    grid_elem.set('Name','peregrine Output')
+    grid_elem.set('Name','PEREGRINE Output')
     grid_elem.set('GridType', 'Collection')
     grid_elem.set('CollectionType','Spatial')
 

@@ -31,7 +31,8 @@ def simulate(config_file_path):
     for niter in range(config['simulation']['niter']):
 
         if mb.nrt%config['simulation']['niterprint'] == 0:
-            print(mb.nrt,mb.tme)
+            if 0 in mb.block_list:
+                print(mb.nrt,mb.tme)
 
         mb.step(config['simulation']['dt'])
 
