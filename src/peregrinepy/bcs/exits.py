@@ -1,4 +1,4 @@
-from .face_slice import fs
+
 
 def constant_pressure_subsonic_exit(eos,blk,face,thermdat,terms):
 
@@ -7,17 +7,17 @@ def constant_pressure_subsonic_exit(eos,blk,face,thermdat,terms):
     if terms == 'euler':
         #Extrapolate everything
         q = blk.array['q'][:,:,:,1::]
-        q[fs[nface]['s0_']] = 2.0*q[fs[nface]['s1_']] - q[fs[nface]['s2_']]
+        q[face.s0_] = 2.0*q[face.s1_] - q[face.s2_]
 
         #Set pressure at face
         p = blk.array['q'][:,:,:,0]
-        p[fs[nface]['s0_']] = 2.0*face.bc['values']['p'] - p[fs[nface]['s1_']]
+        p[face.s0_] = 2.0*face.bcvals['p'] - p[face.s1_]
 
         #Update conservatives
         eos(blk,thermdat,nface,'prims')
 
     elif terms == 'viscous':
         #neumann all gradients
-        blk.array['dqdx'][fs[nface]['s0_']] = blk.array['dqdx'][fs[nface]['s1_']]
-        blk.array['dqdy'][fs[nface]['s0_']] = blk.array['dqdy'][fs[nface]['s1_']]
-        blk.array['dqdz'][fs[nface]['s0_']] = blk.array['dqdz'][fs[nface]['s1_']]
+        blk.array['dqdx'][face.s0_] = blk.array['dqdx'][face.s1_]
+        blk.array['dqdy'][face.s0_] = blk.array['dqdy'][face.s1_]
+        blk.array['dqdz'][face.s0_] = blk.array['dqdz'][face.s1_]

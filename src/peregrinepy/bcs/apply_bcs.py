@@ -12,7 +12,7 @@ def apply_bcs(mb,terms):
                 continue
             elif bc == 'constant_velocity_subsonic_inlet':
                 constant_velocity_subsonic_inlet(mb.eos,blk,face,mb.thermdat,terms)
-            elif bc == 'constant_pressure_subsonic_outlet':
+            elif bc == 'constant_pressure_subsonic_exit':
                 constant_pressure_subsonic_exit(mb.eos,blk,face,mb.thermdat,terms)
     # Then we apply walls
     for blk in mb:
