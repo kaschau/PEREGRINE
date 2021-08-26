@@ -1,3 +1,7 @@
+from numpy import s_
+from ..bcs.walls import *
+from ..bcs.inlets import *
+from ..bcs.exits import *
 from ..misc import FrozenDict
 
 
@@ -11,10 +15,37 @@ class face:
                                         'bctype': 'adiabatic_slip_wall',
                                         'neighbor': None,
                                         'orientation': None})
+
         self.connectivity._freeze()
 
-        #Boundary condition dictionary
-        self.bc = FrozenDict({})
+        # Face slices
+        if nface == 1:
+            self.s0_= s_[ 0,:,:]
+            self.s1_= s_[ 1,:,:]
+            self.s2_= s_[ 2,:,:]
+        if nface == 2:
+            self.s0_= s_[-1,:,:]
+            self.s1_= s_[-2,:,:]
+            self.s2_= s_[-3,:,:]
+        if nface == 3:
+            self.s0_= s_[:, 0,:]
+            self.s1_= s_[:, 1,:]
+            self.s2_= s_[:, 2,:]
+        if nface == 4:
+            self.s0_= s_[:,-1,:]
+            self.s1_= s_[:,-2,:]
+            self.s2_= s_[:,-3,:]
+        if nface == 5:
+            self.s0_= s_[:,:, 0]
+            self.s1_= s_[:,:, 1]
+            self.s2_= s_[:,:, 2]
+        if nface == 6:
+            self.s0_= s_[:,:,-1]
+            self.s1_= s_[:,:,-2]
+            self.s2_= s_[:,:,-3]
+
+        #Boundary condition values
+        self.bcvals = FrozenDict({})
 
         #MPI variables - only set for solver blocks, but we will store them
         # all the time for now
@@ -32,3 +63,4 @@ class face:
         self.recvbuffer3 = None
         self.sendbuffer4 = None
         self.recvbuffer4 = None
+

@@ -45,7 +45,7 @@ def simulate():
 
     blk = mb[0]
     for face in blk.faces:
-        face.connectivity['bctype'] = 's2'
+        face.connectivity['bctype'] = 'adiabatic_slip_wall'
 
     blk.get_face_conn(1)['bctype'] = 'b1'
     blk.get_face_conn(1)['neighbor'] = 0

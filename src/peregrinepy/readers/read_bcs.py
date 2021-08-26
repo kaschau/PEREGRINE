@@ -25,14 +25,14 @@ def read_bcs(mb,path_to_file):
     if 0 in mb.block_list:
         try:
             with open(f'{path_to_file}/bcfams.yaml', 'r') as conn_file:
-                bcs = yaml.load(conn_file, Loader=yaml.FullLoader)
+                bcsin = yaml.load(conn_file, Loader=yaml.FullLoader)
         except IOError:
-            bcs = None
+            bcsin = None
     else:
-        bcs = None
-    bcs = comm.bcast(bcs, root=0)
+        bcsin = None
+    bcsin = comm.bcast(bcsin, root=0)
 
-    if bcs is None:
+    if bcsin is None:
         print('No bcfams.yaml found, using defaults.')
         return
 
@@ -41,14 +41,16 @@ def read_bcs(mb,path_to_file):
             try:
                 bcfam = face.connectivity['bcfam']
             except KeyError:
-                print(f'Warning, block {blk.nblki} face {face.nface} is assigned the bcfam {bcfam} however that family is not defined in bcs.yaml')
+                print(f'Warning, block {blk.nblki} face {face.nface} is assigned the bcfam {bcfam} however that family is not defined in bcfams.yaml')
             if bcfam is None:
                 continue
 
             #Make sure the type in the input file matches the type in the connectivity
-            if bcs[bcfam]['bctype'] != face.connectivity['bctype']:
-                raise KeyError(f'Warning, block {blk.nblki} face {face.nface} does not match the bctype between input *{bcs[bcfam]["bctype"]}* and connectivity *{face.connectivity["bctype"]}*.')
-            for key in bcs[bcfam].keys():
-                face.bc[key] = bcs[bcfam][key]
+            if bcsin[bcfam]['bctype'] != face.connectivity['bctype']:
+                raise KeyError(f'Warning, block {blk.nblki} face {face.nface} does not match the bctype between input *{bcsin[bcfam]["bctype"]}* and connectivity *{face.connectivity["bctype"]}*.')
 
-            face.bc._freeze()
+            #Set the boundary condition values
+            for key in bcsin[bcfam]['values']:
+                face.bcvals[key] = bcsin[bcfam]['values'][key]
+
+            face.bcvals._freeze()

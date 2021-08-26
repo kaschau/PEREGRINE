@@ -3,9 +3,6 @@ from mpi4py.MPI import Request
 
 from . import generate_halo
 from .. import mpicomm
-from ..bcs import face_slice
-
-fs = face_slice.fs
 
 def unify_solver_grid(mb):
 
@@ -44,8 +41,8 @@ def unify_solver_grid(mb):
                     orientation = face.connectivity['orientation']
                     comm_rank = face.comm_rank
                     tag = int(f'1{blk.nblki}2{neighbor}1{face.neighbor_face}')
-                    face.sendbuffer3[:] = face.orient( blk.array[var][fs[face.nface]['s2_']]
-                                                      -blk.array[var][fs[face.nface]['s1_']])
+                    face.sendbuffer3[:] = face.orient( blk.array[var][face.s2_]
+                                                      -blk.array[var][face.s1_])
                     ssize = face.sendbuffer3.size
                     comm.Send([face.sendbuffer3, ssize, MPIDOUBLE], dest=comm_rank, tag=tag)
 
@@ -56,6 +53,6 @@ def unify_solver_grid(mb):
                     neighbor = face.connectivity['neighbor']
                     if neighbor is None:
                         continue
-                    blk.array[var][fs[face.nface]['s0_']] = blk.array[var][fs[face.nface]['s1_']] + face.recvbuffer3[:]
+                    blk.array[var][face.s0_] = blk.array[var][face.s1_] + face.recvbuffer3[:]
 
     comm.Barrier()
