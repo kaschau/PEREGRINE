@@ -84,7 +84,7 @@ def simulate():
     while mb.tme*M0 < 120:
 
         if mb.nrt%niterout == 0:
-            pg.writers.write_restart(mb,config['io']['outputdir'],config['io']['griddir'])
+            pg.writers.write_restart(mb,config['io']['outputdir'],'../Grid')
 
         if mb.nrt%50 == 0:
             print(mb.tme*M0)
