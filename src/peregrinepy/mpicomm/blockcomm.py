@@ -44,15 +44,17 @@ def communicate(mb,varis):
                 comm.Send([send, ssize, MPIDOUBLE], dest=comm_rank, tag=tag)
 
         #wait and assign
-        Request.Waitall(reqs)
+        count = 0
         for blk in mb:
             ndim = blk.array[var].ndim
             for face in blk.faces:
                 neighbor = face.connectivity['neighbor']
                 if neighbor is None:
                     continue
+                Request.Wait(reqs[count])
                 recv,slice_r = (face.recvbuffer4,face.slice_r4) if ndim == 4 else (face.recvbuffer3,face.slice_r3)
                 blk.array[var][slice_r] = recv
+                count += 1
 
         comm.Barrier()
 
