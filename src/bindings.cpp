@@ -128,11 +128,6 @@ PYBIND11_MODULE(compute, m) {
 ///////////////////////////  Compute Functions /////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-  // ./Grid
-  //  |----> metrics
-  m.def("metrics", &metrics, "Compute grid metrics on primary grid",
-        py::arg("block_ object"));
-
   // ./flux
   //  |----> dQzero
   m.def("dQzero", &dQzero, "Zero out RHS",

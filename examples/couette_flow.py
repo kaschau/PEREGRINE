@@ -77,13 +77,13 @@ def simulate():
                               'v':0.0,
                               'w':0.0}
 
-    pg.grid.generate_halo(mb)
+    mb.generate_halo()
 
     pg.mpicomm.blockcomm.set_block_communication(mb)
 
-    pg.grid.unify_solver_grid(mb)
+    mb.unify_solver_grid()
 
-    pg.compute.metrics(mb)
+    mb.compute_metrics()
 
     pg.writers.write_grid(mb,config['io']['griddir'])
 
