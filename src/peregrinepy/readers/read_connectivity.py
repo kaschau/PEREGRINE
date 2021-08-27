@@ -21,8 +21,8 @@ def read_connectivity(mb,path_to_file):
     '''
     comm,rank,size = mpiutils.get_comm_rank_size()
 
-    #only the zeroth block reads in the file
-    if 0 in mb.block_list:
+    #only the zeroth rank reads in the file
+    if rank == 0:
         with open(f'{path_to_file}/conn.yaml', 'r') as conn_file:
             conn = yaml.load(conn_file, Loader=yaml.FullLoader)
     else:
