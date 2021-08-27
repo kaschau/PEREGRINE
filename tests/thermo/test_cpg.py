@@ -39,9 +39,8 @@ def test_cpg():
 
     blk = mb[0]
 
-    pg.grid.generate_halo(mb)
-
-    pg.compute.metrics(mb)
+    mb.generate_halo()
+    mb.compute_metrics()
 
     blk.array['q'][:,:,:,0] = p
     blk.array['q'][:,:,:,4] = T

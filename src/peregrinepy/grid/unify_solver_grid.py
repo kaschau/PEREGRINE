@@ -6,7 +6,8 @@ from .. import mpicomm
 
 def unify_solver_grid(mb):
 
-    generate_halo(mb)
+    for blk in mb:
+        blk.generate_halo()
 
     # Lets just be clean and create the edges and corners
     for _ in range(3):
@@ -47,12 +48,14 @@ def unify_solver_grid(mb):
                     comm.Send([face.sendbuffer3, ssize, MPIDOUBLE], dest=comm_rank, tag=tag)
 
             #wait and assign
-            Request.Waitall(reqs)
+            count = 0
             for blk in mb:
                 for face in blk.faces:
-                    neighbor = face.connectivity['neighbor']
-                    if neighbor is None:
+                    bc = face.connectivity['bctype']
+                    if bc != 'b1':
                         continue
+                    Request.Wait(reqs[count])
                     blk.array[var][face.s0_] = blk.array[var][face.s1_] + face.recvbuffer3[:]
+                    count += 1
 
-    comm.Barrier()
+            comm.Barrier()

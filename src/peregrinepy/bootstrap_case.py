@@ -59,8 +59,8 @@ def bootstrap_case(config):
     ################################################################
     ##### Unify the grid via halo construction, compute metrics
     ################################################################
-    pg.grid.unify_solver_grid(mb)
-    pg.compute.metrics(mb)
+    mb.unify_solver_grid()
+    mb.compute_metrics()
 
     ################################################################
     ##### Read in boundary conditions

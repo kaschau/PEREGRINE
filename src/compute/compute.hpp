@@ -12,10 +12,6 @@
 ///////////////////////////////////////////////////////////
 MDRange3 get_range3(block_ b, int face);
 
-// ./grid
-//    |------> Metrics
-void metrics(std::vector<block_> mb);
-
 // ./flux
 //    |------> dQzero
 void dQzero(std::vector<block_> mb);

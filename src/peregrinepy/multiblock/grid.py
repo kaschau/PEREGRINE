@@ -29,3 +29,11 @@ class grid(topology):
     def init_grid_arrays(self):
         for blk in self:
             blk.init_grid_arrays()
+
+    def compute_metrics(self):
+        for blk in self:
+            blk.compute_metrics()
+
+    def generate_halo(self):
+        for blk in self:
+            blk.generate_halo()
