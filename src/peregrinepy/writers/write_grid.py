@@ -122,7 +122,4 @@ def write_grid(mb, path='./', precision='double',with_halo=False):
 
     et = etree.ElementTree(xdmf_elem)
     save_file = f'{path}/gv.xmf'
-
-    #Only the zeroth block writes out the file
-    if 0 in mb.block_list:
-        et.write(save_file, pretty_print=True, encoding="UTF-8", xml_declaration=True)
+    et.write(save_file, pretty_print=True, encoding="UTF-8", xml_declaration=True)
