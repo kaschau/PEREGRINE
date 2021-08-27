@@ -59,9 +59,9 @@ def simulate():
 
     pg.mpicomm.blockcomm.set_block_communication(mb)
 
-    pg.grid.unify_solver_grid(mb)
+    mb.unify_solver_grid()
 
-    pg.compute.metrics(mb)
+    mb.compute_metrics()
 
     R=281.4583333333333
     blk.array['q'][:,:,:,0] = 1.0
