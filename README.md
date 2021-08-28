@@ -39,7 +39,7 @@ Gives access to the primative variables.
 |**Q**       | **Conserved**   |       |              |
 |            | density         |   0   | kg/m^3       |
 |            | momentum        | 1,2,3 | kg m / s.m^3 |
-|            | total energy    |   4   | J            |
+|            | total energy    |   4   | J/m^3        |
 |            | species mass    | 5..ne | kg/m^3       |
 |**qh**      | **Thermo**      |       |              |
 |            | gamma           |   0   | []           |
