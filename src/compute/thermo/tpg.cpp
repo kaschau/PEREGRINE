@@ -25,10 +25,10 @@ void tpg(block_ b,
 
   // Updates all conserved quantities from primatives
   // Along the way, we need to compute mixture properties
-  // gamma, cp, h
+  // gamma, cp, h, e, hi
   // So we store these as well.
 
-  int ns=th.ns;
+  int    ns=th.ns;
   double p;
   double u,v,w,tke;
   double T;
@@ -37,11 +37,11 @@ void tpg(block_ b,
   double rho,rhoinv;
   double rhou,rhov,rhow;
   double e,rhoE;
-  double rhoY[ns];
+  double rhoY[ns],hi[ns];
   double gamma,cp,h,c;
   double Rmix;
 
-  double cps[ns],hs[ns];
+  double cps[ns];
 
   p = b.q(i,j,k,0);
   u = b.q(i,j,k,1);
@@ -57,13 +57,20 @@ void tpg(block_ b,
   }
   Y[ns-1] = std::max(0.0,Y[ns-1]);
 
-  // Update mixture properties
+  // Compute Rmix
   Rmix = 0.0;
-  h    = 0.0;
-  cp   = 0.0;
   for (int n=0; n<=ns-1; n++)
   {
-    int m = ( T <= th.N7[n][0] ) ? 8 : 1;
+    Rmix += th.Ru  *Y[n]/th.MW[n];
+  }
+
+  // Update mixture properties
+  h    = 0.0;
+  cp   = 0.0;
+  int m;
+  for (int n=0; n<=ns-1; n++)
+  {
+    m = ( T <= th.N7[n][0] ) ? 8 : 1;
 
     cps[n] = th.N7[n][m+0]            +
              th.N7[n][m+1]*    T      +
@@ -71,16 +78,15 @@ void tpg(block_ b,
              th.N7[n][m+3]*pow(T,3.0) +
              th.N7[n][m+4]*pow(T,4.0) ;
 
-    hs[n]  = th.N7[n][m+0]                  +
+    hi[n]  = th.N7[n][m+0]                  +
              th.N7[n][m+1]*    T      / 2.0 +
              th.N7[n][m+2]*pow(T,2.0) / 3.0 +
              th.N7[n][m+3]*pow(T,3.0) / 4.0 +
              th.N7[n][m+4]*pow(T,4.0) / 5.0 +
              th.N7[n][m+5]/    T            ;
 
-    Rmix +=        th.Ru  *Y[n]/th.MW[n];
     cp   += cps[n]*th.Ru  *Y[n]/th.MW[n];
-    h    +=  hs[n]*th.Ru*T*Y[n]/th.MW[n];
+    h    +=  hi[n]*th.Ru*T*Y[n]/th.MW[n];
   }
 
   // Compute mixuture enthalpy
@@ -127,11 +133,16 @@ void tpg(block_ b,
   {
     b.Q(i,j,k,5+n) = rhoY[n];
   }
-  // gamma,cp,h,c
+  // gamma,cp,h,c,e,hi
   b.qh(i,j,k,0) = gamma;
   b.qh(i,j,k,1) = cp;
   b.qh(i,j,k,2) = rho*h;
   b.qh(i,j,k,3) = c;
+  b.qh(i,j,k,4) = rho*e;
+  for (int n=0; n<ns-1; n++)
+  {
+    b.qh(i,j,k,5+n) = rho*hi[n];
+  }
 
   });
   }
@@ -145,10 +156,10 @@ void tpg(block_ b,
 
   // Updates all primatives from conserved quantities
   // Along the way, we need to compute mixture properties
-  // gamma, cp, h
+  // gamma, cp, h, e, hi
   // So we store these as well.
 
-  int ns=th.ns;
+  int    ns=th.ns;
   double rho,rhoinv;
   double rhou,rhov,rhow;
   double e,rhoE;
@@ -157,11 +168,11 @@ void tpg(block_ b,
   double p;
   double u,v,w,tke;
   double T;
-  double Y[ns];
+  double Y[ns],hi[ns];
   double gamma,cp,h,c;
   double Rmix;
 
-  double cps[ns],hs[ns];
+  double cps[ns];
 
   rho = b.Q(i,j,k,0);
   rhoinv = 1.0/b.Q(i,j,k,0);
@@ -210,7 +221,7 @@ void tpg(block_ b,
     {
       int m = ( T <= th.N7[n][0] ) ? 8 : 1;
 
-      hs[n]  = th.N7[n][m+0]                  +
+      hi[n]  = th.N7[n][m+0]                  +
                th.N7[n][m+1]*    T      / 2.0 +
                th.N7[n][m+2]*pow(T,2.0) / 3.0 +
                th.N7[n][m+3]*pow(T,3.0) / 4.0 +
@@ -222,7 +233,7 @@ void tpg(block_ b,
                th.N7[n][m+3]*pow(T,3.0) +
                th.N7[n][m+4]*pow(T,4.0) ;
 
-      h    +=  hs[n]*th.Ru*T*Y[n]/th.MW[n];
+      h    +=  hi[n]*th.Ru*T*Y[n]/th.MW[n];
       cp   += cps[n]*th.Ru  *Y[n]/th.MW[n];
     }
 
@@ -250,11 +261,16 @@ void tpg(block_ b,
   {
     b.q(i,j,k,5+n) = Y[n];
   }
-  // gamma,cp,h,c
+  // gamma,cp,h,c,e,hi
   b.qh(i,j,k,0) = gamma;
   b.qh(i,j,k,1) = cp;
   b.qh(i,j,k,2) = rho*h;
   b.qh(i,j,k,3) = c;
+  b.qh(i,j,k,4) = rho*e;
+  for (int n=0; n<ns-1; n++)
+  {
+    b.qh(i,j,k,5+n) = rho*hi[n];
+  }
 
   });
   }

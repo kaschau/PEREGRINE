@@ -72,7 +72,8 @@ def test_tpg():
     pd.append(print_diff(gas.species_names[-1],gas.Y[-1],1.0-np.sum(pgprim[5::])))
     print('Conservatives')
     pd.append(print_diff('rho', gas.density,pgcons[0]))
-    pd.append(print_diff('E', gas.int_energy_mass, pgcons[4]/pgcons[0]))
+    pd.append(print_diff('e', gas.int_energy_mass, pgcons[4]/pgcons[0]))
+    pd.append(print_diff('e(qh)', gas.int_energy_mass, pgthrm[4]/pgcons[0]))
     for i,n in enumerate(gas.species_names[0:-1]):
         pd.append(print_diff('rho'+n,gas.Y[i]*gas.density,pgcons[5+i]))
     pd.append(print_diff('rho'+gas.species_names[-1],gas.Y[-1]*gas.density,pgcons[0]-np.sum(pgcons[5::])))
@@ -93,6 +94,7 @@ def test_tpg():
     print('Conservatives')
     pd.append(print_diff('rho', gas.density,pgcons[0]))
     pd.append(print_diff('e', gas.int_energy_mass, pgcons[4]/pgcons[0]))
+    pd.append(print_diff('e(qh)', gas.int_energy_mass, pgthrm[4]/pgcons[0]))
     for i,n in enumerate(gas.species_names[0:-1]):
         pd.append(print_diff('rho'+n,gas.Y[i]*gas.density,pgcons[5+i]))
     pd.append(print_diff('rho'+gas.species_names[-1],gas.Y[-1]*gas.density,pgcons[0]-np.sum(pgcons[5::])))
