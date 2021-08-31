@@ -7,7 +7,10 @@ MDRange3 get_range3(block_ b, int face){
 
     MDRange3 range;
 
-    if ( face == 0 ){
+    if ( face == -1){
+        // total block
+        range = MDRange3({0,0,0},{b.ni+1,b.nj+1,b.nk+1});
+    } else if ( face == 0 ){
         // interior
         range = MDRange3({1,1,1},{b.ni,b.nj,b.nk});
     } else if ( face == 1 ) {
