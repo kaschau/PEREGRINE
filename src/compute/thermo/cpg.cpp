@@ -25,7 +25,7 @@ void cpg(block_ b,
 
   // Updates all conserved quantities from primatives
   // Along the way, we need to compute mixture properties
-  // gamma, cp, h
+  // gamma, cp, h, e, hi
   // So we store these as well.
 
   int ns=th.ns;
@@ -37,7 +37,7 @@ void cpg(block_ b,
   double rho,rhoinv;
   double rhou,rhov,rhow;
   double e,rhoE;
-  double rhoY[ns];
+  double rhoY[ns],hi[ns];
   double gamma,cp,h,c;
   double Rmix;
 
@@ -108,11 +108,16 @@ void cpg(block_ b,
   {
     b.Q(i,j,k,5+n) = rhoY[n];
   }
-  // gamma,cp,h,c
+  // gamma,cp,h,c,e,hi
   b.qh(i,j,k,0) = gamma;
   b.qh(i,j,k,1) = cp;
   b.qh(i,j,k,2) = rho*h;
   b.qh(i,j,k,3) = c;
+  b.qh(i,j,k,4) = rho*e;
+  for (int n=0; n<ns-1; n++)
+  {
+    b.qh(i,j,k,5+n) = rho*h*Y[n];
+  }
 
   });
   }
@@ -126,7 +131,7 @@ void cpg(block_ b,
 
   // Updates all primatives from conserved quantities
   // Along the way, we need to compute mixture properties
-  // gamma, cp, h
+  // gamma, cp, h, e, hi
   // So we store these as well.
 
   int ns=th.ns;
@@ -138,7 +143,7 @@ void cpg(block_ b,
   double p;
   double u,v,w,tke;
   double T;
-  double Y[ns];
+  double Y[ns],hi[ns];
   double gamma,cp,h,c;
   double Rmix;
 
@@ -197,11 +202,16 @@ void cpg(block_ b,
   {
     b.q(i,j,k,5+n) = Y[n];
   }
-  // gamma,cp,h,c
+  // gamma,cp,h,c,e,hi
   b.qh(i,j,k,0) = gamma;
   b.qh(i,j,k,1) = cp;
   b.qh(i,j,k,2) = rho*h;
   b.qh(i,j,k,3) = c;
+  b.qh(i,j,k,4) = rho*e;
+  for (int n=0; n<ns-1; n++)
+  {
+    b.qh(i,j,k,5+n) = rho*h*Y[n];
+  }
 
   });
   }
