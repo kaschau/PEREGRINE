@@ -13,22 +13,12 @@ def consistify(mb):
     #First communicate conservatives
     communicate(mb,['Q'])
 
-    #Update interior primatives
+    #Now update derived arrays for ENTIRE block, even exterior halos
     for blk in mb:
-        mb.eos(blk,mb.thermdat,0,'cons')
+        mb.eos(blk,mb.thermdat,-1,'cons')
 
     #Apply euler boundary conditions
     apply_bcs(mb,'euler')
-
-    #now we need to update derived arrays for interior halos
-    for blk in mb:
-        for face in blk.faces:
-            if face.connectivity['neighbor'] is not None:
-                # update qh
-                mb.eos(blk,mb.thermdat,face.nface,'cons')
-
-    #communicate primatives
-    communicate(mb,['q'])
 
     if mb.config['RHS']['diffusion']:
         #Update spatial derivatives
