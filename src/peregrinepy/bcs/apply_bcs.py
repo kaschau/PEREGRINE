@@ -11,9 +11,9 @@ def apply_bcs(mb,terms):
             if bc in ['b0','b1']:
                 continue
             elif bc == 'constant_velocity_subsonic_inlet':
-                constant_velocity_subsonic_inlet(mb.eos,blk,face,mb.thermdat,terms)
+                constant_velocity_subsonic_inlet(mb.eos,blk,face,mb.thtrdat,terms)
             elif bc == 'constant_pressure_subsonic_exit':
-                constant_pressure_subsonic_exit(mb.eos,blk,face,mb.thermdat,terms)
+                constant_pressure_subsonic_exit(mb.eos,blk,face,mb.thtrdat,terms)
     # Then we apply walls
     for blk in mb:
         for face in blk.faces:
@@ -21,10 +21,10 @@ def apply_bcs(mb,terms):
             if bc in ['b0','b1']:
                 continue
             elif bc == 'adiabatic_noslip_wall':
-                adiabatic_noslip_wall(mb.eos,blk,face,mb.thermdat,terms)
+                adiabatic_noslip_wall(mb.eos,blk,face,mb.thtrdat,terms)
             elif bc == 'adiabatic_slip_wall':
-                adiabatic_slip_wall(mb.eos,blk,face,mb.thermdat,terms)
+                adiabatic_slip_wall(mb.eos,blk,face,mb.thtrdat,terms)
             elif bc == 'adiabatic_moving_wall':
-                adiabatic_moving_wall(mb.eos,blk,face,mb.thermdat,terms)
+                adiabatic_moving_wall(mb.eos,blk,face,mb.thtrdat,terms)
             elif bc == 'isoT_moving_wall':
-                isoT_moving_wall(mb.eos,blk,face,mb.thermdat,terms)
+                isoT_moving_wall(mb.eos,blk,face,mb.thtrdat,terms)

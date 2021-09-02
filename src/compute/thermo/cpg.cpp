@@ -1,7 +1,7 @@
 #include "Kokkos_Core.hpp"
 #include "kokkos_types.hpp"
 #include "block_.hpp"
-#include "thermdat_.hpp"
+#include "thtrdat_.hpp"
 #include "compute.hpp"
 #include <math.h>
 #include <numeric>

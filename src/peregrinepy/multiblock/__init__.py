@@ -9,7 +9,7 @@ from .restart_block import restart_block
 from .solver_block import solver_block
 
 from ..integrators import rk1,rk4
-from ..thermo import thermdat
+from ..thermo import thtrdat
 
 import cantera as ct
 from pathlib import Path
@@ -45,8 +45,8 @@ def generate_multiblock_solver(nblks, config, myblocks=None):
     #Stick the config file one
     cls.config = config
 
-    #Stick the thermdat object on
-    cls.thermdat = thermdat(config)
+    #Stick the thtrdat object on
+    cls.thtrdat = thtrdat(config)
 
     #Stick the equation of state on
     if config['thermochem']['eos'] == 'cpg':

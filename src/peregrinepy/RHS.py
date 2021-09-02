@@ -5,7 +5,7 @@ def RHS(mb):
     #Zero out dQ array
     dQzero(mb)
 
-    advective(mb,mb.thermdat)
+    advective(mb,mb.thtrdat)
 
     if mb.config['RHS']['diffusion']:
-        diffusive(mb,mb.thermdat)
+        diffusive(mb,mb.thtrdat)

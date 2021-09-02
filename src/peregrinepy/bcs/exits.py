@@ -1,6 +1,6 @@
 
 
-def constant_pressure_subsonic_exit(eos,blk,face,thermdat,terms):
+def constant_pressure_subsonic_exit(eos,blk,face,thtrdat,terms):
 
     nface = face.nface
 
@@ -14,7 +14,7 @@ def constant_pressure_subsonic_exit(eos,blk,face,thermdat,terms):
         p[face.s0_] = 2.0*face.bcvals['p'] - p[face.s1_]
 
         #Update conservatives
-        eos(blk,thermdat,nface,'prims')
+        eos(blk,thtrdat,nface,'prims')
 
     elif terms == 'viscous':
         #neumann all gradients

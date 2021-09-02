@@ -1,10 +1,10 @@
 #include "Kokkos_Core.hpp"
 #include "kokkos_types.hpp"
 #include "block_.hpp"
-#include "thermdat_.hpp"
+#include "thtrdat_.hpp"
 #include <vector>
 
-void diffusive(std::vector<block_> mb, thermdat_ th) {
+void diffusive(std::vector<block_> mb, thtrdat_ th) {
 for(block_ b : mb){
 
 //-------------------------------------------------------------------------------------------|
