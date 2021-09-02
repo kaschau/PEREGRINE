@@ -63,6 +63,7 @@ void transport(block_ b,
 
   for (int n=0; n<=ns-1; n++)
   {
+
     //Set to constant value first
     mu_sp[n] = th.mu_poly[n][po];
     kappa_sp[n] = th.kappa_poly[n][po];

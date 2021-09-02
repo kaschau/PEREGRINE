@@ -5,7 +5,7 @@ import cantera as ct
 import sys
 from pathlib import Path
 
-#np.random.seed(111)
+np.random.seed(111)
 
 ##################################################################################
 ##### Test for all positive i aligned orientations
@@ -31,7 +31,6 @@ def test_transport():
     config['RHS']['diffusion'] = True
 
     mb = pg.multiblock.generate_multiblock_solver(1,config)
-    thtr = pg.thermo_transport.thtrdat(config)
     pg.grid.create.multiblock_cube(mb,
                                    mb_dimensions=[1,1,1],
                                    dimensions_perblock=[2,2,2],
@@ -74,12 +73,9 @@ def test_transport():
     pd.append(print_diff('mu', gas.viscosity, pgtrns[0]))
     pd.append(print_diff('kappa', gas.thermal_conductivity, pgtrns[1]))
     for i,n in enumerate(gas.species_names[0:-1]):
-        pd.append(print_diff(f'D_{n}', gas.mix_diff_coeffs_mass, pgtrns[2+i]))
+        pd.append(print_diff(f'D_{n}', gas.mix_diff_coeffs_mass[i], pgtrns[2+i]))
 
     kokkos.finalize()
 
     passfail = np.all(np.array(pd) < 1.0)
     assert passfail
-
-if __name__ == "__main__":
-    test_transport()

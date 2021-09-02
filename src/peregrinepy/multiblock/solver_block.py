@@ -42,7 +42,7 @@ class solver_block(restart_block,block_):
         for d in ['dqdx','dqdy','dqdz']:
             self.array[f'{d}'] = None
         # thermo,trans arrays
-        for d in ['qh']:
+        for d in ['qh','qt']:
             self.array[f'{d}'] = None
         # RK stages
         for d in ['rhs0','rhs1','rhs2','rhs3']:
@@ -181,7 +181,7 @@ class solver_block(restart_block,block_):
         #       Transport
         #-------------------------------------------------------------------------------#
         shape  = [self.ni+1,self.nj+1,self.nk+1,2+self.ns-1]
-        for name in ['qh']:
+        for name in ['qt']:
             if self.array[name] is None:
                 setattr(self, name, kokkos.array(name, shape=shape, dtype=kokkos.double, space=space, dynamic=False))
                 self.array[name] = np.array(getattr(self, name), copy=False)
