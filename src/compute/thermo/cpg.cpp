@@ -8,7 +8,7 @@
 #include <stdexcept>
 
 void cpg(block_ b,
-      thermdat_ th,
+      thtrdat_ th,
            int  face,
    std::string  given) {
 
