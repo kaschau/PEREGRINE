@@ -1,11 +1,11 @@
 import cantera as ct
-from ..compute import thermdat_
+from ..compute import thtrdat_
 from pathlib import Path
 
-class thermdat(thermdat_):
+class ththdat(thtrdat_):
 
     def __init__(self, config):
-        thermdat_.__init__(self)
+        thtrdat_.__init__(self)
 
         relpath = str(Path(__file__).parent)
         ct.add_directory(relpath)
@@ -13,6 +13,7 @@ class thermdat(thermdat_):
 
         self.ns = gas.n_species
         self.Ru = ct.gas_constant
+        self.kb = ct.boltzmann
 
         # Species names string
         self.species_names = list(gas.species_names)
@@ -21,6 +22,9 @@ class thermdat(thermdat_):
         self.MW = list(gas.molecular_weights)
 
 
+        ##############################################################
+        ####### Thermodynamic properties
+        ##############################################################
         #Set either constant cp or NASA7 polynomial coefficients
         if config['thermochem']['eos'] == 'cpg':
             #Set gas to STP
@@ -38,3 +42,7 @@ class thermdat(thermdat_):
             self.N7 = N7
         else:
             raise KeyError(f'PEREGRINE ERROR: Unknown EOS {config["thermochem"]["eos"]}')
+
+        ##############################################################
+        ####### Transport properties
+        ##############################################################
