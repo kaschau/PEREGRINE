@@ -1,6 +1,6 @@
 from .bcs import apply_bcs
 from .mpicomm.blockcomm import communicate
-from .compute import dqdxyz
+from .compute import dqdxyz,transport
 
 def consistify(mb):
 

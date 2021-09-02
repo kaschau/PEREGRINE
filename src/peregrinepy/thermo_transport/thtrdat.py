@@ -11,9 +11,9 @@ class thtrdat(thtrdat_):
         ct.add_directory(relpath)
         gas = ct.Solution(config['thermochem']['ctfile'])
 
-        self.ns = gas.n_species
+        ns = gas.n_species
+        self.ns = ns
         self.Ru = ct.gas_constant
-        self.kb = ct.boltzmann
 
         # Species names string
         self.species_names = list(gas.species_names)
@@ -162,7 +162,7 @@ class thtrdat(thtrdat_):
             #Thermal Conductivity
             ##########################################
 
-            cond = np.zeros(npts,ns)
+            cond = np.zeros((npts,ns))
             for i,T in enumerate(Ts):
                 for k in range(ns):
                     Tstar = kb*298.0/well[k]
@@ -211,12 +211,12 @@ class thtrdat(thtrdat_):
 
 
             # Create and set the polynoial coefficients
-            thtrdat.mu_p    = [list(np.polyfit(Ts,visc[k],deg=4)) for k in range(ns)]
-            thtrdat.kappa_p = [list(np.polyfit(Ts,cond[k],deg=4)) for k in range(ns)]
+            thtrdat.mu_poly    = [list(np.polyfit(Ts,visc[:,k],deg=4)) for k in range(ns)]
+            thtrdat.kappa_poly = [list(np.polyfit(Ts,cond[:,k],deg=4)) for k in range(ns)]
 
             Dij = []
             for k in range(ns):
                 for j in range(k,ns):
-                    Dij.append([list(np.polyfit(Ts,diff[k,j],deg=4)) for k in range(ns)])
+                    Dij.append([list(np.polyfit(Ts,diff[:,k,j],deg=4)) for k in range(ns)])
 
-            ththdat.Dij_p = Dij
+            thtrdat.Dij_poly = Dij
