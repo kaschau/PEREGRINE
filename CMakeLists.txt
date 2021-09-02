@@ -38,7 +38,8 @@ set(CMAKE_INTERPROCEDURAL_OPTIMIZATION OFF )
 #Add all da files
 file( GLOB compute_src ${PROJECT_SOURCE_DIR}/src/compute/*.cpp
                        ${PROJECT_SOURCE_DIR}/src/compute/flux/*.cpp
-                       ${PROJECT_SOURCE_DIR}/src/compute/thermo/*.cpp)
+                       ${PROJECT_SOURCE_DIR}/src/compute/thermo/*.cpp
+                       ${PROJECT_SOURCE_DIR}/src/compute/transport/*.cpp)
 
 include_directories(${PROJECT_SOURCE_DIR}/src/compute)
 
