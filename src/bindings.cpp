@@ -96,8 +96,9 @@ PYBIND11_MODULE(compute, m) {
     .def_readwrite("dqdx", &block_::dqdx )
     .def_readwrite("dqdy", &block_::dqdy )
     .def_readwrite("dqdz", &block_::dqdz )
-    // Thermo variables
+    // Thermo,transport variables
     .def_readwrite("qh", &block_::qh )
+    .def_readwrite("qt", &block_::qt )
 
     // RK stages
     .def_readwrite("rhs0", &block_::rhs0 )
@@ -158,6 +159,12 @@ PYBIND11_MODULE(compute, m) {
         py::arg("face"),
         py::arg("given"));
 
+  // ./transport
+  m.def("transport", &transport, "Update transport properties from primatives",
+        py::arg("block_ object"),
+        py::arg("thtrdat_ object"),
+        py::arg("face"),
+        py::arg("given"));
 
 
 

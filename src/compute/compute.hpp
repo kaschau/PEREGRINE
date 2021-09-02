@@ -28,4 +28,8 @@ void cpg(block_ b, thtrdat_ th, int face, std::string given);
 //    |------> tpg
 void tpg(block_ b, thtrdat_ th, int face, std::string given);
 
+// ./transport
+//    |------> transport
+void transport(block_ b, thtrdat_ th, int face, std::string given);
+
 #endif
