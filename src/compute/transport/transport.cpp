@@ -8,8 +8,7 @@
 
 void transport(block_ b,
              thtrdat_ th,
-                 int  face,
-         std::string  given) {
+                 int  face) {
 
   MDRange3 range = get_range3(b, face);
 
@@ -41,11 +40,9 @@ void transport(block_ b,
   Y[ns-1] = std::max(0.0,Y[ns-1]);
 
   // Update mixture properties
-  Rmix = 0.0;
   MWmix = 0.0;
   for (int n=0; n<=ns-1; n++)
   {
-    Rmix  += Y[n]*th.Ru/th.MW[n];
     MWmix += Y[n]*th.MW[n];
   }
   // Mole fractions
@@ -64,30 +61,32 @@ void transport(block_ b,
   // binary diffusion
   double Dij[ns][ns] = {0.0};
 
-  int indx;
   for (int n=0; n<=ns-1; n++)
   {
-    //Set it to constant value first
+    //Set to constant value first
     mu_sp[n] = th.mu_poly[n][po];
     kappa_sp[n] = th.kappa_poly[n][po];
+
+    int indx=0;
     for (int n2=n; n2<=ns-1; n2++)
     {
-      indx = n*(ns-n) + n2;
       Dij[n ][n2] = th.Dij_poly[indx][po];
       Dij[n2][n ] = Dij[n ][n2];
+      indx += 1;
     }
+
     // Evaluate polynomial
     for (int p=0; p<po; p++)
     {
       mu_sp[n] += th.mu_poly[n][p]*pow(T,float(po-p));
       kappa_sp[n] += th.kappa_poly[n][p]*pow(T,float(po-p));
 
+      indx = 0;
       for (int n2=n; n2<=ns-1; n2++)
       {
-        int indx = n*(ns-n)+n2;
         Dij[n ][n2] += th.Dij_poly[indx][p]*pow(T,float(po-p));
+        indx += 1;
       }
-
     }
   }
 
@@ -138,8 +137,8 @@ void transport(block_ b,
       sum1 += X[n2] / Dij[n][n2];
       sum2 += X[n2] * th.MW[n2] / Dij[n][n2];
     }
-    sum1 += p;
-    sum2 += p;
+    sum1 *= p;
+    sum2 *= p * X[n] / ( MWmix - th.MW[k]*X[k] );
     D[n] = 1.0 / (sum1 + sum2);
   }
   // Set values of new properties

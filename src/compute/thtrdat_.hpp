@@ -18,7 +18,6 @@ struct thtrdat_ {
 
   // Constant cp values (reference cp)
   std::vector<double> cp0;
-
   // NASA7 polynomial coefficients
   std::vector<std::vector<double>> N7;
 
@@ -30,6 +29,7 @@ struct thtrdat_ {
   // NOTE: pressure dependence is applied when the mixture diffusion
   // coefficients are created in-situ
   std::vector<std::vector<double>> Dij_poly;
+
 };
 
 #endif

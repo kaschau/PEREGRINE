@@ -120,10 +120,16 @@ PYBIND11_MODULE(compute, m) {
 
     .def_readwrite("ns", &thtrdat_::ns)
     .def_readwrite("Ru", &thtrdat_::Ru)
+
     .def_readwrite("species_names", &thtrdat_::species_names)
     .def_readwrite("MW", &thtrdat_::MW)
+
     .def_readwrite("cp0", &thtrdat_::cp0)
-    .def_readwrite("N7", &thtrdat_::N7);
+    .def_readwrite("N7", &thtrdat_::N7)
+
+    .def_readwrite("mu_poly", &thtrdat_::mu_poly)
+    .def_readwrite("kappa_poly", &thtrdat_::kappa_poly)
+    .def_readwrite("Dij_poly", &thtrdat_::Dij_poly);
 
 ////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////  Compute Functions /////////////////////////////////
@@ -160,13 +166,11 @@ PYBIND11_MODULE(compute, m) {
         py::arg("given"));
 
   // ./transport
+  //  |----> transport
   m.def("transport", &transport, "Update transport properties from primatives",
         py::arg("block_ object"),
         py::arg("thtrdat_ object"),
-        py::arg("face"),
-        py::arg("given"));
-
-
+        py::arg("face"));
 
 
   static auto _atexit = []() {
