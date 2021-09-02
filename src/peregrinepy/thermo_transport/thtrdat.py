@@ -211,12 +211,12 @@ class thtrdat(thtrdat_):
 
 
             # Create and set the polynoial coefficients
-            thtrdat.mu_poly    = [list(np.polyfit(Ts,visc[:,k],deg=4)) for k in range(ns)]
-            thtrdat.kappa_poly = [list(np.polyfit(Ts,cond[:,k],deg=4)) for k in range(ns)]
+            self.mu_poly    = [list(np.polyfit(Ts,visc[:,k],deg=4)) for k in range(ns)]
+            self.kappa_poly = [list(np.polyfit(Ts,cond[:,k],deg=4)) for k in range(ns)]
 
             Dij = []
             for k in range(ns):
                 for j in range(k,ns):
-                    Dij.append([list(np.polyfit(Ts,diff[:,k,j],deg=4)) for k in range(ns)])
+                    Dij.append(list(np.polyfit(Ts,diff[:,k,j],deg=4)))
 
-            thtrdat.Dij_poly = Dij
+            self.Dij_poly = Dij
