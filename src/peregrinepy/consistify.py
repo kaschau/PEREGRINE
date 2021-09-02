@@ -15,7 +15,7 @@ def consistify(mb):
 
     #Now update derived arrays for ENTIRE block, even exterior halos
     for blk in mb:
-        mb.eos(blk,mb.thermdat,-1,'cons')
+        mb.eos(blk,mb.thtrdat,-1,'cons')
 
     #Apply euler boundary conditions
     apply_bcs(mb,'euler')

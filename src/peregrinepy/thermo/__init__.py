@@ -1,1 +1,0 @@
-from .thermdat import thermdat
