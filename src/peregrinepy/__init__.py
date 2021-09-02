@@ -9,4 +9,4 @@ from . import multiblock
 from .bootstrap_case import bootstrap_case
 from .consistify import consistify
 from .RHS import RHS
-from . import thermo
+from . import thermo_transport
