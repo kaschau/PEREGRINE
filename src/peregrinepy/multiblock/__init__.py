@@ -9,7 +9,7 @@ from .restart_block import restart_block
 from .solver_block import solver_block
 
 from ..integrators import rk1,rk4
-from ..thermo import thtrdat
+from ..thermo_transport import thtrdat
 
 import cantera as ct
 from pathlib import Path

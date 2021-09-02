@@ -23,13 +23,13 @@ struct thtrdat_ {
   std::vector<std::vector<double>> N7;
 
   // Generated temperature dependent viscosity poly'l coeff
-  std::vector<std::vector<double>> nu_poly;
+  std::vector<std::vector<double>> mu_poly;
   // Generated temperature dependent thermal conductivity poly'l coeff
   std::vector<std::vector<double>> kappa_poly;
   // Generated temperature dependent binary diffusion poly'l coeff
   // NOTE: pressure dependence is applied when the mixture diffusion
   // coefficients are created in-situ
-  std::vector<std::vector<std::vector<double>>> Dij_poly;
+  std::vector<std::vector<double>> Dij_poly;
 };
 
 #endif
