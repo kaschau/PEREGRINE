@@ -31,7 +31,6 @@ def test_tpg():
     config['RHS']['diffusion'] = False
 
     mb = pg.multiblock.generate_multiblock_solver(1,config)
-    thtr = pg.thermo_transport.thtrdat(config)
     pg.grid.create.multiblock_cube(mb,
                                    mb_dimensions=[1,1,1],
                                    dimensions_perblock=[2,2,2],
