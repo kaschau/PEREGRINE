@@ -1,6 +1,7 @@
 import cantera as ct
 from ..compute import thtrdat_
 from pathlib import Path
+import sys
 
 class thtrdat(thtrdat_):
 
@@ -52,6 +53,7 @@ class thtrdat(thtrdat_):
             import numpy as np
             from scipy import interpolate as intrp
 
+            deg = 5
             #Maximum and minumum temperatures to generate poly'l
             Tmin = 200
             Tmax = 3500
@@ -60,8 +62,8 @@ class thtrdat(thtrdat_):
             Ts = np.linspace(Tmin,Tmax,npts)
 
             # Collision integral interpolations
-            intrp_o22 = intrp.RectBivariateSpline(tstar22, delta, omega22_table, kx=4,ky=4)
-            intrp_Astar = intrp.RectBivariateSpline(tstar, delta, astar_table, kx=4,ky=4)
+            intrp_o22 = intrp.RectBivariateSpline(tstar22, delta, omega22_table, kx=5,ky=5)
+            intrp_Astar = intrp.RectBivariateSpline(tstar, delta, astar_table, kx=5,ky=5)
 
             # Get properties
             MW = gas.molecular_weights
@@ -211,12 +213,25 @@ class thtrdat(thtrdat_):
 
 
             # Create and set the polynoial coefficients
-            self.mu_poly    = [list(np.polyfit(Ts,visc[:,k],deg=4)) for k in range(ns)]
-            self.kappa_poly = [list(np.polyfit(Ts,cond[:,k],deg=4)) for k in range(ns)]
+            logTs = np.log(Ts)
+            sqrtTs = np.sqrt(Ts)
+
+            #We fit the visc pol'y to the sqrtT as visc is proportional to sqrtT
+            visc = visc/sqrtTs[:,None]
+            w = 1.0/(visc**2)
+            self.mu_poly    = [list(np.polyfit(logTs,visc[:,k],deg=deg,w=w[:,k])) for k in range(ns)]
+
+            #We fit the cond pol'y to the sqrtT as cond is proportional to sqrtT
+            cond = cond/np.sqrt(Ts[:,None])
+            w = 1.0/(cond**2)
+            self.kappa_poly = [list(np.polyfit(logTs,cond[:,k],deg=deg,w=w[:,k])) for k in range(ns)]
 
             Dij = []
+            diff = diff/Ts[:,None,None]**1.5
+            w = 1.0/(diff**2)
             for k in range(ns):
                 for j in range(k,ns):
-                    Dij.append(list(np.polyfit(Ts,diff[:,k,j],deg=4)))
+                    Dij.append(list(np.polyfit(logTs,diff[:,k,j],deg=deg,w=w[:,k,j])))
 
             self.Dij_poly = Dij
+
