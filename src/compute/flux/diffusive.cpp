@@ -30,9 +30,9 @@ for(block_ b : mb){
     double dNdx,dNdy,dNdz;
 
     const double c23 = 2.0/3.0;
-    const double mu = 1.48e-5*100;
-    const double kappa  = 0.02638;
-    const double Dij = 1e-4;
+
+    double mu     = 0.5*(qt(i,j,k,0) + qt.(i-1,j,k));
+    double kappa  = 0.5*(qt(i,j,k,1) + qt.(i-1,j,k));
 
     // continuity
     b.iF(i,j,k,0) = 0.0;
@@ -98,8 +98,10 @@ for(block_ b : mb){
                       wf*txz*b.isz(i,j,k) ) - q;
 
     // Species
+    double Dij
     for (int n=0; n<th.ns-1; n++)
     {
+      Dij  = 0.5 * ( qt(i,j,k,2+n) + qt(i-1,j,k,2+n)         );
       dNdx = 0.5 * ( b.dqdx(i,j,k,5+n) + b.dqdx(i-1,j,k,5+n) );
       dNdy = 0.5 * ( b.dqdy(i,j,k,5+n) + b.dqdy(i-1,j,k,5+n) );
       dNdz = 0.5 * ( b.dqdz(i,j,k,5+n) + b.dqdz(i-1,j,k,5+n) );
@@ -134,9 +136,9 @@ for(block_ b : mb){
     double dNdx,dNdy,dNdz;
 
     const double c23 = 2.0/3.0;
-    const double mu = 1.48e-5*100;
-    const double kappa  = 0.02638;
-    const double Dij = 1e-4;
+
+    double mu     = 0.5*(qt(i,j,k,0) + qt.(i,j-1,k));
+    double kappa  = 0.5*(qt(i,j,k,1) + qt.(i,j-1,k));
 
     // continuity
     b.jF(i,j,k,0) = 0.0;
@@ -202,8 +204,10 @@ for(block_ b : mb){
                       wf*txz*b.jsz(i,j,k) ) - q;
 
     // Species
+    double Dij;
     for (int n=0; n<th.ns-1; n++)
     {
+      Dij  = 0.5 * ( qt(i,j,k,2+n) + qt(i,j-1,k,2+n)         );
       dNdx = 0.5 * ( b.dqdx(i,j,k,5+n) + b.dqdx(i,j-1,k,5+n) );
       dNdy = 0.5 * ( b.dqdy(i,j,k,5+n) + b.dqdy(i,j-1,k,5+n) );
       dNdz = 0.5 * ( b.dqdz(i,j,k,5+n) + b.dqdz(i,j-1,k,5+n) );
@@ -238,9 +242,9 @@ for(block_ b : mb){
     double dNdx,dNdy,dNdz;
 
     const double c23 = 2.0/3.0;
-    const double mu = 1.48e-5*100;
-    const double kappa  = 0.02638;
-    const double Dij = 1e-4;
+
+    double mu     = 0.5*(qt(i,j,k,0) + qt.(i,j,k-1));
+    double kappa  = 0.5*(qt(i,j,k,1) + qt.(i,j,k-1));
 
     // continuity
     b.kF(i,j,k,0) = 0.0;
@@ -306,8 +310,10 @@ for(block_ b : mb){
                       wf*txz*b.ksz(i,j,k) ) - q;
 
     // Species
+    double Dij;
     for (int n=0; n<th.ns-1; n++)
     {
+      Dij  = 0.5 * ( qt(i,j,k,2+n) + qt(i,j,k-1,2+n)         );
       dNdx = 0.5 * ( b.dqdx(i,j,k,5+n) + b.dqdx(i,j,k-1,5+n) );
       dNdy = 0.5 * ( b.dqdy(i,j,k,5+n) + b.dqdy(i,j,k-1,5+n) );
       dNdz = 0.5 * ( b.dqdz(i,j,k,5+n) + b.dqdz(i,j,k-1,5+n) );
