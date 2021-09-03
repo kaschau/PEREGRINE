@@ -20,7 +20,7 @@ void transport(block_ b,
                                      const int k) {
 
   // poly'l order
-  const int po = 4;
+  const int plyo = 4;
   int ns=th.ns;
   double p;
   double T;
@@ -55,59 +55,62 @@ void transport(block_ b,
 
   //viscosity
   double mu_sp[ns] = {0.0};
-  double phi[ns][ns] = {0.0};
   //thermal conductivity
   double kappa_sp[ns] = {0.0};
   // binary diffusion
   double Dij[ns][ns] = {0.0};
 
+  int indx;
   for (int n=0; n<=ns-1; n++)
   {
-
     //Set to constant value first
-    mu_sp[n] = th.mu_poly[n][po];
-    kappa_sp[n] = th.kappa_poly[n][po];
+    mu_sp[n] = th.mu_poly[n][plyo];
+    kappa_sp[n] = th.kappa_poly[n][plyo];
 
-    int indx=0;
     for (int n2=n; n2<=ns-1; n2++)
     {
-      Dij[n ][n2] = th.Dij_poly[indx][po];
+      indx = int(ns*(ns-1)/2 - (n2-n)*(ns-n-1)/2 + n2);
+      Dij[n ][n2] = th.Dij_poly[indx][plyo];
       Dij[n2][n ] = Dij[n ][n2];
-      indx += 1;
     }
 
     // Evaluate polynomial
-    for (int p=0; p<po; p++)
+    for (int ply=0; ply<plyo; ply++)
     {
-      mu_sp[n] += th.mu_poly[n][p]*pow(T,float(po-p));
-      kappa_sp[n] += th.kappa_poly[n][p]*pow(T,float(po-p));
+      mu_sp[n] += th.mu_poly[n][ply]*pow(T,float(plyo-ply));
+      kappa_sp[n] += th.kappa_poly[n][ply]*pow(T,float(plyo-ply));
 
-      indx = 0;
       for (int n2=n; n2<=ns-1; n2++)
       {
-        Dij[n ][n2] += th.Dij_poly[indx][p]*pow(T,float(po-p));
-        indx += 1;
+        indx = int(ns*(ns-1)/2 - (n2-n)*(ns-n-1)/2 + n2);
+        Dij[n ][n2] += th.Dij_poly[indx][ply]*pow(T,float(plyo-ply));
+        Dij[n2][n ]  = Dij[n ][n2];
       }
     }
   }
 
+  for (int n=0; n<=ns-1; n++)
+  {
+    std::cout << n << " " << kappa_sp[n] << "\n";
+  }
   // Now every species' property is computed, generate mixture values
 
   // viscosity mixture
   double mu = 0.0;
+  double phi[ns][ns] = {0.0};
   for (int n=0; n<=ns-1; n++)
   {
     for (int n2=0; n2<=ns-1; n2++)
     {
-      phi[n][n2] = pow( 1.0 + sqrt(mu_sp[n]/mu_sp[n2]*sqrt(th.MW[n2]/th.MW[n])),2.0)
-                 / ( sqrt(8.0)*sqrt(1+th.MW[n]/th.MW[n2]));
+      phi[n][n2] =  pow((1.0 + sqrt(mu_sp[n]/mu_sp[n2]*sqrt(th.MW[n2]/th.MW[n]))),2.0) /
+                       ( sqrt(8.0)*sqrt(1+th.MW[n]/th.MW[n2]));
     }
     double phitemp = 0.0;
-    for (int n3=0; n3<=ns-1; n3++)
+    for (int n2=0; n2<=ns-1; n2++)
     {
-      phitemp += phi[n][n3]*X[n3];
+      phitemp += phi[n][n2]*X[n2];
     }
-    mu += mu_sp[k]*X[k]/phitemp;
+    mu += mu_sp[n]*X[n]/phitemp;
   }
 
   // thermal conductivity mixture
@@ -139,7 +142,7 @@ void transport(block_ b,
       sum2 += X[n2] * th.MW[n2] / Dij[n][n2];
     }
     sum1 *= p;
-    sum2 *= p * X[n] / ( MWmix - th.MW[k]*X[k] );
+    sum2 *= p * X[n] / ( MWmix - th.MW[n]*X[n] );
     D[n] = 1.0 / (sum1 + sum2);
   }
   // Set values of new properties
