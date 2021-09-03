@@ -89,10 +89,6 @@ void transport(block_ b,
     }
   }
 
-  for (int n=0; n<=ns-1; n++)
-  {
-    std::cout << n << " " << kappa_sp[n] << "\n";
-  }
   // Now every species' property is computed, generate mixture values
 
   // viscosity mixture
