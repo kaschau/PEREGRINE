@@ -19,8 +19,8 @@ void transport(block_ b,
                                      const int j,
                                      const int k) {
 
-  // poly'l order
-  const int plyo = 4;
+  // poly'l degree
+  const int deg = 5;
   int ns=th.ns;
   double p;
   double T;
@@ -40,15 +40,21 @@ void transport(block_ b,
   Y[ns-1] = std::max(0.0,Y[ns-1]);
 
   // Update mixture properties
+  // Mole fractions
+  double mass=0.0;
+  for (int n=0; n<=ns-1; n++)
+  {
+    mass += Y[n]/th.MW[n];
+  }
+  for (int n=0; n<=ns-1; n++)
+  {
+    X[n] = Y[n]/th.MW[n]/mass;
+  }
+  // Mean molecular weight
   MWmix = 0.0;
   for (int n=0; n<=ns-1; n++)
   {
-    MWmix += Y[n]*th.MW[n];
-  }
-  // Mole fractions
-  for (int n=0; n<=ns-1; n++)
-  {
-    X[n] = Y[n]/th.MW[i]*MWmix;
+    MWmix += X[n]*th.MW[n];
   }
 
   // Evaluate all property polynomials
@@ -61,31 +67,40 @@ void transport(block_ b,
   double Dij[ns][ns] = {0.0};
 
   int indx;
+  double logT = log(T);
+  double sqrt_T = exp(0.5*logT);
+
   for (int n=0; n<=ns-1; n++)
   {
     //Set to constant value first
-    mu_sp[n] = th.mu_poly[n][plyo];
-    kappa_sp[n] = th.kappa_poly[n][plyo];
-
+    mu_sp[n] = th.mu_poly[n][deg];
+    kappa_sp[n] = th.kappa_poly[n][deg];
     for (int n2=n; n2<=ns-1; n2++)
     {
-      indx = int(ns*(ns-1)/2 - (n2-n)*(ns-n-1)/2 + n2);
-      Dij[n ][n2] = th.Dij_poly[indx][plyo];
-      Dij[n2][n ] = Dij[n ][n2];
+      indx = int(ns*(ns-1)/2 - (ns-n)*(ns-n-1)/2 + n2);
+      Dij[n ][n2] = th.Dij_poly[indx][deg];
     }
 
     // Evaluate polynomial
-    for (int ply=0; ply<plyo; ply++)
+    for (int ply=0; ply<deg; ply++)
     {
-      mu_sp[n] += th.mu_poly[n][ply]*pow(T,float(plyo-ply));
-      kappa_sp[n] += th.kappa_poly[n][ply]*pow(T,float(plyo-ply));
+      mu_sp[n]    += th.mu_poly[   n][ply]*pow(logT,float(deg-ply));
+      kappa_sp[n] += th.kappa_poly[n][ply]*pow(logT,float(deg-ply));
 
       for (int n2=n; n2<=ns-1; n2++)
       {
-        indx = int(ns*(ns-1)/2 - (n2-n)*(ns-n-1)/2 + n2);
-        Dij[n ][n2] += th.Dij_poly[indx][ply]*pow(T,float(plyo-ply));
-        Dij[n2][n ]  = Dij[n ][n2];
+        indx = int(ns*(ns-1)/2 - (ns-n)*(ns-n-1)/2 + n2);
+        Dij[n ][n2] += th.Dij_poly[indx][ply]*pow(logT,float(deg-ply));
       }
+    }
+
+    // Set to the correct dimensions
+    mu_sp[n] = sqrt_T*mu_sp[n];
+    kappa_sp[n] = sqrt_T*kappa_sp[n];
+    for (int n2=n; n2<=ns-1; n2++)
+    {
+      Dij[n ][n2] = pow(T,1.5)*Dij[n ][n2];
+      Dij[n2][n ] = Dij[n ][n2];
     }
   }
 
@@ -96,11 +111,14 @@ void transport(block_ b,
   double phi[ns][ns] = {0.0};
   for (int n=0; n<=ns-1; n++)
   {
-    for (int n2=0; n2<=ns-1; n2++)
+    for (int n2=n; n2<=ns-1; n2++)
     {
       phi[n][n2] =  pow((1.0 + sqrt(mu_sp[n]/mu_sp[n2]*sqrt(th.MW[n2]/th.MW[n]))),2.0) /
                        ( sqrt(8.0)*sqrt(1+th.MW[n]/th.MW[n2]));
+      //symmetric
+      phi[n2][n ] = phi[n ][n2];
     }
+
     double phitemp = 0.0;
     for (int n2=0; n2<=ns-1; n2++)
     {
@@ -137,10 +155,12 @@ void transport(block_ b,
       sum1 += X[n2] / Dij[n][n2];
       sum2 += X[n2] * th.MW[n2] / Dij[n][n2];
     }
+    //Account for pressure
     sum1 *= p;
     sum2 *= p * X[n] / ( MWmix - th.MW[n]*X[n] );
     D[n] = 1.0 / (sum1 + sum2);
   }
+
   // Set values of new properties
   // viscocity
   b.qt(i,j,k,0) = mu;
