@@ -26,32 +26,32 @@ elements:
 
 species:
   - name: A
-    composition: {A: 1}
+    composition: {A: 2}
     thermo:
      model: constant-cp
      T0: 0.0 K
      cp0: 29540.65178914549 J/kmol/K  # 1000*MW
     equation-of-state:
      model: ideal-gas
-   transport:
-     model: gas
-     geometry: linear
-     well-depth: 97.53
-     diameter: 3.621
-     polarizability: 1.76
-     rotational-relaxation: 4.0
+    transport:
+      model: gas
+      geometry: linear
+      well-depth: 97.53
+      diameter: 3.621
+      polarizability: 1.76
+      rotational-relaxation: 4.0
   - name: B
-    composition: {B: 1}
+    composition: {B: 2}
     thermo:
      model: constant-cp
      T0: 0.0 K
      cp0: 29540.65178914549 J/kmol/K  # 1000*MW
     equation-of-state:
      model: ideal-gas
-   transport:
-     model: gas
-     geometry: linear
-     well-depth: 97.53
-     diameter: 3.621
-     polarizability: 1.76
-     rotational-relaxation: 4.0
+    transport:
+      model: gas
+      geometry: linear
+      well-depth: 97.53
+      diameter: 3.621
+      polarizability: 1.76
+      rotational-relaxation: 4.0
