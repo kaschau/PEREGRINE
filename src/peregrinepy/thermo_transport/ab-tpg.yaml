@@ -7,10 +7,10 @@ units: {length: cm, time: s, quantity: kmol, energy: J}
 phases:
   - name: gas
     thermo: ideal-gas
-    elements: [A2, B]
+    elements: [A, B]
     species: [A2, B2]
     transport: mixture-averaged
-    state: {T: 300.0, P: 1 atm, Y: {A: 0.5, B2: 0.5}}
+    state: {T: 300.0, P: 1 atm, Y: {A2: 0.5, B2: 0.5}}
 
 elements:
   - symbol: A
