@@ -155,11 +155,20 @@ void transport(block_ b,
       }
       sum1 += X[n2] / Dij[n][n2];
       sum2 += X[n2] * th.MW[n2] / Dij[n][n2];
+
     }
     //Account for pressure
     sum1 *= p;
-    sum2 *= p * X[n] / ( MWmix - th.MW[n]*X[n] );
-    D[n] = 1.0 / (sum1 + sum2);
+    //HACK must be a better way to give zero for sum2 when MWmix == th.MW[n]*X[n]
+    double temp;
+    temp = p * X[n] / ( MWmix - th.MW[n]*X[n] );
+    if ( isinf(temp) )
+    {
+      D[n] = 0.0;
+    }else {
+      sum2 *= temp;
+      D[n] = 1.0 / (sum1 + sum2);
+    }
   }
 
   // Set values of new properties
