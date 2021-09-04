@@ -195,7 +195,7 @@ def parallel_write_restart(mb, path='./', grid_path='./', precision='double'):
             qf['results'].create_dataset(dset_name, shape=(extent_cc,), dtype=fdtype)
             dset = qf['results'][dset_name]
             if blk.ns > 1:
-                dset[:] = 1.0 - np.sum(blk.array['q'][1:-1,1:-1,1:-1,5::], axis=-1).ravel()
+                dset[:] = 1.0 - np.sum(blk.array['q'][1:-1,1:-1,1:-1,5::], axis=-1).ravel(order='F')
             elif blk.ns == 1:
                 dset[:] = 1.0
 
