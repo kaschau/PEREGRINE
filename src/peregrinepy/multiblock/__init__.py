@@ -27,7 +27,7 @@ def generate_multiblock_solver(nblks, config, myblocks=None):
     mbsolver = type(name, (solver,tic), dict(name=name))
 
     #Get the number of species from the ct file
-    relpath = str(Path(__file__).parent)+'/../thermo/'
+    relpath = str(Path(__file__).parent)+'/../thermo_transport/'
     ct.add_directory(relpath)
     gas = ct.Solution(config['thermochem']['ctfile'])
     spn = gas.species_names

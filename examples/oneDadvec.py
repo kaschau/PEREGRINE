@@ -71,7 +71,7 @@ def simulate():
     blk.array['q'][1:-1,1,1,4] = initial_T
 
     #Update cons
-    mb.eos(blk, mb.thermdat, 0 ,'prims')
+    mb.eos(blk, mb.thtrdat, 0 ,'prims')
     pg.consistify(mb)
 
     dt = 0.1 * 0.025
