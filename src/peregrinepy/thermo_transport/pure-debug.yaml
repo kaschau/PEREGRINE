@@ -18,8 +18,8 @@ phases:
 
 elements:
  - symbol: A
-   atomic-weight: 29.54065178914549
-   atomic-number: 29
+   atomic-weight: 14.770325894572744
+   atomic-number: 14
 
 species:
  - name: Air

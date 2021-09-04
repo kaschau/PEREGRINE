@@ -7,21 +7,22 @@ units: {length: cm, time: s, quantity: kmol, energy: J}
 phases:
   - name: gas
     thermo: ideal-gas
-    elements: [A, B]
-    species: [A, B]
-    state: {T: 300.0, P: 1 atm, Y: {A: 0.21, B: 0.79}}
+    elements: [A2, B]
+    species: [A2, B2]
+    transport: mixture-averaged
+    state: {T: 300.0, P: 1 atm, Y: {A: 0.5, B2: 0.5}}
 
 elements:
   - symbol: A
-    atomic-weight: 32.0
+    atomic-weight: 16.0
     atomic-number: 16
   - symbol: B
-    atomic-weight: 28.0
-    atomic-number: 28
+    atomic-weight: 14.0
+    atomic-number: 14
 
 species:
-  - name: A
-    composition: {A: 1}
+  - name: A2
+    composition: {A: 2}
     thermo:
       model: NASA7
       temperature-ranges: [200.0, 1000.0, 3500.0]
@@ -37,8 +38,8 @@ species:
       diameter: 3.621
       polarizability: 1.76
       rotational-relaxation: 4.0
-  - name: B
-    composition: {B: 1}
+  - name: B2
+    composition: {B: 2}
     thermo:
       model: NASA7
       temperature-ranges: [300.0, 1000.0, 5000.0]

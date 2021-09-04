@@ -10,29 +10,25 @@ phases:
   - name: gas
     thermo: ideal-gas
     elements: [A, B]
-    species: [A, B]
-    state:
-    T: 300.0
-    P: 1.01325e+05
-    Y: {'A':1.0}
+    species: [A2, B2]
+    transport: mixture-averaged
+    state: {T: 300.0, P: 1 atm, Y: {A2: 0.5, B2: 0.5}}
 
 elements:
   - symbol: A
-    atomic-weight: 29.54065178914549
+    atomic-weight: 14.770325894572744
     atomic-number: 29
   - symbol: B
-    atomic-weight: 29.54065178914549
+    atomic-weight: 14.770325894572744
     atomic-number: 29
 
 species:
-  - name: A
+  - name: A2
     composition: {A: 2}
     thermo:
-     model: constant-cp
-     T0: 0.0 K
-     cp0: 29540.65178914549 J/kmol/K  # 1000*MW
-    equation-of-state:
-     model: ideal-gas
+      model: constant-cp
+      T0: 0.0 K
+      cp0: 29540.65178914549 J/kmol/K  # 1000*MW
     transport:
       model: gas
       geometry: linear
@@ -40,14 +36,12 @@ species:
       diameter: 3.621
       polarizability: 1.76
       rotational-relaxation: 4.0
-  - name: B
+  - name: B2
     composition: {B: 2}
     thermo:
-     model: constant-cp
-     T0: 0.0 K
-     cp0: 29540.65178914549 J/kmol/K  # 1000*MW
-    equation-of-state:
-     model: ideal-gas
+      model: constant-cp
+      T0: 0.0 K
+      cp0: 29540.65178914549 J/kmol/K  # 1000*MW
     transport:
       model: gas
       geometry: linear
