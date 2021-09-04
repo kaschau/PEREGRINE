@@ -7,37 +7,51 @@ description: |-
 units: {length: m, time: s, quantity: kmol, mass: kg, energy: J}
 
 phases:
- - name: gas
-   thermo: ideal-gas
-   elements: [A, B]
-   species: [A, B]
-   state:
+  - name: gas
+    thermo: ideal-gas
+    elements: [A, B]
+    species: [A, B]
+    state:
     T: 300.0
     P: 1.01325e+05
     Y: {'A':1.0}
 
 elements:
- - symbol: A
-   atomic-weight: 29.54065178914549
-   atomic-number: 29
- - symbol: B
-   atomic-weight: 29.54065178914549
-   atomic-number: 29
+  - symbol: A
+    atomic-weight: 29.54065178914549
+    atomic-number: 29
+  - symbol: B
+    atomic-weight: 29.54065178914549
+    atomic-number: 29
 
 species:
- - name: A
-   composition: {A: 1}
-   thermo:
-    model: constant-cp
-    T0: 0.0 K
-    cp0: 29540.65178914549 J/kmol/K  # 1000*MW
-   equation-of-state:
-    model: ideal-gas
- - name: B
-   composition: {B: 1}
-   thermo:
-    model: constant-cp
-    T0: 0.0 K
-    cp0: 29540.65178914549 J/kmol/K  # 1000*MW
-   equation-of-state:
-    model: ideal-gas
+  - name: A
+    composition: {A: 1}
+    thermo:
+     model: constant-cp
+     T0: 0.0 K
+     cp0: 29540.65178914549 J/kmol/K  # 1000*MW
+    equation-of-state:
+     model: ideal-gas
+   transport:
+     model: gas
+     geometry: linear
+     well-depth: 97.53
+     diameter: 3.621
+     polarizability: 1.76
+     rotational-relaxation: 4.0
+  - name: B
+    composition: {B: 1}
+    thermo:
+     model: constant-cp
+     T0: 0.0 K
+     cp0: 29540.65178914549 J/kmol/K  # 1000*MW
+    equation-of-state:
+     model: ideal-gas
+   transport:
+     model: gas
+     geometry: linear
+     well-depth: 97.53
+     diameter: 3.621
+     polarizability: 1.76
+     rotational-relaxation: 4.0

@@ -91,7 +91,7 @@ def simulate():
     blk.array['q'][:,:,:,1:4] = 0.0
     blk.array['q'][1:-1,1:-1,1,4] = 300.0
 
-    mb.eos(blk, mb.thermdat, 0, 'prims')
+    mb.eos(blk, mb.thtrdat, 0, 'prims')
     pg.consistify(mb)
 
     pg.writers.write_restart(mb,config['io']['outputdir'],grid_path='../Grid')

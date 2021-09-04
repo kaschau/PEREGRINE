@@ -21,6 +21,11 @@ def consistify(mb):
     apply_bcs(mb,'euler')
 
     if mb.config['RHS']['diffusion']:
+
+        #Update transport properties
+        for blk in mb:
+            transport(blk,mb.thtrdat,-1)
+
         #Update spatial derivatives
         dqdxyz(mb)
 
