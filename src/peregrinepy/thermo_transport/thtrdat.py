@@ -163,10 +163,10 @@ class thtrdat(thtrdat_):
             ##########################################
             #Thermal Conductivity
             ##########################################
-
             cond = np.zeros((npts,ns))
             for i,T in enumerate(Ts):
                 for k in range(ns):
+                    gas.TP = T,101325.0
                     Tstar = kb*298.0/well[k]
                     fz_298 = 1.0 + np.pi**1.5 / np.sqrt(Tstar) * (0.5 + 1.0 / Tstar) + (0.25 * np.pi**2 + 2) / Tstar
 
@@ -194,7 +194,6 @@ class thtrdat(thtrdat_):
             # Binary Diffusion
             ##########################################
             diff = np.zeros((npts,ns,ns))
-            ct_diff = np.zeros((npts,ns,ns))
             for k in range(ns):
                 for j in range(k,ns):
                     for i,T in enumerate(Ts):
