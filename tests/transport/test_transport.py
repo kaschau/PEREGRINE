@@ -5,7 +5,7 @@ import cantera as ct
 import sys
 from pathlib import Path
 
-np.random.seed(111)
+#np.random.seed(111)
 
 ##################################################################################
 ##### Test for all positive i aligned orientations
@@ -18,12 +18,10 @@ def test_transport():
     relpath = str(Path(__file__).parent)
     ctfile = relpath+'/ct_test_transport.yaml'
     gas = ct.Solution(ctfile)
-    p = np.random.uniform(low=10000, high=100000)
-    T = np.random.uniform(low=100  , high=1000)
+    p = np.random.uniform(low=10000, high=1000000)
+    T = np.random.uniform(low=200  , high=3500)
     Y = np.random.uniform(low=0.0  , high=1.0,size=gas.n_species)
     Y = Y/np.sum(Y)
-
-    gas.TPY = T,p,Y
 
     config = pg.files.config_file()
     config['thermochem']['ctfile'] = ctfile
@@ -42,6 +40,26 @@ def test_transport():
     mb.generate_halo()
     mb.compute_metrics()
 
+    # visc = np.zeros(50)
+    # ctvisc = np.zeros(50)
+    # cond = np.zeros(50)
+    # ctcond = np.zeros(50)
+    # Ts = np.linspace(300,3500,50)
+    # for i,T in enumerate(Ts):
+    #     gas.TPY = T,p,Y
+    #     blk.array['q'][:,:,:,0] = p
+    #     blk.array['q'][:,:,:,4] = T
+    #     blk.array['q'][:,:,:,5::] = Y[0:-1]
+    #
+    #     #Update transport
+    #     pg.compute.transport(blk, mb.thtrdat, 0)
+    #
+    #     visc[i] = blk.array['qt'][1,1,1,0]
+    #     cond[i] = blk.array['qt'][1,1,1,1]
+    #     ctvisc[i] = gas.viscosity
+    #     ctcond[i] = gas.thermal_conductivity
+
+    gas.TPY = T,p,Y
     blk.array['q'][:,:,:,0] = p
     blk.array['q'][:,:,:,4] = T
     blk.array['q'][:,:,:,5::] = Y[0:-1]
@@ -61,7 +79,7 @@ def test_transport():
         return diff
 
     pd = []
-    print('******** Primatives to Conservatives ***************')
+    print('******** Transport Properties *********')
     print(f'       {"Cantera":<16}  | {"PEREGRINE":<16} | {"%Error":<6}')
     print('Primatives')
     pd.append(print_diff('p',gas.P,pgprim[0]))
@@ -77,5 +95,5 @@ def test_transport():
 
     kokkos.finalize()
 
-    passfail = np.all(np.array(pd) < 1.0)
+    passfail = np.all(np.array(pd) < 5.0)
     assert passfail
