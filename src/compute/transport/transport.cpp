@@ -107,22 +107,23 @@ void transport(block_ b,
   // Now every species' property is computed, generate mixture values
 
   // viscosity mixture
-  double mu = 0.0;
   double phi[ns][ns] = {0.0};
   for (int n=0; n<=ns-1; n++)
   {
-    for (int n2=n; n2<=ns-1; n2++)
+    for (int n2=0; n2<=ns-1; n2++)
     {
       phi[n][n2] =  pow((1.0 + sqrt(mu_sp[n]/mu_sp[n2]*sqrt(th.MW[n2]/th.MW[n]))),2.0) /
                        ( sqrt(8.0)*sqrt(1+th.MW[n]/th.MW[n2]));
-      //symmetric
-      phi[n2][n ] = phi[n ][n2];
     }
+  }
 
+  double mu = 0.0;
+  for (int n=0; n<=ns-1; n++)
+  {
     double phitemp = 0.0;
     for (int n2=0; n2<=ns-1; n2++)
     {
-      phitemp += phi[n][n2]*X[n2];
+      phitemp += phi[n2][n]*X[n2];
     }
     mu += mu_sp[n]*X[n]/phitemp;
   }
