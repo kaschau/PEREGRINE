@@ -53,7 +53,7 @@ class thtrdat(thtrdat_):
             import numpy as np
             from scipy import interpolate as intrp
 
-            deg = 5
+            deg = 4
             #Maximum and minumum temperatures to generate poly'l
             Tmin = 200
             Tmax = 3500

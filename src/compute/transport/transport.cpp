@@ -20,7 +20,7 @@ void transport(block_ b,
                                      const int k) {
 
   // poly'l degree
-  const int deg = 5;
+  const int deg = 4;
   int ns=th.ns;
   double p;
   double T;
@@ -123,7 +123,7 @@ void transport(block_ b,
     double phitemp = 0.0;
     for (int n2=0; n2<=ns-1; n2++)
     {
-      phitemp += phi[n2][n]*X[n2];
+      phitemp += phi[n][n2]*X[n2];
     }
     mu += mu_sp[n]*X[n]/phitemp;
   }
