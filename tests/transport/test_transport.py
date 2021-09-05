@@ -95,5 +95,5 @@ def test_transport():
 
     kokkos.finalize()
 
-    passfail = np.all(np.array(pd) < 5.0)
+    passfail = np.all(np.array(pd) < 1.0)
     assert passfail
