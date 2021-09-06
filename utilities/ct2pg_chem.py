@@ -73,7 +73,7 @@ def ct2pg_chem(ctyaml, cpp):
         pg_mech.write(f'// Y({i:>3d}) = {sp}\n')
     pg_mech.write('// ==================================================================== //\n')
 
-    # WRITE OUT SUBROUTINE
+    # WRITE OUT INITIALIZATION BLOCK UP TO CHEMICAL SOURCE TERMS
     out_string = f'''
 #include "Kokkos_Core.hpp"
 #include "kokkos_types.hpp"
@@ -85,9 +85,9 @@ def ct2pg_chem(ctyaml, cpp):
 #include <stdexcept>
 
 void cpg(  block_ b,
-   const thtrdat_ th,
-        const int  face,
-const std::string  given) {{
+         thtrdat_ th,
+              int  face,
+      std::string  given) {{
 
   MDRange3 range = MDRange3({{1,1,1}},{{b.ni,b.nj,b.nk}});
 
@@ -128,45 +128,8 @@ const std::string  given) {{
 
     pg_mech.write(out_string)
 
-
-    # WRITE OUT INITIALIZATION BLOCK UP TO CHEMICAL SOURCE TERMS
-#    out_string = '''      use thtr
-#
-#
-#
-#            real, dimension(l_tbc)           ::  Fcent
-#            real, dimension(l_tbc)           :: dFcent
-#
-#            real                             :: Pr_pdr
-#            real, dimension(l_tbc)           ::  A_pdr
-#            real                             ::  B_pdr,C_pdr,D_pdr,E_pdr,F_pdr
-#
-#            real                             :: Ccent
-#            real                             :: Ncent
-#
-#            real                             :: p,T,rho,r_p,r_t,Q_e
-#            real, dimension(1:ns  )          :: r_y
-#            real, dimension(1:ns-1)          :: yy,omega
-#            real, dimension(0:ns-1,1:2+ns-1) :: domega
-#
-#            real                             :: p_SI,T_SI,rho_SI
-#            real                             :: rho_ref,U_ref,L_ref,Cp_ref,c_ref
-#
-#            real                             :: yk,yn
-#
-#      ! -------------------------------------------------------------- >
-#
-#      ys(1:ns-1) = max(eps_ref,     min(yy(1:ns-1),1.e0-eps_ref))
-#      ys(  ns  ) = max(eps_ref,1.e0-sum(ys(1:ns-1)             ))
-#
-#      cs(1:ns  ) = rho_SI*ys(1:ns  )/ws(1:ns  ) \n'''.format(nr, ns, )
-#
-#    pg_mech.write(out_string)
-
     #-----------------------------------------------------------------------------
-
     # WRITE Chaperone Efficiencies
-
     #-----------------------------------------------------------------------------
 
     out_string = '''  // -------------------------------------------------------------- >
@@ -180,7 +143,7 @@ const std::string  given) {{
 
     tbc_count = 0
     for i,r in enumerate(gas.reactions()):
-        if r.reaction_type in [2,4]: #ThreeBodyReaction and FallOffReactions
+        if r.reaction_type in ['three-body', 'falloff']: #ThreeBodyReaction and FallOffReactions
             out_string = []
             tbc_count += 1
             for j in range(ns):
@@ -191,11 +154,11 @@ const std::string  given) {{
                     else:
                         out_string.append(f' + cs[{j}]')
             out_string[0] = out_string[0].replace(' + ', '')
-            pg_mech.write('   S_tbc[{i}] = ')
+            pg_mech.write(f'  S_tbc[{i}] = ')
             for item in out_string:
                 pg_mech.write(item)
-            pg_mech.write('\n')
-            pg_mech.write('   J_tbc[{i}] = 1.e0')
+            pg_mech.write(';\n')
+            pg_mech.write(f'  J_tbc[{i}] = 1.e0;')
             pg_mech.write('\n\n')
 
     out_string = '''  // -------------------------------------------------------------- >
@@ -279,7 +242,7 @@ const std::string  given) {{
   double Fcent[{nl_tbc}],dFcent[{nl_tbc}];
   double Pr_pdr;
   double A_pdr[{nl_tbc}];
-  double B_pdr,C_pdr,D_pdr,E_pdr,F_pdr
+  double B_pdr,C_pdr,D_pdr,E_pdr,F_pdr;
   double Ccent,Ncent;
 \n'''
 
@@ -409,7 +372,16 @@ const std::string  given) {{
                 pg_mech.write(item)
         pg_mech.write(');\n')
 
-    pg_mech.write('\n\n  });\n}')
+    out_string = '''
+  // Add source terms to RHS
+  for (int n=0; n<th.ns-1; n++)
+  {
+    b.dQ(i,j,k,5+n) = omega[n]*b.dQ(i,j,k,5+n)*b.J(i,j,k);
+  }
+
+  });\n}'''
+
+    pg_mech.write(out_string)
 
     pg_mech.close()
 
