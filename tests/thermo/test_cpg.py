@@ -28,9 +28,9 @@ def test_cpg():
     config = pg.files.config_file()
     config['thermochem']['ctfile'] = ctfile
     config['thermochem']['eos'] = 'cpg'
+    config['RHS']['diffusion'] = False
 
     mb = pg.multiblock.generate_multiblock_solver(1,config)
-    therm = pg.thermo.thermdat(config)
     pg.grid.create.multiblock_cube(mb,
                                    mb_dimensions=[1,1,1],
                                    dimensions_perblock=[2,2,2],
@@ -47,7 +47,7 @@ def test_cpg():
     blk.array['q'][:,:,:,5::] = Y[0:-1]
 
     #Update cons
-    pg.compute.cpg(blk, mb.thermdat, 0, 'prims')
+    pg.compute.cpg(blk, mb.thtrdat, 0, 'prims')
 
     #test the properties
     pgcons = blk.array['Q'][1,1,1]

@@ -72,7 +72,7 @@ def simulate():
     blk.array['q'][:,:,:,2] = -M0*np.cos(blk.array['xc'])*np.sin(blk.array['yc'])*np.cos(blk.array['zc'])
     blk.array['q'][:,:,:,4] = blk.array['q'][:,:,:,0]/(R*rho0)
 
-    mb.eos(blk, mb.thermdat, 0, 'prims')
+    mb.eos(blk, mb.thtrdat, 0, 'prims')
     pg.consistify(mb)
 
     dt = 0.1 * 2*np.pi/64

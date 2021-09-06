@@ -1,6 +1,6 @@
 
 
-def adiabatic_noslip_wall(eos,blk,face,thermdat,terms):
+def adiabatic_noslip_wall(eos,blk,face,thtrdat,terms):
 
     nface = face.nface
 
@@ -15,7 +15,7 @@ def adiabatic_noslip_wall(eos,blk,face,thermdat,terms):
         TN[face.s0_] = TN[face.s1_]
 
         #Update conservatives
-        eos(blk,thermdat,nface,'prims')
+        eos(blk,thtrdat,nface,'prims')
 
     elif terms == 'viscous':
         #extrapolate velocity gradient
@@ -33,7 +33,7 @@ def adiabatic_noslip_wall(eos,blk,face,thermdat,terms):
         dTNdy[face.s0_] = - dTNdy[face.s1_]
         dTNdz[face.s0_] = - dTNdz[face.s1_]
 
-def adiabatic_slip_wall(eos,blk,face,thermdat,terms):
+def adiabatic_slip_wall(eos,blk,face,thtrdat,terms):
 
     nface = face.nface
 
@@ -66,7 +66,7 @@ def adiabatic_slip_wall(eos,blk,face,thermdat,terms):
         TN[face.s0_] = TN[face.s1_]
 
         #Update conservatives
-        eos(blk,thermdat,nface,'prims')
+        eos(blk,thtrdat,nface,'prims')
 
     elif terms == 'viscous':
         #negate velocity gradient (so gradient evaluates to zero on wall)
@@ -84,7 +84,7 @@ def adiabatic_slip_wall(eos,blk,face,thermdat,terms):
         dTNdy[face.s0_] = - dTNdy[face.s1_]
         dTNdz[face.s0_] = - dTNdz[face.s1_]
 
-def adiabatic_moving_wall(eos, blk, face, thermdat, terms):
+def adiabatic_moving_wall(eos, blk, face, thtrdat, terms):
 
     nface = face.nface
 
@@ -117,7 +117,7 @@ def adiabatic_moving_wall(eos, blk, face, thermdat, terms):
         TN[face.s0_] = TN[face.s1_]
 
         #Update conservatives
-        eos(blk, thermdat, nface, 'prims')
+        eos(blk, thtrdat, nface, 'prims')
 
     elif terms == 'viscous':
         #extrapolate velocity gradient
@@ -136,7 +136,7 @@ def adiabatic_moving_wall(eos, blk, face, thermdat, terms):
         dTNdy[face.s0_] = - dTNdy[face.s1_]
         dTNdz[face.s0_] = - dTNdz[face.s1_]
 
-def isoT_moving_wall(eos,blk,face,thermdat,terms):
+def isoT_moving_wall(eos,blk,face,thtrdat,terms):
 
     nface = face.nface
 
@@ -174,7 +174,7 @@ def isoT_moving_wall(eos,blk,face,thermdat,terms):
         T[face.s0_] = 2.0*face.bcvals['T'] - T[face.s1_]
 
         #Update conservatives
-        eos(blk,thermdat,nface,'prims')
+        eos(blk,thtrdat,nface,'prims')
 
     elif terms == 'viscous':
         #extrapolate velocity gradient

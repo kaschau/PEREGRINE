@@ -4,7 +4,7 @@
 #include "Kokkos_Core.hpp"
 #include "compute.hpp"
 #include "block_.hpp"
-#include "thermdat_.hpp"
+#include "thtrdat_.hpp"
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
@@ -96,8 +96,9 @@ PYBIND11_MODULE(compute, m) {
     .def_readwrite("dqdx", &block_::dqdx )
     .def_readwrite("dqdy", &block_::dqdy )
     .def_readwrite("dqdz", &block_::dqdz )
-    // Thermo variables
+    // Thermo,transport variables
     .def_readwrite("qh", &block_::qh )
+    .def_readwrite("qt", &block_::qt )
 
     // RK stages
     .def_readwrite("rhs0", &block_::rhs0 )
@@ -111,18 +112,24 @@ PYBIND11_MODULE(compute, m) {
     .def_readwrite("kF", &block_::kF );
 
 ////////////////////////////////////////////////////////////////////////////////
-///////////////////  C++ Parent thermdat_ class ////////////////////////////////
+///////////////////  C++ Parent thtrdat_ class ////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-  py::class_<thermdat_>(m, "thermdat_", py::dynamic_attr())
+  py::class_<thtrdat_>(m, "thtrdat_", py::dynamic_attr())
     .def(py::init<>())
 
-    .def_readwrite("ns", &thermdat_::ns)
-    .def_readwrite("Ru", &thermdat_::Ru)
-    .def_readwrite("species_names", &thermdat_::species_names)
-    .def_readwrite("MW", &thermdat_::MW)
-    .def_readwrite("cp0", &thermdat_::cp0)
-    .def_readwrite("N7", &thermdat_::N7);
+    .def_readwrite("ns", &thtrdat_::ns)
+    .def_readwrite("Ru", &thtrdat_::Ru)
+
+    .def_readwrite("species_names", &thtrdat_::species_names)
+    .def_readwrite("MW", &thtrdat_::MW)
+
+    .def_readwrite("cp0", &thtrdat_::cp0)
+    .def_readwrite("N7", &thtrdat_::N7)
+
+    .def_readwrite("mu_poly", &thtrdat_::mu_poly)
+    .def_readwrite("kappa_poly", &thtrdat_::kappa_poly)
+    .def_readwrite("Dij_poly", &thtrdat_::Dij_poly);
 
 ////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////  Compute Functions /////////////////////////////////
@@ -138,28 +145,32 @@ PYBIND11_MODULE(compute, m) {
   //  |----> advective
   m.def("advective", &advective, "Compute centered difference flux",
         py::arg("list of block_ object"),
-        py::arg("thermdat_ object"));
+        py::arg("thtrdat_ object"));
   //  |----> viscous
   m.def("diffusive", &diffusive, "Compute centered diffusive flux",
         py::arg("list of block_ object"),
-        py::arg("thermdat_ object"));
+        py::arg("thtrdat_ object"));
 
   // ./thermo
   //  |----> cpg
   m.def("cpg", &cpg, "Update primatives or conservatives with cpg assumption",
         py::arg("block_ object"),
-        py::arg("thermdat_ object"),
+        py::arg("thtrdat_ object"),
         py::arg("face"),
         py::arg("given"));
   //  |----> tpg
   m.def("tpg", &tpg, "Update primatives or conservatives with tpg assumption",
         py::arg("block_ object"),
-        py::arg("thermdat_ object"),
+        py::arg("thtrdat_ object"),
         py::arg("face"),
         py::arg("given"));
 
-
-
+  // ./transport
+  //  |----> transport
+  m.def("transport", &transport, "Update transport properties from primatives",
+        py::arg("block_ object"),
+        py::arg("thtrdat_ object"),
+        py::arg("face"));
 
 
   static auto _atexit = []() {

@@ -1,14 +1,14 @@
 #include "Kokkos_Core.hpp"
 #include "kokkos_types.hpp"
 #include "block_.hpp"
-#include "thermdat_.hpp"
+#include "thtrdat_.hpp"
 #include "compute.hpp"
 #include <math.h>
 #include <numeric>
 #include <stdexcept>
 
 void tpg(block_ b,
-      thermdat_ th,
+      thtrdat_ th,
            int  face,
    std::string  given) {
 
