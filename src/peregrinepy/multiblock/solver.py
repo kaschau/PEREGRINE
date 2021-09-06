@@ -27,7 +27,7 @@ class solver(restart):
         super().__init__(nblks,sp_names,temp)
 
         self.config = None
-        self.thermdat = None
+        self.thtrdat = None
         self.eos = None
 
         #Parallel output

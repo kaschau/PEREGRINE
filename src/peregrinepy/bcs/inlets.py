@@ -1,6 +1,6 @@
 
 
-def constant_velocity_subsonic_inlet(eos,blk,face,thermdat,terms):
+def constant_velocity_subsonic_inlet(eos,blk,face,thtrdat,terms):
 
     nface = face.nface
 
@@ -20,12 +20,12 @@ def constant_velocity_subsonic_inlet(eos,blk,face,thermdat,terms):
         T = blk.array['q'][:,:,:,4]
         T[face.s0_] = 2.0*face.bcvals['T'] - T[face.s1_]
 
-        for sn,n in enumerate(thermdat.species_names[0:-1]):
+        for sn,n in enumerate(thtrdat.species_names[0:-1]):
             N = blk.array['q'][:,:,:,5+n]
             N[face.s0_] = 2.0*face.bcvals[sn[n]] - N[face.s1_]
 
         #Update conserved
-        eos(blk,thermdat,nface,'prims')
+        eos(blk,thtrdat,nface,'prims')
 
     elif terms == 'viscous':
         #neumann all gradients

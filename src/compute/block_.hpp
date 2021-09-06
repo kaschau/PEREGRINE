@@ -33,6 +33,7 @@ struct block_ {
   fourDview dqdx,dqdy,dqdz;
   // thermo,trans arrays
   fourDview qh;
+  fourDview qt;
 
   // RHS stages
   fourDview rhs0,rhs1,rhs2,rhs3;

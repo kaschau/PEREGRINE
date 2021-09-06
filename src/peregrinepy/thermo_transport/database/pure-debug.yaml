@@ -1,0 +1,17 @@
+DB:
+  comp:
+    A: 2.0
+  MW: 29.54065178914549
+  cp0: 1000.0
+  NASA7:
+    - 0.0
+    - 0.0
+    - 0.0
+    - 29540.65178914549
+  well: 1.3465469697000001e-21
+  diam: 3.621e-10
+  dipole: 0.0
+  polarize: 1.76e-30
+  zrot: 4.0
+  acentric: 0.0
+  geometry: linear

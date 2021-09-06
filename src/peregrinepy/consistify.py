@@ -1,6 +1,6 @@
 from .bcs import apply_bcs
 from .mpicomm.blockcomm import communicate
-from .compute import dqdxyz
+from .compute import dqdxyz,transport
 
 def consistify(mb):
 
@@ -15,12 +15,17 @@ def consistify(mb):
 
     #Now update derived arrays for ENTIRE block, even exterior halos
     for blk in mb:
-        mb.eos(blk,mb.thermdat,-1,'cons')
+        mb.eos(blk,mb.thtrdat,-1,'cons')
 
     #Apply euler boundary conditions
     apply_bcs(mb,'euler')
 
     if mb.config['RHS']['diffusion']:
+
+        #Update transport properties
+        for blk in mb:
+            transport(blk,mb.thtrdat,-1)
+
         #Update spatial derivatives
         dqdxyz(mb)
 
