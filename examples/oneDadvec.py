@@ -36,7 +36,6 @@ def simulate():
     config = pg.files.config_file()
     config['RHS']['diffusion'] = False
     mb = pg.multiblock.generate_multiblock_solver(1,config)
-    therm = pg.thermo.thermdat(config)
     pg.grid.create.multiblock_cube(mb,
                                    mb_dimensions=[1,1,1],
                                    dimensions_perblock=[41,2,2],
