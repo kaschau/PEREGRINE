@@ -73,6 +73,8 @@ def ct2pg_chem(ctyaml, cpp):
         pg_mech.write(f'// Y({i:>3d}) = {sp}\n')
     pg_mech.write('// ==================================================================== //\n')
 
+    print(cpp.replace(".cpp",""))
+
     # WRITE OUT INITIALIZATION BLOCK UP TO CHEMICAL SOURCE TERMS
     out_string = f'''
 #include "Kokkos_Core.hpp"
@@ -81,14 +83,14 @@ def ct2pg_chem(ctyaml, cpp):
 #include "thtrdat_.hpp"
 #include "compute.hpp"
 #include <math.h>
-#include <numeric>
-#include <stdexcept>
+#include <vector>
 
-void cpg(  block_ b,
-         thtrdat_ th,
-              int  face,
-      std::string  given) {{
+void {cpp.replace(".cpp","")}(std::vector<block_> mb, thtrdat_ th) {{
+for(block_ b : mb){{
 
+//-------------------------------------------------------------------------------------------|
+// cc range
+//-------------------------------------------------------------------------------------------|
   MDRange3 range = MDRange3({{1,1,1}},{{b.ni,b.nj,b.nk}});
 
   Kokkos::parallel_for("Compute chemical source terms",
@@ -171,20 +173,20 @@ void cpg(  block_ b,
 
   for (int n=0; n<=ns-1; n++)
   {
-    m = ( T <= th.N7[n][0] ) ? 8 : 1;
+    m = ( T <= th.NASA7[n][0] ) ? 8 : 1;
 
-    hi     = th.N7[n][m+0]                  +
-             th.N7[n][m+1]*    T      / 2.0 +
-             th.N7[n][m+2]*pow(T,2.0) / 3.0 +
-             th.N7[n][m+3]*pow(T,3.0) / 4.0 +
-             th.N7[n][m+4]*pow(T,4.0) / 5.0 +
-             th.N7[n][m+5]/    T            ;
-    scs    = th.N7[n][m+0]*log(T)           +
-             th.N7[n][m+1]*    T            +
-             th.N7[n][m+2]*pow(T,2.0) / 2.0 +
-             th.N7[n][m+3]*pow(T,3.0) / 3.0 +
-             th.N7[n][m+4]*pow(T,4.0) / 4.0 +
-             th.N7[n][m+6]                  ;
+    hi     = th.NASA7[n][m+0]                  +
+             th.NASA7[n][m+1]*    T      / 2.0 +
+             th.NASA7[n][m+2]*pow(T,2.0) / 3.0 +
+             th.NASA7[n][m+3]*pow(T,3.0) / 4.0 +
+             th.NASA7[n][m+4]*pow(T,4.0) / 5.0 +
+             th.NASA7[n][m+5]/    T            ;
+    scs    = th.NASA7[n][m+0]*log(T)           +
+             th.NASA7[n][m+1]*    T            +
+             th.NASA7[n][m+2]*pow(T,2.0) / 2.0 +
+             th.NASA7[n][m+3]*pow(T,3.0) / 3.0 +
+             th.NASA7[n][m+4]*pow(T,4.0) / 4.0 +
+             th.NASA7[n][m+6]                  ;
 
     gbs[n] = hi-scs                         ;
   }
@@ -217,7 +219,7 @@ void cpg(  block_ b,
             elif s == -1:
                 out_string.append(f' - gbs[{j}]')
             elif s != 0:
-                out_string.append(f' {s}*gbs[{j}]')
+                out_string.append(f' {s:+}*gbs[{j}]')
         out_string[0] = out_string[0].replace('+', '')
         pg_mech.write(f'  dG[{i}]  = ')
         for item in out_string:
@@ -258,11 +260,11 @@ void cpg(  block_ b,
             tbc_count += 1
             if r.falloff.type in ['Simple','Lindemann']:
                 pg_mech.write(f'  //  Lindeman Reaction #{i+1}\n')
-                out_string = f'''  Fcent[{tbc_count}] = 1.0
+                out_string = f'''  Fcent[{tbc_count}] = 1.0;
   dFcent[{tbc_count}] = 0.0;
   Pr_pdr = S_tbc[{i}]*( {A_o[tbc_count-1]}*pow(T,{m_o[tbc_count-1]})*exp(-({Ea_o[tbc_count-1]})/T) )/k_f[{i}];
   A_pdr[{tbc_count}]  = 1.e0/(1.e0 + Pr_pdr);
-  k_f[{i}] = k_f({1})*( Pr_pdr/(1.e0 + Pr_pdr) );
+  k_f[{i}] = k_f[{1}]*( Pr_pdr/(1.e0 + Pr_pdr) );
   S_tbc[{i}] = 1.0;\n'''
                 pg_mech.write(out_string)
 
@@ -274,14 +276,14 @@ void cpg(  block_ b,
                 tp = r.falloff.parameters
                 if tp[-1] == 0: # Three Parameter Troe form
                     out_string = f'''  Fcent[{tbc_count}] =   (1.e0 - ({alpha}))*exp(-T/({Tsss}))
-                        + ({alpha}) *exp(-T/({Ts}))
+                        + ({alpha}) *exp(-T/({Ts}));
   dFcent[{tbc_count}] = - (1.e0 - ({alpha}))*exp(-T/({alpha}))/({alpha})
                              - ({alpha}) *exp(-T/({Ts}))/({Ts}); \n'''
                     pg_mech.write(out_string)
                 elif tp[-1] != 0: # Four Parameter Troe form
                     Tss = r.falloff.parameters[3]
                     out_string = f'''  Fcent[{tbc_count}] =   (1.e0 - ({alpha}))*exp(-T/({Tsss}))
-                             + ({alpha}) *exp(-T/({Ts})) + exp(-({Tss})/T)
+                             + ({alpha}) *exp(-T/({Ts})) + exp(-({Tss})/T);
   dFcent[{tbc_count}]= - (1.e0 - ({alpha}))*exp(-T/({Tsss}))/({Tsss})
                              - ({alpha}) *exp(-T/({Ts}))/({Ts}) + exp(-({Tss})/T)*({Tss})/pow(T,2); \n'''
                     pg_mech.write(out_string)
@@ -352,6 +354,8 @@ void cpg(  block_ b,
 
     pg_mech.write('  // -------------------------------------------------------------->\n')
 
+    pg_mech.write('  double omega[ns-1];\n\n')
+
     for i in range(gas.n_species-1):
         out_string = []
         nu_sum = nu_b[i,:] - nu_f[i,:]
@@ -379,7 +383,7 @@ void cpg(  block_ b,
     b.dQ(i,j,k,5+n) = omega[n]*b.dQ(i,j,k,5+n)*b.J(i,j,k);
   }
 
-  });\n}'''
+  });\n}}'''
 
     pg_mech.write(out_string)
 
@@ -393,6 +397,6 @@ if __name__ == '__main__':
 
     ct_file_name = args.ct_file_name
 
-    cpp_file_name = f'chem_{ct_file_name.replace(".yaml","")}.cpp'
+    cpp_file_name = f'chem_{ct_file_name.replace(".yaml",".cpp")}'.replace('-','_')
 
     ct2pg_chem(ct_file_name, cpp_file_name)

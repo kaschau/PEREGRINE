@@ -70,20 +70,20 @@ void tpg(block_ b,
   int m;
   for (int n=0; n<=ns-1; n++)
   {
-    m = ( T <= th.N7[n][0] ) ? 8 : 1;
+    m = ( T <= th.NASA7[n][0] ) ? 8 : 1;
 
-    cps[n] = th.N7[n][m+0]            +
-             th.N7[n][m+1]*    T      +
-             th.N7[n][m+2]*pow(T,2.0) +
-             th.N7[n][m+3]*pow(T,3.0) +
-             th.N7[n][m+4]*pow(T,4.0) ;
+    cps[n] = th.NASA7[n][m+0]            +
+             th.NASA7[n][m+1]*    T      +
+             th.NASA7[n][m+2]*pow(T,2.0) +
+             th.NASA7[n][m+3]*pow(T,3.0) +
+             th.NASA7[n][m+4]*pow(T,4.0) ;
 
-    hi[n]  = th.N7[n][m+0]                  +
-             th.N7[n][m+1]*    T      / 2.0 +
-             th.N7[n][m+2]*pow(T,2.0) / 3.0 +
-             th.N7[n][m+3]*pow(T,3.0) / 4.0 +
-             th.N7[n][m+4]*pow(T,4.0) / 5.0 +
-             th.N7[n][m+5]/    T            ;
+    hi[n]  = th.NASA7[n][m+0]                  +
+             th.NASA7[n][m+1]*    T      / 2.0 +
+             th.NASA7[n][m+2]*pow(T,2.0) / 3.0 +
+             th.NASA7[n][m+3]*pow(T,3.0) / 4.0 +
+             th.NASA7[n][m+4]*pow(T,4.0) / 5.0 +
+             th.NASA7[n][m+5]/    T            ;
 
     cp   += cps[n]*th.Ru  *Y[n]/th.MW[n];
     h    +=  hi[n]*th.Ru*T*Y[n]/th.MW[n];
@@ -219,19 +219,19 @@ void tpg(block_ b,
     cp = 0.0;
     for (int n=0; n<=ns-1; n++)
     {
-      int m = ( T <= th.N7[n][0] ) ? 8 : 1;
+      int m = ( T <= th.NASA7[n][0] ) ? 8 : 1;
 
-      hi[n]  = th.N7[n][m+0]                  +
-               th.N7[n][m+1]*    T      / 2.0 +
-               th.N7[n][m+2]*pow(T,2.0) / 3.0 +
-               th.N7[n][m+3]*pow(T,3.0) / 4.0 +
-               th.N7[n][m+4]*pow(T,4.0) / 5.0 +
-               th.N7[n][m+5]/    T            ;
-      cps[n] = th.N7[n][m+0]            +
-               th.N7[n][m+1]*    T      +
-               th.N7[n][m+2]*pow(T,2.0) +
-               th.N7[n][m+3]*pow(T,3.0) +
-               th.N7[n][m+4]*pow(T,4.0) ;
+      hi[n]  = th.NASA7[n][m+0]                  +
+               th.NASA7[n][m+1]*    T      / 2.0 +
+               th.NASA7[n][m+2]*pow(T,2.0) / 3.0 +
+               th.NASA7[n][m+3]*pow(T,3.0) / 4.0 +
+               th.NASA7[n][m+4]*pow(T,4.0) / 5.0 +
+               th.NASA7[n][m+5]/    T            ;
+      cps[n] = th.NASA7[n][m+0]            +
+               th.NASA7[n][m+1]*    T      +
+               th.NASA7[n][m+2]*pow(T,2.0) +
+               th.NASA7[n][m+3]*pow(T,3.0) +
+               th.NASA7[n][m+4]*pow(T,4.0) ;
 
       h    +=  hi[n]*th.Ru*T*Y[n]/th.MW[n];
       cp   += cps[n]*th.Ru  *Y[n]/th.MW[n];

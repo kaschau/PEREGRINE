@@ -10,6 +10,7 @@ from .solver_block import solver_block
 
 from ..integrators import rk1,rk4
 from ..thermo_transport import thtrdat
+from ..compute import chem_CH4_O2_Stanford_Skeletal
 
 from pathlib import Path
 
@@ -52,5 +53,8 @@ def generate_multiblock_solver(nblks, config, myblocks=None):
         from ..compute import tpg
         cls.eos = tpg
 
+    #Stick the chemistry mechanism on
+    if config['thermochem']['chemistry']:
+        cls.chem = chem_CH4_O2_Stanford_Skeletal
 
     return cls

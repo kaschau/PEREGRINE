@@ -26,7 +26,7 @@ def test_cpg():
     gas.TPY = T,p,Y
 
     config = pg.files.config_file()
-    config['thermochem']['ctfile'] = ctfile
+    config['thermochem']['spdata'] = './thtr_ct_test_cpg.yaml'
     config['thermochem']['eos'] = 'cpg'
     config['RHS']['diffusion'] = False
 
