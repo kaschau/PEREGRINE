@@ -125,7 +125,7 @@ PYBIND11_MODULE(compute, m) {
     .def_readwrite("MW", &thtrdat_::MW)
 
     .def_readwrite("cp0", &thtrdat_::cp0)
-    .def_readwrite("N7", &thtrdat_::N7)
+    .def_readwrite("NASA7", &thtrdat_::NASA7)
 
     .def_readwrite("mu_poly", &thtrdat_::mu_poly)
     .def_readwrite("kappa_poly", &thtrdat_::kappa_poly)
@@ -172,6 +172,11 @@ PYBIND11_MODULE(compute, m) {
         py::arg("thtrdat_ object"),
         py::arg("face"));
 
+  // ./chemistry
+  //  |----> CH4_O2_Stanford_Skeletal
+  m.def("chem_CH4_O2_Stanford_Skeletal", &chem_CH4_O2_Stanford_Skeletal, "Chemical source terms from",
+        py::arg("list of block_ object"),
+        py::arg("thtrdat_ object"));
 
   static auto _atexit = []() {
     if (Kokkos::is_initialized()) Kokkos::finalize();

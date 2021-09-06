@@ -26,7 +26,7 @@ def test_tpg():
     gas.TPY = T,p,Y
 
     config = pg.files.config_file()
-    config['thermochem']['ctfile'] = ctfile
+    config['thermochem']['spdata'] = './thtr_ct_test_tpg.yaml'
     config['thermochem']['eos'] = 'tpg'
     config['RHS']['diffusion'] = False
 
@@ -53,7 +53,6 @@ def test_tpg():
     pgcons = blk.array['Q'][1,1,1]
     pgprim = blk.array['q'][1,1,1]
     pgthrm = blk.array['qh'][1,1,1]
-
 
     def print_diff(name,c,p):
         diff = np.abs(c-p)/p*100

@@ -32,4 +32,8 @@ void tpg(block_ b, thtrdat_ th, int face, std::string given);
 //    |------> transport
 void transport(block_ b, thtrdat_ th, int face);
 
+// ./chemistry
+//    |------> CH4_O2_Stanford_Skeletal
+void chem_CH4_O2_Stanford_Skeletal(std::vector<block_> mb, thtrdat_ th);
+
 #endif
