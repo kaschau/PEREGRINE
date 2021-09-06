@@ -16,7 +16,7 @@ def test_transport():
     kokkos.initialize()
 
     relpath = str(Path(__file__).parent)
-    ctfile = relpath+'/ct_test_transport.yaml'
+    ctfile = relpath+'/ct_gri30.yaml'
     gas = ct.Solution(ctfile)
     p = np.random.uniform(low=10000, high=1000000)
     T = np.random.uniform(low=200  , high=3500)
@@ -24,8 +24,8 @@ def test_transport():
     Y = Y/np.sum(Y)
 
     config = pg.files.config_file()
-    config['thermochem']['ctfile'] = ctfile
-    config['thermochem']['eos'] = 'cpg'
+    config['thermochem']['spdata'] = 'spdata_gri30.yaml'
+    config['thermochem']['eos'] = 'tpg'
     config['RHS']['diffusion'] = True
 
     mb = pg.multiblock.generate_multiblock_solver(1,config)
