@@ -46,3 +46,17 @@ class restart_block(grid_block):
 
         cQshape  = (self.ni+1,self.nj+1,self.nk+1,5+self.ns-1)
         self.array['q'] = np.zeros((cQshape))
+
+    def verify_species_sum(self, normalize=False):
+        '''Function to verify that the sum of species in any cell is not greater than unity
+        '''
+
+        if self.ns > 1:
+            summation = np.sum(self.qv[:,:,:,5::],axis=0)
+            if (np.max(summation) - 1.0) > 1e-10:
+                print('Warning! Species sum of', np.max(summation), 'found at', np.unravel_index(np.argmax(summation, axis=None), summation.shape), 'in block', self.nblki)
+                if normalize:
+                    self.qv[:,:,:,5::] = np.where( summation > 1.0, self.qv[:,:,:,5::]/summation, self.qv[:,:,:,5::] )
+                return False
+        else:
+            print('You are trying to check species sum on a case where ns = 1.')
