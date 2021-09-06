@@ -11,7 +11,6 @@ from .solver_block import solver_block
 from ..integrators import rk1,rk4
 from ..thermo_transport import thtrdat
 
-import cantera as ct
 from pathlib import Path
 
 def generate_multiblock_solver(nblks, config, myblocks=None):
@@ -26,11 +25,9 @@ def generate_multiblock_solver(nblks, config, myblocks=None):
     name = 'solver'+ti
     mbsolver = type(name, (solver,tic), dict(name=name))
 
-    #Get the number of species from the ct file
-    relpath = str(Path(__file__).parent)+'/../thermo_transport/'
-    ct.add_directory(relpath)
-    gas = ct.Solution(config['thermochem']['ctfile'])
-    spn = gas.species_names
+    #Get the number of species from the spdata file
+    spdat = thtrdat(config)
+    spn = spdat.species_names
 
     #Instantiate the combined mbsolver+timeint object
     cls = mbsolver(nblks,spn)
@@ -44,9 +41,8 @@ def generate_multiblock_solver(nblks, config, myblocks=None):
     #TODO: Do this better in the future
     #Stick the config file one
     cls.config = config
-
     #Stick the thtrdat object on
-    cls.thtrdat = thtrdat(config)
+    cls.thtrdat = spdat
 
     #Stick the equation of state on
     if config['thermochem']['eos'] == 'cpg':

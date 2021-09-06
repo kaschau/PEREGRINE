@@ -43,7 +43,7 @@ class config_file(FrozenDict):
         self['RHS'] = FrozenDict({'diffusion' : True
                                      })
 
-        self['thermochem'] = FrozenDict({'ctfile' : 'pure-debug.yaml',
+        self['thermochem'] = FrozenDict({'spdata' : 'pure-debug.yaml',
                                          'eos'    : 'cpg'
                                          })
 

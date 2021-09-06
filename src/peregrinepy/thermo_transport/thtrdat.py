@@ -1,46 +1,89 @@
-import cantera as ct
-from ..compute import thtrdat_
+import yaml
 from pathlib import Path
-import sys
+
+from ..compute import thtrdat_
 
 class thtrdat(thtrdat_):
 
     def __init__(self, config):
         thtrdat_.__init__(self)
 
+        # list of places to check in order
         relpath = str(Path(__file__).parent)
-        ct.add_directory(relpath)
-        gas = ct.Solution(config['thermochem']['ctfile'])
+        #First place we look for the file is in the input folder
+        # then we look in the local directory
+        # then we look in the PEREGRINE data base
+        spdata_locs = [
+            f'{config["io"]["inputdir"]}/{config["thermochem"]["spdata"]}',
+            f'./{config["thermochem"]["spdata"]}',
+            f'{relpath}/database/{config["thermochem"]["spdata"]}'
+        ]
+        for loc in spdata_locs:
+            try:
+                with open(loc,'r') as f:
+                    usersp = yaml.load(f, Loader=yaml.SafeLoader)
+                    break
+            except FileNotFoundError:
+                pass
+        else:
+            raise ValueError(" Not able to find your spdata yaml input file.")
 
-        ns = gas.n_species
+        #Now we get the reference data to fill in missing information not provided by the user
+        with open(f'{relpath}/database/species_library.yaml','r') as f:
+            refsp = yaml.load(f, Loader=yaml.SafeLoader)
+
+        # A function to collect the data in order of species listed in the input spdata
+        def complete_species(key):
+            prop = []
+            for sp in usersp.keys():
+                try:
+                    prop.append(usersp[sp][key])
+                except KeyError:
+                    try:
+                        prop.append(refsp[sp][key])
+                    except KeyError:
+                        raise KeyError(f'You want to use species {sp}, but did not provide a {key}, and it is not in the PEREGRINE species database.')
+                except TypeError:
+                    raise TypeError('The top level in your spieces data input yaml file must only be species names.')
+            return prop
+
+        ns = len(usersp.keys())
         self.ns = ns
-        self.Ru = ct.gas_constant
+        Ru = refsp['Ru']
+        self.Ru = Ru
+        kb = refsp['kb']
+        eps0 = refsp['epsilon_0']
+        avogadro = refsp['avogadro']
 
         # Species names string
-        self.species_names = list(gas.species_names)
+        species_names = list(usersp.keys())
+        self.species_names = species_names
 
         # Species MW
-        self.MW = list(gas.molecular_weights)
-
+        MW =  complete_species('MW')
+        self.MW = MW
 
         #################################################################################
         ####### Set thermodynamic properties
         #################################################################################
         #Set either constant cp or NASA7 polynomial coefficients
         if config['thermochem']['eos'] == 'cpg':
-            #Set gas to STP
-            gas.TP = 293.15,101325.0
             # Values for constant Cp
             # J/(kg.K)
-            cp0 = list(gas.standard_cp_R*ct.gas_constant/gas.molecular_weights)
-            if len(cp0) != gas.n_species:
-                raise ValueError('PEREGRINE ERROR: CPG info for all species (check cp0)')
+            cp0 = complete_species('cp0')
             self.cp0 = cp0
+            NASA7 = [None for i in range(ns)]
+            def cp_R(cp0,poly,T,MW):
+                return cp0*T/(Ru*MW)
         elif config['thermochem']['eos'] == 'tpg':
-            N7 = []
-            for n in range(gas.n_species):
-                N7.append(list(gas.species()[n].thermo.coeffs))
-            self.N7 = N7
+            NASA7 = complete_species('NASA7')
+            self.NASA7 = NASA7
+            def cp_R(cp0,poly,T,MW):
+               if T <= poly[0]:
+                   return sum([poly[i+1+7]*T**(i) for i in range(5)])
+               else:
+                   return sum([poly[i+1  ]*T**(i) for i in range(5)])
+            cp0 = [None for i in range(ns)]
         else:
             raise KeyError(f'PEREGRINE ERROR: Unknown EOS {config["thermochem"]["eos"]}')
 
@@ -65,39 +108,36 @@ class thtrdat(thtrdat_):
             intrp_o22 = intrp.RectBivariateSpline(tstar22, delta, omega22_table, kx=5,ky=5)
             intrp_Astar = intrp.RectBivariateSpline(tstar, delta, astar_table, kx=5,ky=5)
 
-            # Get properties
-            MW = gas.molecular_weights
-            mass = MW/ct.avogadro
-            kb = ct.boltzmann
-            Ru = ct.gas_constant
-            eps0 = ct.epsilon_0
+            # Get molecular mass
+            mass = np.array([M/avogadro for M in MW])
 
             #epsilon
-            well = np.array([g.transport.well_depth for g in gas.species()])
+            well = np.array(complete_species('well'))
             #sigma
-            diam = np.array([g.transport.diameter for g in gas.species()])
+            diam = np.array(complete_species('diam'))
             #mu
-            dipole = np.array([g.transport.dipole for g in gas.species()])
+            dipole = np.array(complete_species('dipole'))
 
             #see if molecule is polar
             polar = dipole > 0.0
 
             #alpha
-            polarize = np.array([g.transport.polarizability for g in gas.species()])
+            polarize = np.array(complete_species('polarize'))
 
             #z_rot
-            zrot = np.array([g.transport.rotational_relaxation for g in gas.species()])
+            zrot = np.array(complete_species('zrot'))
             #W_ac
-            acentric = np.array([g.transport.acentric_factor for g in gas.species()])
+            acentric = np.array(complete_species('acentric'))
 
             #determine rotational DOF
+            geom = np.array(complete_species('geometry'))
             rotDOF = []
-            for k in range(ns):
-                if gas.species()[k].transport.geometry == 'atom':
+            for g in geom:
+                if g == 'atom':
                     rotDOF.append(0.0)
-                elif gas.species()[k].transport.geometry == 'linear':
+                elif g == 'linear':
                     rotDOF.append(1.0)
-                elif gas.species()[k].transport.geometry == 'nonlinear':
+                elif g == 'nonlinear':
                     rotDOF.append(1.5)
 
             ##########################################
@@ -123,7 +163,7 @@ class thtrdat(thtrdat_):
 
                     #reduced dipole delta*
                     r_deltastar[i,j] = 0.5 * r_dipole[i,j]**2 / \
-                                       ( 4*np.pi*ct.epsilon_0*r_well[i,j]*r_diam[i,j]**3 )
+                                       ( 4*np.pi*eps0*r_well[i,j]*r_diam[i,j]**3 )
 
                     #Correct for polarity
                     if polar[i] == polar[j]:
@@ -163,10 +203,12 @@ class thtrdat(thtrdat_):
             ##########################################
             #Thermal Conductivity
             ##########################################
+            #NOTE The EOS has an effect on the transport properties via the calculation of cp
+            #     so if you use tpg you will use NASA7 to help compute thermal conductivities,
+            #     if you use cpg you will use constant cp to compute kappa.
             cond = np.zeros((npts,ns))
             for i,T in enumerate(Ts):
                 for k in range(ns):
-                    gas.TP = T,101325.0
                     Tstar = kb*298.0/well[k]
                     fz_298 = 1.0 + np.pi**1.5 / np.sqrt(Tstar) * (0.5 + 1.0 / Tstar) + (0.25 * np.pi**2 + 2) / Tstar
 
@@ -185,7 +227,7 @@ class thtrdat(thtrdat_):
                     fz_tstar = 1.0+np.pi**1.5/np.sqrt(Tstar) * (0.5+1.0/Tstar)+ (0.25*np.pi**2+2)/Tstar
                     B_factor = zrot[k] *fz_298 / fz_tstar + 2.0/np.pi * (5/3 * rotDOF[k] + f_int)
                     c1 = 2.0/np.pi * A_factor/B_factor
-                    cv_int = gas.standard_cp_R[k] - 2.5 - cv_rot
+                    cv_int = cp_R(cp0[k],NASA7[k],T,MW[k]) - 2.5 - cv_rot
                     f_rot = f_int * (1.0+c1)
                     f_trans = 2.5*(1.0-c1*cv_rot/1.5)
                     cond[i,k] = visc[i,k]/MW[k]*Ru*(f_trans*1.5 + f_rot*cv_rot + f_int*cv_int)
@@ -209,7 +251,6 @@ class thtrdat(thtrdat_):
 
                         diff[i,k,j] = diffcoeff
                         diff[i,j,k] = diff[i,k,j]
-
 
             # Create and set the polynoial coefficients
             logTs = np.log(Ts)
