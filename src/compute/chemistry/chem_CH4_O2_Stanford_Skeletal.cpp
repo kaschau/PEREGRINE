@@ -543,9 +543,9 @@ for(block_ b : mb){
   omega[10] = th.MW[10] * ( q[25] +q[28] +q[29] +q[30] -q[31] -q[32] -q[33] -q[34] -q[35] -q[36] -q[37]);
 
   // Add source terms to RHS
-  for (int n=0; n<th.ns-1; n++)
+  for (int n=0; n<ns-1; n++)
   {
-    b.dQ(i,j,k,5+n) = omega[n]*b.J(i,j,k);
+    b.dQ(i,j,k,5+n) += omega[n];
   }
 
   });
