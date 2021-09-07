@@ -13,10 +13,12 @@ class thtrdat(thtrdat_):
         #First place we look for the file is in the input folder
         # then we look in the local directory
         # then we look in the PEREGRINE data base
+        # then we see if we have an absolute path
         spdata_locs = [
             f'{config["io"]["inputdir"]}/{config["thermochem"]["spdata"]}',
             f'./{config["thermochem"]["spdata"]}',
-            f'{relpath}/database/{config["thermochem"]["spdata"]}'
+            f'{relpath}/database/{config["thermochem"]["spdata"]}',
+            config['thermochem']['spdata']
         ]
         for loc in spdata_locs:
             try:
@@ -26,7 +28,7 @@ class thtrdat(thtrdat_):
             except FileNotFoundError:
                 pass
         else:
-            raise ValueError(" Not able to find your spdata yaml input file.")
+            raise ValueError(f"Not able to find your spdata yaml input file. Tried {spdata_locs}")
 
         #Now we get the reference data to fill in missing information not provided by the user
         with open(f'{relpath}/database/species_library.yaml','r') as f:

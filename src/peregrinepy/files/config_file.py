@@ -43,8 +43,10 @@ class config_file(FrozenDict):
         self['RHS'] = FrozenDict({'diffusion' : True
                                      })
 
-        self['thermochem'] = FrozenDict({'spdata' : 'pure-debug.yaml',
-                                         'eos'    : 'cpg'
+        self['thermochem'] = FrozenDict({'spdata'    : 'pure-debug.yaml',
+                                         'eos'       : 'cpg',
+                                         'chemistry' : False,
+                                         'mechanism' : None
                                          })
 
         self['Kokkos'] = FrozenDict({'Space' : 'Default'

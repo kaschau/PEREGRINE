@@ -11,13 +11,13 @@ from pathlib import Path
 ##### Test for all positive i aligned orientations
 ##################################################################################
 
-def test_tpg():
+def test_chemistry():
     import kokkos
     kokkos.initialize()
 
     relpath = str(Path(__file__).parent)
-    ctfile = relpath+'/ct_test_tpg.yaml'
-    thfile = relpath+'/thtr_ct_test_tpg.yaml'
+    ctfile = relpath+'/CH4_O2_Stanford_Skeletal.yaml'
+    thfile = relpath+'/thtr_CH4-O2-Stanford-Skeletal.yaml'
     gas = ct.Solution(ctfile)
     p = np.random.uniform(low=10000, high=100000)
     T = np.random.uniform(low=100  , high=1000)
@@ -49,11 +49,14 @@ def test_tpg():
 
     #Update cons
     pg.compute.tpg(blk, mb.thtrdat, 0, 'prims')
+    #zero out dQ
+    pg.compute.dQzero(mb)
+    pg.compute.chem_CH4_O2_Stanford_Skeletal(mb, mb.thtrdat)
 
     #test the properties
-    pgcons = blk.array['Q'][1,1,1]
     pgprim = blk.array['q'][1,1,1]
-    pgthrm = blk.array['qh'][1,1,1]
+    pgchem = blk.array['dQ'][1,1,1]
+
 
     def print_diff(name,c,p):
         diff = np.abs(c-p)/p*100
@@ -70,44 +73,9 @@ def test_tpg():
     for i,n in enumerate(gas.species_names[0:-1]):
         pd.append(print_diff(n,gas.Y[i],pgprim[5+i]))
     pd.append(print_diff(gas.species_names[-1],gas.Y[-1],1.0-np.sum(pgprim[5::])))
-    print('Conservatives')
-    pd.append(print_diff('rho', gas.density,pgcons[0]))
-    pd.append(print_diff('e', gas.int_energy_mass, pgcons[4]/pgcons[0]))
-    pd.append(print_diff('e(qh)', gas.int_energy_mass, pgthrm[4]/pgcons[0]))
+    print('Chemical Source Terms')
     for i,n in enumerate(gas.species_names[0:-1]):
-        pd.append(print_diff('rho'+n,gas.Y[i]*gas.density,pgcons[5+i]))
-    pd.append(print_diff('rho'+gas.species_names[-1],gas.Y[-1]*gas.density,pgcons[0]-np.sum(pgcons[5::])))
-    print('Mixture Properties')
-    pd.append(print_diff('gamma', gas.cp/gas.cv, pgthrm[0]))
-    pd.append(print_diff('cp', gas.cp, pgthrm[1]))
-    pd.append(print_diff('h', gas.enthalpy_mass, pgthrm[2]/pgcons[0]))
-
-    #Go the other way
-    #Scramble the primatives
-    blk.array['q'][:,:,:,0] = 0.0
-    blk.array['q'][:,:,:,4] = 0.0
-    blk.array['q'][:,:,:,5::] = np.zeros(len(Y[0:-1]))
-    pg.consistify(mb)
-
-    print('********  Conservatives to Primatives ***************')
-    print(f'       {"Cantera":<15}  | {"PEREGRINE":<15} | {"%Error":<5}')
-    print('Conservatives')
-    pd.append(print_diff('rho', gas.density,pgcons[0]))
-    pd.append(print_diff('e', gas.int_energy_mass, pgcons[4]/pgcons[0]))
-    pd.append(print_diff('e(qh)', gas.int_energy_mass, pgthrm[4]/pgcons[0]))
-    for i,n in enumerate(gas.species_names[0:-1]):
-        pd.append(print_diff('rho'+n,gas.Y[i]*gas.density,pgcons[5+i]))
-    pd.append(print_diff('rho'+gas.species_names[-1],gas.Y[-1]*gas.density,pgcons[0]-np.sum(pgcons[5::])))
-    print('Primatives')
-    pd.append(print_diff('p',gas.P,pgprim[0]))
-    pd.append(print_diff('T',gas.T,pgprim[4]))
-    for i,n in enumerate(gas.species_names[0:-1]):
-        pd.append(print_diff(n,gas.Y[i],pgprim[5+i]))
-    pd.append(print_diff(gas.species_names[-1],gas.Y[-1],1.0-np.sum(pgprim[5::])))
-    print('Mixture Properties')
-    pd.append(print_diff('gamma', gas.cp/gas.cv, pgthrm[0]))
-    pd.append(print_diff('cp', gas.cp, pgthrm[1]))
-    pd.append(print_diff('h', gas.enthalpy_mass, pgthrm[2]/pgcons[0]))
+        pd.append(print_diff(f'omega_{n:<4}', gas.net_production_rates[i]*gas.molecular_weights[i], pgchem[5+i]))
 
     kokkos.finalize()
 
@@ -115,4 +83,4 @@ def test_tpg():
     assert passfail
 
 if __name__ == '__main__':
-    test_tpg()
+    test_chemistry()
