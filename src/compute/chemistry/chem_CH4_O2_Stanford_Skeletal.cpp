@@ -515,7 +515,7 @@ for(block_ b : mb){
   // Add source terms to RHS
   for (int n=0; n<th.ns-1; n++)
   {
-    b.dQ(i,j,k,5+n) = omega[n]*b.J(i,j,k);
+    b.dQ(i,j,k,5+n) += omega[n];
   }
 
   });
