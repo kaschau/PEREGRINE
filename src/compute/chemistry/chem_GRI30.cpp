@@ -1552,49 +1552,32 @@ for(block_ b : mb){
   // FallOff Calculations. ---------------------------------------- >
   // -------------------------------------------------------------- >
 
-  double Fcent[50],dFcent[50];
+  double Fcent[50];
   double Pr_pdr;
-  double A_pdr[50];
-  double B_pdr,C_pdr,D_pdr,E_pdr,F_pdr;
+  double B_pdr,C_pdr,F_pdr;
   double Ccent,Ncent;
 
   //  Three Body Reaction #1
-  A_pdr[0] = 0.0;
   //  Three Body Reaction #2
-  A_pdr[1] = 0.0;
   //  Lindeman Reaction #12
   Fcent[2] = 1.0;
-  dFcent[2] = 0.0;
   Pr_pdr = S_tbc[11]*( 602000000.0000001*pow(T,0.0)*exp(-(1509.6586004962971)/T) )/k_f[11];
-  A_pdr[2]  = 1.0/(1.0 + Pr_pdr);
   k_f[11] = k_f[11]*( Pr_pdr/(1.0 + Pr_pdr) );
   S_tbc[11] = 1.0;
 
   //  Three Body Reaction #33
-  A_pdr[3] = 0.0;
   //  Three Body Reaction #34
-  A_pdr[4] = 0.0;
   //  Three Body Reaction #35
-  A_pdr[5] = 0.0;
   //  Three Body Reaction #36
-  A_pdr[6] = 0.0;
   //  Three Body Reaction #37
-  A_pdr[7] = 0.0;
   //  Three Body Reaction #39
-  A_pdr[8] = 0.0;
   //  Three Body Reaction #40
-  A_pdr[9] = 0.0;
   //  Three Body Reaction #41
-  A_pdr[10] = 0.0;
   //  Three Body Reaction #42
-  A_pdr[11] = 0.0;
   //  Three Body Reaction #43
-  A_pdr[12] = 0.0;
   //  Troe Reaction #50
   Fcent[13] =   (1.0 - (0.562))*exp(-T/(91.0))
                              + (0.562) *exp(-T/(5836.0)) + exp(-(8552.0)/T);
-  dFcent[13]= - (1.0 - (0.562))*exp(-T/(91.0))/(91.0)
-                             - (0.562) *exp(-T/(5836.0))/(5836.0) + exp(-(8552.0)/T)*(8552.0)/pow(T,2.0); 
   Ccent = - 0.4 - 0.67*log10(Fcent[13]);
   Ncent =   0.75 - 1.27*log10(Fcent[13]);
 
@@ -1605,20 +1588,12 @@ for(block_ b : mb){
 
   F_pdr = pow(10.0,log10(Fcent[13])*C_pdr);
 
-  D_pdr = 2.0*B_pdr*log10(F_pdr)/pow(Ncent - 0.14*B_pdr,3.0);
-  E_pdr = C_pdr*(1.0 + D_pdr*(1.27*B_pdr - 0.67*Ncent));
-
-  dFcent[13]  = E_pdr*dFcent[13];
-
-  A_pdr[13]  = 1.0/(1.0 + Pr_pdr) - Ncent*C_pdr*D_pdr;
   k_f[49] = k_f[49]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;
   S_tbc[49] = 1.0; 
 
   //  Troe Reaction #52
   Fcent[14] =   (1.0 - (0.783))*exp(-T/(74.0))
                              + (0.783) *exp(-T/(2941.0)) + exp(-(6964.0)/T);
-  dFcent[14]= - (1.0 - (0.783))*exp(-T/(74.0))/(74.0)
-                             - (0.783) *exp(-T/(2941.0))/(2941.0) + exp(-(6964.0)/T)*(6964.0)/pow(T,2.0); 
   Ccent = - 0.4 - 0.67*log10(Fcent[14]);
   Ncent =   0.75 - 1.27*log10(Fcent[14]);
 
@@ -1629,20 +1604,12 @@ for(block_ b : mb){
 
   F_pdr = pow(10.0,log10(Fcent[14])*C_pdr);
 
-  D_pdr = 2.0*B_pdr*log10(F_pdr)/pow(Ncent - 0.14*B_pdr,3.0);
-  E_pdr = C_pdr*(1.0 + D_pdr*(1.27*B_pdr - 0.67*Ncent));
-
-  dFcent[14]  = E_pdr*dFcent[14];
-
-  A_pdr[14]  = 1.0/(1.0 + Pr_pdr) - Ncent*C_pdr*D_pdr;
   k_f[51] = k_f[51]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;
   S_tbc[51] = 1.0; 
 
   //  Troe Reaction #54
   Fcent[15] =   (1.0 - (0.7824))*exp(-T/(271.0))
                              + (0.7824) *exp(-T/(2755.0)) + exp(-(6570.0)/T);
-  dFcent[15]= - (1.0 - (0.7824))*exp(-T/(271.0))/(271.0)
-                             - (0.7824) *exp(-T/(2755.0))/(2755.0) + exp(-(6570.0)/T)*(6570.0)/pow(T,2.0); 
   Ccent = - 0.4 - 0.67*log10(Fcent[15]);
   Ncent =   0.75 - 1.27*log10(Fcent[15]);
 
@@ -1653,20 +1620,12 @@ for(block_ b : mb){
 
   F_pdr = pow(10.0,log10(Fcent[15])*C_pdr);
 
-  D_pdr = 2.0*B_pdr*log10(F_pdr)/pow(Ncent - 0.14*B_pdr,3.0);
-  E_pdr = C_pdr*(1.0 + D_pdr*(1.27*B_pdr - 0.67*Ncent));
-
-  dFcent[15]  = E_pdr*dFcent[15];
-
-  A_pdr[15]  = 1.0/(1.0 + Pr_pdr) - Ncent*C_pdr*D_pdr;
   k_f[53] = k_f[53]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;
   S_tbc[53] = 1.0; 
 
   //  Troe Reaction #56
   Fcent[16] =   (1.0 - (0.7187))*exp(-T/(103.00000000000001))
                              + (0.7187) *exp(-T/(1291.0)) + exp(-(4160.0)/T);
-  dFcent[16]= - (1.0 - (0.7187))*exp(-T/(103.00000000000001))/(103.00000000000001)
-                             - (0.7187) *exp(-T/(1291.0))/(1291.0) + exp(-(4160.0)/T)*(4160.0)/pow(T,2.0); 
   Ccent = - 0.4 - 0.67*log10(Fcent[16]);
   Ncent =   0.75 - 1.27*log10(Fcent[16]);
 
@@ -1677,20 +1636,12 @@ for(block_ b : mb){
 
   F_pdr = pow(10.0,log10(Fcent[16])*C_pdr);
 
-  D_pdr = 2.0*B_pdr*log10(F_pdr)/pow(Ncent - 0.14*B_pdr,3.0);
-  E_pdr = C_pdr*(1.0 + D_pdr*(1.27*B_pdr - 0.67*Ncent));
-
-  dFcent[16]  = E_pdr*dFcent[16];
-
-  A_pdr[16]  = 1.0/(1.0 + Pr_pdr) - Ncent*C_pdr*D_pdr;
   k_f[55] = k_f[55]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;
   S_tbc[55] = 1.0; 
 
   //  Troe Reaction #57
   Fcent[17] =   (1.0 - (0.758))*exp(-T/(94.0))
                              + (0.758) *exp(-T/(1555.0)) + exp(-(4200.0)/T);
-  dFcent[17]= - (1.0 - (0.758))*exp(-T/(94.0))/(94.0)
-                             - (0.758) *exp(-T/(1555.0))/(1555.0) + exp(-(4200.0)/T)*(4200.0)/pow(T,2.0); 
   Ccent = - 0.4 - 0.67*log10(Fcent[17]);
   Ncent =   0.75 - 1.27*log10(Fcent[17]);
 
@@ -1701,20 +1652,12 @@ for(block_ b : mb){
 
   F_pdr = pow(10.0,log10(Fcent[17])*C_pdr);
 
-  D_pdr = 2.0*B_pdr*log10(F_pdr)/pow(Ncent - 0.14*B_pdr,3.0);
-  E_pdr = C_pdr*(1.0 + D_pdr*(1.27*B_pdr - 0.67*Ncent));
-
-  dFcent[17]  = E_pdr*dFcent[17];
-
-  A_pdr[17]  = 1.0/(1.0 + Pr_pdr) - Ncent*C_pdr*D_pdr;
   k_f[56] = k_f[56]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;
   S_tbc[56] = 1.0; 
 
   //  Troe Reaction #59
   Fcent[18] =   (1.0 - (0.6))*exp(-T/(100.0))
                              + (0.6) *exp(-T/(90000.0)) + exp(-(10000.0)/T);
-  dFcent[18]= - (1.0 - (0.6))*exp(-T/(100.0))/(100.0)
-                             - (0.6) *exp(-T/(90000.0))/(90000.0) + exp(-(10000.0)/T)*(10000.0)/pow(T,2.0); 
   Ccent = - 0.4 - 0.67*log10(Fcent[18]);
   Ncent =   0.75 - 1.27*log10(Fcent[18]);
 
@@ -1725,20 +1668,12 @@ for(block_ b : mb){
 
   F_pdr = pow(10.0,log10(Fcent[18])*C_pdr);
 
-  D_pdr = 2.0*B_pdr*log10(F_pdr)/pow(Ncent - 0.14*B_pdr,3.0);
-  E_pdr = C_pdr*(1.0 + D_pdr*(1.27*B_pdr - 0.67*Ncent));
-
-  dFcent[18]  = E_pdr*dFcent[18];
-
-  A_pdr[18]  = 1.0/(1.0 + Pr_pdr) - Ncent*C_pdr*D_pdr;
   k_f[58] = k_f[58]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;
   S_tbc[58] = 1.0; 
 
   //  Troe Reaction #63
   Fcent[19] =   (1.0 - (0.7))*exp(-T/(100.0))
                              + (0.7) *exp(-T/(90000.0)) + exp(-(10000.0)/T);
-  dFcent[19]= - (1.0 - (0.7))*exp(-T/(100.0))/(100.0)
-                             - (0.7) *exp(-T/(90000.0))/(90000.0) + exp(-(10000.0)/T)*(10000.0)/pow(T,2.0); 
   Ccent = - 0.4 - 0.67*log10(Fcent[19]);
   Ncent =   0.75 - 1.27*log10(Fcent[19]);
 
@@ -1749,20 +1684,12 @@ for(block_ b : mb){
 
   F_pdr = pow(10.0,log10(Fcent[19])*C_pdr);
 
-  D_pdr = 2.0*B_pdr*log10(F_pdr)/pow(Ncent - 0.14*B_pdr,3.0);
-  E_pdr = C_pdr*(1.0 + D_pdr*(1.27*B_pdr - 0.67*Ncent));
-
-  dFcent[19]  = E_pdr*dFcent[19];
-
-  A_pdr[19]  = 1.0/(1.0 + Pr_pdr) - Ncent*C_pdr*D_pdr;
   k_f[62] = k_f[62]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;
   S_tbc[62] = 1.0; 
 
   //  Troe Reaction #70
   Fcent[20] =   (1.0 - (0.6464))*exp(-T/(132.0))
                              + (0.6464) *exp(-T/(1315.0)) + exp(-(5566.0)/T);
-  dFcent[20]= - (1.0 - (0.6464))*exp(-T/(132.0))/(132.0)
-                             - (0.6464) *exp(-T/(1315.0))/(1315.0) + exp(-(5566.0)/T)*(5566.0)/pow(T,2.0); 
   Ccent = - 0.4 - 0.67*log10(Fcent[20]);
   Ncent =   0.75 - 1.27*log10(Fcent[20]);
 
@@ -1773,20 +1700,12 @@ for(block_ b : mb){
 
   F_pdr = pow(10.0,log10(Fcent[20])*C_pdr);
 
-  D_pdr = 2.0*B_pdr*log10(F_pdr)/pow(Ncent - 0.14*B_pdr,3.0);
-  E_pdr = C_pdr*(1.0 + D_pdr*(1.27*B_pdr - 0.67*Ncent));
-
-  dFcent[20]  = E_pdr*dFcent[20];
-
-  A_pdr[20]  = 1.0/(1.0 + Pr_pdr) - Ncent*C_pdr*D_pdr;
   k_f[69] = k_f[69]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;
   S_tbc[69] = 1.0; 
 
   //  Troe Reaction #71
   Fcent[21] =   (1.0 - (0.7507))*exp(-T/(98.50000000000001))
                              + (0.7507) *exp(-T/(1302.0)) + exp(-(4167.0)/T);
-  dFcent[21]= - (1.0 - (0.7507))*exp(-T/(98.50000000000001))/(98.50000000000001)
-                             - (0.7507) *exp(-T/(1302.0))/(1302.0) + exp(-(4167.0)/T)*(4167.0)/pow(T,2.0); 
   Ccent = - 0.4 - 0.67*log10(Fcent[21]);
   Ncent =   0.75 - 1.27*log10(Fcent[21]);
 
@@ -1797,20 +1716,12 @@ for(block_ b : mb){
 
   F_pdr = pow(10.0,log10(Fcent[21])*C_pdr);
 
-  D_pdr = 2.0*B_pdr*log10(F_pdr)/pow(Ncent - 0.14*B_pdr,3.0);
-  E_pdr = C_pdr*(1.0 + D_pdr*(1.27*B_pdr - 0.67*Ncent));
-
-  dFcent[21]  = E_pdr*dFcent[21];
-
-  A_pdr[21]  = 1.0/(1.0 + Pr_pdr) - Ncent*C_pdr*D_pdr;
   k_f[70] = k_f[70]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;
   S_tbc[70] = 1.0; 
 
   //  Troe Reaction #72
   Fcent[22] =   (1.0 - (0.782))*exp(-T/(207.49999999999997))
                              + (0.782) *exp(-T/(2663.0)) + exp(-(6095.0)/T);
-  dFcent[22]= - (1.0 - (0.782))*exp(-T/(207.49999999999997))/(207.49999999999997)
-                             - (0.782) *exp(-T/(2663.0))/(2663.0) + exp(-(6095.0)/T)*(6095.0)/pow(T,2.0); 
   Ccent = - 0.4 - 0.67*log10(Fcent[22]);
   Ncent =   0.75 - 1.27*log10(Fcent[22]);
 
@@ -1821,20 +1732,12 @@ for(block_ b : mb){
 
   F_pdr = pow(10.0,log10(Fcent[22])*C_pdr);
 
-  D_pdr = 2.0*B_pdr*log10(F_pdr)/pow(Ncent - 0.14*B_pdr,3.0);
-  E_pdr = C_pdr*(1.0 + D_pdr*(1.27*B_pdr - 0.67*Ncent));
-
-  dFcent[22]  = E_pdr*dFcent[22];
-
-  A_pdr[22]  = 1.0/(1.0 + Pr_pdr) - Ncent*C_pdr*D_pdr;
   k_f[71] = k_f[71]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;
   S_tbc[71] = 1.0; 
 
   //  Troe Reaction #74
   Fcent[23] =   (1.0 - (0.9753))*exp(-T/(209.99999999999997))
                              + (0.9753) *exp(-T/(983.9999999999999)) + exp(-(4374.0)/T);
-  dFcent[23]= - (1.0 - (0.9753))*exp(-T/(209.99999999999997))/(209.99999999999997)
-                             - (0.9753) *exp(-T/(983.9999999999999))/(983.9999999999999) + exp(-(4374.0)/T)*(4374.0)/pow(T,2.0); 
   Ccent = - 0.4 - 0.67*log10(Fcent[23]);
   Ncent =   0.75 - 1.27*log10(Fcent[23]);
 
@@ -1845,20 +1748,12 @@ for(block_ b : mb){
 
   F_pdr = pow(10.0,log10(Fcent[23])*C_pdr);
 
-  D_pdr = 2.0*B_pdr*log10(F_pdr)/pow(Ncent - 0.14*B_pdr,3.0);
-  E_pdr = C_pdr*(1.0 + D_pdr*(1.27*B_pdr - 0.67*Ncent));
-
-  dFcent[23]  = E_pdr*dFcent[23];
-
-  A_pdr[23]  = 1.0/(1.0 + Pr_pdr) - Ncent*C_pdr*D_pdr;
   k_f[73] = k_f[73]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;
   S_tbc[73] = 1.0; 
 
   //  Troe Reaction #76
   Fcent[24] =   (1.0 - (0.8422))*exp(-T/(125.0))
                              + (0.8422) *exp(-T/(2219.0)) + exp(-(6882.0)/T);
-  dFcent[24]= - (1.0 - (0.8422))*exp(-T/(125.0))/(125.0)
-                             - (0.8422) *exp(-T/(2219.0))/(2219.0) + exp(-(6882.0)/T)*(6882.0)/pow(T,2.0); 
   Ccent = - 0.4 - 0.67*log10(Fcent[24]);
   Ncent =   0.75 - 1.27*log10(Fcent[24]);
 
@@ -1869,20 +1764,12 @@ for(block_ b : mb){
 
   F_pdr = pow(10.0,log10(Fcent[24])*C_pdr);
 
-  D_pdr = 2.0*B_pdr*log10(F_pdr)/pow(Ncent - 0.14*B_pdr,3.0);
-  E_pdr = C_pdr*(1.0 + D_pdr*(1.27*B_pdr - 0.67*Ncent));
-
-  dFcent[24]  = E_pdr*dFcent[24];
-
-  A_pdr[24]  = 1.0/(1.0 + Pr_pdr) - Ncent*C_pdr*D_pdr;
   k_f[75] = k_f[75]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;
   S_tbc[75] = 1.0; 
 
   //  Troe Reaction #83
   Fcent[25] =   (1.0 - (0.932))*exp(-T/(197.00000000000003))
                              + (0.932) *exp(-T/(1540.0)) + exp(-(10300.0)/T);
-  dFcent[25]= - (1.0 - (0.932))*exp(-T/(197.00000000000003))/(197.00000000000003)
-                             - (0.932) *exp(-T/(1540.0))/(1540.0) + exp(-(10300.0)/T)*(10300.0)/pow(T,2.0); 
   Ccent = - 0.4 - 0.67*log10(Fcent[25]);
   Ncent =   0.75 - 1.27*log10(Fcent[25]);
 
@@ -1893,20 +1780,12 @@ for(block_ b : mb){
 
   F_pdr = pow(10.0,log10(Fcent[25])*C_pdr);
 
-  D_pdr = 2.0*B_pdr*log10(F_pdr)/pow(Ncent - 0.14*B_pdr,3.0);
-  E_pdr = C_pdr*(1.0 + D_pdr*(1.27*B_pdr - 0.67*Ncent));
-
-  dFcent[25]  = E_pdr*dFcent[25];
-
-  A_pdr[25]  = 1.0/(1.0 + Pr_pdr) - Ncent*C_pdr*D_pdr;
   k_f[82] = k_f[82]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;
   S_tbc[82] = 1.0; 
 
   //  Troe Reaction #85
   Fcent[26] =   (1.0 - (0.7346))*exp(-T/(94.0))
                              + (0.7346) *exp(-T/(1756.0)) + exp(-(5182.0)/T);
-  dFcent[26]= - (1.0 - (0.7346))*exp(-T/(94.0))/(94.0)
-                             - (0.7346) *exp(-T/(1756.0))/(1756.0) + exp(-(5182.0)/T)*(5182.0)/pow(T,2.0); 
   Ccent = - 0.4 - 0.67*log10(Fcent[26]);
   Ncent =   0.75 - 1.27*log10(Fcent[26]);
 
@@ -1917,20 +1796,12 @@ for(block_ b : mb){
 
   F_pdr = pow(10.0,log10(Fcent[26])*C_pdr);
 
-  D_pdr = 2.0*B_pdr*log10(F_pdr)/pow(Ncent - 0.14*B_pdr,3.0);
-  E_pdr = C_pdr*(1.0 + D_pdr*(1.27*B_pdr - 0.67*Ncent));
-
-  dFcent[26]  = E_pdr*dFcent[26];
-
-  A_pdr[26]  = 1.0/(1.0 + Pr_pdr) - Ncent*C_pdr*D_pdr;
   k_f[84] = k_f[84]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;
   S_tbc[84] = 1.0; 
 
   //  Troe Reaction #95
   Fcent[27] =   (1.0 - (0.412))*exp(-T/(195.0))
                              + (0.412) *exp(-T/(5900.0)) + exp(-(6394.0)/T);
-  dFcent[27]= - (1.0 - (0.412))*exp(-T/(195.0))/(195.0)
-                             - (0.412) *exp(-T/(5900.0))/(5900.0) + exp(-(6394.0)/T)*(6394.0)/pow(T,2.0); 
   Ccent = - 0.4 - 0.67*log10(Fcent[27]);
   Ncent =   0.75 - 1.27*log10(Fcent[27]);
 
@@ -1941,20 +1812,12 @@ for(block_ b : mb){
 
   F_pdr = pow(10.0,log10(Fcent[27])*C_pdr);
 
-  D_pdr = 2.0*B_pdr*log10(F_pdr)/pow(Ncent - 0.14*B_pdr,3.0);
-  E_pdr = C_pdr*(1.0 + D_pdr*(1.27*B_pdr - 0.67*Ncent));
-
-  dFcent[27]  = E_pdr*dFcent[27];
-
-  A_pdr[27]  = 1.0/(1.0 + Pr_pdr) - Ncent*C_pdr*D_pdr;
   k_f[94] = k_f[94]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;
   S_tbc[94] = 1.0; 
 
   //  Troe Reaction #131
   Fcent[28] =   (1.0 - (0.5757))*exp(-T/(237.00000000000003))
                              + (0.5757) *exp(-T/(1652.0)) + exp(-(5069.0)/T);
-  dFcent[28]= - (1.0 - (0.5757))*exp(-T/(237.00000000000003))/(237.00000000000003)
-                             - (0.5757) *exp(-T/(1652.0))/(1652.0) + exp(-(5069.0)/T)*(5069.0)/pow(T,2.0); 
   Ccent = - 0.4 - 0.67*log10(Fcent[28]);
   Ncent =   0.75 - 1.27*log10(Fcent[28]);
 
@@ -1965,20 +1828,12 @@ for(block_ b : mb){
 
   F_pdr = pow(10.0,log10(Fcent[28])*C_pdr);
 
-  D_pdr = 2.0*B_pdr*log10(F_pdr)/pow(Ncent - 0.14*B_pdr,3.0);
-  E_pdr = C_pdr*(1.0 + D_pdr*(1.27*B_pdr - 0.67*Ncent));
-
-  dFcent[28]  = E_pdr*dFcent[28];
-
-  A_pdr[28]  = 1.0/(1.0 + Pr_pdr) - Ncent*C_pdr*D_pdr;
   k_f[130] = k_f[130]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;
   S_tbc[130] = 1.0; 
 
   //  Troe Reaction #140
   Fcent[29] =   (1.0 - (0.5907))*exp(-T/(275.0))
                              + (0.5907) *exp(-T/(1226.0)) + exp(-(5185.0)/T);
-  dFcent[29]= - (1.0 - (0.5907))*exp(-T/(275.0))/(275.0)
-                             - (0.5907) *exp(-T/(1226.0))/(1226.0) + exp(-(5185.0)/T)*(5185.0)/pow(T,2.0); 
   Ccent = - 0.4 - 0.67*log10(Fcent[29]);
   Ncent =   0.75 - 1.27*log10(Fcent[29]);
 
@@ -1989,20 +1844,12 @@ for(block_ b : mb){
 
   F_pdr = pow(10.0,log10(Fcent[29])*C_pdr);
 
-  D_pdr = 2.0*B_pdr*log10(F_pdr)/pow(Ncent - 0.14*B_pdr,3.0);
-  E_pdr = C_pdr*(1.0 + D_pdr*(1.27*B_pdr - 0.67*Ncent));
-
-  dFcent[29]  = E_pdr*dFcent[29];
-
-  A_pdr[29]  = 1.0/(1.0 + Pr_pdr) - Ncent*C_pdr*D_pdr;
   k_f[139] = k_f[139]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;
   S_tbc[139] = 1.0; 
 
   //  Troe Reaction #147
   Fcent[30] =   (1.0 - (0.6027))*exp(-T/(208.0))
                              + (0.6027) *exp(-T/(3921.9999999999995)) + exp(-(10180.0)/T);
-  dFcent[30]= - (1.0 - (0.6027))*exp(-T/(208.0))/(208.0)
-                             - (0.6027) *exp(-T/(3921.9999999999995))/(3921.9999999999995) + exp(-(10180.0)/T)*(10180.0)/pow(T,2.0); 
   Ccent = - 0.4 - 0.67*log10(Fcent[30]);
   Ncent =   0.75 - 1.27*log10(Fcent[30]);
 
@@ -2013,20 +1860,12 @@ for(block_ b : mb){
 
   F_pdr = pow(10.0,log10(Fcent[30])*C_pdr);
 
-  D_pdr = 2.0*B_pdr*log10(F_pdr)/pow(Ncent - 0.14*B_pdr,3.0);
-  E_pdr = C_pdr*(1.0 + D_pdr*(1.27*B_pdr - 0.67*Ncent));
-
-  dFcent[30]  = E_pdr*dFcent[30];
-
-  A_pdr[30]  = 1.0/(1.0 + Pr_pdr) - Ncent*C_pdr*D_pdr;
   k_f[146] = k_f[146]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;
   S_tbc[146] = 1.0; 
 
   //  Troe Reaction #158
   Fcent[31] =   (1.0 - (0.619))*exp(-T/(73.2))
                              + (0.619) *exp(-T/(1180.0)) + exp(-(9999.0)/T);
-  dFcent[31]= - (1.0 - (0.619))*exp(-T/(73.2))/(73.2)
-                             - (0.619) *exp(-T/(1180.0))/(1180.0) + exp(-(9999.0)/T)*(9999.0)/pow(T,2.0); 
   Ccent = - 0.4 - 0.67*log10(Fcent[31]);
   Ncent =   0.75 - 1.27*log10(Fcent[31]);
 
@@ -2037,24 +1876,14 @@ for(block_ b : mb){
 
   F_pdr = pow(10.0,log10(Fcent[31])*C_pdr);
 
-  D_pdr = 2.0*B_pdr*log10(F_pdr)/pow(Ncent - 0.14*B_pdr,3.0);
-  E_pdr = C_pdr*(1.0 + D_pdr*(1.27*B_pdr - 0.67*Ncent));
-
-  dFcent[31]  = E_pdr*dFcent[31];
-
-  A_pdr[31]  = 1.0/(1.0 + Pr_pdr) - Ncent*C_pdr*D_pdr;
   k_f[157] = k_f[157]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;
   S_tbc[157] = 1.0; 
 
   //  Three Body Reaction #166
-  A_pdr[32] = 0.0;
   //  Three Body Reaction #167
-  A_pdr[33] = 0.0;
   //  Troe Reaction #174
   Fcent[34] =   (1.0 - (0.7345))*exp(-T/(180.0))
                              + (0.7345) *exp(-T/(1035.0)) + exp(-(5417.0)/T);
-  dFcent[34]= - (1.0 - (0.7345))*exp(-T/(180.0))/(180.0)
-                             - (0.7345) *exp(-T/(1035.0))/(1035.0) + exp(-(5417.0)/T)*(5417.0)/pow(T,2.0); 
   Ccent = - 0.4 - 0.67*log10(Fcent[34]);
   Ncent =   0.75 - 1.27*log10(Fcent[34]);
 
@@ -2065,46 +1894,29 @@ for(block_ b : mb){
 
   F_pdr = pow(10.0,log10(Fcent[34])*C_pdr);
 
-  D_pdr = 2.0*B_pdr*log10(F_pdr)/pow(Ncent - 0.14*B_pdr,3.0);
-  E_pdr = C_pdr*(1.0 + D_pdr*(1.27*B_pdr - 0.67*Ncent));
-
-  dFcent[34]  = E_pdr*dFcent[34];
-
-  A_pdr[34]  = 1.0/(1.0 + Pr_pdr) - Ncent*C_pdr*D_pdr;
   k_f[173] = k_f[173]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;
   S_tbc[173] = 1.0; 
 
   //  Lindeman Reaction #185
   Fcent[35] = 1.0;
-  dFcent[35] = 0.0;
   Pr_pdr = S_tbc[184]*( 637000000000.0001*pow(T,0.0)*exp(-(28502.35437737009)/T) )/k_f[184];
-  A_pdr[35]  = 1.0/(1.0 + Pr_pdr);
   k_f[184] = k_f[184]*( Pr_pdr/(1.0 + Pr_pdr) );
   S_tbc[184] = 1.0;
 
   //  Three Body Reaction #187
-  A_pdr[36] = 0.0;
   //  Three Body Reaction #205
-  A_pdr[37] = 0.0;
   //  Three Body Reaction #212
-  A_pdr[38] = 0.0;
   //  Three Body Reaction #227
-  A_pdr[39] = 0.0;
   //  Three Body Reaction #230
-  A_pdr[40] = 0.0;
   //  Lindeman Reaction #237
   Fcent[41] = 1.0;
-  dFcent[41] = 0.0;
   Pr_pdr = S_tbc[236]*( 1.4000000000000003e+20*pow(T,-3.4)*exp(-(956.117113647655)/T) )/k_f[236];
-  A_pdr[41]  = 1.0/(1.0 + Pr_pdr);
   k_f[236] = k_f[236]*( Pr_pdr/(1.0 + Pr_pdr) );
   S_tbc[236] = 1.0;
 
   //  Troe Reaction #241
   Fcent[42] =   (1.0 - (0.667))*exp(-T/(235.0))
                              + (0.667) *exp(-T/(2117.0)) + exp(-(4536.0)/T);
-  dFcent[42]= - (1.0 - (0.667))*exp(-T/(235.0))/(235.0)
-                             - (0.667) *exp(-T/(2117.0))/(2117.0) + exp(-(4536.0)/T)*(4536.0)/pow(T,2.0); 
   Ccent = - 0.4 - 0.67*log10(Fcent[42]);
   Ncent =   0.75 - 1.27*log10(Fcent[42]);
 
@@ -2115,22 +1927,13 @@ for(block_ b : mb){
 
   F_pdr = pow(10.0,log10(Fcent[42])*C_pdr);
 
-  D_pdr = 2.0*B_pdr*log10(F_pdr)/pow(Ncent - 0.14*B_pdr,3.0);
-  E_pdr = C_pdr*(1.0 + D_pdr*(1.27*B_pdr - 0.67*Ncent));
-
-  dFcent[42]  = E_pdr*dFcent[42];
-
-  A_pdr[42]  = 1.0/(1.0 + Pr_pdr) - Ncent*C_pdr*D_pdr;
   k_f[240] = k_f[240]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;
   S_tbc[240] = 1.0; 
 
   //  Three Body Reaction #269
-  A_pdr[43] = 0.0;
   //  Troe Reaction #289
   Fcent[44] =   (1.0 - (0.578))*exp(-T/(122.0))
                              + (0.578) *exp(-T/(2535.0)) + exp(-(9365.0)/T);
-  dFcent[44]= - (1.0 - (0.578))*exp(-T/(122.0))/(122.0)
-                             - (0.578) *exp(-T/(2535.0))/(2535.0) + exp(-(9365.0)/T)*(9365.0)/pow(T,2.0); 
   Ccent = - 0.4 - 0.67*log10(Fcent[44]);
   Ncent =   0.75 - 1.27*log10(Fcent[44]);
 
@@ -2141,22 +1944,13 @@ for(block_ b : mb){
 
   F_pdr = pow(10.0,log10(Fcent[44])*C_pdr);
 
-  D_pdr = 2.0*B_pdr*log10(F_pdr)/pow(Ncent - 0.14*B_pdr,3.0);
-  E_pdr = C_pdr*(1.0 + D_pdr*(1.27*B_pdr - 0.67*Ncent));
-
-  dFcent[44]  = E_pdr*dFcent[44];
-
-  A_pdr[44]  = 1.0/(1.0 + Pr_pdr) - Ncent*C_pdr*D_pdr;
   k_f[288] = k_f[288]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;
   S_tbc[288] = 1.0; 
 
   //  Three Body Reaction #303
-  A_pdr[45] = 0.0;
   //  Troe Reaction #304
   Fcent[46] =   (1.0 - (0.465))*exp(-T/(201.0))
                              + (0.465) *exp(-T/(1772.9999999999998)) + exp(-(5333.0)/T);
-  dFcent[46]= - (1.0 - (0.465))*exp(-T/(201.0))/(201.0)
-                             - (0.465) *exp(-T/(1772.9999999999998))/(1772.9999999999998) + exp(-(5333.0)/T)*(5333.0)/pow(T,2.0); 
   Ccent = - 0.4 - 0.67*log10(Fcent[46]);
   Ncent =   0.75 - 1.27*log10(Fcent[46]);
 
@@ -2167,20 +1961,12 @@ for(block_ b : mb){
 
   F_pdr = pow(10.0,log10(Fcent[46])*C_pdr);
 
-  D_pdr = 2.0*B_pdr*log10(F_pdr)/pow(Ncent - 0.14*B_pdr,3.0);
-  E_pdr = C_pdr*(1.0 + D_pdr*(1.27*B_pdr - 0.67*Ncent));
-
-  dFcent[46]  = E_pdr*dFcent[46];
-
-  A_pdr[46]  = 1.0/(1.0 + Pr_pdr) - Ncent*C_pdr*D_pdr;
   k_f[303] = k_f[303]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;
   S_tbc[303] = 1.0; 
 
   //  Troe Reaction #312
   Fcent[47] =   (1.0 - (0.1527))*exp(-T/(291.0))
                              + (0.1527) *exp(-T/(2742.0)) + exp(-(7748.0)/T);
-  dFcent[47]= - (1.0 - (0.1527))*exp(-T/(291.0))/(291.0)
-                             - (0.1527) *exp(-T/(2742.0))/(2742.0) + exp(-(7748.0)/T)*(7748.0)/pow(T,2.0); 
   Ccent = - 0.4 - 0.67*log10(Fcent[47]);
   Ncent =   0.75 - 1.27*log10(Fcent[47]);
 
@@ -2191,20 +1977,12 @@ for(block_ b : mb){
 
   F_pdr = pow(10.0,log10(Fcent[47])*C_pdr);
 
-  D_pdr = 2.0*B_pdr*log10(F_pdr)/pow(Ncent - 0.14*B_pdr,3.0);
-  E_pdr = C_pdr*(1.0 + D_pdr*(1.27*B_pdr - 0.67*Ncent));
-
-  dFcent[47]  = E_pdr*dFcent[47];
-
-  A_pdr[47]  = 1.0/(1.0 + Pr_pdr) - Ncent*C_pdr*D_pdr;
   k_f[311] = k_f[311]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;
   S_tbc[311] = 1.0; 
 
   //  Troe Reaction #318
   Fcent[48] =   (1.0 - (0.1894))*exp(-T/(277.0))
                              + (0.1894) *exp(-T/(8748.0)) + exp(-(7891.0)/T);
-  dFcent[48]= - (1.0 - (0.1894))*exp(-T/(277.0))/(277.0)
-                             - (0.1894) *exp(-T/(8748.0))/(8748.0) + exp(-(7891.0)/T)*(7891.0)/pow(T,2.0); 
   Ccent = - 0.4 - 0.67*log10(Fcent[48]);
   Ncent =   0.75 - 1.27*log10(Fcent[48]);
 
@@ -2215,20 +1993,12 @@ for(block_ b : mb){
 
   F_pdr = pow(10.0,log10(Fcent[48])*C_pdr);
 
-  D_pdr = 2.0*B_pdr*log10(F_pdr)/pow(Ncent - 0.14*B_pdr,3.0);
-  E_pdr = C_pdr*(1.0 + D_pdr*(1.27*B_pdr - 0.67*Ncent));
-
-  dFcent[48]  = E_pdr*dFcent[48];
-
-  A_pdr[48]  = 1.0/(1.0 + Pr_pdr) - Ncent*C_pdr*D_pdr;
   k_f[317] = k_f[317]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;
   S_tbc[317] = 1.0; 
 
   //  Troe Reaction #320
   Fcent[49] =   (1.0 - (0.315))*exp(-T/(369.0))
                              + (0.315) *exp(-T/(3284.9999999999995)) + exp(-(6667.0)/T);
-  dFcent[49]= - (1.0 - (0.315))*exp(-T/(369.0))/(369.0)
-                             - (0.315) *exp(-T/(3284.9999999999995))/(3284.9999999999995) + exp(-(6667.0)/T)*(6667.0)/pow(T,2.0); 
   Ccent = - 0.4 - 0.67*log10(Fcent[49]);
   Ncent =   0.75 - 1.27*log10(Fcent[49]);
 
@@ -2239,15 +2009,14 @@ for(block_ b : mb){
 
   F_pdr = pow(10.0,log10(Fcent[49])*C_pdr);
 
-  D_pdr = 2.0*B_pdr*log10(F_pdr)/pow(Ncent - 0.14*B_pdr,3.0);
-  E_pdr = C_pdr*(1.0 + D_pdr*(1.27*B_pdr - 0.67*Ncent));
-
-  dFcent[49]  = E_pdr*dFcent[49];
-
-  A_pdr[49]  = 1.0/(1.0 + Pr_pdr) - Ncent*C_pdr*D_pdr;
   k_f[319] = k_f[319]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;
   S_tbc[319] = 1.0; 
 
+
+  //for (int n=0; n<=nr-1;n++)
+  //{
+  //  printf("kf_%i = %e \n",n,k_f[n]);
+  //}
 
 
   // -------------------------------------------------------------- >
