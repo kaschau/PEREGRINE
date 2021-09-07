@@ -277,23 +277,17 @@ for(block_ b : mb){
   // FallOff Calculations. ---------------------------------------- >
   // -------------------------------------------------------------- >
 
-  double Fcent[7],dFcent[7];
+  double Fcent[7];
   double Pr_pdr;
-  double A_pdr[7];
-  double B_pdr,C_pdr,D_pdr,E_pdr,F_pdr;
+  double B_pdr,C_pdr,F_pdr;
   double Ccent,Ncent;
 
   //  Three Body Reaction #6
-  A_pdr[0] = 0.0;
   //  Three Body Reaction #7
-  A_pdr[1] = 0.0;
   //  Three Body Reaction #8
-  A_pdr[2] = 0.0;
   //  Troe Reaction #10
   Fcent[3] =   (1.0 - (0.5))*exp(-T/(30.0))
                              + (0.5) *exp(-T/(90000.0)) + exp(-(90000.0)/T);
-  dFcent[3]= - (1.0 - (0.5))*exp(-T/(30.0))/(30.0)
-                             - (0.5) *exp(-T/(90000.0))/(90000.0) + exp(-(90000.0)/T)*(90000.0)/pow(T,2.0); 
   Ccent = - 0.4 - 0.67*log10(Fcent[3]);
   Ncent =   0.75 - 1.27*log10(Fcent[3]);
 
@@ -304,28 +298,18 @@ for(block_ b : mb){
 
   F_pdr = pow(10.0,log10(Fcent[3])*C_pdr);
 
-  D_pdr = 2.0*B_pdr*log10(F_pdr)/pow(Ncent - 0.14*B_pdr,3.0);
-  E_pdr = C_pdr*(1.0 + D_pdr*(1.27*B_pdr - 0.67*Ncent));
-
-  dFcent[3]  = E_pdr*dFcent[3];
-
-  A_pdr[3]  = 1.0/(1.0 + Pr_pdr) - Ncent*C_pdr*D_pdr;
   k_f[9] = k_f[9]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;
   S_tbc[9] = 1.0; 
 
   //  Lindeman Reaction #17
   Fcent[4] = 1.0;
-  dFcent[4] = 0.0;
   Pr_pdr = S_tbc[16]*( 1400000000000000.2*pow(T,-2.1)*exp(-(2767.7074342432115)/T) )/k_f[16];
-  A_pdr[4]  = 1.0/(1.0 + Pr_pdr);
   k_f[16] = k_f[16]*( Pr_pdr/(1.0 + Pr_pdr) );
   S_tbc[16] = 1.0;
 
   //  Troe Reaction #25
   Fcent[5] =   (1.0 - (0.37))*exp(-T/(3315.0))
                              + (0.37) *exp(-T/(61.0)) + exp(-(90000.0)/T);
-  dFcent[5]= - (1.0 - (0.37))*exp(-T/(3315.0))/(3315.0)
-                             - (0.37) *exp(-T/(61.0))/(61.0) + exp(-(90000.0)/T)*(90000.0)/pow(T,2.0); 
   Ccent = - 0.4 - 0.67*log10(Fcent[5]);
   Ncent =   0.75 - 1.27*log10(Fcent[5]);
 
@@ -336,20 +320,12 @@ for(block_ b : mb){
 
   F_pdr = pow(10.0,log10(Fcent[5])*C_pdr);
 
-  D_pdr = 2.0*B_pdr*log10(F_pdr)/pow(Ncent - 0.14*B_pdr,3.0);
-  E_pdr = C_pdr*(1.0 + D_pdr*(1.27*B_pdr - 0.67*Ncent));
-
-  dFcent[5]  = E_pdr*dFcent[5];
-
-  A_pdr[5]  = 1.0/(1.0 + Pr_pdr) - Ncent*C_pdr*D_pdr;
   k_f[24] = k_f[24]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;
   S_tbc[24] = 1.0; 
 
   //  Troe Reaction #33
   Fcent[6] =   (1.0 - (0.932))*exp(-T/(197.00000000000003))
                              + (0.932) *exp(-T/(1540.0)) + exp(-(10300.0)/T);
-  dFcent[6]= - (1.0 - (0.932))*exp(-T/(197.00000000000003))/(197.00000000000003)
-                             - (0.932) *exp(-T/(1540.0))/(1540.0) + exp(-(10300.0)/T)*(10300.0)/pow(T,2.0); 
   Ccent = - 0.4 - 0.67*log10(Fcent[6]);
   Ncent =   0.75 - 1.27*log10(Fcent[6]);
 
@@ -360,12 +336,6 @@ for(block_ b : mb){
 
   F_pdr = pow(10.0,log10(Fcent[6])*C_pdr);
 
-  D_pdr = 2.0*B_pdr*log10(F_pdr)/pow(Ncent - 0.14*B_pdr,3.0);
-  E_pdr = C_pdr*(1.0 + D_pdr*(1.27*B_pdr - 0.67*Ncent));
-
-  dFcent[6]  = E_pdr*dFcent[6];
-
-  A_pdr[6]  = 1.0/(1.0 + Pr_pdr) - Ncent*C_pdr*D_pdr;
   k_f[32] = k_f[32]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;
   S_tbc[32] = 1.0; 
 
@@ -543,9 +513,9 @@ for(block_ b : mb){
   omega[10] = th.MW[10] * ( q[25] +q[28] +q[29] +q[30] -q[31] -q[32] -q[33] -q[34] -q[35] -q[36] -q[37]);
 
   // Add source terms to RHS
-  for (int n=0; n<ns-1; n++)
+  for (int n=0; n<th.ns-1; n++)
   {
-    b.dQ(i,j,k,5+n) += omega[n];
+    b.dQ(i,j,k,5+n) = omega[n]*b.J(i,j,k);
   }
 
   });
