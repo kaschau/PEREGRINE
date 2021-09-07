@@ -19,7 +19,7 @@ struct thtrdat_ {
   // Constant cp values (reference cp)
   std::vector<double> cp0;
   // NASA7 polynomial coefficients
-  std::vector<std::vector<double>> N7;
+  std::vector<std::vector<double>> NASA7;
 
   // Generated temperature dependent viscosity poly'l coeff
   std::vector<std::vector<double>> mu_poly;

@@ -53,3 +53,30 @@ class restart(grid):
         self.__tme = val
         for blk in self:
             blk.tme = val
+
+    def check_species_sum(self, normalize=False):
+        '''Loop through each block to check that the sum of all species does not exceed 1.0 anywhere in the domain
+
+        Parameters
+        ----------
+
+        normalize: bool
+            Whether to normalize the species mass fraction such that the summ is less than one.
+
+        Returns
+        -------
+        None
+
+        '''
+
+        any_bad = False
+        for blk in self:
+            good_sum = blk.verify_species_sum(normalize)
+            if not good_sum:
+                any_bad = True
+
+        if any_bad:
+            if not normalize:
+                print('\nRe-run check_species_sum sum with arg normalize=True to normalize species mass fraction.\n')
+            else:
+                print('Normalizing species mass fraction such that sum is <= one everywhere.')

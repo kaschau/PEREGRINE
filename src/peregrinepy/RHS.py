@@ -9,3 +9,6 @@ def RHS(mb):
 
     if mb.config['RHS']['diffusion']:
         diffusive(mb,mb.thtrdat)
+
+    if mb.config['thermochem']['chemistry']:
+        mb.chem(mb,mb.thtrdat)
