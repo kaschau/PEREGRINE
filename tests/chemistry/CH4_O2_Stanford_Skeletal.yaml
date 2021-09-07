@@ -254,6 +254,7 @@ reactions:
     O2: 1.5}
 - equation: H2O + H2O <=> H + OH + H2O  # Reaction 9
   rate-constant: {A: 1.01e+26, b: -2.44, Ea: 1.202e+05}
+  type: elementary
 - equation: H + O2 (+ M) <=> HO2 (+ M)  # Reaction 10
   type: falloff
   low-P-rate-constant: {A: 1.91e+21, b: -1.72, Ea: 525.0}
@@ -324,10 +325,12 @@ reactions:
   efficiencies: {CH2O: 2.5, CH4: 2.0, CO: 1.5, CO2: 2.0, H2: 2.0, H2O: 6.0}
 - equation: CH2O + H => H2 + CO + H  # Reaction 34
   rate-constant: {A: 5.67e+12, b: 0.361, Ea: 4609.0}
+  type: elementary
   duplicate: true
 - equation: CH2O + H => H2 + CO + H  # Reaction 35
   rate-constant: {A: 1.14e+13, b: 0.582, Ea: 1.4395e+04}
   duplicate: true
+  type: elementary
 - equation: CH2O + O => OH + H + CO  # Reaction 36
   rate-constant: {A: 4.16e+11, b: 0.57, Ea: 2762.0}
 - equation: CH2O + OH => H + CO + H2O  # Reaction 37

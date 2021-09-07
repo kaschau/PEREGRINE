@@ -37,7 +37,7 @@ for(block_ b : mb){
 
   const int ns=12;
   const int nr=38;
-  const int l_tbc=10;
+  const int l_tbc=7;
   double p;
   double T;
   double Y[ns],cs[ns];
@@ -67,38 +67,22 @@ for(block_ b : mb){
   // Chaperon efficiencies. --------------------------------------- >
   // -------------------------------------------------------------- >
 
-  double S_tbc[nr] = {1.e0};
-  double J_tbc[nr] = {0.e0};
+  std::array<double, nr> S_tbc;
+  S_tbc.fill(1.0);
 
   S_tbc[5] = 2.5*cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + cs[5] + 12.0*cs[6] + cs[7] + 2.0*cs[8] + 1.9*cs[9] + 2.5*cs[10] + 3.8*cs[11];
-  J_tbc[5] = 1.e0;
 
   S_tbc[6] = 2.5*cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + cs[5] + 12.0*cs[6] + cs[7] + 2.0*cs[8] + 1.9*cs[9] + 2.5*cs[10] + 3.8*cs[11];
-  J_tbc[6] = 1.e0;
 
   S_tbc[7] = 3.0*cs[0] + cs[1] + 1.5*cs[2] + cs[3] + cs[4] + cs[5] + cs[7] + 7.0*cs[8] + 1.9*cs[9] + 2.5*cs[10] + 3.8*cs[11];
-  J_tbc[7] = 1.e0;
-
-  S_tbc[8] = cs[6];
-  J_tbc[8] = 1.e0;
 
   S_tbc[9] = 2.0*cs[0] + cs[1] + 0.78*cs[2] + cs[3] + cs[4] + cs[5] + 14.0*cs[6] + cs[7] + 2.0*cs[8] + 1.9*cs[9] + 2.5*cs[10] + 3.8*cs[11];
-  J_tbc[9] = 1.e0;
 
   S_tbc[16] = 2.5*cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + cs[5] + 12.0*cs[6] + cs[7] + 2.0*cs[8] + 1.9*cs[9] + 2.5*cs[10] + 3.8*cs[11];
-  J_tbc[16] = 1.e0;
 
   S_tbc[24] = 2.0*cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + cs[5] + 6.0*cs[6] + cs[7] + 2.0*cs[8] + 1.5*cs[9] + 2.5*cs[10] + 2.0*cs[11];
-  J_tbc[24] = 1.e0;
 
   S_tbc[32] = 2.0*cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + cs[5] + 6.0*cs[6] + cs[7] + 2.0*cs[8] + 1.5*cs[9] + 2.5*cs[10] + 2.0*cs[11];
-  J_tbc[32] = 1.e0;
-
-  S_tbc[33] = cs[1];
-  J_tbc[33] = 1.e0;
-
-  S_tbc[34] = cs[1];
-  J_tbc[34] = 1.e0;
 
   // -------------------------------------------------------------- >
   // Gibbs energy. ------------------------------------------------ >
@@ -138,259 +122,253 @@ for(block_ b : mb){
   double dG[nr],K_c[nr],q[nr]; 
 
   k_f[0] = 109000000000.00002*pow(T,0.0)*exp(-(7704.291057866103)/T);
-  dG[0]  =  - gbs[1] - gbs[2] + gbs[3] + gbs[4];
+   dG[0] =  - gbs[1] - gbs[2] + gbs[3] + gbs[4];
   K_c[0] = exp(-dG[0]);
 
   k_f[1] = 3820000000.0000005*pow(T,0.0)*exp(-(4000.5952913151878)/T);
-  dG[1]  =  - gbs[0] + gbs[1] - gbs[3] + gbs[4];
+   dG[1] =  - gbs[0] + gbs[1] - gbs[3] + gbs[4];
   K_c[1] = exp(-dG[1]);
 
   k_f[2] = 879000000000.0001*pow(T,0.0)*exp(-(9651.750652506327)/T);
-  dG[2]  =  - gbs[0] + gbs[1] - gbs[3] + gbs[4];
+   dG[2] =  - gbs[0] + gbs[1] - gbs[3] + gbs[4];
   K_c[2] = exp(-dG[2]);
 
   k_f[3] = 216000.00000000003*pow(T,1.51)*exp(-(1729.5655366352578)/T);
-  dG[3]  =  - gbs[0] + gbs[1] - gbs[4] + gbs[6];
+   dG[3] =  - gbs[0] + gbs[1] - gbs[4] + gbs[6];
   K_c[3] = exp(-dG[3]);
 
   k_f[4] = 33.50000000000001*pow(T,2.42)*exp(-(-970.2072605856204)/T);
-  dG[4]  =   gbs[3] -2.0*gbs[4] + gbs[6];
+   dG[4] =   gbs[3] -2.0*gbs[4] + gbs[6];
   K_c[4] = exp(-dG[4]);
 
   k_f[5] = 4.580000000000001e+16*pow(T,-1.4)*exp(-(52531.08710193616)/T);
-  dG[5]  =  - gbs[0] +2.0*gbs[1];
+   dG[5] =  - gbs[0] +2.0*gbs[1];
   K_c[5] = pow(101325.0/(th.Ru*T),1.0)*exp(-dG[5]);
 
   k_f[6] = 4710000000000.001*pow(T,-1.0)*exp(-(0.0)/T);
-  dG[6]  =  - gbs[1] - gbs[3] + gbs[4];
+   dG[6] =  - gbs[1] - gbs[3] + gbs[4];
   K_c[6] = pow(101325.0/(th.Ru*T),-1.0)*exp(-dG[6]);
 
   k_f[7] = 6.060000000000001e+24*pow(T,-3.322)*exp(-(60788.9196466509)/T);
-  dG[7]  =   gbs[1] + gbs[4] - gbs[6];
+   dG[7] =   gbs[1] + gbs[4] - gbs[6];
   K_c[7] = pow(101325.0/(th.Ru*T),1.0)*exp(-dG[7]);
 
   k_f[8] = 1.0100000000000001e+23*pow(T,-2.44)*exp(-(60486.98792655164)/T);
-  dG[8]  =   gbs[1] + gbs[4] - gbs[6];
+   dG[8] =   gbs[1] + gbs[4] - gbs[6];
   K_c[8] = pow(101325.0/(th.Ru*T),1.0)*exp(-dG[8]);
 
   k_f[9] = 4650000000.000001*pow(T,0.44)*exp(-(0.0)/T);
-  dG[9]  =  - gbs[1] - gbs[2] + gbs[5];
+   dG[9] =  - gbs[1] - gbs[2] + gbs[5];
   K_c[9] = pow(101325.0/(th.Ru*T),-1.0)*exp(-dG[9]);
 
   k_f[10] = 3680.0000000000005*pow(T,2.087)*exp(-(-732.1844212407042)/T);
-  dG[10]  =   gbs[0] - gbs[1] + gbs[2] - gbs[5];
+   dG[10] =   gbs[0] - gbs[1] + gbs[2] - gbs[5];
   K_c[10] = exp(-dG[10]);
 
   k_f[11] = 70800000000.00002*pow(T,0.0)*exp(-(150.96586004962973)/T);
-  dG[11]  =  - gbs[1] +2.0*gbs[4] - gbs[5];
+   dG[11] =  - gbs[1] +2.0*gbs[4] - gbs[5];
   K_c[11] = exp(-dG[11]);
 
   k_f[12] = 1450000000.0000002*pow(T,0.0)*exp(-(0.0)/T);
-  dG[12]  =  - gbs[1] + gbs[3] - gbs[5] + gbs[6];
+   dG[12] =  - gbs[1] + gbs[3] - gbs[5] + gbs[6];
   K_c[12] = exp(-dG[12]);
 
   k_f[13] = 16300000000.000002*pow(T,0.0)*exp(-(-223.93269240695076)/T);
-  dG[13]  =   gbs[2] - gbs[3] + gbs[4] - gbs[5];
+   dG[13] =   gbs[2] - gbs[3] + gbs[4] - gbs[5];
   K_c[13] = exp(-dG[13]);
 
   k_f[14] = 7000000000.000001*pow(T,0.0)*exp(-(-550.0189501141509)/T);
-  dG[14]  =   gbs[2] - gbs[4] - gbs[5] + gbs[6];
+   dG[14] =   gbs[2] - gbs[4] - gbs[5] + gbs[6];
   K_c[14] = exp(-dG[14]);
 
   k_f[15] = 450000000000.00006*pow(T,0.0)*exp(-(5500.18950114151)/T);
-  dG[15]  =   gbs[2] - gbs[4] - gbs[5] + gbs[6];
+   dG[15] =   gbs[2] - gbs[4] - gbs[5] + gbs[6];
   K_c[15] = exp(-dG[15]);
 
   k_f[16] = 10600000000.000002*pow(T,-0.308)*exp(-(3493.8532210819303)/T);
-  dG[16]  =  - gbs[3] - gbs[9] + gbs[11];
+   dG[16] =  - gbs[3] - gbs[9] + gbs[11];
   K_c[16] = pow(101325.0/(th.Ru*T),-1.0)*exp(-dG[16]);
 
   k_f[17] = 2530000000.0000005*pow(T,0.0)*exp(-(24003.571747891125)/T);
-  dG[17]  =  - gbs[2] + gbs[3] - gbs[9] + gbs[11];
+   dG[17] =  - gbs[2] + gbs[3] - gbs[9] + gbs[11];
   K_c[17] = exp(-dG[17]);
 
   k_f[18] = 84.60000000000001*pow(T,2.053)*exp(-(-179.1461539255606)/T);
-  dG[18]  =   gbs[1] - gbs[4] - gbs[9] + gbs[11];
+   dG[18] =   gbs[1] - gbs[4] - gbs[9] + gbs[11];
   K_c[18] = exp(-dG[18]);
 
   k_f[19] = 8640000000.000002*pow(T,-0.664)*exp(-(167.06888512159023)/T);
-  dG[19]  =   gbs[1] - gbs[4] - gbs[9] + gbs[11];
+   dG[19] =   gbs[1] - gbs[4] - gbs[9] + gbs[11];
   K_c[19] = exp(-dG[19]);
 
   k_f[20] = 157.00000000000003*pow(T,2.18)*exp(-(9029.771309101852)/T);
-  dG[20]  =   gbs[4] - gbs[5] - gbs[9] + gbs[11];
+   dG[20] =   gbs[4] - gbs[5] - gbs[9] + gbs[11];
   K_c[20] = exp(-dG[20]);
 
   k_f[21] = 3070.000000000001*pow(T,2.5)*exp(-(3818.4298201886345)/T);
-  dG[21]  =   gbs[0] - gbs[1] + gbs[7] - gbs[8];
+   dG[21] =   gbs[0] - gbs[1] + gbs[7] - gbs[8];
   K_c[21] = exp(-dG[21]);
 
   k_f[22] = 231000.00000000003*pow(T,1.56)*exp(-(4269.817741737027)/T);
-  dG[22]  =  - gbs[3] + gbs[4] + gbs[7] - gbs[8];
+   dG[22] =  - gbs[3] + gbs[4] + gbs[7] - gbs[8];
   K_c[22] = exp(-dG[22]);
 
   k_f[23] = 1000.0000000000002*pow(T,2.182)*exp(-(1230.874978937981)/T);
-  dG[23]  =  - gbs[4] + gbs[6] + gbs[7] - gbs[8];
+   dG[23] =  - gbs[4] + gbs[6] + gbs[7] - gbs[8];
   K_c[23] = exp(-dG[23]);
 
   k_f[24] = 141000000000.00003*pow(T,0.0)*exp(-(0.0)/T);
-  dG[24]  =  - gbs[1] - gbs[7] + gbs[8];
+   dG[24] =  - gbs[1] - gbs[7] + gbs[8];
   K_c[24] = pow(101325.0/(th.Ru*T),-1.0)*exp(-dG[24]);
 
   k_f[25] = 108000000000.00002*pow(T,0.0)*exp(-(0.0)/T);
-  dG[25]  =   gbs[1] - gbs[3] - gbs[7] + gbs[10];
+   dG[25] =   gbs[1] - gbs[3] - gbs[7] + gbs[10];
   K_c[25] = exp(-dG[25]);
 
   k_f[26] = 23100000000.000004*pow(T,0.0)*exp(-(0.0)/T);
-  dG[26]  =   gbs[0] + gbs[1] - gbs[3] - gbs[7] + gbs[9];
+   dG[26] =   gbs[0] + gbs[1] - gbs[3] - gbs[7] + gbs[9];
   K_c[26] = pow(101325.0/(th.Ru*T),1.0)*exp(-dG[26]);
 
   k_f[27] = 116.00000000000001*pow(T,2.35)*exp(-(-765.9001299851215)/T);
-  dG[27]  =   gbs[2] - gbs[5] - gbs[7] + gbs[8];
+   dG[27] =   gbs[2] - gbs[5] - gbs[7] + gbs[8];
   K_c[27] = exp(-dG[27]);
 
   k_f[28] = 20800000000.000004*pow(T,0.0)*exp(-(-296.8995247642718)/T);
-  dG[28]  =   gbs[1] + gbs[4] - gbs[5] - gbs[7] + gbs[10];
+   dG[28] =   gbs[1] + gbs[4] - gbs[5] - gbs[7] + gbs[10];
   K_c[28] = pow(101325.0/(th.Ru*T),1.0)*exp(-dG[28]);
 
   k_f[29] = 2510000000.0000005*pow(T,0.0)*exp(-(14239.603139414574)/T);
-  dG[29]  =   gbs[1] - gbs[2] + gbs[3] - gbs[7] + gbs[10];
+   dG[29] =   gbs[1] - gbs[2] + gbs[3] - gbs[7] + gbs[10];
   K_c[29] = pow(101325.0/(th.Ru*T),1.0)*exp(-dG[29]);
 
   k_f[30] = 0.022800000000000004*pow(T,2.53)*exp(-(4915.4484032159435)/T);
-  dG[30]  =  - gbs[2] + gbs[4] - gbs[7] + gbs[10];
+   dG[30] =  - gbs[2] + gbs[4] - gbs[7] + gbs[10];
   K_c[30] = exp(-dG[30]);
 
   k_f[31] = 0.010600000000000002*pow(T,3.36)*exp(-(2168.8761893796805)/T);
-  dG[31]  =   gbs[1] - gbs[7] + gbs[8] + gbs[9] - gbs[10];
+   dG[31] =   gbs[1] - gbs[7] + gbs[8] + gbs[9] - gbs[10];
   K_c[31] = pow(101325.0/(th.Ru*T),1.0)*exp(-dG[31]);
 
   k_f[32] = 37000000000000.0*pow(T,0.0)*exp(-(36219.729143107164)/T);
-  dG[32]  =   gbs[0] + gbs[9] - gbs[10];
+   dG[32] =   gbs[0] + gbs[9] - gbs[10];
   K_c[32] = pow(101325.0/(th.Ru*T),1.0)*exp(-dG[32]);
 
   k_f[33] = 5670000000.000001*pow(T,0.361)*exp(-(2319.338829895811)/T);
-  dG[33]  =   gbs[0] + gbs[9] - gbs[10];
+   dG[33] =   gbs[0] + gbs[9] - gbs[10];
   K_c[33] = pow(101325.0/(th.Ru*T),1.0)*exp(-dG[33]);
 
   k_f[34] = 11400000000.000002*pow(T,0.582)*exp(-(7243.845184714733)/T);
-  dG[34]  =   gbs[0] + gbs[9] - gbs[10];
+   dG[34] =   gbs[0] + gbs[9] - gbs[10];
   K_c[34] = pow(101325.0/(th.Ru*T),1.0)*exp(-dG[34]);
 
   k_f[35] = 416000000.00000006*pow(T,0.57)*exp(-(1389.892351523591)/T);
-  dG[35]  =   gbs[1] - gbs[3] + gbs[4] + gbs[9] - gbs[10];
+   dG[35] =   gbs[1] - gbs[3] + gbs[4] + gbs[9] - gbs[10];
   K_c[35] = pow(101325.0/(th.Ru*T),1.0)*exp(-dG[35]);
 
   k_f[36] = 78200.00000000001*pow(T,1.63)*exp(-(-530.8966078411978)/T);
-  dG[36]  =   gbs[1] - gbs[4] + gbs[6] + gbs[9] - gbs[10];
+   dG[36] =   gbs[1] - gbs[4] + gbs[6] + gbs[9] - gbs[10];
   K_c[36] = pow(101325.0/(th.Ru*T),1.0)*exp(-dG[36]);
 
   k_f[37] = 244.00000000000006*pow(T,2.5)*exp(-(18347.384191365)/T);
-  dG[37]  =   gbs[1] - gbs[2] + gbs[5] + gbs[9] - gbs[10];
+   dG[37] =   gbs[1] - gbs[2] + gbs[5] + gbs[9] - gbs[10];
   K_c[37] = pow(101325.0/(th.Ru*T),1.0)*exp(-dG[37]);
 
   // -------------------------------------------------------------- >
   // FallOff Calculations. ---------------------------------------- >
   // -------------------------------------------------------------- >
 
-  double Fcent[10],dFcent[10];
+  double Fcent[7],dFcent[7];
   double Pr_pdr;
-  double A_pdr[10];
+  double A_pdr[7];
   double B_pdr,C_pdr,D_pdr,E_pdr,F_pdr;
   double Ccent,Ncent;
 
   //  Three Body Reaction #6
-  A_pdr[1] = 0.0;
+  A_pdr[0] = 0.0;
   //  Three Body Reaction #7
-  A_pdr[2] = 0.0;
+  A_pdr[1] = 0.0;
   //  Three Body Reaction #8
-  A_pdr[3] = 0.0;
-  //  Three Body Reaction #9
-  A_pdr[4] = 0.0;
+  A_pdr[2] = 0.0;
   //  Troe Reaction #10
-  Fcent[5] =   (1.e0 - (0.5))*exp(-T/(30.0))
+  Fcent[3] =   (1.0 - (0.5))*exp(-T/(30.0))
                              + (0.5) *exp(-T/(90000.0)) + exp(-(90000.0)/T);
-  dFcent[5]= - (1.e0 - (0.5))*exp(-T/(30.0))/(30.0)
-                             - (0.5) *exp(-T/(90000.0))/(90000.0) + exp(-(90000.0)/T)*(90000.0)/pow(T,2); 
-  Ccent = - 0.4e+0 - 0.67e+0*log10(Fcent[5]);
-  Ncent =   0.75e+0 - 1.27e+0*log10(Fcent[5]);
+  dFcent[3]= - (1.0 - (0.5))*exp(-T/(30.0))/(30.0)
+                             - (0.5) *exp(-T/(90000.0))/(90000.0) + exp(-(90000.0)/T)*(90000.0)/pow(T,2.0); 
+  Ccent = - 0.4 - 0.67*log10(Fcent[3]);
+  Ncent =   0.75 - 1.27*log10(Fcent[3]);
 
-  Pr_pdr = S_tbc[i]*( (1910000000000000.2)*pow(T,-1.72)*exp(-(264.190255086852)/T) )/k_f[i];
+  Pr_pdr = S_tbc[9]*( (1910000000000000.2)*pow(T,-1.72)*exp(-(264.190255086852)/T) )/k_f[9];
 
   B_pdr = log10(Pr_pdr) + Ccent;
-  C_pdr = 1.e0/(1.e0 + pow(B_pdr/(Ncent - 0.14e+0*B_pdr),2.0));
+  C_pdr = 1.0/(1.0 + pow(B_pdr/(Ncent - 0.14*B_pdr),2.0));
 
-  F_pdr = pow(10.e0,log10(Fcent[5])*C_pdr);
+  F_pdr = pow(10.0,log10(Fcent[3])*C_pdr);
 
-  D_pdr = 2.e0*B_pdr*log10(F_pdr)/pow(Ncent - 0.14e+0*B_pdr,3.0);
-  E_pdr = C_pdr*(1.e0 + D_pdr*(1.27e+0*B_pdr - 0.67e+0*Ncent));
+  D_pdr = 2.0*B_pdr*log10(F_pdr)/pow(Ncent - 0.14*B_pdr,3.0);
+  E_pdr = C_pdr*(1.0 + D_pdr*(1.27*B_pdr - 0.67*Ncent));
 
-  dFcent[5]  = E_pdr*dFcent[5];
+  dFcent[3]  = E_pdr*dFcent[3];
 
-  A_pdr[5]  = 1.e0/(1.e0 + Pr_pdr) - Ncent*C_pdr*D_pdr;
-  k_f[9] = k_f[9]*( Pr_pdr/(1.e0 + Pr_pdr) )*F_pdr;
+  A_pdr[3]  = 1.0/(1.0 + Pr_pdr) - Ncent*C_pdr*D_pdr;
+  k_f[9] = k_f[9]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;
   S_tbc[9] = 1.0; 
 
   //  Lindeman Reaction #17
-  Fcent[6] = 1.0;
-  dFcent[6] = 0.0;
+  Fcent[4] = 1.0;
+  dFcent[4] = 0.0;
   Pr_pdr = S_tbc[16]*( 1400000000000000.2*pow(T,-2.1)*exp(-(2767.7074342432115)/T) )/k_f[16];
-  A_pdr[6]  = 1.e0/(1.e0 + Pr_pdr);
-  k_f[16] = k_f[1]*( Pr_pdr/(1.e0 + Pr_pdr) );
+  A_pdr[4]  = 1.0/(1.0 + Pr_pdr);
+  k_f[16] = k_f[16]*( Pr_pdr/(1.0 + Pr_pdr) );
   S_tbc[16] = 1.0;
 
   //  Troe Reaction #25
-  Fcent[7] =   (1.e0 - (0.37))*exp(-T/(3315.0))
+  Fcent[5] =   (1.0 - (0.37))*exp(-T/(3315.0))
                              + (0.37) *exp(-T/(61.0)) + exp(-(90000.0)/T);
-  dFcent[7]= - (1.e0 - (0.37))*exp(-T/(3315.0))/(3315.0)
-                             - (0.37) *exp(-T/(61.0))/(61.0) + exp(-(90000.0)/T)*(90000.0)/pow(T,2); 
-  Ccent = - 0.4e+0 - 0.67e+0*log10(Fcent[7]);
-  Ncent =   0.75e+0 - 1.27e+0*log10(Fcent[7]);
+  dFcent[5]= - (1.0 - (0.37))*exp(-T/(3315.0))/(3315.0)
+                             - (0.37) *exp(-T/(61.0))/(61.0) + exp(-(90000.0)/T)*(90000.0)/pow(T,2.0); 
+  Ccent = - 0.4 - 0.67*log10(Fcent[5]);
+  Ncent =   0.75 - 1.27*log10(Fcent[5]);
 
-  Pr_pdr = S_tbc[i]*( (6.35e+29)*pow(T,-5.57)*exp(-(1921.2921788982876)/T) )/k_f[i];
+  Pr_pdr = S_tbc[24]*( (6.35e+29)*pow(T,-5.57)*exp(-(1921.2921788982876)/T) )/k_f[24];
 
   B_pdr = log10(Pr_pdr) + Ccent;
-  C_pdr = 1.e0/(1.e0 + pow(B_pdr/(Ncent - 0.14e+0*B_pdr),2.0));
+  C_pdr = 1.0/(1.0 + pow(B_pdr/(Ncent - 0.14*B_pdr),2.0));
 
-  F_pdr = pow(10.e0,log10(Fcent[7])*C_pdr);
+  F_pdr = pow(10.0,log10(Fcent[5])*C_pdr);
 
-  D_pdr = 2.e0*B_pdr*log10(F_pdr)/pow(Ncent - 0.14e+0*B_pdr,3.0);
-  E_pdr = C_pdr*(1.e0 + D_pdr*(1.27e+0*B_pdr - 0.67e+0*Ncent));
+  D_pdr = 2.0*B_pdr*log10(F_pdr)/pow(Ncent - 0.14*B_pdr,3.0);
+  E_pdr = C_pdr*(1.0 + D_pdr*(1.27*B_pdr - 0.67*Ncent));
 
-  dFcent[7]  = E_pdr*dFcent[7];
+  dFcent[5]  = E_pdr*dFcent[5];
 
-  A_pdr[7]  = 1.e0/(1.e0 + Pr_pdr) - Ncent*C_pdr*D_pdr;
-  k_f[24] = k_f[24]*( Pr_pdr/(1.e0 + Pr_pdr) )*F_pdr;
+  A_pdr[5]  = 1.0/(1.0 + Pr_pdr) - Ncent*C_pdr*D_pdr;
+  k_f[24] = k_f[24]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;
   S_tbc[24] = 1.0; 
 
   //  Troe Reaction #33
-  Fcent[8] =   (1.e0 - (0.932))*exp(-T/(197.00000000000003))
+  Fcent[6] =   (1.0 - (0.932))*exp(-T/(197.00000000000003))
                              + (0.932) *exp(-T/(1540.0)) + exp(-(10300.0)/T);
-  dFcent[8]= - (1.e0 - (0.932))*exp(-T/(197.00000000000003))/(197.00000000000003)
-                             - (0.932) *exp(-T/(1540.0))/(1540.0) + exp(-(10300.0)/T)*(10300.0)/pow(T,2); 
-  Ccent = - 0.4e+0 - 0.67e+0*log10(Fcent[8]);
-  Ncent =   0.75e+0 - 1.27e+0*log10(Fcent[8]);
+  dFcent[6]= - (1.0 - (0.932))*exp(-T/(197.00000000000003))/(197.00000000000003)
+                             - (0.932) *exp(-T/(1540.0))/(1540.0) + exp(-(10300.0)/T)*(10300.0)/pow(T,2.0); 
+  Ccent = - 0.4 - 0.67*log10(Fcent[6]);
+  Ncent =   0.75 - 1.27*log10(Fcent[6]);
 
-  Pr_pdr = S_tbc[i]*( (4.4000000000000005e+35)*pow(T,-6.1)*exp(-(47302.636148883976)/T) )/k_f[i];
+  Pr_pdr = S_tbc[32]*( (4.4000000000000005e+35)*pow(T,-6.1)*exp(-(47302.636148883976)/T) )/k_f[32];
 
   B_pdr = log10(Pr_pdr) + Ccent;
-  C_pdr = 1.e0/(1.e0 + pow(B_pdr/(Ncent - 0.14e+0*B_pdr),2.0));
+  C_pdr = 1.0/(1.0 + pow(B_pdr/(Ncent - 0.14*B_pdr),2.0));
 
-  F_pdr = pow(10.e0,log10(Fcent[8])*C_pdr);
+  F_pdr = pow(10.0,log10(Fcent[6])*C_pdr);
 
-  D_pdr = 2.e0*B_pdr*log10(F_pdr)/pow(Ncent - 0.14e+0*B_pdr,3.0);
-  E_pdr = C_pdr*(1.e0 + D_pdr*(1.27e+0*B_pdr - 0.67e+0*Ncent));
+  D_pdr = 2.0*B_pdr*log10(F_pdr)/pow(Ncent - 0.14*B_pdr,3.0);
+  E_pdr = C_pdr*(1.0 + D_pdr*(1.27*B_pdr - 0.67*Ncent));
 
-  dFcent[8]  = E_pdr*dFcent[8];
+  dFcent[6]  = E_pdr*dFcent[6];
 
-  A_pdr[8]  = 1.e0/(1.e0 + Pr_pdr) - Ncent*C_pdr*D_pdr;
-  k_f[32] = k_f[32]*( Pr_pdr/(1.e0 + Pr_pdr) )*F_pdr;
+  A_pdr[6]  = 1.0/(1.0 + Pr_pdr) - Ncent*C_pdr*D_pdr;
+  k_f[32] = k_f[32]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;
   S_tbc[32] = 1.0; 
 
-  //  Three Body Reaction #34
-  A_pdr[9] = 0.0;
-  //  Three Body Reaction #35
-  A_pdr[10] = 0.0;
 
 
   // -------------------------------------------------------------- >
@@ -429,8 +407,8 @@ for(block_ b : mb){
   q_b[7] = - S_tbc[7] * k_f[7]/K_c[7] * cs[1] * cs[4];
   q[  7] =   q_f[7] + q_b[7];
 
-  q_f[8] =   S_tbc[8] * k_f[8] * cs[6];
-  q_b[8] = - S_tbc[8] * k_f[8]/K_c[8] * cs[1] * cs[4];
+  q_f[8] =   S_tbc[8] * k_f[8] * pow(cs[6],2.0);
+  q_b[8] = - S_tbc[8] * k_f[8]/K_c[8] * cs[1] * cs[4] * cs[6];
   q[  8] =   q_f[8] + q_b[8];
 
   q_f[9] =   S_tbc[9] * k_f[9] * cs[1] * cs[2];
@@ -529,12 +507,12 @@ for(block_ b : mb){
   q_b[32] = - S_tbc[32] * k_f[32]/K_c[32] * cs[0] * cs[9];
   q[  32] =   q_f[32] + q_b[32];
 
-  q_f[33] =   S_tbc[33] * k_f[33] * cs[10];
-  q_b[33] = - S_tbc[33] * k_f[33]/K_c[33] * cs[0] * cs[9];
+  q_f[33] =   S_tbc[33] * k_f[33] * cs[1] * cs[10];
+  q_b[33] = - S_tbc[33] * k_f[33]/K_c[33] * cs[0] * cs[1] * cs[9];
   q[  33] =   q_f[33];
 
-  q_f[34] =   S_tbc[34] * k_f[34] * cs[10];
-  q_b[34] = - S_tbc[34] * k_f[34]/K_c[34] * cs[0] * cs[9];
+  q_f[34] =   S_tbc[34] * k_f[34] * cs[1] * cs[10];
+  q_b[34] = - S_tbc[34] * k_f[34]/K_c[34] * cs[0] * cs[1] * cs[9];
   q[  34] =   q_f[34];
 
   q_f[35] =   S_tbc[35] * k_f[35] * cs[3] * cs[10];
@@ -567,7 +545,7 @@ for(block_ b : mb){
   // Add source terms to RHS
   for (int n=0; n<th.ns-1; n++)
   {
-    b.dQ(i,j,k,5+n) = omega[n]*b.dQ(i,j,k,5+n)*b.J(i,j,k);
+    b.dQ(i,j,k,5+n) = omega[n]*b.J(i,j,k);
   }
 
   });

@@ -38,7 +38,7 @@ def ct2pg_chem(ctyaml, cpp):
 
     for i,r in enumerate(gas.reactions()):
         if r.reaction_type in ['three-body','falloff']: #ThreeBodyReaction or FallOffReactions
-            l_tbc.append(i+1)
+            l_tbc.append(i)
             efficiencies = []
             for j in range(ns):
                 efficiencies.append(r.efficiency(gas.species_names[j]))
@@ -72,8 +72,6 @@ def ct2pg_chem(ctyaml, cpp):
     for i,sp in enumerate(gas.species_names):
         pg_mech.write(f'// Y({i:>3d}) = {sp}\n')
     pg_mech.write('// ==================================================================== //\n')
-
-    print(cpp.replace(".cpp",""))
 
     # WRITE OUT INITIALIZATION BLOCK UP TO CHEMICAL SOURCE TERMS
     out_string = f'''
@@ -138,8 +136,8 @@ for(block_ b : mb){{
   // Chaperon efficiencies. --------------------------------------- >
   // -------------------------------------------------------------- >
 
-  double S_tbc[nr] = {1.e0};
-  double J_tbc[nr] = {0.e0};\n\n'''
+  std::array<double, nr> S_tbc;
+  S_tbc.fill(1.0);\n\n'''
 
     pg_mech.write(out_string)
 
@@ -159,9 +157,7 @@ for(block_ b : mb){{
             pg_mech.write(f'  S_tbc[{i}] = ')
             for item in out_string:
                 pg_mech.write(item)
-            pg_mech.write(';\n')
-            pg_mech.write(f'  J_tbc[{i}] = 1.e0;')
-            pg_mech.write('\n\n')
+            pg_mech.write(';\n\n')
 
     out_string = '''  // -------------------------------------------------------------- >
   // Gibbs energy. ------------------------------------------------ >
@@ -221,7 +217,7 @@ for(block_ b : mb){{
             elif s != 0:
                 out_string.append(f' {s:+}*gbs[{j}]')
         out_string[0] = out_string[0].replace('+', '')
-        pg_mech.write(f'  dG[{i}]  = ')
+        pg_mech.write(f'   dG[{i}] = ')
         for item in out_string:
             pg_mech.write(item)
         pg_mech.write(';\n')
@@ -255,16 +251,16 @@ for(block_ b : mb){{
         if r.reaction_type == 'three-body': #ThreeBodyReaction
             tbc_count += 1
             pg_mech.write(f'  //  Three Body Reaction #{i+1}\n')
-            pg_mech.write(f'  A_pdr[{tbc_count}] = 0.0;\n')
+            pg_mech.write(f'  A_pdr[{tbc_count-1}] = 0.0;\n')
         elif r.reaction_type == 'falloff': # FallOff Reactions
             tbc_count += 1
             if r.falloff.type in ['Simple','Lindemann']:
                 pg_mech.write(f'  //  Lindeman Reaction #{i+1}\n')
-                out_string = f'''  Fcent[{tbc_count}] = 1.0;
-  dFcent[{tbc_count}] = 0.0;
+                out_string = f'''  Fcent[{tbc_count-1}] = 1.0;
+  dFcent[{tbc_count-1}] = 0.0;
   Pr_pdr = S_tbc[{i}]*( {A_o[tbc_count-1]}*pow(T,{m_o[tbc_count-1]})*exp(-({Ea_o[tbc_count-1]})/T) )/k_f[{i}];
-  A_pdr[{tbc_count}]  = 1.e0/(1.e0 + Pr_pdr);
-  k_f[{i}] = k_f[{1}]*( Pr_pdr/(1.e0 + Pr_pdr) );
+  A_pdr[{tbc_count-1}]  = 1.0/(1.0 + Pr_pdr);
+  k_f[{i}] = k_f[{i}]*( Pr_pdr/(1.0 + Pr_pdr) );
   S_tbc[{i}] = 1.0;\n'''
                 pg_mech.write(out_string)
 
@@ -275,38 +271,38 @@ for(block_ b : mb){{
                 pg_mech.write(f'  //  Troe Reaction #{i+1}\n')
                 tp = r.falloff.parameters
                 if tp[-1] == 0: # Three Parameter Troe form
-                    out_string = f'''  Fcent[{tbc_count}] =   (1.e0 - ({alpha}))*exp(-T/({Tsss}))
+                    out_string = f'''  Fcent[{tbc_count-1}] =   (1.0 - ({alpha}))*exp(-T/({Tsss}))
                         + ({alpha}) *exp(-T/({Ts}));
-  dFcent[{tbc_count}] = - (1.e0 - ({alpha}))*exp(-T/({alpha}))/({alpha})
+  dFcent[{tbc_count-1}] = - (1.0 - ({alpha}))*exp(-T/({alpha}))/({alpha})
                              - ({alpha}) *exp(-T/({Ts}))/({Ts}); \n'''
                     pg_mech.write(out_string)
                 elif tp[-1] != 0: # Four Parameter Troe form
                     Tss = r.falloff.parameters[3]
-                    out_string = f'''  Fcent[{tbc_count}] =   (1.e0 - ({alpha}))*exp(-T/({Tsss}))
+                    out_string = f'''  Fcent[{tbc_count-1}] =   (1.0 - ({alpha}))*exp(-T/({Tsss}))
                              + ({alpha}) *exp(-T/({Ts})) + exp(-({Tss})/T);
-  dFcent[{tbc_count}]= - (1.e0 - ({alpha}))*exp(-T/({Tsss}))/({Tsss})
-                             - ({alpha}) *exp(-T/({Ts}))/({Ts}) + exp(-({Tss})/T)*({Tss})/pow(T,2); \n'''
+  dFcent[{tbc_count-1}]= - (1.0 - ({alpha}))*exp(-T/({Tsss}))/({Tsss})
+                             - ({alpha}) *exp(-T/({Ts}))/({Ts}) + exp(-({Tss})/T)*({Tss})/pow(T,2.0); \n'''
                     pg_mech.write(out_string)
                 else:
                     raise ValueError('Unknown Falloff type: {}, for reacion {}'.format(r.falloff.type, r.equation))
 
-                out_string = f'''  Ccent = - 0.4e+0 - 0.67e+0*log10(Fcent[{tbc_count}]);
-  Ncent =   0.75e+0 - 1.27e+0*log10(Fcent[{tbc_count}]);
+                out_string = f'''  Ccent = - 0.4 - 0.67*log10(Fcent[{tbc_count-1}]);
+  Ncent =   0.75 - 1.27*log10(Fcent[{tbc_count-1}]);
 
-  Pr_pdr = S_tbc[i]*( ({A_o[tbc_count-1]})*pow(T,{m_o[tbc_count-1]})*exp(-({Ea_o[tbc_count-1]})/T) )/k_f[i];
+  Pr_pdr = S_tbc[{i}]*( ({A_o[tbc_count-1]})*pow(T,{m_o[tbc_count-1]})*exp(-({Ea_o[tbc_count-1]})/T) )/k_f[{i}];
 
   B_pdr = log10(Pr_pdr) + Ccent;
-  C_pdr = 1.e0/(1.e0 + pow(B_pdr/(Ncent - 0.14e+0*B_pdr),2.0));
+  C_pdr = 1.0/(1.0 + pow(B_pdr/(Ncent - 0.14*B_pdr),2.0));
 
-  F_pdr = pow(10.e0,log10(Fcent[{tbc_count}])*C_pdr);
+  F_pdr = pow(10.0,log10(Fcent[{tbc_count-1}])*C_pdr);
 
-  D_pdr = 2.e0*B_pdr*log10(F_pdr)/pow(Ncent - 0.14e+0*B_pdr,3.0);
-  E_pdr = C_pdr*(1.e0 + D_pdr*(1.27e+0*B_pdr - 0.67e+0*Ncent));
+  D_pdr = 2.0*B_pdr*log10(F_pdr)/pow(Ncent - 0.14*B_pdr,3.0);
+  E_pdr = C_pdr*(1.0 + D_pdr*(1.27*B_pdr - 0.67*Ncent));
 
-  dFcent[{tbc_count}]  = E_pdr*dFcent[{tbc_count}];
+  dFcent[{tbc_count-1}]  = E_pdr*dFcent[{tbc_count-1}];
 
-  A_pdr[{tbc_count}]  = 1.e0/(1.e0 + Pr_pdr) - Ncent*C_pdr*D_pdr;
-  k_f[{i}] = k_f[{i}]*( Pr_pdr/(1.e0 + Pr_pdr) )*F_pdr;
+  A_pdr[{tbc_count-1}]  = 1.0/(1.0 + Pr_pdr) - Ncent*C_pdr*D_pdr;
+  k_f[{i}] = k_f[{i}]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;
   S_tbc[{i}] = 1.0; \n'''
 
                 pg_mech.write(out_string)
@@ -380,7 +376,7 @@ for(block_ b : mb){{
   // Add source terms to RHS
   for (int n=0; n<th.ns-1; n++)
   {
-    b.dQ(i,j,k,5+n) = omega[n]*b.dQ(i,j,k,5+n)*b.J(i,j,k);
+    b.dQ(i,j,k,5+n) = omega[n]*b.J(i,j,k);
   }
 
   });\n}}'''

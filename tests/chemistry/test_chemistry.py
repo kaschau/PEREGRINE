@@ -5,7 +5,7 @@ import cantera as ct
 import sys
 from pathlib import Path
 
-np.random.seed(111)
+#np.random.seed(111)
 
 ##################################################################################
 ##### Test for all positive i aligned orientations
@@ -47,6 +47,8 @@ def test_chemistry():
     blk.array['q'][:,:,:,5::] = Y[0:-1]
 
     #Update cons
+    pg.compute.tpg(blk, mb.thtrdat, 0, 'prims')
+    #zero out dQ
     pg.compute.dQzero(mb)
     pg.compute.chem_CH4_O2_Stanford_Skeletal(mb, mb.thtrdat)
 
@@ -72,11 +74,11 @@ def test_chemistry():
     pd.append(print_diff(gas.species_names[-1],gas.Y[-1],1.0-np.sum(pgprim[5::])))
     print('Chemical Source Terms')
     for i,n in enumerate(gas.species_names[0:-1]):
-        pd.append(print_diff(f'omega_{n:<4}', gas.net_production_rates[i]/gas.molecular_weights[i], pgchem[5+i]))
+        pd.append(print_diff(f'omega_{n:<4}', gas.net_production_rates[i]*gas.molecular_weights[i], pgchem[5+i]))
 
     kokkos.finalize()
 
-    passfail = np.allclose(np.array(pd))
+    passfail = np.all(np.array(pd) < 0.0001)
     assert passfail
 
 if __name__ == '__main__':
