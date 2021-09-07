@@ -30,6 +30,8 @@ def test_chemistry():
     config = pg.files.config_file()
     config['thermochem']['spdata'] = thfile
     config['thermochem']['eos'] = 'tpg'
+    config['thermochem']['mechanism'] = 'chem_CH4_O2_Standford_Skeletal'
+    config['thermochem']['chemistry'] = True
     config['RHS']['diffusion'] = False
 
     mb = pg.multiblock.generate_multiblock_solver(1,config)
@@ -52,15 +54,17 @@ def test_chemistry():
     pg.compute.tpg(blk, mb.thtrdat, 0, 'prims')
     #zero out dQ
     pg.compute.dQzero(mb)
-    pg.compute.chem_CH4_O2_Stanford_Skeletal(mb, mb.thtrdat)
+    mb.chem(mb, mb.thtrdat)
 
     #test the properties
     pgprim = blk.array['q'][1,1,1]
     pgchem = blk.array['dQ'][1,1,1]
 
-
     def print_diff(name,c,p):
-        diff = np.abs(c-p)/p*100
+        if np.abs(c-p) == 0.0:
+            diff = 0.0
+        else:
+            diff = np.abs(c-p)/p*100
         print(f'{name:<6s}: {c:16.8e} | {p:16.8e} | {diff:16.15e}')
 
         return diff
