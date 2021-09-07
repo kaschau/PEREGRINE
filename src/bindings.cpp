@@ -177,6 +177,10 @@ PYBIND11_MODULE(compute, m) {
   m.def("chem_CH4_O2_Stanford_Skeletal", &chem_CH4_O2_Stanford_Skeletal, "Chemical source terms from",
         py::arg("list of block_ object"),
         py::arg("thtrdat_ object"));
+  //  |----> GRI30
+  m.def("chem_GRI30", &chem_GRI30, "Chemical source terms from GRI3.0",
+        py::arg("list of block_ object"),
+        py::arg("thtrdat_ object"));
 
   static auto _atexit = []() {
     if (Kokkos::is_initialized()) Kokkos::finalize();

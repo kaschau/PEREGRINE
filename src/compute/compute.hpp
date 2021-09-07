@@ -35,5 +35,7 @@ void transport(block_ b, thtrdat_ th, int face);
 // ./chemistry
 //    |------> CH4_O2_Stanford_Skeletal
 void chem_CH4_O2_Stanford_Skeletal(std::vector<block_> mb, thtrdat_ th);
+//    |------> GRI30
+void chem_GRI30(std::vector<block_> mb, thtrdat_ th);
 
 #endif

@@ -237,10 +237,9 @@ for(block_ b : mb){{
   // FallOff Calculations. ---------------------------------------- >
   // -------------------------------------------------------------- >
 
-  double Fcent[{nl_tbc}],dFcent[{nl_tbc}];
+  double Fcent[{nl_tbc}];
   double Pr_pdr;
-  double A_pdr[{nl_tbc}];
-  double B_pdr,C_pdr,D_pdr,E_pdr,F_pdr;
+  double B_pdr,C_pdr,F_pdr;
   double Ccent,Ncent;
 \n'''
 
@@ -251,15 +250,12 @@ for(block_ b : mb){{
         if r.reaction_type == 'three-body': #ThreeBodyReaction
             tbc_count += 1
             pg_mech.write(f'  //  Three Body Reaction #{i+1}\n')
-            pg_mech.write(f'  A_pdr[{tbc_count-1}] = 0.0;\n')
         elif r.reaction_type == 'falloff': # FallOff Reactions
             tbc_count += 1
             if r.falloff.type in ['Simple','Lindemann']:
                 pg_mech.write(f'  //  Lindeman Reaction #{i+1}\n')
                 out_string = f'''  Fcent[{tbc_count-1}] = 1.0;
-  dFcent[{tbc_count-1}] = 0.0;
   Pr_pdr = S_tbc[{i}]*( {A_o[tbc_count-1]}*pow(T,{m_o[tbc_count-1]})*exp(-({Ea_o[tbc_count-1]})/T) )/k_f[{i}];
-  A_pdr[{tbc_count-1}]  = 1.0/(1.0 + Pr_pdr);
   k_f[{i}] = k_f[{i}]*( Pr_pdr/(1.0 + Pr_pdr) );
   S_tbc[{i}] = 1.0;\n'''
                 pg_mech.write(out_string)
@@ -272,16 +268,12 @@ for(block_ b : mb){{
                 tp = r.falloff.parameters
                 if tp[-1] == 0: # Three Parameter Troe form
                     out_string = f'''  Fcent[{tbc_count-1}] =   (1.0 - ({alpha}))*exp(-T/({Tsss}))
-                        + ({alpha}) *exp(-T/({Ts}));
-  dFcent[{tbc_count-1}] = - (1.0 - ({alpha}))*exp(-T/({alpha}))/({alpha})
-                             - ({alpha}) *exp(-T/({Ts}))/({Ts}); \n'''
+                        + ({alpha}) *exp(-T/({Ts}));\n'''
                     pg_mech.write(out_string)
                 elif tp[-1] != 0: # Four Parameter Troe form
                     Tss = r.falloff.parameters[3]
                     out_string = f'''  Fcent[{tbc_count-1}] =   (1.0 - ({alpha}))*exp(-T/({Tsss}))
-                             + ({alpha}) *exp(-T/({Ts})) + exp(-({Tss})/T);
-  dFcent[{tbc_count-1}]= - (1.0 - ({alpha}))*exp(-T/({Tsss}))/({Tsss})
-                             - ({alpha}) *exp(-T/({Ts}))/({Ts}) + exp(-({Tss})/T)*({Tss})/pow(T,2.0); \n'''
+                             + ({alpha}) *exp(-T/({Ts})) + exp(-({Tss})/T);\n'''
                     pg_mech.write(out_string)
                 else:
                     raise ValueError('Unknown Falloff type: {}, for reacion {}'.format(r.falloff.type, r.equation))
@@ -296,12 +288,6 @@ for(block_ b : mb){{
 
   F_pdr = pow(10.0,log10(Fcent[{tbc_count-1}])*C_pdr);
 
-  D_pdr = 2.0*B_pdr*log10(F_pdr)/pow(Ncent - 0.14*B_pdr,3.0);
-  E_pdr = C_pdr*(1.0 + D_pdr*(1.27*B_pdr - 0.67*Ncent));
-
-  dFcent[{tbc_count-1}]  = E_pdr*dFcent[{tbc_count-1}];
-
-  A_pdr[{tbc_count-1}]  = 1.0/(1.0 + Pr_pdr) - Ncent*C_pdr*D_pdr;
   k_f[{i}] = k_f[{i}]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;
   S_tbc[{i}] = 1.0; \n'''
 
