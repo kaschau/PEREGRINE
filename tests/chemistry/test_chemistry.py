@@ -17,6 +17,7 @@ def test_chemistry():
 
     relpath = str(Path(__file__).parent)
     ctfile = relpath+'/CH4_O2_Stanford_Skeletal.yaml'
+    thfile = relpath+'/thtr_CH4-O2-Stanford-Skeletal.yaml'
     gas = ct.Solution(ctfile)
     p = np.random.uniform(low=10000, high=100000)
     T = np.random.uniform(low=100  , high=1000)
@@ -26,7 +27,7 @@ def test_chemistry():
     gas.TPY = T,p,Y
 
     config = pg.files.config_file()
-    config['thermochem']['spdata'] = 'thtr_CH4-O2-Stanford-Skeletal.yaml'
+    config['thermochem']['spdata'] = thfile
     config['thermochem']['eos'] = 'tpg'
     config['RHS']['diffusion'] = False
 
