@@ -16,8 +16,9 @@ def test_chemistry():
     kokkos.initialize()
 
     relpath = str(Path(__file__).parent)
-    ctfile = relpath+'/CH4_O2_Stanford_Skeletal.yaml'
-    thfile = relpath+'/thtr_CH4-O2-Stanford-Skeletal.yaml'
+    ct.add_directory(relpath+'/../../src/peregrinepy/thermo_transport/database')
+    ctfile = 'ct_CH4_O2_Stanford_Skeletal.yaml'
+    thfile = 'thtr_CH4_O2_Stanford_Skeletal.yaml'
     gas = ct.Solution(ctfile)
     p = np.random.uniform(low=10000, high=100000)
     T = np.random.uniform(low=100  , high=1000)
