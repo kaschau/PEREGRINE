@@ -46,7 +46,12 @@ Gives access to the primative variables.
 |            | cp              |   1   | J/kg.K       |
 |            | enthalpy        |   2   | J/m^3        |
 |            | c               |   3   | m/s          |
-
+|            | internal energy |   4   | J/m^3        |
+|            | species h       | 5..ne | J/m^3        |
+|**qt**      | **Transport**   |       |              |
+|            | mu              |   0   | Pa.s         |
+|            | kappa           |   1   | W/m/k        |
+|            | D[n]            |2+ns-1 | m^2/s        |
 
 ## License
 
