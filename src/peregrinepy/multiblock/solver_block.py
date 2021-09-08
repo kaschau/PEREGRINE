@@ -191,14 +191,10 @@ class solver_block(restart_block,block_):
         #-------------------------------------------------------------------------------#
         #       RK Stages
         #-------------------------------------------------------------------------------#
-        if config['solver']['time_integration'] == 'rk1':
-            stages = ('rhs0', 'rhs1')
-        elif config['solver']['time_integration'] == 'rk4':
-            stages = ('rhs0', 'rhs1', 'rhs2', 'rhs3')
-        else:
-            raise ValueError('Unknown time integrator')
+        nstorage = {'rk1':0, 'rk3':2, 'rk4':4}
         shape = cQshape
-        for name in stages:
+        for i in range(nstorage[config['solver']['time_integration']]):
+            name = f'rhs{i}'
             if self.array[name] is None:
                 setattr(self, name, kokkos.array(name, shape=shape, dtype=kokkos.double, space=space, dynamic=False))
                 self.array[name] = np.array(getattr(self, name), copy=False)
