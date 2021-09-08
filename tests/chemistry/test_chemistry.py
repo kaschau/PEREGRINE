@@ -30,7 +30,7 @@ def test_chemistry():
     config = pg.files.config_file()
     config['thermochem']['spdata'] = thfile
     config['thermochem']['eos'] = 'tpg'
-    config['thermochem']['mechanism'] = 'chem_CH4_O2_Standford_Skeletal'
+    config['thermochem']['mechanism'] = 'chem_CH4_O2_Stanford_Skeletal'
     config['thermochem']['chemistry'] = True
     config['RHS']['diffusion'] = False
 
@@ -51,9 +51,9 @@ def test_chemistry():
     blk.array['q'][:,:,:,5::] = Y[0:-1]
 
     #Update cons
-    pg.compute.tpg(blk, mb.thtrdat, 0, 'prims')
+    pg.compute.thermo.tpg(blk, mb.thtrdat, 0, 'prims')
     #zero out dQ
-    pg.compute.dQzero(mb)
+    pg.compute.flux.dQzero(mb)
     mb.chem(mb, mb.thtrdat)
 
     #test the properties

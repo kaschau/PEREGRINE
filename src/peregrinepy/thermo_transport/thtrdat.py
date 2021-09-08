@@ -1,7 +1,7 @@
 import yaml
 from pathlib import Path
 
-from ..compute import thtrdat_
+from ..compute.thermo import thtrdat_
 
 class thtrdat(thtrdat_):
 

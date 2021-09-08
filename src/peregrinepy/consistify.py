@@ -1,6 +1,8 @@
 from .bcs import apply_bcs
 from .mpicomm.blockcomm import communicate
-from .compute import dqdxyz,transport
+from .compute.transport import kinetic_theory
+from .compute import flux
+
 
 def consistify(mb):
 
@@ -24,10 +26,10 @@ def consistify(mb):
 
         #Update transport properties
         for blk in mb:
-            transport(blk,mb.thtrdat,-1)
+            kinetic_theory(blk,mb.thtrdat,-1)
 
         #Update spatial derivatives
-        dqdxyz(mb)
+        flux.dqdxyz(mb)
 
         #Apply viscous boundary conditions
         apply_bcs(mb,'viscous')

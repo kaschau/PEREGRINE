@@ -48,7 +48,7 @@ def test_tpg():
     blk.array['q'][:,:,:,5::] = Y[0:-1]
 
     #Update cons
-    pg.compute.tpg(blk, mb.thtrdat, 0, 'prims')
+    pg.compute.thermo.tpg(blk, mb.thtrdat, 0, 'prims')
 
     #test the properties
     pgcons = blk.array['Q'][1,1,1]
