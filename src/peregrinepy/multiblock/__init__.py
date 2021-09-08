@@ -10,7 +10,6 @@ from .solver_block import solver_block
 
 from ..integrators import rk1,rk4
 from ..thermo_transport import thtrdat
-from ..compute import chem_CH4_O2_Stanford_Skeletal,chem_GRI30
 
 from pathlib import Path
 
@@ -47,17 +46,19 @@ def generate_multiblock_solver(nblks, config, myblocks=None):
 
     #Stick the equation of state on
     if config['thermochem']['eos'] == 'cpg':
-        from ..compute import cpg
+        from ..compute.thermo import cpg
         cls.eos = cpg
     elif config['thermochem']['eos'] == 'tpg':
-        from ..compute import tpg
+        from ..compute.thermo import tpg
         cls.eos = tpg
 
     #Stick the chemistry mechanism on
     if config['thermochem']['chemistry']:
         if config['thermochem']['mechanism'] == 'chem_CH4_O2_Stanford_Skeletal':
+            from ..compute.chemistry import chem_CH4_O2_Stanford_Skeletal
             cls.chem = chem_CH4_O2_Stanford_Skeletal
         elif config['thermochem']['mechanism'] == 'chem_GRI30':
+            from ..compute.chemistry import chem_GRI30
             cls.chem = chem_GRI30
         else:
             raise ValueError("What mechanism?")

@@ -67,7 +67,7 @@ def test_transport():
     blk.array['q'][:,:,:,5::] = Y[0:-1]
 
     #Update transport
-    pg.compute.transport(blk, mb.thtrdat, 0)
+    pg.compute.transport.kinetic_theory(blk, mb.thtrdat, 0)
 
     #test the properties
     pgprim = blk.array['q'][1,1,1]
