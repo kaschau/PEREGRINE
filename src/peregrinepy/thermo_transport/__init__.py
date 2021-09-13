@@ -9,3 +9,5 @@ def get_eos(eos):
     elif eos == 'tpg':
         from ..compute.thermo import tpg
         return tpg
+    else:
+        raise ValueError("What EOS?")
