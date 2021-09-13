@@ -79,16 +79,14 @@ for(block_ b : mb){
   const int ns=53;
   const int nr=325;
   const int l_tbc=50;
-  double p;
   double T;
   double Y[ns],cs[ns];
 
-  double rho,rhoinv;
+  double rho;
 
-  p = b.q(i,j,k,0);
   T = b.q(i,j,k,4);
   rho = b.Q(i,j,k,0);
-  rhoinv = 1.0/rho;
+
   // Compute nth species Y
   Y[ns-1] = 1.0;
   for (int n=0; n<ns-1; n++)
