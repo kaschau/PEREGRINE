@@ -16,8 +16,8 @@ def test_transport():
     kokkos.initialize()
 
     relpath = str(Path(__file__).parent)
-    ct.add_directory(relpath+'/../../src/peregrinepy/thermo_transport/database')
-    ctfile = 'ct_GRI30.yaml'
+    ct.add_directory(relpath+'/../../src/peregrinepy/thermo_transport/database/source')
+    ctfile = 'GRI30.yaml'
     thfile = 'thtr_GRI30.yaml'
     gas = ct.Solution(ctfile)
     p = np.random.uniform(low=10000, high=1000000)
