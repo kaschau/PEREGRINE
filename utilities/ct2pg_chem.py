@@ -232,7 +232,12 @@ for(block_ b : mb){{
         elif isinstance(m_f[i],float) and Ea_f[i] == 0.0:
             out_string = f'  k_f[{i}] = exp(log({A_f[i]}){ m_f[i]:+}*logT);\n'
         elif isinstance(m_f[i],int) and Ea_f[i] == 0.0:
-            out_string = f'  k_f[{i}] = {A_f[i]}'+''.join("*T" for _ in range(m_f[i]))+';\n'
+            if m_f[i] < 0:
+                out_string = f'  k_f[{i}] = {A_f[i]}'+''.join("/T" for _ in range(m_f[i]))+');\n'
+            elif m_f[i] > 0:
+                out_string = f'  k_f[{i}] = {A_f[i]}'+''.join("*T" for _ in range(m_f[i]))+';\n'
+            else:
+                raise ValueError('Huh?')
         elif Ea_f[i] != 0.0:
             out_string = f'  k_f[{i}] = exp(log({A_f[i]}){ m_f[i]:+}*logT-({Ea_f[i]}/T));\n'
         else:
