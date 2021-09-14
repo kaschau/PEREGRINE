@@ -17,6 +17,15 @@ import cantera as ct
 import numpy as np
 import argparse
 
+class UnknownReactionType(Exception):
+    def __init__(self,rtype,num,eq):
+            message = f'Unknown Reaction type: "{rtype}", for reacion #{num}: {eq}'
+            super().__init__(message)
+
+class UnknownFalloffType(Exception):
+    def __init__(self,ftype,num,eq):
+            message = f'Unknown Falloff type: "{ftype}", for reacion #{num}: {eq}'
+            super().__init__(message)
 
 def ct2pg_chem(ctyaml, cpp):
 
@@ -51,17 +60,20 @@ def ct2pg_chem(ctyaml, cpp):
                 Ea_o.append(r.low_rate.activation_energy/Ru)
                 m_o.append(r.low_rate.temperature_exponent)
                 A_o.append(r.low_rate.pre_exponential_factor)
-            else: #thre-body
+            else: #three-body
                 Ea_f.append(r.rate.activation_energy/Ru)
                 m_f.append(r.rate.temperature_exponent)
                 A_f.append(r.rate.pre_exponential_factor)
                 Ea_o.append(0.0)
                 m_o.append(0.0)
                 A_o.append(0.0)
-        else: #elementry
+        elif r.reaction_type == 'elementary': #elementry
             Ea_f.append(r.rate.activation_energy/Ru)
             m_f.append(r.rate.temperature_exponent)
             A_f.append(r.rate.pre_exponential_factor)
+        else:
+            raise UnknownReactionType(r.reaction_type,i+1,r.equation)
+
 
     nl_tbc = len(l_tbc)
 
@@ -273,8 +285,6 @@ for(block_ b : mb){{
                     out_string = f'''  Fcent[{tbc_count-1}] =   (1.0 - ({alpha}))*exp(-T/({Tsss}))
                              + ({alpha}) *exp(-T/({Ts})) + exp(-({Tss})/T);\n'''
                     pg_mech.write(out_string)
-                else:
-                    raise ValueError('Unknown Falloff type: {}, for reacion {}'.format(r.falloff.type, r.equation))
 
                 out_string = f'''  Ccent = - 0.4 - 0.67*log10(Fcent[{tbc_count-1}]);
   Ncent =   0.75 - 1.27*log10(Fcent[{tbc_count-1}]);
@@ -291,7 +301,9 @@ for(block_ b : mb){{
 
                 pg_mech.write(out_string)
             elif r.falloff.type == 'SRI': # SRI Form
-                raise TypeError(' Warning, this utility cant handle SRI type reactions yet... so add it now')
+                raise ValueError(' Warning, this utility cant handle SRI type reactions yet... so add it now')
+            else:
+                raise UnknownFalloffType(r.falloff.type,i+1,r.equation)
             pg_mech.write('\n')
 
     pg_mech.write('\n\n')
