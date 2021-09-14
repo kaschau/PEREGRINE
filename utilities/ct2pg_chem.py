@@ -27,6 +27,14 @@ class UnknownFalloffType(Exception):
             message = f'Unknown Falloff type: "{ftype}", for reacion #{num}: {eq}'
             super().__init__(message)
 
+def int_or_float(val):
+    ival = int(val)
+
+    if abs(val-ival) > 1e-16:
+        return val
+    else:
+        return ival
+
 def ct2pg_chem(ctyaml, cpp):
 
     gas = ct.Solution(ctyaml)
@@ -69,7 +77,7 @@ def ct2pg_chem(ctyaml, cpp):
                 A_o.append(0.0)
         elif r.reaction_type == 'elementary': #elementry
             Ea_f.append(r.rate.activation_energy/Ru)
-            m_f.append(r.rate.temperature_exponent)
+            m_f.append(int_or_float(r.rate.temperature_exponent))
             A_f.append(r.rate.pre_exponential_factor)
         else:
             raise UnknownReactionType(r.reaction_type,i+1,r.equation)
@@ -112,12 +120,14 @@ for(block_ b : mb){{
   const int ns={ns};
   const int nr={nr};
   const int l_tbc={nl_tbc};
-  double T;
+  double T,logT,prefRuT;
   double Y[ns],cs[ns];
 
   double rho;
 
   T = b.q(i,j,k,4);
+  logT = log(T);
+  prefRuT = 101325.0/(th.Ru*T);
   rho = b.Q(i,j,k,0);
 
   // Compute nth species Y
@@ -204,7 +214,7 @@ for(block_ b : mb){{
     #WRITE OUT HARD CODED k_f dG and K_c
     #-----------------------------------------------------------------------------
     out_string = '''  // -------------------------------------------------------------- >
-  // Rate Constants. --------------------------------------- >
+  // Rate Constants. ---------------------------------------------- >
   // -------------------------------------------------------------- >
 
   double q_f[nr],k_f[nr],c_f[nr];
@@ -215,7 +225,19 @@ for(block_ b : mb){{
     pg_mech.write(out_string)
 
     for i,r in enumerate(gas.reactions()):
-        out_string = f'  k_f[{i}] = {A_f[i]}*pow(T,{m_f[i]})*exp(-({Ea_f[i]})/T);\n'
+        if m_f[i] == 0.0 and Ea_f[i] == 0.0:
+            out_string = f'  k_f[{i}] = {A_f[i]};\n'
+        elif m_f[i] == 0.0 and Ea_f[i] != 0.0:
+            out_string = f'  k_f[{i}] = exp(log({A_f[i]})-({Ea_f[i]}/T));\n'
+        elif isinstance(m_f[i],float) and Ea_f[i] == 0.0:
+            out_string = f'  k_f[{i}] = exp(log({A_f[i]}){ m_f[i]:+}*logT);\n'
+        elif isinstance(m_f[i],int) and Ea_f[i] == 0.0:
+            out_string = f'  k_f[{i}] = {A_f[i]}'+''.join("*T" for _ in range(m_f[i]))+';\n'
+        elif Ea_f[i] != 0.0:
+            out_string = f'  k_f[{i}] = exp(log({A_f[i]}){ m_f[i]:+}*logT-({Ea_f[i]}/T));\n'
+        else:
+            raise ValueError(f'Something is wrong here, m_f = {m_f[i]}  Ea_f={Ea_f[i]} ')
+
         pg_mech.write(out_string)
         nu_sum = nu_b[:,i] - nu_f[:,i]
         out_string = []
@@ -233,7 +255,7 @@ for(block_ b : mb){{
         pg_mech.write(';\n')
 
         if np.sum(nu_sum) != 0:
-            out_string = f'  K_c[{i}] = pow(101325.0/(th.Ru*T),{np.sum(nu_sum)})*exp(-dG[{i}]);'
+            out_string = f'  K_c[{i}] = pow(prefRuT,{np.sum(nu_sum)})*exp(-dG[{i}]);'
         else:
             out_string = f'  K_c[{i}] = exp(-dG[{i}]);'
         pg_mech.write(out_string)
