@@ -143,23 +143,23 @@ for(block_ b : mb){
 
   k_f[5] = exp(log(4.580000000000001e+16)-1.4*logT-(52531.08710193616/T));
    dG[5] =  - gbs[0] +2.0*gbs[1];
-  K_c[5] = pow(prefRuT,1.0)*exp(-dG[5]);
+  K_c[5] = prefRuT*exp(-dG[5]);
 
   k_f[6] = exp(log(4710000000000.001)-1.0*logT);
    dG[6] =  - gbs[1] - gbs[3] + gbs[4];
-  K_c[6] = pow(prefRuT,-1.0)*exp(-dG[6]);
+  K_c[6] = exp(-dG[6])/prefRuT;
 
   k_f[7] = exp(log(6.060000000000001e+24)-3.322*logT-(60788.9196466509/T));
    dG[7] =   gbs[1] + gbs[4] - gbs[6];
-  K_c[7] = pow(prefRuT,1.0)*exp(-dG[7]);
+  K_c[7] = prefRuT*exp(-dG[7]);
 
   k_f[8] = exp(log(1.0100000000000001e+23)-2.44*logT-(60486.98792655164/T));
    dG[8] =   gbs[1] + gbs[4] - gbs[6];
-  K_c[8] = pow(prefRuT,1.0)*exp(-dG[8]);
+  K_c[8] = prefRuT*exp(-dG[8]);
 
   k_f[9] = exp(log(4650000000.000001)+0.44*logT);
    dG[9] =  - gbs[1] - gbs[2] + gbs[5];
-  K_c[9] = pow(prefRuT,-1.0)*exp(-dG[9]);
+  K_c[9] = exp(-dG[9])/prefRuT;
 
   k_f[10] = exp(log(3680.0000000000005)+2.087*logT-(-732.1844212407042/T));
    dG[10] =   gbs[0] - gbs[1] + gbs[2] - gbs[5];
@@ -187,7 +187,7 @@ for(block_ b : mb){
 
   k_f[16] = exp(log(10600000000.000002)-0.308*logT-(3493.8532210819303/T));
    dG[16] =  - gbs[3] - gbs[9] + gbs[11];
-  K_c[16] = pow(prefRuT,-1.0)*exp(-dG[16]);
+  K_c[16] = exp(-dG[16])/prefRuT;
 
   k_f[17] = exp(log(2530000000.0000005)-(24003.571747891125/T));
    dG[17] =  - gbs[2] + gbs[3] - gbs[9] + gbs[11];
@@ -219,7 +219,7 @@ for(block_ b : mb){
 
   k_f[24] = 141000000000.00003;
    dG[24] =  - gbs[1] - gbs[7] + gbs[8];
-  K_c[24] = pow(prefRuT,-1.0)*exp(-dG[24]);
+  K_c[24] = exp(-dG[24])/prefRuT;
 
   k_f[25] = 108000000000.00002;
    dG[25] =   gbs[1] - gbs[3] - gbs[7] + gbs[10];
@@ -227,7 +227,7 @@ for(block_ b : mb){
 
   k_f[26] = 23100000000.000004;
    dG[26] =   gbs[0] + gbs[1] - gbs[3] - gbs[7] + gbs[9];
-  K_c[26] = pow(prefRuT,1.0)*exp(-dG[26]);
+  K_c[26] = prefRuT*exp(-dG[26]);
 
   k_f[27] = exp(log(116.00000000000001)+2.35*logT-(-765.9001299851215/T));
    dG[27] =   gbs[2] - gbs[5] - gbs[7] + gbs[8];
@@ -235,11 +235,11 @@ for(block_ b : mb){
 
   k_f[28] = exp(log(20800000000.000004)-(-296.8995247642718/T));
    dG[28] =   gbs[1] + gbs[4] - gbs[5] - gbs[7] + gbs[10];
-  K_c[28] = pow(prefRuT,1.0)*exp(-dG[28]);
+  K_c[28] = prefRuT*exp(-dG[28]);
 
   k_f[29] = exp(log(2510000000.0000005)-(14239.603139414574/T));
    dG[29] =   gbs[1] - gbs[2] + gbs[3] - gbs[7] + gbs[10];
-  K_c[29] = pow(prefRuT,1.0)*exp(-dG[29]);
+  K_c[29] = prefRuT*exp(-dG[29]);
 
   k_f[30] = exp(log(0.022800000000000004)+2.53*logT-(4915.4484032159435/T));
    dG[30] =  - gbs[2] + gbs[4] - gbs[7] + gbs[10];
@@ -247,31 +247,31 @@ for(block_ b : mb){
 
   k_f[31] = exp(log(0.010600000000000002)+3.36*logT-(2168.8761893796805/T));
    dG[31] =   gbs[1] - gbs[7] + gbs[8] + gbs[9] - gbs[10];
-  K_c[31] = pow(prefRuT,1.0)*exp(-dG[31]);
+  K_c[31] = prefRuT*exp(-dG[31]);
 
   k_f[32] = exp(log(37000000000000.0)-(36219.729143107164/T));
    dG[32] =   gbs[0] + gbs[9] - gbs[10];
-  K_c[32] = pow(prefRuT,1.0)*exp(-dG[32]);
+  K_c[32] = prefRuT*exp(-dG[32]);
 
   k_f[33] = exp(log(5670000000.000001)+0.361*logT-(2319.338829895811/T));
    dG[33] =   gbs[0] + gbs[9] - gbs[10];
-  K_c[33] = pow(prefRuT,1.0)*exp(-dG[33]);
+  K_c[33] = prefRuT*exp(-dG[33]);
 
   k_f[34] = exp(log(11400000000.000002)+0.582*logT-(7243.845184714733/T));
    dG[34] =   gbs[0] + gbs[9] - gbs[10];
-  K_c[34] = pow(prefRuT,1.0)*exp(-dG[34]);
+  K_c[34] = prefRuT*exp(-dG[34]);
 
   k_f[35] = exp(log(416000000.00000006)+0.57*logT-(1389.892351523591/T));
    dG[35] =   gbs[1] - gbs[3] + gbs[4] + gbs[9] - gbs[10];
-  K_c[35] = pow(prefRuT,1.0)*exp(-dG[35]);
+  K_c[35] = prefRuT*exp(-dG[35]);
 
   k_f[36] = exp(log(78200.00000000001)+1.63*logT-(-530.8966078411978/T));
    dG[36] =   gbs[1] - gbs[4] + gbs[6] + gbs[9] - gbs[10];
-  K_c[36] = pow(prefRuT,1.0)*exp(-dG[36]);
+  K_c[36] = prefRuT*exp(-dG[36]);
 
   k_f[37] = exp(log(244.00000000000006)+2.5*logT-(18347.384191365/T));
    dG[37] =   gbs[1] - gbs[2] + gbs[5] + gbs[9] - gbs[10];
-  K_c[37] = pow(prefRuT,1.0)*exp(-dG[37]);
+  K_c[37] = prefRuT*exp(-dG[37]);
 
   // -------------------------------------------------------------- >
   // FallOff Calculations. ---------------------------------------- >

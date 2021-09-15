@@ -84,7 +84,7 @@ def test_chemistry():
 
     kokkos.finalize()
 
-    passfail = np.all(np.array(pd) < 0.0001)
+    passfail = np.all(np.array(pd) < 1e-10)
     assert passfail
 
 if __name__ == '__main__':
