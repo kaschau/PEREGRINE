@@ -259,8 +259,14 @@ for(block_ b : mb){{
             pg_mech.write(item)
         pg_mech.write(';\n')
 
-        if np.sum(nu_sum) != 0:
-            out_string = f'  K_c[{i}] = pow(prefRuT,{np.sum(nu_sum)})*exp(-dG[{i}]);'
+        sum_nu_sum = np.sum(nu_sum)
+        if sum_nu_sum != 0.0:
+            if sum_nu_sum == 1.0:
+                out_string = f'  K_c[{i}] = prefRuT*exp(-dG[{i}]);'
+            elif sum_nu_sum == -1.0:
+                out_string = f'  K_c[{i}] = exp(-dG[{i}])/prefRuT;'
+            else:
+                out_string = f'  K_c[{i}] = pow(prefRuT,{sum_nu_sum})*exp(-dG[{i}]);'
         else:
             out_string = f'  K_c[{i}] = exp(-dG[{i}]);'
         pg_mech.write(out_string)

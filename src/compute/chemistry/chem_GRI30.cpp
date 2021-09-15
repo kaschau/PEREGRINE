@@ -250,11 +250,11 @@ for(block_ b : mb){
 
   k_f[0] = exp(log(120000000000.00002)-1.0*logT);
    dG[0] =  -2.0*gbs[2] + gbs[3];
-  K_c[0] = pow(prefRuT,-1.0)*exp(-dG[0]);
+  K_c[0] = exp(-dG[0])/prefRuT;
 
   k_f[1] = exp(log(500000000000.0001)-1.0*logT);
    dG[1] =  - gbs[1] - gbs[2] + gbs[4];
-  K_c[1] = pow(prefRuT,-1.0)*exp(-dG[1]);
+  K_c[1] = exp(-dG[1])/prefRuT;
 
   k_f[2] = exp(log(38.7)+2.7*logT-(3150.1542797022735/T));
    dG[2] =  - gbs[0] + gbs[1] - gbs[2] + gbs[4];
@@ -294,7 +294,7 @@ for(block_ b : mb){
 
   k_f[11] = exp(log(18000000.000000004)-(1200.1785873945562/T));
    dG[11] =  - gbs[2] - gbs[14] + gbs[15];
-  K_c[11] = pow(prefRuT,-1.0)*exp(-dG[11]);
+  K_c[11] = exp(-dG[11])/prefRuT;
 
   k_f[12] = 30000000000.000004;
    dG[12] =  - gbs[2] + gbs[4] + gbs[14] - gbs[16];
@@ -358,7 +358,7 @@ for(block_ b : mb){
 
   k_f[27] = 100000000000.00002;
    dG[27] =   gbs[1] - gbs[2] +2.0*gbs[14] - gbs[27];
-  K_c[27] = pow(prefRuT,1.0)*exp(-dG[27]);
+  K_c[27] = prefRuT*exp(-dG[27]);
 
   k_f[28] = exp(log(10000000000.000002)-(4025.7562679901257/T));
    dG[28] =  - gbs[2] + gbs[4] + gbs[27] - gbs[28];
@@ -378,23 +378,23 @@ for(block_ b : mb){
 
   k_f[32] = exp(log(2800000000000.0005)-0.86*logT);
    dG[32] =  - gbs[1] - gbs[3] + gbs[6];
-  K_c[32] = pow(prefRuT,-1.0)*exp(-dG[32]);
+  K_c[32] = exp(-dG[32])/prefRuT;
 
   k_f[33] = exp(log(20800000000000.004)-1.24*logT);
    dG[33] =  - gbs[1] - gbs[3] + gbs[6];
-  K_c[33] = pow(prefRuT,-1.0)*exp(-dG[33]);
+  K_c[33] = exp(-dG[33])/prefRuT;
 
   k_f[34] = exp(log(11260000000000.002)-0.76*logT);
    dG[34] =  - gbs[1] - gbs[3] + gbs[6];
-  K_c[34] = pow(prefRuT,-1.0)*exp(-dG[34]);
+  K_c[34] = exp(-dG[34])/prefRuT;
 
   k_f[35] = exp(log(26000000000000.004)-1.24*logT);
    dG[35] =  - gbs[1] - gbs[3] + gbs[6];
-  K_c[35] = pow(prefRuT,-1.0)*exp(-dG[35]);
+  K_c[35] = exp(-dG[35])/prefRuT;
 
   k_f[36] = exp(log(700000000000.0001)-0.8*logT);
    dG[36] =  - gbs[1] - gbs[3] + gbs[6];
-  K_c[36] = pow(prefRuT,-1.0)*exp(-dG[36]);
+  K_c[36] = exp(-dG[36])/prefRuT;
 
   k_f[37] = exp(log(26500000000000.004)-0.6707*logT-(8575.364070352467/T));
    dG[37] =  - gbs[1] + gbs[2] - gbs[3] + gbs[4];
@@ -402,23 +402,23 @@ for(block_ b : mb){
 
   k_f[38] = exp(log(1000000000000.0002)-1.0*logT);
    dG[38] =   gbs[0] -2.0*gbs[1];
-  K_c[38] = pow(prefRuT,-1.0)*exp(-dG[38]);
+  K_c[38] = exp(-dG[38])/prefRuT;
 
   k_f[39] = exp(log(90000000000.00002)-0.6*logT);
    dG[39] =   gbs[0] -2.0*gbs[1];
-  K_c[39] = pow(prefRuT,-1.0)*exp(-dG[39]);
+  K_c[39] = exp(-dG[39])/prefRuT;
 
   k_f[40] = exp(log(60000000000000.01)-1.25*logT);
    dG[40] =   gbs[0] -2.0*gbs[1];
-  K_c[40] = pow(prefRuT,-1.0)*exp(-dG[40]);
+  K_c[40] = exp(-dG[40])/prefRuT;
 
   k_f[41] = exp(log(550000000000000.1)-2.0*logT);
    dG[41] =   gbs[0] -2.0*gbs[1];
-  K_c[41] = pow(prefRuT,-1.0)*exp(-dG[41]);
+  K_c[41] = exp(-dG[41])/prefRuT;
 
   k_f[42] = exp(log(2.2000000000000004e+16)-2.0*logT);
    dG[42] =  - gbs[1] - gbs[4] + gbs[5];
-  K_c[42] = pow(prefRuT,-1.0)*exp(-dG[42]);
+  K_c[42] = exp(-dG[42])/prefRuT;
 
   k_f[43] = exp(log(3970000000.0000005)-(337.66030697767184/T));
    dG[43] =  - gbs[1] + gbs[2] + gbs[5] - gbs[6];
@@ -446,7 +446,7 @@ for(block_ b : mb){
 
   k_f[49] = 600000000000.0001;
    dG[49] =  - gbs[1] - gbs[10] + gbs[12];
-  K_c[49] = pow(prefRuT,-1.0)*exp(-dG[49]);
+  K_c[49] = exp(-dG[49])/prefRuT;
 
   k_f[50] = 30000000000.000004;
    dG[50] =   gbs[0] - gbs[1] + gbs[9] - gbs[11];
@@ -454,7 +454,7 @@ for(block_ b : mb){
 
   k_f[51] = exp(log(13900000000000.002)-0.534*logT-(269.72566995533845/T));
    dG[51] =  - gbs[1] - gbs[12] + gbs[13];
-  K_c[51] = pow(prefRuT,-1.0)*exp(-dG[51]);
+  K_c[51] = exp(-dG[51])/prefRuT;
 
   k_f[52] = exp(log(660000.0000000001)+1.62*logT-(5454.899743126621/T));
    dG[52] =   gbs[0] - gbs[1] + gbs[12] - gbs[13];
@@ -462,7 +462,7 @@ for(block_ b : mb){
 
   k_f[53] = exp(log(1090000000.0000002)+0.48*logT-(-130.8370787096791/T));
    dG[53] =  - gbs[1] - gbs[16] + gbs[17];
-  K_c[53] = pow(prefRuT,-1.0)*exp(-dG[53]);
+  K_c[53] = exp(-dG[53])/prefRuT;
 
   k_f[54] = 73400000000.00002;
    dG[54] =   gbs[0] - gbs[1] + gbs[14] - gbs[16];
@@ -470,11 +470,11 @@ for(block_ b : mb){
 
   k_f[55] = exp(log(540000000.0000001)+0.454*logT-(1811.5903205955567/T));
    dG[55] =  - gbs[1] - gbs[17] + gbs[18];
-  K_c[55] = pow(prefRuT,-1.0)*exp(-dG[55]);
+  K_c[55] = exp(-dG[55])/prefRuT;
 
   k_f[56] = exp(log(540000000.0000001)+0.454*logT-(1308.370787096791/T));
    dG[56] =  - gbs[1] - gbs[17] + gbs[19];
-  K_c[56] = pow(prefRuT,-1.0)*exp(-dG[56]);
+  K_c[56] = exp(-dG[56])/prefRuT;
 
   k_f[57] = exp(log(57400.000000000015)+1.9*logT-(1379.8279608536157/T));
    dG[57] =   gbs[0] - gbs[1] + gbs[16] - gbs[17];
@@ -482,7 +482,7 @@ for(block_ b : mb){
 
   k_f[58] = exp(log(1055000000.0000002)+0.5*logT-(43.27687988089385/T));
    dG[58] =  - gbs[1] - gbs[18] + gbs[20];
-  K_c[58] = pow(prefRuT,-1.0)*exp(-dG[58]);
+  K_c[58] = exp(-dG[58])/prefRuT;
 
   k_f[59] = 20000000000.000004;
    dG[59] =   gbs[0] - gbs[1] + gbs[17] - gbs[18];
@@ -498,7 +498,7 @@ for(block_ b : mb){
 
   k_f[62] = exp(log(2430000000.0000005)+0.515*logT-(25.160976674938286/T));
    dG[62] =  - gbs[1] - gbs[19] + gbs[20];
-  K_c[62] = pow(prefRuT,-1.0)*exp(-dG[62]);
+  K_c[62] = exp(-dG[62])/prefRuT;
 
   k_f[63] = exp(log(41500.00000000001)+1.63*logT-(968.1943824516253/T));
    dG[63] =   gbs[18] - gbs[19];
@@ -526,15 +526,15 @@ for(block_ b : mb){
 
   k_f[69] = exp(log(100000000000000.02)-1.0*logT);
    dG[69] =  - gbs[1] - gbs[21] + gbs[22];
-  K_c[69] = pow(prefRuT,-1.0)*exp(-dG[69]);
+  K_c[69] = exp(-dG[69])/prefRuT;
 
   k_f[70] = exp(log(5600000000.000001)-(1207.7268803970378/T));
    dG[70] =  - gbs[1] - gbs[22] + gbs[23];
-  K_c[70] = pow(prefRuT,-1.0)*exp(-dG[70]);
+  K_c[70] = exp(-dG[70])/prefRuT;
 
   k_f[71] = exp(log(6080000000.000001)+0.27*logT-(140.9014693796544/T));
    dG[71] =  - gbs[1] - gbs[23] + gbs[24];
-  K_c[71] = pow(prefRuT,-1.0)*exp(-dG[71]);
+  K_c[71] = exp(-dG[71])/prefRuT;
 
   k_f[72] = 30000000000.000004;
    dG[72] =   gbs[0] - gbs[1] + gbs[22] - gbs[23];
@@ -542,7 +542,7 @@ for(block_ b : mb){
 
   k_f[73] = exp(log(540000000.0000001)+0.454*logT-(915.8595509677536/T));
    dG[73] =  - gbs[1] - gbs[24] + gbs[25];
-  K_c[73] = pow(prefRuT,-1.0)*exp(-dG[73]);
+  K_c[73] = exp(-dG[73])/prefRuT;
 
   k_f[74] = exp(log(1325.0000000000002)+2.53*logT-(6159.407090024893/T));
    dG[74] =   gbs[0] - gbs[1] + gbs[23] - gbs[24];
@@ -550,7 +550,7 @@ for(block_ b : mb){
 
   k_f[75] = exp(log(521000000000000.06)-0.99*logT-(795.0868629280499/T));
    dG[75] =  - gbs[1] - gbs[25] + gbs[26];
-  K_c[75] = pow(prefRuT,-1.0)*exp(-dG[75]);
+  K_c[75] = exp(-dG[75])/prefRuT;
 
   k_f[76] = 2000000000.0000002;
    dG[76] =   gbs[0] - gbs[1] + gbs[24] - gbs[25];
@@ -578,7 +578,7 @@ for(block_ b : mb){
 
   k_f[82] = exp(log(43000.00000000001)+1.5*logT-(40056.27486650175/T));
    dG[82] =  - gbs[0] - gbs[14] + gbs[17];
-  K_c[82] = pow(prefRuT,-1.0)*exp(-dG[82]);
+  K_c[82] = exp(-dG[82])/prefRuT;
 
   k_f[83] = exp(log(216000.00000000003)+1.51*logT-(1726.0429999007665/T));
    dG[83] =  - gbs[0] + gbs[1] - gbs[4] + gbs[5];
@@ -586,7 +586,7 @@ for(block_ b : mb){
 
   k_f[84] = exp(log(74000000000.00002)-0.37*logT);
    dG[84] =  -2.0*gbs[4] + gbs[7];
-  K_c[84] = pow(prefRuT,-1.0)*exp(-dG[84]);
+  K_c[84] = exp(-dG[84])/prefRuT;
 
   k_f[85] = exp(log(35.7)+2.4*logT-(-1061.7932156823956/T));
    dG[85] =   gbs[2] -2.0*gbs[4] + gbs[5];
@@ -626,7 +626,7 @@ for(block_ b : mb){
 
   k_f[94] = exp(log(2790000000000000.5)-1.43*logT-(669.2819795533584/T));
    dG[94] =  - gbs[4] - gbs[12] + gbs[20];
-  K_c[94] = pow(prefRuT,-1.0)*exp(-dG[94]);
+  K_c[94] = exp(-dG[94])/prefRuT;
 
   k_f[95] = exp(log(56000.00000000001)+1.6*logT-(2727.4498715633104/T));
    dG[95] =  - gbs[4] + gbs[5] + gbs[10] - gbs[12];
@@ -770,7 +770,7 @@ for(block_ b : mb){
 
   k_f[130] = 50000000000.00001;
    dG[130] =  - gbs[9] - gbs[14] + gbs[27];
-  K_c[130] = pow(prefRuT,-1.0)*exp(-dG[130]);
+  K_c[130] = exp(-dG[130])/prefRuT;
 
   k_f[131] = exp(log(190000000000.00003)-(7946.842873012509/T));
    dG[131] =  - gbs[9] + gbs[14] - gbs[15] + gbs[16];
@@ -786,7 +786,7 @@ for(block_ b : mb){
 
   k_f[134] = exp(log(5000000000.000001)-(754.8293002481486/T));
    dG[134] =   gbs[1] - gbs[3] + gbs[4] - gbs[10] + gbs[14];
-  K_c[134] = pow(prefRuT,1.0)*exp(-dG[134]);
+  K_c[134] = prefRuT*exp(-dG[134]);
 
   k_f[135] = exp(log(500.0000000000001)+2*logT-(3638.277227196076/T));
    dG[135] =  - gbs[0] + gbs[1] - gbs[10] + gbs[12];
@@ -806,7 +806,7 @@ for(block_ b : mb){
 
   k_f[139] = exp(log(810000000.0000001)+0.5*logT-(2269.5200960794336/T));
    dG[139] =  - gbs[10] - gbs[14] + gbs[28];
-  K_c[139] = pow(prefRuT,-1.0)*exp(-dG[139]);
+  K_c[139] = exp(-dG[139])/prefRuT;
 
   k_f[140] = 30000000000.000004;
    dG[140] =  - gbs[10] + gbs[14] + gbs[23] - gbs[27];
@@ -822,7 +822,7 @@ for(block_ b : mb){
 
   k_f[143] = 28000000000.000004;
    dG[143] =   gbs[1] - gbs[3] + gbs[4] - gbs[11] + gbs[14];
-  K_c[143] = pow(prefRuT,1.0)*exp(-dG[143]);
+  K_c[143] = prefRuT*exp(-dG[143]);
 
   k_f[144] = 12000000000.000002;
    dG[144] =  - gbs[3] + gbs[5] - gbs[11] + gbs[14];
@@ -834,7 +834,7 @@ for(block_ b : mb){
 
   k_f[146] = exp(log(482000000000000.06)-1.16*logT-(576.1863658560868/T));
    dG[146] =  - gbs[5] - gbs[11] + gbs[20];
-  K_c[146] = pow(prefRuT,-1.0)*exp(-dG[146]);
+  K_c[146] = exp(-dG[146])/prefRuT;
 
   k_f[147] = 30000000000.000004;
    dG[147] =   gbs[10] - gbs[11];
@@ -878,7 +878,7 @@ for(block_ b : mb){
 
   k_f[157] = exp(log(67700000000000.01)-1.18*logT-(329.1055749081928/T));
    dG[157] =  -2.0*gbs[12] + gbs[26];
-  K_c[157] = pow(prefRuT,-1.0)*exp(-dG[157]);
+  K_c[157] = exp(-dG[157])/prefRuT;
 
   k_f[158] = exp(log(6840000000.000001)+0.1*logT-(5334.127055086917/T));
    dG[158] =   gbs[1] -2.0*gbs[12] + gbs[25];
@@ -910,11 +910,11 @@ for(block_ b : mb){
 
   k_f[165] = exp(log(1500000000000000.2)-1.0*logT-(8554.732069479018/T));
    dG[165] =   gbs[1] + gbs[14] - gbs[16];
-  K_c[165] = pow(prefRuT,1.0)*exp(-dG[165]);
+  K_c[165] = prefRuT*exp(-dG[165]);
 
   k_f[166] = exp(log(187000000000000.03)-1.0*logT-(8554.732069479018/T));
    dG[166] =   gbs[1] + gbs[14] - gbs[16];
-  K_c[166] = pow(prefRuT,1.0)*exp(-dG[166]);
+  K_c[166] = prefRuT*exp(-dG[166]);
 
   k_f[167] = exp(log(13450000000.000002)-(201.2878133995063/T));
    dG[167] =  - gbs[3] + gbs[6] + gbs[14] - gbs[16];
@@ -942,7 +942,7 @@ for(block_ b : mb){
 
   k_f[173] = exp(log(8000000000000.0)+0.44*logT-(43664.358921687905/T));
    dG[173] =   gbs[0] + gbs[22] - gbs[24];
-  K_c[173] = pow(prefRuT,1.0)*exp(-dG[173]);
+  K_c[173] = prefRuT*exp(-dG[173]);
 
   k_f[174] = exp(log(840000000.0000001)-(1949.9756923077173/T));
    dG[174] =  - gbs[3] + gbs[6] + gbs[24] - gbs[25];
@@ -950,11 +950,11 @@ for(block_ b : mb){
 
   k_f[175] = exp(log(3200000000.0000005)-(429.74948160794594/T));
    dG[175] =  - gbs[3] + gbs[4] +2.0*gbs[14] - gbs[27];
-  K_c[175] = pow(prefRuT,1.0)*exp(-dG[175]);
+  K_c[175] = prefRuT*exp(-dG[175]);
 
   k_f[176] = 10000000000.000002;
    dG[176] =  2.0*gbs[14] + gbs[22] -2.0*gbs[27];
-  K_c[176] = pow(prefRuT,1.0)*exp(-dG[176]);
+  K_c[176] = prefRuT*exp(-dG[176]);
 
   k_f[177] = exp(log(27000000000.000004)-(178.64293439206185/T));
    dG[177] =   gbs[2] - gbs[30] - gbs[35] + gbs[47];
@@ -986,7 +986,7 @@ for(block_ b : mb){
 
   k_f[184] = exp(log(79100000000.0)-(28190.358266600855/T));
    dG[184] =   gbs[2] - gbs[37] + gbs[47];
-  K_c[184] = pow(prefRuT,1.0)*exp(-dG[184]);
+  K_c[184] = prefRuT*exp(-dG[184]);
 
   k_f[185] = exp(log(2110000000.0000005)-(-241.54537607940756/T));
    dG[185] =   gbs[4] - gbs[6] - gbs[35] + gbs[36];
@@ -994,7 +994,7 @@ for(block_ b : mb){
 
   k_f[186] = exp(log(106000000000000.02)-1.41*logT);
    dG[186] =  - gbs[2] - gbs[35] + gbs[36];
-  K_c[186] = pow(prefRuT,-1.0)*exp(-dG[186]);
+  K_c[186] = exp(-dG[186])/prefRuT;
 
   k_f[187] = exp(log(3900000000.0000005)-(-120.77268803970378/T));
    dG[187] =  - gbs[2] + gbs[3] + gbs[35] - gbs[36];
@@ -1062,11 +1062,11 @@ for(block_ b : mb){
 
   k_f[203] = 330000000.0;
    dG[203] =   gbs[1] - gbs[34] + gbs[47];
-  K_c[203] = pow(prefRuT,1.0)*exp(-dG[203]);
+  K_c[203] = prefRuT*exp(-dG[203]);
 
   k_f[204] = exp(log(130000000000.00002)-0.11*logT-(2506.033276823853/T));
    dG[204] =   gbs[1] - gbs[34] + gbs[47];
-  K_c[204] = pow(prefRuT,1.0)*exp(-dG[204]);
+  K_c[204] = prefRuT*exp(-dG[204]);
 
   k_f[205] = 5000000000.000001;
    dG[205] =  - gbs[3] + gbs[6] - gbs[34] + gbs[47];
@@ -1094,7 +1094,7 @@ for(block_ b : mb){
 
   k_f[211] = exp(log(44800000000000.01)-1.32*logT-(372.38245478908664/T));
    dG[211] =  - gbs[1] - gbs[35] + gbs[38];
-  K_c[211] = pow(prefRuT,-1.0)*exp(-dG[211]);
+  K_c[211] = exp(-dG[211])/prefRuT;
 
   k_f[212] = 25000000000.000004;
    dG[212] =  - gbs[2] + gbs[4] + gbs[35] - gbs[38];
@@ -1142,7 +1142,7 @@ for(block_ b : mb){
 
   k_f[223] = 2500000000.0000005;
    dG[223] =   gbs[1] - gbs[4] + gbs[14] + gbs[35] - gbs[46];
-  K_c[223] = pow(prefRuT,1.0)*exp(-dG[223]);
+  K_c[223] = prefRuT*exp(-dG[223]);
 
   k_f[224] = 20000000000.000004;
    dG[224] =   gbs[14] - gbs[30] - gbs[46] + gbs[47];
@@ -1154,7 +1154,7 @@ for(block_ b : mb){
 
   k_f[226] = exp(log(310000000000.00006)-(27199.015785608288/T));
    dG[226] =   gbs[14] + gbs[30] - gbs[46];
-  K_c[226] = pow(prefRuT,1.0)*exp(-dG[226]);
+  K_c[226] = prefRuT*exp(-dG[226]);
 
   k_f[227] = exp(log(190000000000000.03)-1.52*logT-(372.38245478908664/T));
    dG[227] =   gbs[14] - gbs[35] + gbs[37] - gbs[46];
@@ -1166,7 +1166,7 @@ for(block_ b : mb){
 
   k_f[229] = exp(log(1.0400000000000003e+26)-3.3*logT-(63707.592940943745/T));
    dG[229] =   gbs[1] + gbs[39] - gbs[40];
-  K_c[229] = pow(prefRuT,1.0)*exp(-dG[229]);
+  K_c[229] = prefRuT*exp(-dG[229]);
 
   k_f[230] = exp(log(20.3)+2.64*logT-(2506.033276823853/T));
    dG[230] =   gbs[1] - gbs[2] - gbs[40] + gbs[46];
@@ -1194,7 +1194,7 @@ for(block_ b : mb){
 
   k_f[236] = 33000000000.000004;
    dG[236] =  - gbs[1] - gbs[40] + gbs[41];
-  K_c[236] = pow(prefRuT,-1.0)*exp(-dG[236]);
+  K_c[236] = exp(-dG[236])/prefRuT;
 
   k_f[237] = exp(log(60000000000.00001)-(201.2878133995063/T));
    dG[237] =   gbs[10] - gbs[30] - gbs[41] + gbs[47];
@@ -1210,7 +1210,7 @@ for(block_ b : mb){
 
   k_f[240] = exp(log(3100000000.0000005)+0.15*logT);
    dG[240] =  - gbs[9] + gbs[42] - gbs[47];
-  K_c[240] = pow(prefRuT,-1.0)*exp(-dG[240]);
+  K_c[240] = exp(-dG[240])/prefRuT;
 
   k_f[241] = exp(log(10000000000.000002)-(37238.24547890866/T));
    dG[241] =  - gbs[10] + gbs[31] + gbs[40] - gbs[47];
@@ -1274,7 +1274,7 @@ for(block_ b : mb){
 
   k_f[256] = 22000000000.000004;
    dG[256] =   gbs[1] - gbs[2] + gbs[14] - gbs[42] + gbs[47];
-  K_c[256] = pow(prefRuT,1.0)*exp(-dG[256]);
+  K_c[256] = prefRuT*exp(-dG[256]);
 
   k_f[257] = 2000000000.0000002;
    dG[257] =  - gbs[2] + gbs[35] + gbs[40] - gbs[42];
@@ -1282,11 +1282,11 @@ for(block_ b : mb){
 
   k_f[258] = 12000000000.000002;
    dG[258] =   gbs[2] - gbs[3] + gbs[16] - gbs[42] + gbs[47];
-  K_c[258] = pow(prefRuT,1.0)*exp(-dG[258]);
+  K_c[258] = prefRuT*exp(-dG[258]);
 
   k_f[259] = 12000000000.000002;
    dG[259] =   gbs[1] - gbs[4] + gbs[16] - gbs[42] + gbs[47];
-  K_c[259] = pow(prefRuT,1.0)*exp(-dG[259]);
+  K_c[259] = prefRuT*exp(-dG[259]);
 
   k_f[260] = 100000000000.00002;
    dG[260] =  - gbs[1] + gbs[10] - gbs[42] + gbs[47];
@@ -1322,7 +1322,7 @@ for(block_ b : mb){
 
   k_f[268] = exp(log(11800000000000.002)-(42632.75887801543/T));
    dG[268] =   gbs[14] + gbs[31] - gbs[45];
-  K_c[268] = pow(prefRuT,1.0)*exp(-dG[268]);
+  K_c[268] = prefRuT*exp(-dG[268]);
 
   k_f[269] = exp(log(2100000000000.0002)-0.69*logT-(1434.1756704714824/T));
    dG[269] =  - gbs[43] + gbs[45];
@@ -1382,7 +1382,7 @@ for(block_ b : mb){
 
   k_f[283] = 33700000000.000008;
    dG[283] =   gbs[0] + gbs[1] - gbs[2] - gbs[12] + gbs[14];
-  K_c[283] = pow(prefRuT,1.0)*exp(-dG[283]);
+  K_c[283] = prefRuT*exp(-dG[283]);
 
   k_f[284] = exp(log(6700.000000000001)+1.83*logT-(110.70829736972846/T));
    dG[284] =   gbs[1] - gbs[2] - gbs[24] + gbs[51];
@@ -1402,11 +1402,11 @@ for(block_ b : mb){
 
   k_f[288] = exp(log(1970000000.0000002)+0.43*logT-(-186.19122739454332/T));
    dG[288] =  - gbs[0] - gbs[9] + gbs[12];
-  K_c[288] = pow(prefRuT,-1.0)*exp(-dG[288]);
+  K_c[288] = exp(-dG[288])/prefRuT;
 
   k_f[289] = exp(log(5800000000.000001)-(754.8293002481486/T));
    dG[289] =  2.0*gbs[1] - gbs[3] - gbs[10] + gbs[15];
-  K_c[289] = pow(prefRuT,1.0)*exp(-dG[289]);
+  K_c[289] = prefRuT*exp(-dG[289]);
 
   k_f[290] = exp(log(2400000000.0000005)-(754.8293002481486/T));
    dG[290] =   gbs[2] - gbs[3] - gbs[10] + gbs[17];
@@ -1414,7 +1414,7 @@ for(block_ b : mb){
 
   k_f[291] = exp(log(200000000000.00003)-(5529.879453617937/T));
    dG[291] =  2.0*gbs[1] -2.0*gbs[10] + gbs[22];
-  K_c[291] = pow(prefRuT,1.0)*exp(-dG[291]);
+  K_c[291] = prefRuT*exp(-dG[291]);
 
   k_f[292] = exp(log(68200000.00000001)+0.25*logT-(-470.510263821346/T));
    dG[292] =   gbs[0] - gbs[5] - gbs[11] + gbs[17];
@@ -1434,11 +1434,11 @@ for(block_ b : mb){
 
   k_f[296] = exp(log(2920000000.0000005)-(909.8209165657685/T));
    dG[296] =  - gbs[2] + gbs[4] + gbs[12] + gbs[14] - gbs[52];
-  K_c[296] = pow(prefRuT,1.0)*exp(-dG[296]);
+  K_c[296] = prefRuT*exp(-dG[296]);
 
   k_f[297] = exp(log(30100000000.000004)-(19701.044736476677/T));
    dG[297] =  - gbs[3] + gbs[6] + gbs[12] + gbs[14] - gbs[52];
-  K_c[297] = pow(prefRuT,1.0)*exp(-dG[297]);
+  K_c[297] = prefRuT*exp(-dG[297]);
 
   k_f[298] = exp(log(2050000.0000000005)+1.16*logT-(1210.2429780645316/T));
    dG[298] =   gbs[0] - gbs[1] + gbs[51] - gbs[52];
@@ -1446,35 +1446,35 @@ for(block_ b : mb){
 
   k_f[299] = exp(log(2050000.0000000005)+1.16*logT-(1210.2429780645316/T));
    dG[299] =   gbs[0] - gbs[1] + gbs[12] + gbs[14] - gbs[52];
-  K_c[299] = pow(prefRuT,1.0)*exp(-dG[299]);
+  K_c[299] = prefRuT*exp(-dG[299]);
 
   k_f[300] = exp(log(23430000.000000004)+0.73*logT-(-560.0833407841262/T));
    dG[300] =  - gbs[4] + gbs[5] + gbs[12] + gbs[14] - gbs[52];
-  K_c[300] = pow(prefRuT,1.0)*exp(-dG[300]);
+  K_c[300] = prefRuT*exp(-dG[300]);
 
   k_f[301] = exp(log(3010000000.0000005)-(5999.8864979057835/T));
    dG[301] =  - gbs[6] + gbs[7] + gbs[12] + gbs[14] - gbs[52];
-  K_c[301] = pow(prefRuT,1.0)*exp(-dG[301]);
+  K_c[301] = prefRuT*exp(-dG[301]);
 
   k_f[302] = exp(log(2720.0000000000005)+1.77*logT-(2979.059638312693/T));
    dG[302] =   gbs[13] + gbs[14] - gbs[52];
-  K_c[302] = pow(prefRuT,1.0)*exp(-dG[302]);
+  K_c[302] = prefRuT*exp(-dG[302]);
 
   k_f[303] = exp(log(486500000.00000006)+0.422*logT-(-883.1502812903339/T));
    dG[303] =  - gbs[1] - gbs[28] + gbs[51];
-  K_c[303] = pow(prefRuT,-1.0)*exp(-dG[303]);
+  K_c[303] = exp(-dG[303])/prefRuT;
 
   k_f[304] = 150000000000.00003;
    dG[304] =   gbs[1] - gbs[2] + gbs[10] + gbs[15] - gbs[51];
-  K_c[304] = pow(prefRuT,1.0)*exp(-dG[304]);
+  K_c[304] = prefRuT*exp(-dG[304]);
 
   k_f[305] = 18100000.000000004;
    dG[305] =  - gbs[3] + gbs[4] + gbs[14] + gbs[17] - gbs[51];
-  K_c[305] = pow(prefRuT,1.0)*exp(-dG[305]);
+  K_c[305] = prefRuT*exp(-dG[305]);
 
   k_f[306] = 23500000.000000004;
    dG[306] =  - gbs[3] + gbs[4] +2.0*gbs[16] - gbs[51];
-  K_c[306] = pow(prefRuT,1.0)*exp(-dG[306]);
+  K_c[306] = prefRuT*exp(-dG[306]);
 
   k_f[307] = 22000000000.000004;
    dG[307] =  - gbs[1] + gbs[12] + gbs[16] - gbs[51];
@@ -1494,7 +1494,7 @@ for(block_ b : mb){
 
   k_f[311] = 9430000000.000002;
    dG[311] =  - gbs[12] - gbs[25] + gbs[50];
-  K_c[311] = pow(prefRuT,-1.0)*exp(-dG[311]);
+  K_c[311] = exp(-dG[311])/prefRuT;
 
   k_f[312] = exp(log(193.00000000000003)+2.68*logT-(1869.9637864814135/T));
    dG[312] =  - gbs[2] + gbs[4] + gbs[49] - gbs[50];
@@ -1518,7 +1518,7 @@ for(block_ b : mb){
 
   k_f[317] = exp(log(2550.0000000000005)+1.6*logT-(2868.3513409429647/T));
    dG[317] =  - gbs[12] - gbs[24] + gbs[49];
-  K_c[317] = pow(prefRuT,-1.0)*exp(-dG[317]);
+  K_c[317] = exp(-dG[317])/prefRuT;
 
   k_f[318] = 96400000000.00002;
    dG[318] =  - gbs[2] + gbs[17] + gbs[25] - gbs[49];
@@ -1526,7 +1526,7 @@ for(block_ b : mb){
 
   k_f[319] = 36130000000.00001;
    dG[319] =  - gbs[1] - gbs[49] + gbs[50];
-  K_c[319] = pow(prefRuT,-1.0)*exp(-dG[319]);
+  K_c[319] = exp(-dG[319])/prefRuT;
 
   k_f[320] = exp(log(4060.0000000000005)+2.19*logT-(447.8653848139015/T));
    dG[320] =  - gbs[1] + gbs[12] + gbs[25] - gbs[49];
@@ -1542,7 +1542,7 @@ for(block_ b : mb){
 
   k_f[323] = 24100000000.000004;
    dG[323] =   gbs[4] - gbs[6] + gbs[17] + gbs[25] - gbs[49];
-  K_c[323] = pow(prefRuT,1.0)*exp(-dG[323]);
+  K_c[323] = prefRuT*exp(-dG[323]);
 
   k_f[324] = exp(log(19270000000.000004)-0.32*logT);
    dG[324] =  - gbs[12] +2.0*gbs[25] - gbs[49];
