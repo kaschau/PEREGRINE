@@ -91,60 +91,61 @@ def ct2pg_chem(ctyaml, cpp):
     pg_mech.write('// ==================================================================== //\n')
     for i,sp in enumerate(gas.species_names):
         pg_mech.write(f'// Y({i:>3d}) = {sp}\n')
-    pg_mech.write('// ==================================================================== //\n')
+    pg_mech.write('// ==================================================================== //\n\n')
 
     # WRITE OUT INITIALIZATION BLOCK UP TO CHEMICAL SOURCE TERMS
-    out_string = f'''
-#include "Kokkos_Core.hpp"
-#include "kokkos_types.hpp"
-#include "block_.hpp"
-#include "thtrdat_.hpp"
-#include "compute.hpp"
-#include <math.h>
-#include <vector>
-
-void {cpp.replace(".cpp","")}(std::vector<block_> mb, thtrdat_ th) {{
-for(block_ b : mb){{
-
-//-------------------------------------------------------------------------------------------|
-// cc range
-//-------------------------------------------------------------------------------------------|
-  MDRange3 range = MDRange3({{1,1,1}},{{b.ni,b.nj,b.nk}});
-
-  Kokkos::parallel_for("Compute chemical source terms",
-                       range,
-                       KOKKOS_LAMBDA(const int i,
-                                     const int j,
-                                     const int k) {{
-
-  const int ns={ns};
-  const int nr={nr};
-  const int l_tbc={nl_tbc};
-  double T,logT,prefRuT;
-  double Y[ns],cs[ns];
-
-  double rho;
-
-  T = b.q(i,j,k,4);
-  logT = log(T);
-  prefRuT = 101325.0/(th.Ru*T);
-  rho = b.Q(i,j,k,0);
-
-  // Compute nth species Y
-  Y[ns-1] = 1.0;
-  for (int n=0; n<ns-1; n++)
-  {{
-    Y[n] = b.q(i,j,k,5+n);
-    Y[ns-1] -= Y[n];
-  }}
-  Y[ns-1] = std::max(0.0,Y[ns-1]);
-
-  // Conecntrations
-  for (int n=0; n<=ns-1; n++)
-  {{
-    cs[n] = rho*Y[n]/th.MW[n];
-  }}
-\n'''
+    out_string = (
+                  '#include "Kokkos_Core.hpp"\n'
+                  '#include "kokkos_types.hpp"\n'
+                  '#include "block_.hpp"\n'
+                  '#include "thtrdat_.hpp"\n'
+                  '#include "compute.hpp"\n'
+                  '#include <math.h>\n'
+                  '#include <vector>\n'
+                  '\n'
+                 f'void {cpp.replace(".cpp","")}(std::vector<block_> mb, thtrdat_ th) {{\n'
+                  'for(block_ b : mb){\n'
+                  '\n'
+                  '//-------------------------------------------------------------------------------------------|\n'
+                  '// cc range\n'
+                  '//-------------------------------------------------------------------------------------------|\n'
+                  '  MDRange3 range = MDRange3({1,1,1},{b.ni,b.nj,b.nk});\n'
+                  '\n'
+                  '  Kokkos::parallel_for("Compute chemical source terms",\n'
+                  '                       range,\n'
+                  '                       KOKKOS_LAMBDA(const int i,\n'
+                  '                                     const int j,\n'
+                  '                                     const int k) {\n'
+                  '\n'
+                 f'  const int ns={ns};\n'
+                 f'  const int nr={nr};\n'
+                 f'  const int l_tbc={nl_tbc};\n'
+                  '  double T,logT,prefRuT;\n'
+                  '  double Y[ns],cs[ns];\n'
+                  '\n'
+                  '  double rho;\n'
+                  '\n'
+                  '  T = b.q(i,j,k,4);\n'
+                  '  logT = log(T);\n'
+                  '  prefRuT = 101325.0/(th.Ru*T);\n'
+                  '  rho = b.Q(i,j,k,0);\n'
+                  '\n'
+                  '  // Compute nth species Y\n'
+                  '  Y[ns-1] = 1.0;\n'
+                  '  for (int n=0; n<ns-1; n++)\n'
+                  '  {\n'
+                  '    Y[n] = b.q(i,j,k,5+n);\n'
+                  '    Y[ns-1] -= Y[n];\n'
+                  '  }\n'
+                  '  Y[ns-1] = std::max(0.0,Y[ns-1]);\n'
+                  '\n'
+                  '  // Conecntrations\n'
+                  '  for (int n=0; n<=ns-1; n++)\n'
+                  '  {\n'
+                  '    cs[n] = rho*Y[n]/th.MW[n];\n'
+                  '  }\n'
+                  '\n'
+                  )
 
     pg_mech.write(out_string)
 
@@ -152,12 +153,14 @@ for(block_ b : mb){{
     # WRITE Chaperone Efficiencies
     #-----------------------------------------------------------------------------
 
-    out_string = '''  // -------------------------------------------------------------- >
-  // Chaperon efficiencies. --------------------------------------- >
-  // -------------------------------------------------------------- >
-
-  std::array<double, nr> S_tbc;
-  S_tbc.fill(1.0);\n\n'''
+    out_string = (
+                  '  // -------------------------------------------------------------- >\n'
+                  '  // Chaperon efficiencies. --------------------------------------- >\n'
+                  '  // -------------------------------------------------------------- >\n'
+                  '\n'
+                  '  std::array<double, nr> S_tbc;\n'
+                  '  S_tbc.fill(1.0);\n\n'
+                  )
 
     pg_mech.write(out_string)
 
