@@ -35,7 +35,28 @@ def int_or_float(val):
     else:
         return ival
 
-def ct2pg_chem(ctyaml, cpp):
+def rate_const_string(A,m,Ea):
+    if m == 0.0 and Ea == 0.0:
+        string = f'{A}'
+    elif m == 0.0 and Ea != 0.0:
+        string = f'exp(log({A})-({Ea}/T))'
+    elif isinstance(m,float) and Ea == 0.0:
+        string = f'exp(log({A}){ m:+}*logT)'
+    elif isinstance(m,int) and Ea == 0.0:
+        if m < 0:
+            string = f'{A}'+''.join("/T" for _ in range(m))+')'
+        elif m > 0:
+            string = f'{A}'+''.join("*T" for _ in range(m))+''
+        else:
+            raise ValueError('Huh?')
+    elif Ea != 0.0:
+        string = f'exp(log({A}){ m:+}*logT-({Ea}/T))'
+    else:
+        raise ValueError(f'Something is wrong here, m = {m}  Ea={Ea} ')
+
+    return string
+
+def ct2pg_chem(ctyaml, cpp, jac=False):
 
     gas = ct.Solution(ctyaml)
     ns = gas.n_species
@@ -229,23 +250,7 @@ def ct2pg_chem(ctyaml, cpp):
     pg_mech.write(out_string)
 
     for i in range(nr):
-        if m_f[i] == 0.0 and Ea_f[i] == 0.0:
-            out_string = f'  k_f[{i}] = {A_f[i]};\n'
-        elif m_f[i] == 0.0 and Ea_f[i] != 0.0:
-            out_string = f'  k_f[{i}] = exp(log({A_f[i]})-({Ea_f[i]}/T));\n'
-        elif isinstance(m_f[i],float) and Ea_f[i] == 0.0:
-            out_string = f'  k_f[{i}] = exp(log({A_f[i]}){ m_f[i]:+}*logT);\n'
-        elif isinstance(m_f[i],int) and Ea_f[i] == 0.0:
-            if m_f[i] < 0:
-                out_string = f'  k_f[{i}] = {A_f[i]}'+''.join("/T" for _ in range(m_f[i]))+');\n'
-            elif m_f[i] > 0:
-                out_string = f'  k_f[{i}] = {A_f[i]}'+''.join("*T" for _ in range(m_f[i]))+';\n'
-            else:
-                raise ValueError('Huh?')
-        elif Ea_f[i] != 0.0:
-            out_string = f'  k_f[{i}] = exp(log({A_f[i]}){ m_f[i]:+}*logT-({Ea_f[i]}/T));\n'
-        else:
-            raise ValueError(f'Something is wrong here, m_f = {m_f[i]}  Ea_f={Ea_f[i]} ')
+        out_string = f'  k_f[{i}] = ' + rate_const_string(A_f[i], m_f[i], Ea_f[i]) + ';\n'
 
         pg_mech.write(out_string)
         nu_sum = nu_b[:,i] - nu_f[:,i]
@@ -286,7 +291,7 @@ def ct2pg_chem(ctyaml, cpp):
                   '  // -------------------------------------------------------------- >\n'
                   '\n'
                  f'  double Fcent[{nl_tbc}];\n'
-                  '  double Pr_pdr;\n'
+                  '  double Pr_pdr,k0;\n'
                   '  double B_pdr,C_pdr,F_pdr;\n'
                   '  double Ccent,Ncent;\n'
                   '\n'
@@ -299,9 +304,10 @@ def ct2pg_chem(ctyaml, cpp):
         elif r.reaction_type == 'falloff': # FallOff Reactions
             if r.falloff.type in ['Simple','Lindemann']:
                 pg_mech.write(f'  //  Lindeman Reaction #{l_tbc[i]}\n')
+                pg_mech.write(f'  Fcent[{i}] = 1.0;\n')
+                pg_mech.write(f'  k0 = ' + rate_const_string(A_o[i], m_o[i], Ea_o[i]) + ';\n')
                 out_string = (
-                              f'  Fcent[{i}] = 1.0;\n'
-                              f'  Pr_pdr = S_tbc[{l_tbc[i]}]*( {A_o[i]}*pow(T,{m_o[i]})*exp(-({Ea_o[i]})/T) )/k_f[{l_tbc[i]}];\n'
+                              f'  Pr_pdr = S_tbc[{l_tbc[i]}]*k0/k_f[{l_tbc[i]}];\n'
                               f'  k_f[{l_tbc[i]}] = k_f[{l_tbc[i]}]*( Pr_pdr/(1.0 + Pr_pdr) );\n'
                               )
                 pg_mech.write(out_string)
@@ -323,8 +329,11 @@ def ct2pg_chem(ctyaml, cpp):
                 out_string = (
                              f'  Ccent = - 0.4 - 0.67*log10(Fcent[{i}]);\n'
                              f'  Ncent =   0.75 - 1.27*log10(Fcent[{i}]);\n'
-                              '\n'
-                             f'  Pr_pdr = S_tbc[{l_tbc[i]}]*( ({A_o[i]})*pow(T,{m_o[i]})*exp(-({Ea_o[i]})/T) )/k_f[{l_tbc[i]}];\n'
+                              )
+                pg_mech.write(out_string)
+                pg_mech.write(f'  k0 = ' + rate_const_string(A_o[i], m_o[i], Ea_o[i]) + ';\n')
+                out_string = (
+                             f'  Pr_pdr = S_tbc[{l_tbc[i]}]*k0/k_f[{l_tbc[i]}];\n'
                               '\n'
                               '  B_pdr = log10(Pr_pdr) + Ccent;\n'
                               '  C_pdr = 1.0/(1.0 + pow(B_pdr/(Ncent - 0.14*B_pdr),2.0));\n'
@@ -434,6 +443,16 @@ def ct2pg_chem(ctyaml, cpp):
     pg_mech.write(out_string)
 
 
+    if not jac:
+        # END
+        out_string = (
+                     '  });\n'
+                     '}}'
+                     )
+        pg_mech.write(out_string)
+        pg_mech.close()
+
+        return
 
     #-----------------------------------------------------------------------------
     # Jacobian, df/dy
@@ -445,8 +464,7 @@ def ct2pg_chem(ctyaml, cpp):
                   '\n'
                   '  if (jac){\n'
                   '\n'
-                  '  std::array<std::array<double,ns>,ns> jac;\n'
-                  '  jac.fill(0.0);\n'
+                  '  double jac[ns][ns] = { };\n'
                   '  double Tinv = 1.0/T;\n'
                   '  double rhoinv = 1.0/rho;\n'
                   )
@@ -473,7 +491,7 @@ def ct2pg_chem(ctyaml, cpp):
     pg_mech.write(out_string)
 
 
-    pg_mech.write(f'  double t_temp;\n\n')
+    pg_mech.write(f'  double j_temp;\n\n')
     for i,r in enumerate(gas.reactions()):
         pg_mech.write(f'  // partial of reaction {i} w.r.t. T\n')
 
