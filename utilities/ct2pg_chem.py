@@ -165,9 +165,8 @@ for(block_ b : mb){{
     for i,r in enumerate(gas.reactions()):
         if r.reaction_type in ['three-body', 'falloff']: #ThreeBodyReaction and FallOffReactions
             out_string = []
-            tbc_count += 1
             for j in range(ns):
-                eff = aij[tbc_count-1][j]
+                eff = aij[tbc_count][j]
                 if eff > 0.0:
                     if eff != 1.0:
                         out_string.append(f' + {eff}*cs[{j}]')
@@ -178,6 +177,7 @@ for(block_ b : mb){{
             for item in out_string:
                 pg_mech.write(item)
             pg_mech.write(';\n\n')
+            tbc_count += 1
 
     out_string = '''  // -------------------------------------------------------------- >
   // Gibbs energy. ------------------------------------------------ >
@@ -217,8 +217,8 @@ for(block_ b : mb){{
   // Rate Constants. ---------------------------------------------- >
   // -------------------------------------------------------------- >
 
-  double q_f[nr],k_f[nr],c_f[nr];
-  double q_b[nr],k_b[nr],c_b[nr];
+  double q_f[nr],k_f[nr];
+  double q_b[nr],k_b[nr];
 
   double dG[nr],K_c[nr],q[nr]; \n\n'''
 
@@ -291,14 +291,13 @@ for(block_ b : mb){{
     tbc_count = 0
     for i,r in enumerate(gas.reactions()):
         if r.reaction_type == 'three-body': #ThreeBodyReaction
-            tbc_count += 1
             pg_mech.write(f'  //  Three Body Reaction #{i+1}\n')
-        elif r.reaction_type == 'falloff': # FallOff Reactions
             tbc_count += 1
+        elif r.reaction_type == 'falloff': # FallOff Reactions
             if r.falloff.type in ['Simple','Lindemann']:
                 pg_mech.write(f'  //  Lindeman Reaction #{i+1}\n')
-                out_string = f'''  Fcent[{tbc_count-1}] = 1.0;
-  Pr_pdr = S_tbc[{i}]*( {A_o[tbc_count-1]}*pow(T,{m_o[tbc_count-1]})*exp(-({Ea_o[tbc_count-1]})/T) )/k_f[{i}];
+                out_string = f'''  Fcent[{tbc_count}] = 1.0;
+  Pr_pdr = S_tbc[{i}]*( {A_o[tbc_count]}*pow(T,{m_o[tbc_count]})*exp(-({Ea_o[tbc_count]})/T) )/k_f[{i}];
   k_f[{i}] = k_f[{i}]*( Pr_pdr/(1.0 + Pr_pdr) );
   S_tbc[{i}] = 1.0;\n'''
                 pg_mech.write(out_string)
@@ -310,24 +309,24 @@ for(block_ b : mb){{
                 pg_mech.write(f'  //  Troe Reaction #{i+1}\n')
                 tp = r.falloff.parameters
                 if tp[-1] == 0: # Three Parameter Troe form
-                    out_string = f'''  Fcent[{tbc_count-1}] =   (1.0 - ({alpha}))*exp(-T/({Tsss}))
+                    out_string = f'''  Fcent[{tbc_count}] =   (1.0 - ({alpha}))*exp(-T/({Tsss}))
                         + ({alpha}) *exp(-T/({Ts}));\n'''
                     pg_mech.write(out_string)
                 elif tp[-1] != 0: # Four Parameter Troe form
                     Tss = r.falloff.parameters[3]
-                    out_string = f'''  Fcent[{tbc_count-1}] =   (1.0 - ({alpha}))*exp(-T/({Tsss}))
+                    out_string = f'''  Fcent[{tbc_count}] =   (1.0 - ({alpha}))*exp(-T/({Tsss}))
                              + ({alpha}) *exp(-T/({Ts})) + exp(-({Tss})/T);\n'''
                     pg_mech.write(out_string)
 
-                out_string = f'''  Ccent = - 0.4 - 0.67*log10(Fcent[{tbc_count-1}]);
-  Ncent =   0.75 - 1.27*log10(Fcent[{tbc_count-1}]);
+                out_string = f'''  Ccent = - 0.4 - 0.67*log10(Fcent[{tbc_count}]);
+  Ncent =   0.75 - 1.27*log10(Fcent[{tbc_count}]);
 
-  Pr_pdr = S_tbc[{i}]*( ({A_o[tbc_count-1]})*pow(T,{m_o[tbc_count-1]})*exp(-({Ea_o[tbc_count-1]})/T) )/k_f[{i}];
+  Pr_pdr = S_tbc[{i}]*( ({A_o[tbc_count]})*pow(T,{m_o[tbc_count]})*exp(-({Ea_o[tbc_count]})/T) )/k_f[{i}];
 
   B_pdr = log10(Pr_pdr) + Ccent;
   C_pdr = 1.0/(1.0 + pow(B_pdr/(Ncent - 0.14*B_pdr),2.0));
 
-  F_pdr = pow(10.0,log10(Fcent[{tbc_count-1}])*C_pdr);
+  F_pdr = pow(10.0,log10(Fcent[{tbc_count}])*C_pdr);
 
   k_f[{i}] = k_f[{i}]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;
   S_tbc[{i}] = 1.0; \n'''
@@ -337,6 +336,7 @@ for(block_ b : mb){{
                 raise ValueError(' Warning, this utility cant handle SRI type reactions yet... so add it now')
             else:
                 raise UnknownFalloffType(r.falloff.type,i+1,r.equation)
+            tbc_count += 1
             pg_mech.write('\n')
 
     pg_mech.write('\n\n')
