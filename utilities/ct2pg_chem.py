@@ -40,7 +40,8 @@ def ct2pg_chem(ctyaml, cpp):
     gas = ct.Solution(ctyaml)
     ns = gas.n_species
     nr = gas.n_reactions
-    l_tbc = []
+    l_tbc = []  #list of all three body reactions
+
     Ea_f = []
     m_f = []
     A_f = []
@@ -81,7 +82,6 @@ def ct2pg_chem(ctyaml, cpp):
             A_f.append(r.rate.pre_exponential_factor)
         else:
             raise UnknownReactionType(r.reaction_type,i+1,r.equation)
-
 
     nl_tbc = len(l_tbc)
 
@@ -164,23 +164,21 @@ def ct2pg_chem(ctyaml, cpp):
 
     pg_mech.write(out_string)
 
-    tbc_count = 0
-    for i,r in enumerate(gas.reactions()):
-        if r.reaction_type in ['three-body', 'falloff']: #ThreeBodyReaction and FallOffReactions
-            out_string = []
-            for j in range(ns):
-                eff = aij[tbc_count][j]
-                if eff > 0.0:
-                    if eff != 1.0:
-                        out_string.append(f' + {eff}*cs[{j}]')
-                    else:
-                        out_string.append(f' + cs[{j}]')
-            out_string[0] = out_string[0].replace(' + ', '')
-            pg_mech.write(f'  S_tbc[{i}] = ')
-            for item in out_string:
-                pg_mech.write(item)
-            pg_mech.write(';\n\n')
-            tbc_count += 1
+    # ThreeBodyReaction and FallOffReactions
+    for tbc,i in enumerate(l_tbc):
+        out_string = []
+        for j in range(ns):
+            eff = aij[tbc][j]
+            if eff > 0.0:
+                if eff != 1.0:
+                    out_string.append(f' + {eff}*cs[{j}]')
+                else:
+                    out_string.append(f' + cs[{j}]')
+        out_string[0] = out_string[0].replace(' + ', '')
+        pg_mech.write(f'  S_tbc[{i}] = ')
+        for item in out_string:
+            pg_mech.write(item)
+        pg_mech.write(';\n\n')
 
     out_string = (
                   '  // -------------------------------------------------------------- >\n'
@@ -231,7 +229,7 @@ def ct2pg_chem(ctyaml, cpp):
 
     pg_mech.write(out_string)
 
-    for i,r in enumerate(gas.reactions()):
+    for i in range(nr):
         if m_f[i] == 0.0 and Ea_f[i] == 0.0:
             out_string = f'  k_f[{i}] = {A_f[i]};\n'
         elif m_f[i] == 0.0 and Ea_f[i] != 0.0:
@@ -297,19 +295,18 @@ def ct2pg_chem(ctyaml, cpp):
 
     pg_mech.write(out_string)
 
-    tbc_count = 0
-    for i,r in enumerate(gas.reactions()):
+
+    for i,r in enumerate([gas.reaction(j) for j in l_tbc]):
         if r.reaction_type == 'three-body': #ThreeBodyReaction
-            pg_mech.write(f'  //  Three Body Reaction #{i+1}\n')
-            tbc_count += 1
+            pg_mech.write(f'  //  Three Body Reaction #{l_tbc[i]+1}\n')
         elif r.reaction_type == 'falloff': # FallOff Reactions
             if r.falloff.type in ['Simple','Lindemann']:
-                pg_mech.write(f'  //  Lindeman Reaction #{i+1}\n')
+                pg_mech.write(f'  //  Lindeman Reaction #{l_tbc[i]+1}\n')
                 out_string = (
-                              f'  Fcent[{tbc_count}] = 1.0;\n'
-                              f'  Pr_pdr = S_tbc[{i}]*( {A_o[tbc_count]}*pow(T,{m_o[tbc_count]})*exp(-({Ea_o[tbc_count]})/T) )/k_f[{i}];\n'
-                              f'  k_f[{i}] = k_f[{i}]*( Pr_pdr/(1.0 + Pr_pdr) );\n'
-                              f'  S_tbc[{i}] = 1.0;\n'
+                              f'  Fcent[{i}] = 1.0;\n'
+                              f'  Pr_pdr = S_tbc[{l_tbc[i]}]*( {A_o[i]}*pow(T,{m_o[i]})*exp(-({Ea_o[i]})/T) )/k_f[{l_tbc[i]}];\n'
+                              f'  k_f[{l_tbc[i]}] = k_f[{l_tbc[i]}]*( Pr_pdr/(1.0 + Pr_pdr) );\n'
+                              f'  S_tbc[{l_tbc[i]}] = 1.0;\n'
                               )
                 pg_mech.write(out_string)
 
@@ -317,29 +314,29 @@ def ct2pg_chem(ctyaml, cpp):
                 alpha = r.falloff.parameters[0]
                 Tsss = r.falloff.parameters[1]
                 Ts = r.falloff.parameters[2]
-                pg_mech.write(f'  //  Troe Reaction #{i+1}\n')
+                pg_mech.write(f'  //  Troe Reaction #{l_tbc[i]+1}\n')
                 tp = r.falloff.parameters
                 if tp[-1] == 0: # Three Parameter Troe form
-                    out_string = f'  Fcent[{tbc_count}] = (1.0 - ({alpha}))*exp(-T/({Tsss})) + ({alpha}) *exp(-T/({Ts}));\n'
+                    out_string = f'  Fcent[{i}] = (1.0 - ({alpha}))*exp(-T/({Tsss})) + ({alpha}) *exp(-T/({Ts}));\n'
                     pg_mech.write(out_string)
                 elif tp[-1] != 0: # Four Parameter Troe form
                     Tss = r.falloff.parameters[3]
-                    out_string = f'  Fcent[{tbc_count}] = (1.0 - ({alpha}))*exp(-T/({Tsss})) + ({alpha}) *exp(-T/({Ts})) + exp(-({Tss})/T);\n'
+                    out_string = f'  Fcent[{i}] = (1.0 - ({alpha}))*exp(-T/({Tsss})) + ({alpha}) *exp(-T/({Ts})) + exp(-({Tss})/T);\n'
                     pg_mech.write(out_string)
 
                 out_string = (
-                             f'  Ccent = - 0.4 - 0.67*log10(Fcent[{tbc_count}]);\n'
-                             f'  Ncent =   0.75 - 1.27*log10(Fcent[{tbc_count}]);\n'
+                             f'  Ccent = - 0.4 - 0.67*log10(Fcent[{i}]);\n'
+                             f'  Ncent =   0.75 - 1.27*log10(Fcent[{i}]);\n'
                               '\n'
-                             f'  Pr_pdr = S_tbc[{i}]*( ({A_o[tbc_count]})*pow(T,{m_o[tbc_count]})*exp(-({Ea_o[tbc_count]})/T) )/k_f[{i}];\n'
+                             f'  Pr_pdr = S_tbc[{l_tbc[i]}]*( ({A_o[i]})*pow(T,{m_o[i]})*exp(-({Ea_o[i]})/T) )/k_f[{l_tbc[i]}];\n'
                               '\n'
                               '  B_pdr = log10(Pr_pdr) + Ccent;\n'
                               '  C_pdr = 1.0/(1.0 + pow(B_pdr/(Ncent - 0.14*B_pdr),2.0));\n'
                               '\n'
-                             f'  F_pdr = pow(10.0,log10(Fcent[{tbc_count}])*C_pdr);\n'
+                             f'  F_pdr = pow(10.0,log10(Fcent[{i}])*C_pdr);\n'
                               '\n'
-                             f'  k_f[{i}] = k_f[{i}]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;\n'
-                             f'  S_tbc[{i}] = 1.0; \n'
+                             f'  k_f[{l_tbc[i]}] = k_f[{l_tbc[i]}]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;\n'
+                             f'  S_tbc[{l_tbc[i]}] = 1.0; \n'
                               )
 
                 pg_mech.write(out_string)
@@ -347,7 +344,6 @@ def ct2pg_chem(ctyaml, cpp):
                 raise NotImplementedError(' Warning, this utility cant handle SRI type reactions yet... so add it now')
             else:
                 raise UnknownFalloffType(r.falloff.type,i+1,r.equation)
-            tbc_count += 1
             pg_mech.write('\n')
 
     pg_mech.write('\n\n')
