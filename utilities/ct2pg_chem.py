@@ -182,34 +182,36 @@ def ct2pg_chem(ctyaml, cpp):
             pg_mech.write(';\n\n')
             tbc_count += 1
 
-    out_string = '''  // -------------------------------------------------------------- >
-  // Gibbs energy. ------------------------------------------------ >
-  // -------------------------------------------------------------- >
-
-  int m;
-  double hi,scs;
-  double gbs[ns];
-
-  for (int n=0; n<=ns-1; n++)
-  {
-    m = ( T <= th.NASA7[n][0] ) ? 8 : 1;
-
-    hi     = th.NASA7[n][m+0]                  +
-             th.NASA7[n][m+1]*    T      / 2.0 +
-             th.NASA7[n][m+2]*pow(T,2.0) / 3.0 +
-             th.NASA7[n][m+3]*pow(T,3.0) / 4.0 +
-             th.NASA7[n][m+4]*pow(T,4.0) / 5.0 +
-             th.NASA7[n][m+5]/    T            ;
-    scs    = th.NASA7[n][m+0]*log(T)           +
-             th.NASA7[n][m+1]*    T            +
-             th.NASA7[n][m+2]*pow(T,2.0) / 2.0 +
-             th.NASA7[n][m+3]*pow(T,3.0) / 3.0 +
-             th.NASA7[n][m+4]*pow(T,4.0) / 4.0 +
-             th.NASA7[n][m+6]                  ;
-
-    gbs[n] = hi-scs                         ;
-  }
-\n'''
+    out_string = (
+                  '  // -------------------------------------------------------------- >\n'
+                  '  // Gibbs energy. ------------------------------------------------ >\n'
+                  '  // -------------------------------------------------------------- >\n'
+                  '\n'
+                  '  int m;\n'
+                  '  double hi,scs;\n'
+                  '  double gbs[ns];\n'
+                  '\n'
+                  '  for (int n=0; n<=ns-1; n++)\n'
+                  '  {\n'
+                  '    m = ( T <= th.NASA7[n][0] ) ? 8 : 1;\n'
+                  '\n'
+                  '    hi     = th.NASA7[n][m+0]                  +\n'
+                  '             th.NASA7[n][m+1]*    T      / 2.0 +\n'
+                  '             th.NASA7[n][m+2]*pow(T,2.0) / 3.0 +\n'
+                  '             th.NASA7[n][m+3]*pow(T,3.0) / 4.0 +\n'
+                  '             th.NASA7[n][m+4]*pow(T,4.0) / 5.0 +\n'
+                  '             th.NASA7[n][m+5]/    T            ;\n'
+                  '    scs    = th.NASA7[n][m+0]*log(T)           +\n'
+                  '             th.NASA7[n][m+1]*    T            +\n'
+                  '             th.NASA7[n][m+2]*pow(T,2.0) / 2.0 +\n'
+                  '             th.NASA7[n][m+3]*pow(T,3.0) / 3.0 +\n'
+                  '             th.NASA7[n][m+4]*pow(T,4.0) / 4.0 +\n'
+                  '             th.NASA7[n][m+6]                  ;\n'
+                  '\n'
+                  '    gbs[n] = hi-scs                         ;\n'
+                  '  }\n'
+                  '\n'
+                  )
 
     pg_mech.write(out_string)
 
