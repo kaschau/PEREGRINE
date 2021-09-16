@@ -116,8 +116,8 @@ for(block_ b : mb){
   // Rate Constants. ---------------------------------------------- >
   // -------------------------------------------------------------- >
 
-  double q_f[nr],k_f[nr],c_f[nr];
-  double q_b[nr],k_b[nr],c_b[nr];
+  double q_f[nr],k_f[nr];
+  double q_b[nr],k_b[nr];
 
   double dG[nr],K_c[nr],q[nr]; 
 
@@ -286,8 +286,7 @@ for(block_ b : mb){
   //  Three Body Reaction #7
   //  Three Body Reaction #8
   //  Troe Reaction #10
-  Fcent[3] =   (1.0 - (0.5))*exp(-T/(30.0))
-                             + (0.5) *exp(-T/(90000.0)) + exp(-(90000.0)/T);
+  Fcent[3] = (1.0 - (0.5))*exp(-T/(30.0)) + (0.5) *exp(-T/(90000.0)) + exp(-(90000.0)/T);
   Ccent = - 0.4 - 0.67*log10(Fcent[3]);
   Ncent =   0.75 - 1.27*log10(Fcent[3]);
 
@@ -308,8 +307,7 @@ for(block_ b : mb){
   S_tbc[16] = 1.0;
 
   //  Troe Reaction #25
-  Fcent[5] =   (1.0 - (0.37))*exp(-T/(3315.0))
-                             + (0.37) *exp(-T/(61.0)) + exp(-(90000.0)/T);
+  Fcent[5] = (1.0 - (0.37))*exp(-T/(3315.0)) + (0.37) *exp(-T/(61.0)) + exp(-(90000.0)/T);
   Ccent = - 0.4 - 0.67*log10(Fcent[5]);
   Ncent =   0.75 - 1.27*log10(Fcent[5]);
 
@@ -324,8 +322,7 @@ for(block_ b : mb){
   S_tbc[24] = 1.0; 
 
   //  Troe Reaction #33
-  Fcent[6] =   (1.0 - (0.932))*exp(-T/(197.00000000000003))
-                             + (0.932) *exp(-T/(1540.0)) + exp(-(10300.0)/T);
+  Fcent[6] = (1.0 - (0.932))*exp(-T/(197.00000000000003)) + (0.932) *exp(-T/(1540.0)) + exp(-(10300.0)/T);
   Ccent = - 0.4 - 0.67*log10(Fcent[6]);
   Ncent =   0.75 - 1.27*log10(Fcent[6]);
 
