@@ -81,7 +81,7 @@ def ct2pg_chem(ctyaml, cpp):
             m_f.append(int_or_float(r.rate.temperature_exponent))
             A_f.append(r.rate.pre_exponential_factor)
         else:
-            raise UnknownReactionType(r.reaction_type,i+1,r.equation)
+            raise UnknownReactionType(r.reaction_type,i,r.equation)
     nl_tbc = len(l_tbc)
 
 
@@ -295,10 +295,10 @@ def ct2pg_chem(ctyaml, cpp):
 
     for i,r in enumerate([gas.reaction(j) for j in l_tbc]):
         if r.reaction_type == 'three-body': #ThreeBodyReaction
-            pg_mech.write(f'  //  Three Body Reaction #{l_tbc[i]+1}\n')
+            pg_mech.write(f'  //  Three Body Reaction #{l_tbc[i]}\n')
         elif r.reaction_type == 'falloff': # FallOff Reactions
             if r.falloff.type in ['Simple','Lindemann']:
-                pg_mech.write(f'  //  Lindeman Reaction #{l_tbc[i]+1}\n')
+                pg_mech.write(f'  //  Lindeman Reaction #{l_tbc[i]}\n')
                 out_string = (
                               f'  Fcent[{i}] = 1.0;\n'
                               f'  Pr_pdr = S_tbc[{l_tbc[i]}]*( {A_o[i]}*pow(T,{m_o[i]})*exp(-({Ea_o[i]})/T) )/k_f[{l_tbc[i]}];\n'
@@ -311,7 +311,7 @@ def ct2pg_chem(ctyaml, cpp):
                 alpha = r.falloff.parameters[0]
                 Tsss = r.falloff.parameters[1]
                 Ts = r.falloff.parameters[2]
-                pg_mech.write(f'  //  Troe Reaction #{l_tbc[i]+1}\n')
+                pg_mech.write(f'  //  Troe Reaction #{l_tbc[i]}\n')
                 tp = r.falloff.parameters
                 if tp[-1] == 0: # Three Parameter Troe form
                     out_string = f'  Fcent[{i}] = (1.0 - ({alpha}))*exp(-T/({Tsss})) + ({alpha}) *exp(-T/({Ts}));\n'
@@ -340,7 +340,7 @@ def ct2pg_chem(ctyaml, cpp):
             elif r.falloff.type == 'SRI': # SRI Form
                 raise NotImplementedError(' Warning, this utility cant handle SRI type reactions yet... so add it now')
             else:
-                raise UnknownFalloffType(r.falloff.type,i+1,r.equation)
+                raise UnknownFalloffType(r.falloff.type,i,r.equation)
             pg_mech.write('\n')
 
     pg_mech.write('\n\n')
