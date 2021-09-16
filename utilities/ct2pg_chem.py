@@ -303,7 +303,6 @@ def ct2pg_chem(ctyaml, cpp):
                               f'  Fcent[{i}] = 1.0;\n'
                               f'  Pr_pdr = S_tbc[{l_tbc[i]}]*( {A_o[i]}*pow(T,{m_o[i]})*exp(-({Ea_o[i]})/T) )/k_f[{l_tbc[i]}];\n'
                               f'  k_f[{l_tbc[i]}] = k_f[{l_tbc[i]}]*( Pr_pdr/(1.0 + Pr_pdr) );\n'
-                              f'  S_tbc[{l_tbc[i]}] = 1.0;\n'
                               )
                 pg_mech.write(out_string)
 
@@ -333,7 +332,6 @@ def ct2pg_chem(ctyaml, cpp):
                              f'  F_pdr = pow(10.0,log10(Fcent[{i}])*C_pdr);\n'
                               '\n'
                              f'  k_f[{l_tbc[i]}] = k_f[{l_tbc[i]}]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;\n'
-                             f'  S_tbc[{l_tbc[i]}] = 1.0; \n'
                               )
 
                 pg_mech.write(out_string)
@@ -359,11 +357,15 @@ def ct2pg_chem(ctyaml, cpp):
     for i,r in enumerate(gas.reactions()):
         out_string = []
         for j,s in enumerate(nu_f[:,i]):
-            if s == 1:
+            if s == 1.0:
                 out_string.append(f' * cs[{j}]')
             elif s > 0.0:
                 out_string.append(f' * pow(cs[{j}],{float(s)})')
-        pg_mech.write(f'  q_f[{i}] =   S_tbc[{i}] * k_f[{i}]')
+        # S_tbc has already been applied to falloffs above!!!
+        if r.reaction_type == 'falloff':
+            pg_mech.write(f'  q_f[{i}] =   k_f[{i}]')
+        else:
+            pg_mech.write(f'  q_f[{i}] =   S_tbc[{i}] * k_f[{i}]')
         for item in out_string:
             pg_mech.write(item)
         pg_mech.write(';\n')
@@ -374,7 +376,11 @@ def ct2pg_chem(ctyaml, cpp):
                 out_string.append(f' * cs[{j}]')
             elif s > 0.0:
                 out_string.append(f' * pow(cs[{j}],{float(s)})')
-        pg_mech.write(f'  q_b[{i}] = - S_tbc[{i}] * k_f[{i}]/K_c[{i}]')
+        # S_tbc has already been applied to falloffs above!!!
+        if r.reaction_type == 'falloff':
+            pg_mech.write(f'  q_b[{i}] = - k_f[{i}]/K_c[{i}]')
+        else:
+            pg_mech.write(f'  q_b[{i}] = - S_tbc[{i}] * k_f[{i}]/K_c[{i}]')
         for item in out_string:
             pg_mech.write(item)
         pg_mech.write(';\n')
@@ -467,6 +473,9 @@ def ct2pg_chem(ctyaml, cpp):
     pg_mech.write(out_string)
 
 
+    pg_mech.write(f'  double t_temp;\n\n')
+    for i,r in enumerate(gas.reactions()):
+        pg_mech.write(f'  // partial of reaction {i} w.r.t. T\n')
 
 
     # END
