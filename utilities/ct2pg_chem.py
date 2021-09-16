@@ -93,7 +93,9 @@ def ct2pg_chem(ctyaml, cpp):
         pg_mech.write(f'// Y({i:>3d}) = {sp}\n')
     pg_mech.write('// ==================================================================== //\n\n')
 
-    # WRITE OUT INITIALIZATION BLOCK UP TO CHEMICAL SOURCE TERMS
+    #-----------------------------------------------------------------------------
+    # HEADER
+    #-----------------------------------------------------------------------------
     out_string = (
                   '#include "Kokkos_Core.hpp"\n'
                   '#include "kokkos_types.hpp"\n'
@@ -150,7 +152,7 @@ def ct2pg_chem(ctyaml, cpp):
     pg_mech.write(out_string)
 
     #-----------------------------------------------------------------------------
-    # WRITE Chaperone Efficiencies
+    # Chaperone Efficiencies
     #-----------------------------------------------------------------------------
 
     out_string = (
@@ -161,7 +163,6 @@ def ct2pg_chem(ctyaml, cpp):
                   '  std::array<double, nr> S_tbc;\n'
                   '  S_tbc.fill(1.0);\n\n'
                   )
-
     pg_mech.write(out_string)
 
     # ThreeBodyReaction and FallOffReactions
@@ -214,7 +215,7 @@ def ct2pg_chem(ctyaml, cpp):
     pg_mech.write(out_string)
 
     #-----------------------------------------------------------------------------
-    #WRITE OUT HARD CODED k_f dG and K_c
+    # HARD CODED forward rate constants k_f,  dG and K_c
     #-----------------------------------------------------------------------------
     out_string = (
                   '  // -------------------------------------------------------------- >\n'
@@ -226,7 +227,6 @@ def ct2pg_chem(ctyaml, cpp):
                   '\n'
                   '  double dG[nr],K_c[nr],q[nr]; \n\n'
                   )
-
     pg_mech.write(out_string)
 
     for i in range(nr):
@@ -278,12 +278,12 @@ def ct2pg_chem(ctyaml, cpp):
         pg_mech.write('\n\n')
 
     #-----------------------------------------------------------------------------
-    #WRITE FallOff Calculations
+    # FallOff Modifications
     #-----------------------------------------------------------------------------
 
     out_string = (
                   '  // -------------------------------------------------------------- >\n'
-                  '  // FallOff Calculations. ---------------------------------------- >\n'
+                  '  // FallOff Modifications. --------------------------------------- >\n'
                   '  // -------------------------------------------------------------- >\n'
                   '\n'
                  f'  double Fcent[{nl_tbc}];\n'
@@ -292,9 +292,7 @@ def ct2pg_chem(ctyaml, cpp):
                   '  double Ccent,Ncent;\n'
                   '\n'
                   )
-
     pg_mech.write(out_string)
-
 
     for i,r in enumerate([gas.reaction(j) for j in l_tbc]):
         if r.reaction_type == 'three-body': #ThreeBodyReaction
@@ -349,16 +347,16 @@ def ct2pg_chem(ctyaml, cpp):
     pg_mech.write('\n\n')
 
     #-----------------------------------------------------------------------------
-    #WRITE OUT RATES OF PROGRESS AND SOURCE TERMS
+    # Rates of progress
     #-----------------------------------------------------------------------------
 
     out_string = (
                   '  // -------------------------------------------------------------- >\n'
-                  '  // Rates of Progress. ---------------------------------------- >\n'
+                  '  // Forward, backward, net rates of progress. -------------------- >\n'
                   '  // -------------------------------------------------------------- >\n\n'
                   )
-
     pg_mech.write(out_string)
+
     for i,r in enumerate(gas.reactions()):
         out_string = []
         for j,s in enumerate(nu_f[:,i]):
@@ -388,7 +386,16 @@ def ct2pg_chem(ctyaml, cpp):
 
     pg_mech.write('  // -------------------------------------------------------------->\n')
 
-    pg_mech.write('  double omega[ns-1];\n\n')
+    #-----------------------------------------------------------------------------
+    # SOURCE TERMS
+    #-----------------------------------------------------------------------------
+    out_string = (
+                  '  // -------------------------------------------------------------- >\n'
+                  '  // Source terms. ------------------------------------------------ >\n'
+                  '  // -------------------------------------------------------------- >\n\n'
+                  '  double omega[ns-1];\n\n'
+                  )
+    pg_mech.write(out_string)
 
     for i in range(gas.n_species-1):
         out_string = []
@@ -420,6 +427,7 @@ def ct2pg_chem(ctyaml, cpp):
                  '\n'
                  )
     pg_mech.write(out_string)
+
 
 
 
