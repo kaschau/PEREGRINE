@@ -291,9 +291,10 @@ def ct2pg_chem(ctyaml, cpp, jac=False):
                   '  // -------------------------------------------------------------- >\n'
                   '\n'
                  f'  double Fcent[{nl_tbc}];\n'
-                  '  double Pr_pdr,k0;\n'
-                  '  double B_pdr,C_pdr,F_pdr;\n'
-                  '  double Ccent,Ncent;\n'
+                 f'  double pmod[{nl_tbc}];\n'
+                  '  double Pr,k0;\n'
+                  '  double A,f1,F_pdr;\n'
+                  '  double C,N;\n'
                   '\n'
                   )
     pg_mech.write(out_string)
@@ -307,8 +308,9 @@ def ct2pg_chem(ctyaml, cpp, jac=False):
                 pg_mech.write(f'  Fcent[{i}] = 1.0;\n')
                 pg_mech.write(f'  k0 = ' + rate_const_string(A_o[i], m_o[i], Ea_o[i]) + ';\n')
                 out_string = (
-                              f'  Pr_pdr = S_tbc[{l_tbc[i]}]*k0/k_f[{l_tbc[i]}];\n'
-                              f'  k_f[{l_tbc[i]}] = k_f[{l_tbc[i]}]*( Pr_pdr/(1.0 + Pr_pdr) );\n'
+                              f'  Pr = S_tbc[{l_tbc[i]}]*k0/k_f[{l_tbc[i]}];\n'
+                              f'  pmod[{i}] = Pr/(1.0 + Pr);\n'
+                              f'  k_f[{l_tbc[i]}] = k_f[{l_tbc[i]}]*pmod[{i}];\n'
                               )
                 pg_mech.write(out_string)
 
@@ -327,20 +329,19 @@ def ct2pg_chem(ctyaml, cpp, jac=False):
                     pg_mech.write(out_string)
 
                 out_string = (
-                             f'  Ccent = - 0.4 - 0.67*log10(Fcent[{i}]);\n'
-                             f'  Ncent =   0.75 - 1.27*log10(Fcent[{i}]);\n'
+                             f'  C = - 0.4 - 0.67*log10(Fcent[{i}]);\n'
+                             f'  N =   0.75 - 1.27*log10(Fcent[{i}]);\n'
                               )
                 pg_mech.write(out_string)
                 pg_mech.write(f'  k0 = ' + rate_const_string(A_o[i], m_o[i], Ea_o[i]) + ';\n')
                 out_string = (
-                             f'  Pr_pdr = S_tbc[{l_tbc[i]}]*k0/k_f[{l_tbc[i]}];\n'
+                             f'  Pr = S_tbc[{l_tbc[i]}]*k0/k_f[{l_tbc[i]}];\n'
+                              '  A = log10(Pr) + C;\n'
+                              '  f1 = A/(N - 0.14*A);\n'
+                             f'  F_pdr = pow(10.0,log10(Fcent[{i}])/(1.0+f1*f1));\n'
                               '\n'
-                              '  B_pdr = log10(Pr_pdr) + Ccent;\n'
-                              '  C_pdr = 1.0/(1.0 + pow(B_pdr/(Ncent - 0.14*B_pdr),2.0));\n'
-                              '\n'
-                             f'  F_pdr = pow(10.0,log10(Fcent[{i}])*C_pdr);\n'
-                              '\n'
-                             f'  k_f[{l_tbc[i]}] = k_f[{l_tbc[i]}]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;\n'
+                             f'  pmod[{i}] =  Pr/(1.0 + Pr) * F_pdr;\n'
+                             f'  k_f[{l_tbc[i]}] = k_f[{l_tbc[i]}]*pmod[{i}];\n'
                               )
 
                 pg_mech.write(out_string)

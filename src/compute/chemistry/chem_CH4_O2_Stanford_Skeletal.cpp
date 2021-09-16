@@ -278,60 +278,59 @@ for(block_ b : mb){
   // -------------------------------------------------------------- >
 
   double Fcent[7];
-  double Pr_pdr,k0;
-  double B_pdr,C_pdr,F_pdr;
-  double Ccent,Ncent;
+  double pmod[7];
+  double Pr,k0;
+  double A,f1,F_pdr;
+  double C,N;
 
   //  Three Body Reaction #5
   //  Three Body Reaction #6
   //  Three Body Reaction #7
   //  Troe Reaction #9
   Fcent[3] = (1.0 - (0.5))*exp(-T/(30.0)) + (0.5) *exp(-T/(90000.0)) + exp(-(90000.0)/T);
-  Ccent = - 0.4 - 0.67*log10(Fcent[3]);
-  Ncent =   0.75 - 1.27*log10(Fcent[3]);
+  C = - 0.4 - 0.67*log10(Fcent[3]);
+  N =   0.75 - 1.27*log10(Fcent[3]);
   k0 = exp(log(1910000000000000.2)-1.72*logT-(264.190255086852/T));
-  Pr_pdr = S_tbc[9]*k0/k_f[9];
+  Pr = S_tbc[9]*k0/k_f[9];
+  A = log10(Pr) + C;
+  f1 = A/(N - 0.14*A);
+  F_pdr = pow(10.0,log10(Fcent[3])/(1.0+f1*f1));
 
-  B_pdr = log10(Pr_pdr) + Ccent;
-  C_pdr = 1.0/(1.0 + pow(B_pdr/(Ncent - 0.14*B_pdr),2.0));
-
-  F_pdr = pow(10.0,log10(Fcent[3])*C_pdr);
-
-  k_f[9] = k_f[9]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;
+  pmod[3] =  Pr/(1.0 + Pr) * F_pdr;
+  k_f[9] = k_f[9]*pmod[3];
 
   //  Lindeman Reaction #16
   Fcent[4] = 1.0;
   k0 = exp(log(1400000000000000.2)-2.1*logT-(2767.7074342432115/T));
-  Pr_pdr = S_tbc[16]*k0/k_f[16];
-  k_f[16] = k_f[16]*( Pr_pdr/(1.0 + Pr_pdr) );
+  Pr = S_tbc[16]*k0/k_f[16];
+  pmod[4] = Pr/(1.0 + Pr);
+  k_f[16] = k_f[16]*pmod[4];
 
   //  Troe Reaction #24
   Fcent[5] = (1.0 - (0.37))*exp(-T/(3315.0)) + (0.37) *exp(-T/(61.0)) + exp(-(90000.0)/T);
-  Ccent = - 0.4 - 0.67*log10(Fcent[5]);
-  Ncent =   0.75 - 1.27*log10(Fcent[5]);
+  C = - 0.4 - 0.67*log10(Fcent[5]);
+  N =   0.75 - 1.27*log10(Fcent[5]);
   k0 = exp(log(6.35e+29)-5.57*logT-(1921.2921788982876/T));
-  Pr_pdr = S_tbc[24]*k0/k_f[24];
+  Pr = S_tbc[24]*k0/k_f[24];
+  A = log10(Pr) + C;
+  f1 = A/(N - 0.14*A);
+  F_pdr = pow(10.0,log10(Fcent[5])/(1.0+f1*f1));
 
-  B_pdr = log10(Pr_pdr) + Ccent;
-  C_pdr = 1.0/(1.0 + pow(B_pdr/(Ncent - 0.14*B_pdr),2.0));
-
-  F_pdr = pow(10.0,log10(Fcent[5])*C_pdr);
-
-  k_f[24] = k_f[24]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;
+  pmod[5] =  Pr/(1.0 + Pr) * F_pdr;
+  k_f[24] = k_f[24]*pmod[5];
 
   //  Troe Reaction #32
   Fcent[6] = (1.0 - (0.932))*exp(-T/(197.00000000000003)) + (0.932) *exp(-T/(1540.0)) + exp(-(10300.0)/T);
-  Ccent = - 0.4 - 0.67*log10(Fcent[6]);
-  Ncent =   0.75 - 1.27*log10(Fcent[6]);
+  C = - 0.4 - 0.67*log10(Fcent[6]);
+  N =   0.75 - 1.27*log10(Fcent[6]);
   k0 = exp(log(4.4000000000000005e+35)-6.1*logT-(47302.636148883976/T));
-  Pr_pdr = S_tbc[32]*k0/k_f[32];
+  Pr = S_tbc[32]*k0/k_f[32];
+  A = log10(Pr) + C;
+  f1 = A/(N - 0.14*A);
+  F_pdr = pow(10.0,log10(Fcent[6])/(1.0+f1*f1));
 
-  B_pdr = log10(Pr_pdr) + Ccent;
-  C_pdr = 1.0/(1.0 + pow(B_pdr/(Ncent - 0.14*B_pdr),2.0));
-
-  F_pdr = pow(10.0,log10(Fcent[6])*C_pdr);
-
-  k_f[32] = k_f[32]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;
+  pmod[6] =  Pr/(1.0 + Pr) * F_pdr;
+  k_f[32] = k_f[32]*pmod[6];
 
 
 
