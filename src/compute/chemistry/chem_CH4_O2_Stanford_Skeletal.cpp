@@ -21,7 +21,7 @@
 #include <math.h>
 #include <vector>
 
-void chem_CH4_O2_Stanford_Skeletal(std::vector<block_> mb, thtrdat_ th) {
+void chem_CH4_O2_Stanford_Skeletal(std::vector<block_> mb, thtrdat_ th, bool jac=false) {
 for(block_ b : mb){
 
 //-------------------------------------------------------------------------------------------|
@@ -278,19 +278,19 @@ for(block_ b : mb){
   // -------------------------------------------------------------- >
 
   double Fcent[7];
-  double Pr_pdr;
+  double Pr_pdr,k0;
   double B_pdr,C_pdr,F_pdr;
   double Ccent,Ncent;
 
+  //  Three Body Reaction #5
   //  Three Body Reaction #6
   //  Three Body Reaction #7
-  //  Three Body Reaction #8
-  //  Troe Reaction #10
+  //  Troe Reaction #9
   Fcent[3] = (1.0 - (0.5))*exp(-T/(30.0)) + (0.5) *exp(-T/(90000.0)) + exp(-(90000.0)/T);
   Ccent = - 0.4 - 0.67*log10(Fcent[3]);
   Ncent =   0.75 - 1.27*log10(Fcent[3]);
-
-  Pr_pdr = S_tbc[9]*( (1910000000000000.2)*pow(T,-1.72)*exp(-(264.190255086852)/T) )/k_f[9];
+  k0 = exp(log(1910000000000000.2)-1.72*logT-(264.190255086852/T));
+  Pr_pdr = S_tbc[9]*k0/k_f[9];
 
   B_pdr = log10(Pr_pdr) + Ccent;
   C_pdr = 1.0/(1.0 + pow(B_pdr/(Ncent - 0.14*B_pdr),2.0));
@@ -298,20 +298,19 @@ for(block_ b : mb){
   F_pdr = pow(10.0,log10(Fcent[3])*C_pdr);
 
   k_f[9] = k_f[9]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;
-  S_tbc[9] = 1.0; 
 
-  //  Lindeman Reaction #17
+  //  Lindeman Reaction #16
   Fcent[4] = 1.0;
-  Pr_pdr = S_tbc[16]*( 1400000000000000.2*pow(T,-2.1)*exp(-(2767.7074342432115)/T) )/k_f[16];
+  k0 = exp(log(1400000000000000.2)-2.1*logT-(2767.7074342432115/T));
+  Pr_pdr = S_tbc[16]*k0/k_f[16];
   k_f[16] = k_f[16]*( Pr_pdr/(1.0 + Pr_pdr) );
-  S_tbc[16] = 1.0;
 
-  //  Troe Reaction #25
+  //  Troe Reaction #24
   Fcent[5] = (1.0 - (0.37))*exp(-T/(3315.0)) + (0.37) *exp(-T/(61.0)) + exp(-(90000.0)/T);
   Ccent = - 0.4 - 0.67*log10(Fcent[5]);
   Ncent =   0.75 - 1.27*log10(Fcent[5]);
-
-  Pr_pdr = S_tbc[24]*( (6.35e+29)*pow(T,-5.57)*exp(-(1921.2921788982876)/T) )/k_f[24];
+  k0 = exp(log(6.35e+29)-5.57*logT-(1921.2921788982876/T));
+  Pr_pdr = S_tbc[24]*k0/k_f[24];
 
   B_pdr = log10(Pr_pdr) + Ccent;
   C_pdr = 1.0/(1.0 + pow(B_pdr/(Ncent - 0.14*B_pdr),2.0));
@@ -319,14 +318,13 @@ for(block_ b : mb){
   F_pdr = pow(10.0,log10(Fcent[5])*C_pdr);
 
   k_f[24] = k_f[24]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;
-  S_tbc[24] = 1.0; 
 
-  //  Troe Reaction #33
+  //  Troe Reaction #32
   Fcent[6] = (1.0 - (0.932))*exp(-T/(197.00000000000003)) + (0.932) *exp(-T/(1540.0)) + exp(-(10300.0)/T);
   Ccent = - 0.4 - 0.67*log10(Fcent[6]);
   Ncent =   0.75 - 1.27*log10(Fcent[6]);
-
-  Pr_pdr = S_tbc[32]*( (4.4000000000000005e+35)*pow(T,-6.1)*exp(-(47302.636148883976)/T) )/k_f[32];
+  k0 = exp(log(4.4000000000000005e+35)-6.1*logT-(47302.636148883976/T));
+  Pr_pdr = S_tbc[32]*k0/k_f[32];
 
   B_pdr = log10(Pr_pdr) + Ccent;
   C_pdr = 1.0/(1.0 + pow(B_pdr/(Ncent - 0.14*B_pdr),2.0));
@@ -334,7 +332,6 @@ for(block_ b : mb){
   F_pdr = pow(10.0,log10(Fcent[6])*C_pdr);
 
   k_f[32] = k_f[32]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;
-  S_tbc[32] = 1.0; 
 
 
 
@@ -378,8 +375,8 @@ for(block_ b : mb){
   q_b[8] = - S_tbc[8] * k_f[8]/K_c[8] * cs[1] * cs[4] * cs[6];
   q[  8] =   q_f[8] + q_b[8];
 
-  q_f[9] =   S_tbc[9] * k_f[9] * cs[1] * cs[2];
-  q_b[9] = - S_tbc[9] * k_f[9]/K_c[9] * cs[5];
+  q_f[9] =   k_f[9] * cs[1] * cs[2];
+  q_b[9] = - k_f[9]/K_c[9] * cs[5];
   q[  9] =   q_f[9] + q_b[9];
 
   q_f[10] =   S_tbc[10] * k_f[10] * cs[1] * cs[5];
@@ -406,8 +403,8 @@ for(block_ b : mb){
   q_b[15] = - S_tbc[15] * k_f[15]/K_c[15] * cs[2] * cs[6];
   q[  15] =   q_f[15] + q_b[15];
 
-  q_f[16] =   S_tbc[16] * k_f[16] * cs[3] * cs[9];
-  q_b[16] = - S_tbc[16] * k_f[16]/K_c[16] * cs[11];
+  q_f[16] =   k_f[16] * cs[3] * cs[9];
+  q_b[16] = - k_f[16]/K_c[16] * cs[11];
   q[  16] =   q_f[16] + q_b[16];
 
   q_f[17] =   S_tbc[17] * k_f[17] * cs[2] * cs[9];
@@ -438,8 +435,8 @@ for(block_ b : mb){
   q_b[23] = - S_tbc[23] * k_f[23]/K_c[23] * cs[6] * cs[7];
   q[  23] =   q_f[23] + q_b[23];
 
-  q_f[24] =   S_tbc[24] * k_f[24] * cs[1] * cs[7];
-  q_b[24] = - S_tbc[24] * k_f[24]/K_c[24] * cs[8];
+  q_f[24] =   k_f[24] * cs[1] * cs[7];
+  q_b[24] = - k_f[24]/K_c[24] * cs[8];
   q[  24] =   q_f[24] + q_b[24];
 
   q_f[25] =   S_tbc[25] * k_f[25] * cs[3] * cs[7];
@@ -470,8 +467,8 @@ for(block_ b : mb){
   q_b[31] = - S_tbc[31] * k_f[31]/K_c[31] * cs[1] * cs[8] * cs[9];
   q[  31] =   q_f[31];
 
-  q_f[32] =   S_tbc[32] * k_f[32] * cs[10];
-  q_b[32] = - S_tbc[32] * k_f[32]/K_c[32] * cs[0] * cs[9];
+  q_f[32] =   k_f[32] * cs[10];
+  q_b[32] = - k_f[32]/K_c[32] * cs[0] * cs[9];
   q[  32] =   q_f[32] + q_b[32];
 
   q_f[33] =   S_tbc[33] * k_f[33] * cs[1] * cs[10];
