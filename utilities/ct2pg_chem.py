@@ -218,7 +218,8 @@ def ct2pg_chem(ctyaml, cpp):
     #-----------------------------------------------------------------------------
     #WRITE OUT HARD CODED k_f dG and K_c
     #-----------------------------------------------------------------------------
-    out_string = ('  // -------------------------------------------------------------- >\n'
+    out_string = (
+                  '  // -------------------------------------------------------------- >\n'
                   '  // Rate Constants. ---------------------------------------------- >\n'
                   '  // -------------------------------------------------------------- >\n'
                   '\n'
@@ -282,7 +283,8 @@ def ct2pg_chem(ctyaml, cpp):
     #WRITE FallOff Calculations
     #-----------------------------------------------------------------------------
 
-    out_string = ('  // -------------------------------------------------------------- >\n'
+    out_string = (
+                  '  // -------------------------------------------------------------- >\n'
                   '  // FallOff Calculations. ---------------------------------------- >\n'
                   '  // -------------------------------------------------------------- >\n'
                   '\n'
@@ -303,10 +305,12 @@ def ct2pg_chem(ctyaml, cpp):
         elif r.reaction_type == 'falloff': # FallOff Reactions
             if r.falloff.type in ['Simple','Lindemann']:
                 pg_mech.write(f'  //  Lindeman Reaction #{i+1}\n')
-                out_string = f'''  Fcent[{tbc_count}] = 1.0;
-  Pr_pdr = S_tbc[{i}]*( {A_o[tbc_count]}*pow(T,{m_o[tbc_count]})*exp(-({Ea_o[tbc_count]})/T) )/k_f[{i}];
-  k_f[{i}] = k_f[{i}]*( Pr_pdr/(1.0 + Pr_pdr) );
-  S_tbc[{i}] = 1.0;\n'''
+                out_string = (
+                              f'  Fcent[{tbc_count}] = 1.0;\n'
+                              f'  Pr_pdr = S_tbc[{i}]*( {A_o[tbc_count]}*pow(T,{m_o[tbc_count]})*exp(-({Ea_o[tbc_count]})/T) )/k_f[{i}];\n'
+                              f'  k_f[{i}] = k_f[{i}]*( Pr_pdr/(1.0 + Pr_pdr) );\n'
+                              f'  S_tbc[{i}] = 1.0;\n'
+                              )
                 pg_mech.write(out_string)
 
             elif r.falloff.type == 'Troe':
@@ -316,31 +320,31 @@ def ct2pg_chem(ctyaml, cpp):
                 pg_mech.write(f'  //  Troe Reaction #{i+1}\n')
                 tp = r.falloff.parameters
                 if tp[-1] == 0: # Three Parameter Troe form
-                    out_string = f'''  Fcent[{tbc_count}] =   (1.0 - ({alpha}))*exp(-T/({Tsss}))
-                        + ({alpha}) *exp(-T/({Ts}));\n'''
+                    out_string = f'  Fcent[{tbc_count}] = (1.0 - ({alpha}))*exp(-T/({Tsss})) + ({alpha}) *exp(-T/({Ts}));\n'
                     pg_mech.write(out_string)
                 elif tp[-1] != 0: # Four Parameter Troe form
                     Tss = r.falloff.parameters[3]
-                    out_string = f'''  Fcent[{tbc_count}] =   (1.0 - ({alpha}))*exp(-T/({Tsss}))
-                             + ({alpha}) *exp(-T/({Ts})) + exp(-({Tss})/T);\n'''
+                    out_string = f'  Fcent[{tbc_count}] = (1.0 - ({alpha}))*exp(-T/({Tsss})) + ({alpha}) *exp(-T/({Ts})) + exp(-({Tss})/T);\n'
                     pg_mech.write(out_string)
 
-                out_string = f'''  Ccent = - 0.4 - 0.67*log10(Fcent[{tbc_count}]);
-  Ncent =   0.75 - 1.27*log10(Fcent[{tbc_count}]);
-
-  Pr_pdr = S_tbc[{i}]*( ({A_o[tbc_count]})*pow(T,{m_o[tbc_count]})*exp(-({Ea_o[tbc_count]})/T) )/k_f[{i}];
-
-  B_pdr = log10(Pr_pdr) + Ccent;
-  C_pdr = 1.0/(1.0 + pow(B_pdr/(Ncent - 0.14*B_pdr),2.0));
-
-  F_pdr = pow(10.0,log10(Fcent[{tbc_count}])*C_pdr);
-
-  k_f[{i}] = k_f[{i}]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;
-  S_tbc[{i}] = 1.0; \n'''
+                out_string = (
+                             f'  Ccent = - 0.4 - 0.67*log10(Fcent[{tbc_count}]);\n'
+                             f'  Ncent =   0.75 - 1.27*log10(Fcent[{tbc_count}]);\n'
+                              '\n'
+                             f'  Pr_pdr = S_tbc[{i}]*( ({A_o[tbc_count]})*pow(T,{m_o[tbc_count]})*exp(-({Ea_o[tbc_count]})/T) )/k_f[{i}];\n'
+                              '\n'
+                              '  B_pdr = log10(Pr_pdr) + Ccent;\n'
+                              '  C_pdr = 1.0/(1.0 + pow(B_pdr/(Ncent - 0.14*B_pdr),2.0));\n'
+                              '\n'
+                             f'  F_pdr = pow(10.0,log10(Fcent[{tbc_count}])*C_pdr);\n'
+                              '\n'
+                             f'  k_f[{i}] = k_f[{i}]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;\n'
+                             f'  S_tbc[{i}] = 1.0; \n'
+                              )
 
                 pg_mech.write(out_string)
             elif r.falloff.type == 'SRI': # SRI Form
-                raise ValueError(' Warning, this utility cant handle SRI type reactions yet... so add it now')
+                raise NotImplementedError(' Warning, this utility cant handle SRI type reactions yet... so add it now')
             else:
                 raise UnknownFalloffType(r.falloff.type,i+1,r.equation)
             tbc_count += 1
@@ -352,9 +356,11 @@ def ct2pg_chem(ctyaml, cpp):
     #WRITE OUT RATES OF PROGRESS AND SOURCE TERMS
     #-----------------------------------------------------------------------------
 
-    out_string = '''  // -------------------------------------------------------------- >
-  // Rates of Progress. ---------------------------------------- >
-  // -------------------------------------------------------------- >\n\n'''
+    out_string = (
+                  '  // -------------------------------------------------------------- >\n'
+                  '  // Rates of Progress. ---------------------------------------- >\n'
+                  '  // -------------------------------------------------------------- >\n\n'
+                  )
 
     pg_mech.write(out_string)
     for i,r in enumerate(gas.reactions()):
@@ -408,17 +414,29 @@ def ct2pg_chem(ctyaml, cpp):
                 pg_mech.write(item)
         pg_mech.write(');\n')
 
-    out_string = '''
-  // Add source terms to RHS
-  for (int n=0; n<th.ns-1; n++)
-  {
-    b.dQ(i,j,k,5+n) += omega[n];
-  }
-
-  });\n}}'''
-
+    out_string = (
+                 '\n'
+                 '  // Add source terms to RHS\n'
+                 '  for (int n=0; n<th.ns-1; n++)\n'
+                 '  {\n'
+                 '    b.dQ(i,j,k,5+n) += omega[n];\n'
+                 '  }\n'
+                 '\n'
+                 )
     pg_mech.write(out_string)
 
+
+
+
+
+
+
+    # END
+    out_string = (
+                 '  });\n'
+                 '}}'
+                 )
+    pg_mech.write(out_string)
     pg_mech.close()
 
 if __name__ == '__main__':
