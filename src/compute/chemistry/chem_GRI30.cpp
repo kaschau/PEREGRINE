@@ -62,7 +62,7 @@
 #include <math.h>
 #include <vector>
 
-void chem_GRI30(std::vector<block_> mb, thtrdat_ th) {
+void chem_GRI30(std::vector<block_> mb, thtrdat_ th, bool jac=false) {
 for(block_ b : mb){
 
 //-------------------------------------------------------------------------------------------|
@@ -1553,438 +1553,390 @@ for(block_ b : mb){
   // -------------------------------------------------------------- >
 
   double Fcent[50];
-  double Pr_pdr;
-  double B_pdr,C_pdr,F_pdr;
-  double Ccent,Ncent;
+  double pmod[50];
+  double Pr,k0;
+  double A,f1,F_pdr;
+  double C,N;
 
+  //  Three Body Reaction #0
   //  Three Body Reaction #1
-  //  Three Body Reaction #2
-  //  Lindeman Reaction #12
+  //  Lindeman Reaction #11
   Fcent[2] = 1.0;
-  Pr_pdr = S_tbc[11]*( 602000000.0000001*pow(T,0.0)*exp(-(1509.6586004962971)/T) )/k_f[11];
-  k_f[11] = k_f[11]*( Pr_pdr/(1.0 + Pr_pdr) );
-  S_tbc[11] = 1.0;
+  k0 = exp(log(602000000.0000001)-(1509.6586004962971/T));
+  Pr = S_tbc[11]*k0/k_f[11];
+  pmod[2] = Pr/(1.0 + Pr);
+  k_f[11] = k_f[11]*pmod[2];
 
+  //  Three Body Reaction #32
   //  Three Body Reaction #33
   //  Three Body Reaction #34
   //  Three Body Reaction #35
   //  Three Body Reaction #36
-  //  Three Body Reaction #37
+  //  Three Body Reaction #38
   //  Three Body Reaction #39
   //  Three Body Reaction #40
   //  Three Body Reaction #41
   //  Three Body Reaction #42
-  //  Three Body Reaction #43
-  //  Troe Reaction #50
+  //  Troe Reaction #49
   Fcent[13] = (1.0 - (0.562))*exp(-T/(91.0)) + (0.562) *exp(-T/(5836.0)) + exp(-(8552.0)/T);
-  Ccent = - 0.4 - 0.67*log10(Fcent[13]);
-  Ncent =   0.75 - 1.27*log10(Fcent[13]);
+  C = - 0.4 - 0.67*log10(Fcent[13]);
+  N =   0.75 - 1.27*log10(Fcent[13]);
+  k0 = exp(log(1.0400000000000002e+20)-2.76*logT-(805.1512535980252/T));
+  Pr = S_tbc[49]*k0/k_f[49];
+  A = log10(Pr) + C;
+  f1 = A/(N - 0.14*A);
+  F_pdr = pow(10.0,log10(Fcent[13])/(1.0+f1*f1));
 
-  Pr_pdr = S_tbc[49]*( (1.0400000000000002e+20)*pow(T,-2.76)*exp(-(805.1512535980252)/T) )/k_f[49];
+  pmod[13] =  Pr/(1.0 + Pr) * F_pdr;
+  k_f[49] = k_f[49]*pmod[13];
 
-  B_pdr = log10(Pr_pdr) + Ccent;
-  C_pdr = 1.0/(1.0 + pow(B_pdr/(Ncent - 0.14*B_pdr),2.0));
-
-  F_pdr = pow(10.0,log10(Fcent[13])*C_pdr);
-
-  k_f[49] = k_f[49]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;
-  S_tbc[49] = 1.0; 
-
-  //  Troe Reaction #52
+  //  Troe Reaction #51
   Fcent[14] = (1.0 - (0.783))*exp(-T/(74.0)) + (0.783) *exp(-T/(2941.0)) + exp(-(6964.0)/T);
-  Ccent = - 0.4 - 0.67*log10(Fcent[14]);
-  Ncent =   0.75 - 1.27*log10(Fcent[14]);
+  C = - 0.4 - 0.67*log10(Fcent[14]);
+  N =   0.75 - 1.27*log10(Fcent[14]);
+  k0 = exp(log(2.6200000000000006e+27)-4.76*logT-(1227.8556617369884/T));
+  Pr = S_tbc[51]*k0/k_f[51];
+  A = log10(Pr) + C;
+  f1 = A/(N - 0.14*A);
+  F_pdr = pow(10.0,log10(Fcent[14])/(1.0+f1*f1));
 
-  Pr_pdr = S_tbc[51]*( (2.6200000000000006e+27)*pow(T,-4.76)*exp(-(1227.8556617369884)/T) )/k_f[51];
+  pmod[14] =  Pr/(1.0 + Pr) * F_pdr;
+  k_f[51] = k_f[51]*pmod[14];
 
-  B_pdr = log10(Pr_pdr) + Ccent;
-  C_pdr = 1.0/(1.0 + pow(B_pdr/(Ncent - 0.14*B_pdr),2.0));
-
-  F_pdr = pow(10.0,log10(Fcent[14])*C_pdr);
-
-  k_f[51] = k_f[51]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;
-  S_tbc[51] = 1.0; 
-
-  //  Troe Reaction #54
+  //  Troe Reaction #53
   Fcent[15] = (1.0 - (0.7824))*exp(-T/(271.0)) + (0.7824) *exp(-T/(2755.0)) + exp(-(6570.0)/T);
-  Ccent = - 0.4 - 0.67*log10(Fcent[15]);
-  Ncent =   0.75 - 1.27*log10(Fcent[15]);
+  C = - 0.4 - 0.67*log10(Fcent[15]);
+  N =   0.75 - 1.27*log10(Fcent[15]);
+  k0 = exp(log(2.4700000000000005e+18)-2.57*logT-(213.86830173697544/T));
+  Pr = S_tbc[53]*k0/k_f[53];
+  A = log10(Pr) + C;
+  f1 = A/(N - 0.14*A);
+  F_pdr = pow(10.0,log10(Fcent[15])/(1.0+f1*f1));
 
-  Pr_pdr = S_tbc[53]*( (2.4700000000000005e+18)*pow(T,-2.57)*exp(-(213.86830173697544)/T) )/k_f[53];
+  pmod[15] =  Pr/(1.0 + Pr) * F_pdr;
+  k_f[53] = k_f[53]*pmod[15];
 
-  B_pdr = log10(Pr_pdr) + Ccent;
-  C_pdr = 1.0/(1.0 + pow(B_pdr/(Ncent - 0.14*B_pdr),2.0));
+  //  Troe Reaction #55
+  Fcent[16] = (1.0 - (0.7187))*exp(-T/(103.00000000000001)) + (0.7187) *exp(-T/(1291.0)) + exp(-(4160.0)/T);
+  C = - 0.4 - 0.67*log10(Fcent[16]);
+  N =   0.75 - 1.27*log10(Fcent[16]);
+  k0 = exp(log(1.2700000000000002e+26)-4.82*logT-(3286.0235537469403/T));
+  Pr = S_tbc[55]*k0/k_f[55];
+  A = log10(Pr) + C;
+  f1 = A/(N - 0.14*A);
+  F_pdr = pow(10.0,log10(Fcent[16])/(1.0+f1*f1));
 
-  F_pdr = pow(10.0,log10(Fcent[15])*C_pdr);
-
-  k_f[53] = k_f[53]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;
-  S_tbc[53] = 1.0; 
+  pmod[16] =  Pr/(1.0 + Pr) * F_pdr;
+  k_f[55] = k_f[55]*pmod[16];
 
   //  Troe Reaction #56
-  Fcent[16] = (1.0 - (0.7187))*exp(-T/(103.00000000000001)) + (0.7187) *exp(-T/(1291.0)) + exp(-(4160.0)/T);
-  Ccent = - 0.4 - 0.67*log10(Fcent[16]);
-  Ncent =   0.75 - 1.27*log10(Fcent[16]);
-
-  Pr_pdr = S_tbc[55]*( (1.2700000000000002e+26)*pow(T,-4.82)*exp(-(3286.0235537469403)/T) )/k_f[55];
-
-  B_pdr = log10(Pr_pdr) + Ccent;
-  C_pdr = 1.0/(1.0 + pow(B_pdr/(Ncent - 0.14*B_pdr),2.0));
-
-  F_pdr = pow(10.0,log10(Fcent[16])*C_pdr);
-
-  k_f[55] = k_f[55]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;
-  S_tbc[55] = 1.0; 
-
-  //  Troe Reaction #57
   Fcent[17] = (1.0 - (0.758))*exp(-T/(94.0)) + (0.758) *exp(-T/(1555.0)) + exp(-(4200.0)/T);
-  Ccent = - 0.4 - 0.67*log10(Fcent[17]);
-  Ncent =   0.75 - 1.27*log10(Fcent[17]);
+  C = - 0.4 - 0.67*log10(Fcent[17]);
+  N =   0.75 - 1.27*log10(Fcent[17]);
+  k0 = exp(log(2.2000000000000006e+24)-4.8*logT-(2797.9006062531375/T));
+  Pr = S_tbc[56]*k0/k_f[56];
+  A = log10(Pr) + C;
+  f1 = A/(N - 0.14*A);
+  F_pdr = pow(10.0,log10(Fcent[17])/(1.0+f1*f1));
 
-  Pr_pdr = S_tbc[56]*( (2.2000000000000006e+24)*pow(T,-4.8)*exp(-(2797.9006062531375)/T) )/k_f[56];
+  pmod[17] =  Pr/(1.0 + Pr) * F_pdr;
+  k_f[56] = k_f[56]*pmod[17];
 
-  B_pdr = log10(Pr_pdr) + Ccent;
-  C_pdr = 1.0/(1.0 + pow(B_pdr/(Ncent - 0.14*B_pdr),2.0));
-
-  F_pdr = pow(10.0,log10(Fcent[17])*C_pdr);
-
-  k_f[56] = k_f[56]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;
-  S_tbc[56] = 1.0; 
-
-  //  Troe Reaction #59
+  //  Troe Reaction #58
   Fcent[18] = (1.0 - (0.6))*exp(-T/(100.0)) + (0.6) *exp(-T/(90000.0)) + exp(-(10000.0)/T);
-  Ccent = - 0.4 - 0.67*log10(Fcent[18]);
-  Ncent =   0.75 - 1.27*log10(Fcent[18]);
+  C = - 0.4 - 0.67*log10(Fcent[18]);
+  N =   0.75 - 1.27*log10(Fcent[18]);
+  k0 = exp(log(4.360000000000001e+25)-4.65*logT-(2556.35523017373/T));
+  Pr = S_tbc[58]*k0/k_f[58];
+  A = log10(Pr) + C;
+  f1 = A/(N - 0.14*A);
+  F_pdr = pow(10.0,log10(Fcent[18])/(1.0+f1*f1));
 
-  Pr_pdr = S_tbc[58]*( (4.360000000000001e+25)*pow(T,-4.65)*exp(-(2556.35523017373)/T) )/k_f[58];
+  pmod[18] =  Pr/(1.0 + Pr) * F_pdr;
+  k_f[58] = k_f[58]*pmod[18];
 
-  B_pdr = log10(Pr_pdr) + Ccent;
-  C_pdr = 1.0/(1.0 + pow(B_pdr/(Ncent - 0.14*B_pdr),2.0));
-
-  F_pdr = pow(10.0,log10(Fcent[18])*C_pdr);
-
-  k_f[58] = k_f[58]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;
-  S_tbc[58] = 1.0; 
-
-  //  Troe Reaction #63
+  //  Troe Reaction #62
   Fcent[19] = (1.0 - (0.7))*exp(-T/(100.0)) + (0.7) *exp(-T/(90000.0)) + exp(-(10000.0)/T);
-  Ccent = - 0.4 - 0.67*log10(Fcent[19]);
-  Ncent =   0.75 - 1.27*log10(Fcent[19]);
+  C = - 0.4 - 0.67*log10(Fcent[19]);
+  N =   0.75 - 1.27*log10(Fcent[19]);
+  k0 = exp(log(4.660000000000001e+35)-7.44*logT-(7085.331031662621/T));
+  Pr = S_tbc[62]*k0/k_f[62];
+  A = log10(Pr) + C;
+  f1 = A/(N - 0.14*A);
+  F_pdr = pow(10.0,log10(Fcent[19])/(1.0+f1*f1));
 
-  Pr_pdr = S_tbc[62]*( (4.660000000000001e+35)*pow(T,-7.44)*exp(-(7085.331031662621)/T) )/k_f[62];
+  pmod[19] =  Pr/(1.0 + Pr) * F_pdr;
+  k_f[62] = k_f[62]*pmod[19];
 
-  B_pdr = log10(Pr_pdr) + Ccent;
-  C_pdr = 1.0/(1.0 + pow(B_pdr/(Ncent - 0.14*B_pdr),2.0));
+  //  Troe Reaction #69
+  Fcent[20] = (1.0 - (0.6464))*exp(-T/(132.0)) + (0.6464) *exp(-T/(1315.0)) + exp(-(5566.0)/T);
+  C = - 0.4 - 0.67*log10(Fcent[20]);
+  N =   0.75 - 1.27*log10(Fcent[20]);
+  k0 = exp(log(3.750000000000001e+27)-4.8*logT-(956.117113647655/T));
+  Pr = S_tbc[69]*k0/k_f[69];
+  A = log10(Pr) + C;
+  f1 = A/(N - 0.14*A);
+  F_pdr = pow(10.0,log10(Fcent[20])/(1.0+f1*f1));
 
-  F_pdr = pow(10.0,log10(Fcent[19])*C_pdr);
-
-  k_f[62] = k_f[62]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;
-  S_tbc[62] = 1.0; 
+  pmod[20] =  Pr/(1.0 + Pr) * F_pdr;
+  k_f[69] = k_f[69]*pmod[20];
 
   //  Troe Reaction #70
-  Fcent[20] = (1.0 - (0.6464))*exp(-T/(132.0)) + (0.6464) *exp(-T/(1315.0)) + exp(-(5566.0)/T);
-  Ccent = - 0.4 - 0.67*log10(Fcent[20]);
-  Ncent =   0.75 - 1.27*log10(Fcent[20]);
+  Fcent[21] = (1.0 - (0.7507))*exp(-T/(98.50000000000001)) + (0.7507) *exp(-T/(1302.0)) + exp(-(4167.0)/T);
+  C = - 0.4 - 0.67*log10(Fcent[21]);
+  N =   0.75 - 1.27*log10(Fcent[21]);
+  k0 = exp(log(3.8000000000000006e+34)-7.27*logT-(3633.2450318610886/T));
+  Pr = S_tbc[70]*k0/k_f[70];
+  A = log10(Pr) + C;
+  f1 = A/(N - 0.14*A);
+  F_pdr = pow(10.0,log10(Fcent[21])/(1.0+f1*f1));
 
-  Pr_pdr = S_tbc[69]*( (3.750000000000001e+27)*pow(T,-4.8)*exp(-(956.117113647655)/T) )/k_f[69];
-
-  B_pdr = log10(Pr_pdr) + Ccent;
-  C_pdr = 1.0/(1.0 + pow(B_pdr/(Ncent - 0.14*B_pdr),2.0));
-
-  F_pdr = pow(10.0,log10(Fcent[20])*C_pdr);
-
-  k_f[69] = k_f[69]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;
-  S_tbc[69] = 1.0; 
+  pmod[21] =  Pr/(1.0 + Pr) * F_pdr;
+  k_f[70] = k_f[70]*pmod[21];
 
   //  Troe Reaction #71
-  Fcent[21] = (1.0 - (0.7507))*exp(-T/(98.50000000000001)) + (0.7507) *exp(-T/(1302.0)) + exp(-(4167.0)/T);
-  Ccent = - 0.4 - 0.67*log10(Fcent[21]);
-  Ncent =   0.75 - 1.27*log10(Fcent[21]);
-
-  Pr_pdr = S_tbc[70]*( (3.8000000000000006e+34)*pow(T,-7.27)*exp(-(3633.2450318610886)/T) )/k_f[70];
-
-  B_pdr = log10(Pr_pdr) + Ccent;
-  C_pdr = 1.0/(1.0 + pow(B_pdr/(Ncent - 0.14*B_pdr),2.0));
-
-  F_pdr = pow(10.0,log10(Fcent[21])*C_pdr);
-
-  k_f[70] = k_f[70]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;
-  S_tbc[70] = 1.0; 
-
-  //  Troe Reaction #72
   Fcent[22] = (1.0 - (0.782))*exp(-T/(207.49999999999997)) + (0.782) *exp(-T/(2663.0)) + exp(-(6095.0)/T);
-  Ccent = - 0.4 - 0.67*log10(Fcent[22]);
-  Ncent =   0.75 - 1.27*log10(Fcent[22]);
+  C = - 0.4 - 0.67*log10(Fcent[22]);
+  N =   0.75 - 1.27*log10(Fcent[22]);
+  k0 = exp(log(1.4000000000000004e+24)-3.86*logT-(1670.6888512159023/T));
+  Pr = S_tbc[71]*k0/k_f[71];
+  A = log10(Pr) + C;
+  f1 = A/(N - 0.14*A);
+  F_pdr = pow(10.0,log10(Fcent[22])/(1.0+f1*f1));
 
-  Pr_pdr = S_tbc[71]*( (1.4000000000000004e+24)*pow(T,-3.86)*exp(-(1670.6888512159023)/T) )/k_f[71];
+  pmod[22] =  Pr/(1.0 + Pr) * F_pdr;
+  k_f[71] = k_f[71]*pmod[22];
 
-  B_pdr = log10(Pr_pdr) + Ccent;
-  C_pdr = 1.0/(1.0 + pow(B_pdr/(Ncent - 0.14*B_pdr),2.0));
-
-  F_pdr = pow(10.0,log10(Fcent[22])*C_pdr);
-
-  k_f[71] = k_f[71]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;
-  S_tbc[71] = 1.0; 
-
-  //  Troe Reaction #74
+  //  Troe Reaction #73
   Fcent[23] = (1.0 - (0.9753))*exp(-T/(209.99999999999997)) + (0.9753) *exp(-T/(983.9999999999999)) + exp(-(4374.0)/T);
-  Ccent = - 0.4 - 0.67*log10(Fcent[23]);
-  Ncent =   0.75 - 1.27*log10(Fcent[23]);
+  C = - 0.4 - 0.67*log10(Fcent[23]);
+  N =   0.75 - 1.27*log10(Fcent[23]);
+  k0 = exp(log(6.0000000000000005e+35)-7.62*logT-(3507.440148486397/T));
+  Pr = S_tbc[73]*k0/k_f[73];
+  A = log10(Pr) + C;
+  f1 = A/(N - 0.14*A);
+  F_pdr = pow(10.0,log10(Fcent[23])/(1.0+f1*f1));
 
-  Pr_pdr = S_tbc[73]*( (6.0000000000000005e+35)*pow(T,-7.62)*exp(-(3507.440148486397)/T) )/k_f[73];
+  pmod[23] =  Pr/(1.0 + Pr) * F_pdr;
+  k_f[73] = k_f[73]*pmod[23];
 
-  B_pdr = log10(Pr_pdr) + Ccent;
-  C_pdr = 1.0/(1.0 + pow(B_pdr/(Ncent - 0.14*B_pdr),2.0));
-
-  F_pdr = pow(10.0,log10(Fcent[23])*C_pdr);
-
-  k_f[73] = k_f[73]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;
-  S_tbc[73] = 1.0; 
-
-  //  Troe Reaction #76
+  //  Troe Reaction #75
   Fcent[24] = (1.0 - (0.8422))*exp(-T/(125.0)) + (0.8422) *exp(-T/(2219.0)) + exp(-(6882.0)/T);
-  Ccent = - 0.4 - 0.67*log10(Fcent[24]);
-  Ncent =   0.75 - 1.27*log10(Fcent[24]);
+  C = - 0.4 - 0.67*log10(Fcent[24]);
+  N =   0.75 - 1.27*log10(Fcent[24]);
+  k0 = exp(log(1.9900000000000005e+35)-7.08*logT-(3364.022581439249/T));
+  Pr = S_tbc[75]*k0/k_f[75];
+  A = log10(Pr) + C;
+  f1 = A/(N - 0.14*A);
+  F_pdr = pow(10.0,log10(Fcent[24])/(1.0+f1*f1));
 
-  Pr_pdr = S_tbc[75]*( (1.9900000000000005e+35)*pow(T,-7.08)*exp(-(3364.022581439249)/T) )/k_f[75];
+  pmod[24] =  Pr/(1.0 + Pr) * F_pdr;
+  k_f[75] = k_f[75]*pmod[24];
 
-  B_pdr = log10(Pr_pdr) + Ccent;
-  C_pdr = 1.0/(1.0 + pow(B_pdr/(Ncent - 0.14*B_pdr),2.0));
-
-  F_pdr = pow(10.0,log10(Fcent[24])*C_pdr);
-
-  k_f[75] = k_f[75]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;
-  S_tbc[75] = 1.0; 
-
-  //  Troe Reaction #83
+  //  Troe Reaction #82
   Fcent[25] = (1.0 - (0.932))*exp(-T/(197.00000000000003)) + (0.932) *exp(-T/(1540.0)) + exp(-(10300.0)/T);
-  Ccent = - 0.4 - 0.67*log10(Fcent[25]);
-  Ncent =   0.75 - 1.27*log10(Fcent[25]);
+  C = - 0.4 - 0.67*log10(Fcent[25]);
+  N =   0.75 - 1.27*log10(Fcent[25]);
+  k0 = exp(log(5.07e+21)-3.42*logT-(42446.56765062089/T));
+  Pr = S_tbc[82]*k0/k_f[82];
+  A = log10(Pr) + C;
+  f1 = A/(N - 0.14*A);
+  F_pdr = pow(10.0,log10(Fcent[25])/(1.0+f1*f1));
 
-  Pr_pdr = S_tbc[82]*( (5.07e+21)*pow(T,-3.42)*exp(-(42446.56765062089)/T) )/k_f[82];
+  pmod[25] =  Pr/(1.0 + Pr) * F_pdr;
+  k_f[82] = k_f[82]*pmod[25];
 
-  B_pdr = log10(Pr_pdr) + Ccent;
-  C_pdr = 1.0/(1.0 + pow(B_pdr/(Ncent - 0.14*B_pdr),2.0));
-
-  F_pdr = pow(10.0,log10(Fcent[25])*C_pdr);
-
-  k_f[82] = k_f[82]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;
-  S_tbc[82] = 1.0; 
-
-  //  Troe Reaction #85
+  //  Troe Reaction #84
   Fcent[26] = (1.0 - (0.7346))*exp(-T/(94.0)) + (0.7346) *exp(-T/(1756.0)) + exp(-(5182.0)/T);
-  Ccent = - 0.4 - 0.67*log10(Fcent[26]);
-  Ncent =   0.75 - 1.27*log10(Fcent[26]);
+  C = - 0.4 - 0.67*log10(Fcent[26]);
+  N =   0.75 - 1.27*log10(Fcent[26]);
+  k0 = exp(log(2300000000000.0005)-0.9*logT-(-855.4732069479018/T));
+  Pr = S_tbc[84]*k0/k_f[84];
+  A = log10(Pr) + C;
+  f1 = A/(N - 0.14*A);
+  F_pdr = pow(10.0,log10(Fcent[26])/(1.0+f1*f1));
 
-  Pr_pdr = S_tbc[84]*( (2300000000000.0005)*pow(T,-0.9)*exp(-(-855.4732069479018)/T) )/k_f[84];
+  pmod[26] =  Pr/(1.0 + Pr) * F_pdr;
+  k_f[84] = k_f[84]*pmod[26];
 
-  B_pdr = log10(Pr_pdr) + Ccent;
-  C_pdr = 1.0/(1.0 + pow(B_pdr/(Ncent - 0.14*B_pdr),2.0));
-
-  F_pdr = pow(10.0,log10(Fcent[26])*C_pdr);
-
-  k_f[84] = k_f[84]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;
-  S_tbc[84] = 1.0; 
-
-  //  Troe Reaction #95
+  //  Troe Reaction #94
   Fcent[27] = (1.0 - (0.412))*exp(-T/(195.0)) + (0.412) *exp(-T/(5900.0)) + exp(-(6394.0)/T);
-  Ccent = - 0.4 - 0.67*log10(Fcent[27]);
-  Ncent =   0.75 - 1.27*log10(Fcent[27]);
+  C = - 0.4 - 0.67*log10(Fcent[27]);
+  N =   0.75 - 1.27*log10(Fcent[27]);
+  k0 = exp(log(4.000000000000001e+30)-5.92*logT-(1580.1093351861243/T));
+  Pr = S_tbc[94]*k0/k_f[94];
+  A = log10(Pr) + C;
+  f1 = A/(N - 0.14*A);
+  F_pdr = pow(10.0,log10(Fcent[27])/(1.0+f1*f1));
 
-  Pr_pdr = S_tbc[94]*( (4.000000000000001e+30)*pow(T,-5.92)*exp(-(1580.1093351861243)/T) )/k_f[94];
+  pmod[27] =  Pr/(1.0 + Pr) * F_pdr;
+  k_f[94] = k_f[94]*pmod[27];
 
-  B_pdr = log10(Pr_pdr) + Ccent;
-  C_pdr = 1.0/(1.0 + pow(B_pdr/(Ncent - 0.14*B_pdr),2.0));
-
-  F_pdr = pow(10.0,log10(Fcent[27])*C_pdr);
-
-  k_f[94] = k_f[94]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;
-  S_tbc[94] = 1.0; 
-
-  //  Troe Reaction #131
+  //  Troe Reaction #130
   Fcent[28] = (1.0 - (0.5757))*exp(-T/(237.00000000000003)) + (0.5757) *exp(-T/(1652.0)) + exp(-(5069.0)/T);
-  Ccent = - 0.4 - 0.67*log10(Fcent[28]);
-  Ncent =   0.75 - 1.27*log10(Fcent[28]);
+  C = - 0.4 - 0.67*log10(Fcent[28]);
+  N =   0.75 - 1.27*log10(Fcent[28]);
+  k0 = exp(log(2.6900000000000003e+22)-3.74*logT-(974.2330168536105/T));
+  Pr = S_tbc[130]*k0/k_f[130];
+  A = log10(Pr) + C;
+  f1 = A/(N - 0.14*A);
+  F_pdr = pow(10.0,log10(Fcent[28])/(1.0+f1*f1));
 
-  Pr_pdr = S_tbc[130]*( (2.6900000000000003e+22)*pow(T,-3.74)*exp(-(974.2330168536105)/T) )/k_f[130];
+  pmod[28] =  Pr/(1.0 + Pr) * F_pdr;
+  k_f[130] = k_f[130]*pmod[28];
 
-  B_pdr = log10(Pr_pdr) + Ccent;
-  C_pdr = 1.0/(1.0 + pow(B_pdr/(Ncent - 0.14*B_pdr),2.0));
-
-  F_pdr = pow(10.0,log10(Fcent[28])*C_pdr);
-
-  k_f[130] = k_f[130]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;
-  S_tbc[130] = 1.0; 
-
-  //  Troe Reaction #140
+  //  Troe Reaction #139
   Fcent[29] = (1.0 - (0.5907))*exp(-T/(275.0)) + (0.5907) *exp(-T/(1226.0)) + exp(-(5185.0)/T);
-  Ccent = - 0.4 - 0.67*log10(Fcent[29]);
-  Ncent =   0.75 - 1.27*log10(Fcent[29]);
+  C = - 0.4 - 0.67*log10(Fcent[29]);
+  N =   0.75 - 1.27*log10(Fcent[29]);
+  k0 = exp(log(2.6900000000000006e+27)-5.11*logT-(3570.342590173743/T));
+  Pr = S_tbc[139]*k0/k_f[139];
+  A = log10(Pr) + C;
+  f1 = A/(N - 0.14*A);
+  F_pdr = pow(10.0,log10(Fcent[29])/(1.0+f1*f1));
 
-  Pr_pdr = S_tbc[139]*( (2.6900000000000006e+27)*pow(T,-5.11)*exp(-(3570.342590173743)/T) )/k_f[139];
+  pmod[29] =  Pr/(1.0 + Pr) * F_pdr;
+  k_f[139] = k_f[139]*pmod[29];
 
-  B_pdr = log10(Pr_pdr) + Ccent;
-  C_pdr = 1.0/(1.0 + pow(B_pdr/(Ncent - 0.14*B_pdr),2.0));
-
-  F_pdr = pow(10.0,log10(Fcent[29])*C_pdr);
-
-  k_f[139] = k_f[139]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;
-  S_tbc[139] = 1.0; 
-
-  //  Troe Reaction #147
+  //  Troe Reaction #146
   Fcent[30] = (1.0 - (0.6027))*exp(-T/(208.0)) + (0.6027) *exp(-T/(3921.9999999999995)) + exp(-(10180.0)/T);
-  Ccent = - 0.4 - 0.67*log10(Fcent[30]);
-  Ncent =   0.75 - 1.27*log10(Fcent[30]);
+  C = - 0.4 - 0.67*log10(Fcent[30]);
+  N =   0.75 - 1.27*log10(Fcent[30]);
+  k0 = exp(log(1.88e+32)-6.36*logT-(2536.226448833779/T));
+  Pr = S_tbc[146]*k0/k_f[146];
+  A = log10(Pr) + C;
+  f1 = A/(N - 0.14*A);
+  F_pdr = pow(10.0,log10(Fcent[30])/(1.0+f1*f1));
 
-  Pr_pdr = S_tbc[146]*( (1.88e+32)*pow(T,-6.36)*exp(-(2536.226448833779)/T) )/k_f[146];
+  pmod[30] =  Pr/(1.0 + Pr) * F_pdr;
+  k_f[146] = k_f[146]*pmod[30];
 
-  B_pdr = log10(Pr_pdr) + Ccent;
-  C_pdr = 1.0/(1.0 + pow(B_pdr/(Ncent - 0.14*B_pdr),2.0));
-
-  F_pdr = pow(10.0,log10(Fcent[30])*C_pdr);
-
-  k_f[146] = k_f[146]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;
-  S_tbc[146] = 1.0; 
-
-  //  Troe Reaction #158
+  //  Troe Reaction #157
   Fcent[31] = (1.0 - (0.619))*exp(-T/(73.2)) + (0.619) *exp(-T/(1180.0)) + exp(-(9999.0)/T);
-  Ccent = - 0.4 - 0.67*log10(Fcent[31]);
-  Ncent =   0.75 - 1.27*log10(Fcent[31]);
+  C = - 0.4 - 0.67*log10(Fcent[31]);
+  N =   0.75 - 1.27*log10(Fcent[31]);
+  k0 = exp(log(3.400000000000001e+35)-7.03*logT-(1389.892351523591/T));
+  Pr = S_tbc[157]*k0/k_f[157];
+  A = log10(Pr) + C;
+  f1 = A/(N - 0.14*A);
+  F_pdr = pow(10.0,log10(Fcent[31])/(1.0+f1*f1));
 
-  Pr_pdr = S_tbc[157]*( (3.400000000000001e+35)*pow(T,-7.03)*exp(-(1389.892351523591)/T) )/k_f[157];
+  pmod[31] =  Pr/(1.0 + Pr) * F_pdr;
+  k_f[157] = k_f[157]*pmod[31];
 
-  B_pdr = log10(Pr_pdr) + Ccent;
-  C_pdr = 1.0/(1.0 + pow(B_pdr/(Ncent - 0.14*B_pdr),2.0));
-
-  F_pdr = pow(10.0,log10(Fcent[31])*C_pdr);
-
-  k_f[157] = k_f[157]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;
-  S_tbc[157] = 1.0; 
-
+  //  Three Body Reaction #165
   //  Three Body Reaction #166
-  //  Three Body Reaction #167
-  //  Troe Reaction #174
+  //  Troe Reaction #173
   Fcent[34] = (1.0 - (0.7345))*exp(-T/(180.0)) + (0.7345) *exp(-T/(1035.0)) + exp(-(5417.0)/T);
-  Ccent = - 0.4 - 0.67*log10(Fcent[34]);
-  Ncent =   0.75 - 1.27*log10(Fcent[34]);
+  C = - 0.4 - 0.67*log10(Fcent[34]);
+  N =   0.75 - 1.27*log10(Fcent[34]);
+  k0 = exp(log(1.5800000000000006e+48)-9.3*logT-(49214.870376179286/T));
+  Pr = S_tbc[173]*k0/k_f[173];
+  A = log10(Pr) + C;
+  f1 = A/(N - 0.14*A);
+  F_pdr = pow(10.0,log10(Fcent[34])/(1.0+f1*f1));
 
-  Pr_pdr = S_tbc[173]*( (1.5800000000000006e+48)*pow(T,-9.3)*exp(-(49214.870376179286)/T) )/k_f[173];
+  pmod[34] =  Pr/(1.0 + Pr) * F_pdr;
+  k_f[173] = k_f[173]*pmod[34];
 
-  B_pdr = log10(Pr_pdr) + Ccent;
-  C_pdr = 1.0/(1.0 + pow(B_pdr/(Ncent - 0.14*B_pdr),2.0));
-
-  F_pdr = pow(10.0,log10(Fcent[34])*C_pdr);
-
-  k_f[173] = k_f[173]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;
-  S_tbc[173] = 1.0; 
-
-  //  Lindeman Reaction #185
+  //  Lindeman Reaction #184
   Fcent[35] = 1.0;
-  Pr_pdr = S_tbc[184]*( 637000000000.0001*pow(T,0.0)*exp(-(28502.35437737009)/T) )/k_f[184];
-  k_f[184] = k_f[184]*( Pr_pdr/(1.0 + Pr_pdr) );
-  S_tbc[184] = 1.0;
+  k0 = exp(log(637000000000.0001)-(28502.35437737009/T));
+  Pr = S_tbc[184]*k0/k_f[184];
+  pmod[35] = Pr/(1.0 + Pr);
+  k_f[184] = k_f[184]*pmod[35];
 
-  //  Three Body Reaction #187
-  //  Three Body Reaction #205
-  //  Three Body Reaction #212
-  //  Three Body Reaction #227
-  //  Three Body Reaction #230
-  //  Lindeman Reaction #237
+  //  Three Body Reaction #186
+  //  Three Body Reaction #204
+  //  Three Body Reaction #211
+  //  Three Body Reaction #226
+  //  Three Body Reaction #229
+  //  Lindeman Reaction #236
   Fcent[41] = 1.0;
-  Pr_pdr = S_tbc[236]*( 1.4000000000000003e+20*pow(T,-3.4)*exp(-(956.117113647655)/T) )/k_f[236];
-  k_f[236] = k_f[236]*( Pr_pdr/(1.0 + Pr_pdr) );
-  S_tbc[236] = 1.0;
+  k0 = exp(log(1.4000000000000003e+20)-3.4*logT-(956.117113647655/T));
+  Pr = S_tbc[236]*k0/k_f[236];
+  pmod[41] = Pr/(1.0 + Pr);
+  k_f[236] = k_f[236]*pmod[41];
 
-  //  Troe Reaction #241
+  //  Troe Reaction #240
   Fcent[42] = (1.0 - (0.667))*exp(-T/(235.0)) + (0.667) *exp(-T/(2117.0)) + exp(-(4536.0)/T);
-  Ccent = - 0.4 - 0.67*log10(Fcent[42]);
-  Ncent =   0.75 - 1.27*log10(Fcent[42]);
+  C = - 0.4 - 0.67*log10(Fcent[42]);
+  N =   0.75 - 1.27*log10(Fcent[42]);
+  k0 = exp(log(1.3000000000000002e+19)-3.16*logT-(372.38245478908664/T));
+  Pr = S_tbc[240]*k0/k_f[240];
+  A = log10(Pr) + C;
+  f1 = A/(N - 0.14*A);
+  F_pdr = pow(10.0,log10(Fcent[42])/(1.0+f1*f1));
 
-  Pr_pdr = S_tbc[240]*( (1.3000000000000002e+19)*pow(T,-3.16)*exp(-(372.38245478908664)/T) )/k_f[240];
+  pmod[42] =  Pr/(1.0 + Pr) * F_pdr;
+  k_f[240] = k_f[240]*pmod[42];
 
-  B_pdr = log10(Pr_pdr) + Ccent;
-  C_pdr = 1.0/(1.0 + pow(B_pdr/(Ncent - 0.14*B_pdr),2.0));
-
-  F_pdr = pow(10.0,log10(Fcent[42])*C_pdr);
-
-  k_f[240] = k_f[240]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;
-  S_tbc[240] = 1.0; 
-
-  //  Three Body Reaction #269
-  //  Troe Reaction #289
+  //  Three Body Reaction #268
+  //  Troe Reaction #288
   Fcent[44] = (1.0 - (0.578))*exp(-T/(122.0)) + (0.578) *exp(-T/(2535.0)) + exp(-(9365.0)/T);
-  Ccent = - 0.4 - 0.67*log10(Fcent[44]);
-  Ncent =   0.75 - 1.27*log10(Fcent[44]);
+  C = - 0.4 - 0.67*log10(Fcent[44]);
+  N =   0.75 - 1.27*log10(Fcent[44]);
+  k0 = exp(log(4.820000000000001e+19)-2.8*logT-(296.8995247642718/T));
+  Pr = S_tbc[288]*k0/k_f[288];
+  A = log10(Pr) + C;
+  f1 = A/(N - 0.14*A);
+  F_pdr = pow(10.0,log10(Fcent[44])/(1.0+f1*f1));
 
-  Pr_pdr = S_tbc[288]*( (4.820000000000001e+19)*pow(T,-2.8)*exp(-(296.8995247642718)/T) )/k_f[288];
+  pmod[44] =  Pr/(1.0 + Pr) * F_pdr;
+  k_f[288] = k_f[288]*pmod[44];
 
-  B_pdr = log10(Pr_pdr) + Ccent;
-  C_pdr = 1.0/(1.0 + pow(B_pdr/(Ncent - 0.14*B_pdr),2.0));
-
-  F_pdr = pow(10.0,log10(Fcent[44])*C_pdr);
-
-  k_f[288] = k_f[288]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;
-  S_tbc[288] = 1.0; 
-
-  //  Three Body Reaction #303
-  //  Troe Reaction #304
+  //  Three Body Reaction #302
+  //  Troe Reaction #303
   Fcent[46] = (1.0 - (0.465))*exp(-T/(201.0)) + (0.465) *exp(-T/(1772.9999999999998)) + exp(-(5333.0)/T);
-  Ccent = - 0.4 - 0.67*log10(Fcent[46]);
-  Ncent =   0.75 - 1.27*log10(Fcent[46]);
+  C = - 0.4 - 0.67*log10(Fcent[46]);
+  N =   0.75 - 1.27*log10(Fcent[46]);
+  k0 = exp(log(1.0120000000000002e+36)-7.63*logT-(1939.4080821042432/T));
+  Pr = S_tbc[303]*k0/k_f[303];
+  A = log10(Pr) + C;
+  f1 = A/(N - 0.14*A);
+  F_pdr = pow(10.0,log10(Fcent[46])/(1.0+f1*f1));
 
-  Pr_pdr = S_tbc[303]*( (1.0120000000000002e+36)*pow(T,-7.63)*exp(-(1939.4080821042432)/T) )/k_f[303];
+  pmod[46] =  Pr/(1.0 + Pr) * F_pdr;
+  k_f[303] = k_f[303]*pmod[46];
 
-  B_pdr = log10(Pr_pdr) + Ccent;
-  C_pdr = 1.0/(1.0 + pow(B_pdr/(Ncent - 0.14*B_pdr),2.0));
-
-  F_pdr = pow(10.0,log10(Fcent[46])*C_pdr);
-
-  k_f[303] = k_f[303]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;
-  S_tbc[303] = 1.0; 
-
-  //  Troe Reaction #312
+  //  Troe Reaction #311
   Fcent[47] = (1.0 - (0.1527))*exp(-T/(291.0)) + (0.1527) *exp(-T/(2742.0)) + exp(-(7748.0)/T);
-  Ccent = - 0.4 - 0.67*log10(Fcent[47]);
-  Ncent =   0.75 - 1.27*log10(Fcent[47]);
+  C = - 0.4 - 0.67*log10(Fcent[47]);
+  N =   0.75 - 1.27*log10(Fcent[47]);
+  k0 = exp(log(2.7100000000000003e+68)-16.82*logT-(6574.563205161375/T));
+  Pr = S_tbc[311]*k0/k_f[311];
+  A = log10(Pr) + C;
+  f1 = A/(N - 0.14*A);
+  F_pdr = pow(10.0,log10(Fcent[47])/(1.0+f1*f1));
 
-  Pr_pdr = S_tbc[311]*( (2.7100000000000003e+68)*pow(T,-16.82)*exp(-(6574.563205161375)/T) )/k_f[311];
+  pmod[47] =  Pr/(1.0 + Pr) * F_pdr;
+  k_f[311] = k_f[311]*pmod[47];
 
-  B_pdr = log10(Pr_pdr) + Ccent;
-  C_pdr = 1.0/(1.0 + pow(B_pdr/(Ncent - 0.14*B_pdr),2.0));
-
-  F_pdr = pow(10.0,log10(Fcent[47])*C_pdr);
-
-  k_f[311] = k_f[311]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;
-  S_tbc[311] = 1.0; 
-
-  //  Troe Reaction #318
+  //  Troe Reaction #317
   Fcent[48] = (1.0 - (0.1894))*exp(-T/(277.0)) + (0.1894) *exp(-T/(8748.0)) + exp(-(7891.0)/T);
-  Ccent = - 0.4 - 0.67*log10(Fcent[48]);
-  Ncent =   0.75 - 1.27*log10(Fcent[48]);
+  C = - 0.4 - 0.67*log10(Fcent[48]);
+  N =   0.75 - 1.27*log10(Fcent[48]);
+  k0 = exp(log(3.0000000000000007e+57)-14.6*logT-(9143.498923672574/T));
+  Pr = S_tbc[317]*k0/k_f[317];
+  A = log10(Pr) + C;
+  f1 = A/(N - 0.14*A);
+  F_pdr = pow(10.0,log10(Fcent[48])/(1.0+f1*f1));
 
-  Pr_pdr = S_tbc[317]*( (3.0000000000000007e+57)*pow(T,-14.6)*exp(-(9143.498923672574)/T) )/k_f[317];
+  pmod[48] =  Pr/(1.0 + Pr) * F_pdr;
+  k_f[317] = k_f[317]*pmod[48];
 
-  B_pdr = log10(Pr_pdr) + Ccent;
-  C_pdr = 1.0/(1.0 + pow(B_pdr/(Ncent - 0.14*B_pdr),2.0));
-
-  F_pdr = pow(10.0,log10(Fcent[48])*C_pdr);
-
-  k_f[317] = k_f[317]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;
-  S_tbc[317] = 1.0; 
-
-  //  Troe Reaction #320
+  //  Troe Reaction #319
   Fcent[49] = (1.0 - (0.315))*exp(-T/(369.0)) + (0.315) *exp(-T/(3284.9999999999995)) + exp(-(6667.0)/T);
-  Ccent = - 0.4 - 0.67*log10(Fcent[49]);
-  Ncent =   0.75 - 1.27*log10(Fcent[49]);
+  C = - 0.4 - 0.67*log10(Fcent[49]);
+  N =   0.75 - 1.27*log10(Fcent[49]);
+  k0 = exp(log(4.420000000000001e+55)-13.545*logT-(5715.0642419454825/T));
+  Pr = S_tbc[319]*k0/k_f[319];
+  A = log10(Pr) + C;
+  f1 = A/(N - 0.14*A);
+  F_pdr = pow(10.0,log10(Fcent[49])/(1.0+f1*f1));
 
-  Pr_pdr = S_tbc[319]*( (4.420000000000001e+55)*pow(T,-13.545)*exp(-(5715.0642419454825)/T) )/k_f[319];
-
-  B_pdr = log10(Pr_pdr) + Ccent;
-  C_pdr = 1.0/(1.0 + pow(B_pdr/(Ncent - 0.14*B_pdr),2.0));
-
-  F_pdr = pow(10.0,log10(Fcent[49])*C_pdr);
-
-  k_f[319] = k_f[319]*( Pr_pdr/(1.0 + Pr_pdr) )*F_pdr;
-  S_tbc[319] = 1.0; 
+  pmod[49] =  Pr/(1.0 + Pr) * F_pdr;
+  k_f[319] = k_f[319]*pmod[49];
 
 
 
@@ -2036,8 +1988,8 @@ for(block_ b : mb){
   q_b[10] = - S_tbc[10] * k_f[10]/K_c[10] * cs[4] * cs[12];
   q[  10] =   q_f[10] + q_b[10];
 
-  q_f[11] =   S_tbc[11] * k_f[11] * cs[2] * cs[14];
-  q_b[11] = - S_tbc[11] * k_f[11]/K_c[11] * cs[15];
+  q_f[11] =   k_f[11] * cs[2] * cs[14];
+  q_b[11] = - k_f[11]/K_c[11] * cs[15];
   q[  11] =   q_f[11] + q_b[11];
 
   q_f[12] =   S_tbc[12] * k_f[12] * cs[2] * cs[16];
@@ -2188,44 +2140,44 @@ for(block_ b : mb){
   q_b[48] = - S_tbc[48] * k_f[48]/K_c[48] * cs[0] * cs[8];
   q[  48] =   q_f[48] + q_b[48];
 
-  q_f[49] =   S_tbc[49] * k_f[49] * cs[1] * cs[10];
-  q_b[49] = - S_tbc[49] * k_f[49]/K_c[49] * cs[12];
+  q_f[49] =   k_f[49] * cs[1] * cs[10];
+  q_b[49] = - k_f[49]/K_c[49] * cs[12];
   q[  49] =   q_f[49] + q_b[49];
 
   q_f[50] =   S_tbc[50] * k_f[50] * cs[1] * cs[11];
   q_b[50] = - S_tbc[50] * k_f[50]/K_c[50] * cs[0] * cs[9];
   q[  50] =   q_f[50] + q_b[50];
 
-  q_f[51] =   S_tbc[51] * k_f[51] * cs[1] * cs[12];
-  q_b[51] = - S_tbc[51] * k_f[51]/K_c[51] * cs[13];
+  q_f[51] =   k_f[51] * cs[1] * cs[12];
+  q_b[51] = - k_f[51]/K_c[51] * cs[13];
   q[  51] =   q_f[51] + q_b[51];
 
   q_f[52] =   S_tbc[52] * k_f[52] * cs[1] * cs[13];
   q_b[52] = - S_tbc[52] * k_f[52]/K_c[52] * cs[0] * cs[12];
   q[  52] =   q_f[52] + q_b[52];
 
-  q_f[53] =   S_tbc[53] * k_f[53] * cs[1] * cs[16];
-  q_b[53] = - S_tbc[53] * k_f[53]/K_c[53] * cs[17];
+  q_f[53] =   k_f[53] * cs[1] * cs[16];
+  q_b[53] = - k_f[53]/K_c[53] * cs[17];
   q[  53] =   q_f[53] + q_b[53];
 
   q_f[54] =   S_tbc[54] * k_f[54] * cs[1] * cs[16];
   q_b[54] = - S_tbc[54] * k_f[54]/K_c[54] * cs[0] * cs[14];
   q[  54] =   q_f[54] + q_b[54];
 
-  q_f[55] =   S_tbc[55] * k_f[55] * cs[1] * cs[17];
-  q_b[55] = - S_tbc[55] * k_f[55]/K_c[55] * cs[18];
+  q_f[55] =   k_f[55] * cs[1] * cs[17];
+  q_b[55] = - k_f[55]/K_c[55] * cs[18];
   q[  55] =   q_f[55] + q_b[55];
 
-  q_f[56] =   S_tbc[56] * k_f[56] * cs[1] * cs[17];
-  q_b[56] = - S_tbc[56] * k_f[56]/K_c[56] * cs[19];
+  q_f[56] =   k_f[56] * cs[1] * cs[17];
+  q_b[56] = - k_f[56]/K_c[56] * cs[19];
   q[  56] =   q_f[56] + q_b[56];
 
   q_f[57] =   S_tbc[57] * k_f[57] * cs[1] * cs[17];
   q_b[57] = - S_tbc[57] * k_f[57]/K_c[57] * cs[0] * cs[16];
   q[  57] =   q_f[57] + q_b[57];
 
-  q_f[58] =   S_tbc[58] * k_f[58] * cs[1] * cs[18];
-  q_b[58] = - S_tbc[58] * k_f[58]/K_c[58] * cs[20];
+  q_f[58] =   k_f[58] * cs[1] * cs[18];
+  q_b[58] = - k_f[58]/K_c[58] * cs[20];
   q[  58] =   q_f[58] + q_b[58];
 
   q_f[59] =   S_tbc[59] * k_f[59] * cs[1] * cs[18];
@@ -2240,8 +2192,8 @@ for(block_ b : mb){
   q_b[61] = - S_tbc[61] * k_f[61]/K_c[61] * cs[5] * cs[11];
   q[  61] =   q_f[61] + q_b[61];
 
-  q_f[62] =   S_tbc[62] * k_f[62] * cs[1] * cs[19];
-  q_b[62] = - S_tbc[62] * k_f[62]/K_c[62] * cs[20];
+  q_f[62] =   k_f[62] * cs[1] * cs[19];
+  q_b[62] = - k_f[62]/K_c[62] * cs[20];
   q[  62] =   q_f[62] + q_b[62];
 
   q_f[63] =   S_tbc[63] * k_f[63] * cs[1] * cs[19];
@@ -2268,32 +2220,32 @@ for(block_ b : mb){
   q_b[68] = - S_tbc[68] * k_f[68]/K_c[68] * cs[0] * cs[19];
   q[  68] =   q_f[68] + q_b[68];
 
-  q_f[69] =   S_tbc[69] * k_f[69] * cs[1] * cs[21];
-  q_b[69] = - S_tbc[69] * k_f[69]/K_c[69] * cs[22];
+  q_f[69] =   k_f[69] * cs[1] * cs[21];
+  q_b[69] = - k_f[69]/K_c[69] * cs[22];
   q[  69] =   q_f[69] + q_b[69];
 
-  q_f[70] =   S_tbc[70] * k_f[70] * cs[1] * cs[22];
-  q_b[70] = - S_tbc[70] * k_f[70]/K_c[70] * cs[23];
+  q_f[70] =   k_f[70] * cs[1] * cs[22];
+  q_b[70] = - k_f[70]/K_c[70] * cs[23];
   q[  70] =   q_f[70] + q_b[70];
 
-  q_f[71] =   S_tbc[71] * k_f[71] * cs[1] * cs[23];
-  q_b[71] = - S_tbc[71] * k_f[71]/K_c[71] * cs[24];
+  q_f[71] =   k_f[71] * cs[1] * cs[23];
+  q_b[71] = - k_f[71]/K_c[71] * cs[24];
   q[  71] =   q_f[71] + q_b[71];
 
   q_f[72] =   S_tbc[72] * k_f[72] * cs[1] * cs[23];
   q_b[72] = - S_tbc[72] * k_f[72]/K_c[72] * cs[0] * cs[22];
   q[  72] =   q_f[72] + q_b[72];
 
-  q_f[73] =   S_tbc[73] * k_f[73] * cs[1] * cs[24];
-  q_b[73] = - S_tbc[73] * k_f[73]/K_c[73] * cs[25];
+  q_f[73] =   k_f[73] * cs[1] * cs[24];
+  q_b[73] = - k_f[73]/K_c[73] * cs[25];
   q[  73] =   q_f[73] + q_b[73];
 
   q_f[74] =   S_tbc[74] * k_f[74] * cs[1] * cs[24];
   q_b[74] = - S_tbc[74] * k_f[74]/K_c[74] * cs[0] * cs[23];
   q[  74] =   q_f[74] + q_b[74];
 
-  q_f[75] =   S_tbc[75] * k_f[75] * cs[1] * cs[25];
-  q_b[75] = - S_tbc[75] * k_f[75]/K_c[75] * cs[26];
+  q_f[75] =   k_f[75] * cs[1] * cs[25];
+  q_b[75] = - k_f[75]/K_c[75] * cs[26];
   q[  75] =   q_f[75] + q_b[75];
 
   q_f[76] =   S_tbc[76] * k_f[76] * cs[1] * cs[25];
@@ -2320,16 +2272,16 @@ for(block_ b : mb){
   q_b[81] = - S_tbc[81] * k_f[81]/K_c[81] * cs[1] * cs[28];
   q[  81] =   q_f[81] + q_b[81];
 
-  q_f[82] =   S_tbc[82] * k_f[82] * cs[0] * cs[14];
-  q_b[82] = - S_tbc[82] * k_f[82]/K_c[82] * cs[17];
+  q_f[82] =   k_f[82] * cs[0] * cs[14];
+  q_b[82] = - k_f[82]/K_c[82] * cs[17];
   q[  82] =   q_f[82] + q_b[82];
 
   q_f[83] =   S_tbc[83] * k_f[83] * cs[0] * cs[4];
   q_b[83] = - S_tbc[83] * k_f[83]/K_c[83] * cs[1] * cs[5];
   q[  83] =   q_f[83] + q_b[83];
 
-  q_f[84] =   S_tbc[84] * k_f[84] * pow(cs[4],2.0);
-  q_b[84] = - S_tbc[84] * k_f[84]/K_c[84] * cs[7];
+  q_f[84] =   k_f[84] * pow(cs[4],2.0);
+  q_b[84] = - k_f[84]/K_c[84] * cs[7];
   q[  84] =   q_f[84] + q_b[84];
 
   q_f[85] =   S_tbc[85] * k_f[85] * pow(cs[4],2.0);
@@ -2368,8 +2320,8 @@ for(block_ b : mb){
   q_b[93] = - S_tbc[93] * k_f[93]/K_c[93] * cs[1] * cs[17];
   q[  93] =   q_f[93] + q_b[93];
 
-  q_f[94] =   S_tbc[94] * k_f[94] * cs[4] * cs[12];
-  q_b[94] = - S_tbc[94] * k_f[94]/K_c[94] * cs[20];
+  q_f[94] =   k_f[94] * cs[4] * cs[12];
+  q_b[94] = - k_f[94]/K_c[94] * cs[20];
   q[  94] =   q_f[94] + q_b[94];
 
   q_f[95] =   S_tbc[95] * k_f[95] * cs[4] * cs[12];
@@ -2512,8 +2464,8 @@ for(block_ b : mb){
   q_b[129] = - S_tbc[129] * k_f[129]/K_c[129] * cs[1] * cs[24];
   q[  129] =   q_f[129] + q_b[129];
 
-  q_f[130] =   S_tbc[130] * k_f[130] * cs[9] * cs[14];
-  q_b[130] = - S_tbc[130] * k_f[130]/K_c[130] * cs[27];
+  q_f[130] =   k_f[130] * cs[9] * cs[14];
+  q_b[130] = - k_f[130]/K_c[130] * cs[27];
   q[  130] =   q_f[130] + q_b[130];
 
   q_f[131] =   S_tbc[131] * k_f[131] * cs[9] * cs[15];
@@ -2548,8 +2500,8 @@ for(block_ b : mb){
   q_b[138] = - S_tbc[138] * k_f[138]/K_c[138] * pow(cs[12],2.0);
   q[  138] =   q_f[138] + q_b[138];
 
-  q_f[139] =   S_tbc[139] * k_f[139] * cs[10] * cs[14];
-  q_b[139] = - S_tbc[139] * k_f[139]/K_c[139] * cs[28];
+  q_f[139] =   k_f[139] * cs[10] * cs[14];
+  q_b[139] = - k_f[139]/K_c[139] * cs[28];
   q[  139] =   q_f[139] + q_b[139];
 
   q_f[140] =   S_tbc[140] * k_f[140] * cs[10] * cs[27];
@@ -2576,8 +2528,8 @@ for(block_ b : mb){
   q_b[145] = - S_tbc[145] * k_f[145]/K_c[145] * cs[1] * cs[12];
   q[  145] =   q_f[145] + q_b[145];
 
-  q_f[146] =   S_tbc[146] * k_f[146] * cs[5] * cs[11];
-  q_b[146] = - S_tbc[146] * k_f[146]/K_c[146] * cs[20];
+  q_f[146] =   k_f[146] * cs[5] * cs[11];
+  q_b[146] = - k_f[146]/K_c[146] * cs[20];
   q[  146] =   q_f[146] + q_b[146];
 
   q_f[147] =   S_tbc[147] * k_f[147] * cs[5] * cs[11];
@@ -2620,8 +2572,8 @@ for(block_ b : mb){
   q_b[156] = - S_tbc[156] * k_f[156]/K_c[156] * cs[6] * cs[13];
   q[  156] =   q_f[156] + q_b[156];
 
-  q_f[157] =   S_tbc[157] * k_f[157] * pow(cs[12],2.0);
-  q_b[157] = - S_tbc[157] * k_f[157]/K_c[157] * cs[26];
+  q_f[157] =   k_f[157] * pow(cs[12],2.0);
+  q_b[157] = - k_f[157]/K_c[157] * cs[26];
   q[  157] =   q_f[157] + q_b[157];
 
   q_f[158] =   S_tbc[158] * k_f[158] * pow(cs[12],2.0);
@@ -2684,8 +2636,8 @@ for(block_ b : mb){
   q_b[172] = - S_tbc[172] * k_f[172]/K_c[172] * cs[16] * cs[17];
   q[  172] =   q_f[172] + q_b[172];
 
-  q_f[173] =   S_tbc[173] * k_f[173] * cs[24];
-  q_b[173] = - S_tbc[173] * k_f[173]/K_c[173] * cs[0] * cs[22];
+  q_f[173] =   k_f[173] * cs[24];
+  q_b[173] = - k_f[173]/K_c[173] * cs[0] * cs[22];
   q[  173] =   q_f[173] + q_b[173];
 
   q_f[174] =   S_tbc[174] * k_f[174] * cs[3] * cs[25];
@@ -2728,8 +2680,8 @@ for(block_ b : mb){
   q_b[183] = - S_tbc[183] * k_f[183]/K_c[183] * cs[6] * cs[47];
   q[  183] =   q_f[183] + q_b[183];
 
-  q_f[184] =   S_tbc[184] * k_f[184] * cs[37];
-  q_b[184] = - S_tbc[184] * k_f[184]/K_c[184] * cs[2] * cs[47];
+  q_f[184] =   k_f[184] * cs[37];
+  q_b[184] = - k_f[184]/K_c[184] * cs[2] * cs[47];
   q[  184] =   q_f[184] + q_b[184];
 
   q_f[185] =   S_tbc[185] * k_f[185] * cs[6] * cs[35];
@@ -2936,8 +2888,8 @@ for(block_ b : mb){
   q_b[235] = - S_tbc[235] * k_f[235]/K_c[235] * cs[14] * cs[32];
   q[  235] =   q_f[235] + q_b[235];
 
-  q_f[236] =   S_tbc[236] * k_f[236] * cs[1] * cs[40];
-  q_b[236] = - S_tbc[236] * k_f[236]/K_c[236] * cs[41];
+  q_f[236] =   k_f[236] * cs[1] * cs[40];
+  q_b[236] = - k_f[236]/K_c[236] * cs[41];
   q[  236] =   q_f[236] + q_b[236];
 
   q_f[237] =   S_tbc[237] * k_f[237] * cs[30] * cs[41];
@@ -2952,8 +2904,8 @@ for(block_ b : mb){
   q_b[239] = - S_tbc[239] * k_f[239]/K_c[239] * cs[30] * cs[40];
   q[  239] =   q_f[239] + q_b[239];
 
-  q_f[240] =   S_tbc[240] * k_f[240] * cs[9] * cs[47];
-  q_b[240] = - S_tbc[240] * k_f[240]/K_c[240] * cs[42];
+  q_f[240] =   k_f[240] * cs[9] * cs[47];
+  q_b[240] = - k_f[240]/K_c[240] * cs[42];
   q[  240] =   q_f[240] + q_b[240];
 
   q_f[241] =   S_tbc[241] * k_f[241] * cs[10] * cs[47];
@@ -3144,8 +3096,8 @@ for(block_ b : mb){
   q_b[287] = - S_tbc[287] * k_f[287]/K_c[287] * cs[0] * cs[17];
   q[  287] =   q_f[287];
 
-  q_f[288] =   S_tbc[288] * k_f[288] * cs[0] * cs[9];
-  q_b[288] = - S_tbc[288] * k_f[288]/K_c[288] * cs[12];
+  q_f[288] =   k_f[288] * cs[0] * cs[9];
+  q_b[288] = - k_f[288]/K_c[288] * cs[12];
   q[  288] =   q_f[288] + q_b[288];
 
   q_f[289] =   S_tbc[289] * k_f[289] * cs[3] * cs[10];
@@ -3204,8 +3156,8 @@ for(block_ b : mb){
   q_b[302] = - S_tbc[302] * k_f[302]/K_c[302] * cs[13] * cs[14];
   q[  302] =   q_f[302];
 
-  q_f[303] =   S_tbc[303] * k_f[303] * cs[1] * cs[28];
-  q_b[303] = - S_tbc[303] * k_f[303]/K_c[303] * cs[51];
+  q_f[303] =   k_f[303] * cs[1] * cs[28];
+  q_b[303] = - k_f[303]/K_c[303] * cs[51];
   q[  303] =   q_f[303] + q_b[303];
 
   q_f[304] =   S_tbc[304] * k_f[304] * cs[2] * cs[51];
@@ -3236,8 +3188,8 @@ for(block_ b : mb){
   q_b[310] = - S_tbc[310] * k_f[310]/K_c[310] * cs[16] * cs[18];
   q[  310] =   q_f[310] + q_b[310];
 
-  q_f[311] =   S_tbc[311] * k_f[311] * cs[12] * cs[25];
-  q_b[311] = - S_tbc[311] * k_f[311]/K_c[311] * cs[50];
+  q_f[311] =   k_f[311] * cs[12] * cs[25];
+  q_b[311] = - k_f[311]/K_c[311] * cs[50];
   q[  311] =   q_f[311] + q_b[311];
 
   q_f[312] =   S_tbc[312] * k_f[312] * cs[2] * cs[50];
@@ -3260,16 +3212,16 @@ for(block_ b : mb){
   q_b[316] = - S_tbc[316] * k_f[316]/K_c[316] * cs[13] * cs[49];
   q[  316] =   q_f[316] + q_b[316];
 
-  q_f[317] =   S_tbc[317] * k_f[317] * cs[12] * cs[24];
-  q_b[317] = - S_tbc[317] * k_f[317]/K_c[317] * cs[49];
+  q_f[317] =   k_f[317] * cs[12] * cs[24];
+  q_b[317] = - k_f[317]/K_c[317] * cs[49];
   q[  317] =   q_f[317] + q_b[317];
 
   q_f[318] =   S_tbc[318] * k_f[318] * cs[2] * cs[49];
   q_b[318] = - S_tbc[318] * k_f[318]/K_c[318] * cs[17] * cs[25];
   q[  318] =   q_f[318] + q_b[318];
 
-  q_f[319] =   S_tbc[319] * k_f[319] * cs[1] * cs[49];
-  q_b[319] = - S_tbc[319] * k_f[319]/K_c[319] * cs[50];
+  q_f[319] =   k_f[319] * cs[1] * cs[49];
+  q_b[319] = - k_f[319]/K_c[319] * cs[50];
   q[  319] =   q_f[319] + q_b[319];
 
   q_f[320] =   S_tbc[320] * k_f[320] * cs[1] * cs[49];
