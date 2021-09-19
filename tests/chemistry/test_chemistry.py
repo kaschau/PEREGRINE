@@ -14,23 +14,29 @@ from pathlib import Path
 def test_chemistry():
     import kokkos
     kokkos.initialize()
+    config = pg.files.config_file()
 
     relpath = str(Path(__file__).parent)
     ct.add_directory(relpath+'/../../src/peregrinepy/thermo_transport/database/source')
-    ctfile = 'CH4_O2_Stanford_Skeletal.yaml'
-    thfile = 'thtr_CH4_O2_Stanford_Skeletal.yaml'
+    if np.random.random() > 0.5:
+        ctfile = 'CH4_O2_Stanford_Skeletal.yaml'
+        thfile = 'thtr_CH4_O2_Stanford_Skeletal.yaml'
+        config['thermochem']['mechanism'] = 'chem_CH4_O2_Stanford_Skeletal'
+    else:
+        ctfile = 'GRI30.yaml'
+        thfile = 'thtr_GRI30.yaml'
+        config['thermochem']['mechanism'] = 'chem_GRI30'
+
     gas = ct.Solution(ctfile)
     p = np.random.uniform(low=10000, high=100000)
-    T = np.random.uniform(low=100  , high=1000)
+    T = np.random.uniform(low=1000  , high=2000)
     Y = np.random.uniform(low=0.0  , high=1.0,size=gas.n_species)
     Y = Y/np.sum(Y)
 
     gas.TPY = T,p,Y
 
-    config = pg.files.config_file()
     config['thermochem']['spdata'] = thfile
     config['thermochem']['eos'] = 'tpg'
-    config['thermochem']['mechanism'] = 'chem_CH4_O2_Stanford_Skeletal'
     config['thermochem']['chemistry'] = True
     config['RHS']['diffusion'] = False
 
