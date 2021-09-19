@@ -141,7 +141,7 @@ void tpg(block_ b,
   b.qh(i,j,k,4) = rho*e;
   for (int n=0; n<ns-1; n++)
   {
-    b.qh(i,j,k,5+n) = rho*hi[n];
+    b.qh(i,j,k,5+n) = th.Ru*hi[n]/th.MW[n];
   }
 
   });
@@ -269,7 +269,7 @@ void tpg(block_ b,
   b.qh(i,j,k,4) = rho*e;
   for (int n=0; n<ns-1; n++)
   {
-    b.qh(i,j,k,5+n) = rho*hi[n];
+    b.qh(i,j,k,5+n) = th.Ru*hi[n]/th.MW[n];
   }
 
   });
