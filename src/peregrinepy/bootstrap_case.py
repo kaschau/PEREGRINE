@@ -5,7 +5,7 @@ def bootstrap_case(config):
 
     comm, rank, size = pg.mpicomm.mpiutils.get_comm_rank_size()
     ################################################################
-    ##### First we determine what bocks we are responsible for #####
+    # First we determine what bocks we are responsible for
     ################################################################
     if rank == 0:
         blocks4procs = pg.readers.read_blocks4procs(config["io"]["inputdir"])
@@ -25,19 +25,19 @@ def bootstrap_case(config):
     mb = pg.multiblock.generate_multiblock_solver(len(myblocks), config, myblocks)
 
     ################################################################
-    ##### Read in the connectivity
+    # Read in the connectivity
     ################################################################
     pg.readers.read_connectivity(mb, config["io"]["inputdir"])
 
     ################################################################
-    ##### Now we figure out which processor each block's neighbor
-    ##### is on
+    # Now we figure out which processor each block's neighbor
+    # is on
     ################################################################
 
     for blk in mb:
         for face in blk.faces:
             neighbor = face.connectivity["neighbor"]
-            if neighbor == None:
+            if neighbor is None:
                 face.comm_rank = None
                 continue
             for otherrank, proc in enumerate(blocks4procs):
@@ -45,33 +45,33 @@ def bootstrap_case(config):
                     face.comm_rank = otherrank
 
     ################################################################
-    ##### Read in the grid
+    # Read in the grid
     ################################################################
     pg.readers.read_grid(mb, config["io"]["griddir"])
 
     ################################################################
-    ##### Now set the MPI communication info for each block
+    # Now set the MPI communication info for each block
     ################################################################
     pg.mpicomm.blockcomm.set_block_communication(mb)
 
     ################################################################
-    ##### Initialize the solver arrays
+    # Initialize the solver arrays
     ################################################################
     mb.init_solver_arrays(config)
 
     ################################################################
-    ##### Unify the grid via halo construction, compute metrics
+    # Unify the grid via halo construction, compute metrics
     ################################################################
     mb.unify_solver_grid()
     mb.compute_metrics()
 
     ################################################################
-    ##### Read in boundary conditions
+    # Read in boundary conditions
     ################################################################
     pg.readers.read_bcs(mb, config["io"]["inputdir"])
 
     ################################################################
-    ##### Read in restart
+    # Read in restart
     ################################################################
     pg.readers.read_restart(
         mb,
@@ -81,10 +81,10 @@ def bootstrap_case(config):
     )
 
     ################################################################
-    ##### Register parallel writer
+    # Register parallel writer
     ################################################################
     pg.writers.parallel_writer.register_parallel_xdmf(
-        mb, config["io"]["outputdir"], grid_path=f'../{config["io"]["griddir"]}'
+        mb, config["io"]["outputdir"], grid_path=f"../{config['io']['griddir']}"
     )
 
     # Generate conserved variables
