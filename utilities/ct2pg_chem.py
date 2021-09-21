@@ -56,7 +56,7 @@ def rate_const_string(A,m,Ea):
 
     return string
 
-def ct2pg_chem(ctyaml, cpp, jac=False):
+def ct2pg_chem(ctyaml, cpp):
 
     gas = ct.Solution(ctyaml)
     ns = gas.n_species
@@ -70,8 +70,8 @@ def ct2pg_chem(ctyaml, cpp, jac=False):
     m_o = []
     A_o = []
     aij = []
-    nu_f = gas.reactant_stoich_coeffs()
-    nu_b = gas.product_stoich_coeffs()
+    nu_f = gas.reactant_stoich_coeffs3
+    nu_b = gas.product_stoich_coeffs3
 
     Ru = ct.gas_constant #J/kmol.K
 
@@ -443,68 +443,14 @@ def ct2pg_chem(ctyaml, cpp, jac=False):
                  )
     pg_mech.write(out_string)
 
-
-    if not jac:
-        # END
-        out_string = (
-                     '  });\n'
-                     '}}'
-                     )
-        pg_mech.write(out_string)
-        pg_mech.close()
-
-        return
-
-    #-----------------------------------------------------------------------------
-    # Jacobian, df/dy
-    #-----------------------------------------------------------------------------
-    out_string = (
-                  '  // -------------------------------------------------------------- >\n'
-                  '  // Jacobian. ---------------------------------------------------- >\n'
-                  '  // -------------------------------------------------------------- >\n\n'
-                  '\n'
-                  '  if (jac){\n'
-                  '\n'
-                  '  double jac[ns][ns] = { };\n'
-                  '  double Tinv = 1.0/T;\n'
-                  '  double rhoinv = 1.0/rho;\n'
-                  )
-    pg_mech.write(out_string)
-
-
-    #-----------------------------------------------------------------------------
-    # dB/dT
-    #-----------------------------------------------------------------------------
-    out_string = (
-                  '  // -------------------------------------------------------------- >\n'
-                  '  // dBdT. -------------------------------------------------------- >\n'
-                  '  // -------------------------------------------------------------- >\n'
-                  '\n'
-                  '  double dBdT[ns-1];\n'
-                  '\n'
-                  '  for (int n=0; n<ns-1; n++)\n'
-                  '  {\n'
-                  '    m = ( T <= th.NASA7[n][0] ) ? 8 : 1;\n'
-                  '    dBdT[n] = Tinv*(th.NASA7[n][m+0] - 1.0 + th.NASA7[n][m+5]*Tinv) + th.NASA7[n][m+1]/2.0 + T*(th.NASA7[n][m+2]/3.0 + T*(th.NASA7[n][m+3]/4.0 + th.NASA7[n][m+4]/5.0*T));\n'
-                  '  }\n'
-                  '\n'
-                  )
-    pg_mech.write(out_string)
-
-
-    pg_mech.write(f'  double j_temp;\n\n')
-    for i,r in enumerate(gas.reactions()):
-        pg_mech.write(f'  // partial of reaction {i} w.r.t. T\n')
-
-
     # END
     out_string = (
-                 '  }\n'
                  '  });\n'
                  '}}'
                  )
     pg_mech.write(out_string)
     pg_mech.close()
+
 
 if __name__ == '__main__':
 
