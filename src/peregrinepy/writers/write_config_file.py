@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import yaml
 
+
 class MyDumper(yaml.SafeDumper):
     # HACK: insert blank lines between top-level objects
     # inspired by https://stackoverflow.com/a/44284819/3786245
@@ -11,9 +12,9 @@ class MyDumper(yaml.SafeDumper):
             super().write_line_break()
 
 
-def write_config_file(config,file_path='./'):
+def write_config_file(config, file_path="./"):
 
-    '''This function write a RAPTOR input file dtms.inp from a raptorpy.files.input_file object
+    """This function write a RAPTOR input file dtms.inp from a raptorpy.files.input_file object
 
     Parameters
     ----------
@@ -27,7 +28,7 @@ def write_config_file(config,file_path='./'):
     -------
     None
 
-    '''
+    """
 
     connout = {}
     for k1 in config.keys():
@@ -35,5 +36,5 @@ def write_config_file(config,file_path='./'):
         for k2 in config[k1].keys():
             connout[k1][k2] = config[k1][k2]
 
-    with open(f"{file_path}/peregrine.yaml", 'w') as f:
+    with open(f"{file_path}/peregrine.yaml", "w") as f:
         yaml.dump(connout, f, Dumper=MyDumper, sort_keys=False)

@@ -2,6 +2,7 @@ from abc import ABCMeta
 from ..RHS import RHS
 from ..consistify import consistify
 
+
 class rk4:
     __metaclass__ = ABCMeta
 
@@ -10,17 +11,17 @@ class rk4:
 
     def step(self, dt):
 
-        #store zeroth stage solution
+        # store zeroth stage solution
         for blk in self:
-            blk.array['rhs0'][:] = blk.array['Q'][:]
+            blk.array["rhs0"][:] = blk.array["Q"][:]
 
         # First Stage
 
         RHS(self)
 
         for blk in self:
-            blk.array['rhs1'][:] = dt*blk.array['dQ']
-            blk.array['Q'][:] = blk.array['rhs0'] + 0.5*blk.array['rhs1']
+            blk.array["rhs1"][:] = dt * blk.array["dQ"]
+            blk.array["Q"][:] = blk.array["rhs0"] + 0.5 * blk.array["rhs1"]
 
         consistify(self)
 
@@ -29,8 +30,8 @@ class rk4:
         RHS(self)
 
         for blk in self:
-            blk.array['rhs2'][:] = dt*blk.array['dQ']
-            blk.array['Q'][:] = blk.array['rhs0'] + 0.5*blk.array['rhs2']
+            blk.array["rhs2"][:] = dt * blk.array["dQ"]
+            blk.array["Q"][:] = blk.array["rhs0"] + 0.5 * blk.array["rhs2"]
 
         consistify(self)
 
@@ -39,8 +40,8 @@ class rk4:
         RHS(self)
 
         for blk in self:
-            blk.array['rhs3'][:] = dt*blk.array['dQ']
-            blk.array['Q'][:] = blk.array['rhs0'] + blk.array['rhs3']
+            blk.array["rhs3"][:] = dt * blk.array["dQ"]
+            blk.array["Q"][:] = blk.array["rhs0"] + blk.array["rhs3"]
 
         consistify(self)
 
@@ -49,10 +50,16 @@ class rk4:
         RHS(self)
 
         for blk in self:
-            blk.array['Q'][:] = blk.array['rhs0'] + (     blk.array['rhs1'] +
-                                                      2.0*blk.array['rhs2'] +
-                                                      2.0*blk.array['rhs3'] +
-                                                      dt *blk.array['dQ']   )/6.0
+            blk.array["Q"][:] = (
+                blk.array["rhs0"]
+                + (
+                    blk.array["rhs1"]
+                    + 2.0 * blk.array["rhs2"]
+                    + 2.0 * blk.array["rhs3"]
+                    + dt * blk.array["dQ"]
+                )
+                / 6.0
+            )
 
         consistify(self)
 

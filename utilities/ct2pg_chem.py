@@ -122,9 +122,7 @@ def ct2pg_chem(ctyaml, cpp):
     # HEADER
     # --------------------------------
     # WRITE OUT SPECIES ORDER
-    pg_mech.write(
-        "// ========================================================== //\n"
-    )
+    pg_mech.write("// ========================================================== //\n")
     for i, sp in enumerate(gas.species_names):
         pg_mech.write(f"// Y({i:>3d}) = {sp}\n")
     pg_mech.write(
@@ -265,9 +263,7 @@ def ct2pg_chem(ctyaml, cpp):
 
     for i in range(nr):
         out_string = (
-            f"  k_f[{i}] = "
-            + rate_const_string(A_f[i], m_f[i], Ea_f[i])
-            + ";\n"
+            f"  k_f[{i}] = " + rate_const_string(A_f[i], m_f[i], Ea_f[i]) + ";\n"
         )
 
         pg_mech.write(out_string)
@@ -468,10 +464,7 @@ def ct2pg_chem(ctyaml, cpp):
     pg_mech.write(out_string)
 
     # END
-    out_string = (
-        "  });\n"
-        "}}"
-    )
+    out_string = "  });\n" "}}"
     pg_mech.write(out_string)
     pg_mech.close()
 
@@ -487,7 +480,7 @@ if __name__ == "__main__":
         "ct_file_name",
         metavar="<ct_file>",
         help="Cantera .yaml file to convert into hard coded PEREGRINE chemical source term.",
-        type=str
+        type=str,
     )
     args = parser.parse_args()
 

@@ -1,11 +1,12 @@
 #!/usr/bin/env python
-'''
+"""
 
 Adiabatic flame calculation.
 
-'''
+"""
 
 import mpi4py.rc
+
 mpi4py.rc.initialize = False
 
 import kokkos
@@ -17,34 +18,37 @@ import matplotlib.pyplot as plt
 
 from pathlib import Path
 
+
 def simulate():
     # Import but do not initialise MPI
     from mpi4py import MPI
 
     # Manually initialise MPI
     MPI.Init()
-    comm,rank,size = pg.mpicomm.mpiutils.get_comm_rank_size()
+    comm, rank, size = pg.mpicomm.mpiutils.get_comm_rank_size()
     # Ensure MPI is suitably cleaned up
     pg.mpicomm.mpiutils.register_finalize_handler()
 
     relpath = str(Path(__file__).parent)
-    ct.add_directory(relpath+'/../src/peregrinepy/thermo_transport/database')
+    ct.add_directory(relpath + "/../src/peregrinepy/thermo_transport/database")
     config = pg.files.config_file()
-    config['RHS']['diffusion'] = False
-    config['thermochem']['chemistry'] = True
-    config['thermochem']['mechanism'] = 'chem_CH4_O2_Stanford_Skeletal'
-    config['thermochem']['eos'] = 'tpg'
-    config['thermochem']['spdata'] = 'thtr_CH4_O2_Stanford_Skeletal.yaml'
-    mb = pg.multiblock.generate_multiblock_solver(1,config)
-    pg.grid.create.multiblock_cube(mb,
-                                   mb_dimensions=[1,1,1],
-                                   dimensions_perblock=[2,2,2],
-                                   lengths=[0.01,0.01,0.01])
+    config["RHS"]["diffusion"] = False
+    config["thermochem"]["chemistry"] = True
+    config["thermochem"]["mechanism"] = "chem_CH4_O2_Stanford_Skeletal"
+    config["thermochem"]["eos"] = "tpg"
+    config["thermochem"]["spdata"] = "thtr_CH4_O2_Stanford_Skeletal.yaml"
+    mb = pg.multiblock.generate_multiblock_solver(1, config)
+    pg.grid.create.multiblock_cube(
+        mb,
+        mb_dimensions=[1, 1, 1],
+        dimensions_perblock=[2, 2, 2],
+        lengths=[0.01, 0.01, 0.01],
+    )
     mb.init_solver_arrays(config)
 
     blk = mb[0]
     for face in blk.faces:
-        face.connectivity['bctype'] = 'adiabatic_noslip_wall'
+        face.connectivity["bctype"] = "adiabatic_noslip_wall"
 
     pg.mpicomm.blockcomm.set_block_communication(mb)
 
@@ -52,21 +56,21 @@ def simulate():
 
     mb.compute_metrics()
 
-    T,p = 1100.0,101325
-    gas = ct.Solution('ct_CH4_O2_Stanford_Skeletal.yaml')
+    T, p = 1100.0, 101325
+    gas = ct.Solution("ct_CH4_O2_Stanford_Skeletal.yaml")
     # set the gas state
-    gas.TP = T,p
+    gas.TP = T, p
     phi = 1.0
-    gas.set_equivalence_ratio(phi, 'CH4', 'O2')
+    gas.set_equivalence_ratio(phi, "CH4", "O2")
     r1 = ct.Reactor(gas)
     sim = ct.ReactorNet([r1])
 
-    blk.array['q'][:,:,:,0] = gas.P
-    blk.array['q'][:,:,:,4] = gas.T
-    blk.array['q'][:,:,:,5::] = gas.Y[0:-1]
+    blk.array["q"][:, :, :, 0] = gas.P
+    blk.array["q"][:, :, :, 4] = gas.T
+    blk.array["q"][:, :, :, 5::] = gas.Y[0:-1]
 
-    #Update cons
-    mb.eos(blk, mb.thtrdat, 0 ,'prims')
+    # Update cons
+    mb.eos(blk, mb.thtrdat, 0, "prims")
     pg.consistify(mb)
 
     dt = 1e-7
@@ -78,9 +82,9 @@ def simulate():
     t = []
     while mb.tme < 3.16e-2:
 
-        if mb.nrt%niterout == 0:
-            pgT.append(blk.array['q'][1,1,1,4])
-            pgO2.append(blk.array['q'][1,1,1,7])
+        if mb.nrt % niterout == 0:
+            pgT.append(blk.array["q"][1, 1, 1, 4])
+            pgO2.append(blk.array["q"][1, 1, 1, 7])
             ctT.append(gas.T)
             ctO2.append(gas.Y[2])
             t.append(mb.tme)
@@ -94,12 +98,12 @@ def simulate():
     niterout = 10000
     while mb.tme < 3.235e-2:
 
-        if mb.nrt%niterout == 0:
-            pgT.append(blk.array['q'][1,1,1,4])
-            pgO2.append(blk.array['q'][1,1,1,7])
+        if mb.nrt % niterout == 0:
+            pgT.append(blk.array["q"][1, 1, 1, 4])
+            pgO2.append(blk.array["q"][1, 1, 1, 7])
             ctT.append(gas.T)
             ctO2.append(gas.Y[2])
-            t.append(mb.nrt*dt)
+            t.append(mb.nrt * dt)
 
             print(f'{mb.tme:.2e} {blk.array["q"][1,1,1,4]:.2f} {gas.T:.2f}')
 
@@ -110,9 +114,9 @@ def simulate():
     niterout = 10000
     while mb.tme < 3.27e-2:
 
-        if mb.nrt%niterout == 0:
-            pgT.append(blk.array['q'][1,1,1,4])
-            pgO2.append(blk.array['q'][1,1,1,7])
+        if mb.nrt % niterout == 0:
+            pgT.append(blk.array["q"][1, 1, 1, 4])
+            pgO2.append(blk.array["q"][1, 1, 1, 7])
             ctT.append(gas.T)
             ctO2.append(gas.Y[2])
             t.append(mb.tme)
@@ -122,19 +126,20 @@ def simulate():
         mb.step(dt)
         sim.advance(mb.tme)
 
-    plt.plot(t,pgT,label='PEREGRINE')
-    plt.plot(t,ctT,label='CANTERA')
-    plt.title('T [K]')
+    plt.plot(t, pgT, label="PEREGRINE")
+    plt.plot(t, ctT, label="CANTERA")
+    plt.title("T [K]")
     plt.legend()
     plt.show()
-    plt.plot(t,pgO2,label='PEREGRINE')
-    plt.plot(t,ctO2,label='CANTERA')
-    plt.title('O2')
+    plt.plot(t, pgO2, label="PEREGRINE")
+    plt.plot(t, ctO2, label="CANTERA")
+    plt.title("O2")
     plt.legend()
     plt.show()
 
     # Finalise MPI
     MPI.Finalize()
+
 
 if __name__ == "__main__":
     try:
