@@ -62,7 +62,7 @@
 #include <math.h>
 #include <vector>
 
-void chem_GRI30(std::vector<block_> mb, thtrdat_ th, bool jac=false) {
+void chem_GRI30(std::vector<block_> mb, thtrdat_ th) {
 for(block_ b : mb){
 
 // --------------------------------------------------------------|

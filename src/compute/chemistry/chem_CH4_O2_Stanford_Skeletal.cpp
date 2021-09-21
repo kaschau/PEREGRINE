@@ -21,7 +21,7 @@
 #include <math.h>
 #include <vector>
 
-void chem_CH4_O2_Stanford_Skeletal(std::vector<block_> mb, thtrdat_ th, bool jac=false) {
+void chem_CH4_O2_Stanford_Skeletal(std::vector<block_> mb, thtrdat_ th) {
 for(block_ b : mb){
 
 // --------------------------------------------------------------|

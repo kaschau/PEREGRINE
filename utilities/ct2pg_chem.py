@@ -140,7 +140,7 @@ def ct2pg_chem(ctyaml, cpp):
         "#include <math.h>\n"
         "#include <vector>\n"
         "\n"
-        f'void {cpp.replace(".cpp","")}(std::vector<block_> mb, thtrdat_ th, bool jac=false) {{\n'
+        f'void {cpp.replace(".cpp","")}(std::vector<block_> mb, thtrdat_ th) {{\n'
         "for(block_ b : mb){\n"
         "\n"
         "// --------------------------------------------------------------|\n"
