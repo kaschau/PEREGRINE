@@ -5,7 +5,7 @@ from ..compute import block_
 from .restart_block import restart_block
 from ..misc import FrozenDict
 
-''' block.py
+""" block.py
 
 Authors:
 
@@ -13,200 +13,438 @@ Kyle Schau
 
 This module defines the top block class. This object is the most basic object that a multiblock datasets (see multiblock.py) can be composed of.
 
-'''
+"""
 
-class solver_block(restart_block,block_):
-    '''block object is the most basic object a raptorpy.multiblock.dataset (or one of its descendants) can be.
+
+class solver_block(restart_block, block_):
+    """block object is the most basic object a raptorpy.multiblock.dataset (or one of its descendants) can be.
 
     Attributes
     ---------
 
-    '''
+    """
 
-    block_type = 'solver'
+    block_type = "solver"
+
     def __init__(self, nblki, sp_names):
         # The c++ stuff must be instantiated first, so that inhereted python side
         # attributes are assigned values, not defined in the upstream __init__s
         block_.__init__(self)
         restart_block.__init__(self, nblki, sp_names)
 
-        self.ne = 5+self.ns-1
+        self.ne = 5 + self.ns - 1
 
         ################################################################################################################
         ############## Solution Variables
         ################################################################################################################
         # Conserved variables
-        for d in ['Q','dQ']:
-            self.array[f'{d}'] = None
+        for d in ["Q", "dQ"]:
+            self.array[f"{d}"] = None
         # Spatial derivative of primative array
-        for d in ['dqdx','dqdy','dqdz']:
-            self.array[f'{d}'] = None
+        for d in ["dqdx", "dqdy", "dqdz"]:
+            self.array[f"{d}"] = None
         # thermo,trans arrays
-        for d in ['qh','qt']:
-            self.array[f'{d}'] = None
+        for d in ["qh", "qt"]:
+            self.array[f"{d}"] = None
         # RK stages
-        for d in ['rhs0','rhs1','rhs2','rhs3']:
-            self.array[f'{d}'] = None
+        for d in ["rhs0", "rhs1", "rhs2", "rhs3"]:
+            self.array[f"{d}"] = None
         # Face fluxes
-        for d in ['iF','jF','kF']:
-            self.array[f'{d}'] = None
+        for d in ["iF", "jF", "kF"]:
+            self.array[f"{d}"] = None
 
-        if self.block_type == 'solver':
+        if self.block_type == "solver":
             self.array._freeze()
 
-    def init_solver_arrays(self,config):
-        '''
+    def init_solver_arrays(self, config):
+        """
         Create the Kokkos work arrays and python side numpy wrappers
-        '''
+        """
 
-        if config['Kokkos']['Space'] in ['OpenMP','Serial','Default']:
+        if config["Kokkos"]["Space"] in ["OpenMP", "Serial", "Default"]:
             space = kokkos.HostSpace
         else:
-            raise ValueError('Are we ready for that?')
+            raise ValueError("Are we ready for that?")
 
-        ccshape = [self.ni+1,self.nj+1,self.nk+1]
-        ifshape = [self.ni+2,self.nj+1,self.nk+1]
-        jfshape = [self.ni+1,self.nj+2,self.nk+1]
-        kfshape = [self.ni+1,self.nj+1,self.nk+2]
+        ccshape = [self.ni + 1, self.nj + 1, self.nk + 1]
+        ifshape = [self.ni + 2, self.nj + 1, self.nk + 1]
+        jfshape = [self.ni + 1, self.nj + 2, self.nk + 1]
+        kfshape = [self.ni + 1, self.nj + 1, self.nk + 2]
 
-        cQshape  = [self.ni+1,self.nj+1,self.nk+1,5+self.ns-1]
-        ifQshape = [self.ni+2,self.nj+1,self.nk+1,5+self.ns-1]
-        jfQshape = [self.ni+1,self.nj+2,self.nk+1,5+self.ns-1]
-        kfQshape = [self.ni+1,self.nj+1,self.nk+2,5+self.ns-1]
+        cQshape = [self.ni + 1, self.nj + 1, self.nk + 1, 5 + self.ns - 1]
+        ifQshape = [self.ni + 2, self.nj + 1, self.nk + 1, 5 + self.ns - 1]
+        jfQshape = [self.ni + 1, self.nj + 2, self.nk + 1, 5 + self.ns - 1]
+        kfQshape = [self.ni + 1, self.nj + 1, self.nk + 2, 5 + self.ns - 1]
 
         #################################################################################
         ######## Grid Arrays
         #################################################################################
-        #-------------------------------------------------------------------------------#
+        # -------------------------------------------------------------------------------#
         #       Primary grid coordinates
-        #-------------------------------------------------------------------------------#
-        shape = [self.ni+2,self.nj+2,self.nk+2]
-        for name in ['x','y','z']:
+        # -------------------------------------------------------------------------------#
+        shape = [self.ni + 2, self.nj + 2, self.nk + 2]
+        for name in ["x", "y", "z"]:
             if self.array[name] is None:
-                setattr(self, name, kokkos.array(name, shape=shape, dtype=kokkos.double, space=space, dynamic=False))
+                setattr(
+                    self,
+                    name,
+                    kokkos.array(
+                        name,
+                        shape=shape,
+                        dtype=kokkos.double,
+                        space=space,
+                        dynamic=False,
+                    ),
+                )
                 self.array[name] = np.array(getattr(self, name), copy=False)
             else:
-                setattr(self, name, kokkos.array(self.array[name], dtype=kokkos.double, space=space, dynamic=False))
+                setattr(
+                    self,
+                    name,
+                    kokkos.array(
+                        self.array[name],
+                        dtype=kokkos.double,
+                        space=space,
+                        dynamic=False,
+                    ),
+                )
 
-        #-------------------------------------------------------------------------------#
+        # -------------------------------------------------------------------------------#
         #       Cell center
-        #-------------------------------------------------------------------------------#
+        # -------------------------------------------------------------------------------#
         shape = ccshape
-        for name in ('xc', 'yc', 'zc','J'):
+        for name in ("xc", "yc", "zc", "J"):
             if self.array[name] is None:
-                setattr(self, name, kokkos.array(name, shape=shape, dtype=kokkos.double, space=space, dynamic=False))
+                setattr(
+                    self,
+                    name,
+                    kokkos.array(
+                        name,
+                        shape=shape,
+                        dtype=kokkos.double,
+                        space=space,
+                        dynamic=False,
+                    ),
+                )
                 self.array[name] = np.array(getattr(self, name), copy=False)
             else:
-                setattr(self, name, kokkos.array(self.array[name], dtype=kokkos.double, space=space, dynamic=False))
+                setattr(
+                    self,
+                    name,
+                    kokkos.array(
+                        self.array[name],
+                        dtype=kokkos.double,
+                        space=space,
+                        dynamic=False,
+                    ),
+                )
         # Cell center metrics
-        for name in ('dEdx','dEdy','dEdz',
-                     'dNdx','dNdy','dNdz',
-                     'dXdx','dXdy','dXdz'):
+        for name in (
+            "dEdx",
+            "dEdy",
+            "dEdz",
+            "dNdx",
+            "dNdy",
+            "dNdz",
+            "dXdx",
+            "dXdy",
+            "dXdz",
+        ):
             if self.array[name] is None:
-                setattr(self, name, kokkos.array(name, shape=shape, dtype=kokkos.double, space=space, dynamic=False))
+                setattr(
+                    self,
+                    name,
+                    kokkos.array(
+                        name,
+                        shape=shape,
+                        dtype=kokkos.double,
+                        space=space,
+                        dynamic=False,
+                    ),
+                )
                 self.array[name] = np.array(getattr(self, name), copy=False)
             else:
-                setattr(self, name, kokkos.array(self.array[name], dtype=kokkos.double, space=space, dynamic=False))
+                setattr(
+                    self,
+                    name,
+                    kokkos.array(
+                        self.array[name],
+                        dtype=kokkos.double,
+                        space=space,
+                        dynamic=False,
+                    ),
+                )
 
-        #-------------------------------------------------------------------------------#
+        # -------------------------------------------------------------------------------#
         #       i face vector components and areas
-        #-------------------------------------------------------------------------------#
+        # -------------------------------------------------------------------------------#
         shape = ifshape
-        for name in ('isx', 'isy', 'isz', 'iS', 'inx', 'iny', 'inz'):
+        for name in ("isx", "isy", "isz", "iS", "inx", "iny", "inz"):
             if self.array[name] is None:
-                setattr(self, name, kokkos.array(name, shape=shape, dtype=kokkos.double, space=space, dynamic=False))
+                setattr(
+                    self,
+                    name,
+                    kokkos.array(
+                        name,
+                        shape=shape,
+                        dtype=kokkos.double,
+                        space=space,
+                        dynamic=False,
+                    ),
+                )
                 self.array[name] = np.array(getattr(self, name), copy=False)
             else:
-                setattr(self, name, kokkos.array(self.array[name], dtype=kokkos.double, space=space, dynamic=False))
+                setattr(
+                    self,
+                    name,
+                    kokkos.array(
+                        self.array[name],
+                        dtype=kokkos.double,
+                        space=space,
+                        dynamic=False,
+                    ),
+                )
 
-        #-------------------------------------------------------------------------------#
+        # -------------------------------------------------------------------------------#
         #       j face vector components and areas
-        #-------------------------------------------------------------------------------#
+        # -------------------------------------------------------------------------------#
         shape = jfshape
-        for name in ('jsx', 'jsy', 'jsz', 'jS', 'jnx', 'jny', 'jnz'):
+        for name in ("jsx", "jsy", "jsz", "jS", "jnx", "jny", "jnz"):
             if self.array[name] is None:
-                setattr(self, name, kokkos.array(name, shape=shape, dtype=kokkos.double, space=space, dynamic=False))
+                setattr(
+                    self,
+                    name,
+                    kokkos.array(
+                        name,
+                        shape=shape,
+                        dtype=kokkos.double,
+                        space=space,
+                        dynamic=False,
+                    ),
+                )
                 self.array[name] = np.array(getattr(self, name), copy=False)
             else:
-                setattr(self, name, kokkos.array(self.array[name], dtype=kokkos.double, space=space, dynamic=False))
+                setattr(
+                    self,
+                    name,
+                    kokkos.array(
+                        self.array[name],
+                        dtype=kokkos.double,
+                        space=space,
+                        dynamic=False,
+                    ),
+                )
 
-        #-------------------------------------------------------------------------------#
+        # -------------------------------------------------------------------------------#
         #       k face vector components and areas
-        #-------------------------------------------------------------------------------#
+        # -------------------------------------------------------------------------------#
         shape = kfshape
-        for name in ('ksx', 'ksy', 'ksz', 'kS', 'knx', 'kny', 'knz'):
+        for name in ("ksx", "ksy", "ksz", "kS", "knx", "kny", "knz"):
             if self.array[name] is None:
-                setattr(self, name, kokkos.array(name, shape=shape, dtype=kokkos.double, space=space, dynamic=False))
+                setattr(
+                    self,
+                    name,
+                    kokkos.array(
+                        name,
+                        shape=shape,
+                        dtype=kokkos.double,
+                        space=space,
+                        dynamic=False,
+                    ),
+                )
                 self.array[name] = np.array(getattr(self, name), copy=False)
             else:
-                setattr(self, name, kokkos.array(self.array[name], dtype=kokkos.double, space=space, dynamic=False))
+                setattr(
+                    self,
+                    name,
+                    kokkos.array(
+                        self.array[name],
+                        dtype=kokkos.double,
+                        space=space,
+                        dynamic=False,
+                    ),
+                )
 
         #################################################################################
         ######## Flow Arrays
         #################################################################################
-        #-------------------------------------------------------------------------------#
+        # -------------------------------------------------------------------------------#
         #       Conservative, Primative, dQ
-        #-------------------------------------------------------------------------------#
+        # -------------------------------------------------------------------------------#
         shape = cQshape
-        for name in ('Q', 'q', 'dQ'):
+        for name in ("Q", "q", "dQ"):
             if self.array[name] is None:
-                setattr(self, name, kokkos.array(name, shape=shape, dtype=kokkos.double, space=space, dynamic=False))
+                setattr(
+                    self,
+                    name,
+                    kokkos.array(
+                        name,
+                        shape=shape,
+                        dtype=kokkos.double,
+                        space=space,
+                        dynamic=False,
+                    ),
+                )
                 self.array[name] = np.array(getattr(self, name), copy=False)
             else:
-                setattr(self, name, kokkos.array(self.array[name], dtype=kokkos.double, space=space, dynamic=False))
+                setattr(
+                    self,
+                    name,
+                    kokkos.array(
+                        self.array[name],
+                        dtype=kokkos.double,
+                        space=space,
+                        dynamic=False,
+                    ),
+                )
 
-        #-------------------------------------------------------------------------------#
+        # -------------------------------------------------------------------------------#
         #       Spatial derivative of primative array
-        #-------------------------------------------------------------------------------#
+        # -------------------------------------------------------------------------------#
         shape = cQshape
-        for name in ('dqdx','dqdy','dqdz'):
+        for name in ("dqdx", "dqdy", "dqdz"):
             if self.array[name] is None:
-                setattr(self, name, kokkos.array(name, shape=shape, dtype=kokkos.double, space=space, dynamic=False))
+                setattr(
+                    self,
+                    name,
+                    kokkos.array(
+                        name,
+                        shape=shape,
+                        dtype=kokkos.double,
+                        space=space,
+                        dynamic=False,
+                    ),
+                )
                 self.array[name] = np.array(getattr(self, name), copy=False)
             else:
-                setattr(self, name, kokkos.array(self.array[name], dtype=kokkos.double, space=space, dynamic=False))
+                setattr(
+                    self,
+                    name,
+                    kokkos.array(
+                        self.array[name],
+                        dtype=kokkos.double,
+                        space=space,
+                        dynamic=False,
+                    ),
+                )
 
-        #-------------------------------------------------------------------------------#
+        # -------------------------------------------------------------------------------#
         #       Thermo
-        #-------------------------------------------------------------------------------#
+        # -------------------------------------------------------------------------------#
         shape = cQshape
-        for name in ['qh']:
+        for name in ["qh"]:
             if self.array[name] is None:
-                setattr(self, name, kokkos.array(name, shape=shape, dtype=kokkos.double, space=space, dynamic=False))
+                setattr(
+                    self,
+                    name,
+                    kokkos.array(
+                        name,
+                        shape=shape,
+                        dtype=kokkos.double,
+                        space=space,
+                        dynamic=False,
+                    ),
+                )
                 self.array[name] = np.array(getattr(self, name), copy=False)
             else:
-                setattr(self, name, kokkos.array(self.array[name], dtype=kokkos.double, space=space, dynamic=False))
+                setattr(
+                    self,
+                    name,
+                    kokkos.array(
+                        self.array[name],
+                        dtype=kokkos.double,
+                        space=space,
+                        dynamic=False,
+                    ),
+                )
 
-        #-------------------------------------------------------------------------------#
+        # -------------------------------------------------------------------------------#
         #       Transport
-        #-------------------------------------------------------------------------------#
-        shape  = [self.ni+1,self.nj+1,self.nk+1,2+self.ns-1]
-        for name in ['qt']:
+        # -------------------------------------------------------------------------------#
+        shape = [self.ni + 1, self.nj + 1, self.nk + 1, 2 + self.ns - 1]
+        for name in ["qt"]:
             if self.array[name] is None:
-                setattr(self, name, kokkos.array(name, shape=shape, dtype=kokkos.double, space=space, dynamic=False))
+                setattr(
+                    self,
+                    name,
+                    kokkos.array(
+                        name,
+                        shape=shape,
+                        dtype=kokkos.double,
+                        space=space,
+                        dynamic=False,
+                    ),
+                )
                 self.array[name] = np.array(getattr(self, name), copy=False)
             else:
-                setattr(self, name, kokkos.array(self.array[name], dtype=kokkos.double, space=space, dynamic=False))
+                setattr(
+                    self,
+                    name,
+                    kokkos.array(
+                        self.array[name],
+                        dtype=kokkos.double,
+                        space=space,
+                        dynamic=False,
+                    ),
+                )
 
-        #-------------------------------------------------------------------------------#
+        # -------------------------------------------------------------------------------#
         #       RK Stages
-        #-------------------------------------------------------------------------------#
-        nstorage = {'rk1':0, 'rk3':2, 'rk4':4}
+        # -------------------------------------------------------------------------------#
+        nstorage = {"rk1": 0, "rk3": 2, "rk4": 4}
         shape = cQshape
-        for i in range(nstorage[config['solver']['time_integration']]):
-            name = f'rhs{i}'
+        for i in range(nstorage[config["solver"]["time_integration"]]):
+            name = f"rhs{i}"
             if self.array[name] is None:
-                setattr(self, name, kokkos.array(name, shape=shape, dtype=kokkos.double, space=space, dynamic=False))
+                setattr(
+                    self,
+                    name,
+                    kokkos.array(
+                        name,
+                        shape=shape,
+                        dtype=kokkos.double,
+                        space=space,
+                        dynamic=False,
+                    ),
+                )
                 self.array[name] = np.array(getattr(self, name), copy=False)
             else:
-                setattr(self, name, kokkos.array(self.array[name], dtype=kokkos.double, space=space, dynamic=False))
+                setattr(
+                    self,
+                    name,
+                    kokkos.array(
+                        self.array[name],
+                        dtype=kokkos.double,
+                        space=space,
+                        dynamic=False,
+                    ),
+                )
 
-        #-------------------------------------------------------------------------------#
+        # -------------------------------------------------------------------------------#
         #       Fluxes
-        #-------------------------------------------------------------------------------#
-        for shape,name in zip((ifQshape,jfQshape,kfQshape),('iF', 'jF', 'kF')):
+        # -------------------------------------------------------------------------------#
+        for shape, name in zip((ifQshape, jfQshape, kfQshape), ("iF", "jF", "kF")):
             if self.array[name] is None:
-                setattr(self, name, kokkos.array(name, shape=shape, dtype=kokkos.double, space=space, dynamic=False))
+                setattr(
+                    self,
+                    name,
+                    kokkos.array(
+                        name,
+                        shape=shape,
+                        dtype=kokkos.double,
+                        space=space,
+                        dynamic=False,
+                    ),
+                )
                 self.array[name] = np.array(getattr(self, name), copy=False)
             else:
-                setattr(self, name, kokkos.array(self.array[name], dtype=kokkos.double, space=space, dynamic=False))
+                setattr(
+                    self,
+                    name,
+                    kokkos.array(
+                        self.array[name],
+                        dtype=kokkos.double,
+                        space=space,
+                        dynamic=False,
+                    ),
+                )

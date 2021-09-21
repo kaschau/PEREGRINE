@@ -6,33 +6,33 @@ from .compute import flux
 
 def consistify(mb):
 
-    #We assume that the interior of the blocks have a
+    # We assume that the interior of the blocks have a
     # conservative Q variable field. We update the
     # interior primatives, apply boundary conditions,
     # update halo values as needed, then communicate
     # everything
 
-    #First communicate conservatives
-    communicate(mb,['Q'])
+    # First communicate conservatives
+    communicate(mb, ["Q"])
 
-    #Now update derived arrays for ENTIRE block, even exterior halos
+    # Now update derived arrays for ENTIRE block, even exterior halos
     for blk in mb:
-        mb.eos(blk,mb.thtrdat,-1,'cons')
+        mb.eos(blk, mb.thtrdat, -1, "cons")
 
-    #Apply euler boundary conditions
-    apply_bcs(mb,'euler')
+    # Apply euler boundary conditions
+    apply_bcs(mb, "euler")
 
-    if mb.config['RHS']['diffusion']:
+    if mb.config["RHS"]["diffusion"]:
 
-        #Update transport properties
+        # Update transport properties
         for blk in mb:
-            kinetic_theory(blk,mb.thtrdat,-1)
+            kinetic_theory(blk, mb.thtrdat, -1)
 
-        #Update spatial derivatives
+        # Update spatial derivatives
         flux.dqdxyz(mb)
 
-        #Apply viscous boundary conditions
-        apply_bcs(mb,'viscous')
+        # Apply viscous boundary conditions
+        apply_bcs(mb, "viscous")
 
-        #communicate viscous halos
-        communicate(mb,['dqdx','dqdy','dqdz'])
+        # communicate viscous halos
+        communicate(mb, ["dqdx", "dqdy", "dqdz"])
