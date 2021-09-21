@@ -122,7 +122,9 @@ def ct2pg_chem(ctyaml, cpp):
     # HEADER
     # --------------------------------
     # WRITE OUT SPECIES ORDER
-    pg_mech.write("// ========================================================== //\n")
+    pg_mech.write(
+        "// ========================================================== //\n"
+    )
     for i, sp in enumerate(gas.species_names):
         pg_mech.write(f"// Y({i:>3d}) = {sp}\n")
     pg_mech.write(
@@ -428,11 +430,10 @@ def ct2pg_chem(ctyaml, cpp):
         "  // Source terms. --------------------------------------------- >\n"
         "  // ----------------------------------------------------------- >\n"
         "\n"
-        "  double omega[ns-1];\n\n"
     )
     pg_mech.write(out_string)
 
-    for i in range(gas.n_species - 1):
+    for i in range(gas.n_species):
         out_string = []
         nu_sum = nu_b[i, :] - nu_f[i, :]
         for j, s in enumerate(nu_sum):
@@ -444,10 +445,10 @@ def ct2pg_chem(ctyaml, cpp):
                 out_string.append(f" {s:+}*q[{j}]")
 
         if len(out_string) == 0:
-            pg_mech.write(f"  omega[{i}] = th.MW[{i}] * (0.0")
+            pg_mech.write(f"  b.omega(i,j,k,{i}) = th.MW[{i}] * (0.0")
         else:
             out_string[0] = out_string[0].replace("+", "")
-            pg_mech.write(f"  omega[{i}] = th.MW[{i}] * (")
+            pg_mech.write(f"  b.omega(i,j,k,{i}) = th.MW[{i}] * (")
             for item in out_string:
                 pg_mech.write(item)
         pg_mech.write(");\n")
@@ -457,14 +458,17 @@ def ct2pg_chem(ctyaml, cpp):
         "  // Add source terms to RHS\n"
         "  for (int n=0; n<th.ns-1; n++)\n"
         "  {\n"
-        "    b.dQ(i,j,k,5+n) += omega[n];\n"
+        "    b.dQ(i,j,k,5+n) += b.omega(i,j,k,n);\n"
         "  }\n"
         "\n"
     )
     pg_mech.write(out_string)
 
     # END
-    out_string = "  });\n" "}}"
+    out_string = (
+        "  });\n"
+        "}}"
+    )
     pg_mech.write(out_string)
     pg_mech.close()
 
@@ -474,18 +478,21 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(
-        description="Convert a cantera .yaml file to hard coded finite rate chemical source term c++ source code used by PEREGRINE"
+        description="""Convert a cantera .yaml file to hard coded finite rate
+        chemical source term c++ source code used by PEREGRINE"""
     )
     parser.add_argument(
         "ct_file_name",
         metavar="<ct_file>",
-        help="Cantera .yaml file to convert into hard coded PEREGRINE chemical source term.",
+        help="""Cantera .yaml file to convert into hard coded PEREGRINE
+        chemical source term.""",
         type=str,
     )
     args = parser.parse_args()
 
     ct_file_name = args.ct_file_name
 
-    cpp_file_name = f'chem_{ct_file_name.replace(".yaml",".cpp")}'.replace("-", "_")
+    cpp_file_name = f'chem_{ct_file_name.replace(".yaml",".cpp")}'.replace("-",
+                                                                           "_")
 
     ct2pg_chem(ct_file_name, cpp_file_name)

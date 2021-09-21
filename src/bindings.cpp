@@ -92,13 +92,18 @@ PYBIND11_MODULE(compute, m) {
     .def_readwrite("Q" , &block_::Q )
     .def_readwrite("q" , &block_::q )
     .def_readwrite("dQ", &block_::dQ )
+
     // Spatial derivative of prim array
     .def_readwrite("dqdx", &block_::dqdx )
     .def_readwrite("dqdy", &block_::dqdy )
     .def_readwrite("dqdz", &block_::dqdz )
+
     // Thermo,transport variables
     .def_readwrite("qh", &block_::qh )
     .def_readwrite("qt", &block_::qt )
+
+    // Chemistry
+    .def_readwrite("omega", &block_::omega )
 
     // RK stages
     .def_readwrite("rhs0", &block_::rhs0 )

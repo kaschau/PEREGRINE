@@ -6,16 +6,13 @@ Adiabatic flame calculation.
 """
 
 import mpi4py.rc
-
 mpi4py.rc.initialize = False
 
 import kokkos
-
 import peregrinepy as pg
 import numpy as np
 import cantera as ct
 import matplotlib.pyplot as plt
-
 from pathlib import Path
 
 
@@ -30,7 +27,7 @@ def simulate():
     pg.mpicomm.mpiutils.register_finalize_handler()
 
     relpath = str(Path(__file__).parent)
-    ct.add_directory(relpath + "/../src/peregrinepy/thermo_transport/database")
+    ct.add_directory(relpath + "/../src/peregrinepy/thermo_transport/database/source")
     config = pg.files.config_file()
     config["RHS"]["diffusion"] = False
     config["thermochem"]["chemistry"] = True
@@ -57,7 +54,7 @@ def simulate():
     mb.compute_metrics()
 
     T, p = 1100.0, 101325
-    gas = ct.Solution("ct_CH4_O2_Stanford_Skeletal.yaml")
+    gas = ct.Solution("CH4_O2_Stanford_Skeletal.yaml")
     # set the gas state
     gas.TP = T, p
     phi = 1.0
