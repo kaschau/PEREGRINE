@@ -6,7 +6,8 @@ Authors:
 
 Kyle Schau
 
-This module holds a python dictionary version of a standard PEREGRINE config file.
+This module holds a python dictionary version
+of a standard PEREGRINE config file.
 
 """
 
@@ -15,13 +16,12 @@ class FrozenDict(dict):
     __isfrozen = False
 
     def __setitem__(self, key, value):
-        if self.__isfrozen and not key in self.keys():
+        if self.__isfrozen and key not in self.keys():
             raise KeyError(
-                "{} is not a valid input file attribute, check spelling and case".format(
-                    key
+                f"""{key} is not a valid input file attribute,
+                check spelling and case"""
                 )
-            )
-        super(FrozenDict, self).__setitem__(key, value)
+        super().__setitem__(key, value)
 
     def _freeze(self):
         self.__isfrozen = True
@@ -30,7 +30,11 @@ class FrozenDict(dict):
 class config_file(FrozenDict):
     def __init__(self):
         self["io"] = FrozenDict(
-            {"griddir": "./Grid", "inputdir": "./Input", "outputdir": "./Output"}
+            {
+                "griddir": "./Grid",
+                "inputdir": "./Input",
+                "outputdir": "./Output"
+            }
         )
         self["simulation"] = FrozenDict(
             {
@@ -43,9 +47,17 @@ class config_file(FrozenDict):
             }
         )
 
-        self["solver"] = FrozenDict({"time_integration": "rk4"})
+        self["solver"] = FrozenDict(
+            {
+                "time_integration": "rk4"
+            }
+        )
 
-        self["RHS"] = FrozenDict({"diffusion": True})
+        self["RHS"] = FrozenDict(
+            {
+                "diffusion": True
+            }
+        )
 
         self["thermochem"] = FrozenDict(
             {
@@ -56,7 +68,11 @@ class config_file(FrozenDict):
             }
         )
 
-        self["Kokkos"] = FrozenDict({"Space": "Default"})
+        self["Kokkos"] = FrozenDict(
+            {
+                "Space": "Default"
+            }
+        )
 
         for key in self.keys():
             self[key]._freeze()

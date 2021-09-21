@@ -12,11 +12,9 @@ Should reproduce results in Fig. 2 for the KEEP scheme (blue line)
 """
 
 import mpi4py.rc
-
 mpi4py.rc.initialize = False
 
 import kokkos
-
 import peregrinepy as pg
 import numpy as np
 import matplotlib.pyplot as plt
@@ -63,8 +61,6 @@ def simulate():
 
     mb.compute_metrics()
 
-    pg.writers.write_grid(mb, config["io"]["griddir"])
-
     R = 281.4583333333333
     cp = 1000.0
     cv = cp - R
@@ -89,15 +85,11 @@ def simulate():
     pg.consistify(mb)
 
     dt = 0.1 * 2 * np.pi / 64
-    niterout = 5000
     ke = []
     e = []
     s = []
     t = []
     while mb.tme * M0 < 120:
-
-        if mb.nrt % niterout == 0:
-            pg.writers.write_restart(mb, config["io"]["outputdir"], "../Grid")
 
         if mb.nrt % 50 == 0:
             print(mb.tme * M0)
@@ -115,7 +107,6 @@ def simulate():
                 * (blk.array["q"][1:-1, 1:-1, 1:-1, 4] * cv)
             )
 
-            rE = np.sum(blk.array["Q"][1:-1, 1:-1, 1:-1, 4])
             rS = np.sum(
                 blk.array["Q"][1:-1, 1:-1, 1:-1, 0]
                 * np.log10(
@@ -148,12 +139,7 @@ def simulate():
 
 
 if __name__ == "__main__":
-    try:
-        from os import mkdir
 
-        mkdir("./Output")
-    except FileExistsError:
-        pass
     try:
         kokkos.initialize()
         simulate()
