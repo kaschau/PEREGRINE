@@ -46,7 +46,7 @@ MDRange3 get_range3(block_ b,
         break;
       case 10 :
         // specify i,j,k turn it into a function call (kinda)
-        range = MDRange3({i,j,k},{i,j,k});
+        range = MDRange3({i,j,k},{i+1,j+1,k+1});
         break;
       default :
         throw std::invalid_argument( "Unknown argument to get_range3");
