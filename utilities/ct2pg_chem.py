@@ -138,15 +138,13 @@ def ct2pg_chem(ctyaml, cpp):
         '#include "thtrdat_.hpp"\n'
         '#include "compute.hpp"\n'
         "#include <math.h>\n"
-        "#include <vector>\n"
         "\n"
-        f'void {cpp.replace(".cpp","")}(std::vector<block_> mb, thtrdat_ th) {{\n'
-        "for(block_ b : mb){\n"
+        f'void {cpp.replace(".cpp","")}(block_ b, thtrdat_ th, int face/*=0*/, int i/*=0*/, int j/*=0*/, int k/*=0*/) {{\n'
         "\n"
         "// --------------------------------------------------------------|\n"
         "// cc range\n"
         "// --------------------------------------------------------------|\n"
-        "  MDRange3 range = MDRange3({1,1,1},{b.ni,b.nj,b.nk});\n"
+        "  MDRange3 range = get_range3(b, face, i, j, k);\n"
         "\n"
         '  Kokkos::parallel_for("Compute chemical source terms",\n'
         "                       range,\n"
@@ -476,7 +474,7 @@ def ct2pg_chem(ctyaml, cpp):
     # END
     out_string = (
         "  });\n"
-        "}}"
+        "}"
     )
     pg_mech.write(out_string)
     pg_mech.close()
