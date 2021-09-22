@@ -92,13 +92,18 @@ PYBIND11_MODULE(compute, m) {
     .def_readwrite("Q" , &block_::Q )
     .def_readwrite("q" , &block_::q )
     .def_readwrite("dQ", &block_::dQ )
+
     // Spatial derivative of prim array
     .def_readwrite("dqdx", &block_::dqdx )
     .def_readwrite("dqdy", &block_::dqdy )
     .def_readwrite("dqdz", &block_::dqdz )
+
     // Thermo,transport variables
     .def_readwrite("qh", &block_::qh )
     .def_readwrite("qt", &block_::qt )
+
+    // Chemistry
+    .def_readwrite("omega", &block_::omega )
 
     // RK stages
     .def_readwrite("rhs0", &block_::rhs0 )
@@ -112,10 +117,42 @@ PYBIND11_MODULE(compute, m) {
     .def_readwrite("kF", &block_::kF );
 
 ////////////////////////////////////////////////////////////////////////////////
-///////////////////  C++ Parent thtrdat_ class ////////////////////////////////
+///////////////////////////  Compute Functions /////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-  py::class_<thtrdat_>(m, "thtrdat_", py::dynamic_attr())
+  // ./flux
+  py::module flux = m.def_submodule("flux","flux module");
+  //  |----> dQzero
+  flux.def("dQzero", &dQzero, "Zero out RHS",
+        py::arg("list of block_ object"));
+  //  |----> dqdx
+  flux.def("dqdxyz", &dqdxyz, "Spatial derivatives of prims",
+        py::arg("list of block_ object"));
+  //  |----> advective
+  flux.def("advective", &advective, "Compute centered difference flux",
+        py::arg("list of block_ object"),
+        py::arg("thtrdat_ object"));
+  //  |----> viscous
+  flux.def("diffusive", &diffusive, "Compute centered diffusive flux",
+        py::arg("list of block_ object"),
+        py::arg("thtrdat_ object"));
+
+  // ./thermo
+  py::module thermo = m.def_submodule("thermo","thermo module");
+  //  |----> cpg
+  thermo.def("cpg", &cpg, "Update primatives or conservatives with cpg assumption",
+        py::arg("block_ object"),
+        py::arg("thtrdat_ object"),
+        py::arg("face"),
+        py::arg("given"));
+  //  |----> tpg
+  thermo.def("tpg", &tpg, "Update primatives or conservatives with tpg assumption",
+        py::arg("block_ object"),
+        py::arg("thtrdat_ object"),
+        py::arg("face"),
+        py::arg("given"));
+
+  py::class_<thtrdat_>(thermo, "thtrdat_", py::dynamic_attr())
     .def(py::init<>())
 
     .def_readwrite("ns", &thtrdat_::ns)
@@ -131,54 +168,22 @@ PYBIND11_MODULE(compute, m) {
     .def_readwrite("kappa_poly", &thtrdat_::kappa_poly)
     .def_readwrite("Dij_poly", &thtrdat_::Dij_poly);
 
-////////////////////////////////////////////////////////////////////////////////
-///////////////////////////  Compute Functions /////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-
-  // ./flux
-  //  |----> dQzero
-  m.def("dQzero", &dQzero, "Zero out RHS",
-        py::arg("list of block_ object"));
-  //  |----> dqdx
-  m.def("dqdxyz", &dqdxyz, "Spatial derivatives of prims",
-        py::arg("list of block_ object"));
-  //  |----> advective
-  m.def("advective", &advective, "Compute centered difference flux",
-        py::arg("list of block_ object"),
-        py::arg("thtrdat_ object"));
-  //  |----> viscous
-  m.def("diffusive", &diffusive, "Compute centered diffusive flux",
-        py::arg("list of block_ object"),
-        py::arg("thtrdat_ object"));
-
-  // ./thermo
-  //  |----> cpg
-  m.def("cpg", &cpg, "Update primatives or conservatives with cpg assumption",
-        py::arg("block_ object"),
-        py::arg("thtrdat_ object"),
-        py::arg("face"),
-        py::arg("given"));
-  //  |----> tpg
-  m.def("tpg", &tpg, "Update primatives or conservatives with tpg assumption",
-        py::arg("block_ object"),
-        py::arg("thtrdat_ object"),
-        py::arg("face"),
-        py::arg("given"));
-
   // ./transport
-  //  |----> transport
-  m.def("transport", &transport, "Update transport properties from primatives",
-        py::arg("block_ object"),
+  py::module transport = m.def_submodule("transport","transport module");
+  //  |----> kinetic_theory
+  transport.def("kinetic_theory", &kinetic_theory, "Update transport properties from primatives",
+        py::arg("block_"),
         py::arg("thtrdat_ object"),
         py::arg("face"));
 
   // ./chemistry
+  py::module chemistry = m.def_submodule("chemistry","chemistry module");
   //  |----> CH4_O2_Stanford_Skeletal
-  m.def("chem_CH4_O2_Stanford_Skeletal", &chem_CH4_O2_Stanford_Skeletal, "Chemical source terms from",
+  chemistry.def("chem_CH4_O2_Stanford_Skeletal", &chem_CH4_O2_Stanford_Skeletal, "Chemical source terms from",
         py::arg("list of block_ object"),
         py::arg("thtrdat_ object"));
   //  |----> GRI30
-  m.def("chem_GRI30", &chem_GRI30, "Chemical source terms from GRI3.0",
+  chemistry.def("chem_GRI30", &chem_GRI30, "Chemical source terms from GRI3.0",
         py::arg("list of block_ object"),
         py::arg("thtrdat_ object"));
 

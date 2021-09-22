@@ -1,14 +1,15 @@
-from .compute import dQzero,advective,diffusive
+from .compute import flux
+
 
 def RHS(mb):
 
-    #Zero out dQ array
-    dQzero(mb)
+    # Zero out dQ array
+    flux.dQzero(mb)
 
-    advective(mb,mb.thtrdat)
+    flux.advective(mb, mb.thtrdat)
 
-    if mb.config['RHS']['diffusion']:
-        diffusive(mb,mb.thtrdat)
+    if mb.config["RHS"]["diffusion"]:
+        flux.diffusive(mb, mb.thtrdat)
 
-    if mb.config['thermochem']['chemistry']:
-        mb.chem(mb,mb.thtrdat)
+    if mb.config["thermochem"]["chemistry"]:
+        mb.chem(mb, mb.thtrdat)

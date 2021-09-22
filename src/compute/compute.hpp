@@ -30,7 +30,7 @@ void tpg(block_ b, thtrdat_ th, int face, std::string given);
 
 // ./transport
 //    |------> transport
-void transport(block_ b, thtrdat_ th, int face);
+void kinetic_theory(block_ b, thtrdat_ th, int face);
 
 // ./chemistry
 //    |------> CH4_O2_Stanford_Skeletal

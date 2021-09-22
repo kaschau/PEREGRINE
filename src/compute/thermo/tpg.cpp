@@ -72,28 +72,28 @@ void tpg(block_ b,
   {
     m = ( T <= th.NASA7[n][0] ) ? 8 : 1;
 
-    cps[n] = th.NASA7[n][m+0]            +
+    cps[n] =(th.NASA7[n][m+0]            +
              th.NASA7[n][m+1]*    T      +
              th.NASA7[n][m+2]*pow(T,2.0) +
              th.NASA7[n][m+3]*pow(T,3.0) +
-             th.NASA7[n][m+4]*pow(T,4.0) ;
+             th.NASA7[n][m+4]*pow(T,4.0) )*th.Ru/th.MW[n];
 
-    hi[n]  = th.NASA7[n][m+0]                  +
+    hi[n]  =(th.NASA7[n][m+0]                  +
              th.NASA7[n][m+1]*    T      / 2.0 +
              th.NASA7[n][m+2]*pow(T,2.0) / 3.0 +
              th.NASA7[n][m+3]*pow(T,3.0) / 4.0 +
              th.NASA7[n][m+4]*pow(T,4.0) / 5.0 +
-             th.NASA7[n][m+5]/    T            ;
+             th.NASA7[n][m+5]/    T            )*T*th.Ru/th.MW[n];
 
-    cp   += cps[n]*th.Ru  *Y[n]/th.MW[n];
-    h    +=  hi[n]*th.Ru*T*Y[n]/th.MW[n];
+    cp   += cps[n]*Y[n];
+    h    +=  hi[n]*Y[n];
   }
 
   // Compute mixuture enthalpy
   gamma = cp/(cp-Rmix);
 
   // Mixture speed of sound
-  c = pow( gamma*Rmix*T , 2.0 );
+  c = sqrt(gamma*Rmix*T);
 
   // Compute density
   rho = p/(Rmix*T);
@@ -139,9 +139,9 @@ void tpg(block_ b,
   b.qh(i,j,k,2) = rho*h;
   b.qh(i,j,k,3) = c;
   b.qh(i,j,k,4) = rho*e;
-  for (int n=0; n<ns-1; n++)
+  for (int n=0; n<=ns-1; n++)
   {
-    b.qh(i,j,k,5+n) = rho*hi[n];
+    b.qh(i,j,k,5+n) = hi[n];
   }
 
   });
@@ -221,20 +221,21 @@ void tpg(block_ b,
     {
       int m = ( T <= th.NASA7[n][0] ) ? 8 : 1;
 
-      hi[n]  = th.NASA7[n][m+0]                  +
+      cps[n] =(th.NASA7[n][m+0]            +
+               th.NASA7[n][m+1]*    T      +
+               th.NASA7[n][m+2]*pow(T,2.0) +
+               th.NASA7[n][m+3]*pow(T,3.0) +
+               th.NASA7[n][m+4]*pow(T,4.0) )*th.Ru/th.MW[n];
+
+      hi[n]  =(th.NASA7[n][m+0]                  +
                th.NASA7[n][m+1]*    T      / 2.0 +
                th.NASA7[n][m+2]*pow(T,2.0) / 3.0 +
                th.NASA7[n][m+3]*pow(T,3.0) / 4.0 +
                th.NASA7[n][m+4]*pow(T,4.0) / 5.0 +
-               th.NASA7[n][m+5]/    T            ;
-      cps[n] = th.NASA7[n][m+0]            +
-               th.NASA7[n][m+1]*    T      +
-               th.NASA7[n][m+2]*pow(T,2.0) +
-               th.NASA7[n][m+3]*pow(T,3.0) +
-               th.NASA7[n][m+4]*pow(T,4.0) ;
+               th.NASA7[n][m+5]/    T            )*T*th.Ru/th.MW[n];
 
-      h    +=  hi[n]*th.Ru*T*Y[n]/th.MW[n];
-      cp   += cps[n]*th.Ru  *Y[n]/th.MW[n];
+      cp   += cps[n]*Y[n];
+      h    +=  hi[n]*Y[n];
     }
 
     T = T - (e - (h - Rmix*T))/(-cp - Rmix);
@@ -267,9 +268,9 @@ void tpg(block_ b,
   b.qh(i,j,k,2) = rho*h;
   b.qh(i,j,k,3) = c;
   b.qh(i,j,k,4) = rho*e;
-  for (int n=0; n<ns-1; n++)
+  for (int n=0; n<=ns-1; n++)
   {
-    b.qh(i,j,k,5+n) = rho*hi[n];
+    b.qh(i,j,k,5+n) = hi[n];
   }
 
   });

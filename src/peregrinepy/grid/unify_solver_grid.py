@@ -4,6 +4,7 @@ from mpi4py.MPI import Request
 from . import generate_halo
 from .. import mpicomm
 
+
 def unify_solver_grid(mb):
 
     for blk in mb:
@@ -11,51 +12,62 @@ def unify_solver_grid(mb):
 
     # Lets just be clean and create the edges and corners
     for _ in range(3):
-        mpicomm.blockcomm.communicate(mb,['x','y','z'])
+        mpicomm.blockcomm.communicate(mb, ["x", "y", "z"])
 
-    comm,rank,size = mpicomm.mpiutils.get_comm_rank_size()
+    comm, rank, size = mpicomm.mpiutils.get_comm_rank_size()
 
-    for var in ['x','y','z']:
+    for var in ["x", "y", "z"]:
         for _ in range(3):
             reqs = []
-            #Post non-blocking recieves
+            # Post non-blocking recieves
             for blk in mb:
                 for face in blk.faces:
-                    bc = face.connectivity['bctype']
-                    if bc != 'b1':
+                    bc = face.connectivity["bctype"]
+                    if bc != "b1":
                         continue
-                    neighbor = face.connectivity['neighbor']
-                    orientation = face.connectivity['orientation']
-                    comm_rank   = face.comm_rank
-                    tag = int(f'1{neighbor}2{blk.nblki}1{face.nface}')
+                    neighbor = face.connectivity["neighbor"]
+                    orientation = face.connectivity["orientation"]
+                    comm_rank = face.comm_rank
+                    tag = int(f"1{neighbor}2{blk.nblki}1{face.nface}")
 
                     ssize = face.recvbuffer3.size
-                    reqs.append(comm.Irecv([face.recvbuffer3[:], ssize, MPIDOUBLE], source=comm_rank, tag=tag))
+                    reqs.append(
+                        comm.Irecv(
+                            [face.recvbuffer3[:], ssize, MPIDOUBLE],
+                            source=comm_rank,
+                            tag=tag,
+                        )
+                    )
 
-            #Post non-blocking sends
+            # Post non-blocking sends
             for blk in mb:
                 for face in blk.faces:
-                    bc = face.connectivity['bctype']
-                    if bc != 'b1':
+                    bc = face.connectivity["bctype"]
+                    if bc != "b1":
                         continue
-                    neighbor = face.connectivity['neighbor']
-                    orientation = face.connectivity['orientation']
+                    neighbor = face.connectivity["neighbor"]
+                    orientation = face.connectivity["orientation"]
                     comm_rank = face.comm_rank
-                    tag = int(f'1{blk.nblki}2{neighbor}1{face.neighbor_face}')
-                    face.sendbuffer3[:] = face.orient( blk.array[var][face.s2_]
-                                                      -blk.array[var][face.s1_])
+                    tag = int(f"1{blk.nblki}2{neighbor}1{face.neighbor_face}")
+                    face.sendbuffer3[:] = face.orient(
+                        blk.array[var][face.s2_] - blk.array[var][face.s1_]
+                    )
                     ssize = face.sendbuffer3.size
-                    comm.Send([face.sendbuffer3, ssize, MPIDOUBLE], dest=comm_rank, tag=tag)
+                    comm.Send(
+                        [face.sendbuffer3, ssize, MPIDOUBLE], dest=comm_rank, tag=tag
+                    )
 
-            #wait and assign
+            # wait and assign
             count = 0
             for blk in mb:
                 for face in blk.faces:
-                    bc = face.connectivity['bctype']
-                    if bc != 'b1':
+                    bc = face.connectivity["bctype"]
+                    if bc != "b1":
                         continue
                     Request.Wait(reqs[count])
-                    blk.array[var][face.s0_] = blk.array[var][face.s1_] + face.recvbuffer3[:]
+                    blk.array[var][face.s0_] = (
+                        blk.array[var][face.s1_] + face.recvbuffer3[:]
+                    )
                     count += 1
 
             comm.Barrier()

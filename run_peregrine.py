@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import mpi4py.rc
+
 mpi4py.rc.initialize = False
 
 import kokkos
@@ -9,16 +10,18 @@ import time
 
 import sys
 
+
 def simulate(config_file_path):
     # Import but do not initialise MPI
     from mpi4py import MPI
     import numpy as np
-    np.seterr(all='raise')
+
+    np.seterr(all="raise")
 
     # Manually initialise MPI
     MPI.Init()
 
-    comm,rank,size = pg.mpicomm.mpiutils.get_comm_rank_size()
+    comm, rank, size = pg.mpicomm.mpiutils.get_comm_rank_size()
     # Ensure MPI is suitably cleaned up
     pg.mpicomm.mpiutils.register_finalize_handler()
 
@@ -26,21 +29,26 @@ def simulate(config_file_path):
 
     mb = pg.bootstrap_case(config)
 
-    pg.writers.parallel_writer.parallel_write_restart(mb,path=config['io']['outputdir'])
+    pg.writers.parallel_writer.parallel_write_restart(
+        mb, path=config["io"]["outputdir"]
+    )
 
-    for niter in range(config['simulation']['niter']):
+    for niter in range(config["simulation"]["niter"]):
 
-        if mb.nrt%config['simulation']['niterprint'] == 0:
+        if mb.nrt % config["simulation"]["niterprint"] == 0:
             if rank == 0:
-                print(mb.nrt,mb.tme)
+                print(mb.nrt, mb.tme)
 
-        mb.step(config['simulation']['dt'])
+        mb.step(config["simulation"]["dt"])
 
-        if mb.nrt%config['simulation']['niterout'] == 0:
-            pg.writers.parallel_writer.parallel_write_restart(mb,config['io']['outputdir'])
+        if mb.nrt % config["simulation"]["niterout"] == 0:
+            pg.writers.parallel_writer.parallel_write_restart(
+                mb, config["io"]["outputdir"]
+            )
 
     # Finalise MPI
     MPI.Finalize()
+
 
 if __name__ == "__main__":
     config_file_path = sys.argv[1]

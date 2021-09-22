@@ -68,7 +68,7 @@ void cpg(block_ b,
   gamma = cp/(cp-Rmix);
 
   // Mixture speed of soung
-  c = pow( gamma*Rmix*T , 2.0 );
+  c = sqrt(gamma*Rmix*T);
 
   // Compute density
   rho = p/(Rmix*T);
@@ -114,9 +114,9 @@ void cpg(block_ b,
   b.qh(i,j,k,2) = rho*h;
   b.qh(i,j,k,3) = c;
   b.qh(i,j,k,4) = rho*e;
-  for (int n=0; n<ns-1; n++)
+  for (int n=0; n<=ns-1; n++)
   {
-    b.qh(i,j,k,5+n) = rho*h*Y[n];
+    b.qh(i,j,k,5+n) = T*th.cp0[n];
   }
 
   });
@@ -189,7 +189,7 @@ void cpg(block_ b,
   gamma = cp/(cp-Rmix);
 
   // Mixture speed of soung
-  c = pow( gamma*Rmix*T , 2.0 );
+  c = sqrt(gamma*Rmix*T);
 
   // Set values of new properties
   // Pressure, temperature, Y
@@ -208,9 +208,9 @@ void cpg(block_ b,
   b.qh(i,j,k,2) = rho*h;
   b.qh(i,j,k,3) = c;
   b.qh(i,j,k,4) = rho*e;
-  for (int n=0; n<ns-1; n++)
+  for (int n=0; n<=ns-1; n++)
   {
-    b.qh(i,j,k,5+n) = rho*h*Y[n];
+    b.qh(i,j,k,5+n) = T*th.cp0[n];
   }
 
   });

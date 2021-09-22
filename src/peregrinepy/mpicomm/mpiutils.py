@@ -1,14 +1,17 @@
 import sys
 import atexit
 
+
 def get_comm_rank_size():
 
     from mpi4py import MPI
+
     comm = MPI.COMM_WORLD
     rank = comm.rank
     size = comm.size
 
-    return comm,rank,size
+    return comm, rank, size
+
 
 def register_finalize_handler():
     import mpi4py.rc
@@ -40,9 +43,12 @@ def register_finalize_handler():
         exc = excepthook.exception
 
         # If we are exiting normally then call MPI_Finalize
-        if (MPI.COMM_WORLD.size == 1 or exc is None or
-            isinstance(exc, KeyboardInterrupt) or
-            (isinstance(exc, SystemExit) and exc.code == 0)):
+        if (
+            MPI.COMM_WORLD.size == 1
+            or exc is None
+            or isinstance(exc, KeyboardInterrupt)
+            or (isinstance(exc, SystemExit) and exc.code == 0)
+        ):
             MPI.Finalize()
         # Otherwise forcefully abort
         else:
