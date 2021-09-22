@@ -78,7 +78,7 @@ class solver_block(restart_block, block_):
         jfshape = [self.ni + 1, self.nj + 2, self.nk + 1]
         kfshape = [self.ni + 1, self.nj + 1, self.nk + 2]
 
-        cQshape = [self.ni + 1, self.nj + 1, self.nk + 1, 5 + self.ns - 1]
+        cQshape  = [self.ni + 1, self.nj + 1, self.nk + 1, 5 + self.ns - 1]
         ifQshape = [self.ni + 2, self.nj + 1, self.nk + 1, 5 + self.ns - 1]
         jfQshape = [self.ni + 1, self.nj + 2, self.nk + 1, 5 + self.ns - 1]
         kfQshape = [self.ni + 1, self.nj + 1, self.nk + 2, 5 + self.ns - 1]
@@ -169,7 +169,7 @@ class solver_block(restart_block, block_):
         # ------------------------------------------------------------------- #
         #       Thermo
         # ------------------------------------------------------------------- #
-        shape = cQshape
+        shape = [self.ni + 1, self.nj + 1, self.nk + 1, 5 + self.ns]
         np_or_kokkos(["qh"], shape)
 
         # ------------------------------------------------------------------- #
