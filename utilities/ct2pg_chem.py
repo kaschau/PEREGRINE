@@ -445,20 +445,29 @@ def ct2pg_chem(ctyaml, cpp):
                 out_string.append(f" {s:+}*q[{j}]")
 
         if len(out_string) == 0:
-            pg_mech.write(f"  b.omega(i,j,k,{i}) = th.MW[{i}] * (0.0")
+            pg_mech.write(f"  b.omega(i,j,k,{i+1}) = th.MW[{i}] * (0.0")
         else:
             out_string[0] = out_string[0].replace("+", "")
-            pg_mech.write(f"  b.omega(i,j,k,{i}) = th.MW[{i}] * (")
+            pg_mech.write(f"  b.omega(i,j,k,{i+1}) = th.MW[{i}] * (")
             for item in out_string:
                 pg_mech.write(item)
         pg_mech.write(");\n")
 
     out_string = (
         "\n"
+        "  // Compute constant pressure dTdt (for implicit chem integration)\n"
+        "  double dTdt = 0.0;"
+        "  for (int n=0; n<=th.ns-1; n++)\n"
+        "  {\n"
+        "    dTdt -= b.qh(i,j,k,5+n) * b.omega(i,j,k,n+1);\n"
+        "  }\n"
+        "  dTdt /= b.qh(i,j,k,1) * b.Q(i,j,k,0) * b.J(i,j,k);\n"
+        "  b.omega(i,j,k,0) = dTdt;\n"
+        "\n"
         "  // Add source terms to RHS\n"
         "  for (int n=0; n<th.ns-1; n++)\n"
         "  {\n"
-        "    b.dQ(i,j,k,5+n) += b.omega(i,j,k,n);\n"
+        "    b.dQ(i,j,k,5+n) += b.omega(i,j,k,n+1);\n"
         "  }\n"
         "\n"
     )

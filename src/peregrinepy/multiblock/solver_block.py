@@ -182,7 +182,7 @@ class solver_block(restart_block, block_):
         #       Chemistry
         # ------------------------------------------------------------------- #
         if config["thermochem"]["chemistry"]:
-            shape = [self.ni + 1, self.nj + 1, self.nk + 1, self.ns]
+            shape = [self.ni + 1, self.nj + 1, self.nk + 1, 1 + self.ns]
             np_or_kokkos(["omega"], shape)
 
         # ------------------------------------------------------------------- #
