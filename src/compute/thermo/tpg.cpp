@@ -8,12 +8,14 @@
 #include <stdexcept>
 
 void tpg(block_ b,
-      thtrdat_ th,
-           int  face,
-   std::string  given) {
+       thtrdat_ th,
+            int face,
+    std::string given,
+            int i/*=0*/,
+            int j/*=0*/,
+            int k/*=0*/) {
 
-  MDRange3 range = get_range3(b, face);
-
+  MDRange3 range = get_range3(b, face, i, j, k);
 
   if ( given.compare("prims") == 0 )
   {

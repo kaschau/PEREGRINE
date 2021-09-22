@@ -12,4 +12,5 @@ def RHS(mb):
         flux.diffusive(mb, mb.thtrdat)
 
     if mb.config["thermochem"]["chemistry"]:
-        mb.chem(mb, mb.thtrdat)
+        for blk in mb:
+            mb.chem(blk, mb.thtrdat)

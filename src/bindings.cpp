@@ -144,13 +144,19 @@ PYBIND11_MODULE(compute, m) {
         py::arg("block_ object"),
         py::arg("thtrdat_ object"),
         py::arg("face"),
-        py::arg("given"));
+        py::arg("given"),
+        py::arg("i")=0,
+        py::arg("j")=0,
+        py::arg("k")=0);
   //  |----> tpg
   thermo.def("tpg", &tpg, "Update primatives or conservatives with tpg assumption",
         py::arg("block_ object"),
         py::arg("thtrdat_ object"),
         py::arg("face"),
-        py::arg("given"));
+        py::arg("given"),
+        py::arg("i")=0,
+        py::arg("j")=0,
+        py::arg("k")=0);
 
   py::class_<thtrdat_>(thermo, "thtrdat_", py::dynamic_attr())
     .def(py::init<>())
@@ -174,18 +180,29 @@ PYBIND11_MODULE(compute, m) {
   transport.def("kinetic_theory", &kinetic_theory, "Update transport properties from primatives",
         py::arg("block_"),
         py::arg("thtrdat_ object"),
-        py::arg("face"));
+        py::arg("face"),
+        py::arg("i")=0,
+        py::arg("j")=0,
+        py::arg("k")=0);
 
   // ./chemistry
   py::module chemistry = m.def_submodule("chemistry","chemistry module");
   //  |----> CH4_O2_Stanford_Skeletal
   chemistry.def("chem_CH4_O2_Stanford_Skeletal", &chem_CH4_O2_Stanford_Skeletal, "Chemical source terms from",
-        py::arg("list of block_ object"),
-        py::arg("thtrdat_ object"));
+        py::arg("block_ object"),
+        py::arg("thtrdat_ object"),
+        py::arg("face")=0,
+        py::arg("i")=0,
+        py::arg("j")=0,
+        py::arg("k")=0);
   //  |----> GRI30
   chemistry.def("chem_GRI30", &chem_GRI30, "Chemical source terms from GRI3.0",
-        py::arg("list of block_ object"),
-        py::arg("thtrdat_ object"));
+        py::arg("block_ object"),
+        py::arg("thtrdat_ object"),
+        py::arg("face")=0,
+        py::arg("i") = 0,
+        py::arg("j") = 0,
+        py::arg("k") = 0);
 
   static auto _atexit = []() {
     if (Kokkos::is_initialized()) Kokkos::finalize();
