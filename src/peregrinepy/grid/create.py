@@ -13,114 +13,115 @@ This module holds functions for creating grid_block objects of various forms.
 
 import numpy as np
 
+
 def cubic_connectivity(blk, mb_dimensions, blk_number, i, j, k):
 
     # i faces
     if i == 0 and mb_dimensions[0] != 1:
         conn = blk.get_face_conn(1)
-        conn['bctype'] = 'adiabatic_noslip_wall'
-        conn['neighbor'] = None
-        conn['orientation'] = None
+        conn["bctype"] = "adiabatic_noslip_wall"
+        conn["neighbor"] = None
+        conn["orientation"] = None
 
         conn = blk.get_face_conn(2)
-        conn['bctype'] = 'b0'
-        conn['neighbor'] = blk_number+1
-        conn['orientation'] = '123'
+        conn["bctype"] = "b0"
+        conn["neighbor"] = blk_number + 1
+        conn["orientation"] = "123"
 
-    elif i == mb_dimensions[0]-1 and mb_dimensions[0] != 1:
+    elif i == mb_dimensions[0] - 1 and mb_dimensions[0] != 1:
         conn = blk.get_face_conn(1)
-        conn['bctype'] = 'b0'
-        conn['neighbor'] = blk_number-1
-        conn['orientation'] = '123'
+        conn["bctype"] = "b0"
+        conn["neighbor"] = blk_number - 1
+        conn["orientation"] = "123"
 
         conn = blk.get_face_conn(2)
-        conn['bctype'] = 'adiabatic_noslip_wall'
-        conn['neighbor'] = None
-        conn['orientation'] = None
+        conn["bctype"] = "adiabatic_noslip_wall"
+        conn["neighbor"] = None
+        conn["orientation"] = None
 
     elif mb_dimensions[0] != 1:
         conn = blk.get_face_conn(1)
-        conn['bctype'] = 'b0'
-        conn['neighbor'] = blk_number-1
-        conn['orientation'] = '123'
+        conn["bctype"] = "b0"
+        conn["neighbor"] = blk_number - 1
+        conn["orientation"] = "123"
 
         conn = blk.get_face_conn(2)
-        conn['bctype'] = 'b0'
-        conn['neighbor'] = blk_number+1
-        conn['orientation'] = '123'
+        conn["bctype"] = "b0"
+        conn["neighbor"] = blk_number + 1
+        conn["orientation"] = "123"
 
     # j faces
     if j == 0 and mb_dimensions[1] != 1:
         conn = blk.get_face_conn(3)
-        conn['bctype'] = 'adiabatic_noslip_wall'
-        conn['neighbor'] = None
-        conn['orientation'] = None
+        conn["bctype"] = "adiabatic_noslip_wall"
+        conn["neighbor"] = None
+        conn["orientation"] = None
 
         conn = blk.get_face_conn(4)
-        conn['bctype'] = 'b0'
-        conn['neighbor'] = blk_number+mb_dimensions[0]
-        conn['orientation'] = '123'
+        conn["bctype"] = "b0"
+        conn["neighbor"] = blk_number + mb_dimensions[0]
+        conn["orientation"] = "123"
 
-    elif j == mb_dimensions[1]-1 and mb_dimensions[1] != 1:
+    elif j == mb_dimensions[1] - 1 and mb_dimensions[1] != 1:
         conn = blk.get_face_conn(3)
-        conn['bctype'] = 'b0'
-        conn['neighbor'] = blk_number-mb_dimensions[0]
-        conn['orientation'] = '123'
+        conn["bctype"] = "b0"
+        conn["neighbor"] = blk_number - mb_dimensions[0]
+        conn["orientation"] = "123"
 
         conn = blk.get_face_conn(4)
-        conn['bctype'] = 'adiabatic_noslip_wall'
-        conn['neighbor'] = None
-        conn['orientation'] = None
+        conn["bctype"] = "adiabatic_noslip_wall"
+        conn["neighbor"] = None
+        conn["orientation"] = None
 
     elif mb_dimensions[1] != 1:
         conn = blk.get_face_conn(3)
-        conn['bctype'] = 'b0'
-        conn['neighbor'] = blk_number-mb_dimensions[0]
-        conn['orientation'] = '123'
+        conn["bctype"] = "b0"
+        conn["neighbor"] = blk_number - mb_dimensions[0]
+        conn["orientation"] = "123"
 
         conn = blk.get_face_conn(4)
-        conn['bctype'] = 'b0'
-        conn['neighbor'] = blk_number+mb_dimensions[0]
-        conn['orientation'] = '123'
+        conn["bctype"] = "b0"
+        conn["neighbor"] = blk_number + mb_dimensions[0]
+        conn["orientation"] = "123"
 
     # k faces
     if k == 0 and mb_dimensions[2] != 1:
         conn = blk.get_face_conn(5)
-        conn['bctype'] = 'adiabatic_noslip_wall'
-        conn['neighbor'] = None
-        conn['orientation'] = None
+        conn["bctype"] = "adiabatic_noslip_wall"
+        conn["neighbor"] = None
+        conn["orientation"] = None
 
         conn = blk.get_face_conn(6)
-        conn['bctype'] = 'b0'
-        conn['neighbor'] = blk_number+mb_dimensions[0]*mb_dimensions[1]
-        conn['orientation'] = '123'
+        conn["bctype"] = "b0"
+        conn["neighbor"] = blk_number + mb_dimensions[0] * mb_dimensions[1]
+        conn["orientation"] = "123"
 
-    elif k == mb_dimensions[2]-1 and mb_dimensions[2] != 1:
+    elif k == mb_dimensions[2] - 1 and mb_dimensions[2] != 1:
         conn = blk.get_face_conn(5)
-        conn['bctype'] = 'b0'
-        conn['neighbor'] = blk_number-mb_dimensions[0]*mb_dimensions[1]
-        conn['orientation'] = '123'
+        conn["bctype"] = "b0"
+        conn["neighbor"] = blk_number - mb_dimensions[0] * mb_dimensions[1]
+        conn["orientation"] = "123"
 
         conn = blk.get_face_conn(6)
-        conn['bctype'] = 'adiabatic_noslip_wall'
-        conn['neighbor'] = None
-        conn['orientation'] = None
+        conn["bctype"] = "adiabatic_noslip_wall"
+        conn["neighbor"] = None
+        conn["orientation"] = None
 
     elif mb_dimensions[2] != 1:
         conn = blk.get_face_conn(5)
-        conn['bctype'] = 'b0'
-        conn['neighbor'] = blk_number-mb_dimensions[0]*mb_dimensions[1]
-        conn['orientation'] = '123'
+        conn["bctype"] = "b0"
+        conn["neighbor"] = blk_number - mb_dimensions[0] * mb_dimensions[1]
+        conn["orientation"] = "123"
 
         conn = blk.get_face_conn(6)
-        conn['bctype'] = 'b0'
-        conn['neighbor'] = blk_number+mb_dimensions[0]*mb_dimensions[1]
-        conn['orientation'] = '123'
+        conn["bctype"] = "b0"
+        conn["neighbor"] = blk_number + mb_dimensions[0] * mb_dimensions[1]
+        conn["orientation"] = "123"
 
 
 def cube(blk, origin, lengths, dimensions):
 
-    '''Function to populate the coordinate arrays of a provided peregrinepy.block in the shape of a cube with prescribed location, extents, and discretization.
+    """Function to populate the coordinate arrays of a provided peregrinepy.block in the shape of a cube with prescribed location, extents, and discretization.
     If the input multiblock object is a restart block the shape and size of the flow data arrays are also updated.
 
     Parameters
@@ -142,37 +143,41 @@ def cube(blk, origin, lengths, dimensions):
     None
         Updates attributes of parameter blk.
 
-    '''
+    """
     blk.ni = dimensions[0]
     blk.nj = dimensions[1]
     blk.nk = dimensions[2]
 
     blk.init_grid_arrays()
 
-    x = np.linspace(origin[0], origin[0]+lengths[0], dimensions[0], dtype=np.float64)
-    y = np.linspace(origin[1], origin[1]+lengths[1], dimensions[1], dtype=np.float64)
-    z = np.linspace(origin[2], origin[2]+lengths[2], dimensions[2], dtype=np.float64)
+    x = np.linspace(origin[0], origin[0] + lengths[0], dimensions[0], dtype=np.float64)
+    y = np.linspace(origin[1], origin[1] + lengths[1], dimensions[1], dtype=np.float64)
+    z = np.linspace(origin[2], origin[2] + lengths[2], dimensions[2], dtype=np.float64)
 
-    if blk.block_type == 'solver':
-        shape = (blk.ni+2,
-                 blk.nj+2,
-                 blk.nk+2)
-        s_i = np.s_[1:-1,1:-1,1:-1]
+    if blk.block_type == "solver":
+        shape = (blk.ni + 2, blk.nj + 2, blk.nk + 2)
+        s_i = np.s_[1:-1, 1:-1, 1:-1]
     else:
-        shape = (blk.ni,
-                 blk.nj,
-                 blk.nk)
-        s_i = np.s_[:,:,:]
+        shape = (blk.ni, blk.nj, blk.nk)
+        s_i = np.s_[:, :, :]
 
-    blk.array['x'][s_i], blk.array['y'][s_i], blk.array['z'][s_i] = np.meshgrid(x,y,z, indexing='ij')
+    blk.array["x"][s_i], blk.array["y"][s_i], blk.array["z"][s_i] = np.meshgrid(
+        x, y, z, indexing="ij"
+    )
 
-    if blk.block_type in ['restart', 'solver']:
+    if blk.block_type in ["restart", "solver"]:
         blk.init_restart_arrays()
 
 
-def multiblock_cube(mb, origin=[0,0,0], lengths=[1,1,1], mb_dimensions=[1,1,1], dimensions_perblock=[10,10,10]):
+def multiblock_cube(
+    mb,
+    origin=[0, 0, 0],
+    lengths=[1, 1, 1],
+    mb_dimensions=[1, 1, 1],
+    dimensions_perblock=[10, 10, 10],
+):
 
-    '''Function to populate the coordinate arrays of a raptorpy.multiblock.grid (or one of its descendants) in the shape of a cube
+    """Function to populate the coordinate arrays of a raptorpy.multiblock.grid (or one of its descendants) in the shape of a cube
        with prescribed location, extents, and discretization split into as manj  blocks as mb.nblks. Will also update
        connectivity of interblock faces. If the input multiblock object is a restart block the shape and size of the flow
        data arrays are also updated.
@@ -199,26 +204,38 @@ def multiblock_cube(mb, origin=[0,0,0], lengths=[1,1,1], mb_dimensions=[1,1,1], 
     None
         Updates elements in mb
 
-    '''
+    """
 
     if np.product(mb_dimensions) != mb.nblks:
-        raise ValueError('Warning, multiblock dimensions does not equal number of blocks!')
+        raise ValueError(
+            "Warning, multiblock dimensions does not equal number of blocks!"
+        )
 
-    blk_origins_x = np.linspace(origin[0], origin[0]+lengths[0], mb_dimensions[0]+1)
-    blk_origins_y = np.linspace(origin[1], origin[1]+lengths[1], mb_dimensions[1]+1)
-    blk_origins_z = np.linspace(origin[2], origin[2]+lengths[2], mb_dimensions[2]+1)
+    blk_origins_x = np.linspace(origin[0], origin[0] + lengths[0], mb_dimensions[0] + 1)
+    blk_origins_y = np.linspace(origin[1], origin[1] + lengths[1], mb_dimensions[1] + 1)
+    blk_origins_z = np.linspace(origin[2], origin[2] + lengths[2], mb_dimensions[2] + 1)
 
     for k in range(int(mb_dimensions[2])):
         for j in range(int(mb_dimensions[1])):
             for i in range(int(mb_dimensions[0])):
-                blk_number = k*mb_dimensions[1]*mb_dimensions[0] + j*mb_dimensions[0] + i
+                blk_number = (
+                    k * mb_dimensions[1] * mb_dimensions[0] + j * mb_dimensions[0] + i
+                )
 
                 blk = mb[blk_number]
                 blk.nblki = blk_number
 
-                origin = [blk_origins_x[i],blk_origins_y[j],blk_origins_z[k]]
-                lengths = [blk_origins_x[i+1]-blk_origins_x[i], blk_origins_y[j+1]-blk_origins_y[j], blk_origins_z[k+1]-blk_origins_z[k]]
-                dimensions = [dimensions_perblock[0], dimensions_perblock[1], dimensions_perblock[2]]
+                origin = [blk_origins_x[i], blk_origins_y[j], blk_origins_z[k]]
+                lengths = [
+                    blk_origins_x[i + 1] - blk_origins_x[i],
+                    blk_origins_y[j + 1] - blk_origins_y[j],
+                    blk_origins_z[k + 1] - blk_origins_z[k],
+                ]
+                dimensions = [
+                    dimensions_perblock[0],
+                    dimensions_perblock[1],
+                    dimensions_perblock[2],
+                ]
 
                 cube(blk, origin, lengths, dimensions)
 
@@ -228,9 +245,9 @@ def multiblock_cube(mb, origin=[0,0,0], lengths=[1,1,1], mb_dimensions=[1,1,1], 
 
 def annulus(blk, p1, p2, p13, sweep, thickness, dimensions):
 
-    raise ValueError('The annulus is jacked, needs to be updated.')
+    raise ValueError("The annulus is jacked, needs to be updated.")
 
-    '''Function to populate the coordinate arrays of a provided raptorpy.grid.grid_block in the shape of an annulus with prescribed location, extents, and discretization.
+    """Function to populate the coordinate arrays of a provided raptorpy.grid.grid_block in the shape of an annulus with prescribed location, extents, and discretization.
     If the input multiblock object is a restart block the shape and size of the flow data arrays are also updated.
 
     Parameters
@@ -272,79 +289,79 @@ def annulus(blk, p1, p2, p13, sweep, thickness, dimensions):
     None
         Updates attributes of parameter blk.
 
-    '''
+    """
 
     p1 = np.array(p1)
     p2 = np.array(p2)
     p3 = np.array(p3)
 
-    if np.dot(p2-p1, p3-p1) != 0.0:
-        raise ValueError('Error: The line (p1,p2) is not orthogonal to (p1,p3)')
+    if np.dot(p2 - p1, p3 - p1) != 0.0:
+        raise ValueError("Error: The line (p1,p2) is not orthogonal to (p1,p3)")
 
     if abs(sweep) < -360 or abs(sweep) > 360.0:
-        raise ValueError('Error: sweep parameter must be >-360 and <360')
+        raise ValueError("Error: sweep parameter must be >-360 and <360")
 
-    n12 = (p2-p1)/np.linalg.norm(p2-p1)
-    n13 = (p3-p1)/np.linalg.norm(p3-p1)
+    n12 = (p2 - p1) / np.linalg.norm(p2 - p1)
+    n13 = (p3 - p1) / np.linalg.norm(p3 - p1)
 
-    shape = (blk.ni+2,
-             blk.nj+2,
-             blk.nk+2)
-    blk.array['x'] =  np.zeros(shape)
-    blk.array['y'] =  np.zeros(shape)
-    blk.array['z'] =  np.zeros(shape)
+    shape = (blk.ni + 2, blk.nj + 2, blk.nk + 2)
+    blk.array["x"] = np.zeros(shape)
+    blk.array["y"] = np.zeros(shape)
+    blk.array["z"] = np.zeros(shape)
 
-    dx = np.linalg.norm(p2-p1)/(blk.ni-1)
-    dr = thickness/(blk.nj-1)
-    dtheta = sweep/(blk.nk-1)
+    dx = np.linalg.norm(p2 - p1) / (blk.ni - 1)
+    dr = thickness / (blk.nj - 1)
+    dtheta = sweep / (blk.nk - 1)
 
     for j in range(blk.nj):
         for i in range(blk.ni):
-            p_ij = np.append(p3 + dx*i*n12 + dr*j*n13,1)
+            p_ij = np.append(p3 + dx * i * n12 + dr * j * n13, 1)
 
-            blk.array['x'][i,j,0] = p_ij[0]
-            blk.array['y'][i,j,0] = p_ij[1]
-            blk.array['z'][i,j,0] = p_ij[2]
+            blk.array["x"][i, j, 0] = p_ij[0]
+            blk.array["y"][i, j, 0] = p_ij[1]
+            blk.array["z"][i, j, 0] = p_ij[2]
 
-    xflat = np.reshape(blk.array['x'][:,:,0], (blk.ni*blk.nj, 1))
-    yflat = np.reshape(blk.array['y'][:,:,0], (blk.ni*blk.nj, 1))
-    zflat = np.reshape(blk.array['z'][:,:,0], (blk.ni*blk.nj, 1))
+    xflat = np.reshape(blk.array["x"][:, :, 0], (blk.ni * blk.nj, 1))
+    yflat = np.reshape(blk.array["y"][:, :, 0], (blk.ni * blk.nj, 1))
+    zflat = np.reshape(blk.array["z"][:, :, 0], (blk.ni * blk.nj, 1))
 
     pts = np.hstack((xflat, yflat, zflat))
     p = pts - p1
-    shape = blk.array['x'][:,:,0].shape
-    for k in range(1,blk.nk):
+    shape = blk.array["x"][:, :, 0].shape
+    for k in range(1, blk.nk):
 
         # See http://paulbourke.net/geometry/rotate/
-        theta = k*dtheta*np.pi/180.0
+        theta = k * dtheta * np.pi / 180.0
         ct = np.cos(theta)
         st = np.sin(theta)
 
         q = np.zeros(pts.shape)
-        q[:,0] += (ct + (1 - ct) * n12[0] * n12[0]) * p[:,0]
-        q[:,0] += ((1 - ct) * n12[0] * n12[1] - n12[2] * st) * p[:,1]
-        q[:,0] += ((1 - ct) * n12[0] * n12[2] + n12[1] * st) * p[:,2]
+        q[:, 0] += (ct + (1 - ct) * n12[0] * n12[0]) * p[:, 0]
+        q[:, 0] += ((1 - ct) * n12[0] * n12[1] - n12[2] * st) * p[:, 1]
+        q[:, 0] += ((1 - ct) * n12[0] * n12[2] + n12[1] * st) * p[:, 2]
 
-        q[:,1] += ((1 - ct) * n12[0] * n12[1] + n12[2] * st) * p[:,0]
-        q[:,1] += (ct + (1 - ct) * n12[1] * n12[1]) * p[:,1]
-        q[:,1] += ((1 - ct) * n12[1] * n12[2] - n12[0] * st) * p[:,2]
+        q[:, 1] += ((1 - ct) * n12[0] * n12[1] + n12[2] * st) * p[:, 0]
+        q[:, 1] += (ct + (1 - ct) * n12[1] * n12[1]) * p[:, 1]
+        q[:, 1] += ((1 - ct) * n12[1] * n12[2] - n12[0] * st) * p[:, 2]
 
-        q[:,2] += ((1 - ct) * n12[0] * n12[2] - n12[1] * st) * p[:,0]
-        q[:,2] += ((1 - ct) * n12[1] * n12[2] + n12[0] * st) * p[:,1]
-        q[:,2] += (ct + (1 - ct) * n12[2] * n12[2]) * p[:,2]
+        q[:, 2] += ((1 - ct) * n12[0] * n12[2] - n12[1] * st) * p[:, 0]
+        q[:, 2] += ((1 - ct) * n12[1] * n12[2] + n12[0] * st) * p[:, 1]
+        q[:, 2] += (ct + (1 - ct) * n12[2] * n12[2]) * p[:, 2]
 
-        q[:,0] += p1[0]
-        q[:,1] += p1[1]
-        q[:,2] += p1[2]
+        q[:, 0] += p1[0]
+        q[:, 1] += p1[1]
+        q[:, 2] += p1[2]
 
-        blk.array['x'][:,:,k] = np.reshape(q[:,0], shape)
-        blk.array['y'][:,:,k] = np.reshape(q[:,1], shape)
-        blk.array['z'][:,:,k] = np.reshape(q[:,2], shape)
+        blk.array["x"][:, :, k] = np.reshape(q[:, 0], shape)
+        blk.array["y"][:, :, k] = np.reshape(q[:, 1], shape)
+        blk.array["z"][:, :, k] = np.reshape(q[:, 2], shape)
 
 
-def multiblock_annulus(mb, p1, p2, p3, sweep, thickness, mb_dimensions, dimensions_perblock, periodic=False):
+def multiblock_annulus(
+    mb, p1, p2, p3, sweep, thickness, mb_dimensions, dimensions_perblock, periodic=False
+):
 
-    '''Function to populate the coordinate arrays of a raptorpy.multiblock.grid (or one of its descendants) in the shape
+    """Function to populate the coordinate arrays of a raptorpy.multiblock.grid (or one of its descendants) in the shape
        of an annulus with prescribed location, extents, and discretization split into as manj blocks as mb.nblks.
        Will also update connectivity of interblock faces. If the input multiblock object is a restart block the shape
        and size of the flow data arrays are also updated.
@@ -392,36 +409,38 @@ def multiblock_annulus(mb, p1, p2, p3, sweep, thickness, mb_dimensions, dimensio
     None
         Updates elements in mb
 
-    '''
+    """
     p1 = np.array(p1)
     p2 = np.array(p2)
     p3 = np.array(p3)
 
     if np.product(mb_dimensions) != mb.nblks:
-        raise ValueError('Error: multiblock dimensions does not equal number of blocks!')
+        raise ValueError(
+            "Error: multiblock dimensions does not equal number of blocks!"
+        )
 
-    if np.dot(p2-p1, p3-p1) != 0.0:
-        raise ValueError('Error: The line (p1,p2) is not orthogonal to (p1,p3)')
+    if np.dot(p2 - p1, p3 - p1) != 0.0:
+        raise ValueError("Error: The line (p1,p2) is not orthogonal to (p1,p3)")
 
     if sweep < 0.0 or sweep > 360.0:
-        raise ValueError('Error: sweep parameter must be >0 and <360')
+        raise ValueError("Error: sweep parameter must be >0 and <360")
 
     if periodic or float(sweep) == 360.0:
         connect = True
     else:
         connect = False
 
-    n12 = (p2-p1)/np.linalg.norm(p2-p1)
+    n12 = (p2 - p1) / np.linalg.norm(p2 - p1)
     p = p3 - p1
 
-    dx = np.linalg.norm(p2-p1)/mb_dimensions[0]
-    dr = thickness/mb_dimensions[1]
-    dtheta = sweep/mb_dimensions[2]
+    dx = np.linalg.norm(p2 - p1) / mb_dimensions[0]
+    dr = thickness / mb_dimensions[1]
+    dtheta = sweep / mb_dimensions[2]
 
     for k in range(int(mb_dimensions[2])):
 
         # See http://paulbourke.net/geometry/rotate/
-        theta = k*dtheta*np.pi/180.0
+        theta = k * dtheta * np.pi / 180.0
         ct = np.cos(theta)
         st = np.sin(theta)
 
@@ -442,21 +461,23 @@ def multiblock_annulus(mb, p1, p2, p3, sweep, thickness, mb_dimensions, dimensio
         q[1] += p1[1]
         q[2] += p1[2]
 
-        n13 = (q-p1)/np.linalg.norm(q-p1)
+        n13 = (q - p1) / np.linalg.norm(q - p1)
 
         for j in range(int(mb_dimensions[1])):
             for i in range(int(mb_dimensions[0])):
 
-                blk_number = k*mb_dimensions[1]*mb_dimensions[0] + j*mb_dimensions[0] + i
+                blk_number = (
+                    k * mb_dimensions[1] * mb_dimensions[0] + j * mb_dimensions[0] + i
+                )
                 blk = mb[blk_number]
                 blk.nblki = blk_number
                 blk.ni = dimensions_perblock[0]
                 blk.nj = dimensions_perblock[1]
                 blk.nk = dimensions_perblock[2]
 
-                newp1 = p1 + dx*i*n12
-                newp2 = p1 + dx*(i+1)*n12
-                newp3 = q + dx*i*n12 + dr*j*n13
+                newp1 = p1 + dx * i * n12
+                newp2 = p1 + dx * (i + 1) * n12
+                newp3 = q + dx * i * n12 + dr * j * n13
 
                 annulus(blk, newp1, newp2, newp3, dtheta, dr, dimensions_perblock)
 
@@ -468,16 +489,20 @@ def multiblock_annulus(mb, p1, p2, p3, sweep, thickness, mb_dimensions, dimensio
                 if connect:
                     if k == 0:
                         if float(sweep) == 360.0:
-                            conn['5']['bc'] = 'b0'
+                            conn["5"]["bc"] = "b0"
                         else:
-                            conn['5']['bc'] = 'b1'
-                        conn['5']['neighbor'] = blk_number+mb_dimensions[0]*mb_dimensions[1]*(mb_dimensions[2]-1)
-                        conn['5']['orientation'] = '123'
+                            conn["5"]["bc"] = "b1"
+                        conn["5"]["neighbor"] = blk_number + mb_dimensions[
+                            0
+                        ] * mb_dimensions[1] * (mb_dimensions[2] - 1)
+                        conn["5"]["orientation"] = "123"
 
-                    elif k == mb_dimensions[2]-1:
+                    elif k == mb_dimensions[2] - 1:
                         if float(sweep) == 360.0:
-                            conn['6']['bc'] = 'b0'
+                            conn["6"]["bc"] = "b0"
                         else:
-                            conn['6']['bc'] = 'b1'
-                        conn['6']['neighbor'] = blk_number-mb_dimensions[0]*mb_dimensions[1]*(mb_dimensions[2]-1)
-                        conn['6']['orientation'] = '123'
+                            conn["6"]["bc"] = "b1"
+                        conn["6"]["neighbor"] = blk_number - mb_dimensions[
+                            0
+                        ] * mb_dimensions[1] * (mb_dimensions[2] - 1)
+                        conn["6"]["orientation"] = "123"

@@ -3,8 +3,9 @@
 import yaml
 from ..mpicomm import mpiutils
 
-def read_connectivity(mb,path_to_file):
-    '''This function parses a RAPTOR connectivity file given by file_path and adds the connectivity information to the supplied raptorpy.multiblock object
+
+def read_connectivity(mb, path_to_file):
+    """This function parses a RAPTOR connectivity file given by file_path and adds the connectivity information to the supplied raptorpy.multiblock object
 
     Parameters
     ----------
@@ -18,22 +19,22 @@ def read_connectivity(mb,path_to_file):
     None
         Adds the connectivity information to mb
 
-    '''
-    comm,rank,size = mpiutils.get_comm_rank_size()
+    """
+    comm, rank, size = mpiutils.get_comm_rank_size()
 
-    #only the zeroth rank reads in the file
+    # only the zeroth rank reads in the file
     if rank == 0:
-        with open(f'{path_to_file}/conn.yaml', 'r') as conn_file:
+        with open(f"{path_to_file}/conn.yaml", "r") as conn_file:
             conn = yaml.load(conn_file, Loader=yaml.FullLoader)
     else:
         conn = None
-    conn = comm.bcast(conn,root=0)
+    conn = comm.bcast(conn, root=0)
 
     for blk in mb:
-        myconn = conn[f'Block{blk.nblki}']
+        myconn = conn[f"Block{blk.nblki}"]
         for face in blk.faces:
             for k1 in face.connectivity.keys():
-                val = myconn[f'Face{face.nface}'][k1]
+                val = myconn[f"Face{face.nface}"][k1]
                 face.connectivity[k1] = val
 
-    mb.total_blocks = conn['Total_Blocks']
+    mb.total_blocks = conn["Total_Blocks"]

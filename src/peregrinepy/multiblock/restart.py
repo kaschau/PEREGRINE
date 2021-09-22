@@ -15,17 +15,19 @@ python lists to create a list of peregrine.block object with added functionality
 from .grid import grid
 from .restart_block import restart_block
 
+
 class restart(grid):
-    '''A list of peregrinepy.restart.restart_block objects. Inherits from peregrinepy.multiblock.grid
-    '''
-    mb_type = 'restart'
+    """A list of peregrinepy.restart.restart_block objects. Inherits from peregrinepy.multiblock.grid"""
+
+    mb_type = "restart"
+
     def __init__(self, nblks, sp_names, ls=[]):
 
         if ls == []:
-            temp = [restart_block(i,sp_names) for i in range(nblks)]
-            super().__init__(nblks,temp)
+            temp = [restart_block(i, sp_names) for i in range(nblks)]
+            super().__init__(nblks, temp)
         else:
-            super().__init__(nblks,ls)
+            super().__init__(nblks, ls)
 
         self.nrt = 0
         self.tme = 0
@@ -40,22 +42,25 @@ class restart(grid):
     @property
     def nrt(self):
         return self.__nrt
+
     @nrt.setter
-    def nrt(self,val):
+    def nrt(self, val):
         self.__nrt = val
         for blk in self:
             blk.nrt = val
+
     @property
     def tme(self):
         return self.__tme
+
     @tme.setter
-    def tme(self,val):
+    def tme(self, val):
         self.__tme = val
         for blk in self:
             blk.tme = val
 
     def check_species_sum(self, normalize=False):
-        '''Loop through each block to check that the sum of all species does not exceed 1.0 anywhere in the domain
+        """Loop through each block to check that the sum of all species does not exceed 1.0 anywhere in the domain
 
         Parameters
         ----------
@@ -67,7 +72,7 @@ class restart(grid):
         -------
         None
 
-        '''
+        """
 
         any_bad = False
         for blk in self:
@@ -77,6 +82,10 @@ class restart(grid):
 
         if any_bad:
             if not normalize:
-                print('\nRe-run check_species_sum sum with arg normalize=True to normalize species mass fraction.\n')
+                print(
+                    "\nRe-run check_species_sum sum with arg normalize=True to normalize species mass fraction.\n"
+                )
             else:
-                print('Normalizing species mass fraction such that sum is <= one everywhere.')
+                print(
+                    "Normalizing species mass fraction such that sum is <= one everywhere."
+                )

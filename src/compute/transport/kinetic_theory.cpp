@@ -6,9 +6,9 @@
 #include <math.h>
 #include <numeric>
 
-void transport(block_ b,
-             thtrdat_ th,
-                 int  face) {
+void kinetic_theory(block_ b,
+                  thtrdat_ th,
+                       int face) {
 
   MDRange3 range = get_range3(b, face);
 
@@ -60,11 +60,11 @@ void transport(block_ b,
   // Evaluate all property polynomials
 
   //viscosity
-  double mu_sp[ns] = {0.0};
+  double mu_sp[ns];
   //thermal conductivity
-  double kappa_sp[ns] = {0.0};
+  double kappa_sp[ns];
   // binary diffusion
-  double Dij[ns][ns] = {0.0};
+  double Dij[ns][ns];
 
   int indx;
   double logT = log(T);
@@ -107,7 +107,7 @@ void transport(block_ b,
   // Now every species' property is computed, generate mixture values
 
   // viscosity mixture
-  double phi[ns][ns] = {0.0};
+  double phi[ns][ns];
   for (int n=0; n<=ns-1; n++)
   {
     for (int n2=0; n2<=ns-1; n2++)
@@ -142,7 +142,7 @@ void transport(block_ b,
 
 
   // mass diffusion coefficient mixture
-  double D[ns] = {0.0};
+  double D[ns];
   for (int n=0; n<=ns-1; n++)
   {
     sum1 = 0.0;
