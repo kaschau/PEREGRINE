@@ -323,7 +323,7 @@ def ct2pg_chem(ctyaml, cpp):
                 pg_mech.write(f"  //  Lindeman Reaction #{l_tbc[i]}\n")
                 pg_mech.write(f"  Fcent[{i}] = 1.0;\n")
                 pg_mech.write(
-                    f"  k0 = " + rate_const_string(A_o[i], m_o[i], Ea_o[i]) + ";\n"
+                    "  k0 = " + rate_const_string(A_o[i], m_o[i], Ea_o[i]) + ";\n"
                 )
                 out_string = (
                     f"  Pr = S_tbc[{l_tbc[i]}]*k0/k_f[{l_tbc[i]}];\n"
@@ -352,7 +352,7 @@ def ct2pg_chem(ctyaml, cpp):
                 )
                 pg_mech.write(out_string)
                 pg_mech.write(
-                    f"  k0 = " + rate_const_string(A_o[i], m_o[i], Ea_o[i]) + ";\n"
+                    "  k0 = " + rate_const_string(A_o[i], m_o[i], Ea_o[i]) + ";\n"
                 )
                 out_string = (
                     f"  Pr = S_tbc[{l_tbc[i]}]*k0/k_f[{l_tbc[i]}];\n"
@@ -455,20 +455,20 @@ def ct2pg_chem(ctyaml, cpp):
 
     out_string = (
         "\n"
-        "  // Compute constant pressure dTdt (for implicit chem integration)\n"
-        "  double dTdt = 0.0;"
-        "  for (int n=0; n<=th.ns-1; n++)\n"
-        "  {\n"
-        "    dTdt -= b.qh(i,j,k,5+n) * b.omega(i,j,k,n+1);\n"
-        "  }\n"
-        "  dTdt /= b.qh(i,j,k,1) * b.Q(i,j,k,0) * b.J(i,j,k);\n"
-        "  b.omega(i,j,k,0) = dTdt;\n"
-        "\n"
         "  // Add source terms to RHS\n"
         "  for (int n=0; n<th.ns-1; n++)\n"
         "  {\n"
         "    b.dQ(i,j,k,5+n) += b.omega(i,j,k,n+1);\n"
         "  }\n"
+        "  // Compute constant pressure dTdt dYdt (for implicit chem integration)\n"
+        "  double dTdt = 0.0;\n"
+        "  for (int n=0; n<=th.ns-1; n++)\n"
+        "  {\n"
+        "    dTdt -= b.qh(i,j,k,5+n) * b.omega(i,j,k,n+1);\n"
+        "    b.omega(i,j,k,n+1) /= b.Q(i,j,k,0);\n"
+        "  }\n"
+        "  dTdt /= b.qh(i,j,k,1) * b.Q(i,j,k,0);\n"
+        "  b.omega(i,j,k,0) = dTdt;\n"
         "\n"
     )
     pg_mech.write(out_string)
