@@ -8,10 +8,12 @@
 
 void kinetic_theory(block_ b,
                   thtrdat_ th,
-                       int face) {
+                       int face,
+                       int i/*=0*/,
+                       int j/*=0*/,
+                       int k/*=0*/) {
 
-  MDRange3 range = get_range3(b, face);
-
+  MDRange3 range = get_range3(b, face, i, j, k);
 
   Kokkos::parallel_for("Compute transport properties mu,kappa,Dij from poly'l",
                        range,

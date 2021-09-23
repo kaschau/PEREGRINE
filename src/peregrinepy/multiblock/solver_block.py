@@ -189,7 +189,7 @@ class solver_block(restart_block, block_):
         #       RK Stages
         # ------------------------------------------------------------------- #
         shape = cQshape
-        nstorage = {"rk1": 0, "rk3": 2, "rk4": 4}
+        nstorage = {"rk1": 0, "rk3": 2, "rk4": 4, "strang": 2}
         names = [f"rhs{i}" for i in range(nstorage[config["solver"]
                                                    ["time_integration"]])]
         np_or_kokkos(names, shape)

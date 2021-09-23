@@ -19,15 +19,13 @@
 #include "thtrdat_.hpp"
 #include "compute.hpp"
 #include <math.h>
-#include <vector>
 
-void chem_CH4_O2_Stanford_Skeletal(std::vector<block_> mb, thtrdat_ th) {
-for(block_ b : mb){
+void chem_CH4_O2_Stanford_Skeletal(block_ b, thtrdat_ th, int face/*=0*/, int i/*=0*/, int j/*=0*/, int k/*=0*/) {
 
 // --------------------------------------------------------------|
 // cc range
 // --------------------------------------------------------------|
-  MDRange3 range = MDRange3({1,1,1},{b.ni,b.nj,b.nk});
+  MDRange3 range = get_range3(b, face, i, j, k);
 
   Kokkos::parallel_for("Compute chemical source terms",
                        range,
@@ -523,4 +521,4 @@ for(block_ b : mb){
   b.omega(i,j,k,0) = dTdt;
 
   });
-}}
+}

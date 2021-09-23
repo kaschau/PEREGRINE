@@ -10,7 +10,7 @@
 ///////////////////////////////////////////////////////////
 ////////////////// Compute Functions //////////////////////
 ///////////////////////////////////////////////////////////
-MDRange3 get_range3(block_ b, int face);
+MDRange3 get_range3(block_ b, int face, int i=0, int j=0, int k=0);
 
 // ./flux
 //    |------> dQzero
@@ -24,18 +24,18 @@ void diffusive(std::vector<block_> mb, thtrdat_ th);
 
 // ./thermo
 //    |------> cpg
-void cpg(block_ b, thtrdat_ th, int face, std::string given);
+void cpg(block_ b, thtrdat_ th, int face, std::string given, int i=0, int j=0, int k=0);
 //    |------> tpg
-void tpg(block_ b, thtrdat_ th, int face, std::string given);
+void tpg(block_ b, thtrdat_ th, int face, std::string given, int i=0, int j=0, int k=0);
 
 // ./transport
 //    |------> transport
-void kinetic_theory(block_ b, thtrdat_ th, int face);
+void kinetic_theory(block_ b, thtrdat_ th, int face, int i=0, int j=0, int k=0);
 
 // ./chemistry
 //    |------> CH4_O2_Stanford_Skeletal
-void chem_CH4_O2_Stanford_Skeletal(std::vector<block_> mb, thtrdat_ th);
+void chem_CH4_O2_Stanford_Skeletal(block_ b, thtrdat_ th, int face=0, int i=0, int j=0, int k=0);
 //    |------> GRI30
-void chem_GRI30(std::vector<block_> mb, thtrdat_ th);
+void chem_GRI30(block_ b, thtrdat_ th, int face=0, int i=0, int j=0, int k=0);
 
 #endif
