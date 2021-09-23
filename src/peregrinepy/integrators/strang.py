@@ -5,13 +5,14 @@ from scipy.integrate import ode
 from itertools import product
 
 
-class simpler:
+class strang:
     """
-    Efficient time-stepping techniques for simulating turbulent reactive flows with stiff chemistry,
-    Computer Physics Communications, Volume 243, 2019, Pages 81-96,
-    https://doi.org/10.1016/j.cpc.2019.04.016.
+    Strang-splitting
 
-    Reacting portion uses implicit vode+bdf.
+    Second order accurate in time.
+
+    Stiff reactions use implicit vode+bdf.
+    Non-stiff transport use SSPRK3.
 
     """
 
