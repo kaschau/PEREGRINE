@@ -1,6 +1,7 @@
 from .rk1 import rk1
 from .rk3 import rk3
 from .rk4 import rk4
+from .strang import strang
 
 
 def get_integrator(ti):
@@ -11,5 +12,7 @@ def get_integrator(ti):
         return rk3
     elif ti == "rk4":
         return rk4
+    elif ti == "strang":
+        return strang
     else:
         raise ValueError("What time integrator?")
