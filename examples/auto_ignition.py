@@ -30,6 +30,7 @@ def simulate():
     ct.add_directory(relpath + "/../src/peregrinepy/thermo_transport/database/source")
     config = pg.files.config_file()
     config["RHS"]["diffusion"] = False
+    config["solver"]["time_integration"] = "simpler"
     config["thermochem"]["chemistry"] = True
     config["thermochem"]["mechanism"] = "chem_CH4_O2_Stanford_Skeletal"
     config["thermochem"]["eos"] = "tpg"
@@ -70,46 +71,14 @@ def simulate():
     mb.eos(blk, mb.thtrdat, 0, "prims")
     pg.consistify(mb)
 
-    dt = 1e-7
+    dt = 1e-6
     niterout = 1000
     pgT = []
     pgO2 = []
     ctT = []
     ctO2 = []
     t = []
-    while mb.tme < 3.16e-2:
-
-        if mb.nrt % niterout == 0:
-            pgT.append(blk.array["q"][1, 1, 1, 4])
-            pgO2.append(blk.array["q"][1, 1, 1, 7])
-            ctT.append(gas.T)
-            ctO2.append(gas.Y[2])
-            t.append(mb.tme)
-
-            print(f'{mb.tme:.2e} {blk.array["q"][1,1,1,4]:.2f} {gas.T:.2f}')
-
-        mb.step(dt)
-        sim.advance(mb.tme)
-
-    dt = 1e-8
-    niterout = 10000
-    while mb.tme < 3.235e-2:
-
-        if mb.nrt % niterout == 0:
-            pgT.append(blk.array["q"][1, 1, 1, 4])
-            pgO2.append(blk.array["q"][1, 1, 1, 7])
-            ctT.append(gas.T)
-            ctO2.append(gas.Y[2])
-            t.append(mb.nrt * dt)
-
-            print(f'{mb.tme:.2e} {blk.array["q"][1,1,1,4]:.2f} {gas.T:.2f}')
-
-        mb.step(dt)
-        sim.advance(mb.tme)
-
-    dt = 1e-9
-    niterout = 10000
-    while mb.tme < 3.27e-2:
+    while mb.tme < 0.05:
 
         if mb.nrt % niterout == 0:
             pgT.append(blk.array["q"][1, 1, 1, 4])
