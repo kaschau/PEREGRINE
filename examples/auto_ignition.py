@@ -30,7 +30,7 @@ def simulate():
     ct.add_directory(relpath + "/../src/peregrinepy/thermo_transport/database/source")
     config = pg.files.config_file()
     config["RHS"]["diffusion"] = False
-    config["solver"]["time_integration"] = "simpler"
+    config["solver"]["time_integration"] = "strang"
     config["thermochem"]["chemistry"] = True
     config["thermochem"]["mechanism"] = "chem_CH4_O2_Stanford_Skeletal"
     config["thermochem"]["eos"] = "tpg"
