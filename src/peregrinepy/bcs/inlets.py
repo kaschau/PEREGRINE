@@ -18,9 +18,9 @@ def constant_velocity_subsonic_inlet(eos, blk, face, thtrdat, terms):
         T = blk.array["q"][:, :, :, 4]
         T[face.s0_] = 2.0 * face.bcvals["T"] - T[face.s1_]
 
-        for sn, n in enumerate(thtrdat.species_names[0:-1]):
+        for n, sn in enumerate(thtrdat.species_names[0:-1]):
             N = blk.array["q"][:, :, :, 5 + n]
-            N[face.s0_] = 2.0 * face.bcvals[sn[n]] - N[face.s1_]
+            N[face.s0_] = 2.0 * face.bcvals[sn] - N[face.s1_]
 
         # Update conserved
         eos(blk, thtrdat, nface, "prims")
