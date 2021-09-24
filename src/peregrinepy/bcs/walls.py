@@ -95,20 +95,7 @@ def adiabatic_moving_wall(eos, blk, face, thtrdat, terms):
         u = blk.array["q"][:, :, :, 1]
         v = blk.array["q"][:, :, :, 2]
         w = blk.array["q"][:, :, :, 3]
-        if nface in [1, 2]:
-            nx = blk.array["inx"]
-            ny = blk.array["iny"]
-            nz = blk.array["inz"]
-        elif nface in [3, 4]:
-            nx = blk.array["jnx"]
-            ny = blk.array["jny"]
-            nz = blk.array["jnz"]
-        elif nface in [5, 6]:
-            nx = blk.array["knx"]
-            ny = blk.array["kny"]
-            nz = blk.array["knz"]
-        else:
-            raise ValueError("Unknown nface")
+
         u[face.s0_] = 2.0 * face.bcvals["u"] - u[face.s1_]
         v[face.s0_] = 2.0 * face.bcvals["v"] - v[face.s1_]
         w[face.s0_] = 2.0 * face.bcvals["w"] - w[face.s1_]
@@ -148,20 +135,7 @@ def isoT_moving_wall(eos, blk, face, thtrdat, terms):
         u = blk.array["q"][:, :, :, 1]
         v = blk.array["q"][:, :, :, 2]
         w = blk.array["q"][:, :, :, 3]
-        if nface in [1, 2]:
-            nx = blk.array["inx"]
-            ny = blk.array["iny"]
-            nz = blk.array["inz"]
-        elif nface in [3, 4]:
-            nx = blk.array["jnx"]
-            ny = blk.array["jny"]
-            nz = blk.array["jnz"]
-        elif nface in [5, 6]:
-            nx = blk.array["knx"]
-            ny = blk.array["kny"]
-            nz = blk.array["knz"]
-        else:
-            raise ValueError("Unknown nface")
+
         u[face.s0_] = 2.0 * face.bcvals["u"] - u[face.s1_]
         v[face.s0_] = 2.0 * face.bcvals["v"] - v[face.s1_]
         w[face.s0_] = 2.0 * face.bcvals["w"] - w[face.s1_]

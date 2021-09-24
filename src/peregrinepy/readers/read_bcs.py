@@ -59,4 +59,13 @@ def read_bcs(mb, path_to_file):
             for key in bcsin[bcfam]["values"]:
                 face.bcvals[key] = bcsin[bcfam]["values"][key]
 
+            # Now add any un-specified species as zero (unless we have single component)
+            if blk.ns != 1:
+                for sn in blk.species_names[0:-1]:
+                    if sn not in face.bcvals.keys():
+                        face.bcvals[sn] = 0.0
+            else:
+                face.bcvals[mb.species_names[0]] = 1.0
+
+
             face.bcvals._freeze()
