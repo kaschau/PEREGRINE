@@ -30,9 +30,9 @@ class restart_block(grid_block):
         if self.ns < 1:
             raise ValueError("Number of species must be >=1")
 
-        ################################################################################################################
-        ############## Primative Variables
-        ################################################################################################################
+        #########################################################
+        # Primative Variables
+        #########################################################
         # Conserved variables
         for d in ["q"]:
             self.array[f"{d}"] = None
@@ -52,8 +52,8 @@ class restart_block(grid_block):
         """Function to verify that the sum of species in any cell is not greater than unity"""
 
         if self.ns > 1:
-            summation = np.sum(self.qv[:, :, :, 5::], axis=0)
-            if (np.max(summation) - 1.0) > 1e-10:
+            summation = np.sum(self.array["q"][:, :, :, 5::], axis=-1)
+            if np.max(summation) > 1.0:
                 print(
                     "Warning! Species sum of",
                     np.max(summation),
@@ -63,10 +63,10 @@ class restart_block(grid_block):
                     self.nblki,
                 )
                 if normalize:
-                    self.qv[:, :, :, 5::] = np.where(
+                    self.array["q"][:, :, :, 5::] = np.where(
                         summation > 1.0,
-                        self.qv[:, :, :, 5::] / summation,
-                        self.qv[:, :, :, 5::],
+                        self.array["q"][:, :, :, 5::] / summation,
+                        self.array["q"][:, :, :, 5::],
                     )
                 return False
         else:

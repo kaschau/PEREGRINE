@@ -46,6 +46,8 @@ def simulate(config_file_path):
         mb.step(config["simulation"]["dt"])
 
         if mb.nrt % config["simulation"]["niterout"] == 0:
+            if rank == 0:
+                print("Saving restart.\n")
             pg.writers.parallel_writer.parallel_write_restart(
                 mb, config["io"]["outputdir"]
             )
