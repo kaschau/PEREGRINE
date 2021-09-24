@@ -37,7 +37,11 @@ def simulate(config_file_path):
 
         if mb.nrt % config["simulation"]["niterprint"] == 0:
             if rank == 0:
-                print(mb.nrt, mb.tme)
+                print(
+                    " >>> -------------------------------- <<<\n",
+                    f"nrt: {mb.nrt:6>}, tme: {mb.tme:.6E}\n"
+                    " >>> -------------------------------- <<<\n"
+                )
 
         mb.step(config["simulation"]["dt"])
 
