@@ -12,7 +12,7 @@ def RHS(mb, nochem=False):
         mb.nonDissAdvFlux(blk, mb.thtrdat)
     # Dissipative advective fluxes
     for blk in mb:
-        mb.DissAdvFlux(blk, mb.thtrdat)
+        mb.dissAdvFlux(blk, mb.thtrdat)
 
     # Diffusive fluxes
     for blk in mb:
