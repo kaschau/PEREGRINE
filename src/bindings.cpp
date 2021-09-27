@@ -121,27 +121,18 @@ PYBIND11_MODULE(compute, m) {
 ////////////////////////////////////////////////////////////////////////////////
 
   // ./advFlux
-  py::module advFlux = m.def_submodule("advFlux","advective flux module");
+  py::module advFlux = m.def_submodule("advFlux", "advective flux module");
   //  |----> centralDifference
-  flux.def("centralDifference", &centralDifference, "Compute centeral difference advective fluxes",
+  advFlux.def("centralEuler", &centralEuler, "Compute centeral difference euler fluxes",
         py::arg("block_ object"),
         py::arg("thtrdat_ object"));
 
   // ./diffFlux
-  py::module diffFlux = m.def_submodule("diffFlux","diffusive flux module");
+  py::module diffFlux = m.def_submodule("diffFlux", "diffusive flux module");
   //  |----> centralDifference
-  flux.def("centralDifference", &centralDifference, "Compute centeral difference diffusive fluxes",
+  diffFlux.def("centralVisc", &centralVisc, "Compute centeral difference viscous fluxes",
         py::arg("block_ object"),
         py::arg("thtrdat_ object"));
-
-  // ./utils
-  py::module utils = m.def_submodule("utils","utility module");
-  //  |----> dQzero
-  utils.def("dQzero", &dQzero, "Zero out dQ array",
-        py::arg("block_ object"));
-  //  |----> dq2FD
-  utils.def("dq2FD", &dq2FD, "Second order approx of spatial derivative of q array via finite difference",
-        py::arg("block_ object"));
 
   // ./thermo
   py::module thermo = m.def_submodule("thermo","thermo module");
@@ -209,6 +200,16 @@ PYBIND11_MODULE(compute, m) {
         py::arg("i") = 0,
         py::arg("j") = 0,
         py::arg("k") = 0);
+
+  // ./utils
+  py::module utils = m.def_submodule("utils","utility module");
+  //  |----> dQzero
+  utils.def("dQzero", &dQzero, "Zero out dQ array",
+        py::arg("block_ object"));
+  //  |----> dq2FD
+  utils.def("dq2FD", &dq2FD, "Second order approx of spatial derivative of q array via finite difference",
+        py::arg("block_ object"));
+
 
   static auto _atexit = []() {
     if (Kokkos::is_initialized()) Kokkos::finalize();

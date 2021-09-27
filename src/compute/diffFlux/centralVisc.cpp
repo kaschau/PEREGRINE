@@ -3,7 +3,7 @@
 #include "block_.hpp"
 #include "thtrdat_.hpp"
 
-void diffusive(block_ b, thtrdat_ th) {
+void centralVisc(block_ b, thtrdat_ th) {
 
 //-------------------------------------------------------------------------------------------|
 // i flux face range
