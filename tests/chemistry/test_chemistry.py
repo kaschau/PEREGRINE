@@ -62,7 +62,7 @@ def test_chemistry():
     # Update cons
     pg.compute.thermo.tpg(blk, mb.thtrdat, 0, "prims")
     # zero out dQ
-    pg.compute.flux.dQzero(mb)
+    pg.compute.flux.dQzero(blk)
     mb.chem(blk, mb.thtrdat)
 
     # test the properties

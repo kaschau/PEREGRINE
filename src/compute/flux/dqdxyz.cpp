@@ -1,10 +1,8 @@
 #include "Kokkos_Core.hpp"
 #include "kokkos_types.hpp"
 #include "block_.hpp"
-#include <vector>
 
-void dqdxyz(std::vector<block_> mb) {
-for(block_ b : mb){
+void dqdxyz(block_ b) {
 
 //-------------------------------------------------------------------------------------------|
 // Spatial derivatices of primative variables
@@ -30,4 +28,4 @@ for(block_ b : mb){
                       0.5*( b.q(i  ,j  ,k+1,l) - b.q(i  ,j  ,k-1,l) ) * b.dXdz(i,j,k) ;
   });
 
-}};
+};
