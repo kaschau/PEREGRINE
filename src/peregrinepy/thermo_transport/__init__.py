@@ -14,3 +14,12 @@ def get_eos(eos):
         return tpg
     else:
         raise ValueError("What EOS?")
+
+
+def get_trans(trans):
+
+    if trans == "kineticTheory":
+        from ..compute.transport import kineticTheory
+        return kineticTheory
+    else:
+        raise ValueError("What transport method?")

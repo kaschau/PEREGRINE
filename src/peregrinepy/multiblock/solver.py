@@ -28,9 +28,32 @@ class solver(restart):
         temp = [solver_block(i, sp_names) for i in range(nblks)]
         super().__init__(nblks, sp_names, temp)
 
+        # Save the config file to the mb object
         self.config = None
+        # Save the species data
         self.thtrdat = None
+
+        #########################################
+        # Consistify
+        #########################################
+        # We need the following in order to use
+        # consisify method
         self.eos = None
+        self.trans = None
+        self.dqdxyz = None
+
+        #########################################
+        # RHS
+        #########################################
+        # We need the following in order to use
+        # RHS method
+        self.nonDissAdvFlx = None
+        self.DissAdvFlx = None
+        self.switch = None
+
+        self.diffFlx = None
+
+        self.chem = None
 
         # Parallel output
         self.parallel_xmf = None
@@ -39,5 +62,5 @@ class solver(restart):
         for blk in self:
             blk.init_solver_arrays(config)
 
-    def unify_solver_grid(self):
+    def unify_grid(self):
         unify_solver_grid(self)

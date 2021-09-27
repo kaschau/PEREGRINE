@@ -62,7 +62,7 @@ def bootstrap_case(config):
     ################################################################
     # Unify the grid via halo construction, compute metrics
     ################################################################
-    mb.unify_solver_grid()
+    mb.unify_grid()
     mb.compute_metrics()
 
     ################################################################

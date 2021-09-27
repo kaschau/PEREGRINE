@@ -3,7 +3,7 @@
 #include "block_.hpp"
 #include "thtrdat_.hpp"
 
-void advective(block_ b, thtrdat_ th) {
+void centralEuler(block_ b, thtrdat_ th) {
 
 //-------------------------------------------------------------------------------------------|
 // i flux face range

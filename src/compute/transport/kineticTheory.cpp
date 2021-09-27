@@ -6,12 +6,12 @@
 #include <math.h>
 #include <numeric>
 
-void kinetic_theory(block_ b,
-                  thtrdat_ th,
-                       int face,
-                       int i/*=0*/,
-                       int j/*=0*/,
-                       int k/*=0*/) {
+void kineticTheory(block_ b,
+                 thtrdat_ th,
+                      int face,
+                      int i/*=0*/,
+                      int j/*=0*/,
+                      int k/*=0*/) {
 
   MDRange3 range = get_range3(b, face, i, j, k);
 
