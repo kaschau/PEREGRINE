@@ -20,7 +20,7 @@ class FrozenDict(dict):
             raise KeyError(
                 f"""{key} is not a valid input file attribute,
                 check spelling and case"""
-                )
+            )
         super().__setitem__(key, value)
 
     def _freeze(self):
@@ -30,11 +30,7 @@ class FrozenDict(dict):
 class config_file(FrozenDict):
     def __init__(self):
         self["io"] = FrozenDict(
-            {
-                "griddir": "./Grid",
-                "inputdir": "./Input",
-                "outputdir": "./Output"
-            }
+            {"griddir": "./Grid", "inputdir": "./Input", "outputdir": "./Output"}
         )
         self["simulation"] = FrozenDict(
             {
@@ -47,17 +43,9 @@ class config_file(FrozenDict):
             }
         )
 
-        self["solver"] = FrozenDict(
-            {
-                "time_integration": "rk4"
-            }
-        )
+        self["solver"] = FrozenDict({"time_integration": "rk4"})
 
-        self["RHS"] = FrozenDict(
-            {
-                "diffusion": True
-            }
-        )
+        self["RHS"] = FrozenDict({"diffusion": True})
 
         self["thermochem"] = FrozenDict(
             {
@@ -69,11 +57,7 @@ class config_file(FrozenDict):
             }
         )
 
-        self["Kokkos"] = FrozenDict(
-            {
-                "Space": "Default"
-            }
-        )
+        self["Kokkos"] = FrozenDict({"Space": "Default"})
 
         for key in self.keys():
             self[key]._freeze()

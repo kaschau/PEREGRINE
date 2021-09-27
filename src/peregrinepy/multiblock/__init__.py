@@ -43,10 +43,11 @@ def generate_multiblock_solver(nblks, config, myblocks=None):
     # Consistify
     #########################################
     cls.eos = get_eos(config["thermochem"]["eos"])
-    cls.trans = get_trans(config["thermochem"]["trans"])
-    if config["diffusion"]:
+    if config["RHS"]["diffusion"]:
+        cls.trans = get_trans(config["thermochem"]["trans"])
         cls.dqdxyz = compute.utils.dq2FD
     else:
+        cls.trans = dummy
         cls.dqdxyz = dummy
     # Switching function between non-diss and diss adv fluxes
     cls.switch = dummy
@@ -55,15 +56,15 @@ def generate_multiblock_solver(nblks, config, myblocks=None):
     # RHS
     #########################################
     # Non dissipative advective fluxes
-    cls.nonDissAdvFlx = compute.advFlx.centeredEuler
+    cls.nonDissAdvFlux = compute.advFlux.centralEuler
     # Dissipative advective fluxes
-    cls.DissAdvFlx = dummy
+    cls.DissAdvFlux = dummy
 
-    # Diffusive fluxes fluxes
-    if config["diffusion"]:
-        cls.diffFlx = compute.diffFlx.centeredVisc
+    # Diffusive fluxes
+    if config["RHS"]["diffusion"]:
+        cls.diffFlux = compute.diffFlux.centralVisc
     else:
-        cls.diffFlx = dummy
+        cls.diffFlux = dummy
 
     # Chemical source terms
     if config["thermochem"]["chemistry"]:

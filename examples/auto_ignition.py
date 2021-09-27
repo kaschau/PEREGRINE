@@ -6,6 +6,7 @@ Adiabatic flame calculation.
 """
 
 import mpi4py.rc
+
 mpi4py.rc.initialize = False
 
 import kokkos
@@ -50,7 +51,7 @@ def simulate():
 
     pg.mpicomm.blockcomm.set_block_communication(mb)
 
-    mb.unify_solver_grid()
+    mb.unify_grid()
 
     mb.compute_metrics()
 
@@ -78,6 +79,7 @@ def simulate():
     ctT = []
     ctO2 = []
     t = []
+    print("Time   PEREGRINE  CANTERA")
     while mb.tme < 0.05:
 
         if mb.nrt % niterout == 0:
@@ -87,7 +89,7 @@ def simulate():
             ctO2.append(gas.Y[2])
             t.append(mb.tme)
 
-            print(f'{mb.tme:.2e} {blk.array["q"][1,1,1,4]:.2f} {gas.T:.2f}')
+            print(f"{mb.tme:.2e} {blk.array['q'][1,1,1,4]:.2f} {gas.T:.2f}")
 
         mb.step(dt)
         sim.advance(mb.tme)
