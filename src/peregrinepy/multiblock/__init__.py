@@ -65,13 +65,21 @@ def set_RHS(cls, config):
     # Chemical source terms
     if config["thermochem"]["chemistry"]:
         if config["thermochem"]["mechanism"] == "chem_CH4_O2_Stanford_Skeletal":
-            cls.chem = compute.chemistry.chem_CH4_O2_Stanford_Skeletal
+            cls.expchem = compute.chemistry.chem_CH4_O2_Stanford_Skeletal
         elif config["thermochem"]["mechanism"] == "chem_GRI30":
-            cls.chem = compute.chemistry.chem_GRI30
+            cls.expchem = compute.chemistry.chem_GRI30
         else:
             raise pgConfigError(config["thermochem"]["chemistry"])
+        # If we are using an implicit chemistry integration
+        #  we need to set it here and set the explicit
+        #  module to null so it is not called in RHS
+        if config["solver"]["time_integration"] in ["strang"]:
+            cls.impchem = cls.expchem
+            cls.expchem = null
+
     else:
-        cls.chem = null
+        cls.expchem = null
+        cls.impchem = null
 
 
 def generate_multiblock_solver(nblks, config, myblocks=None):
