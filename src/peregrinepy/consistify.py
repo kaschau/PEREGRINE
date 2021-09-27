@@ -29,7 +29,8 @@ def consistify(mb):
             kinetic_theory(blk, mb.thtrdat, -1)
 
         # Update spatial derivatives
-        flux.dqdxyz(mb)
+        for blk in mb:
+            flux.dqdxyz(blk)
 
         # Apply viscous boundary conditions
         apply_bcs(mb, "viscous")

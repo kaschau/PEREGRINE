@@ -124,17 +124,17 @@ PYBIND11_MODULE(compute, m) {
   py::module flux = m.def_submodule("flux","flux module");
   //  |----> dQzero
   flux.def("dQzero", &dQzero, "Zero out RHS",
-        py::arg("list of block_ object"));
+        py::arg("block_ object"));
   //  |----> dqdx
   flux.def("dqdxyz", &dqdxyz, "Spatial derivatives of prims",
-        py::arg("list of block_ object"));
+        py::arg("block_ object"));
   //  |----> advective
   flux.def("advective", &advective, "Compute centered difference flux",
-        py::arg("list of block_ object"),
+        py::arg("block_ object"),
         py::arg("thtrdat_ object"));
   //  |----> viscous
   flux.def("diffusive", &diffusive, "Compute centered diffusive flux",
-        py::arg("list of block_ object"),
+        py::arg("block_ object"),
         py::arg("thtrdat_ object"));
 
   // ./thermo

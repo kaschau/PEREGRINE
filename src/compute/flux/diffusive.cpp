@@ -2,10 +2,8 @@
 #include "kokkos_types.hpp"
 #include "block_.hpp"
 #include "thtrdat_.hpp"
-#include <vector>
 
-void diffusive(std::vector<block_> mb, thtrdat_ th) {
-for(block_ b : mb){
+void diffusive(block_ b, thtrdat_ th) {
 
 //-------------------------------------------------------------------------------------------|
 // i flux face range
@@ -343,4 +341,4 @@ for(block_ b : mb){
 
   });
 
-}};
+};

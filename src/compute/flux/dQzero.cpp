@@ -1,10 +1,8 @@
 #include "Kokkos_Core.hpp"
 #include "kokkos_types.hpp"
 #include "block_.hpp"
-#include <vector>
 
-void dQzero(std::vector<block_> mb) {
-for(block_ b : mb){
+void dQzero(block_ b) {
 
 //-------------------------------------------------------------------------------------------|
 // Zero out dQ
@@ -21,4 +19,4 @@ for(block_ b : mb){
 
   });
 
-}};
+};

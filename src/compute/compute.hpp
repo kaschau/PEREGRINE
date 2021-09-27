@@ -14,13 +14,13 @@ MDRange3 get_range3(block_ b, int face, int i=0, int j=0, int k=0);
 
 // ./flux
 //    |------> dQzero
-void dQzero(std::vector<block_> mb);
+void dQzero(block_ b);
 //    |------> dqdxyz
-void dqdxyz(std::vector<block_> mb);
+void dqdxyz(block_ b);
 //    |------> Advective
-void advective(std::vector<block_> mb, thtrdat_ th);
+void advective(block_ b, thtrdat_ th);
 //    |------> Diffusive
-void diffusive(std::vector<block_> mb, thtrdat_ th);
+void diffusive(block_ b, thtrdat_ th);
 
 // ./thermo
 //    |------> cpg
