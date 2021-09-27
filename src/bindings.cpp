@@ -120,22 +120,28 @@ PYBIND11_MODULE(compute, m) {
 ///////////////////////////  Compute Functions /////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-  // ./flux
-  py::module flux = m.def_submodule("flux","flux module");
+  // ./advFlux
+  py::module advFlux = m.def_submodule("advFlux","advective flux module");
+  //  |----> centralDifference
+  flux.def("centralDifference", &centralDifference, "Compute centeral difference advective fluxes",
+        py::arg("block_ object"),
+        py::arg("thtrdat_ object"));
+
+  // ./diffFlux
+  py::module diffFlux = m.def_submodule("diffFlux","diffusive flux module");
+  //  |----> centralDifference
+  flux.def("centralDifference", &centralDifference, "Compute centeral difference diffusive fluxes",
+        py::arg("block_ object"),
+        py::arg("thtrdat_ object"));
+
+  // ./utils
+  py::module utils = m.def_submodule("utils","utility module");
   //  |----> dQzero
-  flux.def("dQzero", &dQzero, "Zero out RHS",
+  utils.def("dQzero", &dQzero, "Zero out dQ array",
         py::arg("block_ object"));
-  //  |----> dqdx
-  flux.def("dqdxyz", &dqdxyz, "Spatial derivatives of prims",
+  //  |----> dq2FD
+  utils.def("dq2FD", &dq2FD, "Second order approx of spatial derivative of q array via finite difference",
         py::arg("block_ object"));
-  //  |----> advective
-  flux.def("advective", &advective, "Compute centered difference flux",
-        py::arg("block_ object"),
-        py::arg("thtrdat_ object"));
-  //  |----> viscous
-  flux.def("diffusive", &diffusive, "Compute centered diffusive flux",
-        py::arg("block_ object"),
-        py::arg("thtrdat_ object"));
 
   // ./thermo
   py::module thermo = m.def_submodule("thermo","thermo module");
