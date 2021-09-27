@@ -1,7 +1,5 @@
 from mpi4py.MPI import DOUBLE as MPIDOUBLE
 from mpi4py.MPI import Request
-
-from . import generate_halo
 from .. import mpicomm
 
 
@@ -26,7 +24,6 @@ def unify_solver_grid(mb):
                     if bc != "b1":
                         continue
                     neighbor = face.connectivity["neighbor"]
-                    orientation = face.connectivity["orientation"]
                     comm_rank = face.comm_rank
                     tag = int(f"1{neighbor}2{blk.nblki}1{face.nface}")
 
@@ -46,7 +43,6 @@ def unify_solver_grid(mb):
                     if bc != "b1":
                         continue
                     neighbor = face.connectivity["neighbor"]
-                    orientation = face.connectivity["orientation"]
                     comm_rank = face.comm_rank
                     tag = int(f"1{blk.nblki}2{neighbor}1{face.neighbor_face}")
                     face.sendbuffer3[:] = face.orient(

@@ -3,15 +3,13 @@ from .grid import grid
 from .restart import restart
 from .solver import solver
 
-from .topology_block import topology_block
-from .grid_block import grid_block
-from .restart_block import restart_block
-from .solver_block import solver_block
-
 from ..integrators import get_integrator
-from ..thermo_transport import thtrdat, get_eos
+from ..thermo_transport import thtrdat, get_eos, get_trans
+from peregrinepy import compute
 
-from pathlib import Path
+
+def dummy(a=None, b=None, c=None):
+    pass
 
 
 def generate_multiblock_solver(nblks, config, myblocks=None):
@@ -29,32 +27,53 @@ def generate_multiblock_solver(nblks, config, myblocks=None):
     cls = mbsolver(nblks, spn)
 
     # In parallel we need to overwrite the generated block numbers
-    if myblocks != None:
+    if myblocks is not None:
         assert (
             len(myblocks) == nblks
         ), "You passed a quantity of block number assignments that != nblks"
         for blk, nblki in zip(cls, myblocks):
             blk.nblki = nblki
 
-    # TODO: Do this better in the future
-    # Stick the config file on
+    # Set the config file on
     cls.config = config
-    # Stick the thtrdat object on
+    # Set the thtrdat object on
     cls.thtrdat = spdat
-    # Stick the equation of state on
-    cls.eos = get_eos(config["thermochem"]["eos"])
 
-    # Stick the chemistry mechanism on
+    #########################################
+    # Consistify
+    #########################################
+    cls.eos = get_eos(config["thermochem"]["eos"])
+    cls.trans = get_trans(config["thermochem"]["trans"])
+    if config["diffusion"]:
+        cls.dqdxyz = compute.utils.dq2FD
+    else:
+        cls.dqdxyz = dummy
+    # Switching function between non-diss and diss adv fluxes
+    cls.switch = dummy
+
+    #########################################
+    # RHS
+    #########################################
+    # Non dissipative advective fluxes
+    cls.nonDissAdvFlx = compute.advFlx.centeredEuler
+    # Dissipative advective fluxes
+    cls.DissAdvFlx = dummy
+
+    # Diffusive fluxes fluxes
+    if config["diffusion"]:
+        cls.diffFlx = compute.diffFlx.centeredVisc
+    else:
+        cls.diffFlx = dummy
+
+    # Chemical source terms
     if config["thermochem"]["chemistry"]:
         if config["thermochem"]["mechanism"] == "chem_CH4_O2_Stanford_Skeletal":
-            from ..compute.chemistry import chem_CH4_O2_Stanford_Skeletal
-
-            cls.chem = chem_CH4_O2_Stanford_Skeletal
+            cls.chem = compute.chemistry.chem_CH4_O2_Stanford_Skeletal
         elif config["thermochem"]["mechanism"] == "chem_GRI30":
-            from ..compute.chemistry import chem_GRI30
-
-            cls.chem = chem_GRI30
+            cls.chem = compute.chemistry.chem_GRI30
         else:
             raise ValueError("What mechanism?")
+    else:
+        cls.chem = dummy
 
     return cls

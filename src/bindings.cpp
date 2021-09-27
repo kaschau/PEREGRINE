@@ -122,21 +122,21 @@ PYBIND11_MODULE(compute, m) {
 
   // ./advFlux
   py::module advFlux = m.def_submodule("advFlux", "advective flux module");
-  //  |----> centralDifference
+  //  |----> centralEuler.cpp
   advFlux.def("centralEuler", &centralEuler, "Compute centeral difference euler fluxes",
         py::arg("block_ object"),
         py::arg("thtrdat_ object"));
 
   // ./diffFlux
   py::module diffFlux = m.def_submodule("diffFlux", "diffusive flux module");
-  //  |----> centralDifference
+  //  |----> centralVisc.cpp
   diffFlux.def("centralVisc", &centralVisc, "Compute centeral difference viscous fluxes",
         py::arg("block_ object"),
         py::arg("thtrdat_ object"));
 
   // ./thermo
   py::module thermo = m.def_submodule("thermo","thermo module");
-  //  |----> cpg
+  //  |----> cpg.cpp
   thermo.def("cpg", &cpg, "Update primatives or conservatives with cpg assumption",
         py::arg("block_ object"),
         py::arg("thtrdat_ object"),
@@ -145,7 +145,7 @@ PYBIND11_MODULE(compute, m) {
         py::arg("i")=0,
         py::arg("j")=0,
         py::arg("k")=0);
-  //  |----> tpg
+  //  |----> tpg.cpp
   thermo.def("tpg", &tpg, "Update primatives or conservatives with tpg assumption",
         py::arg("block_ object"),
         py::arg("thtrdat_ object"),
@@ -172,9 +172,9 @@ PYBIND11_MODULE(compute, m) {
     .def_readwrite("Dij_poly", &thtrdat_::Dij_poly);
 
   // ./transport
-  py::module transport = m.def_submodule("transport","transport module");
-  //  |----> kinetic_theory
-  transport.def("kinetic_theory", &kinetic_theory, "Update transport properties from primatives",
+  py::module transport = m.def_submodule("transport", "transport module");
+  //  |----> kineticTheory.cpp
+  transport.def("kineticTheory", &kineticTheory, "Update transport properties from primatives via kinetic theory",
         py::arg("block_"),
         py::arg("thtrdat_ object"),
         py::arg("face"),
@@ -183,8 +183,8 @@ PYBIND11_MODULE(compute, m) {
         py::arg("k")=0);
 
   // ./chemistry
-  py::module chemistry = m.def_submodule("chemistry","chemistry module");
-  //  |----> CH4_O2_Stanford_Skeletal
+  py::module chemistry = m.def_submodule("chemistry", "chemistry module");
+  //  |----> CH4_O2_Stanford_Skeletal.cpp
   chemistry.def("chem_CH4_O2_Stanford_Skeletal", &chem_CH4_O2_Stanford_Skeletal, "Chemical source terms from",
         py::arg("block_ object"),
         py::arg("thtrdat_ object"),
@@ -202,11 +202,11 @@ PYBIND11_MODULE(compute, m) {
         py::arg("k") = 0);
 
   // ./utils
-  py::module utils = m.def_submodule("utils","utility module");
-  //  |----> dQzero
+  py::module utils = m.def_submodule("utils", "utility module");
+  //  |----> dQzero.cpp
   utils.def("dQzero", &dQzero, "Zero out dQ array",
         py::arg("block_ object"));
-  //  |----> dq2FD
+  //  |----> dq2FD.cpp
   utils.def("dq2FD", &dq2FD, "Second order approx of spatial derivative of q array via finite difference",
         py::arg("block_ object"));
 

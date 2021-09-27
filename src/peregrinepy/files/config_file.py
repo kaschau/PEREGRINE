@@ -63,6 +63,7 @@ class config_file(FrozenDict):
             {
                 "spdata": "pure-debug.yaml",
                 "eos": "cpg",
+                "trans": "kineticTheory",
                 "chemistry": False,
                 "mechanism": None,
             }

@@ -4,7 +4,6 @@
 #include "kokkos_types.hpp"
 #include "block_.hpp"
 #include "thtrdat_.hpp"
-#include <vector>
 #include <string>
 
 ///////////////////////////////////////////////////////////
@@ -31,7 +30,7 @@ void tpg(block_ b, thtrdat_ th, int face, std::string given, int i=0, int j=0, i
 
 // ./transport
 //    |------> transport
-void kinetic_theory(block_ b, thtrdat_ th, int face, int i=0, int j=0, int k=0);
+void kineticTheory(block_ b, thtrdat_ th, int face, int i=0, int j=0, int k=0);
 
 
 // ./chemistry
