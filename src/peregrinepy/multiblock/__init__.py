@@ -8,8 +8,70 @@ from ..thermo_transport import thtrdat, get_eos, get_trans
 from peregrinepy import compute
 
 
-def dummy(a=None, b=None, c=None):
+def null(*args):
     pass
+
+
+class pgConfigError(Exception):
+    def __init__(self, option):
+        message = f'Unknown PEREGRINE config options {option}.'
+        super().__init__(message)
+
+
+#########################################
+# Consistify
+#########################################
+def set_consistify(cls, config):
+    cls.eos = get_eos(config["thermochem"]["eos"])
+    if config["RHS"]["diffusion"]:
+        cls.trans = get_trans(config["thermochem"]["trans"])
+        cls.dqdxyz = compute.utils.dq2FD
+    else:
+        cls.trans = null
+        cls.dqdxyz = null
+    # Switching function between non-diss and diss adv fluxes
+    cls.switch = null
+
+
+#########################################
+# RHS
+#########################################
+def set_RHS(cls, config):
+    # Non dissipative advective fluxes
+    if config["RHS"]["nonDissAdvFlux"] == "centralEuler":
+        cls.nonDissAdvFlux = compute.advFlux.centralEuler
+    elif config["RHS"]["nonDissAdvFlux"] is None:
+        cls.nonDissAdvFlux = null
+    else:
+        raise pgConfigError(config["RHS"]["nonDissAdvFlux"])
+
+    # Dissipative advective fluxes
+    if config["RHS"]["dissAdvFlux"] == "upwind":
+        cls.dissAdvFlux = compute.advFlux.upwind
+    elif config["RHS"]["dissAdvFlux"] is None:
+        cls.dissAdvFlux = null
+    else:
+        raise pgConfigError(config["RHS"]["nonDissAdvFlux"])
+
+    # Diffusive fluxes
+    if config["RHS"]["diffusion"]:
+        if config["RHS"]["diffFlux"] == "centralVisc":
+            cls.diffFlux = compute.diffFlux.centralVisc
+        else:
+            raise pgConfigError(config["RHS"]["diffFlux"])
+    else:
+        cls.diffFlux = null
+
+    # Chemical source terms
+    if config["thermochem"]["chemistry"]:
+        if config["thermochem"]["mechanism"] == "chem_CH4_O2_Stanford_Skeletal":
+            cls.chem = compute.chemistry.chem_CH4_O2_Stanford_Skeletal
+        elif config["thermochem"]["mechanism"] == "chem_GRI30":
+            cls.chem = compute.chemistry.chem_GRI30
+        else:
+            raise pgConfigError(config["thermochem"]["chemistry"])
+    else:
+        cls.chem = null
 
 
 def generate_multiblock_solver(nblks, config, myblocks=None):
@@ -39,42 +101,10 @@ def generate_multiblock_solver(nblks, config, myblocks=None):
     # Set the thtrdat object on
     cls.thtrdat = spdat
 
-    #########################################
-    # Consistify
-    #########################################
-    cls.eos = get_eos(config["thermochem"]["eos"])
-    if config["RHS"]["diffusion"]:
-        cls.trans = get_trans(config["thermochem"]["trans"])
-        cls.dqdxyz = compute.utils.dq2FD
-    else:
-        cls.trans = dummy
-        cls.dqdxyz = dummy
-    # Switching function between non-diss and diss adv fluxes
-    cls.switch = dummy
+    # Set the compute routines for consistify
+    set_consistify(cls, config)
 
-    #########################################
-    # RHS
-    #########################################
-    # Non dissipative advective fluxes
-    cls.nonDissAdvFlux = compute.advFlux.centralEuler
-    # Dissipative advective fluxes
-    cls.DissAdvFlux = dummy
-
-    # Diffusive fluxes
-    if config["RHS"]["diffusion"]:
-        cls.diffFlux = compute.diffFlux.centralVisc
-    else:
-        cls.diffFlux = dummy
-
-    # Chemical source terms
-    if config["thermochem"]["chemistry"]:
-        if config["thermochem"]["mechanism"] == "chem_CH4_O2_Stanford_Skeletal":
-            cls.chem = compute.chemistry.chem_CH4_O2_Stanford_Skeletal
-        elif config["thermochem"]["mechanism"] == "chem_GRI30":
-            cls.chem = compute.chemistry.chem_GRI30
-        else:
-            raise ValueError("What mechanism?")
-    else:
-        cls.chem = dummy
+    # Set the compute routines for the RHS
+    set_RHS(cls, config)
 
     return cls
