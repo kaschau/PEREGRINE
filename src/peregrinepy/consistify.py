@@ -29,7 +29,7 @@ def consistify(mb):
     for blk in mb:
         mb.dqdxyz(blk)
 
-    if mb.config["diffusion"]:
+    if mb.config["RHS"]["diffusion"]:
         # Apply viscous boundary conditions
         apply_bcs(mb, "viscous")
 

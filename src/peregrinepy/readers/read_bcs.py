@@ -67,5 +67,4 @@ def read_bcs(mb, path_to_file):
             else:
                 face.bcvals[mb.species_names[0]] = 1.0
 
-
             face.bcvals._freeze()

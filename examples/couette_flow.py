@@ -83,7 +83,7 @@ def simulate():
 
     pg.mpicomm.blockcomm.set_block_communication(mb)
 
-    mb.unify_solver_grid()
+    mb.unify_grid()
 
     mb.compute_metrics()
 

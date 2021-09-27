@@ -78,7 +78,7 @@ class solver_block(restart_block, block_):
         jfshape = [self.ni + 1, self.nj + 2, self.nk + 1]
         kfshape = [self.ni + 1, self.nj + 1, self.nk + 2]
 
-        cQshape  = [self.ni + 1, self.nj + 1, self.nk + 1, 5 + self.ns - 1]
+        cQshape = [self.ni + 1, self.nj + 1, self.nk + 1, 5 + self.ns - 1]
         ifQshape = [self.ni + 2, self.nj + 1, self.nk + 1, 5 + self.ns - 1]
         jfQshape = [self.ni + 1, self.nj + 2, self.nk + 1, 5 + self.ns - 1]
         kfQshape = [self.ni + 1, self.nj + 1, self.nk + 2, 5 + self.ns - 1]
@@ -97,8 +97,7 @@ class solver_block(restart_block, block_):
                             dynamic=False,
                         ),
                     )
-                    self.array[name] = np.array(getattr(self, name),
-                                                copy=False)
+                    self.array[name] = np.array(getattr(self, name), copy=False)
                 else:
                     setattr(
                         self,
@@ -126,30 +125,28 @@ class solver_block(restart_block, block_):
         shape = ccshape
         np_or_kokkos(["xc", "yc", "zc", "J"], shape)
         # Cell center metrics
-        np_or_kokkos(["dEdx", "dEdy", "dEdz",
-                      "dNdx", "dNdy", "dNdz",
-                      "dXdx", "dXdy", "dXdz"], shape)
+        np_or_kokkos(
+            ["dEdx", "dEdy", "dEdz", "dNdx", "dNdy", "dNdz", "dXdx", "dXdy", "dXdz"],
+            shape,
+        )
 
         # ------------------------------------------------------------------- #
         #       i face vector components and areas
         # ------------------------------------------------------------------- #
         shape = ifshape
-        np_or_kokkos(["isx", "isy", "isz", "iS",
-                      "inx", "iny", "inz"], ifshape)
+        np_or_kokkos(["isx", "isy", "isz", "iS", "inx", "iny", "inz"], ifshape)
 
         # ------------------------------------------------------------------- #
         #       j face vector components and areas
         # ------------------------------------------------------------------- #
         shape = jfshape
-        np_or_kokkos(["jsx", "jsy", "jsz", "jS",
-                      "jnx", "jny", "jnz"], shape)
+        np_or_kokkos(["jsx", "jsy", "jsz", "jS", "jnx", "jny", "jnz"], shape)
 
         # ------------------------------------------------------------------- #
         #       k face vector components and areas
         # ------------------------------------------------------------------- #
         shape = kfshape
-        np_or_kokkos(["ksx", "ksy", "ksz", "kS",
-                      "knx", "kny", "knz"], shape)
+        np_or_kokkos(["ksx", "ksy", "ksz", "kS", "knx", "kny", "knz"], shape)
 
         #######################################################################
         # Flow Arrays
@@ -190,14 +187,17 @@ class solver_block(restart_block, block_):
         # ------------------------------------------------------------------- #
         shape = cQshape
         nstorage = {"rk1": 0, "rk3": 2, "rk4": 4, "strang": 2}
-        names = [f"rhs{i}" for i in range(nstorage[config["solver"]
-                                                   ["time_integration"]])]
+        names = [
+            f"rhs{i}" for i in range(nstorage[config["solver"]["time_integration"]])
+        ]
         np_or_kokkos(names, shape)
 
         # ------------------------------------------------------------------- #
         #       Fluxes
         # ------------------------------------------------------------------- #
-        for shape, names in ((ifQshape, ["iF"]),
-                             (jfQshape, ["jF"]),
-                             (kfQshape, ["kF"])):
+        for shape, names in (
+            (ifQshape, ["iF"]),
+            (jfQshape, ["jF"]),
+            (kfQshape, ["kF"]),
+        ):
             np_or_kokkos(names, shape)

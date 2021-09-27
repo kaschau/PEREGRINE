@@ -7,9 +7,9 @@ from pathlib import Path
 
 # np.random.seed(111)
 
-##################################################################################
-##### Test for all positive i aligned orientations
-##################################################################################
+##############################################
+# Test for all positive i aligned orientations
+##############################################
 
 
 def test_chemistry():
@@ -62,7 +62,7 @@ def test_chemistry():
     # Update cons
     pg.compute.thermo.tpg(blk, mb.thtrdat, 0, "prims")
     # zero out dQ
-    pg.compute.flux.dQzero(blk)
+    pg.compute.utils.dQzero(blk)
     mb.chem(blk, mb.thtrdat)
 
     # test the properties

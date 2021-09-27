@@ -33,9 +33,7 @@ def test_tpg():
 
     mb = pg.multiblock.generate_multiblock_solver(1, config)
     pg.grid.create.multiblock_cube(
-        mb, mb_dimensions=[1, 1, 1],
-        dimensions_perblock=[2, 2, 2],
-        lengths=[1, 1, 1]
+        mb, mb_dimensions=[1, 1, 1], dimensions_perblock=[2, 2, 2], lengths=[1, 1, 1]
     )
     mb.init_solver_arrays(config)
 
@@ -89,10 +87,18 @@ def test_tpg():
     pd.append(print_diff("cp", gas.cp, pgthrm[1]))
     pd.append(print_diff("h", gas.enthalpy_mass, pgthrm[2] / pgcons[0]))
     for i, n in enumerate(gas.species_names):
-        pd.append(print_diff("h_" + n,
-                             (gas.standard_enthalpies_RT[i]
-                              * ct.gas_constant*gas.T
-                              / gas.molecular_weights[i]), pgthrm[5 + i]))
+        pd.append(
+            print_diff(
+                "h_" + n,
+                (
+                    gas.standard_enthalpies_RT[i]
+                    * ct.gas_constant
+                    * gas.T
+                    / gas.molecular_weights[i]
+                ),
+                pgthrm[5 + i],
+            )
+        )
 
     # Go the other way
     # Scramble the primatives
@@ -127,10 +133,18 @@ def test_tpg():
     pd.append(print_diff("cp", gas.cp, pgthrm[1]))
     pd.append(print_diff("h", gas.enthalpy_mass, pgthrm[2] / pgcons[0]))
     for i, n in enumerate(gas.species_names[0:-1]):
-        pd.append(print_diff("h_" + n,
-                             (gas.standard_enthalpies_RT[i]
-                              * ct.gas_constant*gas.T
-                              / gas.molecular_weights[i]), pgthrm[5 + i]))
+        pd.append(
+            print_diff(
+                "h_" + n,
+                (
+                    gas.standard_enthalpies_RT[i]
+                    * ct.gas_constant
+                    * gas.T
+                    / gas.molecular_weights[i]
+                ),
+                pgthrm[5 + i],
+            )
+        )
 
     kokkos.finalize()
 

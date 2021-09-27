@@ -20,6 +20,7 @@ def get_trans(trans):
 
     if trans == "kineticTheory":
         from ..compute.transport import kineticTheory
+
         return kineticTheory
     else:
         raise ValueError("What transport method?")

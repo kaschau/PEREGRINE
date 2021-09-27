@@ -12,6 +12,7 @@ Should reproduce results in Fig. 2 for the KEEP scheme (blue line)
 """
 
 import mpi4py.rc
+
 mpi4py.rc.initialize = False
 
 import kokkos
@@ -57,7 +58,7 @@ def simulate():
 
     pg.mpicomm.blockcomm.set_block_communication(mb)
 
-    mb.unify_solver_grid()
+    mb.unify_grid()
 
     mb.compute_metrics()
 
