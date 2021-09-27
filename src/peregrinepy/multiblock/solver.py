@@ -53,7 +53,11 @@ class solver(restart):
 
         self.diffFlux = None
 
-        self.chem = None
+        # Explicit chemistry is solved for in RHS,
+        #  so we want to keep implicit chemistry
+        #  separate
+        self.expchem = None
+        self.impchem = None
 
         # Parallel output
         self.parallel_xmf = None

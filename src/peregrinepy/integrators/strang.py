@@ -23,7 +23,7 @@ class strang:
 
     def stiff(t, y, mb, bindx, i, j, k):
         mb[bindx].array["q"][i, j, k, 4::] = y
-        mb.chem(mb[bindx], mb.thtrdat, 10, i, j, k)
+        mb.impchem(mb[bindx], mb.thtrdat, 10, i, j, k)
 
         return mb[bindx].array["omega"][i, j, k, 0:-1]
 
@@ -36,7 +36,7 @@ class strang:
             blk.array["rhs0"][:] = blk.array["Q"][:]
 
         # First Stage
-        RHS(self, nochem=True)
+        RHS(self)
 
         for blk in self:
             blk.array["rhs1"][:] = dt * blk.array["dQ"]
@@ -45,7 +45,7 @@ class strang:
         consistify(self)
 
         # Second Stage
-        RHS(self, nochem=True)
+        RHS(self)
 
         for blk in self:
             blk.array["Q"][:] = (
@@ -57,7 +57,7 @@ class strang:
         consistify(self)
 
         # Third Stage
-        RHS(self, nochem=True)
+        RHS(self)
 
         for blk in self:
             blk.array["Q"][:] = (

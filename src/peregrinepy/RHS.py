@@ -1,7 +1,7 @@
 from .compute import utils
 
 
-def RHS(mb, nochem=False):
+def RHS(mb):
 
     # Zero out dQ array
     for blk in mb:
@@ -19,6 +19,5 @@ def RHS(mb, nochem=False):
         mb.diffFlux(blk, mb.thtrdat)
 
     # Chemical source terms
-    if not nochem:
-        for blk in mb:
-            mb.chem(blk, mb.thtrdat)
+    for blk in mb:
+        mb.expchem(blk, mb.thtrdat)

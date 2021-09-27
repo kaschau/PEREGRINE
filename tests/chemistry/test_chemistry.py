@@ -63,7 +63,7 @@ def test_chemistry():
     pg.compute.thermo.tpg(blk, mb.thtrdat, 0, "prims")
     # zero out dQ
     pg.compute.utils.dQzero(blk)
-    mb.chem(blk, mb.thtrdat)
+    mb.expchem(blk, mb.thtrdat)
 
     # test the properties
     pgprim = blk.array["q"][1, 1, 1]

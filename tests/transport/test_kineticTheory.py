@@ -21,8 +21,12 @@ def test_kineticTheory():
     ct.add_directory(
         relpath + "/../../src/peregrinepy/thermo_transport/database/source"
     )
-    ctfile = "GRI30.yaml"
-    thfile = "thtr_GRI30.yaml"
+    if np.random.random() > 0.5:
+        ctfile = "CH4_O2_Stanford_Skeletal.yaml"
+        thfile = "thtr_CH4_O2_Stanford_Skeletal.yaml"
+    else:
+        ctfile = "GRI30.yaml"
+        thfile = "thtr_GRI30.yaml"
     gas = ct.Solution(ctfile)
     p = np.random.uniform(low=10000, high=1000000)
     T = np.random.uniform(low=200, high=3500)
