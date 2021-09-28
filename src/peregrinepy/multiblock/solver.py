@@ -47,9 +47,9 @@ class solver(restart):
         #########################################
         # We need the following in order to use
         # RHS method
-        self.nonDissAdvFlux = None
-        self.dissAdvFlux = None
-        self.switch = None
+        self.primaryAdvFlux = None
+        self.secondaryAdvFlux = None
+        self.switchAdvFlux = None
 
         self.diffFlux = None
 

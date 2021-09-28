@@ -4,7 +4,7 @@ from .restart import restart
 from .solver import solver
 
 from ..integrators import get_integrator
-from ..thermo_transport import thtrdat, get_eos, get_trans
+from ..thermo_transport import thtrdat
 from peregrinepy import compute
 
 
@@ -22,14 +22,23 @@ class pgConfigError(Exception):
 # Consistify
 #########################################
 def set_consistify(cls, config):
-    cls.eos = get_eos(config["thermochem"]["eos"])
+    eos = config["thermochem"]["eos"]
+    try:
+        cls.eos = getattr(compute.thermo, eos)
+    except AttributeError:
+        raise pgConfigError(eos)
     if config["RHS"]["diffusion"]:
-        cls.trans = get_trans(config["thermochem"]["trans"])
+        trans = config["thermochem"]["trans"]
+        try:
+            cls.trans = getattr(compute.transport, trans)
+        except AttributeError:
+            raise pgConfigError(trans)
         cls.dqdxyz = compute.utils.dq2FD
     else:
         cls.trans = null
         cls.dqdxyz = null
-    # Switching function between non-diss and diss adv fluxes
+
+    # Switching function between primary and secondary advective fluxes
     cls.switch = null
 
 
@@ -37,46 +46,49 @@ def set_consistify(cls, config):
 # RHS
 #########################################
 def set_RHS(cls, config):
-    # Non dissipative advective fluxes
-    if config["RHS"]["nonDissAdvFlux"] == "centralEuler":
-        cls.nonDissAdvFlux = compute.advFlux.centralEuler
-    elif config["RHS"]["nonDissAdvFlux"] is None:
-        cls.nonDissAdvFlux = null
+    # Primary advective fluxes
+    primary = config["RHS"]["primaryAdvFlux"]
+    if primary is None:
+        raise ValueError("Primary advective flux cannot be None")
     else:
-        raise pgConfigError(config["RHS"]["nonDissAdvFlux"])
+        try:
+            cls.primaryAdvFlux = getattr(compute.advFlux, primary)
+        except AttributeError:
+            raise pgConfigError(primary)
 
-    # Dissipative advective fluxes
-    if config["RHS"]["dissAdvFlux"] == "upwind":
-        cls.dissAdvFlux = compute.advFlux.upwind
-    elif config["RHS"]["dissAdvFlux"] is None:
-        cls.dissAdvFlux = null
+    # Secondary advective fluxes
+    secondary = config["RHS"]["secondaryAdvFlux"]
+    if secondary is None:
+        cls.secondaryAdvFlux = null
     else:
-        raise pgConfigError(config["RHS"]["nonDissAdvFlux"])
+        try:
+            cls.secondaryAdvFLux = getattr(compute.advFlux, secondary)
+        except AttributeError:
+            raise pgConfigError(secondary)
 
     # Diffusive fluxes
     if config["RHS"]["diffusion"]:
-        if config["RHS"]["diffFlux"] == "centralVisc":
-            cls.diffFlux = compute.diffFlux.centralVisc
-        else:
-            raise pgConfigError(config["RHS"]["diffFlux"])
+        diff = config["RHS"]["diffFlux"]
+        try:
+            cls.primaryAdvFlux = getattr(compute.diffFlux, diff)
+        except AttributeError:
+            raise pgConfigError(diff)
     else:
         cls.diffFlux = null
 
     # Chemical source terms
     if config["thermochem"]["chemistry"]:
-        if config["thermochem"]["mechanism"] == "chem_CH4_O2_Stanford_Skeletal":
-            cls.expchem = compute.chemistry.chem_CH4_O2_Stanford_Skeletal
-        elif config["thermochem"]["mechanism"] == "chem_GRI30":
-            cls.expchem = compute.chemistry.chem_GRI30
-        else:
-            raise pgConfigError(config["thermochem"]["chemistry"])
+        mech = config["thermochem"]["mechanism"]
+        try:
+            cls.expchem = getattr(compute.chemistry, mech)
+        except AttributeError:
+            raise pgConfigError(diff)
         # If we are using an implicit chemistry integration
         #  we need to set it here and set the explicit
         #  module to null so it is not called in RHS
         if config["solver"]["time_integration"] in ["strang"]:
             cls.impchem = cls.expchem
             cls.expchem = null
-
     else:
         cls.expchem = null
         cls.impchem = null

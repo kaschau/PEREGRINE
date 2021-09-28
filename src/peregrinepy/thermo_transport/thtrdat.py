@@ -71,9 +71,9 @@ class thtrdat(thtrdat_):
         MW = complete_species("MW")
         self.MW = MW
 
-        #################################################################################
-        ####### Set thermodynamic properties
-        #################################################################################
+        ########################################
+        # Set thermodynamic properties
+        ########################################
         # Set either constant cp or NASA7 polynomial coefficients
         if config["thermochem"]["eos"] == "cpg":
             # Values for constant Cp
@@ -101,9 +101,9 @@ class thtrdat(thtrdat_):
                 f'PEREGRINE ERROR: Unknown EOS {config["thermochem"]["eos"]}'
             )
 
-        #################################################################################
-        ####### Set transport properties
-        #################################################################################
+        ################################
+        # Set transport properties
+        ################################
 
         if config["RHS"]["diffusion"]:
             from .MM_Tables import delta, tstar22, omega22_table, tstar, astar_table
@@ -218,8 +218,6 @@ class thtrdat(thtrdat_):
             # Viscosities
             ##########################################
             visc = np.zeros((npts, ns))
-            ct_visc = np.zeros((npts, ns))
-            ct_mix = np.zeros(npts)
             for i, T in enumerate(Ts):
                 Tstar = T * kb / well
                 omga22 = intrp_o22(Tstar, r_deltastar.diagonal(), grid=False)
