@@ -59,6 +59,9 @@ class solver_block(restart_block, block_):
         # Face fluxes
         for d in ["iF", "jF", "kF"]:
             self.array[f"{d}"] = None
+        # Face flux switches
+        for d in ["phi"]:
+            self.array[f"{d}"] = None
 
         if self.block_type == "solver":
             self.array._freeze()
@@ -201,3 +204,9 @@ class solver_block(restart_block, block_):
             (kfQshape, ["kF"]),
         ):
             np_or_kokkos(names, shape)
+
+        # ------------------------------------------------------------------- #
+        #       Switches
+        # ------------------------------------------------------------------- #
+        shape = ccshape
+        np_or_kokkos(["phi"], shape)

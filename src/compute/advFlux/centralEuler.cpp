@@ -3,7 +3,7 @@
 #include "block_.hpp"
 #include "thtrdat_.hpp"
 
-void centralEuler(block_ b, thtrdat_ th) {
+void centralEuler(block_ b, thtrdat_ th, double primary) {
 
 //-------------------------------------------------------------------------------------------|
 // i flux face range
@@ -235,8 +235,9 @@ void centralEuler(block_ b, thtrdat_ th) {
                                      const int l) {
 
     // Add fluxes to RHS
-    b.dQ(i,j,k,l) += ( b.iF(i  ,j,k,l) + b.jF(i,j  ,k,l) + b.kF(i,j,k  ,l) ) / b.J(i,j,k);
-    b.dQ(i,j,k,l) -= ( b.iF(i+1,j,k,l) + b.jF(i,j+1,k,l) + b.kF(i,j,k+1,l) ) / b.J(i,j,k);
+    // format is F_primary*(1-switch) + F_secondary*(switch)
+    b.dQ(i,j,k,l) += ( b.iF(i  ,j,k,l) + b.jF(i,j  ,k,l) + b.kF(i,j,k  ,l) ) / b.J(i,j,k) * ( ( primary) -  b.phi(i,j,k) * (2.0*primary - 1.0));
+    b.dQ(i,j,k,l) -= ( b.iF(i+1,j,k,l) + b.jF(i,j+1,k,l) + b.kF(i,j,k+1,l) ) / b.J(i,j,k) * ( ( primary) -  b.phi(i,j,k) * (2.0*primary - 1.0));
 
   });
 

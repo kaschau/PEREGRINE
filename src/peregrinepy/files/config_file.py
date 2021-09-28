@@ -47,9 +47,9 @@ class config_file(FrozenDict):
 
         self["RHS"] = FrozenDict(
             {
-                "nonDissAdvFlux": "centralEuler",
-                "dissAdvFlux": None,
-                "advFluxSwitch": None,
+                "primaryAdvFlux": "centralEuler",
+                "secondaryAdvFlux": None,
+                "switchAdvFlux": None,
                 "diffusion": True,
                 "diffFlux": "centralVisc",
             }

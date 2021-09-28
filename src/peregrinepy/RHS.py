@@ -7,12 +7,12 @@ def RHS(mb):
     for blk in mb:
         utils.dQzero(blk)
 
-    # Non dissipative advective fluxes
+    # Primary advective fluxes
     for blk in mb:
-        mb.nonDissAdvFlux(blk, mb.thtrdat)
-    # Dissipative advective fluxes
+        mb.primaryAdvFlux(blk, mb.thtrdat, 1.0)
+    # Secondary advective fluxes
     for blk in mb:
-        mb.dissAdvFlux(blk, mb.thtrdat)
+        mb.secondaryAdvFlux(blk, mb.thtrdat, 0.0)
 
     # Diffusive fluxes
     for blk in mb:

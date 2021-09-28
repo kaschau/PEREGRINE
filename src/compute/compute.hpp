@@ -13,7 +13,7 @@ MDRange3 get_range3(block_ b, int face, int i=0, int j=0, int k=0);
 
 // ./advFlux
 //    |------> centralEuler
-void centralEuler(block_ b, thtrdat_ th);
+void centralEuler(block_ b, thtrdat_ th, double primary);
 
 
 // ./diffFlux

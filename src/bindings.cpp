@@ -114,7 +114,10 @@ PYBIND11_MODULE(compute, m) {
     // Flux Arrays
     .def_readwrite("iF", &block_::iF )
     .def_readwrite("jF", &block_::jF )
-    .def_readwrite("kF", &block_::kF );
+    .def_readwrite("kF", &block_::kF )
+
+    // Switch
+    .def_readwrite("phi", &block_::phi );
 
 ////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////  Compute Functions /////////////////////////////////
@@ -125,7 +128,8 @@ PYBIND11_MODULE(compute, m) {
   //  |----> centralEuler.cpp
   advFlux.def("centralEuler", &centralEuler, "Compute centeral difference euler fluxes",
         py::arg("block_ object"),
-        py::arg("thtrdat_ object"));
+        py::arg("thtrdat_ object"),
+        py::arg("primary"));
 
   // ./diffFlux
   py::module diffFlux = m.def_submodule("diffFlux", "diffusive flux module");
