@@ -22,11 +22,15 @@ class pgConfigError(Exception):
 # Consistify
 #########################################
 def set_consistify(cls, config):
+
+    # EOS
     eos = config["thermochem"]["eos"]
     try:
         cls.eos = getattr(compute.thermo, eos)
     except AttributeError:
         raise pgConfigError(eos)
+
+    # Diffusion, transport properties, spatial derivatives.
     if config["RHS"]["diffusion"]:
         trans = config["thermochem"]["trans"]
         try:
@@ -39,7 +43,18 @@ def set_consistify(cls, config):
         cls.dqdxyz = null
 
     # Switching function between primary and secondary advective fluxes
-    cls.switch = null
+
+    # If we aren't using a secondary flux function, we rely on the
+    #  initialization of the switch array "phi" = 0.0 and then
+    #  just never change it.
+    if config["RHS"]["secondaryAdvFlux"] is None:
+        cls.switch = null
+    else:
+        switch = config["RHS"]["switch"]
+        try:
+            cls.switch = getattr(compute.switch, switch)
+        except AttributeError:
+            raise pgConfigError(switch)
 
 
 #########################################
@@ -70,7 +85,7 @@ def set_RHS(cls, config):
     if config["RHS"]["diffusion"]:
         diff = config["RHS"]["diffFlux"]
         try:
-            cls.primaryAdvFlux = getattr(compute.diffFlux, diff)
+            cls.diffFlux = getattr(compute.diffFlux, diff)
         except AttributeError:
             raise pgConfigError(diff)
     else:
