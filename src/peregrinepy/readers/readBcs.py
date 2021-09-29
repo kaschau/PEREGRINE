@@ -68,6 +68,6 @@ def readBcs(mb, pathToFile):
                     if sn not in face.bcVals.keys():
                         face.bcVals[sn] = 0.0
             else:
-                face.bcVals[mb.speciesNames[0]] = 1.0
+                face.bcVals[blk.speciesNames[0]] = 1.0
 
             face.bcVals._freeze()
