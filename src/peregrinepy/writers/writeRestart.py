@@ -4,7 +4,6 @@ import h5py
 import numpy as np
 from lxml import etree
 from copy import deepcopy
-from ..misc import progressBar
 
 
 def writeRestart(mb, path="./", gridPath="./", precision="double"):
