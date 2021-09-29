@@ -23,7 +23,7 @@ def readBcs(mb, pathToFile):
         Adds the connectivity information to mb
 
     """
-    comm, rank, size = mpiutils.get_comm_rank_size()
+    comm, rank, size = mpiutils.getCommRankSize()
 
     # only the zeroth block reads in the file
     if 0 in mb.block_list:
