@@ -23,37 +23,37 @@ def simulate():
 
     # Manually initialise MPI
     MPI.Init()
-    comm, rank, size = pg.mpicomm.mpiutils.get_comm_rank_size()
+    comm, rank, size = pg.mpicomm.mpiutils.getCommRankSize()
     # Ensure MPI is suitably cleaned up
-    pg.mpicomm.mpiutils.register_finalize_handler()
+    pg.mpicomm.mpiutils.registerFinalizeHandler()
 
     relpath = str(Path(__file__).parent)
     ct.add_directory(relpath + "/../src/peregrinepy/thermo_transport/database/source")
-    config = pg.files.config_file()
+    config = pg.files.configFile()
     config["RHS"]["diffusion"] = False
-    config["solver"]["time_integration"] = "strang"
+    config["solver"]["timeIntegration"] = "strang"
     config["thermochem"]["chemistry"] = True
     config["thermochem"]["mechanism"] = "chem_CH4_O2_Stanford_Skeletal"
     config["thermochem"]["eos"] = "tpg"
     config["thermochem"]["spdata"] = "thtr_CH4_O2_Stanford_Skeletal.yaml"
-    mb = pg.multiblock.generate_multiblock_solver(1, config)
-    pg.grid.create.multiblock_cube(
+    mb = pg.multiblock.generateMultiblockSolver(1, config)
+    pg.grid.create.multiblockCube(
         mb,
-        mb_dimensions=[1, 1, 1],
-        dimensions_perblock=[2, 2, 2],
+        mbDims=[1, 1, 1],
+        dimsPerBlock=[2, 2, 2],
         lengths=[0.01, 0.01, 0.01],
     )
-    mb.init_solver_arrays(config)
+    mb.initSolverArrays(config)
 
     blk = mb[0]
     for face in blk.faces:
-        face.connectivity["bctype"] = "adiabatic_noslip_wall"
+        face.connectivity["bcType"] = "adiabatic_noslip_wall"
 
-    pg.mpicomm.blockcomm.set_block_communication(mb)
+    pg.mpicomm.blockComm.setBlockCommunication(mb)
 
-    mb.unify_grid()
+    mb.unifyGrid()
 
-    mb.compute_metrics()
+    mb.computeMetrics()
 
     T, p = 1100.0, 101325
     gas = ct.Solution("CH4_O2_Stanford_Skeletal.yaml")

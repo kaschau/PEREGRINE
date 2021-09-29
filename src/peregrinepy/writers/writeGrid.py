@@ -3,10 +3,10 @@ import h5py
 import numpy as np
 from lxml import etree
 from copy import deepcopy
-from ..misc import ProgressBar
+from ..misc import progressBar
 
 
-def write_grid(mb, path="./", precision="double", with_halo=False):
+def writeGrid(mb, path="./", precision="double", withHalo=False):
     """This function produces an hdf5 file from a raptorpy.multiblock.grid (or a descendant) for viewing in Paraview.
 
     Parameters
@@ -32,20 +32,20 @@ def write_grid(mb, path="./", precision="double", with_halo=False):
     else:
         fdtype = "<f8"
 
-    if with_halo and mb.mb_type == "solver":
+    if withHalo and mb.mbType == "solver":
         ng = 2
     else:
         ng = 0
 
-    xdmf_elem = etree.Element("Xdmf")
-    xdmf_elem.set("Version", "2")
+    xdmfElem = etree.Element("Xdmf")
+    xdmfElem.set("Version", "2")
 
-    domain_elem = etree.SubElement(xdmf_elem, "Domain")
+    domainElem = etree.SubElement(xdmfElem, "Domain")
 
-    grid_elem = etree.SubElement(domain_elem, "Grid")
-    grid_elem.set("Name", "RAPTOR Output")
-    grid_elem.set("GridType", "Collection")
-    grid_elem.set("CollectionType", "Spatial")
+    gridElem = etree.SubElement(domainElem, "Grid")
+    gridElem.set("Name", "RAPTOR Output")
+    gridElem.set("GridType", "Collection")
+    gridElem.set("CollectionType", "Spatial")
 
     for blk in mb:
 
@@ -69,8 +69,8 @@ def write_grid(mb, path="./", precision="double", with_halo=False):
             f["coordinates"].create_dataset("y", shape=(extent,), dtype=fdtype)
             f["coordinates"].create_dataset("z", shape=(extent,), dtype=fdtype)
 
-            if blk.block_type == "solver":
-                if with_halo:
+            if blk.blockType == "solver":
+                if withHalo:
                     s_ = np.s_[:, :, :]
                 else:
                     s_ = np.s_[1:-1, 1:-1, 1:-1]
@@ -83,44 +83,44 @@ def write_grid(mb, path="./", precision="double", with_halo=False):
             dset = f["coordinates"]["z"]
             dset[:] = blk.array["z"][s_].ravel(order="F")
 
-        block_elem = etree.Element("Grid")
-        block_elem.set("Name", f"B{blk.nblki:06d}")
+        blockElem = etree.Element("Grid")
+        blockElem.set("Name", f"B{blk.nblki:06d}")
 
-        topology_elem = etree.SubElement(block_elem, "Topology")
-        topology_elem.set("TopologyType", "3DSMesh")
-        topology_elem.set("NumberOfElements", f"{blk.nk+ng} {blk.nj+ng} {blk.ni+ng}")
+        topologyElem = etree.SubElement(blockElem, "Topology")
+        topologyElem.set("TopologyType", "3DSMesh")
+        topologyElem.set("NumberOfElements", f"{blk.nk+ng} {blk.nj+ng} {blk.ni+ng}")
 
-        geometry_elem = etree.SubElement(block_elem, "Geometry")
-        geometry_elem.set("GeometryType", "X_Y_Z")
+        geometryElem = etree.SubElement(blockElem, "Geometry")
+        geometryElem.set("GeometryType", "X_Y_Z")
 
-        data_x_elem = etree.SubElement(geometry_elem, "DataItem")
-        data_x_elem.set("ItemType", "Hyperslab")
-        data_x_elem.set("Dimensions", f"{blk.nk+ng} {blk.nj+ng} {blk.ni+ng}")
-        data_x_elem.set("Type", "HyperSlab")
-        data_x1_elem = etree.SubElement(data_x_elem, "DataItem")
-        data_x1_elem.set("DataType", "Int")
-        data_x1_elem.set("Dimensions", "3")
-        data_x1_elem.set("Format", "XML")
-        data_x1_elem.text = f"0 1 {extent}"
-        data_x2_elem = etree.SubElement(data_x_elem, "DataItem")
-        data_x2_elem.set("NumberType", "Float")
-        data_x2_elem.set("ItemType", "Uniform")
-        data_x2_elem.set("Dimensions", f"{extent}")
-        data_x2_elem.set("Precision", "4")
-        data_x2_elem.set("Format", "HDF")
-        data_x2_elem.text = f"gv.{blk.nblki:06d}.h5:/coordinates/x"
+        dataXElem = etree.SubElement(geometryElem, "DataItem")
+        dataXElem.set("ItemType", "Hyperslab")
+        dataXElem.set("Dimensions", f"{blk.nk+ng} {blk.nj+ng} {blk.ni+ng}")
+        dataXElem.set("Type", "HyperSlab")
+        dataX1Elem = etree.SubElement(dataXElem, "DataItem")
+        dataX1Elem.set("DataType", "Int")
+        dataX1Elem.set("Dimensions", "3")
+        dataX1Elem.set("Format", "XML")
+        dataX1Elem.text = f"0 1 {extent}"
+        dataX2Elem = etree.SubElement(dataXElem, "DataItem")
+        dataX2Elem.set("NumberType", "Float")
+        dataX2Elem.set("ItemType", "Uniform")
+        dataX2Elem.set("Dimensions", f"{extent}")
+        dataX2Elem.set("Precision", "4")
+        dataX2Elem.set("Format", "HDF")
+        dataX2Elem.text = f"gv.{blk.nblki:06d}.h5:/coordinates/x"
 
-        geometry_elem.append(deepcopy(data_x_elem))
-        geometry_elem[-1][1].text = f"gv.{blk.nblki:06d}.h5:/coordinates/y"
+        geometryElem.append(deepcopy(dataXElem))
+        geometryElem[-1][1].text = f"gv.{blk.nblki:06d}.h5:/coordinates/y"
 
-        geometry_elem.append(deepcopy(data_x_elem))
-        geometry_elem[-1][1].text = f"gv.{blk.nblki:06d}.h5:/coordinates/z"
+        geometryElem.append(deepcopy(dataXElem))
+        geometryElem[-1][1].text = f"gv.{blk.nblki:06d}.h5:/coordinates/z"
 
-        grid_elem.append(deepcopy(block_elem))
+        gridElem.append(deepcopy(blockElem))
 
-        if mb.mb_type in ["grid", "restart"]:
+        if mb.mbType in ["grid", "restart"]:
             ProgressBar(blk.nblki + 1, len(mb), f"Writing out block {blk.nblki}")
 
-    et = etree.ElementTree(xdmf_elem)
+    et = etree.ElementTree(xdmfElem)
     save_file = f"{path}/gv.xmf"
     et.write(save_file, pretty_print=True, encoding="UTF-8", xml_declaration=True)

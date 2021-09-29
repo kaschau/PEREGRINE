@@ -1,33 +1,33 @@
 import peregrinepy as pg
 
 
-def bootstrap_case(config):
+def bootstrapCase(config):
 
-    comm, rank, size = pg.mpicomm.mpiutils.get_comm_rank_size()
+    comm, rank, size = pg.mpicomm.mpiutils.getCommRankSize()
     ################################################################
     # First we determine what bocks we are responsible for
     ################################################################
     if rank == 0:
-        blocks4procs = pg.readers.read_blocks4procs(config["io"]["inputdir"])
+        blocksForProcs = pg.readers.readBlocksForProcs(config["io"]["inputdir"])
     else:
-        blocks4procs = None
-    blocks4procs = comm.bcast(blocks4procs, root=0)
+        blocksForProcs = None
+    blocksForProcs = comm.bcast(blocksForProcs, root=0)
     comm.Barrier()
 
-    if len(blocks4procs) != size:
+    if len(blocksForProcs) != size:
         if rank == 0:
             print(
-                "ERROR!! Number of requested processors in blocks4procs does not equal number of processors!"
+                "ERROR!! Number of requested processors in blocksForProcs does not equal number of processors!"
             )
         comm.Abort()
 
-    myblocks = blocks4procs[rank]
-    mb = pg.multiblock.generate_multiblock_solver(len(myblocks), config, myblocks)
+    myblocks = blocksForProcs[rank]
+    mb = pg.multiblock.generateMultiblockSolver(len(myblocks), config, myblocks)
 
     ################################################################
     # Read in the connectivity
     ################################################################
-    pg.readers.read_connectivity(mb, config["io"]["inputdir"])
+    pg.readers.readConnectivity(mb, config["io"]["inputdir"])
 
     ################################################################
     # Now we figure out which processor each block's neighbor
@@ -38,53 +38,53 @@ def bootstrap_case(config):
         for face in blk.faces:
             neighbor = face.connectivity["neighbor"]
             if neighbor is None:
-                face.comm_rank = None
+                face.commRank = None
                 continue
-            for otherrank, proc in enumerate(blocks4procs):
+            for otherrank, proc in enumerate(blocksForProcs):
                 if neighbor in proc:
-                    face.comm_rank = otherrank
+                    face.commRank = otherrank
 
     ################################################################
     # Read in the grid
     ################################################################
-    pg.readers.read_grid(mb, config["io"]["griddir"])
+    pg.readers.readGrid(mb, config["io"]["griddir"])
 
     ################################################################
     # Now set the MPI communication info for each block
     ################################################################
-    pg.mpicomm.blockcomm.set_block_communication(mb)
+    pg.mpicomm.blockcomm.setBlockCommunication(mb)
 
     ################################################################
     # Initialize the solver arrays
     ################################################################
-    mb.init_solver_arrays(config)
+    mb.initSolverArrays(config)
 
     ################################################################
     # Unify the grid via halo construction, compute metrics
     ################################################################
-    mb.unify_grid()
-    mb.compute_metrics()
+    mb.unifyGrid()
+    mb.computeMetrics()
 
     ################################################################
     # Read in boundary conditions
     ################################################################
-    pg.readers.read_bcs(mb, config["io"]["inputdir"])
+    pg.readers.readBcs(mb, config["io"]["inputdir"])
 
     ################################################################
     # Read in restart
     ################################################################
-    pg.readers.read_restart(
+    pg.readers.readRestart(
         mb,
         config["io"]["outputdir"],
-        config["simulation"]["restart_from"],
+        config["simulation"]["restartFrom"],
         config["simulation"]["animate"],
     )
 
     ################################################################
     # Register parallel writer
     ################################################################
-    pg.writers.parallel_writer.register_parallel_xdmf(
-        mb, config["io"]["outputdir"], grid_path=f"../{config['io']['griddir']}"
+    pg.writers.parallelWriter.registerParallelXdmf(
+        mb, config["io"]["outputdir"], gridPath=f"../{config['io']['griddir']}"
     )
 
     # Generate conserved variables

@@ -1,7 +1,7 @@
 from numpy import s_
 
 
-def generate_halo(blk):
+def generateHalo(blk):
 
     for var in ["x", "y", "z"]:
         # face1

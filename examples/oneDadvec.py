@@ -31,40 +31,40 @@ def simulate():
 
     # Manually initialise MPI
     MPI.Init()
-    comm, rank, size = pg.mpicomm.mpiutils.get_comm_rank_size()
+    comm, rank, size = pg.mpicomm.mpiutils.getCommRankSize()
     # Ensure MPI is suitably cleaned up
-    pg.mpicomm.mpiutils.register_finalize_handler()
+    pg.mpicomm.mpiutils.registerFinalizeHandler()
 
-    config = pg.files.config_file()
+    config = pg.files.configFile()
     config["RHS"]["diffusion"] = False
-    mb = pg.multiblock.generate_multiblock_solver(1, config)
-    pg.grid.create.multiblock_cube(
+    mb = pg.multiblock.generateMultiblockSolver(1, config)
+    pg.grid.create.multiblockCube(
         mb,
-        mb_dimensions=[1, 1, 1],
-        dimensions_perblock=[41, 2, 2],
+        mbDims=[1, 1, 1],
+        dimsPerBlock=[41, 2, 2],
         lengths=[1, 0.01, 0.01],
     )
-    mb.init_solver_arrays(config)
+    mb.initSolverArrays(config)
 
     blk = mb[0]
     for face in blk.faces:
-        face.connectivity["bctype"] = "adiabatic_slip_wall"
+        face.connectivity["bcType"] = "adiabatic_slip_wall"
 
-    blk.get_face_conn(1)["bctype"] = "b1"
-    blk.get_face_conn(1)["neighbor"] = 0
-    blk.get_face_conn(1)["orientation"] = "123"
-    blk.get_face(1).comm_rank = 0
+    blk.getFaceConn(1)["bcType"] = "b1"
+    blk.getFaceConn(1)["neighbor"] = 0
+    blk.getFaceConn(1)["orientation"] = "123"
+    blk.getFace(1).commRank = 0
 
-    blk.get_face_conn(2)["bctype"] = "b1"
-    blk.get_face_conn(2)["neighbor"] = 0
-    blk.get_face_conn(2)["orientation"] = "123"
-    blk.get_face(2).comm_rank = 0
+    blk.getFaceConn(2)["bcType"] = "b1"
+    blk.getFaceConn(2)["neighbor"] = 0
+    blk.getFaceConn(2)["orientation"] = "123"
+    blk.getFace(2).commRank = 0
 
-    pg.mpicomm.blockcomm.set_block_communication(mb)
+    pg.mpicomm.blockComm.setBlockCommunication(mb)
 
-    mb.unify_grid()
+    mb.unifyGrid()
 
-    mb.compute_metrics()
+    mb.computeMetrics()
 
     R = 281.4583333333333
     blk.array["q"][:, :, :, 0] = 1.0

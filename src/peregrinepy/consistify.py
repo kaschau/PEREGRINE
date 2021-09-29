@@ -1,5 +1,5 @@
-from .bcs import apply_bcs
-from .mpicomm.blockcomm import communicate
+from .bcs import applyBcs
+from .mpicomm.blockComm import communicate
 
 
 def consistify(mb):
@@ -22,7 +22,7 @@ def consistify(mb):
         mb.eos(blk, mb.thtrdat, -1, "cons")
 
     # Apply euler boundary conditions
-    apply_bcs(mb, "euler")
+    applyBcs(mb, "euler")
 
     # Update transport properties
     for blk in mb:
@@ -35,7 +35,7 @@ def consistify(mb):
     # TODO: can we get rid of this if check?
     if mb.config["RHS"]["diffusion"]:
         # Apply viscous boundary conditions
-        apply_bcs(mb, "viscous")
+        applyBcs(mb, "viscous")
 
         # communicate viscous halos
         commList += ["dqdx", "dqdy", "dqdz"]

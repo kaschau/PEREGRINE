@@ -11,7 +11,7 @@ import time
 import sys
 
 
-def simulate(config_file_path):
+def simulate(configFilePath):
     # Import but do not initialise MPI
     from mpi4py import MPI
     import numpy as np
@@ -21,15 +21,15 @@ def simulate(config_file_path):
     # Manually initialise MPI
     MPI.Init()
 
-    comm, rank, size = pg.mpicomm.mpiutils.get_comm_rank_size()
+    comm, rank, size = pg.mpicomm.mpiutils.getCommRankSize()
     # Ensure MPI is suitably cleaned up
-    pg.mpicomm.mpiutils.register_finalize_handler()
+    pg.mpicomm.mpiutils.registerFinalizeHandler()
 
-    config = pg.mpicomm.mpiread_config(config_file_path)
+    config = pg.mpicomm.mpiReadConfig(configFilePath)
 
-    mb = pg.bootstrap_case(config)
+    mb = pg.bootstrapCase(config)
 
-    pg.writers.parallel_writer.parallel_write_restart(
+    pg.writers.parallelWriter.parallelWriteRestart(
         mb, path=config["io"]["outputdir"]
     )
 
@@ -48,7 +48,7 @@ def simulate(config_file_path):
         if mb.nrt % config["simulation"]["niterout"] == 0:
             if rank == 0:
                 print("Saving restart.\n")
-            pg.writers.parallel_writer.parallel_write_restart(
+            pg.writers.parallelWriter.parallelWriteRestart(
                 mb, config["io"]["outputdir"]
             )
 
@@ -57,10 +57,10 @@ def simulate(config_file_path):
 
 
 if __name__ == "__main__":
-    config_file_path = sys.argv[1]
+    configFilePath = sys.argv[1]
     try:
         kokkos.initialize()
-        simulate(config_file_path)
+        simulate(configFilePath)
         kokkos.finalize()
 
     except Exception as e:
@@ -68,6 +68,6 @@ if __name__ == "__main__":
         import traceback
 
         print(f"{e}")
-        exc_type, exc_value, exc_traceback = sys.exc_info()
-        traceback.print_exception(exc_type, exc_value, exc_traceback)
+        excType, excValue, excTraceback = sys.exc_info()
+        traceback.print_exception(excType, excValue, excTraceback)
         sys.exit(1)

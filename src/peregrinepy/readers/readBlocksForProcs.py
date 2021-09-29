@@ -1,6 +1,6 @@
-def read_blocks4procs(path_to_file):
+def readBlocksForProcs(pathToFile):
 
-    with open(f"{path_to_file}/blocks4procs.inp") as f:
+    with open(f"{pathToFile}/blocksForProcs.inp") as f:
         lines = [
             i.strip().split(",") for i in f.readlines() if not i.strip().startswith("#")
         ]

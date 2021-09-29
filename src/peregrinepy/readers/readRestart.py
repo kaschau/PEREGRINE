@@ -4,15 +4,17 @@ import numpy as np
 import h5py
 
 
-def read_restart(mb, path="./", nrt=0, animate=True):
-    """This function reads in all the HDF5 grid files in :path: and adds the coordinate data to a supplied raptorpy.multiblock.grid object (or one of its descendants)
+def readRestart(mb, path="./", nrt=0, animate=True):
+    """This function reads in all the HDF5 grid files in :path:
+    and adds the coordinate data to a supplied peregrinepy.multiblock.grid
+    object (or one of its descendants)
 
     Parameters
     ----------
 
-    mb : raptorpy.multiblock.grid (or a descendant)
+    mb : peregrinepy.multiblock.grid (or a descendant)
 
-    file_path : str
+    path : str
         Path to find all the HDF5 grid files to be read in
 
     Returns
@@ -22,14 +24,14 @@ def read_restart(mb, path="./", nrt=0, animate=True):
     """
 
     for blk in mb:
-        variables = ["p", "u", "v", "w", "T"] + blk.species_names[0:-1]
+        variables = ["p", "u", "v", "w", "T"] + blk.speciesNames[0:-1]
 
         if animate:
-            file_name = f"{path}/q.{nrt:08d}.{blk.nblki:06d}.h5"
+            fileName = f"{path}/q.{nrt:08d}.{blk.nblki:06d}.h5"
         else:
-            file_name = f"{path}/q.{blk.nblki:06d}.h5"
+            fileName = f"{path}/q.{blk.nblki:06d}.h5"
 
-        with h5py.File(file_name, "r") as f:
+        with h5py.File(fileName, "r") as f:
 
             blk.nrt = list(f["iter"]["nrt"])[0]
             blk.tme = list(f["iter"]["tme"])[0]

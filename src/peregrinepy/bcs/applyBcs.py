@@ -3,12 +3,12 @@ from .exits import *
 from .walls import *
 
 
-def apply_bcs(mb, terms):
+def applyBcs(mb, terms):
 
     # First we apply inlets and exits
     for blk in mb:
         for face in blk.faces:
-            bc = face.connectivity["bctype"]
+            bc = face.connectivity["bcType"]
             if bc in ["b0", "b1"]:
                 continue
             elif bc == "constant_velocity_subsonic_inlet":
@@ -18,7 +18,7 @@ def apply_bcs(mb, terms):
     # Then we apply walls
     for blk in mb:
         for face in blk.faces:
-            bc = face.connectivity["bctype"]
+            bc = face.connectivity["bcType"]
             if bc in ["b0", "b1"]:
                 continue
             elif bc == "adiabatic_noslip_wall":

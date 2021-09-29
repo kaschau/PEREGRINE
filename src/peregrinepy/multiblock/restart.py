@@ -13,18 +13,18 @@ python lists to create a list of peregrine.block object with added functionality
 """
 
 from .grid import grid
-from .restart_block import restart_block
+from .restartBlock import restartBlock
 
 
 class restart(grid):
     """A list of peregrinepy.restart.restart_block objects. Inherits from peregrinepy.multiblock.grid"""
 
-    mb_type = "restart"
+    mbType = "restart"
 
-    def __init__(self, nblks, sp_names, ls=[]):
+    def __init__(self, nblks, spNames, ls=[]):
 
         if ls == []:
-            temp = [restart_block(i, sp_names) for i in range(nblks)]
+            temp = [restartBlock(i, spNames) for i in range(nblks)]
             super().__init__(nblks, temp)
         else:
             super().__init__(nblks, ls)
@@ -32,9 +32,9 @@ class restart(grid):
         self.nrt = 0
         self.tme = 0
 
-    def init_restart_arrays(self):
+    def initRestartArrays(self):
         for blk in self:
-            blk.init_restart_arrays()
+            blk.initRestartArrays()
 
     # We will make the nrt and tme attribues of the restart containter
     # properties with a setter so that setting the container value will
@@ -59,7 +59,7 @@ class restart(grid):
         for blk in self:
             blk.tme = val
 
-    def check_species_sum(self, normalize=False):
+    def checkSpeciesSum(self, normalize=False):
         """Loop through each block to check that the sum of all species does not exceed 1.0 anywhere in the domain
 
         Parameters
@@ -74,16 +74,16 @@ class restart(grid):
 
         """
 
-        any_bad = False
+        anyBad = False
         for blk in self:
-            good_sum = blk.verify_species_sum(normalize)
-            if not good_sum:
-                any_bad = True
+            goodSum = blk.verifySpeciesSum(normalize)
+            if not goodSum:
+                anyBad = True
 
-        if any_bad:
+        if anyBad:
             if not normalize:
                 print(
-                    "\nRe-run check_species_sum sum with arg normalize=True to normalize species mass fraction.\n"
+                    "\nRe-run checkSpeciesSum sum with arg normalize=True to normalize species mass fraction.\n"
                 )
             else:
                 print(
