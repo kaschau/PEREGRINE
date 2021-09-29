@@ -5,11 +5,11 @@ import yaml
 class myDumper(yaml.SafeDumper):
     # HACK: insert blank lines between top-level objects
     # inspired by https://stackoverflow.com/a/44284819/3786245
-    def writeLineBreak(self, data=None):
-        super().writeLineBreak(data)
+    def write_line_break(self, data=None):
+        super().write_line_break(data)
 
         if len(self.indents) == 1:
-            super().writeLineBreak()
+            super().write_line_break()
 
 
 def writeConfigFile(config, filePath="./"):
@@ -19,10 +19,10 @@ def writeConfigFile(config, filePath="./"):
     Parameters
     ----------
 
-    config : raptorpy.files.configut_file
+    config : peregrinepy.files.configFile
 
     filePath : str
-       Path of location to write output RAPTOR input file to
+       Path of location to write output PEREGRINE input file to
 
     Returns
     -------
