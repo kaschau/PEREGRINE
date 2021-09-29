@@ -52,7 +52,7 @@ def bootstrapCase(config):
     ################################################################
     # Now set the MPI communication info for each block
     ################################################################
-    pg.mpicomm.blockcomm.setBlockCommunication(mb)
+    pg.mpicomm.blockComm.setBlockCommunication(mb)
 
     ################################################################
     # Initialize the solver arrays
