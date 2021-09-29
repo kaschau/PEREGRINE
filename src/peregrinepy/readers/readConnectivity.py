@@ -23,7 +23,7 @@ def readConnectivity(mb, pathToFile):
         Adds the connectivity information to mb
 
     """
-    comm, rank, size = mpiutils.get_comm_rank_size()
+    comm, rank, size = mpiutils.getCommRankSize()
 
     # only the zeroth rank reads in the file
     if rank == 0:
