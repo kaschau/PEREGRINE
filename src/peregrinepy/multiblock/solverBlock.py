@@ -2,7 +2,7 @@
 import kokkos
 import numpy as np
 from ..compute import block_
-from .restart_block import restart_block
+from .restartBlock import restartBlock
 
 """ block.py
 
@@ -16,7 +16,7 @@ that a multiblock datasets (see multiblock.py) can be composed of.
 """
 
 
-class solver_block(restart_block, block_):
+class solverBlock(restartBlock, block_):
     """
     block object is the most basic object a raptorpy.multiblock.dataset
     (or one of its descendants) can be.
@@ -26,7 +26,7 @@ class solver_block(restart_block, block_):
 
     """
 
-    block_type = "solver"
+    blockType = "solver"
 
     def __init__(self, nblki, sp_names):
         # The c++ stuff must be instantiated first,
@@ -34,7 +34,7 @@ class solver_block(restart_block, block_):
         # attributes are assigned values, not defined
         # in the upstream __init__s
         block_.__init__(self)
-        restart_block.__init__(self, nblki, sp_names)
+        restartBlock.__init__(self, nblki, sp_names)
 
         self.ne = 5 + self.ns - 1
 
@@ -63,10 +63,10 @@ class solver_block(restart_block, block_):
         for d in ["phi"]:
             self.array[f"{d}"] = None
 
-        if self.block_type == "solver":
+        if self.blockType == "solver":
             self.array._freeze()
 
-    def init_solver_arrays(self, config):
+    def initSolverArrays(self, config):
         """
         Create the Kokkos work arrays and python side numpy wrappers
         """
@@ -86,7 +86,7 @@ class solver_block(restart_block, block_):
         jfQshape = [self.ni + 1, self.nj + 2, self.nk + 1, 5 + self.ns - 1]
         kfQshape = [self.ni + 1, self.nj + 1, self.nk + 2, 5 + self.ns - 1]
 
-        def np_or_kokkos(names, shape):
+        def npOrKokkos(names, shape):
             for name in names:
                 if self.array[name] is None:
                     setattr(
@@ -120,15 +120,15 @@ class solver_block(restart_block, block_):
         #       Primary grid coordinates
         # ------------------------------------------------------------------- #
         shape = [self.ni + 2, self.nj + 2, self.nk + 2]
-        np_or_kokkos(["x", "y", "z"], shape)
+        npOrKokkos(["x", "y", "z"], shape)
 
         # ------------------------------------------------------------------- #
         #       Cell center
         # ------------------------------------------------------------------- #
         shape = ccshape
-        np_or_kokkos(["xc", "yc", "zc", "J"], shape)
+        npOrKokkos(["xc", "yc", "zc", "J"], shape)
         # Cell center metrics
-        np_or_kokkos(
+        npOrKokkos(
             ["dEdx", "dEdy", "dEdz", "dNdx", "dNdy", "dNdz", "dXdx", "dXdy", "dXdz"],
             shape,
         )
@@ -137,19 +137,19 @@ class solver_block(restart_block, block_):
         #       i face vector components and areas
         # ------------------------------------------------------------------- #
         shape = ifshape
-        np_or_kokkos(["isx", "isy", "isz", "iS", "inx", "iny", "inz"], ifshape)
+        npOrKokkos(["isx", "isy", "isz", "iS", "inx", "iny", "inz"], ifshape)
 
         # ------------------------------------------------------------------- #
         #       j face vector components and areas
         # ------------------------------------------------------------------- #
         shape = jfshape
-        np_or_kokkos(["jsx", "jsy", "jsz", "jS", "jnx", "jny", "jnz"], shape)
+        npOrKokkos(["jsx", "jsy", "jsz", "jS", "jnx", "jny", "jnz"], shape)
 
         # ------------------------------------------------------------------- #
         #       k face vector components and areas
         # ------------------------------------------------------------------- #
         shape = kfshape
-        np_or_kokkos(["ksx", "ksy", "ksz", "kS", "knx", "kny", "knz"], shape)
+        npOrKokkos(["ksx", "ksy", "ksz", "kS", "knx", "kny", "knz"], shape)
 
         #######################################################################
         # Flow Arrays
@@ -158,32 +158,32 @@ class solver_block(restart_block, block_):
         #       Conservative, Primative, dQ
         # ------------------------------------------------------------------- #
         shape = cQshape
-        np_or_kokkos(["Q", "q", "dQ"], shape)
+        npOrKokkos(["Q", "q", "dQ"], shape)
 
         # ------------------------------------------------------------------- #
         #       Spatial derivative of primative array
         # ------------------------------------------------------------------- #
         shape = cQshape
-        np_or_kokkos(["dqdx", "dqdy", "dqdz"], shape)
+        npOrKokkos(["dqdx", "dqdy", "dqdz"], shape)
 
         # ------------------------------------------------------------------- #
         #       Thermo
         # ------------------------------------------------------------------- #
         shape = [self.ni + 1, self.nj + 1, self.nk + 1, 5 + self.ns]
-        np_or_kokkos(["qh"], shape)
+        npOrKokkos(["qh"], shape)
 
         # ------------------------------------------------------------------- #
         #       Transport
         # ------------------------------------------------------------------- #
         shape = [self.ni + 1, self.nj + 1, self.nk + 1, 2 + self.ns - 1]
-        np_or_kokkos(["qt"], shape)
+        npOrKokkos(["qt"], shape)
 
         # ------------------------------------------------------------------- #
         #       Chemistry
         # ------------------------------------------------------------------- #
         if config["thermochem"]["chemistry"]:
             shape = [self.ni + 1, self.nj + 1, self.nk + 1, 1 + self.ns]
-            np_or_kokkos(["omega"], shape)
+            npOrKokkos(["omega"], shape)
 
         # ------------------------------------------------------------------- #
         #       RK Stages
@@ -191,9 +191,9 @@ class solver_block(restart_block, block_):
         shape = cQshape
         nstorage = {"rk1": 0, "rk3": 2, "rk4": 4, "strang": 2}
         names = [
-            f"rhs{i}" for i in range(nstorage[config["solver"]["time_integration"]])
+            f"rhs{i}" for i in range(nstorage[config["solver"]["timeIntegration"]])
         ]
-        np_or_kokkos(names, shape)
+        npOrKokkos(names, shape)
 
         # ------------------------------------------------------------------- #
         #       Fluxes
@@ -203,10 +203,10 @@ class solver_block(restart_block, block_):
             (jfQshape, ["jF"]),
             (kfQshape, ["kF"]),
         ):
-            np_or_kokkos(names, shape)
+            npOrKokkos(names, shape)
 
         # ------------------------------------------------------------------- #
         #       Switches
         # ------------------------------------------------------------------- #
         shape = [self.ni + 1, self.nj + 1, self.nk + 1, 3]
-        np_or_kokkos(["phi"], shape)
+        npOrKokkos(["phi"], shape)

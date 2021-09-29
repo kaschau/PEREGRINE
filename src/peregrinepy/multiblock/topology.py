@@ -13,22 +13,22 @@ python lists to create a list of peregrine.block object with added functionality
 """
 
 from collections import UserList
-from .topology_block import topology_block
+from .topologyBlock import topologyBlock
 
 
 class topology(UserList):
     """A list of peregrinepy.block objects"""
 
-    mb_type = "topology"
+    mbType = "topology"
 
     def __init__(self, nblks, ls=[]):
         if ls == []:
-            temp = [topology_block(i) for i in range(nblks)]
+            temp = [topologyBlock(i) for i in range(nblks)]
             super().__init__(temp)
         else:
             super().__init__(ls)
 
-        self.total_blocks = None
+        self.totalBlocks = None
 
     @property
     def nblks(self):
@@ -37,3 +37,8 @@ class topology(UserList):
     @property
     def block_list(self):
         return [b.nblki for b in self]
+
+    def __repr__(self):
+        string = "Topology multiblock object:\n"
+        string += f"{self.nblks} block(s)\n"
+        return string

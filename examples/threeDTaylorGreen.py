@@ -29,38 +29,38 @@ def simulate():
 
     # Manually initialise MPI
     MPI.Init()
-    comm, rank, size = pg.mpicomm.mpiutils.get_comm_rank_size()
+    comm, rank, size = pg.mpicomm.mpiutils.getCommRankSize()
     # Ensure MPI is suitably cleaned up
-    pg.mpicomm.mpiutils.register_finalize_handler()
+    pg.mpicomm.mpiutils.registerFinalizeHandler()
 
-    config = pg.files.config_file()
+    config = pg.files.configFile()
     config["RHS"]["diffusion"] = False
 
-    mb = pg.multiblock.generate_multiblock_solver(1, config)
-    pg.grid.create.multiblock_cube(
+    mb = pg.multiblock.generateMultiblockSolver(1, config)
+    pg.grid.create.multiblockCube(
         mb,
-        mb_dimensions=[1, 1, 1],
-        dimensions_perblock=[65, 65, 65],
+        mbDims=[1, 1, 1],
+        dimsPerBlock=[65, 65, 65],
         lengths=[2 * np.pi for _ in range(3)],
     )
 
-    mb.init_solver_arrays(config)
+    mb.initSolverArrays(config)
 
     blk = mb[0]
 
     for face in blk.faces:
-        face.connectivity["bctype"] = "b1"
+        face.connectivity["bcType"] = "b1"
         face.connectivity["neighbor"] = 0
         face.connectivity["orientation"] = "123"
-        face.comm_rank = 0
+        face.commRank = 0
 
-    mb.generate_halo()
+    mb.generateHalo()
 
-    pg.mpicomm.blockcomm.set_block_communication(mb)
+    pg.mpicomm.blockComm.setBlockCommunication(mb)
 
-    mb.unify_grid()
+    mb.unifyGrid()
 
-    mb.compute_metrics()
+    mb.computeMetrics()
 
     R = 281.4583333333333
     cp = 1000.0

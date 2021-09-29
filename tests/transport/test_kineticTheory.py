@@ -33,21 +33,21 @@ def test_kineticTheory():
     Y = np.random.uniform(low=0.0, high=1.0, size=gas.n_species)
     Y = Y / np.sum(Y)
 
-    config = pg.files.config_file()
+    config = pg.files.configFile()
     config["thermochem"]["spdata"] = thfile
     config["thermochem"]["eos"] = "tpg"
     config["RHS"]["diffusion"] = True
 
-    mb = pg.multiblock.generate_multiblock_solver(1, config)
-    pg.grid.create.multiblock_cube(
-        mb, mb_dimensions=[1, 1, 1], dimensions_perblock=[2, 2, 2], lengths=[1, 1, 1]
+    mb = pg.multiblock.generateMultiblockSolver(1, config)
+    pg.grid.create.multiblockCube(
+        mb, mbDims=[1, 1, 1], dimsPerBlock=[2, 2, 2], lengths=[1, 1, 1]
     )
-    mb.init_solver_arrays(config)
+    mb.initSolverArrays(config)
 
     blk = mb[0]
 
-    mb.generate_halo()
-    mb.compute_metrics()
+    mb.generateHalo()
+    mb.computeMetrics()
 
     gas.TPY = T, p, Y
     blk.array["q"][:, :, :, 0] = p

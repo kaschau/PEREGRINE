@@ -3,7 +3,7 @@ from .grid import grid
 from .restart import restart
 from .solver import solver
 
-from ..integrators import get_integrator
+from ..integrators import getIntegrator
 from ..thermo_transport import thtrdat
 from peregrinepy import compute
 
@@ -21,7 +21,7 @@ class pgConfigError(Exception):
 #########################################
 # Consistify
 #########################################
-def set_consistify(cls, config):
+def setConsistify(cls, config):
 
     # EOS
     eos = config["thermochem"]["eos"]
@@ -60,7 +60,7 @@ def set_consistify(cls, config):
 #########################################
 # RHS
 #########################################
-def set_RHS(cls, config):
+def setRHS(cls, config):
     # Primary advective fluxes
     primary = config["RHS"]["primaryAdvFlux"]
     if primary is None:
@@ -95,31 +95,31 @@ def set_RHS(cls, config):
     if config["thermochem"]["chemistry"]:
         mech = config["thermochem"]["mechanism"]
         try:
-            cls.expchem = getattr(compute.chemistry, mech)
+            cls.expChem = getattr(compute.chemistry, mech)
         except AttributeError:
             raise pgConfigError(diff)
         # If we are using an implicit chemistry integration
         #  we need to set it here and set the explicit
         #  module to null so it is not called in RHS
-        if config["solver"]["time_integration"] in ["strang"]:
-            cls.impchem = cls.expchem
-            cls.expchem = null
+        if config["solver"]["timeIntegration"] in ["strang"]:
+            cls.impChem = cls.expChem
+            cls.expChem = null
     else:
-        cls.expchem = null
-        cls.impchem = null
+        cls.expChem = null
+        cls.impChem = null
 
 
-def generate_multiblock_solver(nblks, config, myblocks=None):
+def generateMultiblockSolver(nblks, config, myblocks=None):
 
     # Get the time integrator from config file
-    ti = config["solver"]["time_integration"]
-    tic = get_integrator(ti)
+    ti = config["solver"]["timeIntegration"]
+    tic = getIntegrator(ti)
     name = "solver" + ti
     mbsolver = type(name, (solver, tic), dict(name=name))
 
     # Get the number of species from the spdata file
     spdat = thtrdat(config)
-    spn = spdat.species_names
+    spn = spdat.speciesNames
     # Instantiate the combined mbsolver+timeint object
     cls = mbsolver(nblks, spn)
 
@@ -137,9 +137,9 @@ def generate_multiblock_solver(nblks, config, myblocks=None):
     cls.thtrdat = spdat
 
     # Set the compute routines for consistify
-    set_consistify(cls, config)
+    setConsistify(cls, config)
 
     # Set the compute routines for the RHS
-    set_RHS(cls, config)
+    setRHS(cls, config)
 
     return cls

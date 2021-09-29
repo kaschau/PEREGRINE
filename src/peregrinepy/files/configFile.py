@@ -11,28 +11,28 @@ of a standard PEREGRINE config file.
 
 """
 
-from ..misc import FrozenDict
+from ..misc import frozenDict
 
 
-class config_file(FrozenDict):
+class configFile(frozenDict):
     def __init__(self):
-        self["io"] = FrozenDict(
+        self["io"] = frozenDict(
             {"griddir": "./Grid", "inputdir": "./Input", "outputdir": "./Output"}
         )
-        self["simulation"] = FrozenDict(
+        self["simulation"] = frozenDict(
             {
                 "niter": 1,
                 "dt": 1e-3,
-                "restart_from": 0,
+                "restartFrom": 0,
                 "animate": True,
                 "niterout": 10,
                 "niterprint": 1,
             }
         )
 
-        self["solver"] = FrozenDict({"time_integration": "rk4"})
+        self["solver"] = frozenDict({"timeIntegration": "rk4"})
 
-        self["RHS"] = FrozenDict(
+        self["RHS"] = frozenDict(
             {
                 "primaryAdvFlux": "centralEuler",
                 "secondaryAdvFlux": None,
@@ -42,7 +42,7 @@ class config_file(FrozenDict):
             }
         )
 
-        self["thermochem"] = FrozenDict(
+        self["thermochem"] = frozenDict(
             {
                 "spdata": "pure-debug.yaml",
                 "eos": "cpg",
@@ -52,7 +52,7 @@ class config_file(FrozenDict):
             }
         )
 
-        self["Kokkos"] = FrozenDict({"Space": "Default"})
+        self["Kokkos"] = frozenDict({"Space": "Default"})
 
         for key in self.keys():
             self[key]._freeze()

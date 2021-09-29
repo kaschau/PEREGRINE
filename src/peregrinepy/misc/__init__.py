@@ -1,2 +1,2 @@
-from .FrozenDict import FrozenDict
-from .ProgressBar import ProgressBar
+from .frozenDict import frozenDict
+from .progressBar import progressBar

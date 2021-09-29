@@ -23,7 +23,7 @@ class strang:
 
     def stiff(t, y, mb, bindx, i, j, k):
         mb[bindx].array["q"][i, j, k, 4::] = y
-        mb.impchem(mb[bindx], mb.thtrdat, 10, i, j, k)
+        mb.impChem(mb[bindx], mb.thtrdat, 10, i, j, k)
 
         return mb[bindx].array["omega"][i, j, k, 0:-1]
 

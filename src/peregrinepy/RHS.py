@@ -20,4 +20,4 @@ def RHS(mb):
 
     # Chemical source terms
     for blk in mb:
-        mb.expchem(blk, mb.thtrdat)
+        mb.expChem(blk, mb.thtrdat)

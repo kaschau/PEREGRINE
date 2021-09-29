@@ -23,70 +23,70 @@ def simulate():
 
     # Manually initialise MPI
     MPI.Init()
-    comm, rank, size = pg.mpicomm.mpiutils.get_comm_rank_size()
+    comm, rank, size = pg.mpicomm.mpiutils.getCommRankSize()
     # Ensure MPI is suitably cleaned up
-    pg.mpicomm.mpiutils.register_finalize_handler()
+    pg.mpicomm.mpiutils.registerFinalizeHandler()
 
-    config = pg.files.config_file()
+    config = pg.files.configFile()
     config["simulation"]["dt"] = 1e-5
     config["simulation"]["niter"] = 500000
     config["simulation"]["niterout"] = 10000
     config["simulation"]["niterprint"] = 1000
     config["RHS"]["diffusion"] = True
 
-    mb = pg.multiblock.generate_multiblock_solver(1, config)
-    pg.grid.create.multiblock_cube(
+    mb = pg.multiblock.generateMultiblockSolver(1, config)
+    pg.grid.create.multiblockCube(
         mb,
-        mb_dimensions=[1, 1, 1],
-        dimensions_perblock=[5, 40, 2],
+        mbDims=[1, 1, 1],
+        dimsPerBlock=[5, 40, 2],
         lengths=[0.01, 0.1, 0.01],
     )
 
-    mb.init_solver_arrays(config)
+    mb.initSolverArrays(config)
 
     blk = mb[0]
 
     # face 1
-    blk.get_face_conn(1)["bcfam"] = None
-    blk.get_face_conn(1)["bctype"] = "b1"
-    blk.get_face_conn(1)["neighbor"] = 0
-    blk.get_face_conn(1)["orientation"] = "123"
-    blk.get_face(1).comm_rank = 0
+    blk.getFaceConn(1)["bcFam"] = None
+    blk.getFaceConn(1)["bcType"] = "b1"
+    blk.getFaceConn(1)["neighbor"] = 0
+    blk.getFaceConn(1)["orientation"] = "123"
+    blk.getFace(1).commRank = 0
     # face 2
-    blk.get_face_conn(2)["bcfam"] = None
-    blk.get_face_conn(2)["bctype"] = "b1"
-    blk.get_face_conn(2)["neighbor"] = 0
-    blk.get_face_conn(2)["orientation"] = "123"
-    blk.get_face(2).comm_rank = 0
+    blk.getFaceConn(2)["bcFam"] = None
+    blk.getFaceConn(2)["bcType"] = "b1"
+    blk.getFaceConn(2)["neighbor"] = 0
+    blk.getFaceConn(2)["orientation"] = "123"
+    blk.getFace(2).commRank = 0
     # face 3
-    blk.get_face_conn(3)["bcfam"] = None
-    blk.get_face_conn(3)["bctype"] = "adiabatic_noslip_wall"
-    blk.get_face_conn(3)["neighbor"] = None
-    blk.get_face_conn(3)["orientation"] = None
-    blk.get_face(3).comm_rank = 0
+    blk.getFaceConn(3)["bcFam"] = None
+    blk.getFaceConn(3)["bcType"] = "adiabatic_noslip_wall"
+    blk.getFaceConn(3)["neighbor"] = None
+    blk.getFaceConn(3)["orientation"] = None
+    blk.getFace(3).commRank = 0
     # face 4 isoT moving wall
-    blk.get_face_conn(4)["bcfam"] = "whoosh"
-    blk.get_face_conn(4)["bctype"] = "adiabatic_moving_wall"
-    blk.get_face_conn(4)["neighbor"] = None
-    blk.get_face_conn(4)["orientation"] = None
-    blk.get_face(4).comm_rank = 0
+    blk.getFaceConn(4)["bcFam"] = "whoosh"
+    blk.getFaceConn(4)["bcType"] = "adiabatic_moving_wall"
+    blk.getFaceConn(4)["neighbor"] = None
+    blk.getFaceConn(4)["orientation"] = None
+    blk.getFace(4).commRank = 0
 
     for face in [5, 6]:
-        blk.get_face_conn(face)["bcfam"] = None
-        blk.get_face_conn(face)["bctype"] = "adiabatic_slip_wall"
-        blk.get_face(face).comm_rank = 0
+        blk.getFaceConn(face)["bcFam"] = None
+        blk.getFaceConn(face)["bcType"] = "adiabatic_slip_wall"
+        blk.getFace(face).commRank = 0
 
-    blk.get_face(4).bcvals = {"u": 5.0, "v": 0.0, "w": 0.0}
+    blk.getFace(4).bcVals = {"u": 5.0, "v": 0.0, "w": 0.0}
 
-    mb.generate_halo()
+    mb.generateHalo()
 
-    pg.mpicomm.blockcomm.set_block_communication(mb)
+    pg.mpicomm.blockComm.setBlockCommunication(mb)
 
-    mb.unify_grid()
+    mb.unifyGrid()
 
-    mb.compute_metrics()
+    mb.computeMetrics()
 
-    pg.writers.write_grid(mb, config["io"]["griddir"])
+    pg.writers.writeGrid(mb, config["io"]["griddir"])
 
     blk.array["q"][1:-1, 1:-1, 1, 0] = 101325.0
     blk.array["q"][:, :, :, 1:4] = 0.0
@@ -95,7 +95,7 @@ def simulate():
     mb.eos(blk, mb.thtrdat, 0, "prims")
     pg.consistify(mb)
 
-    pg.writers.write_restart(mb, config["io"]["outputdir"], grid_path="../Grid")
+    pg.writers.writeRestart(mb, config["io"]["outputdir"], gridPath="../Grid")
 
     for niter in range(config["simulation"]["niter"]):
 
@@ -105,7 +105,7 @@ def simulate():
         mb.step(config["simulation"]["dt"])
 
         if mb.nrt % config["simulation"]["niterout"] == 0:
-            pg.writers.write_restart(mb, config["io"]["outputdir"], grid_path="../Grid")
+            pg.writers.writeRestart(mb, config["io"]["outputdir"], gridPath="../Grid")
 
     # Finalise MPI
     MPI.Finalize()

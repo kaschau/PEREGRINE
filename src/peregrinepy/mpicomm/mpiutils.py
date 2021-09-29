@@ -2,7 +2,7 @@ import sys
 import atexit
 
 
-def get_comm_rank_size():
+def getCommRankSize():
 
     from mpi4py import MPI
 
@@ -13,12 +13,11 @@ def get_comm_rank_size():
     return comm, rank, size
 
 
-def register_finalize_handler():
+def registerFinalizeHandler():
     import mpi4py.rc
-    from mpi4py import MPI
-
     # Prevent mpi4py from calling MPI_Finalize
     mpi4py.rc.finalize = False
+    from mpi4py import MPI
 
     # Intercept any uncaught exceptions
     class ExceptHook(object):

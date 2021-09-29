@@ -96,9 +96,9 @@ def adiabatic_moving_wall(eos, blk, face, thtrdat, terms):
         v = blk.array["q"][:, :, :, 2]
         w = blk.array["q"][:, :, :, 3]
 
-        u[face.s0_] = 2.0 * face.bcvals["u"] - u[face.s1_]
-        v[face.s0_] = 2.0 * face.bcvals["v"] - v[face.s1_]
-        w[face.s0_] = 2.0 * face.bcvals["w"] - w[face.s1_]
+        u[face.s0_] = 2.0 * face.bcVals["u"] - u[face.s1_]
+        v[face.s0_] = 2.0 * face.bcVals["v"] - v[face.s1_]
+        w[face.s0_] = 2.0 * face.bcVals["w"] - w[face.s1_]
 
         TN = blk.array["q"][:, :, :, 4::]
         TN[face.s0_] = TN[face.s1_]
@@ -136,9 +136,9 @@ def isoT_moving_wall(eos, blk, face, thtrdat, terms):
         v = blk.array["q"][:, :, :, 2]
         w = blk.array["q"][:, :, :, 3]
 
-        u[face.s0_] = 2.0 * face.bcvals["u"] - u[face.s1_]
-        v[face.s0_] = 2.0 * face.bcvals["v"] - v[face.s1_]
-        w[face.s0_] = 2.0 * face.bcvals["w"] - w[face.s1_]
+        u[face.s0_] = 2.0 * face.bcVals["u"] - u[face.s1_]
+        v[face.s0_] = 2.0 * face.bcVals["v"] - v[face.s1_]
+        w[face.s0_] = 2.0 * face.bcVals["w"] - w[face.s1_]
 
         # Match species
         N = blk.array["q"][:, :, :, 4::]
@@ -146,7 +146,7 @@ def isoT_moving_wall(eos, blk, face, thtrdat, terms):
 
         # Set tempeerature
         T = blk.array["q"][:, :, :, 4]
-        T[face.s0_] = 2.0 * face.bcvals["T"] - T[face.s1_]
+        T[face.s0_] = 2.0 * face.bcVals["T"] - T[face.s1_]
 
         # Update conservatives
         eos(blk, thtrdat, nface, "prims")
