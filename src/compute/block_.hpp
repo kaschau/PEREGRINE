@@ -43,7 +43,7 @@ struct block_ {
   fourDview iF,jF,kF;
 
   // Flux Switch Array
-  threeDview phi;
+  fourDview phi;
 
 };
 

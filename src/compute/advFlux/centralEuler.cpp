@@ -3,7 +3,7 @@
 #include "block_.hpp"
 #include "thtrdat_.hpp"
 
-void centralEuler(block_ b, thtrdat_ th, double primary) {
+void centralEuler(block_ b, thtrdat_ th, const double primary) {
 
 //-------------------------------------------------------------------------------------------|
 // i flux face range
@@ -234,10 +234,26 @@ void centralEuler(block_ b, thtrdat_ th, double primary) {
                                      const int k,
                                      const int l) {
 
+
+    // Compute switch on face
+    double iFphi  = 0.5 * ( b.phi(i,j,k,0) + b.phi(i-1,j,k,0) );
+    double iFphi1 = 0.5 * ( b.phi(i,j,k,0) + b.phi(i+1,j,k,0) );
+    double jFphi  = 0.5 * ( b.phi(i,j,k,1) + b.phi(i,j-1,k,1) );
+    double jFphi1 = 0.5 * ( b.phi(i,j,k,1) + b.phi(i,j+1,k,1) );
+    double kFphi  = 0.5 * ( b.phi(i,j,k,2) + b.phi(i,j,k+1,2) );
+    double kFphi1 = 0.5 * ( b.phi(i,j,k,2) + b.phi(i,j,k-1,2) );
+
+    double dPrimary = 2.0*primary - 1.0;
+
     // Add fluxes to RHS
     // format is F_primary*(1-switch) + F_secondary*(switch)
-    b.dQ(i,j,k,l) += ( b.iF(i  ,j,k,l) + b.jF(i,j  ,k,l) + b.kF(i,j,k  ,l) ) / b.J(i,j,k) * ( ( primary) -  b.phi(i,j,k) * (2.0*primary - 1.0));
-    b.dQ(i,j,k,l) -= ( b.iF(i+1,j,k,l) + b.jF(i,j+1,k,l) + b.kF(i,j,k+1,l) ) / b.J(i,j,k) * ( ( primary) -  b.phi(i,j,k) * (2.0*primary - 1.0));
+    b.dQ(i,j,k,l) += ( b.iF(i,j,k,l) * (primary -  iFphi * dPrimary) +
+                       b.jF(i,j,k,l) * (primary -  jFphi * dPrimary) +
+                       b.kF(i,j,k,l) * (primary -  kFphi * dPrimary) ) / b.J(i,j,k) ;
+
+    b.dQ(i,j,k,l) -= ( b.iF(i+1,j,k,l) * (primary -  iFphi1 * dPrimary) +
+                       b.jF(i,j+1,k,l) * (primary -  jFphi1 * dPrimary) +
+                       b.kF(i,j,k+1,l) * (primary -  kFphi1 * dPrimary) ) / b.J(i,j,k) ;
 
   });
 
