@@ -13,31 +13,58 @@ MDRange3 get_range3(block_ b, int face, int i=0, int j=0, int k=0);
 
 // ./advFlux
 //    |------> centralEuler
-void centralEuler(block_ b, thtrdat_ th, double primary);
+void centralEuler(block_ b, const thtrdat_ th, const double primary);
 
 
 // ./diffFlux
 //    |------> centralVisc
-void centralVisc(block_ b, thtrdat_ th);
+void centralVisc(block_ b, const thtrdat_ th);
 
 
 // ./thermo
 //    |------> cpg
-void cpg(block_ b, thtrdat_ th, int face, std::string given, int i=0, int j=0, int k=0);
+void cpg(block_ b,
+         const thtrdat_ th,
+         const int face,
+         const std::string given,
+         const int i=0,
+         const int j=0,
+         const int k=0);
 //    |------> tpg
-void tpg(block_ b, thtrdat_ th, int face, std::string given, int i=0, int j=0, int k=0);
+void tpg(block_ b,
+         const thtrdat_ th,
+         const int face,
+         const std::string given,
+         const int i=0,
+         const int j=0,
+         const int k=0);
 
 
 // ./transport
 //    |------> transport
-void kineticTheory(block_ b, thtrdat_ th, int face, int i=0, int j=0, int k=0);
+void kineticTheory(block_ b,
+                   const thtrdat_ th,
+                   const int face,
+                   const int i=0,
+                   const int j=0,
+                   const int k=0);
 
 
 // ./chemistry
 //    |------> CH4_O2_Stanford_Skeletal
-void chem_CH4_O2_Stanford_Skeletal(block_ b, thtrdat_ th, int face=0, int i=0, int j=0, int k=0);
+void chem_CH4_O2_Stanford_Skeletal(block_ b,
+                             const thtrdat_ th,
+                             const int face,
+                             const int i=0,
+                             const int j=0,
+                             const int k=0);
 //    |------> GRI30
-void chem_GRI30(block_ b, thtrdat_ th, int face=0, int i=0, int j=0, int k=0);
+void chem_GRI30(block_ b,
+          const thtrdat_ th,
+          const int face,
+          const int i=0,
+          const int j=0,
+          const int k=0);
 
 
 // ./utils
