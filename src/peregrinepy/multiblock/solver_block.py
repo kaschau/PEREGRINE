@@ -208,5 +208,5 @@ class solver_block(restart_block, block_):
         # ------------------------------------------------------------------- #
         #       Switches
         # ------------------------------------------------------------------- #
-        shape = ccshape
+        shape = [self.ni + 1, self.nj + 1, self.nk + 1, 3]
         np_or_kokkos(["phi"], shape)
