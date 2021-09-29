@@ -26,7 +26,7 @@ class restartBlock(gridBlock):
         super().__init__(nblki)
 
         self.nrt = 0
-        self.tme = 0
+        self.tme = 0.0
 
         self.speciesNames = speciesNames
         self.ns = len(speciesNames)
