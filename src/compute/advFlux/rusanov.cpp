@@ -28,12 +28,12 @@ void rusanov(block_ b, const thtrdat_ th, const double primary) {
     vfL = b.q(i-1,j,k,2);
     wfL = b.q(i-1,j,k,3);
 
-    UR = b.inx(i,j,k)*ufR +
-         b.iny(i,j,k)*vfR +
-         b.inz(i,j,k)*wfR ;
-    UL = b.inx(i,j,k)*ufL +
-         b.iny(i,j,k)*vfL +
-         b.inz(i,j,k)*wfL ;
+    UR = b.isx(i,j,k)*ufR +
+         b.isy(i,j,k)*vfR +
+         b.isz(i,j,k)*wfR ;
+    UL = b.isx(i,j,k)*ufL +
+         b.isy(i,j,k)*vfL +
+         b.isz(i,j,k)*wfL ;
 
     rhoR = b.Q(i  ,j,k,0);
     rhoL = b.Q(i-1,j,k,0);
@@ -45,35 +45,36 @@ void rusanov(block_ b, const thtrdat_ th, const double primary) {
     EL = b.Q(i-1,j,k,4);
 
     // wave speed estimate / 2
-    double lam = 0.25*( ( b.qh(i,j,k,3) + b.qh(i-1,j,k,3) ) + abs(UR + UL) );
+    //double lam = 0.25*( ( b.qh(i,j,k,3) + b.qh(i-1,j,k,3) ) + abs(UR + UL) );
+    double lam = fmax( abs(UL) + b.qh(i,j,k,3), abs(UR) + b.qh(i-1,j,k,3) );
 
     // Continuity rho*Ui
     double FrhoR,FrhoL;
     FrhoR = UR*rhoR;
     FrhoL = UL*rhoL;
-    b.iF(i,j,k,0) = 0.5*( FrhoR + FrhoL - lam*(rhoR - rhoL) ) * b.iS(i,j,k);
+    b.iF(i,j,k,0) = 0.5*( FrhoR + FrhoL - lam*(rhoR - rhoL)*b.iS(i,j,k) );
 
     double FUR,FUL;
     // x momentum rho*u*Ui+ p*Ax
-    FUR = UR*ufR*rhoR + pR*b.isx(i,j,k)/b.iS(i,j,k);
-    FUL = UL*ufL*rhoL + pL*b.isx(i,j,k)/b.iS(i,j,k);
-    b.iF(i,j,k,1) = 0.5*( FUR + FUL - lam*(rhoR*ufR - rhoL*ufL) ) * b.iS(i,j,k);
+    FUR = UR*ufR*rhoR + pR*b.isx(i,j,k);
+    FUL = UL*ufL*rhoL + pL*b.isx(i,j,k);
+    b.iF(i,j,k,1) = 0.5*( FUR + FUL - lam*(rhoR*ufR - rhoL*ufL)*b.iS(i,j,k) );
 
     // y momentum rho*v*Ui+ p*Ay
-    FUR = UR*vfR*rhoR + pR*b.isy(i,j,k)/b.iS(i,j,k);
-    FUL = UL*vfL*rhoL + pL*b.isy(i,j,k)/b.iS(i,j,k);
-    b.iF(i,j,k,2) = 0.5*( FUR + FUL - lam*(rhoR*vfR - rhoL*vfL) ) * b.iS(i,j,k);
+    FUR = UR*vfR*rhoR + pR*b.isy(i,j,k);
+    FUL = UL*vfL*rhoL + pL*b.isy(i,j,k);
+    b.iF(i,j,k,2) = 0.5*( FUR + FUL - lam*(rhoR*vfR - rhoL*vfL)*b.iS(i,j,k) );
 
     // w momentum rho*w*Ui+ p*Az
-    FUR = UR*wfR*rhoR + pR*b.isz(i,j,k)/b.iS(i,j,k);
-    FUL = UL*wfL*rhoL + pL*b.isz(i,j,k)/b.iS(i,j,k);
-    b.iF(i,j,k,3) = 0.5*( FUR + FUL - lam*(rhoR*wfR - rhoL*wfL) ) * b.iS(i,j,k);
+    FUR = UR*wfR*rhoR + pR*b.isz(i,j,k);
+    FUL = UL*wfL*rhoL + pL*b.isz(i,j,k);
+    b.iF(i,j,k,3) = 0.5*( FUR + FUL - lam*(rhoR*wfR - rhoL*wfL)*b.iS(i,j,k) );
 
     // Total energy (rhoE+ p)*Ui)
     double FER, FEL;
     FER = UR*(ER + pR);
     FEL = UL*(EL + pL);
-    b.iF(i,j,k,4) = 0.5*( FER + FEL - lam*(ER - EL) ) * b.iS(i,j,k);
+    b.iF(i,j,k,4) = 0.5*( FER + FEL - lam*(ER - EL)*b.iS(i,j,k) );
 
     // Species
     double FYiR, FYiL;
