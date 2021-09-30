@@ -130,6 +130,11 @@ PYBIND11_MODULE(compute, m) {
         py::arg("block_ object"),
         py::arg("thtrdat_ object"),
         py::arg("primary"));
+  //  |----> rusanov.cpp
+  advFlux.def("rusanov", &rusanov, "Compute first order euler fluxes via rusanov",
+        py::arg("block_ object"),
+        py::arg("thtrdat_ object"),
+        py::arg("primary"));
 
   // ./diffFlux
   py::module diffFlux = m.def_submodule("diffFlux", "diffusive flux module");
