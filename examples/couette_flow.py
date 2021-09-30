@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 
-Poisuielle Flow with top wall moving at 5m/s
+Couette Flow with top wall moving at 5m/s
 
 """
 import kokkos
