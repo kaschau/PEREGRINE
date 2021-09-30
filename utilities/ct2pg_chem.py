@@ -122,9 +122,7 @@ def ct2pg_chem(ctyaml, cpp):
     # HEADER
     # --------------------------------
     # WRITE OUT SPECIES ORDER
-    pg_mech.write(
-        "// ========================================================== //\n"
-    )
+    pg_mech.write("// ========================================================== //\n")
     for i, sp in enumerate(gas.species_names):
         pg_mech.write(f"// Y({i:>3d}) = {sp}\n")
     pg_mech.write(
@@ -472,10 +470,7 @@ def ct2pg_chem(ctyaml, cpp):
     pg_mech.write(out_string)
 
     # END
-    out_string = (
-        "  });\n"
-        "}"
-    )
+    out_string = "  });\n" "}"
     pg_mech.write(out_string)
     pg_mech.close()
 
@@ -499,7 +494,6 @@ if __name__ == "__main__":
 
     ct_file_name = args.ct_file_name
 
-    cpp_file_name = f'chem_{ct_file_name.replace(".yaml",".cpp")}'.replace("-",
-                                                                           "_")
+    cpp_file_name = f'chem_{ct_file_name.replace(".yaml",".cpp")}'.replace("-", "_")
 
     ct2pg_chem(ct_file_name, cpp_file_name)

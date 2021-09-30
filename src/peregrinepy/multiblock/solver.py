@@ -13,31 +13,58 @@ python lists to create a list of peregrine.block object with added functionality
 """
 
 from .restart import restart
-from .solver_block import solver_block
-from ..grid import unify_solver_grid
+from .solverBlock import solverBlock
+from ..grid import unifySolverGrid
 
 
 class solver(restart):
     """A list of peregrinepy.restart.restart_block objects. Inherits from peregrinepy.multiblock.grid"""
 
-    mb_type = "solver"
+    mbType = "solver"
 
-    def __init__(self, nblks, sp_names):
-        assert type(sp_names) is list, f"sp_names must me a list not {type(sp_names)}"
+    def __init__(self, nblks, spNames):
+        assert type(spNames) is list, f"spNames must me a list not {type(spNames)}"
 
-        temp = [solver_block(i, sp_names) for i in range(nblks)]
-        super().__init__(nblks, sp_names, temp)
+        temp = [solverBlock(i, spNames) for i in range(nblks)]
+        super().__init__(nblks, spNames, temp)
 
+        # Save the config file to the mb object
         self.config = None
+        # Save the species data
         self.thtrdat = None
+
+        #########################################
+        # Consistify
+        #########################################
+        # We need the following in order to use
+        # consisify method
         self.eos = None
+        self.trans = None
+        self.dqdxyz = None
+
+        #########################################
+        # RHS
+        #########################################
+        # We need the following in order to use
+        # RHS method
+        self.primaryAdvFlux = None
+        self.secondaryAdvFlux = None
+        self.switchAdvFlux = None
+
+        self.diffFlux = None
+
+        # Explicit chemistry is solved for in RHS,
+        #  so we want to keep implicit chemistry
+        #  separate
+        self.expChem = None
+        self.impChem = None
 
         # Parallel output
-        self.parallel_xmf = None
+        self.parallelXmf = None
 
-    def init_solver_arrays(self, config):
+    def initSolverArrays(self, config):
         for blk in self:
-            blk.init_solver_arrays(config)
+            blk.initSolverArrays(config)
 
-    def unify_solver_grid(self):
-        unify_solver_grid(self)
+    def unifyGrid(self):
+        unifySolverGrid(self)

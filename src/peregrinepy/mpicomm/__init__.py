@@ -1,3 +1,3 @@
 from . import mpiutils
-from . import blockcomm
-from .mpiread_config import mpiread_config
+from . import blockComm
+from .mpiReadConfig import mpiReadConfig

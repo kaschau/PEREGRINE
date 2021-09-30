@@ -14,108 +14,108 @@ This module holds functions for creating grid_block objects of various forms.
 import numpy as np
 
 
-def cubic_connectivity(blk, mb_dimensions, blk_number, i, j, k):
+def cubicConnectivity(blk, mbDims, blkNum, i, j, k):
 
     # i faces
-    if i == 0 and mb_dimensions[0] != 1:
-        conn = blk.get_face_conn(1)
-        conn["bctype"] = "adiabatic_noslip_wall"
+    if i == 0 and mbDims[0] != 1:
+        conn = blk.getFaceConn(1)
+        conn["bcType"] = "adiabatic_noslip_wall"
         conn["neighbor"] = None
         conn["orientation"] = None
 
-        conn = blk.get_face_conn(2)
-        conn["bctype"] = "b0"
-        conn["neighbor"] = blk_number + 1
+        conn = blk.getFaceConn(2)
+        conn["bcType"] = "b0"
+        conn["neighbor"] = blkNum + 1
         conn["orientation"] = "123"
 
-    elif i == mb_dimensions[0] - 1 and mb_dimensions[0] != 1:
-        conn = blk.get_face_conn(1)
-        conn["bctype"] = "b0"
-        conn["neighbor"] = blk_number - 1
+    elif i == mbDims[0] - 1 and mbDims[0] != 1:
+        conn = blk.getFaceConn(1)
+        conn["bcType"] = "b0"
+        conn["neighbor"] = blkNum - 1
         conn["orientation"] = "123"
 
-        conn = blk.get_face_conn(2)
-        conn["bctype"] = "adiabatic_noslip_wall"
+        conn = blk.getFaceConn(2)
+        conn["bcType"] = "adiabatic_noslip_wall"
         conn["neighbor"] = None
         conn["orientation"] = None
 
-    elif mb_dimensions[0] != 1:
-        conn = blk.get_face_conn(1)
-        conn["bctype"] = "b0"
-        conn["neighbor"] = blk_number - 1
+    elif mbDims[0] != 1:
+        conn = blk.getFaceConn(1)
+        conn["bcType"] = "b0"
+        conn["neighbor"] = blkNum - 1
         conn["orientation"] = "123"
 
-        conn = blk.get_face_conn(2)
-        conn["bctype"] = "b0"
-        conn["neighbor"] = blk_number + 1
+        conn = blk.getFaceConn(2)
+        conn["bcType"] = "b0"
+        conn["neighbor"] = blkNum + 1
         conn["orientation"] = "123"
 
     # j faces
-    if j == 0 and mb_dimensions[1] != 1:
-        conn = blk.get_face_conn(3)
-        conn["bctype"] = "adiabatic_noslip_wall"
+    if j == 0 and mbDims[1] != 1:
+        conn = blk.getFaceConn(3)
+        conn["bcType"] = "adiabatic_noslip_wall"
         conn["neighbor"] = None
         conn["orientation"] = None
 
-        conn = blk.get_face_conn(4)
-        conn["bctype"] = "b0"
-        conn["neighbor"] = blk_number + mb_dimensions[0]
+        conn = blk.getFaceConn(4)
+        conn["bcType"] = "b0"
+        conn["neighbor"] = blkNum + mbDims[0]
         conn["orientation"] = "123"
 
-    elif j == mb_dimensions[1] - 1 and mb_dimensions[1] != 1:
-        conn = blk.get_face_conn(3)
-        conn["bctype"] = "b0"
-        conn["neighbor"] = blk_number - mb_dimensions[0]
+    elif j == mbDims[1] - 1 and mbDims[1] != 1:
+        conn = blk.getFaceConn(3)
+        conn["bcType"] = "b0"
+        conn["neighbor"] = blkNum - mbDims[0]
         conn["orientation"] = "123"
 
-        conn = blk.get_face_conn(4)
-        conn["bctype"] = "adiabatic_noslip_wall"
+        conn = blk.getFaceConn(4)
+        conn["bcType"] = "adiabatic_noslip_wall"
         conn["neighbor"] = None
         conn["orientation"] = None
 
-    elif mb_dimensions[1] != 1:
-        conn = blk.get_face_conn(3)
-        conn["bctype"] = "b0"
-        conn["neighbor"] = blk_number - mb_dimensions[0]
+    elif mbDims[1] != 1:
+        conn = blk.getFaceConn(3)
+        conn["bcType"] = "b0"
+        conn["neighbor"] = blkNum - mbDims[0]
         conn["orientation"] = "123"
 
-        conn = blk.get_face_conn(4)
-        conn["bctype"] = "b0"
-        conn["neighbor"] = blk_number + mb_dimensions[0]
+        conn = blk.getFaceConn(4)
+        conn["bcType"] = "b0"
+        conn["neighbor"] = blkNum + mbDims[0]
         conn["orientation"] = "123"
 
     # k faces
-    if k == 0 and mb_dimensions[2] != 1:
-        conn = blk.get_face_conn(5)
-        conn["bctype"] = "adiabatic_noslip_wall"
+    if k == 0 and mbDims[2] != 1:
+        conn = blk.getFaceConn(5)
+        conn["bcType"] = "adiabatic_noslip_wall"
         conn["neighbor"] = None
         conn["orientation"] = None
 
-        conn = blk.get_face_conn(6)
-        conn["bctype"] = "b0"
-        conn["neighbor"] = blk_number + mb_dimensions[0] * mb_dimensions[1]
+        conn = blk.getFaceConn(6)
+        conn["bcType"] = "b0"
+        conn["neighbor"] = blkNum + mbDims[0] * mbDims[1]
         conn["orientation"] = "123"
 
-    elif k == mb_dimensions[2] - 1 and mb_dimensions[2] != 1:
-        conn = blk.get_face_conn(5)
-        conn["bctype"] = "b0"
-        conn["neighbor"] = blk_number - mb_dimensions[0] * mb_dimensions[1]
+    elif k == mbDims[2] - 1 and mbDims[2] != 1:
+        conn = blk.getFaceConn(5)
+        conn["bcType"] = "b0"
+        conn["neighbor"] = blkNum - mbDims[0] * mbDims[1]
         conn["orientation"] = "123"
 
-        conn = blk.get_face_conn(6)
-        conn["bctype"] = "adiabatic_noslip_wall"
+        conn = blk.getFaceConn(6)
+        conn["bcType"] = "adiabatic_noslip_wall"
         conn["neighbor"] = None
         conn["orientation"] = None
 
-    elif mb_dimensions[2] != 1:
-        conn = blk.get_face_conn(5)
-        conn["bctype"] = "b0"
-        conn["neighbor"] = blk_number - mb_dimensions[0] * mb_dimensions[1]
+    elif mbDims[2] != 1:
+        conn = blk.getFaceConn(5)
+        conn["bcType"] = "b0"
+        conn["neighbor"] = blkNum - mbDims[0] * mbDims[1]
         conn["orientation"] = "123"
 
-        conn = blk.get_face_conn(6)
-        conn["bctype"] = "b0"
-        conn["neighbor"] = blk_number + mb_dimensions[0] * mb_dimensions[1]
+        conn = blk.getFaceConn(6)
+        conn["bcType"] = "b0"
+        conn["neighbor"] = blkNum + mbDims[0] * mbDims[1]
         conn["orientation"] = "123"
 
 
@@ -148,33 +148,31 @@ def cube(blk, origin, lengths, dimensions):
     blk.nj = dimensions[1]
     blk.nk = dimensions[2]
 
-    blk.init_grid_arrays()
+    blk.initGridArrays()
 
     x = np.linspace(origin[0], origin[0] + lengths[0], dimensions[0], dtype=np.float64)
     y = np.linspace(origin[1], origin[1] + lengths[1], dimensions[1], dtype=np.float64)
     z = np.linspace(origin[2], origin[2] + lengths[2], dimensions[2], dtype=np.float64)
 
-    if blk.block_type == "solver":
-        shape = (blk.ni + 2, blk.nj + 2, blk.nk + 2)
+    if blk.blockType == "solver":
         s_i = np.s_[1:-1, 1:-1, 1:-1]
     else:
-        shape = (blk.ni, blk.nj, blk.nk)
         s_i = np.s_[:, :, :]
 
     blk.array["x"][s_i], blk.array["y"][s_i], blk.array["z"][s_i] = np.meshgrid(
         x, y, z, indexing="ij"
     )
 
-    if blk.block_type in ["restart", "solver"]:
-        blk.init_restart_arrays()
+    if blk.blockType in ["restart", "solver"]:
+        blk.initRestartArrays()
 
 
-def multiblock_cube(
+def multiblockCube(
     mb,
     origin=[0, 0, 0],
     lengths=[1, 1, 1],
-    mb_dimensions=[1, 1, 1],
-    dimensions_perblock=[10, 10, 10],
+    mbDims=[1, 1, 1],
+    dimsPerBlock=[10, 10, 10],
 ):
 
     """Function to populate the coordinate arrays of a raptorpy.multiblock.grid (or one of its descendants) in the shape of a cube
@@ -193,10 +191,10 @@ def multiblock_cube(
     lengths : list, tuple
        List/tuple of length 3 containing the extents in x, y, and z of the ENTIRE cube relative to the origin
 
-    mb_dimensions : list, tuple
-       List/tuple of length 3 containing number of blocks in x, y, and z. NOTE: product of mb_dimensions must equal mb.nblks!
+    mbDims : list, tuple
+       List/tuple of length 3 containing number of blocks in x, y, and z. NOTE: product of mbDims must equal mb.nblks!
 
-    dimensions_perblock : list, tuple
+    dimsPerBlock : list, tuple
        List/tuple of length 3 containing discretization (nx,nj,nk) in each dimension of each block to be created.
 
     Returns
@@ -206,24 +204,24 @@ def multiblock_cube(
 
     """
 
-    if np.product(mb_dimensions) != mb.nblks:
+    if np.product(mbDims) != mb.nblks:
         raise ValueError(
             "Warning, multiblock dimensions does not equal number of blocks!"
         )
 
-    blk_origins_x = np.linspace(origin[0], origin[0] + lengths[0], mb_dimensions[0] + 1)
-    blk_origins_y = np.linspace(origin[1], origin[1] + lengths[1], mb_dimensions[1] + 1)
-    blk_origins_z = np.linspace(origin[2], origin[2] + lengths[2], mb_dimensions[2] + 1)
+    blk_origins_x = np.linspace(origin[0], origin[0] + lengths[0], mbDims[0] + 1)
+    blk_origins_y = np.linspace(origin[1], origin[1] + lengths[1], mbDims[1] + 1)
+    blk_origins_z = np.linspace(origin[2], origin[2] + lengths[2], mbDims[2] + 1)
 
-    for k in range(int(mb_dimensions[2])):
-        for j in range(int(mb_dimensions[1])):
-            for i in range(int(mb_dimensions[0])):
-                blk_number = (
-                    k * mb_dimensions[1] * mb_dimensions[0] + j * mb_dimensions[0] + i
+    for k in range(int(mbDims[2])):
+        for j in range(int(mbDims[1])):
+            for i in range(int(mbDims[0])):
+                blkNum = (
+                    k * mbDims[1] * mbDims[0] + j * mbDims[0] + i
                 )
 
-                blk = mb[blk_number]
-                blk.nblki = blk_number
+                blk = mb[blkNum]
+                blk.nblki = blkNum
 
                 origin = [blk_origins_x[i], blk_origins_y[j], blk_origins_z[k]]
                 lengths = [
@@ -232,18 +230,18 @@ def multiblock_cube(
                     blk_origins_z[k + 1] - blk_origins_z[k],
                 ]
                 dimensions = [
-                    dimensions_perblock[0],
-                    dimensions_perblock[1],
-                    dimensions_perblock[2],
+                    dimsPerBlock[0],
+                    dimsPerBlock[1],
+                    dimsPerBlock[2],
                 ]
 
                 cube(blk, origin, lengths, dimensions)
 
                 # Update connectivity
-                cubic_connectivity(blk, mb_dimensions, blk_number, i, j, k)
+                cubicConnectivity(blk, mbDims, blkNum, i, j, k)
 
 
-def annulus(blk, p1, p2, p13, sweep, thickness, dimensions):
+def annulus(blk, p1, p2, p3, sweep, thickness, dimensions):
 
     raise ValueError("The annulus is jacked, needs to be updated.")
 
@@ -357,8 +355,8 @@ def annulus(blk, p1, p2, p13, sweep, thickness, dimensions):
         blk.array["z"][:, :, k] = np.reshape(q[:, 2], shape)
 
 
-def multiblock_annulus(
-    mb, p1, p2, p3, sweep, thickness, mb_dimensions, dimensions_perblock, periodic=False
+def multiblockAnnulus(
+    mb, p1, p2, p3, sweep, thickness, mbDims, dimsPerBlock, periodic=False
 ):
 
     """Function to populate the coordinate arrays of a raptorpy.multiblock.grid (or one of its descendants) in the shape
@@ -395,9 +393,9 @@ def multiblock_annulus(
        Float denoting (outer radius - inner radius) of the annulus, where the inner radius is determined by
        the length of the line (p1,p3).
 
-    mb_dimensions : list, tuple
+    mbDims : list, tuple
        List/tuple of length 3 containing number of blocks in axial direction, radial direction, and theta direction.
-       NOTE: product of mb_dimensions must equal mb.nblks!
+       NOTE: product of mbDims must equal mb.nblks!
 
     dimensions : list, tuple
        List/tuple of length 3 containing discretization (ni,nj,nk) in each dimension of every block (all will be uniform). Where the "x,i,xi"
@@ -414,7 +412,7 @@ def multiblock_annulus(
     p2 = np.array(p2)
     p3 = np.array(p3)
 
-    if np.product(mb_dimensions) != mb.nblks:
+    if np.product(mbDims) != mb.nblks:
         raise ValueError(
             "Error: multiblock dimensions does not equal number of blocks!"
         )
@@ -433,11 +431,11 @@ def multiblock_annulus(
     n12 = (p2 - p1) / np.linalg.norm(p2 - p1)
     p = p3 - p1
 
-    dx = np.linalg.norm(p2 - p1) / mb_dimensions[0]
-    dr = thickness / mb_dimensions[1]
-    dtheta = sweep / mb_dimensions[2]
+    dx = np.linalg.norm(p2 - p1) / mbDims[0]
+    dr = thickness / mbDims[1]
+    dtheta = sweep / mbDims[2]
 
-    for k in range(int(mb_dimensions[2])):
+    for k in range(int(mbDims[2])):
 
         # See http://paulbourke.net/geometry/rotate/
         theta = k * dtheta * np.pi / 180.0
@@ -463,27 +461,27 @@ def multiblock_annulus(
 
         n13 = (q - p1) / np.linalg.norm(q - p1)
 
-        for j in range(int(mb_dimensions[1])):
-            for i in range(int(mb_dimensions[0])):
+        for j in range(int(mbDims[1])):
+            for i in range(int(mbDims[0])):
 
-                blk_number = (
-                    k * mb_dimensions[1] * mb_dimensions[0] + j * mb_dimensions[0] + i
+                blkNum = (
+                    k * mbDims[1] * mbDims[0] + j * mbDims[0] + i
                 )
-                blk = mb[blk_number]
-                blk.nblki = blk_number
-                blk.ni = dimensions_perblock[0]
-                blk.nj = dimensions_perblock[1]
-                blk.nk = dimensions_perblock[2]
+                blk = mb[blkNum]
+                blk.nblki = blkNum
+                blk.ni = dimsPerBlock[0]
+                blk.nj = dimsPerBlock[1]
+                blk.nk = dimsPerBlock[2]
 
                 newp1 = p1 + dx * i * n12
                 newp2 = p1 + dx * (i + 1) * n12
                 newp3 = q + dx * i * n12 + dr * j * n13
 
-                annulus(blk, newp1, newp2, newp3, dtheta, dr, dimensions_perblock)
+                annulus(blk, newp1, newp2, newp3, dtheta, dr, dimsPerBlock)
 
                 # Update connectivity
                 conn = blk.connectivity
-                cubic_connectivity(conn, mb_dimensions, blk_number, i, j, k)
+                cubicConnectivity(conn, mbDims, blkNum, i, j, k)
 
                 # k faces
                 if connect:
@@ -492,17 +490,17 @@ def multiblock_annulus(
                             conn["5"]["bc"] = "b0"
                         else:
                             conn["5"]["bc"] = "b1"
-                        conn["5"]["neighbor"] = blk_number + mb_dimensions[
+                        conn["5"]["neighbor"] = blkNum + mbDims[
                             0
-                        ] * mb_dimensions[1] * (mb_dimensions[2] - 1)
+                        ] * mbDims[1] * (mbDims[2] - 1)
                         conn["5"]["orientation"] = "123"
 
-                    elif k == mb_dimensions[2] - 1:
+                    elif k == mbDims[2] - 1:
                         if float(sweep) == 360.0:
                             conn["6"]["bc"] = "b0"
                         else:
                             conn["6"]["bc"] = "b1"
-                        conn["6"]["neighbor"] = blk_number - mb_dimensions[
+                        conn["6"]["neighbor"] = blkNum - mbDims[
                             0
-                        ] * mb_dimensions[1] * (mb_dimensions[2] - 1)
+                        ] * mbDims[1] * (mbDims[2] - 1)
                         conn["6"]["orientation"] = "123"

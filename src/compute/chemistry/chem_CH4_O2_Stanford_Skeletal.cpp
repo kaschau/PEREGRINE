@@ -20,7 +20,12 @@
 #include "compute.hpp"
 #include <math.h>
 
-void chem_CH4_O2_Stanford_Skeletal(block_ b, thtrdat_ th, int face/*=0*/, int i/*=0*/, int j/*=0*/, int k/*=0*/) {
+void chem_CH4_O2_Stanford_Skeletal(block_ b,
+                             const thtrdat_ th,
+                             const int face/*=0*/,
+                             const int i/*=0*/,
+                             const int j/*=0*/,
+                             const int k/*=0*/) {
 
 // --------------------------------------------------------------|
 // cc range

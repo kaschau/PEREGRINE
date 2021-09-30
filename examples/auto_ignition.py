@@ -1,58 +1,46 @@
 #!/usr/bin/env python
 """
 
-Adiabatic flame calculation.
+Auto ignition flame calculation.
 
 """
 
-import mpi4py.rc
-mpi4py.rc.initialize = False
-
 import kokkos
 import peregrinepy as pg
-import numpy as np
 import cantera as ct
 import matplotlib.pyplot as plt
 from pathlib import Path
 
 
 def simulate():
-    # Import but do not initialise MPI
-    from mpi4py import MPI
-
-    # Manually initialise MPI
-    MPI.Init()
-    comm, rank, size = pg.mpicomm.mpiutils.get_comm_rank_size()
-    # Ensure MPI is suitably cleaned up
-    pg.mpicomm.mpiutils.register_finalize_handler()
 
     relpath = str(Path(__file__).parent)
     ct.add_directory(relpath + "/../src/peregrinepy/thermo_transport/database/source")
-    config = pg.files.config_file()
+    config = pg.files.configFile()
     config["RHS"]["diffusion"] = False
-    config["solver"]["time_integration"] = "strang"
+    config["solver"]["timeIntegration"] = "strang"
     config["thermochem"]["chemistry"] = True
     config["thermochem"]["mechanism"] = "chem_CH4_O2_Stanford_Skeletal"
     config["thermochem"]["eos"] = "tpg"
     config["thermochem"]["spdata"] = "thtr_CH4_O2_Stanford_Skeletal.yaml"
-    mb = pg.multiblock.generate_multiblock_solver(1, config)
-    pg.grid.create.multiblock_cube(
+    mb = pg.multiblock.generateMultiblockSolver(1, config)
+    pg.grid.create.multiblockCube(
         mb,
-        mb_dimensions=[1, 1, 1],
-        dimensions_perblock=[2, 2, 2],
+        mbDims=[1, 1, 1],
+        dimsPerBlock=[2, 2, 2],
         lengths=[0.01, 0.01, 0.01],
     )
-    mb.init_solver_arrays(config)
+    mb.initSolverArrays(config)
 
     blk = mb[0]
     for face in blk.faces:
-        face.connectivity["bctype"] = "adiabatic_noslip_wall"
+        face.connectivity["bcType"] = "adiabatic_noslip_wall"
 
-    pg.mpicomm.blockcomm.set_block_communication(mb)
+    pg.mpicomm.blockComm.setBlockCommunication(mb)
 
-    mb.unify_solver_grid()
+    mb.unifyGrid()
 
-    mb.compute_metrics()
+    mb.computeMetrics()
 
     T, p = 1100.0, 101325
     gas = ct.Solution("CH4_O2_Stanford_Skeletal.yaml")
@@ -78,6 +66,7 @@ def simulate():
     ctT = []
     ctO2 = []
     t = []
+    print("Time   PEREGRINE  CANTERA")
     while mb.tme < 0.05:
 
         if mb.nrt % niterout == 0:
@@ -87,7 +76,7 @@ def simulate():
             ctO2.append(gas.Y[2])
             t.append(mb.tme)
 
-            print(f'{mb.tme:.2e} {blk.array["q"][1,1,1,4]:.2f} {gas.T:.2f}')
+            print(f"{mb.tme:.2e} {blk.array['q'][1,1,1,4]:.2f} {gas.T:.2f}")
 
         mb.step(dt)
         sim.advance(mb.tme)
@@ -102,9 +91,6 @@ def simulate():
     plt.title("O2")
     plt.legend()
     plt.show()
-
-    # Finalise MPI
-    MPI.Finalize()
 
 
 if __name__ == "__main__":

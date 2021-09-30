@@ -13,29 +13,29 @@ python lists to create a list of peregrine.block object with added functionality
 """
 
 from .topology import topology
-from .grid_block import grid_block
+from .gridBlock import gridBlock
 
 
 class grid(topology):
     """A list of raptorpy.grid.grid_block objects. Inherits from raptorpy.multiblock.dataset"""
 
-    mb_type = "grid"
+    mbType = "grid"
 
     def __init__(self, nblks, ls=[]):
         if ls == []:
-            temp = [grid_block(i) for i in range(nblks)]
+            temp = [gridBlock(i) for i in range(nblks)]
             super().__init__(nblks, temp)
         else:
             super().__init__(nblks, ls)
 
-    def init_grid_arrays(self):
+    def initGridArrays(self):
         for blk in self:
-            blk.init_grid_arrays()
+            blk.initGridArrays()
 
-    def compute_metrics(self):
+    def computeMetrics(self):
         for blk in self:
-            blk.compute_metrics()
+            blk.computeMetrics()
 
-    def generate_halo(self):
+    def generateHalo(self):
         for blk in self:
-            blk.generate_halo()
+            blk.generateHalo()

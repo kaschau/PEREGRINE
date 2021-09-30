@@ -4,7 +4,7 @@ from .rk4 import rk4
 from .strang import strang
 
 
-def get_integrator(ti):
+def getIntegrator(ti):
 
     if ti == "rk1":
         return rk1

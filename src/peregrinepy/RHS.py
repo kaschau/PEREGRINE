@@ -1,16 +1,23 @@
-from .compute import flux
+from .compute import utils
 
 
 def RHS(mb):
 
     # Zero out dQ array
-    flux.dQzero(mb)
+    for blk in mb:
+        utils.dQzero(blk)
 
-    flux.advective(mb, mb.thtrdat)
+    # Primary advective fluxes
+    for blk in mb:
+        mb.primaryAdvFlux(blk, mb.thtrdat, 1.0)
+    # Secondary advective fluxes
+    for blk in mb:
+        mb.secondaryAdvFlux(blk, mb.thtrdat, 0.0)
 
-    if mb.config["RHS"]["diffusion"]:
-        flux.diffusive(mb, mb.thtrdat)
+    # Diffusive fluxes
+    for blk in mb:
+        mb.diffFlux(blk, mb.thtrdat)
 
-    if mb.config["thermochem"]["chemistry"]:
-        for blk in mb:
-            mb.chem(blk, mb.thtrdat)
+    # Chemical source terms
+    for blk in mb:
+        mb.expChem(blk, mb.thtrdat)

@@ -1,19 +1,22 @@
 from numpy import s_
-from ..bcs.walls import *
-from ..bcs.inlets import *
-from ..bcs.exits import *
-from ..misc import FrozenDict
+from ..misc import frozenDict
 
 
 class face:
+
+    __slots__ = ("nface", "connectivity", "s0_", "s1_", "s2_",
+                 "bcVals", "commRank", "neighborFace", "neighborOrientation",
+                 "orient", "sliceS3", "sliceS4", "sliceR3", "sliceR4",
+                 "sendBuffer3", "sendBuffer4", "recvBuffer3", "recvBuffer4")
+
     def __init__(self, nface):
         assert 1 <= nface <= 6, "nface must be between (1,6)"
 
         self.nface = nface
-        self.connectivity = FrozenDict(
+        self.connectivity = frozenDict(
             {
-                "bcfam": None,
-                "bctype": "adiabatic_slip_wall",
+                "bcFam": None,
+                "bcType": "adiabatic_slip_wall",
                 "neighbor": None,
                 "orientation": None,
             }
@@ -48,21 +51,21 @@ class face:
             self.s2_ = s_[:, :, -3]
 
         # Boundary condition values
-        self.bcvals = FrozenDict({})
+        self.bcVals = frozenDict({})
 
         # MPI variables - only set for solver blocks, but we will store them
         # all the time for now
-        self.comm_rank = None
-        self.neighbor_face = None
-        self.neighbor_orientation = None
+        self.commRank = None
+        self.neighborFace = None
+        self.neighborOrientation = None
 
         self.orient = None
-        self.slice_s3 = None
-        self.slice_r3 = None
-        self.slice_s4 = None
-        self.slice_r4 = None
+        self.sliceS3 = None
+        self.sliceR3 = None
+        self.sliceS4 = None
+        self.sliceR4 = None
 
-        self.sendbuffer3 = None
-        self.recvbuffer3 = None
-        self.sendbuffer4 = None
-        self.recvbuffer4 = None
+        self.sendBuffer3 = None
+        self.recvBuffer3 = None
+        self.sendBuffer4 = None
+        self.recvBuffer4 = None

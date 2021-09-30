@@ -26,23 +26,21 @@ def test_tpg():
 
     gas.TPY = T, p, Y
 
-    config = pg.files.config_file()
+    config = pg.files.configFile()
     config["thermochem"]["spdata"] = thfile
     config["thermochem"]["eos"] = "tpg"
     config["RHS"]["diffusion"] = False
 
-    mb = pg.multiblock.generate_multiblock_solver(1, config)
-    pg.grid.create.multiblock_cube(
-        mb, mb_dimensions=[1, 1, 1],
-        dimensions_perblock=[2, 2, 2],
-        lengths=[1, 1, 1]
+    mb = pg.multiblock.generateMultiblockSolver(1, config)
+    pg.grid.create.multiblockCube(
+        mb, mbDims=[1, 1, 1], dimsPerBlock=[2, 2, 2], lengths=[1, 1, 1]
     )
-    mb.init_solver_arrays(config)
+    mb.initSolverArrays(config)
 
     blk = mb[0]
 
-    mb.generate_halo()
-    mb.compute_metrics()
+    mb.generateHalo()
+    mb.computeMetrics()
 
     blk.array["q"][:, :, :, 0] = p
     blk.array["q"][:, :, :, 4] = T
@@ -89,10 +87,18 @@ def test_tpg():
     pd.append(print_diff("cp", gas.cp, pgthrm[1]))
     pd.append(print_diff("h", gas.enthalpy_mass, pgthrm[2] / pgcons[0]))
     for i, n in enumerate(gas.species_names):
-        pd.append(print_diff("h_" + n,
-                             (gas.standard_enthalpies_RT[i]
-                              * ct.gas_constant*gas.T
-                              / gas.molecular_weights[i]), pgthrm[5 + i]))
+        pd.append(
+            print_diff(
+                "h_" + n,
+                (
+                    gas.standard_enthalpies_RT[i]
+                    * ct.gas_constant
+                    * gas.T
+                    / gas.molecular_weights[i]
+                ),
+                pgthrm[5 + i],
+            )
+        )
 
     # Go the other way
     # Scramble the primatives
@@ -127,10 +133,18 @@ def test_tpg():
     pd.append(print_diff("cp", gas.cp, pgthrm[1]))
     pd.append(print_diff("h", gas.enthalpy_mass, pgthrm[2] / pgcons[0]))
     for i, n in enumerate(gas.species_names[0:-1]):
-        pd.append(print_diff("h_" + n,
-                             (gas.standard_enthalpies_RT[i]
-                              * ct.gas_constant*gas.T
-                              / gas.molecular_weights[i]), pgthrm[5 + i]))
+        pd.append(
+            print_diff(
+                "h_" + n,
+                (
+                    gas.standard_enthalpies_RT[i]
+                    * ct.gas_constant
+                    * gas.T
+                    / gas.molecular_weights[i]
+                ),
+                pgthrm[5 + i],
+            )
+        )
 
     kokkos.finalize()
 

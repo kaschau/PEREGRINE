@@ -23,7 +23,7 @@ class strang:
 
     def stiff(t, y, mb, bindx, i, j, k):
         mb[bindx].array["q"][i, j, k, 4::] = y
-        mb.chem(mb[bindx], mb.thtrdat, 10, i, j, k)
+        mb.impChem(mb[bindx], mb.thtrdat, 10, i, j, k)
 
         return mb[bindx].array["omega"][i, j, k, 0:-1]
 
@@ -68,9 +68,6 @@ class strang:
 
     def step(self, dt):
 
-        # Turn off chem for RHS
-        self.config["thermochem"]["chemistry"] = False
-
         ###############################################################
         # Take a half step in time for non-stiff operator
         ###############################################################
@@ -83,9 +80,7 @@ class strang:
         # Take a full step in time for stiff operator
         ###############################################################
         for bindx, blk in enumerate(self):
-            it = product(range(1, blk.ni),
-                         range(1, blk.nj),
-                         range(1, blk.nk))
+            it = product(range(1, blk.ni), range(1, blk.nj), range(1, blk.nk))
             for ijk in it:
                 i, j, k = ijk
 
@@ -94,7 +89,9 @@ class strang:
                 self.solver.set_f_params(self, bindx, i, j, k)
                 self.solver.integrate(dt)
 
-                blk.array["Q"][i, j, k, 5::] = self.solver.y[1::] * blk.array["Q"][i, j, k, 0]
+                blk.array["Q"][i, j, k, 5::] = (
+                    self.solver.y[1::] * blk.array["Q"][i, j, k, 0]
+                )
 
             consistify(self)
 
@@ -111,6 +108,3 @@ class strang:
         ###############################################################
         self.nrt += 1
         self.tme += dt
-
-        # Turn on chem I guess?
-        self.config["thermochem"]["chemistry"] = True
