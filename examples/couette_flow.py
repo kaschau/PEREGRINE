@@ -4,28 +4,13 @@
 Poisuielle Flow with top wall moving at 5m/s
 
 """
-
-import mpi4py.rc
-
-mpi4py.rc.initialize = False
-
 import kokkos
-
 import peregrinepy as pg
 import numpy as np
-
 np.seterr(all="raise")
 
 
 def simulate():
-    # Import but do not initialise MPI
-    from mpi4py import MPI
-
-    # Manually initialise MPI
-    MPI.Init()
-    comm, rank, size = pg.mpicomm.mpiutils.getCommRankSize()
-    # Ensure MPI is suitably cleaned up
-    pg.mpicomm.mpiutils.registerFinalizeHandler()
 
     config = pg.files.configFile()
     config["simulation"]["dt"] = 1e-5
@@ -106,9 +91,6 @@ def simulate():
 
         if mb.nrt % config["simulation"]["niterout"] == 0:
             pg.writers.writeRestart(mb, config["io"]["outputdir"], gridPath="../Grid")
-
-    # Finalise MPI
-    MPI.Finalize()
 
 
 if __name__ == "__main__":

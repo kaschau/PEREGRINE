@@ -11,29 +11,13 @@ Should reproduce results in Fig. 1 for the KEEP scheme (blue line)
 
 """
 
-import mpi4py.rc
-
-mpi4py.rc.initialize = False
-
 import kokkos
-
 import peregrinepy as pg
 import numpy as np
 import matplotlib.pyplot as plt
 
-import time
-import sys
-
 
 def simulate():
-    # Import but do not initialise MPI
-    from mpi4py import MPI
-
-    # Manually initialise MPI
-    MPI.Init()
-    comm, rank, size = pg.mpicomm.mpiutils.getCommRankSize()
-    # Ensure MPI is suitably cleaned up
-    pg.mpicomm.mpiutils.registerFinalizeHandler()
 
     config = pg.files.configFile()
     config["RHS"]["diffusion"] = False
@@ -107,9 +91,6 @@ def simulate():
             plt.close()
 
         mb.step(dt)
-
-    # Finalise MPI
-    MPI.Finalize()
 
 
 if __name__ == "__main__":

@@ -1,31 +1,18 @@
 #!/usr/bin/env python
 """
 
-Adiabatic flame calculation.
+Auto ignition flame calculation.
 
 """
 
-import mpi4py.rc
-
-mpi4py.rc.initialize = False
-
 import kokkos
 import peregrinepy as pg
-import numpy as np
 import cantera as ct
 import matplotlib.pyplot as plt
 from pathlib import Path
 
 
 def simulate():
-    # Import but do not initialise MPI
-    from mpi4py import MPI
-
-    # Manually initialise MPI
-    MPI.Init()
-    comm, rank, size = pg.mpicomm.mpiutils.getCommRankSize()
-    # Ensure MPI is suitably cleaned up
-    pg.mpicomm.mpiutils.registerFinalizeHandler()
 
     relpath = str(Path(__file__).parent)
     ct.add_directory(relpath + "/../src/peregrinepy/thermo_transport/database/source")
@@ -104,9 +91,6 @@ def simulate():
     plt.title("O2")
     plt.legend()
     plt.show()
-
-    # Finalise MPI
-    MPI.Finalize()
 
 
 if __name__ == "__main__":
