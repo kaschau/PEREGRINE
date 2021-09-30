@@ -251,7 +251,7 @@ void tpg(block_ b,
   gamma = cp/(cp-Rmix);
 
   // Mixture speed of sound
-  c = pow( gamma*Rmix*T , 2.0 );
+  c = sqrt(gamma*Rmix*T);
 
   // Set values of new properties
   // Pressure, temperature, Y
