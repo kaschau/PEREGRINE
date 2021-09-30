@@ -28,12 +28,12 @@ void rusanov(block_ b, const thtrdat_ th, const double primary) {
     vfL = b.q(i-1,j,k,2);
     wfL = b.q(i-1,j,k,3);
 
-    UR = b.isx(i,j,k)*ufR +
-         b.isy(i,j,k)*vfR +
-         b.isz(i,j,k)*wfR ;
-    UL = b.isx(i,j,k)*ufL +
-         b.isy(i,j,k)*vfL +
-         b.isz(i,j,k)*wfL ;
+    UR = b.inx(i,j,k)*ufR +
+         b.iny(i,j,k)*vfR +
+         b.inz(i,j,k)*wfR ;
+    UL = b.inx(i,j,k)*ufL +
+         b.iny(i,j,k)*vfL +
+         b.inz(i,j,k)*wfL ;
 
     rhoR = b.Q(i  ,j,k,0);
     rhoL = b.Q(i-1,j,k,0);
@@ -51,35 +51,29 @@ void rusanov(block_ b, const thtrdat_ th, const double primary) {
     double FrhoR,FrhoL;
     FrhoR = UR*rhoR;
     FrhoL = UL*rhoL;
-    b.iF(i,j,k,0) = 0.5*( FrhoR + FrhoL - lam*(rhoR - rhoL) );
+    b.iF(i,j,k,0) = 0.5*( FrhoR + FrhoL - lam*(rhoR - rhoL) ) * b.iS(i,j,k);
 
     double FUR,FUL;
     // x momentum rho*u*Ui+ p*Ax
-    FUR = UR*ufR*rhoR + pR*b.isx(i,j,k);
-    FUL = UL*ufL*rhoL + pL*b.isx(i,j,k);
-    b.iF(i,j,k,1) = 0.5*( FUR + FUL - lam*(rhoR*ufR - rhoL*ufL) );
+    FUR = UR*ufR*rhoR + pR*b.isx(i,j,k)/b.iS(i,j,k);
+    FUL = UL*ufL*rhoL + pL*b.isx(i,j,k)/b.iS(i,j,k);
+    b.iF(i,j,k,1) = 0.5*( FUR + FUL - lam*(rhoR*ufR - rhoL*ufL) ) * b.iS(i,j,k);
 
     // y momentum rho*v*Ui+ p*Ay
-    FUR = UR*vfR*rhoR + pR*b.isy(i,j,k);
-    FUL = UL*vfL*rhoL + pL*b.isy(i,j,k);
-    b.iF(i,j,k,2) = 0.5*( FUR + FUL - lam*(rhoR*vfR - rhoL*vfL) );
+    FUR = UR*vfR*rhoR + pR*b.isy(i,j,k)/b.iS(i,j,k);
+    FUL = UL*vfL*rhoL + pL*b.isy(i,j,k)/b.iS(i,j,k);
+    b.iF(i,j,k,2) = 0.5*( FUR + FUL - lam*(rhoR*vfR - rhoL*vfL) ) * b.iS(i,j,k);
 
     // w momentum rho*w*Ui+ p*Az
-    FUR = UR*wfR*rhoR + pR*b.isz(i,j,k);
-    FUL = UL*wfL*rhoL + pL*b.isz(i,j,k);
-    b.iF(i,j,k,3) = 0.5*( FUR + FUL - lam*(rhoR*wfR - rhoL*wfL) );
+    FUR = UR*wfR*rhoR + pR*b.isz(i,j,k)/b.iS(i,j,k);
+    FUL = UL*wfL*rhoL + pL*b.isz(i,j,k)/b.iS(i,j,k);
+    b.iF(i,j,k,3) = 0.5*( FUR + FUL - lam*(rhoR*wfR - rhoL*wfL) ) * b.iS(i,j,k);
 
     // Total energy (rhoE+ p)*Ui)
     double FER, FEL;
-    FER = UR*ER + pR*(b.q(i  ,j,k,1)*b.isx(i,j,k)
-                     +b.q(i  ,j,k,2)*b.isy(i,j,k)
-                     +b.q(i  ,j,k,3)*b.isz(i,j,k) );
-
-    FEL = UL*EL + pL*(b.q(i-1,j,k,1)*b.isx(i,j,k)
-                     +b.q(i-1,j,k,2)*b.isy(i,j,k)
-                     +b.q(i-1,j,k,3)*b.isz(i,j,k) );
-
-    b.iF(i,j,k,4) = 0.5*( FER + FEL - lam*(ER - EL) );
+    FER = UR*(ER + pR);
+    FEL = UL*(EL + pL);
+    b.iF(i,j,k,4) = 0.5*( FER + FEL - lam*(ER - EL) ) * b.iS(i,j,k);
 
     // Species
     double FYiR, FYiL;
@@ -90,7 +84,7 @@ void rusanov(block_ b, const thtrdat_ th, const double primary) {
       FYiL = rhoL*b.q(i-1,j,k,5+n)*UL;
       YiR = b.Q(i  ,j,k,5+n);
       YiL = b.Q(i-1,j,k,5+n);
-      b.iF(i,j,k,5+n) = 0.5*( FYiR + FYiL - lam*(YiR - YiL) );
+      b.iF(i,j,k,5+n) = 0.5*( FYiR + FYiL - lam*(YiR - YiL) ) * b.iS(i,j,k);
     }
 
   });
