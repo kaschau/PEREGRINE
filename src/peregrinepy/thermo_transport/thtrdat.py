@@ -14,13 +14,13 @@ class thtrdat(thtrdat_):
         # then we look in the local directory
         # then we look in the PEREGRINE data base
         # then we see if we have an absolute path
-        spdata_locs = [
+        spdataLocs = [
             f'{config["io"]["inputdir"]}/{config["thermochem"]["spdata"]}',
             f'./{config["thermochem"]["spdata"]}',
             f'{relpath}/database/{config["thermochem"]["spdata"]}',
             config["thermochem"]["spdata"],
         ]
-        for loc in spdata_locs:
+        for loc in spdataLocs:
             try:
                 with open(loc, "r") as f:
                     usersp = yaml.load(f, Loader=yaml.SafeLoader)
@@ -29,15 +29,15 @@ class thtrdat(thtrdat_):
                 pass
         else:
             raise ValueError(
-                f"Not able to find your spdata yaml input file. Tried {spdata_locs}"
+                f"Not able to find your spdata yaml input file. Tried {spdataLocs}"
             )
 
         # Now we get the reference data to fill in missing information not provided by the user
-        with open(f"{relpath}/database/species_library.yaml", "r") as f:
+        with open(f"{relpath}/database/speciesLibrary.yaml", "r") as f:
             refsp = yaml.load(f, Loader=yaml.SafeLoader)
 
         # A function to collect the data in order of species listed in the input spdata
-        def complete_species(key):
+        def completeSpecies(key):
             prop = []
             for sp in usersp.keys():
                 try:
@@ -60,25 +60,25 @@ class thtrdat(thtrdat_):
         Ru = refsp["Ru"]
         self.Ru = Ru
         kb = refsp["kb"]
-        eps0 = refsp["epsilon_0"]
+        eps0 = refsp["epsilon0"]
         avogadro = refsp["avogadro"]
 
         # Species names string
-        species_names = list(usersp.keys())
-        self.species_names = species_names
+        speciesNames = list(usersp.keys())
+        self.speciesNames = speciesNames
 
         # Species MW
-        MW = complete_species("MW")
+        MW = completeSpecies("MW")
         self.MW = MW
 
-        #################################################################################
-        ####### Set thermodynamic properties
-        #################################################################################
+        ########################################
+        # Set thermodynamic properties
+        ########################################
         # Set either constant cp or NASA7 polynomial coefficients
         if config["thermochem"]["eos"] == "cpg":
             # Values for constant Cp
             # J/(kg.K)
-            cp0 = complete_species("cp0")
+            cp0 = completeSpecies("cp0")
             self.cp0 = cp0
             NASA7 = [None for i in range(ns)]
 
@@ -86,7 +86,7 @@ class thtrdat(thtrdat_):
                 return cp0 * T / (Ru * MW)
 
         elif config["thermochem"]["eos"] == "tpg":
-            NASA7 = complete_species("NASA7")
+            NASA7 = completeSpecies("NASA7")
             self.NASA7 = NASA7
 
             def cp_R(cp0, poly, T, MW):
@@ -101,9 +101,9 @@ class thtrdat(thtrdat_):
                 f'PEREGRINE ERROR: Unknown EOS {config["thermochem"]["eos"]}'
             )
 
-        #################################################################################
-        ####### Set transport properties
-        #################################################################################
+        ################################
+        # Set transport properties
+        ################################
 
         if config["RHS"]["diffusion"]:
             from .MM_Tables import delta, tstar22, omega22_table, tstar, astar_table
@@ -130,25 +130,25 @@ class thtrdat(thtrdat_):
             mass = np.array([M / avogadro for M in MW])
 
             # epsilon
-            well = np.array(complete_species("well"))
+            well = np.array(completeSpecies("well"))
             # sigma
-            diam = np.array(complete_species("diam"))
+            diam = np.array(completeSpecies("diam"))
             # mu
-            dipole = np.array(complete_species("dipole"))
+            dipole = np.array(completeSpecies("dipole"))
 
             # see if molecule is polar
             polar = dipole > 0.0
 
             # alpha
-            polarize = np.array(complete_species("polarize"))
+            polarize = np.array(completeSpecies("polarize"))
 
             # z_rot
-            zrot = np.array(complete_species("zrot"))
+            zrot = np.array(completeSpecies("zrot"))
             # W_ac
-            acentric = np.array(complete_species("acentric"))
+            acentric = np.array(completeSpecies("acentric"))
 
             # determine rotational DOF
-            geom = np.array(complete_species("geometry"))
+            geom = np.array(completeSpecies("geometry"))
             rotDOF = []
             for g in geom:
                 if g == "atom":
@@ -218,8 +218,6 @@ class thtrdat(thtrdat_):
             # Viscosities
             ##########################################
             visc = np.zeros((npts, ns))
-            ct_visc = np.zeros((npts, ns))
-            ct_mix = np.zeros(npts)
             for i, T in enumerate(Ts):
                 Tstar = T * kb / well
                 omga22 = intrp_o22(Tstar, r_deltastar.diagonal(), grid=False)

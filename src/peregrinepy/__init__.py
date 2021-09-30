@@ -6,7 +6,7 @@ from . import writers
 
 from . import multiblock
 
-from .bootstrap_case import bootstrap_case
+from .bootstrapCase import bootstrapCase
 from .consistify import consistify
 from .RHS import RHS
 from . import thermo_transport

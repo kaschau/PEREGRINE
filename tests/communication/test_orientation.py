@@ -1,5 +1,5 @@
-import unittest
-import pytest
+# import unittest
+# import pytest
 import peregrinepy as pg
 import numpy as np
 
@@ -8,20 +8,20 @@ import numpy as np
 
 class twoblock123:
     def __init__(self):
-        self.config = pg.files.config_file()
+        self.config = pg.files.configFile()
         self.mb = pg.multiblock.solver(2, ["Air"])
 
-        pg.grid.create.multiblock_cube(
+        pg.grid.create.multiblockCube(
             self.mb,
-            mb_dimensions=[2, 1, 1],
-            dimensions_perblock=[6, 3, 2],
+            mbDims=[2, 1, 1],
+            dimsPerBlock=[6, 3, 2],
             lengths=[2, 1, 1],
         )
 
         blk0 = self.mb[0]
         blk1 = self.mb[1]
-        blk0.get_face(2).comm_rank = 0
-        blk1.get_face(1).comm_rank = 0
+        blk0.getFace(2).commRank = 0
+        blk1.getFace(1).commRank = 0
 
         self.xshape = self.mb[0].array["x"].shape
         self.qshape = self.mb[0].array["q"].shape
@@ -33,9 +33,9 @@ class twoblock123:
             blk.array["q"][:] = np.random.random((self.qshape))
 
 
-##################################################################################
-##### Test for all positive i aligned orientations
-##################################################################################
+##############################################
+# Test for all positive i aligned orientations
+##############################################
 def test_123():
 
     tb = twoblock123()
@@ -43,9 +43,9 @@ def test_123():
     blk1 = tb.mb[1]
 
     # Reorient and update communication info
-    pg.mpicomm.blockcomm.set_block_communication(tb.mb)
+    pg.mpicomm.blockComm.setBlockCommunication(tb.mb)
     # Execute communication
-    pg.mpicomm.blockcomm.communicate(tb.mb, ["x", "y", "z", "q"])
+    pg.mpicomm.blockComm.communicate(tb.mb, ["x", "y", "z", "q"])
 
     passfail = []
     for var, shape, off in zip(
@@ -84,13 +84,13 @@ def test_135():
     blk1.nk = tb.xshape[1] - 2
 
     # Reorient second block and update communication info
-    blk0.get_face_conn(2)["orientation"] = "135"
-    blk1.get_face_conn(1)["orientation"] = "162"
+    blk0.getFaceConn(2)["orientation"] = "135"
+    blk1.getFaceConn(1)["orientation"] = "162"
 
-    pg.mpicomm.blockcomm.set_block_communication(tb.mb)
+    pg.mpicomm.blockComm.setBlockCommunication(tb.mb)
 
     # Execute communication
-    pg.mpicomm.blockcomm.communicate(tb.mb, ["x", "y", "z", "q"])
+    pg.mpicomm.blockComm.communicate(tb.mb, ["x", "y", "z", "q"])
 
     passfail = []
     for var, shape, off in zip(
@@ -116,9 +116,9 @@ def test_135():
     assert False not in passfail
 
 
-###################################################################################
-###### Test for all positive j aligned orientations
-###################################################################################
+##############################################
+# Test for all positive j aligned orientations
+##############################################
 def test_231():
     tb = twoblock123()
 
@@ -131,22 +131,22 @@ def test_231():
     blk1.nk = tb.xshape[1] - 2
 
     # Reorient second block and update communication info
-    blk0.get_face_conn(2)["orientation"] = "231"
+    blk0.getFaceConn(2)["orientation"] = "231"
 
-    blk1.get_face_conn(1)["neighbor"] = None
-    blk1.get_face_conn(1)["bctype"] = "s1"
-    blk1.get_face_conn(1)["orientation"] = None
-    blk1.get_face(1).comm_rank = None
+    blk1.getFaceConn(1)["neighbor"] = None
+    blk1.getFaceConn(1)["bcType"] = "s1"
+    blk1.getFaceConn(1)["orientation"] = None
+    blk1.getFace(1).commRank = None
 
-    blk1.get_face_conn(3)["neighbor"] = 0
-    blk1.get_face_conn(3)["bctype"] = "b0"
-    blk1.get_face_conn(3)["orientation"] = "312"
-    blk1.get_face(3).comm_rank = 0
+    blk1.getFaceConn(3)["neighbor"] = 0
+    blk1.getFaceConn(3)["bcType"] = "b0"
+    blk1.getFaceConn(3)["orientation"] = "312"
+    blk1.getFace(3).commRank = 0
 
-    pg.mpicomm.blockcomm.set_block_communication(tb.mb)
+    pg.mpicomm.blockComm.setBlockCommunication(tb.mb)
 
     # Execute communication
-    pg.mpicomm.blockcomm.communicate(tb.mb, ["x", "y", "z", "q"])
+    pg.mpicomm.blockComm.communicate(tb.mb, ["x", "y", "z", "q"])
 
     passfail = []
     for var, shape, off in zip(
@@ -172,9 +172,9 @@ def test_231():
     assert False not in passfail
 
 
-###################################################################################
-###### Test for all positive k aligned orientations
-###################################################################################
+##############################################
+# Test for all positive k aligned orientations
+##############################################
 def test_321():
     tb = twoblock123()
 
@@ -187,22 +187,22 @@ def test_321():
     blk1.nk = tb.xshape[0] - 2
 
     # Reorient second block and update communication info
-    blk0.get_face_conn(2)["orientation"] = "312"
+    blk0.getFaceConn(2)["orientation"] = "312"
 
-    blk1.get_face_conn(1)["neighbor"] = None
-    blk1.get_face_conn(1)["bctype"] = "s1"
-    blk1.get_face_conn(1)["orientation"] = None
-    blk1.get_face(1).comm_rank = None
+    blk1.getFaceConn(1)["neighbor"] = None
+    blk1.getFaceConn(1)["bcType"] = "s1"
+    blk1.getFaceConn(1)["orientation"] = None
+    blk1.getFace(1).commRank = None
 
-    blk1.get_face_conn(5)["neighbor"] = 0
-    blk1.get_face_conn(5)["bctype"] = "b0"
-    blk1.get_face_conn(5)["orientation"] = "231"
-    blk1.get_face(5).comm_rank = 0
+    blk1.getFaceConn(5)["neighbor"] = 0
+    blk1.getFaceConn(5)["bcType"] = "b0"
+    blk1.getFaceConn(5)["orientation"] = "231"
+    blk1.getFace(5).commRank = 0
 
-    pg.mpicomm.blockcomm.set_block_communication(tb.mb)
+    pg.mpicomm.blockComm.setBlockCommunication(tb.mb)
 
     # Execute communication
-    pg.mpicomm.blockcomm.communicate(tb.mb, ["x", "y", "z", "q"])
+    pg.mpicomm.blockComm.communicate(tb.mb, ["x", "y", "z", "q"])
 
     passfail = []
     for var, shape, off in zip(
@@ -231,9 +231,9 @@ def test_321():
     assert False not in passfail
 
 
-##################################################################################
-##### Test for all negative i aligned orientations
-##################################################################################
+##############################################
+# Test for all negative i aligned orientations
+##############################################
 def test_432():
     tb = twoblock123()
 
@@ -246,22 +246,22 @@ def test_432():
     blk1.nk = tb.xshape[1] - 2
 
     # Reorient second block and update communication info
-    blk0.get_face_conn(2)["orientation"] = "432"
+    blk0.getFaceConn(2)["orientation"] = "432"
 
-    blk1.get_face_conn(1)["neighbor"] = None
-    blk1.get_face_conn(1)["bctype"] = "s1"
-    blk1.get_face_conn(1)["orientation"] = None
-    blk1.get_face(1).comm_rank = None
+    blk1.getFaceConn(1)["neighbor"] = None
+    blk1.getFaceConn(1)["bcType"] = "s1"
+    blk1.getFaceConn(1)["orientation"] = None
+    blk1.getFace(1).commRank = None
 
-    blk1.get_face_conn(2)["neighbor"] = 0
-    blk1.get_face_conn(2)["bctype"] = "b0"
-    blk1.get_face_conn(2)["orientation"] = "432"
-    blk1.get_face(2).comm_rank = 0
+    blk1.getFaceConn(2)["neighbor"] = 0
+    blk1.getFaceConn(2)["bcType"] = "b0"
+    blk1.getFaceConn(2)["orientation"] = "432"
+    blk1.getFace(2).commRank = 0
 
-    pg.mpicomm.blockcomm.set_block_communication(tb.mb)
+    pg.mpicomm.blockComm.setBlockCommunication(tb.mb)
 
     # Execute communication
-    pg.mpicomm.blockcomm.communicate(tb.mb, ["x", "y", "z", "q"])
+    pg.mpicomm.blockComm.communicate(tb.mb, ["x", "y", "z", "q"])
 
     passfail = []
     for var, shape, off in zip(
@@ -287,9 +287,9 @@ def test_432():
     assert False not in passfail
 
 
-##################################################################################
-##### Test for all negative j aligned orientations
-##################################################################################
+##############################################
+# Test for all negative j aligned orientations
+##############################################
 def test_513():
     tb = twoblock123()
 
@@ -302,22 +302,22 @@ def test_513():
     blk1.nk = tb.xshape[2] - 2
 
     # Reorient second block and update communication info
-    blk0.get_face_conn(2)["orientation"] = "513"
+    blk0.getFaceConn(2)["orientation"] = "513"
 
-    blk1.get_face_conn(1)["neighbor"] = None
-    blk1.get_face_conn(1)["bctype"] = "s1"
-    blk1.get_face_conn(1)["orientation"] = None
-    blk1.get_face(1).comm_rank = None
+    blk1.getFaceConn(1)["neighbor"] = None
+    blk1.getFaceConn(1)["bcType"] = "s1"
+    blk1.getFaceConn(1)["orientation"] = None
+    blk1.getFace(1).commRank = None
 
-    blk1.get_face_conn(4)["neighbor"] = 0
-    blk1.get_face_conn(4)["bctype"] = "b0"
-    blk1.get_face_conn(4)["orientation"] = "243"
-    blk1.get_face(4).comm_rank = 0
+    blk1.getFaceConn(4)["neighbor"] = 0
+    blk1.getFaceConn(4)["bcType"] = "b0"
+    blk1.getFaceConn(4)["orientation"] = "243"
+    blk1.getFace(4).commRank = 0
 
-    pg.mpicomm.blockcomm.set_block_communication(tb.mb)
+    pg.mpicomm.blockComm.setBlockCommunication(tb.mb)
 
     # Execute communication
-    pg.mpicomm.blockcomm.communicate(tb.mb, ["x", "y", "z", "q"])
+    pg.mpicomm.blockComm.communicate(tb.mb, ["x", "y", "z", "q"])
 
     passfail = []
     for var, shape, off in zip(
@@ -343,9 +343,9 @@ def test_513():
     assert False not in passfail
 
 
-##################################################################################
-##### Test for all negative k aligned orientations
-##################################################################################
+##############################################
+# Test for all negative k aligned orientations
+##############################################
 def test_621():
     tb = twoblock123()
 
@@ -358,22 +358,22 @@ def test_621():
     blk1.nk = tb.xshape[0] - 2
 
     # Reorient second block and update communication info
-    blk0.get_face_conn(2)["orientation"] = "621"
+    blk0.getFaceConn(2)["orientation"] = "621"
 
-    blk1.get_face_conn(1)["neighbor"] = None
-    blk1.get_face_conn(1)["bctype"] = "s1"
-    blk1.get_face_conn(1)["orientation"] = None
-    blk1.get_face(1).comm_rank = None
+    blk1.getFaceConn(1)["neighbor"] = None
+    blk1.getFaceConn(1)["bcType"] = "s1"
+    blk1.getFaceConn(1)["orientation"] = None
+    blk1.getFace(1).commRank = None
 
-    blk1.get_face_conn(6)["neighbor"] = 0
-    blk1.get_face_conn(6)["bctype"] = "b0"
-    blk1.get_face_conn(6)["orientation"] = "324"
-    blk1.get_face(6).comm_rank = 0
+    blk1.getFaceConn(6)["neighbor"] = 0
+    blk1.getFaceConn(6)["bcType"] = "b0"
+    blk1.getFaceConn(6)["orientation"] = "324"
+    blk1.getFace(6).commRank = 0
 
-    pg.mpicomm.blockcomm.set_block_communication(tb.mb)
+    pg.mpicomm.blockComm.setBlockCommunication(tb.mb)
 
     # Execute communication
-    pg.mpicomm.blockcomm.communicate(tb.mb, ["x", "y", "z", "q"])
+    pg.mpicomm.blockComm.communicate(tb.mb, ["x", "y", "z", "q"])
 
     passfail = []
     for var, shape, off in zip(

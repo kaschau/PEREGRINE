@@ -1,7 +1,5 @@
-from .bcs import apply_bcs
-from .mpicomm.blockcomm import communicate
-from .compute.transport import kinetic_theory
-from .compute import flux
+from .bcs import applyBcs
+from .mpicomm.blockComm import communicate
 
 
 def consistify(mb):
@@ -10,29 +8,43 @@ def consistify(mb):
     # conservative Q variable field. We update the
     # interior primatives, apply boundary conditions,
     # update halo values as needed, then communicate
-    # everything
+    # everything.
 
     # First communicate conservatives
     communicate(mb, ["Q"])
 
-    # Now update derived arrays for ENTIRE block, even exterior halos
+    # Keep a list of arrays we need to communicate as we change them
+    commList = []
+
+    # Now update derived arrays for ENTIRE block,
+    #  even exterior halos.
     for blk in mb:
         mb.eos(blk, mb.thtrdat, -1, "cons")
 
     # Apply euler boundary conditions
-    apply_bcs(mb, "euler")
+    applyBcs(mb, "euler")
 
+    # Update transport properties
+    for blk in mb:
+        mb.trans(blk, mb.thtrdat, -1)
+
+    # Update spatial derivatives
+    for blk in mb:
+        mb.dqdxyz(blk)
+
+    # TODO: can we get rid of this if check?
     if mb.config["RHS"]["diffusion"]:
-
-        # Update transport properties
-        for blk in mb:
-            kinetic_theory(blk, mb.thtrdat, -1)
-
-        # Update spatial derivatives
-        flux.dqdxyz(mb)
-
         # Apply viscous boundary conditions
-        apply_bcs(mb, "viscous")
+        applyBcs(mb, "viscous")
 
         # communicate viscous halos
-        communicate(mb, ["dqdx", "dqdy", "dqdz"])
+        commList += ["dqdx", "dqdy", "dqdz"]
+
+    # Update switch
+    for blk in mb:
+        mb.switch(blk)
+    if mb.switch.__name__ != 'null':
+        commList += ["phi"]
+
+    # Communicate necessary halos
+    communicate(mb, commList)

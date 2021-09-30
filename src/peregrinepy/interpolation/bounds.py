@@ -14,7 +14,7 @@ from scipy import spatial
 import numpy as np
 
 
-def pts_in_blk_bounds(blk, test_pts):
+def ptsInBlkBounds(blk, testPts):
 
     """
     Takes a block, defines a cube from the extent of that block, and test to see if
@@ -26,8 +26,8 @@ def pts_in_blk_bounds(blk, test_pts):
     blk: raptorpy.block.grid_block
        raptorpy.blocks.grid_block (or a descendant). Must have coordinate data populated
 
-    test_pts : np.array
-       Numpy array of shape (num_pts,3) defining (x,y,z) of each point to test
+    testPts : np.array
+       Numpy array of shape (numPts,3) defining (x,y,z) of each point to test
 
     Returns
     -------
@@ -44,15 +44,15 @@ def pts_in_blk_bounds(blk, test_pts):
 
     # Test if it is possible that any test points lie inside the block
     if (
-        xmin > np.max(test_pts[:, 0])
-        or xmax < np.min(test_pts[:, 0])
-        or ymin > np.max(test_pts[:, 1])
-        or ymax < np.min(test_pts[:, 1])
-        or zmin > np.max(test_pts[:, 2])
-        or zmax < np.min(test_pts[:, 2])
+        xmin > np.max(testPts[:, 0])
+        or xmax < np.min(testPts[:, 0])
+        or ymin > np.max(testPts[:, 1])
+        or ymax < np.min(testPts[:, 1])
+        or zmin > np.max(testPts[:, 2])
+        or zmax < np.min(testPts[:, 2])
     ):
 
-        return [False] * len(test_pts)
+        return [False] * len(testPts)
 
     else:
         # Create a list of the corner points of the block that we want to "test" if any test points lie inside
@@ -247,55 +247,56 @@ def pts_in_blk_bounds(blk, test_pts):
             )
 
         hull = spatial.Delaunay(cube)
-        hull_bool = hull.find_simplex(test_pts) >= 0
+        hullBool = hull.find_simplex(testPts) >= 0
 
-        return hull_bool
+        return hullBool
 
 
-def find_bounds(mb_to, mb_from, verbose_search):
+def findBounds(mbTo, mbFrom, verbose_search):
     """
-    Compares two multiblock grids (or descendants) and determines which blocks from mb_from each
-    individual block from mb_to reside in, in space.
+    Compares two multiblock grids (or descendants) and
+    determines which blocks from mbFrom each
+    individual block from mbTo reside in, in space.
 
     Parameters
     ----------
 
-    mb_from: raptorpy.multiblock.grid
+    mbFrom: raptorpy.multiblock.grid
        raptorpy.multiblock.grid (or a descendant). Must have coordinate data populated
 
-    mb_to: raptorpy.multiblock.grid
+    mbTo: raptorpy.multiblock.grid
        raptorpy.multiblock.grid (or a descendant). Must have coordinate data populated
 
     Returns
     -------
     bounding_blocks : list
-       List of length len(mb_to) where each entry is itself a list containing the block
-       numbers of all the blocks from mb_from that each block in mb_to reside in, spatially.
+       List of length len(mbTo) where each entry is itself a list containing the block
+       numbers of all the blocks from mbFrom that each block in mbTo reside in, spatially.
     """
 
-    mb_from.compute_metrics(xc=True, xu=True, xv=True, xw=True)
-    mb_to.compute_metrics(xc=True, xu=True, xv=True, xw=True)
+    mbFrom.compute_metrics(xc=True, xu=True, xv=True, xw=True)
+    mbTo.compute_metrics(xc=True, xu=True, xv=True, xw=True)
 
-    bounding_blocks = []
-    for blk_to in mb_to:
-        blk_to_xc = np.column_stack(
+    boundingBlocks = []
+    for blkTo in mbTo:
+        blkTo_xc = np.column_stack(
             (
-                blk_to.array["xc"].ravel(),
-                blk_to.array["yc"].ravel(),
-                blk_to.array["zc"].ravel(),
+                blkTo.array["xc"].ravel(),
+                blkTo.array["yc"].ravel(),
+                blkTo.array["zc"].ravel(),
             )
         )
-        pt_found = [False] * len(blk_to_xc)
-        curr_blk_in = []
-        for blk_from in mb_from:
-            in_block_bool = pts_in_blk_bounds(blk_from, blk_to_xc)
-            if True in in_block_bool:
-                curr_blk_in.append(blk_from.nblki)
-                pt_found = pt_found + in_block_bool
+        ptFound = [False] * len(blkTo_xc)
+        currBlkIn = []
+        for blkFrom in mbFrom:
+            inBlockBool = ptsInBlkBounds(blkFrom, blkTo_xc)
+            if True in inBlockBool:
+                currBlkIn.append(blkFrom.nblki)
+                ptFound = ptFound + inBlockBool
             if not verbose_search:
-                if False not in pt_found:
+                if False not in ptFound:
                     break
 
-        bounding_blocks.append(curr_blk_in)
+        boundingBlocks.append(currBlkIn)
 
-    return bounding_blocks
+    return boundingBlocks

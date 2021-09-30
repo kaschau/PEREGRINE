@@ -8,12 +8,12 @@
 #include <stdexcept>
 
 void cpg(block_ b,
-       thtrdat_ th,
-           int face,
-    std::string given,
-            int i/*=0*/,
-            int j/*=0*/,
-            int k/*=0*/) {
+   const thtrdat_ th,
+   const int face,
+   const std::string given,
+   const int i/*=0*/,
+   const int j/*=0*/,
+   const int k/*=0*/) {
 
   MDRange3 range = get_range3(b, face, i, j, k);
 

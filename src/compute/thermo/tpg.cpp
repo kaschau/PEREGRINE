@@ -8,12 +8,12 @@
 #include <stdexcept>
 
 void tpg(block_ b,
-       thtrdat_ th,
-            int face,
-    std::string given,
-            int i/*=0*/,
-            int j/*=0*/,
-            int k/*=0*/) {
+   const thtrdat_ th,
+   const int face,
+   const std::string given,
+   const int i/*=0*/,
+   const int j/*=0*/,
+   const int k/*=0*/) {
 
   MDRange3 range = get_range3(b, face, i, j, k);
 
@@ -251,7 +251,7 @@ void tpg(block_ b,
   gamma = cp/(cp-Rmix);
 
   // Mixture speed of sound
-  c = pow( gamma*Rmix*T , 2.0 );
+  c = sqrt(gamma*Rmix*T);
 
   // Set values of new properties
   // Pressure, temperature, Y

@@ -9,7 +9,7 @@ def constant_pressure_subsonic_exit(eos, blk, face, thtrdat, terms):
 
         # Set pressure at face
         p = blk.array["q"][:, :, :, 0]
-        p[face.s0_] = 2.0 * face.bcvals["p"] - p[face.s1_]
+        p[face.s0_] = 2.0 * face.bcVals["p"] - p[face.s1_]
 
         # Update conservatives
         eos(blk, thtrdat, nface, "prims")
