@@ -135,6 +135,11 @@ PYBIND11_MODULE(compute, m) {
         py::arg("block_ object"),
         py::arg("thtrdat_ object"),
         py::arg("primary"));
+  //  |----> ausmPlusUp.cpp
+  advFlux.def("ausmPlusUp", &ausmPlusUp, "Compute inviscid fluxes via AUSM+UP",
+        py::arg("block_ object"),
+        py::arg("thtrdat_ object"),
+        py::arg("primary"));
 
   // ./diffFlux
   py::module diffFlux = m.def_submodule("diffFlux", "diffusive flux module");
