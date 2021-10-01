@@ -29,14 +29,14 @@ def simulate(configFilePath):
                     " >>> -------------------------------- <<<\n",
                 )
 
-        mb.step(config["simulation"]["dt"])
-
         if mb.nrt % config["simulation"]["niterout"] == 0:
             if rank == 0:
                 print("Saving restart.\n")
             pg.writers.parallelWriter.parallelWriteRestart(
                 mb, config["io"]["outputdir"]
             )
+
+        mb.step(config["simulation"]["dt"])
 
 
 if __name__ == "__main__":
