@@ -15,10 +15,6 @@ def simulate(configFilePath):
 
     mb = pg.bootstrapCase(config)
 
-    pg.writers.parallelWriter.parallelWriteRestart(
-        mb, path=config["io"]["outputdir"]
-    )
-
     for niter in range(config["simulation"]["niter"]):
 
         if mb.nrt % config["simulation"]["niterprint"] == 0:
