@@ -117,7 +117,7 @@ def simulate():
 
     # pg.writers.writeGrid(mb, config["io"]["griddir"])
     # pg.writers.writeRestart(mb, config["io"]["outputdir"], gridPath="../Grid")
-    #
+    
     dt = 0.1 * (Lx / NE) / aInf
     tEnd = Lx / uInf
     while mb.tme < tEnd:
@@ -132,8 +132,9 @@ def simulate():
     plt.plot(refX, refV, "o", label="exact")
     plt.ylim([-0.016, 0.016])
     plt.xlim([-6, 6])
+    plt.title("2D Euler Vortex Results")
     plt.legend()
-    plt.savefig("v.png")
+    plt.show()
     plt.clf()
 
 

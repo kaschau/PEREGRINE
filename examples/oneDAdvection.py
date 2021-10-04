@@ -62,35 +62,37 @@ def simulate():
     pg.consistify(mb)
 
     dt = 0.1 * 0.025
-    niterout = 1100
-    while mb.tme < 11.0:
+    tEnd = 11.0
+    while mb.tme < tEnd:
 
-        if mb.nrt % niterout == 0:
-            # Compute primatives from conserved Q
-            fig, ax1 = plt.subplots()
-            ax1.set_title(f"{mb.tme}")
-            ax1.set_xlabel(r"x")
-            x = blk.array["xc"][1:-1, 1, 1]
-            rho = blk.array["Q"][1:-1, 1, 1, 0]
-            p = blk.array["q"][1:-1, 1, 1, 0]
-            u = blk.array["q"][1:-1, 1, 1, 1]
-            ax1.plot(x, rho, color="g", label="rho", linewidth=0.5)
-            ax1.plot(x, p, color="r", label="p", linewidth=0.5)
-            ax1.plot(x, u, color="k", label="u", linewidth=0.5)
-            ax1.scatter(
-                x,
-                initial_rho,
-                marker="o",
-                facecolor="w",
-                edgecolor="b",
-                label="exact",
-                linewidth=0.5,
-            )
-            ax1.legend()
-            plt.savefig(f"{mb.nrt:04d}.png", dpi=400)
-            plt.close()
+        if mb.nrt % 50 == 0:
+            pg.misc.progressBar(mb.tme, tEnd)
 
         mb.step(dt)
+
+    # Compute primatives from conserved Q
+    fig, ax1 = plt.subplots()
+    ax1.set_title("1D Advection Results")
+    ax1.set_xlabel(r"x")
+    x = blk.array["xc"][1:-1, 1, 1]
+    rho = blk.array["Q"][1:-1, 1, 1, 0]
+    p = blk.array["q"][1:-1, 1, 1, 0]
+    u = blk.array["q"][1:-1, 1, 1, 1]
+    ax1.plot(x, rho, color="g", label="rho", linewidth=0.5)
+    ax1.plot(x, p, color="r", label="p", linewidth=0.5)
+    ax1.plot(x, u, color="k", label="u", linewidth=0.5)
+    ax1.scatter(
+        x,
+        initial_rho,
+        marker="o",
+        facecolor="w",
+        edgecolor="b",
+        label="exact",
+        linewidth=0.5,
+    )
+    ax1.legend()
+    plt.show()
+    plt.close()
 
 
 if __name__ == "__main__":

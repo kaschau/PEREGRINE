@@ -77,10 +77,12 @@ def simulate():
     e = []
     s = []
     t = []
-    while mb.tme * M0 < 120:
+    tEnd = 120.0
+    while mb.tme * M0 < tEnd:
 
         if mb.nrt % 50 == 0:
-            print(mb.tme * M0)
+            pg.misc.progressBar(mb.tme * M0, tEnd)
+
             rke = np.sum(
                 0.5
                 * blk.array["Q"][1:-1, 1:-1, 1:-1, 0]
@@ -112,10 +114,12 @@ def simulate():
 
     plt.plot(t, ke / ke[0])
     plt.ylim([0, 2.4])
+    plt.title(r"$\rho k / (\rho k)_{0}$")
     plt.savefig("ke.png")
     plt.clf()
     plt.plot(t, (-(s - s[0])) / s[0])
     plt.ylim([-3e-2, 1e-2])
+    plt.title(r"$\Delta(\rho s) / (\rho_0 s_0)$")
     plt.savefig("entropy.png")
     plt.clf()
     plt.plot(t, e / e[0])
