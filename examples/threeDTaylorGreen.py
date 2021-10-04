@@ -15,6 +15,7 @@ import kokkos
 import peregrinepy as pg
 import numpy as np
 import matplotlib.pyplot as plt
+
 np.seterr(all="raise")
 
 

@@ -2,18 +2,61 @@ from numpy import s_
 from ..misc import frozenDict
 
 
+class connectivityDict(frozenDict):
+    def __setitem__(self, key, value):
+        if key == "bcType":
+            if value not in [
+                "s1",
+                "b0",
+                "b1",
+                "constant_velocity_subsonic_inlet",
+                "constant_pressure_subsonic_inlet",
+                "adiabatic_noslip_wall",
+                "adiabatic_slip_wall",
+                "adiabatic_moving_wall",
+                "isoT_moving_wall",
+            ]:
+                raise KeyError(f"{value} is not a valid input for bcType.")
+        elif key == "neighbor":
+            if type(value) not in [type(None), int]:
+                raise KeyError(f"{value} is not a valid input for neighbor.")
+        elif key == "orientation":
+            if type(value) not in [type(None), str]:
+                raise KeyError(f"{value} is not a valid input for orientation.")
+            if value is str and len(value) != 3:
+                raise KeyError(f"{value} is not a valid input for orientation.")
+
+        super().__setitem__(key, value)
+
+
 class face:
 
-    __slots__ = ("nface", "connectivity", "s0_", "s1_", "s2_",
-                 "bcVals", "commRank", "neighborFace", "neighborOrientation",
-                 "orient", "sliceS3", "sliceS4", "sliceR3", "sliceR4",
-                 "sendBuffer3", "sendBuffer4", "recvBuffer3", "recvBuffer4")
+    __slots__ = (
+        "nface",
+        "connectivity",
+        "s0_",
+        "s1_",
+        "s2_",
+        "bcVals",
+        "commRank",
+        "neighborFace",
+        "neighborOrientation",
+        "orient",
+        "sliceS3",
+        "sliceS4",
+        "sliceR3",
+        "sliceR4",
+        "sendBuffer3",
+        "sendBuffer4",
+        "recvBuffer3",
+        "recvBuffer4",
+    )
 
     def __init__(self, nface):
         assert 1 <= nface <= 6, "nface must be between (1,6)"
 
         self.nface = nface
-        self.connectivity = frozenDict(
+        self.connectivity = connectivityDict(
             {
                 "bcFam": None,
                 "bcType": "adiabatic_slip_wall",

@@ -14,7 +14,7 @@ def progressBar(current, total, note=""):
 
     sys.stdout.write(
         "[{}] {}% ...{}{}".format(
-            bar[0: length + len(dude)],
+            bar[0 : length + len(dude)],
             round(percentage, 1),
             note,
             "\r" if percentage < 100.0 else "\n",

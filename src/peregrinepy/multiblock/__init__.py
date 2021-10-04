@@ -14,7 +14,7 @@ def null(*args):
 
 class pgConfigError(Exception):
     def __init__(self, option):
-        message = f'Unknown PEREGRINE config options {option}.'
+        message = f"Unknown PEREGRINE config options {option}."
         super().__init__(message)
 
 

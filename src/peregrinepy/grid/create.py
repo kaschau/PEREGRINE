@@ -216,9 +216,7 @@ def multiblockCube(
     for k in range(int(mbDims[2])):
         for j in range(int(mbDims[1])):
             for i in range(int(mbDims[0])):
-                blkNum = (
-                    k * mbDims[1] * mbDims[0] + j * mbDims[0] + i
-                )
+                blkNum = k * mbDims[1] * mbDims[0] + j * mbDims[0] + i
 
                 blk = mb[blkNum]
                 blk.nblki = blkNum
@@ -464,9 +462,7 @@ def multiblockAnnulus(
         for j in range(int(mbDims[1])):
             for i in range(int(mbDims[0])):
 
-                blkNum = (
-                    k * mbDims[1] * mbDims[0] + j * mbDims[0] + i
-                )
+                blkNum = k * mbDims[1] * mbDims[0] + j * mbDims[0] + i
                 blk = mb[blkNum]
                 blk.nblki = blkNum
                 blk.ni = dimsPerBlock[0]
@@ -490,9 +486,9 @@ def multiblockAnnulus(
                             conn["5"]["bc"] = "b0"
                         else:
                             conn["5"]["bc"] = "b1"
-                        conn["5"]["neighbor"] = blkNum + mbDims[
-                            0
-                        ] * mbDims[1] * (mbDims[2] - 1)
+                        conn["5"]["neighbor"] = blkNum + mbDims[0] * mbDims[1] * (
+                            mbDims[2] - 1
+                        )
                         conn["5"]["orientation"] = "123"
 
                     elif k == mbDims[2] - 1:
@@ -500,7 +496,7 @@ def multiblockAnnulus(
                             conn["6"]["bc"] = "b0"
                         else:
                             conn["6"]["bc"] = "b1"
-                        conn["6"]["neighbor"] = blkNum - mbDims[
-                            0
-                        ] * mbDims[1] * (mbDims[2] - 1)
+                        conn["6"]["neighbor"] = blkNum - mbDims[0] * mbDims[1] * (
+                            mbDims[2] - 1
+                        )
                         conn["6"]["orientation"] = "123"
