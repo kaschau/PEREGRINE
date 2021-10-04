@@ -64,17 +64,13 @@ def writeRestart(mb, path="./", gridPath="./", precision="double"):
 
             if blk.blockType == "solver":
                 dsetName = "rho"
-                qf["results"].create_dataset(
-                    dsetName, shape=(extentCC,), dtype=fdtype
-                )
+                qf["results"].create_dataset(dsetName, shape=(extentCC,), dtype=fdtype)
                 dset = qf["results"][dsetName]
                 dset[:] = blk.array["Q"][1:-1, 1:-1, 1:-1, 0].ravel(order="F")
             names = ["p", "u", "v", "w", "T"] + blk.speciesNames[0:-1]
             for j in range(len(names)):
                 dsetName = names[j]
-                qf["results"].create_dataset(
-                    dsetName, shape=(extentCC,), dtype=fdtype
-                )
+                qf["results"].create_dataset(dsetName, shape=(extentCC,), dtype=fdtype)
                 dset = qf["results"][dsetName]
                 dset[:] = blk.array["q"][1:-1, 1:-1, 1:-1, j].ravel(order="F")
             # Compute the nth species here

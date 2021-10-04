@@ -43,7 +43,7 @@ def consistify(mb):
     # Update switch
     for blk in mb:
         mb.switch(blk)
-    if mb.switch.__name__ != 'null':
+    if mb.switch.__name__ != "null":
         commList += ["phi"]
 
     # Communicate necessary halos

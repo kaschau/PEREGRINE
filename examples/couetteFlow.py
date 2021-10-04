@@ -7,6 +7,7 @@ Couette Flow with top wall moving at 5m/s
 import kokkos
 import peregrinepy as pg
 import numpy as np
+
 np.seterr(all="raise")
 
 

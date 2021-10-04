@@ -1,9 +1,5 @@
-# import unittest
-# import pytest
 import peregrinepy as pg
 import numpy as np
-
-# np.random.seed(111)
 
 
 class twoblock123:
@@ -134,7 +130,7 @@ def test_231():
     blk0.getFaceConn(2)["orientation"] = "231"
 
     blk1.getFaceConn(1)["neighbor"] = None
-    blk1.getFaceConn(1)["bcType"] = "s1"
+    blk1.getFaceConn(1)["bcType"] = "adiabatic_slip_wall"
     blk1.getFaceConn(1)["orientation"] = None
     blk1.getFace(1).commRank = None
 
@@ -190,7 +186,7 @@ def test_321():
     blk0.getFaceConn(2)["orientation"] = "312"
 
     blk1.getFaceConn(1)["neighbor"] = None
-    blk1.getFaceConn(1)["bcType"] = "s1"
+    blk1.getFaceConn(1)["bcType"] = "adiabatic_slip_wall"
     blk1.getFaceConn(1)["orientation"] = None
     blk1.getFace(1).commRank = None
 
@@ -249,7 +245,7 @@ def test_432():
     blk0.getFaceConn(2)["orientation"] = "432"
 
     blk1.getFaceConn(1)["neighbor"] = None
-    blk1.getFaceConn(1)["bcType"] = "s1"
+    blk1.getFaceConn(1)["bcType"] = "adiabatic_slip_wall"
     blk1.getFaceConn(1)["orientation"] = None
     blk1.getFace(1).commRank = None
 
@@ -305,7 +301,7 @@ def test_513():
     blk0.getFaceConn(2)["orientation"] = "513"
 
     blk1.getFaceConn(1)["neighbor"] = None
-    blk1.getFaceConn(1)["bcType"] = "s1"
+    blk1.getFaceConn(1)["bcType"] = "adiabatic_slip_wall"
     blk1.getFaceConn(1)["orientation"] = None
     blk1.getFace(1).commRank = None
 
@@ -361,7 +357,7 @@ def test_621():
     blk0.getFaceConn(2)["orientation"] = "621"
 
     blk1.getFaceConn(1)["neighbor"] = None
-    blk1.getFaceConn(1)["bcType"] = "s1"
+    blk1.getFaceConn(1)["bcType"] = "adiabatic_slip_wall"
     blk1.getFaceConn(1)["orientation"] = None
     blk1.getFace(1).commRank = None
 
