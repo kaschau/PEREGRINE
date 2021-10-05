@@ -46,23 +46,26 @@ def simulate():
     blk.getFace(2).commRank = 0
     # face 3
     blk.getFaceConn(3)["bcFam"] = None
-    blk.getFaceConn(3)["bcType"] = "adiabatic_noslip_wall"
+    blk.getFaceConn(3)["bcType"] = "adiabaticNoSlipWall"
     blk.getFaceConn(3)["neighbor"] = None
     blk.getFaceConn(3)["orientation"] = None
     blk.getFace(3).commRank = 0
     # face 4 isoT moving wall
     blk.getFaceConn(4)["bcFam"] = "whoosh"
-    blk.getFaceConn(4)["bcType"] = "adiabatic_moving_wall"
+    blk.getFaceConn(4)["bcType"] = "adiabaticMovingWall"
     blk.getFaceConn(4)["neighbor"] = None
     blk.getFaceConn(4)["orientation"] = None
     blk.getFace(4).commRank = 0
 
     for face in [5, 6]:
         blk.getFaceConn(face)["bcFam"] = None
-        blk.getFaceConn(face)["bcType"] = "adiabatic_slip_wall"
+        blk.getFaceConn(face)["bcType"] = "adiabaticSlipWall"
         blk.getFace(face).commRank = 0
 
     blk.getFace(4).bcVals = {"u": 5.0, "v": 0.0, "w": 0.0}
+
+    for face in blk.faces:
+        face.setBcFunc()
 
     mb.generateHalo()
 

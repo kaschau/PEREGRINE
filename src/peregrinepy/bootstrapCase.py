@@ -69,6 +69,9 @@ def bootstrapCase(config):
     # Read in boundary conditions
     ################################################################
     pg.readers.readBcs(mb, config["io"]["inputdir"])
+    for blk in mb:
+        for face in blk.faces:
+            face.setBcFunc()
 
     ################################################################
     # Read in restart

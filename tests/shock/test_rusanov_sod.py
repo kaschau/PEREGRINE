@@ -41,7 +41,7 @@ def test_rusanov_sod():
     blk = mb[0]
 
     for face in blk.faces:
-        face.connectivity["bcType"] = "adiabatic_slip_wall"
+        face.connectivity["bcType"] = "adiabaticSlipWall"
 
     pg.mpicomm.blockComm.setBlockCommunication(mb)
     mb.unifyGrid()
