@@ -34,7 +34,8 @@ def simulate():
 
     blk = mb[0]
     for face in blk.faces:
-        face.connectivity["bcType"] = "adiabatic_noslip_wall"
+        face.connectivity["bcType"] = "adiabaticNoSlipWall"
+        face.setBcFunc()
 
     pg.mpicomm.blockComm.setBlockCommunication(mb)
 

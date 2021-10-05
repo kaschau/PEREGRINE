@@ -1,4 +1,4 @@
-def constant_pressure_subsonic_exit(eos, blk, face, thtrdat, terms):
+def constantPressureSubsonicExit(eos, blk, face, thtrdat, terms):
 
     nface = face.nface
 

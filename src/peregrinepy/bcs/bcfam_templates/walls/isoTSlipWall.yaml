@@ -1,6 +1,6 @@
 ---
 
 dummy_wall:
-  bcType: isoT_noslip_wall
+  bcType: isoTSlipWall
   values:
     T: 300.0
