@@ -1,5 +1,6 @@
 from numpy import s_
 from ..misc import frozenDict
+from ..bcs import inlets, exits, walls
 
 
 class connectivityDict(frozenDict):
@@ -9,12 +10,12 @@ class connectivityDict(frozenDict):
                 "s1",
                 "b0",
                 "b1",
-                "constant_velocity_subsonic_inlet",
-                "constant_pressure_subsonic_inlet",
-                "adiabatic_noslip_wall",
-                "adiabatic_slip_wall",
-                "adiabatic_moving_wall",
-                "isoT_moving_wall",
+                "constantVelocitySubsonicInlet",
+                "constantPressureSubsonicExit",
+                "adiabaticNoSlipWall",
+                "adiabaticSlipWall",
+                "adiabaticMovingWall",
+                "isoTMovingWall",
             ]:
                 raise KeyError(f"{value} is not a valid input for bcType.")
         elif key == "neighbor":
@@ -29,6 +30,10 @@ class connectivityDict(frozenDict):
         super().__setitem__(key, value)
 
 
+def dummy(*args):
+    pass
+
+
 class face:
 
     __slots__ = (
@@ -38,6 +43,7 @@ class face:
         "s1_",
         "s2_",
         "bcVals",
+        "bcFunc",
         "commRank",
         "neighborFace",
         "neighborOrientation",
@@ -59,7 +65,7 @@ class face:
         self.connectivity = connectivityDict(
             {
                 "bcFam": None,
-                "bcType": "adiabatic_slip_wall",
+                "bcType": "adiabaticSlipWall",
                 "neighbor": None,
                 "orientation": None,
             }
@@ -95,6 +101,8 @@ class face:
 
         # Boundary condition values
         self.bcVals = frozenDict({})
+        # Boundary function
+        self.bcFunc = walls.adiabaticSlipWall
 
         # MPI variables - only set for solver blocks, but we will store them
         # all the time for now
@@ -112,3 +120,23 @@ class face:
         self.recvBuffer3 = None
         self.sendBuffer4 = None
         self.recvBuffer4 = None
+
+    def setBcFunc(self):
+
+        bc = self.connectivity["bcType"]
+        if bc in ["b0", "b1"]:
+            self.bcFunc = dummy
+        elif bc == "constantVelocitySubsonicInlet":
+            self.bcFunc = inlets.constantVelocitySubsonicInlet
+        elif bc == "constantPressureSubsonicExit":
+            self.bcFunc = exits.constantPressureSubsonicExit
+        elif bc == "adiabaticNoSlipWall":
+            self.bcFunc = walls.adiabaticNoSlipWall
+        elif bc == "adiabaticSlipWall":
+            self.bcFunc = walls.adiabaticSlipWall
+        elif bc == "adiabaticMovingWall":
+            self.bcFunc = walls.adiabaticMovingWall
+        elif bc == "isoTMovingWall":
+            self.bcFunc = walls.isoTMovingWall
+        else:
+            raise KeyError(f"{bc} is not a valid bcType")

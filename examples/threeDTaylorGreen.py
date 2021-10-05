@@ -42,6 +42,9 @@ def simulate():
         face.connectivity["orientation"] = "123"
         face.commRank = 0
 
+    for face in blk.faces:
+        face.setBcFunc()
+
     mb.generateHalo()
 
     pg.mpicomm.blockComm.setBlockCommunication(mb)

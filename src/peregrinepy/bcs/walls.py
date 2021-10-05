@@ -1,4 +1,4 @@
-def adiabatic_noslip_wall(eos, blk, face, thtrdat, terms):
+def adiabaticNoSlipWall(eos, blk, face, thtrdat, terms):
 
     nface = face.nface
 
@@ -32,7 +32,7 @@ def adiabatic_noslip_wall(eos, blk, face, thtrdat, terms):
         dTNdz[face.s0_] = -dTNdz[face.s1_]
 
 
-def adiabatic_slip_wall(eos, blk, face, thtrdat, terms):
+def adiabaticSlipWall(eos, blk, face, thtrdat, terms):
 
     nface = face.nface
 
@@ -84,7 +84,7 @@ def adiabatic_slip_wall(eos, blk, face, thtrdat, terms):
         dTNdz[face.s0_] = -dTNdz[face.s1_]
 
 
-def adiabatic_moving_wall(eos, blk, face, thtrdat, terms):
+def adiabaticMovingWall(eos, blk, face, thtrdat, terms):
 
     nface = face.nface
 
@@ -124,7 +124,7 @@ def adiabatic_moving_wall(eos, blk, face, thtrdat, terms):
         dTNdz[face.s0_] = -dTNdz[face.s1_]
 
 
-def isoT_moving_wall(eos, blk, face, thtrdat, terms):
+def isoTMovingWall(eos, blk, face, thtrdat, terms):
 
     nface = face.nface
 

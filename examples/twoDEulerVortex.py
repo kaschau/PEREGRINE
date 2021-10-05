@@ -66,11 +66,14 @@ def simulate():
         face.commRank = 0
     for f in [5, 6]:
         face = blk.getFace(f)
-        face.connectivity["bcType"] = "adiabatic_slip_wall"
+        face.connectivity["bcType"] = "adiabaticSlipWall"
         face.connectivity["bcFam"] = None
         face.connectivity["neighbor"] = None
         face.connectivity["orientation"] = "000"
         face.commRank = None
+
+    for face in blk.faces:
+        face.setBcFunc()
 
     pg.mpicomm.blockComm.setBlockCommunication(mb)
 

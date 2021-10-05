@@ -1,4 +1,4 @@
-def constant_velocity_subsonic_inlet(eos, blk, face, thtrdat, terms):
+def constantVelocitySubsonicInlet(eos, blk, face, thtrdat, terms):
 
     nface = face.nface
 
