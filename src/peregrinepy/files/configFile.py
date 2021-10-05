@@ -37,7 +37,7 @@ class configFile(frozenDict):
                 "primaryAdvFlux": "centralEuler",
                 "secondaryAdvFlux": None,
                 "switchAdvFlux": None,
-                "diffusion": True,
+                "diffusion": False,
                 "diffFlux": "centralVisc",
             }
         )
