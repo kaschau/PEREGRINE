@@ -32,7 +32,7 @@ def simulate():
 
     blk = mb[0]
     for face in blk.faces:
-        face.connectivity["bcType"] = "adiabatic_slip_wall"
+        face.connectivity["bcType"] = "adiabaticSlipWall"
 
     blk.getFaceConn(1)["bcType"] = "b1"
     blk.getFaceConn(1)["neighbor"] = 0
@@ -43,6 +43,9 @@ def simulate():
     blk.getFaceConn(2)["neighbor"] = 0
     blk.getFaceConn(2)["orientation"] = "123"
     blk.getFace(2).commRank = 0
+
+    for face in blk.faces:
+        face.setBcFunc()
 
     pg.mpicomm.blockComm.setBlockCommunication(mb)
 

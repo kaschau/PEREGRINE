@@ -19,7 +19,7 @@ def cubicConnectivity(blk, mbDims, blkNum, i, j, k):
     # i faces
     if i == 0 and mbDims[0] != 1:
         conn = blk.getFaceConn(1)
-        conn["bcType"] = "adiabatic_noslip_wall"
+        conn["bcType"] = "adiabaticNoSlipWall"
         conn["neighbor"] = None
         conn["orientation"] = None
 
@@ -35,7 +35,7 @@ def cubicConnectivity(blk, mbDims, blkNum, i, j, k):
         conn["orientation"] = "123"
 
         conn = blk.getFaceConn(2)
-        conn["bcType"] = "adiabatic_noslip_wall"
+        conn["bcType"] = "adiabaticNoSlipWall"
         conn["neighbor"] = None
         conn["orientation"] = None
 
@@ -53,7 +53,7 @@ def cubicConnectivity(blk, mbDims, blkNum, i, j, k):
     # j faces
     if j == 0 and mbDims[1] != 1:
         conn = blk.getFaceConn(3)
-        conn["bcType"] = "adiabatic_noslip_wall"
+        conn["bcType"] = "adiabaticNoSlipWall"
         conn["neighbor"] = None
         conn["orientation"] = None
 
@@ -69,7 +69,7 @@ def cubicConnectivity(blk, mbDims, blkNum, i, j, k):
         conn["orientation"] = "123"
 
         conn = blk.getFaceConn(4)
-        conn["bcType"] = "adiabatic_noslip_wall"
+        conn["bcType"] = "adiabaticNoSlipWall"
         conn["neighbor"] = None
         conn["orientation"] = None
 
@@ -87,7 +87,7 @@ def cubicConnectivity(blk, mbDims, blkNum, i, j, k):
     # k faces
     if k == 0 and mbDims[2] != 1:
         conn = blk.getFaceConn(5)
-        conn["bcType"] = "adiabatic_noslip_wall"
+        conn["bcType"] = "adiabaticNoSlipWall"
         conn["neighbor"] = None
         conn["orientation"] = None
 
@@ -103,7 +103,7 @@ def cubicConnectivity(blk, mbDims, blkNum, i, j, k):
         conn["orientation"] = "123"
 
         conn = blk.getFaceConn(6)
-        conn["bcType"] = "adiabatic_noslip_wall"
+        conn["bcType"] = "adiabaticNoSlipWall"
         conn["neighbor"] = None
         conn["orientation"] = None
 
