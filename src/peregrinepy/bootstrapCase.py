@@ -3,7 +3,7 @@ import peregrinepy as pg
 
 def bootstrapCase(config):
 
-    comm, rank, size = pg.mpicomm.mpiutils.getCommRankSize()
+    comm, rank, size = pg.mpiComm.mpiUtils.getCommRankSize()
     ################################################################
     # First we determine what bocks we are responsible for
     ################################################################
@@ -22,7 +22,7 @@ def bootstrapCase(config):
         comm.Abort()
 
     myblocks = blocksForProcs[rank]
-    mb = pg.multiblock.generateMultiblockSolver(len(myblocks), config, myblocks)
+    mb = pg.multiBlock.generateMultiBlockSolver(len(myblocks), config, myblocks)
 
     ################################################################
     # Read in the connectivity
@@ -52,7 +52,7 @@ def bootstrapCase(config):
     ################################################################
     # Now set the MPI communication info for each block
     ################################################################
-    pg.mpicomm.blockComm.setBlockCommunication(mb)
+    pg.mpiComm.blockComm.setBlockCommunication(mb)
 
     ################################################################
     # Initialize the solver arrays

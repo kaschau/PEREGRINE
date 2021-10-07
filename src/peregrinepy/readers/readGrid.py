@@ -8,7 +8,7 @@ def readGrid(mb, path="./"):
     """
     This function reads in all the HDF5 grid files in
     :path: and adds the coordinate data to a supplied
-    peregrinepy.multiblock.grid object (or one of its descendants)
+    peregrinepy.multiBlock.grid object (or one of its descendants)
 
     Parameters
     ----------

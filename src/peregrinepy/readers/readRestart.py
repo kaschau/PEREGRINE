@@ -6,13 +6,13 @@ import h5py
 
 def readRestart(mb, path="./", nrt=0, animate=True):
     """This function reads in all the HDF5 grid files in :path:
-    and adds the coordinate data to a supplied peregrinepy.multiblock.grid
+    and adds the coordinate data to a supplied peregrinepy.multiBlock.grid
     object (or one of its descendants)
 
     Parameters
     ----------
 
-    mb : peregrinepy.multiblock.grid (or a descendant)
+    mb : peregrinepy.multiBlock.grid (or a descendant)
 
     path : str
         Path to find all the HDF5 grid files to be read in

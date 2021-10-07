@@ -7,7 +7,7 @@ Authors:
 Kyle Schau
 
 
-This module holds the peregrinepy.multiblock object class that inherits from
+This module holds the peregrinepy.multiBlock object class that inherits from
 python lists to create a list of peregrine.block object with added functionality and attributes
 
 """
@@ -39,6 +39,6 @@ class topology(UserList):
         return [b.nblki for b in self]
 
     def __repr__(self):
-        string = "Topology multiblock object:\n"
+        string = "Topology multiBlock object:\n"
         string += f"{self.nblks} block(s)\n"
         return string

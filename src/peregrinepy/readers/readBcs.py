@@ -1,18 +1,18 @@
 # -*- coding: utf-8 -*-
 
 import yaml
-from ..mpicomm import mpiutils
+from ..mpiComm import mpiUtils
 
 
 def readBcs(mb, pathToFile):
     """
     This function parses a RAPTOR connectivity file given by
     file_path and adds the connectivity information to the
-    supplied raptorpy.multiblock object
+    supplied raptorpy.multiBlock object
 
     Parameters
     ----------
-    mb_data : raptorpy.multiblock.dataset (or a descendant)
+    mb_data : raptorpy.multiBlock.dataset (or a descendant)
 
     file_path : str
         Path to the conn.inp file to be read in
@@ -23,7 +23,7 @@ def readBcs(mb, pathToFile):
         Adds the connectivity information to mb
 
     """
-    comm, rank, size = mpiutils.getCommRankSize()
+    comm, rank, size = mpiUtils.getCommRankSize()
 
     # only the zeroth block reads in the file
     if 0 in mb.block_list:

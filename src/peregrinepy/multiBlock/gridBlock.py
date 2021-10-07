@@ -7,7 +7,7 @@ Authors:
 Kyle Schau
 
 This module defines a gridBlock object that is used to
-compose a peregrinepy.multiblock.grid (or one of its descendants)
+compose a peregrinepy.multiBlock.grid (or one of its descendants)
 
 """
 

@@ -5,9 +5,9 @@ import numpy as np
 class twoblock123:
     def __init__(self):
         self.config = pg.files.configFile()
-        self.mb = pg.multiblock.solver(2, ["Air"])
+        self.mb = pg.multiBlock.solver(2, ["Air"])
 
-        pg.grid.create.multiblockCube(
+        pg.grid.create.multiBlockCube(
             self.mb,
             mbDims=[2, 1, 1],
             dimsPerBlock=[6, 3, 2],
@@ -43,9 +43,9 @@ def test_123():
     blk1 = tb.mb[1]
 
     # Reorient and update communication info
-    pg.mpicomm.blockComm.setBlockCommunication(tb.mb)
+    pg.mpiComm.blockComm.setBlockCommunication(tb.mb)
     # Execute communication
-    pg.mpicomm.blockComm.communicate(tb.mb, ["x", "y", "z", "q"])
+    pg.mpiComm.blockComm.communicate(tb.mb, ["x", "y", "z", "q"])
 
     passfail = []
     for var, shape, off in zip(
@@ -87,10 +87,10 @@ def test_135():
     blk0.getFaceConn(2)["orientation"] = "135"
     blk1.getFaceConn(1)["orientation"] = "162"
 
-    pg.mpicomm.blockComm.setBlockCommunication(tb.mb)
+    pg.mpiComm.blockComm.setBlockCommunication(tb.mb)
 
     # Execute communication
-    pg.mpicomm.blockComm.communicate(tb.mb, ["x", "y", "z", "q"])
+    pg.mpiComm.blockComm.communicate(tb.mb, ["x", "y", "z", "q"])
 
     passfail = []
     for var, shape, off in zip(
@@ -147,10 +147,10 @@ def test_231():
     for face in blk1.faces:
         face.setBcFunc()
 
-    pg.mpicomm.blockComm.setBlockCommunication(tb.mb)
+    pg.mpiComm.blockComm.setBlockCommunication(tb.mb)
 
     # Execute communication
-    pg.mpicomm.blockComm.communicate(tb.mb, ["x", "y", "z", "q"])
+    pg.mpiComm.blockComm.communicate(tb.mb, ["x", "y", "z", "q"])
 
     passfail = []
     for var, shape, off in zip(
@@ -207,10 +207,10 @@ def test_321():
     for face in blk1.faces:
         face.setBcFunc()
 
-    pg.mpicomm.blockComm.setBlockCommunication(tb.mb)
+    pg.mpiComm.blockComm.setBlockCommunication(tb.mb)
 
     # Execute communication
-    pg.mpicomm.blockComm.communicate(tb.mb, ["x", "y", "z", "q"])
+    pg.mpiComm.blockComm.communicate(tb.mb, ["x", "y", "z", "q"])
 
     passfail = []
     for var, shape, off in zip(
@@ -270,10 +270,10 @@ def test_432():
     for face in blk1.faces:
         face.setBcFunc()
 
-    pg.mpicomm.blockComm.setBlockCommunication(tb.mb)
+    pg.mpiComm.blockComm.setBlockCommunication(tb.mb)
 
     # Execute communication
-    pg.mpicomm.blockComm.communicate(tb.mb, ["x", "y", "z", "q"])
+    pg.mpiComm.blockComm.communicate(tb.mb, ["x", "y", "z", "q"])
 
     passfail = []
     for var, shape, off in zip(
@@ -331,10 +331,10 @@ def test_513():
     for face in blk1.faces:
         face.setBcFunc()
 
-    pg.mpicomm.blockComm.setBlockCommunication(tb.mb)
+    pg.mpiComm.blockComm.setBlockCommunication(tb.mb)
 
     # Execute communication
-    pg.mpicomm.blockComm.communicate(tb.mb, ["x", "y", "z", "q"])
+    pg.mpiComm.blockComm.communicate(tb.mb, ["x", "y", "z", "q"])
 
     passfail = []
     for var, shape, off in zip(
@@ -392,10 +392,10 @@ def test_621():
     for face in blk1.faces:
         face.setBcFunc()
 
-    pg.mpicomm.blockComm.setBlockCommunication(tb.mb)
+    pg.mpiComm.blockComm.setBlockCommunication(tb.mb)
 
     # Execute communication
-    pg.mpicomm.blockComm.communicate(tb.mb, ["x", "y", "z", "q"])
+    pg.mpiComm.blockComm.communicate(tb.mb, ["x", "y", "z", "q"])
 
     passfail = []
     for var, shape, off in zip(

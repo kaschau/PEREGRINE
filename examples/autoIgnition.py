@@ -23,8 +23,8 @@ def simulate():
     config["thermochem"]["mechanism"] = "chem_CH4_O2_Stanford_Skeletal"
     config["thermochem"]["eos"] = "tpg"
     config["thermochem"]["spdata"] = "thtr_CH4_O2_Stanford_Skeletal.yaml"
-    mb = pg.multiblock.generateMultiblockSolver(1, config)
-    pg.grid.create.multiblockCube(
+    mb = pg.multiBlock.generateMultiBlockSolver(1, config)
+    pg.grid.create.multiBlockCube(
         mb,
         mbDims=[1, 1, 1],
         dimsPerBlock=[2, 2, 2],
@@ -37,7 +37,7 @@ def simulate():
         face.connectivity["bcType"] = "adiabaticNoSlipWall"
         face.setBcFunc()
 
-    pg.mpicomm.blockComm.setBlockCommunication(mb)
+    pg.mpiComm.blockComm.setBlockCommunication(mb)
 
     mb.unifyGrid()
 

@@ -7,9 +7,7 @@ from ..integrators import getIntegrator
 from ..thermo_transport import thtrdat
 from peregrinepy import compute
 
-
-def null(*args):
-    pass
+from ..misc import null
 
 
 class pgConfigError(Exception):
@@ -109,7 +107,7 @@ def setRHS(cls, config):
         cls.impChem = null
 
 
-def generateMultiblockSolver(nblks, config, myblocks=None):
+def generateMultiBlockSolver(nblks, config, myblocks=None):
 
     # Get the time integrator from config file
     ti = config["solver"]["timeIntegration"]

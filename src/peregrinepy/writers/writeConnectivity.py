@@ -3,12 +3,12 @@ import yaml
 
 
 def writeConnectivity(mb, path="./"):
-    """This function produces RAPTOR grid connectivity file (conn.inp) files from a raptorpy.multiblock.grid (or a descendant)
+    """This function produces RAPTOR grid connectivity file (conn.inp) files from a raptorpy.multiBlock.grid (or a descendant)
 
     Parameters
     ----------
 
-    mb : raptorpy.multiblock.grid (or a descendant)
+    mb : raptorpy.multiBlock.grid (or a descendant)
 
     file_path : str
        Path of location to write output RAPTOR grid connectivity file to
