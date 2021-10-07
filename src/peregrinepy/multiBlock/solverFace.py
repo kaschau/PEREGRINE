@@ -15,15 +15,15 @@ class solverFace(topologyFace):
         "bcVals",
         "bcFunc",
         "commRank",
-        "neighborFace",
-        "neighborOrientation",
         "orient",
         "sliceS3",
         "sliceS4",
         "sliceR3",
         "sliceR4",
+        "tagS",
         "sendBuffer3",
         "sendBuffer4",
+        "tagR",
         "recvBuffer3",
         "recvBuffer4",
     )
@@ -66,8 +66,6 @@ class solverFace(topologyFace):
         # MPI variables - only set for solver blocks, but we will store them
         # all the time for now
         self.commRank = None
-        self.neighborFace = None
-        self.neighborOrientation = None
 
         self.orient = None
         self.sliceS3 = None
@@ -75,57 +73,12 @@ class solverFace(topologyFace):
         self.sliceS4 = None
         self.sliceR4 = None
 
+        self.tagS = None
         self.sendBuffer3 = None
-        self.recvBuffer3 = None
         self.sendBuffer4 = None
+        self.tagR = None
+        self.recvBuffer3 = None
         self.recvBuffer4 = None
-
-    def getNeighborFace(self):
-
-        nface = self.nface
-        orientation = self.connectivity["orientation"]
-
-        # Which character in the orientation string do we look at to
-        #  determine the orientation of a face's normal axis
-        faceToOrientIndexMapping = {1: 0, 2: 0, 3: 1, 4: 1, 5: 2, 6: 2}
-        # If we are a small face (1,3,5) and we have a direction (key)
-        #  from above, what is our neighbor face (value)
-        orientToSmallFaceMapping = {1: 2, 2: 4, 3: 6, 4: 1, 5: 3, 6: 5}
-        # If we are a large face (2,4,6) and we have a direction (key)
-        #  from above, what is our neighbor face (value)
-        orientToLargeFaceMapping = {1: 1, 2: 3, 3: 5, 4: 2, 5: 4, 6: 6}
-
-        direction = int(orientation[faceToOrientIndexMapping[nface]])
-
-        if nface in [1, 3, 5]:
-            nface2 = orientToSmallFaceMapping[direction]
-        elif nface in [2, 4, 6]:
-            nface2 = orientToLargeFaceMapping[direction]
-
-        self.neighborFace = nface2
-
-    def getNeighborOrientation(self):
-
-        orientation = self.connectivity["orientation"]
-
-        dirToOrientIndexMapping = {1: 0, 2: 1, 3: 2, 4: 0, 5: 1, 6: 2}
-        neighborOrientation = [None, None, None]
-        for i in range(3):
-            n = int(orientation[i])
-            indx = dirToOrientIndexMapping[n]
-
-            if indx == i:
-                neighborOrientation[indx] = str(n)
-            elif n in (1, 2, 3):
-                neighborOrientation[indx] = str(i + 1)
-            elif n in (4, 5, 6):
-                neighborOrientation[indx] = str(i + 4)
-
-        assert (
-            None not in neighborOrientation
-        ), "Something wrong in getNeighborOrientation routine. Check connectivity"
-
-        return "".join(neighborOrientation)
 
     def setBcFunc(self):
 
@@ -147,7 +100,7 @@ class solverFace(topologyFace):
         else:
             raise KeyError(f"{bc} is not a valid bcType")
 
-    def setCommBuffers(self, ni, nj, nk, ne):
+    def setCommBuffers(self, ni, nj, nk, ne, nblki):
         assert (
             self.orient is not None
         ), "Must set orientFun before commBuffers, or perhaps you are trying to set buffers for a non communication face."
@@ -220,6 +173,9 @@ class solverFace(topologyFace):
         # We revieve the data in the correct shape already
         self.recvBuffer4 = np.ascontiguousarray(np.empty(commcshape))
 
+        self.tagR = int(f"1{self.connectivity['neighbor']}2{nblki}1{self.nface}")
+        self.tagS = int(f"1{nblki}2{self.connectivity['neighbor']}1{self.neighborFace}")
+
     def setOrientFunc(self, ni, nj, nk, ne):
         assert 0 not in [
             ni,
@@ -241,7 +197,6 @@ class solverFace(topologyFace):
         if neighbor is None:
             return
 
-        self.getNeighborFace()
         neighborFace = self.neighborFace
 
         orientation = self.connectivity["orientation"]

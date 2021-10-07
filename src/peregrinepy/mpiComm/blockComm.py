@@ -4,9 +4,8 @@ from mpi4py.MPI import Request
 
 
 def communicate(mb, varis):
-    if not isinstance(varis, list):
-        varis = [varis]
 
+    varis = list(varis)
     comm, rank, size = getCommRankSize()
 
     for var in varis:
@@ -15,27 +14,21 @@ def communicate(mb, varis):
         for blk in mb:
             ndim = blk.array[var].ndim
             for face in blk.faces:
-                neighbor = face.connectivity["neighbor"]
-                if neighbor is None:
+                if face.connectivity["neighbor"] is None:
                     continue
-                commRank = face.commRank
-                tag = int(f"1{neighbor}2{blk.nblki}1{face.nface}")
 
                 recv = face.recvBuffer4 if ndim == 4 else face.recvBuffer3
                 ssize = recv.size
                 reqs.append(
-                    comm.Irecv([recv, ssize, MPIDOUBLE], source=commRank, tag=tag)
+                    comm.Irecv([recv, ssize, MPIDOUBLE], source=face.commRank, tag=face.tagR)
                 )
 
         # Post non-blocking sends
         for blk in mb:
             ndim = blk.array[var].ndim
             for face in blk.faces:
-                neighbor = face.connectivity["neighbor"]
-                if neighbor is None:
+                if face.connectivity["neighbor"] is None:
                     continue
-                commRank = face.commRank
-                tag = int(f"1{blk.nblki}2{neighbor}1{face.neighborFace}")
 
                 send, sliceS = (
                     (face.sendBuffer4, face.sliceS4)
@@ -44,24 +37,22 @@ def communicate(mb, varis):
                 )
                 send[:] = face.orient(blk.array[var][sliceS])
                 ssize = send.size
-                comm.Send([send, ssize, MPIDOUBLE], dest=commRank, tag=tag)
+                comm.Send([send, ssize, MPIDOUBLE], dest=face.commRank, tag=face.tagS)
 
         # wait and assign
-        count = 0
+        reqs = iter(reqs)
         for blk in mb:
             ndim = blk.array[var].ndim
             for face in blk.faces:
-                neighbor = face.connectivity["neighbor"]
-                if neighbor is None:
+                if face.connectivity["neighbor"] is None:
                     continue
-                Request.Wait(reqs[count])
+                Request.Wait(reqs.__next__())
                 recv, sliceR = (
                     (face.recvBuffer4, face.sliceR4)
                     if ndim == 4
                     else (face.recvBuffer3, face.sliceR3)
                 )
                 blk.array[var][sliceR] = recv[:]
-                count += 1
 
         comm.Barrier()
 
@@ -70,8 +61,7 @@ def setBlockCommunication(mb):
 
     for blk in mb:
         for face in blk.faces:
-            neighbor = face.connectivity["neighbor"]
-            if neighbor is None:
+            if face.connectivity["neighbor"] is None:
                 continue
             face.setOrientFunc(blk.ni, blk.nj, blk.nk, blk.ne)
-            face.setCommBuffers(blk.ni, blk.nj, blk.nk, blk.ne)
+            face.setCommBuffers(blk.ni, blk.nj, blk.nk, blk.ne, blk.nblki)
