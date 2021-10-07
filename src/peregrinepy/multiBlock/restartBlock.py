@@ -6,7 +6,7 @@ Authors:
 
 Kyle Schau
 
-This module defines a restart_block object that is used to compose a raptorpy.multiblock.restart (see multiblock.py).
+This module defines a restart_block object that is used to compose a raptorpy.multiBlock.restart (see multiBlock.py).
 
 """
 

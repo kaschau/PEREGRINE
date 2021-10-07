@@ -7,7 +7,7 @@ Authors:
 Kyle Schau
 
 
-This module holds the peregrinepy.multiblock object class that inherits from
+This module holds the peregrinepy.multiBlock object class that inherits from
 python lists to create a list of peregrine.block object with added functionality and attributes
 
 """
@@ -17,7 +17,7 @@ from .gridBlock import gridBlock
 
 
 class grid(topology):
-    """A list of raptorpy.grid.grid_block objects. Inherits from raptorpy.multiblock.dataset"""
+    """A list of raptorpy.grid.grid_block objects. Inherits from raptorpy.multiBlock.dataset"""
 
     mbType = "grid"
 

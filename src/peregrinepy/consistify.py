@@ -1,4 +1,4 @@
-from .mpicomm.blockComm import communicate
+from .mpiComm.blockComm import communicate
 
 
 def consistify(mb):

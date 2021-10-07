@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 
-""" multiblock.py
+""" multiBlock.py
 
 Authors:
 
 Kyle Schau
 
 
-This module holds the peregrinepy.multiblock object class that inherits from
+This module holds the peregrinepy.multiBlock object class that inherits from
 python lists to create a list of peregrine.block object with added functionality and attributes
 
 """
@@ -17,7 +17,7 @@ from .restartBlock import restartBlock
 
 
 class restart(grid):
-    """A list of peregrinepy.restart.restart_block objects. Inherits from peregrinepy.multiblock.grid"""
+    """A list of peregrinepy.restart.restart_block objects. Inherits from peregrinepy.multiBlock.grid"""
 
     mbType = "restart"
 
