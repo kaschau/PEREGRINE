@@ -195,7 +195,7 @@ class solverFace(topologyFace):
 
         elif self.nface == 5:
             self.sliceS3 = s_[:, :, 2]
-            self.sliceS4[5] = s_[:, :, 1]
+            self.sliceS4 = s_[:, :, 1]
             commfpshape = (ni + 2, nj + 2)
             commcshape = (ni + 1, nj + 1, ne)
             self.sliceR3 = s_[:, :, 0]
@@ -211,12 +211,12 @@ class solverFace(topologyFace):
 
         # We send the data in the correct shape already
         # Face and point shape
-        self.sendBuffer3 = np.ascontiguousarray(np.empty(commfpshape))
+        self.sendBuffer3 = np.ascontiguousarray(self.orient(np.empty(commfpshape)))
         # We revieve the data in the correct shape already
         self.recvBuffer3 = np.ascontiguousarray(np.empty(commfpshape))
 
         # Cell
-        self.sendBuffer4 = np.ascontiguousarray(np.empty(commcshape))
+        self.sendBuffer4 = np.ascontiguousarray(self.orient(np.empty(commcshape)))
         # We revieve the data in the correct shape already
         self.recvBuffer4 = np.ascontiguousarray(np.empty(commcshape))
 

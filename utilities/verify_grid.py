@@ -19,7 +19,7 @@ Output will print any errors to the screen
 import os
 import argparse
 from peregrinepy.readers import read_grid, read_connectivity
-from peregrinepy.multiblock import grid as mbg
+from peregrinepy.multiBlock import grid as mbg
 import numpy as np
 
 

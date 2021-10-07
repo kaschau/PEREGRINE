@@ -7,12 +7,12 @@ from copy import deepcopy
 
 
 def writeRestart(mb, path="./", gridPath="./", precision="double"):
-    """This function produces an hdf5 file from a raptorpy.multiblock.restart for viewing in Paraview.
+    """This function produces an hdf5 file from a raptorpy.multiBlock.restart for viewing in Paraview.
 
     Parameters
     ----------
 
-    mb : raptorpy.multiblock.restart
+    mb : raptorpy.multiBlock.restart
 
     filePath : str
         Path to location to write output files

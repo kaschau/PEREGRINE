@@ -8,14 +8,14 @@ Authors:
 Kyle Schau
 
 This module defines the topology block class.
-This object is the most basic object that a multiblock
+This object is the most basic object that a multiBlock
 composition can be comprised of.
 
 """
 
 
 class topologyBlock:
-    """topologyBlock object is the most basic object a peregrinepy.multiblock
+    """topologyBlock object is the most basic object a peregrinepy.multiBlock
     (or one of its descendants) can be.
 
     Attributes

@@ -4,7 +4,7 @@ from ._version import __version__
 from . import grid
 from . import writers
 
-from . import multiblock
+from . import multiBlock
 
 from .bootstrapCase import bootstrapCase
 from .consistify import consistify

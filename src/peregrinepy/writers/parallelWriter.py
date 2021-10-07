@@ -4,7 +4,7 @@ import h5py
 import numpy as np
 from lxml import etree
 from copy import deepcopy
-from ..mpicomm.mpiutils import getCommRankSize
+from ..mpiComm.mpiUtils import getCommRankSize
 
 
 def registerParallelXdmf(mb, path="./", gridPath="./"):

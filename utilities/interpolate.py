@@ -22,7 +22,7 @@ interpolate.py --from </path/to/from-grid/and/restart> --to </path/to/to-grid/> 
 import argparse
 from peregrinepy.readers import read_grid, read_restart
 from peregrinepy.writers import write_restart
-from peregrinepy.multiblock import restart as mbr
+from peregrinepy.multiBlock import restart as mbr
 from peregrinepy import interpolation
 import os
 

@@ -1,5 +1,5 @@
 from ..readers import readConfigFile
-from .mpiutils import getCommRankSize
+from .mpiUtils import getCommRankSize
 
 
 def mpiReadConfig(file_path):

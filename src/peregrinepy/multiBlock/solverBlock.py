@@ -12,14 +12,14 @@ Authors:
 Kyle Schau
 
 This module defines the top block class. This object is the most basic object
-that a multiblock datasets (see multiblock.py) can be composed of.
+that a multiBlock datasets (see multiBlock.py) can be composed of.
 
 """
 
 
 class solverBlock(restartBlock, block_):
     """
-    block object is the most basic object a raptorpy.multiblock.dataset
+    block object is the most basic object a raptorpy.multiBlock.dataset
     (or one of its descendants) can be.
 
     Attributes

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""This utility converts the output of ICEM Multiblock-Info into PEREGRINE grid and connectivity files.
+"""This utility converts the output of ICEM MultiBlock-Info into PEREGRINE grid and connectivity files.
 
 Inputs are the ICEM info connectivity file (info.topo), and ICEM property file (blk.tmp.pty).
 
@@ -15,7 +15,7 @@ Output will be a PEREGRINE compatible connectivity file 'conn.yaml' as well as h
 """
 
 # For info on the info.topo file format see
-# https://support.ansys.com/staticassets/ANSYS/Initial%20Content%20Entry/General%20Articles%20-%20Products/ICEM%20CFD%20Interfaces/multiblock.htm
+# https://support.ansys.com/staticassets/ANSYS/Initial%20Content%20Entry/General%20Articles%20-%20Products/ICEM%20CFD%20Interfaces/multiBlock.htm
 
 
 import argparse
@@ -35,7 +35,7 @@ parser.add_argument(
     metavar="<topo_FILE>",
     dest="topo_file_name",
     default="info.topo",
-    help="topology file from Multiblock-Info export from ICEM. Default is info.topo",
+    help="topology file from MultiBlock-Info export from ICEM. Default is info.topo",
     type=str,
 )
 parser.add_argument(
@@ -67,7 +67,7 @@ if args.fmt == "tns3dmb":
     with FortranFile(file_name, "r") as f90:
 
         nblks = f90.read_ints(dtype=np.int32)[0]
-        mb = pg.multiblock.grid(nblks)
+        mb = pg.multiBlock.grid(nblks)
 
         nxyzs = np.array_split(f90.read_ints(dtype=np.int32), nblks)
 
@@ -85,7 +85,7 @@ elif args.fmt == "mbi":
     nblks = len([f for f in os.listdir() if f.startswith("info.dom")])
     print(f"Reading in {nblks} ICEM domain files")
     print("    {}".format(args.topo_file_name))
-    mb = pg.multiblock.grid(nblks)
+    mb = pg.multiBlock.grid(nblks)
 
     for blk in mb:
         file_name = "info.dom{}".format(blk.nblki)

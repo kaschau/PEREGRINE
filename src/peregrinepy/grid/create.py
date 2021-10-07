@@ -122,7 +122,7 @@ def cubicConnectivity(blk, mbDims, blkNum, i, j, k):
 def cube(blk, origin, lengths, dimensions):
 
     """Function to populate the coordinate arrays of a provided peregrinepy.block in the shape of a cube with prescribed location, extents, and discretization.
-    If the input multiblock object is a restart block the shape and size of the flow data arrays are also updated.
+    If the input multiBlock object is a restart block the shape and size of the flow data arrays are also updated.
 
     Parameters
     ----------
@@ -167,7 +167,7 @@ def cube(blk, origin, lengths, dimensions):
         blk.initRestartArrays()
 
 
-def multiblockCube(
+def multiBlockCube(
     mb,
     origin=[0, 0, 0],
     lengths=[1, 1, 1],
@@ -175,15 +175,15 @@ def multiblockCube(
     dimsPerBlock=[10, 10, 10],
 ):
 
-    """Function to populate the coordinate arrays of a raptorpy.multiblock.grid (or one of its descendants) in the shape of a cube
+    """Function to populate the coordinate arrays of a raptorpy.multiBlock.grid (or one of its descendants) in the shape of a cube
        with prescribed location, extents, and discretization split into as manj  blocks as mb.nblks. Will also update
-       connectivity of interblock faces. If the input multiblock object is a restart block the shape and size of the flow
+       connectivity of interblock faces. If the input multiBlock object is a restart block the shape and size of the flow
        data arrays are also updated.
 
     Parameters
     ----------
 
-    mb : raptorpy.multiblock.grid (or one of its descendants)
+    mb : raptorpy.multiBlock.grid (or one of its descendants)
 
     origin : list, tuple
        List/tuple of length 3 containing the location of the origin of the ENTIRE cube to be created
@@ -206,7 +206,7 @@ def multiblockCube(
 
     if np.product(mbDims) != mb.nblks:
         raise ValueError(
-            "Warning, multiblock dimensions does not equal number of blocks!"
+            "Warning, multiBlock dimensions does not equal number of blocks!"
         )
 
     blk_origins_x = np.linspace(origin[0], origin[0] + lengths[0], mbDims[0] + 1)
@@ -244,7 +244,7 @@ def annulus(blk, p1, p2, p3, sweep, thickness, dimensions):
     raise ValueError("The annulus is jacked, needs to be updated.")
 
     """Function to populate the coordinate arrays of a provided raptorpy.grid.grid_block in the shape of an annulus with prescribed location, extents, and discretization.
-    If the input multiblock object is a restart block the shape and size of the flow data arrays are also updated.
+    If the input multiBlock object is a restart block the shape and size of the flow data arrays are also updated.
 
     Parameters
     ----------
@@ -353,19 +353,19 @@ def annulus(blk, p1, p2, p3, sweep, thickness, dimensions):
         blk.array["z"][:, :, k] = np.reshape(q[:, 2], shape)
 
 
-def multiblockAnnulus(
+def multiBlockAnnulus(
     mb, p1, p2, p3, sweep, thickness, mbDims, dimsPerBlock, periodic=False
 ):
 
-    """Function to populate the coordinate arrays of a raptorpy.multiblock.grid (or one of its descendants) in the shape
+    """Function to populate the coordinate arrays of a raptorpy.multiBlock.grid (or one of its descendants) in the shape
        of an annulus with prescribed location, extents, and discretization split into as manj blocks as mb.nblks.
-       Will also update connectivity of interblock faces. If the input multiblock object is a restart block the shape
+       Will also update connectivity of interblock faces. If the input multiBlock object is a restart block the shape
        and size of the flow data arrays are also updated.
 
     Parameters
     ----------
 
-    mb : raptorpy.multiblock.grid (or one of its descendants)
+    mb : raptorpy.multiBlock.grid (or one of its descendants)
 
     p1 : list, tuple
        List/tuple of length 3 containing the location of the origin of the annulus to be created, i.e.
@@ -412,7 +412,7 @@ def multiblockAnnulus(
 
     if np.product(mbDims) != mb.nblks:
         raise ValueError(
-            "Error: multiblock dimensions does not equal number of blocks!"
+            "Error: multiBlock dimensions does not equal number of blocks!"
         )
 
     if np.dot(p2 - p1, p3 - p1) != 0.0:

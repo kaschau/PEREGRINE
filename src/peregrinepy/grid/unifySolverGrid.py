@@ -1,6 +1,6 @@
 from mpi4py.MPI import DOUBLE as MPIDOUBLE
 from mpi4py.MPI import Request
-from .. import mpicomm
+from .. import mpiComm
 
 
 def unifySolverGrid(mb):
@@ -10,9 +10,9 @@ def unifySolverGrid(mb):
 
     # Lets just be clean and create the edges and corners
     for _ in range(3):
-        mpicomm.blockComm.communicate(mb, ["x", "y", "z"])
+        mpiComm.blockComm.communicate(mb, ["x", "y", "z"])
 
-    comm, rank, size = mpicomm.mpiutils.getCommRankSize()
+    comm, rank, size = mpiComm.mpiUtils.getCommRankSize()
 
     for var in ["x", "y", "z"]:
         for _ in range(3):

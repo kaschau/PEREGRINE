@@ -7,12 +7,12 @@ from ..misc import progressBar
 
 
 def writeGrid(mb, path="./", precision="double", withHalo=False):
-    """This function produces an hdf5 file from a raptorpy.multiblock.grid (or a descendant) for viewing in Paraview.
+    """This function produces an hdf5 file from a raptorpy.multiBlock.grid (or a descendant) for viewing in Paraview.
 
     Parameters
     ----------
 
-    mb : raptorpy.multiblock.grid (or a descendant)
+    mb : raptorpy.multiBlock.grid (or a descendant)
 
     file_path : str
         Path to location to write output files
