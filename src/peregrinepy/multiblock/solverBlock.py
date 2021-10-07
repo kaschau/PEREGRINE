@@ -3,6 +3,7 @@ import kokkos
 import numpy as np
 from ..compute import block_
 from .restartBlock import restartBlock
+from .solverFace import solverFace
 
 """ block.py
 
@@ -35,6 +36,9 @@ class solverBlock(restartBlock, block_):
         # in the upstream __init__s
         block_.__init__(self)
         restartBlock.__init__(self, nblki, sp_names)
+
+        for fn in [1, 2, 3, 4, 5, 6]:
+            self.faces.append(solverFace(fn))
 
         self.ne = 5 + self.ns - 1
 
