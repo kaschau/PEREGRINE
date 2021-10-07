@@ -20,7 +20,7 @@ import argparse
 from peregrinepy.writers import write_grid, write_connectivity
 import struct
 import numpy as np
-from peregrinepy.multiblock import grid as mbg
+from peregrinepy.multiBlock import grid as mbg
 import sys
 from verify_grid import verify
 

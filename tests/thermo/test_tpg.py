@@ -31,8 +31,8 @@ def test_tpg():
     config["thermochem"]["eos"] = "tpg"
     config["RHS"]["diffusion"] = False
 
-    mb = pg.multiblock.generateMultiblockSolver(1, config)
-    pg.grid.create.multiblockCube(
+    mb = pg.multiBlock.generateMultiBlockSolver(1, config)
+    pg.grid.create.multiBlockCube(
         mb, mbDims=[1, 1, 1], dimsPerBlock=[2, 2, 2], lengths=[1, 1, 1]
     )
     mb.initSolverArrays(config)

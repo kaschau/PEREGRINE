@@ -10,9 +10,9 @@ np.seterr(all="raise")
 def simulate(configFilePath):
     # Import but do not initialise MPI
 
-    comm, rank, size = pg.mpicomm.mpiutils.getCommRankSize()
+    comm, rank, size = pg.mpiComm.mpiUtils.getCommRankSize()
 
-    config = pg.mpicomm.mpiReadConfig(configFilePath)
+    config = pg.mpiComm.mpiReadConfig(configFilePath)
 
     mb = pg.bootstrapCase(config)
 

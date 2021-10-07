@@ -1,18 +1,18 @@
 # -*- coding: utf-8 -*-
 
 import yaml
-from ..mpicomm import mpiutils
+from ..mpiComm import mpiUtils
 
 
 def readConnectivity(mb, pathToFile):
     """
     This function parses a PEREGRINE connectivity file given
     by pathToFile and adds the connectivity information to
-    the supplied peregrinepy.multiblock object
+    the supplied peregrinepy.multiBlock object
 
     Parameters
     ----------
-    mb : peregrine.multiblock.topology (or a descendant)
+    mb : peregrine.multiBlock.topology (or a descendant)
 
     pathToFile : str
         Path to the conn.yaml file to be read in
@@ -23,7 +23,7 @@ def readConnectivity(mb, pathToFile):
         Adds the connectivity information to mb
 
     """
-    comm, rank, size = mpiutils.getCommRankSize()
+    comm, rank, size = mpiUtils.getCommRankSize()
 
     # only the zeroth rank reads in the file
     if rank == 0:

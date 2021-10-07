@@ -254,18 +254,18 @@ def ptsInBlkBounds(blk, testPts):
 
 def findBounds(mbTo, mbFrom, verbose_search):
     """
-    Compares two multiblock grids (or descendants) and
+    Compares two multiBlock grids (or descendants) and
     determines which blocks from mbFrom each
     individual block from mbTo reside in, in space.
 
     Parameters
     ----------
 
-    mbFrom: raptorpy.multiblock.grid
-       raptorpy.multiblock.grid (or a descendant). Must have coordinate data populated
+    mbFrom: raptorpy.multiBlock.grid
+       raptorpy.multiBlock.grid (or a descendant). Must have coordinate data populated
 
-    mbTo: raptorpy.multiblock.grid
-       raptorpy.multiblock.grid (or a descendant). Must have coordinate data populated
+    mbTo: raptorpy.multiBlock.grid
+       raptorpy.multiBlock.grid (or a descendant). Must have coordinate data populated
 
     Returns
     -------

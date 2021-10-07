@@ -1,11 +1,11 @@
 import yaml
 from ..files import configFile
-from ..mpicomm import mpiutils
+from ..mpiComm import mpiUtils
 
 
 def readConfigFile(file_path="./"):
 
-    comm, rank, size = mpiutils.getCommRankSize()
+    comm, rank, size = mpiUtils.getCommRankSize()
 
     # only the zeroth block reads in the file
     with open(f"{file_path}", "r") as connFile:

@@ -1,0 +1,2 @@
+def null(*args):
+    pass

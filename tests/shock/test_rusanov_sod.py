@@ -27,9 +27,9 @@ def test_rusanov_sod():
     config["RHS"]["diffusion"] = False
     config["RHS"]["primaryAdvFlux"] = "rusanov"
     config["solver"]["timeIntegration"] = "rk1"
-    mb = pg.multiblock.generateMultiblockSolver(1, config)
+    mb = pg.multiBlock.generateMultiBlockSolver(1, config)
 
-    pg.grid.create.multiblockCube(
+    pg.grid.create.multiBlockCube(
         mb,
         mbDims=[1, 1, 1],
         dimsPerBlock=[nx, 2, 2],
@@ -43,7 +43,7 @@ def test_rusanov_sod():
     for face in blk.faces:
         face.connectivity["bcType"] = "adiabaticSlipWall"
 
-    pg.mpicomm.blockComm.setBlockCommunication(mb)
+    pg.mpiComm.blockComm.setBlockCommunication(mb)
     mb.unifyGrid()
     mb.computeMetrics()
     indx = np.where(blk.array["xc"][:, 1, 1] > x0)

@@ -23,9 +23,9 @@ def simulate():
 
     config = pg.files.configFile()
 
-    mb = pg.multiblock.generateMultiblockSolver(1, config)
+    mb = pg.multiBlock.generateMultiBlockSolver(1, config)
     NE = NN = 41
-    pg.grid.create.multiblockCube(
+    pg.grid.create.multiBlockCube(
         mb,
         mbDims=[1, 1, 1],
         dimsPerBlock=[NE, NN, 2],
@@ -75,7 +75,7 @@ def simulate():
     for face in blk.faces:
         face.setBcFunc()
 
-    pg.mpicomm.blockComm.setBlockCommunication(mb)
+    pg.mpiComm.blockComm.setBlockCommunication(mb)
 
     mb.unifyGrid()
     mb.computeMetrics()
