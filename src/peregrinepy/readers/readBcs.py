@@ -53,9 +53,9 @@ def readBcs(mb, pathToFile):
                 continue
 
             # Make sure the type in the input file matches the type in the connectivity
-            if bcsIn[bcFam]["bcType"] != face.connectivity["bcType"]:
+            if bcsIn[bcFam]["bcType"] != face.bcType:
                 raise KeyError(
-                    f'Warning, block {blk.nblki} face {face.nface} does not match the bcType between input *{bcsIn[bcFam]["bcType"]}* and connectivity *{face.connectivity["bcType"]}*.'
+                    f'Warning, block {blk.nblki} face {face.nface} does not match the bcType between input *{bcsIn[bcFam]["bcType"]}* and connectivity *{face.bcType}*.'
                 )
 
             # Set the boundary condition values

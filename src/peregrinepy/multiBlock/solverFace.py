@@ -82,7 +82,7 @@ class solverFace(topologyFace):
 
     def setBcFunc(self):
 
-        bc = self.connectivity["bcType"]
+        bc = self.bcType
         if bc in ["b0", "b1"]:
             self.bcFunc = null
         elif bc == "constantVelocitySubsonicInlet":
@@ -173,8 +173,8 @@ class solverFace(topologyFace):
         # We revieve the data in the correct shape already
         self.recvBuffer4 = np.ascontiguousarray(np.empty(commcshape))
 
-        self.tagR = int(f"1{self.connectivity['neighbor']}2{nblki}1{self.nface}")
-        self.tagS = int(f"1{nblki}2{self.connectivity['neighbor']}1{self.neighborFace}")
+        self.tagR = int(f"1{self.neighbor}2{nblki}1{self.nface}")
+        self.tagS = int(f"1{nblki}2{self.neighbor}1{self.neighborFace}")
 
     def setOrientFunc(self, ni, nj, nk, ne):
         assert 0 not in [
@@ -193,14 +193,12 @@ class solverFace(topologyFace):
             "j": {"k": [1, 2, 4, 5], "j": [1, 4]},
         }
 
-        neighbor = self.connectivity["neighbor"]
+        neighbor = self.neighbor
         if neighbor is None:
             return
 
         neighborFace = self.neighborFace
-
-        orientation = self.connectivity["orientation"]
-        neighbor = self.connectivity["neighbor"]
+        orientation = self.orientation
 
         # What are the orientations of our face plane? i.e. if we are
         #  face #1 with orientation "123" then our face in quetions has

@@ -20,10 +20,10 @@ def unifySolverGrid(mb):
             # Post non-blocking recieves
             for blk in mb:
                 for face in blk.faces:
-                    bc = face.connectivity["bcType"]
+                    bc = face.bcType
                     if bc != "b1":
                         continue
-                    neighbor = face.connectivity["neighbor"]
+                    neighbor = face.neighbor
                     commRank = face.commRank
                     tag = int(f"1{neighbor}2{blk.nblki}1{face.nface}")
 
@@ -39,10 +39,10 @@ def unifySolverGrid(mb):
             # Post non-blocking sends
             for blk in mb:
                 for face in blk.faces:
-                    bc = face.connectivity["bcType"]
+                    bc = face.bcType
                     if bc != "b1":
                         continue
-                    neighbor = face.connectivity["neighbor"]
+                    neighbor = face.neighbor
                     commRank = face.commRank
                     tag = int(f"1{blk.nblki}2{neighbor}1{face.neighborFace}")
                     face.sendBuffer3[:] = face.orient(
@@ -57,7 +57,7 @@ def unifySolverGrid(mb):
             count = 0
             for blk in mb:
                 for face in blk.faces:
-                    bc = face.connectivity["bcType"]
+                    bc = face.bcType
                     if bc != "b1":
                         continue
                     Request.Wait(reqs[count])

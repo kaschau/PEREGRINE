@@ -18,105 +18,105 @@ def cubicConnectivity(blk, mbDims, blkNum, i, j, k):
 
     # i faces
     if i == 0 and mbDims[0] != 1:
-        conn = blk.getFaceConn(1)
-        conn["bcType"] = "adiabaticNoSlipWall"
-        conn["neighbor"] = None
-        conn["orientation"] = None
+        face = blk.getFace(1)
+        face.bcType = "adiabaticNoSlipWall"
+        face.neighbor = None
+        face.orientation = None
 
-        conn = blk.getFaceConn(2)
-        conn["bcType"] = "b0"
-        conn["neighbor"] = blkNum + 1
-        conn["orientation"] = "123"
+        face = blk.getFace(2)
+        face.bcType = "b0"
+        face.neighbor = blkNum + 1
+        face.orientation = "123"
 
     elif i == mbDims[0] - 1 and mbDims[0] != 1:
-        conn = blk.getFaceConn(1)
-        conn["bcType"] = "b0"
-        conn["neighbor"] = blkNum - 1
-        conn["orientation"] = "123"
+        face = blk.getFace(1)
+        face.bcType = "b0"
+        face.neighbor = blkNum - 1
+        face.orientation = "123"
 
-        conn = blk.getFaceConn(2)
-        conn["bcType"] = "adiabaticNoSlipWall"
-        conn["neighbor"] = None
-        conn["orientation"] = None
+        face = blk.getFace(2)
+        face.bcType = "adiabaticNoSlipWall"
+        face.neighbor = None
+        face.orientation = None
 
     elif mbDims[0] != 1:
-        conn = blk.getFaceConn(1)
-        conn["bcType"] = "b0"
-        conn["neighbor"] = blkNum - 1
-        conn["orientation"] = "123"
+        face = blk.getFace(1)
+        face.bcType = "b0"
+        face.neighbor = blkNum - 1
+        face.orientation = "123"
 
-        conn = blk.getFaceConn(2)
-        conn["bcType"] = "b0"
-        conn["neighbor"] = blkNum + 1
-        conn["orientation"] = "123"
+        face = blk.getFace(2)
+        face.bcType = "b0"
+        face.neighbor = blkNum + 1
+        face.orientation = "123"
 
     # j faces
     if j == 0 and mbDims[1] != 1:
-        conn = blk.getFaceConn(3)
-        conn["bcType"] = "adiabaticNoSlipWall"
-        conn["neighbor"] = None
-        conn["orientation"] = None
+        face = blk.getFace(3)
+        face.bcType = "adiabaticNoSlipWall"
+        face.neighbor = None
+        face.orientation = None
 
-        conn = blk.getFaceConn(4)
-        conn["bcType"] = "b0"
-        conn["neighbor"] = blkNum + mbDims[0]
-        conn["orientation"] = "123"
+        face = blk.getFace(4)
+        face.bcType = "b0"
+        face.neighbor = blkNum + mbDims[0]
+        face.orientation = "123"
 
     elif j == mbDims[1] - 1 and mbDims[1] != 1:
-        conn = blk.getFaceConn(3)
-        conn["bcType"] = "b0"
-        conn["neighbor"] = blkNum - mbDims[0]
-        conn["orientation"] = "123"
+        face = blk.getFace(3)
+        face.bcType = "b0"
+        face.neighbor = blkNum - mbDims[0]
+        face.orientation = "123"
 
-        conn = blk.getFaceConn(4)
-        conn["bcType"] = "adiabaticNoSlipWall"
-        conn["neighbor"] = None
-        conn["orientation"] = None
+        face = blk.getFace(4)
+        face.bcType = "adiabaticNoSlipWall"
+        face.neighbor = None
+        face.orientation = None
 
     elif mbDims[1] != 1:
-        conn = blk.getFaceConn(3)
-        conn["bcType"] = "b0"
-        conn["neighbor"] = blkNum - mbDims[0]
-        conn["orientation"] = "123"
+        face = blk.getFace(3)
+        face.bcType = "b0"
+        face.neighbor = blkNum - mbDims[0]
+        face.orientation = "123"
 
-        conn = blk.getFaceConn(4)
-        conn["bcType"] = "b0"
-        conn["neighbor"] = blkNum + mbDims[0]
-        conn["orientation"] = "123"
+        face = blk.getFace(4)
+        face.bcType = "b0"
+        face.neighbor = blkNum + mbDims[0]
+        face.orientation = "123"
 
     # k faces
     if k == 0 and mbDims[2] != 1:
-        conn = blk.getFaceConn(5)
-        conn["bcType"] = "adiabaticNoSlipWall"
-        conn["neighbor"] = None
-        conn["orientation"] = None
+        face = blk.getFace(5)
+        face.bcType = "adiabaticNoSlipWall"
+        face.neighbor = None
+        face.orientation = None
 
-        conn = blk.getFaceConn(6)
-        conn["bcType"] = "b0"
-        conn["neighbor"] = blkNum + mbDims[0] * mbDims[1]
-        conn["orientation"] = "123"
+        face = blk.getFace(6)
+        face.bcType = "b0"
+        face.neighbor = blkNum + mbDims[0] * mbDims[1]
+        face.orientation = "123"
 
     elif k == mbDims[2] - 1 and mbDims[2] != 1:
-        conn = blk.getFaceConn(5)
-        conn["bcType"] = "b0"
-        conn["neighbor"] = blkNum - mbDims[0] * mbDims[1]
-        conn["orientation"] = "123"
+        face = blk.getFace(5)
+        face.bcType = "b0"
+        face.neighbor = blkNum - mbDims[0] * mbDims[1]
+        face.orientation = "123"
 
-        conn = blk.getFaceConn(6)
-        conn["bcType"] = "adiabaticNoSlipWall"
-        conn["neighbor"] = None
-        conn["orientation"] = None
+        face = blk.getFace(6)
+        face.bcType = "adiabaticNoSlipWall"
+        face.neighbor = None
+        face.orientation = None
 
     elif mbDims[2] != 1:
-        conn = blk.getFaceConn(5)
-        conn["bcType"] = "b0"
-        conn["neighbor"] = blkNum - mbDims[0] * mbDims[1]
-        conn["orientation"] = "123"
+        face = blk.getFace(5)
+        face.bcType = "b0"
+        face.neighbor = blkNum - mbDims[0] * mbDims[1]
+        face.orientation = "123"
 
-        conn = blk.getFaceConn(6)
-        conn["bcType"] = "b0"
-        conn["neighbor"] = blkNum + mbDims[0] * mbDims[1]
-        conn["orientation"] = "123"
+        face = blk.getFace(6)
+        face.bcType = "b0"
+        face.neighbor = blkNum + mbDims[0] * mbDims[1]
+        face.orientation = "123"
 
 
 def cube(blk, origin, lengths, dimensions):
@@ -477,7 +477,7 @@ def multiBlockAnnulus(
 
                 # Update connectivity
                 conn = blk.connectivity
-                cubicConnectivity(conn, mbDims, blkNum, i, j, k)
+                cubicConnectivity(face, mbDims, blkNum, i, j, k)
 
                 # k faces
                 if connect:

@@ -23,7 +23,15 @@ def writeConnectivity(mb, path="./"):
     conn = {}
     conn["Total_Blocks"] = len(mb)
     for blk in mb:
-        conn[f"Block{blk.nblki}"] = blk.connectivity()
+        conn[f"Block{blk.nblki}"] = {}
+        bdict = conn[f"Block{blk.nblki}"]
+        for fc in blk.faces:
+            bdict[f"Face{fc.nface}"] = {}
+            fdict = bdict[f"Face{fc.nface}"]
+            fdict["bcType"] = fc.bcType
+            fdict["bcFam"] = fc.bcFam
+            fdict["neighbor"] = fc.neighbor
+            fdict["orientation"] = fc.orientation
 
     with open(f"{path}/conn.yaml", "w") as f:
         yaml.dump(conn, f, sort_keys=False)
