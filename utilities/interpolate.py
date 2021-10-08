@@ -20,8 +20,8 @@ interpolate.py --from </path/to/from-grid/and/restart> --to </path/to/to-grid/> 
 """
 
 import argparse
-from peregrinepy.readers import read_grid, read_restart
-from peregrinepy.writers import write_restart
+from peregrinepy.readers import readGrid, readRestart
+from peregrinepy.writers import writeRestart
 from peregrinepy.multiBlock import restart as mbr
 from peregrinepy import interpolation
 import os
@@ -103,13 +103,13 @@ if __name__ == "__main__":
     from_nrst = int(
         [i for i in os.listdir(from_dir) if i.startswith("q.")][0].strip().split(".")[1]
     )
-    read_grid(mb_from, from_dir)
-    read_restart(mb_from, from_dir, from_nrst)
+    readGrid(mb_from, from_dir)
+    readRestart(mb_from, from_dir, from_nrst)
 
     # Read in to data
     nblk_to = len([i for i in os.listdir(to_dir) if i.startswith("gv.")])
     mb_to = mbr(nblk_to, ns)
-    read_grid(mb_to, to_dir)
+    readGrid(mb_to, to_dir)
 
     # Compute bounding blocks of each block
     bounds_list = interpolation.bounds.find_bounds(mb_to, mb_from, verbose_search)
@@ -131,4 +131,4 @@ if __name__ == "__main__":
     mb_to.tme = mb_from.tme
     mb_to.dtm = mb_from.dtm
 
-    write_restart(mb_to, to_dir)
+    writeRestart(mb_to, to_dir)
