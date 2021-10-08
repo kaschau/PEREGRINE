@@ -37,9 +37,9 @@ def simulate():
     blk = mb[0]
 
     for face in blk.faces:
-        face.connectivity["bcType"] = "b1"
-        face.connectivity["neighbor"] = 0
-        face.connectivity["orientation"] = "123"
+        face.bcType = "b1"
+        face.neighbor = 0
+        face.orientation = "123"
         face.commRank = 0
 
     for face in blk.faces:

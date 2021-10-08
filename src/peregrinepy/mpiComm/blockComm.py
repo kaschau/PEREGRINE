@@ -14,7 +14,7 @@ def communicate(mb, varis):
         for blk in mb:
             ndim = blk.array[var].ndim
             for face in blk.faces:
-                if face.connectivity["neighbor"] is None:
+                if face.neighbor is None:
                     continue
 
                 recv = face.recvBuffer4 if ndim == 4 else face.recvBuffer3
@@ -27,7 +27,7 @@ def communicate(mb, varis):
         for blk in mb:
             ndim = blk.array[var].ndim
             for face in blk.faces:
-                if face.connectivity["neighbor"] is None:
+                if face.neighbor is None:
                     continue
 
                 send, sliceS = (
@@ -44,7 +44,7 @@ def communicate(mb, varis):
         for blk in mb:
             ndim = blk.array[var].ndim
             for face in blk.faces:
-                if face.connectivity["neighbor"] is None:
+                if face.neighbor is None:
                     continue
                 Request.Wait(reqs.__next__())
                 recv, sliceR = (
@@ -61,7 +61,7 @@ def setBlockCommunication(mb):
 
     for blk in mb:
         for face in blk.faces:
-            if face.connectivity["neighbor"] is None:
+            if face.neighbor is None:
                 continue
             face.setOrientFunc(blk.ni, blk.nj, blk.nk, blk.ne)
             face.setCommBuffers(blk.ni, blk.nj, blk.nk, blk.ne, blk.nblki)

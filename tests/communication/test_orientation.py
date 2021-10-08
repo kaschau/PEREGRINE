@@ -84,8 +84,8 @@ def test_135():
     blk1.nk = tb.xshape[1] - 2
 
     # Reorient second block and update communication info
-    blk0.getFaceConn(2)["orientation"] = "135"
-    blk1.getFaceConn(1)["orientation"] = "162"
+    blk0.getFace(2).orientation = "135"
+    blk1.getFace(1).orientation = "162"
 
     pg.mpiComm.blockComm.setBlockCommunication(tb.mb)
 
@@ -131,16 +131,16 @@ def test_231():
     blk1.nk = tb.xshape[1] - 2
 
     # Reorient second block and update communication info
-    blk0.getFaceConn(2)["orientation"] = "231"
+    blk0.getFace(2).orientation = "231"
 
-    blk1.getFaceConn(1)["neighbor"] = None
-    blk1.getFaceConn(1)["bcType"] = "adiabaticSlipWall"
-    blk1.getFaceConn(1)["orientation"] = None
+    blk1.getFace(1).neighbor = None
+    blk1.getFace(1).bcType = "adiabaticSlipWall"
+    blk1.getFace(1).orientation = None
     blk1.getFace(1).commRank = None
 
-    blk1.getFaceConn(3)["neighbor"] = 0
-    blk1.getFaceConn(3)["bcType"] = "b0"
-    blk1.getFaceConn(3)["orientation"] = "312"
+    blk1.getFace(3).neighbor = 0
+    blk1.getFace(3).bcType = "b0"
+    blk1.getFace(3).orientation = "312"
     blk1.getFace(3).commRank = 0
     for face in blk0.faces:
         face.setBcFunc()
@@ -191,16 +191,16 @@ def test_321():
     blk1.nk = tb.xshape[0] - 2
 
     # Reorient second block and update communication info
-    blk0.getFaceConn(2)["orientation"] = "312"
+    blk0.getFace(2).orientation = "312"
 
-    blk1.getFaceConn(1)["neighbor"] = None
-    blk1.getFaceConn(1)["bcType"] = "adiabaticSlipWall"
-    blk1.getFaceConn(1)["orientation"] = None
+    blk1.getFace(1).neighbor = None
+    blk1.getFace(1).bcType = "adiabaticSlipWall"
+    blk1.getFace(1).orientation = None
     blk1.getFace(1).commRank = None
 
-    blk1.getFaceConn(5)["neighbor"] = 0
-    blk1.getFaceConn(5)["bcType"] = "b0"
-    blk1.getFaceConn(5)["orientation"] = "231"
+    blk1.getFace(5).neighbor = 0
+    blk1.getFace(5).bcType = "b0"
+    blk1.getFace(5).orientation = "231"
     blk1.getFace(5).commRank = 0
     for face in blk0.faces:
         face.setBcFunc()
@@ -254,16 +254,16 @@ def test_432():
     blk1.nk = tb.xshape[1] - 2
 
     # Reorient second block and update communication info
-    blk0.getFaceConn(2)["orientation"] = "432"
+    blk0.getFace(2).orientation = "432"
 
-    blk1.getFaceConn(1)["neighbor"] = None
-    blk1.getFaceConn(1)["bcType"] = "adiabaticSlipWall"
-    blk1.getFaceConn(1)["orientation"] = None
+    blk1.getFace(1).neighbor = None
+    blk1.getFace(1).bcType = "adiabaticSlipWall"
+    blk1.getFace(1).orientation = None
     blk1.getFace(1).commRank = None
 
-    blk1.getFaceConn(2)["neighbor"] = 0
-    blk1.getFaceConn(2)["bcType"] = "b0"
-    blk1.getFaceConn(2)["orientation"] = "432"
+    blk1.getFace(2).neighbor = 0
+    blk1.getFace(2).bcType = "b0"
+    blk1.getFace(2).orientation = "432"
     blk1.getFace(2).commRank = 0
     for face in blk0.faces:
         face.setBcFunc()
@@ -314,16 +314,16 @@ def test_513():
     blk1.nk = tb.xshape[2] - 2
 
     # Reorient second block and update communication info
-    blk0.getFaceConn(2)["orientation"] = "513"
+    blk0.getFace(2).orientation = "513"
 
-    blk1.getFaceConn(1)["neighbor"] = None
-    blk1.getFaceConn(1)["bcType"] = "adiabaticSlipWall"
-    blk1.getFaceConn(1)["orientation"] = None
+    blk1.getFace(1).neighbor = None
+    blk1.getFace(1).bcType = "adiabaticSlipWall"
+    blk1.getFace(1).orientation = None
     blk1.getFace(1).commRank = None
 
-    blk1.getFaceConn(4)["neighbor"] = 0
-    blk1.getFaceConn(4)["bcType"] = "b0"
-    blk1.getFaceConn(4)["orientation"] = "243"
+    blk1.getFace(4).neighbor = 0
+    blk1.getFace(4).bcType = "b0"
+    blk1.getFace(4).orientation = "243"
     blk1.getFace(4).commRank = 0
 
     for face in blk0.faces:
@@ -375,16 +375,16 @@ def test_621():
     blk1.nk = tb.xshape[0] - 2
 
     # Reorient second block and update communication info
-    blk0.getFaceConn(2)["orientation"] = "621"
+    blk0.getFace(2).orientation = "621"
 
-    blk1.getFaceConn(1)["neighbor"] = None
-    blk1.getFaceConn(1)["bcType"] = "adiabaticSlipWall"
-    blk1.getFaceConn(1)["orientation"] = None
+    blk1.getFace(1).neighbor = None
+    blk1.getFace(1).bcType = "adiabaticSlipWall"
+    blk1.getFace(1).orientation = None
     blk1.getFace(1).commRank = None
 
-    blk1.getFaceConn(6)["neighbor"] = 0
-    blk1.getFaceConn(6)["bcType"] = "b0"
-    blk1.getFaceConn(6)["orientation"] = "324"
+    blk1.getFace(6).neighbor = 0
+    blk1.getFace(6).bcType = "b0"
+    blk1.getFace(6).orientation = "324"
     blk1.getFace(6).commRank = 0
 
     for face in blk0.faces:
