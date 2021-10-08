@@ -8,24 +8,22 @@ GridPro property file (blk.tmp.pty).
 
 Example
 -------
-/path/to/pergrinepy/utilities/gp2raptor.py <gp_binary_grid_file> <gp_connnectivity_file> <gp_property_file>
+/path/to/pergrinepy/utilities/gp2pg.py <gp_binary_grid_file> <gp_connnectivity_file> <gp_property_file>
 
 Default vaules to read in are the GridPro generic names of blk.tmp, blk.tmp.conn, and blk.tmp.pty
 
-Output will be a RAPTOR compatible connectivity file 'conn.inp' as well as fortran binary grid files.
+Output will be a PEREGRINE compatible connectivity file 'conn.inp' as well as fortran binary grid files.
 
 """
 
 import argparse
-from peregrinepy.writers import write_grid, write_connectivity
-import struct
+from peregrinepy.writers import writeGrid, writeConnectivity
 import numpy as np
 from peregrinepy.multiBlock import grid as mbg
-import sys
 from verify_grid import verify
 
 parser = argparse.ArgumentParser(
-    description="Convert binary GridPro files into grid and connectivity files used by RAPTOR"
+    description="Convert binary GridPro files into grid and connectivity files used by PEREGRINE"
 )
 parser.add_argument(
     "-blk",
@@ -75,17 +73,17 @@ if args.is_binary:
 else:
     gp_blk_file = open(args.gp_blk_file_name, "r")
 
-gp_surface_to_raptor_bc = {
-    "pdc:INTERBLK": "b 0",
-    "pdc:PERIODIC": "b 1",
-    "pdc:WALL": "s 1",
-    "pdc:user5": "i 1",
-    "pdc:user6": "e 1",
-    "pdc:user7": "e 2",
-    "pdc:user8": "s 2",
-    "pdc:user9": "s 3",
-    "pdc:user10": "s 4",
-    "pdc:user11": "s 5",
+gp_surface_to_pg_bc = {
+    "pdc:INTERBLK": "b0",
+    "pdc:PERIODIC": "b1",
+    "pdc:WALL": "adiabaticNoSlipWall",
+    "pdc:user5": "constantPressureSubsonicInlet",
+    "pdc:user6": "constantPressureSubsonicInlet",
+    "pdc:user7": "user7",
+    "pdc:user8": "user8",
+    "pdc:user9": "user9",
+    "pdc:user10": "user10",
+    "pdc:user11": "user11",
 }
 
 blk_ptys = []
@@ -130,13 +128,13 @@ surface_to_bc = dict()
 for i in range(nprops):
     line = gp_pty_file.readline().replace("(", "").replace(")", "").split()
     if line[0] in present_surfaces:
-        surface_to_bc[line[0]] = gp_surface_to_raptor_bc[line[2]]
+        surface_to_bc[line[0]] = gp_surface_to_pg_bc[line[2]]
 
-raptor_blk_ptys = []
+pg_blk_ptys = []
 for i in range(nblks):
-    raptor_blk_ptys.append([0, 0, 0, 0, 0, 0])
+    pg_blk_ptys.append([0, 0, 0, 0, 0, 0])
     for j in range(6):
-        raptor_blk_ptys[i][j] = surface_to_bc[blk_ptys[i][j]]
+        pg_blk_ptys[i][j] = surface_to_bc[blk_ptys[i][j]]
 
 go = True
 while go:
@@ -150,21 +148,21 @@ while go:
         except ValueError:
             raise TypeError("Unrecognized format for connectivity file.")
 
-raptor_conns = []
+pg_conns = []
 for i in range(nblks):
     line = gp_conn_file.readline().split()
     for j in range(6):
-        line[2 + j * 4] = raptor_blk_ptys[i][j].split()[0]
-        line[3 + j * 4] = raptor_blk_ptys[i][j].split()[1]
-    raptor_conns.append(line[2:-1])
+        line[2 + j * 4] = pg_blk_ptys[i][j].split()[0]
+        line[3 + j * 4] = pg_blk_ptys[i][j].split()[1]
+    pg_conns.append(line[2:-1])
 
 mb = mbg(nblks)
-for temp, blk in zip(raptor_conns, mb):
-    for key in blk.connectivity.keys():
-        face_data = temp[(int(key) - 1) * 4 : (int(key) - 1) * 4 + 4]
-        blk.connectivity[key]["bc"] = "{}{}".format(face_data[0], face_data[1])
-        blk.connectivity[key]["connection"] = face_data[2]
-        blk.connectivity[key]["orientation"] = face_data[3]
+for temp, blk in zip(pg_conns, mb):
+    for face in blk.faces:
+        face_data = temp[(int(face.nface) - 1) * 4 : (int(face.nface) - 1) * 4 + 4]
+        face.bcType = "{}{}".format(face_data[0], face_data[1])
+        face.connection = face_data[2]
+        face.orientation = face_data[3]
 
 go = True
 while go:
@@ -220,10 +218,10 @@ gp_blk_file.close()
 if verify(mb):
     pass
 
-print("Writing out RAPTOR connectivity file: conn.inp...")
-write_connectivity(mb, "./")
+print("Writing out PEREGRINE connectivity file: conn.inp...")
+writeConnectivity(mb, "./")
 
-print("Writing out {} block RAPTOR grid files".format(len(mb)))
-write_grid(mb, "./")
+print("Writing out {} block PEREGRINE grid files".format(len(mb)))
+writeGrid(mb, "./")
 
 print("GridPro to PEREGRINE translation done.")

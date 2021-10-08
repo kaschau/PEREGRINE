@@ -18,7 +18,7 @@ Output will print any errors to the screen
 
 import os
 import argparse
-from peregrinepy.readers import read_grid, read_connectivity
+from peregrinepy.readers import readGrid, readConnectivity
 from peregrinepy.multiBlock import grid as mbg
 import numpy as np
 
@@ -91,20 +91,20 @@ def verify(mb_data):
         for face in blk.faces:
 
             nface = face.nface
-            nneighbor = face.connectivity["neighbor"]
-            orientation = face.connectivity["orientation"]
-            bc = face.connectivity["bctype"]
+            neighbor = face.neighbor
+            orientation = face.orientation
+            bc = face.bcType
 
-            if nneighbor == 0:
+            if neighbor is None:
                 continue
-            if bc == "b 1":
+            if bc == "b1":
                 periodic = True
             else:
                 periodic = False
 
             (face_x, face_y, face_z) = extract_face(blk, face.nface)
 
-            blk2 = mb_data[nneighbor - 1]
+            blk2 = mb_data[neighbor - 1]
             nface2 = get_neighbor_face(nface, orientation, blk2)
 
             if int(blk2.connectivity[nface2]["connection"]) != blk.nblki:
@@ -113,7 +113,6 @@ def verify(mb_data):
                 )
 
             (face2_x, face2_y, face2_z) = extract_face(blk2, nface2)
-            orientation2 = blk2.connectivity[nface2]["orientation"]
 
             face_orientations = [
                 i
@@ -123,11 +122,6 @@ def verify(mb_data):
             normal_index = [
                 j for j in range(3) if j == int(face_to_orient_place_mapping[nface])
             ][0]
-            face_orientations2 = [
-                i
-                for j, i in enumerate(orientation2)
-                if j != int(face_to_orient_place_mapping[nface2])
-            ]
             normal_index2 = [
                 j for j in range(3) if j == int(face_to_orient_place_mapping[nface2])
             ][0]
@@ -154,7 +148,7 @@ def verify(mb_data):
                 diff_x = np.mean(np.abs(face_x - face2_x))
                 diff_y = np.mean(np.abs(face_y - face2_y))
                 diff_z = np.mean(np.abs(face_z - face2_z))
-            except:
+            except ValueError:
                 raise ValueError(
                     f"Error when comparing block {blk.nblki} and block {blk2.nblki} connection"
                 )
@@ -213,11 +207,11 @@ if __name__ == "__main__":
 
     gp = args.grid_path
     cp = args.conn_path
-    nblks = len([i for i in os.listdir(gp) if i.startswith("g.")])
+    nblks = len([i for i in os.listdir(gp) if i.startswith("gv.")])
     mb = mbg(nblks)
 
-    read_grid(mb, gp)
-    read_connectivity(mb, cp + "/conn.inp")
+    readGrid(mb, gp)
+    readConnectivity(mb, cp + "/conn.yaml")
 
     if verify(mb):
         print("Grid is valid!")
