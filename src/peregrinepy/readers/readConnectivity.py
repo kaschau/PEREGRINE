@@ -36,8 +36,10 @@ def readConnectivity(mb, pathToFile):
     for blk in mb:
         myConn = conn[f"Block{blk.nblki}"]
         for face in blk.faces:
-            for k1 in face.connectivity.keys():
-                val = myConn[f"Face{face.nface}"][k1]
-                face.connectivity[k1] = val
+            fdict = myConn[f"Face{face.nface}"]
+            face.bcType = fdict["bcType"]
+            face.bcFam = fdict["bcFam"]
+            face.neighbor = fdict["neighbor"]
+            face.orientation = fdict["orientation"]
 
     mb.totalBlocks = conn["Total_Blocks"]
