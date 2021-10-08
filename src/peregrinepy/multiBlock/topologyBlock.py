@@ -38,16 +38,3 @@ class topologyBlock:
     def getFace(self, nface):
         assert 1 <= nface <= 6, "nface must be between (1,6)"
         return self.faces[int(nface) - 1]
-
-    def getFaceConn(self, nface):
-        assert 1 <= nface <= 6, "nface must be between (1,6)"
-        return self.getFace(nface).connectivity
-
-    def connectivity(self):
-        conn = {}
-        for fc in self.faces:
-            conn[f"Face{fc.nface}"] = {}
-            f = conn[f"Face{fc.nface}"]
-            for key in fc.connectivity.keys():
-                f[key] = fc.connectivity[key]
-        return conn

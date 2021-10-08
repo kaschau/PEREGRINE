@@ -36,7 +36,7 @@ def bootstrapCase(config):
 
     for blk in mb:
         for face in blk.faces:
-            neighbor = face.connectivity["neighbor"]
+            neighbor = face["neighbor"]
             if neighbor is None:
                 face.commRank = None
                 continue
