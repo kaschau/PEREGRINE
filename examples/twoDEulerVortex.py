@@ -59,17 +59,17 @@ def simulate():
             )
 
     for face in blk.faces:
-        face.connectivity["bcType"] = "b1"
-        face.connectivity["bcFam"] = None
-        face.connectivity["neighbor"] = 0
-        face.connectivity["orientation"] = "123"
+        face.bcType = "b1"
+        face.bcFam = None
+        face.neighbor = 0
+        face.orientation = "123"
         face.commRank = 0
     for f in [5, 6]:
         face = blk.getFace(f)
-        face.connectivity["bcType"] = "adiabaticSlipWall"
-        face.connectivity["bcFam"] = None
-        face.connectivity["neighbor"] = None
-        face.connectivity["orientation"] = "000"
+        face.bcType = "adiabaticSlipWall"
+        face.bcFam = None
+        face.neighbor = None
+        face.orientation = "000"
         face.commRank = None
 
     for face in blk.faces:

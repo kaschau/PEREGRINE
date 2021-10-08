@@ -32,16 +32,16 @@ def simulate():
 
     blk = mb[0]
     for face in blk.faces:
-        face.connectivity["bcType"] = "adiabaticSlipWall"
+        face.bcType = "adiabaticSlipWall"
 
-    blk.getFaceConn(1)["bcType"] = "b1"
-    blk.getFaceConn(1)["neighbor"] = 0
-    blk.getFaceConn(1)["orientation"] = "123"
+    blk.getFace(1).bcType = "b1"
+    blk.getFace(1).neighbor = 0
+    blk.getFace(1).orientation = "123"
     blk.getFace(1).commRank = 0
 
-    blk.getFaceConn(2)["bcType"] = "b1"
-    blk.getFaceConn(2)["neighbor"] = 0
-    blk.getFaceConn(2)["orientation"] = "123"
+    blk.getFace(2).bcType = "b1"
+    blk.getFace(2).neighbor = 0
+    blk.getFace(2).orientation = "123"
     blk.getFace(2).commRank = 0
 
     for face in blk.faces:
