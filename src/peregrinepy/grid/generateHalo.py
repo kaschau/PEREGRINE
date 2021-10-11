@@ -1,4 +1,5 @@
 import numpy as np
+
 s_ = np.s_
 
 
