@@ -212,5 +212,5 @@ class solverBlock(restartBlock, block_):
         # ------------------------------------------------------------------- #
         #       Switches
         # ------------------------------------------------------------------- #
-        shape = [self.ni + 1, self.nj + 1, self.nk + 1, 3]
+        shape = cQshape
         npOrKokkos(["phi"], shape)

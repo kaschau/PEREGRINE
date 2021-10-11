@@ -334,12 +334,12 @@ void ausmPlusUp(block_ b, const thtrdat_ th, const double primary) {
 
 
     // Compute switch on face
-    double iFphi  = 0.5 * ( b.phi(i,j,k,0) + b.phi(i-1,j,k,0) );
-    double iFphi1 = 0.5 * ( b.phi(i,j,k,0) + b.phi(i+1,j,k,0) );
-    double jFphi  = 0.5 * ( b.phi(i,j,k,1) + b.phi(i,j-1,k,1) );
-    double jFphi1 = 0.5 * ( b.phi(i,j,k,1) + b.phi(i,j+1,k,1) );
-    double kFphi  = 0.5 * ( b.phi(i,j,k,2) + b.phi(i,j,k+1,2) );
-    double kFphi1 = 0.5 * ( b.phi(i,j,k,2) + b.phi(i,j,k-1,2) );
+    double iFphi  = std::max( b.phi(i,j,k,0) , b.phi(i-1,j,k,0) );
+    double iFphi1 = std::max( b.phi(i,j,k,0) , b.phi(i+1,j,k,0) );
+    double jFphi  = std::max( b.phi(i,j,k,1) , b.phi(i,j-1,k,1) );
+    double jFphi1 = std::max( b.phi(i,j,k,1) , b.phi(i,j+1,k,1) );
+    double kFphi  = std::max( b.phi(i,j,k,2) , b.phi(i,j,k+1,2) );
+    double kFphi1 = std::max( b.phi(i,j,k,2) , b.phi(i,j,k-1,2) );
 
     double dPrimary = 2.0*primary - 1.0;
 
