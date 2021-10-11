@@ -150,8 +150,8 @@ PYBIND11_MODULE(compute, m) {
 
   // ./switches
   py::module switches = m.def_submodule("switches", "switches");
-  //  |----> pressure.cpp
-  switches.def("pressure", &pressure, "Compute switches based on pressure",
+  //  |----> entropy.cpp
+  switches.def("entropy", &entropy, "Compute switches based on entropy",
         py::arg("block_ object"));
 
   // ./thermo
