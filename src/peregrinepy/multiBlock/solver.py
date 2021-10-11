@@ -22,10 +22,10 @@ class solver(restart):
 
     mbType = "solver"
 
-    def __init__(self, nblks, spNames):
+    def __init__(self, nblks, spNames, ng):
         assert type(spNames) is list, f"spNames must me a list not {type(spNames)}"
 
-        temp = [solverBlock(i, spNames) for i in range(nblks)]
+        temp = [solverBlock(i, spNames, ng) for i in range(nblks)]
         super().__init__(nblks, spNames, temp)
 
         # Save the config file to the mb object

@@ -147,6 +147,7 @@ def cube(blk, origin, lengths, dimensions):
     blk.ni = dimensions[0]
     blk.nj = dimensions[1]
     blk.nk = dimensions[2]
+    ng = blk.ng
 
     blk.initGridArrays()
 
@@ -155,7 +156,7 @@ def cube(blk, origin, lengths, dimensions):
     z = np.linspace(origin[2], origin[2] + lengths[2], dimensions[2], dtype=np.float64)
 
     if blk.blockType == "solver":
-        s_i = np.s_[1:-1, 1:-1, 1:-1]
+        s_i = np.s_[ng:-ng, ng:-ng, ng:-ng]
     else:
         s_i = np.s_[:, :, :]
 

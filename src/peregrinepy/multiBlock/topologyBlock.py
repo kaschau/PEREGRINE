@@ -24,14 +24,15 @@ class topologyBlock:
         Block number (first block number is 0)
 
     """
-    blockType = 'topology'
+
+    blockType = "topology"
 
     def __init__(self, nblki):
 
         self.nblki = nblki
 
         self.faces = []
-        if self.blockType in ['topology', 'grid', 'restart']:
+        if self.blockType in ["topology", "grid", "restart"]:
             for fn in [1, 2, 3, 4, 5, 6]:
                 self.faces.append(topologyFace(fn))
 
