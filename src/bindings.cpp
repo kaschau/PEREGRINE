@@ -148,6 +148,12 @@ PYBIND11_MODULE(compute, m) {
         py::arg("block_ object"),
         py::arg("thtrdat_ object"));
 
+  // ./switches
+  py::module switches = m.def_submodule("switches", "switches");
+  //  |----> entropy.cpp
+  switches.def("entropy", &entropy, "Compute switches based on entropy",
+        py::arg("block_ object"));
+
   // ./thermo
   py::module thermo = m.def_submodule("thermo","thermo module");
   //  |----> cpg.cpp

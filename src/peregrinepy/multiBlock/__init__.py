@@ -12,7 +12,7 @@ from ..misc import null
 
 class pgConfigError(Exception):
     def __init__(self, option):
-        message = f"Unknown PEREGRINE config options {option}."
+        message = f"Unknown PEREGRINE config option {option}."
         super().__init__(message)
 
 
@@ -48,9 +48,9 @@ def setConsistify(cls, config):
     if config["RHS"]["secondaryAdvFlux"] is None:
         cls.switch = null
     else:
-        switch = config["RHS"]["switch"]
+        switch = config["RHS"]["switchAdvFlux"]
         try:
-            cls.switch = getattr(compute.switch, switch)
+            cls.switch = getattr(compute.switches, switch)
         except AttributeError:
             raise pgConfigError(switch)
 
@@ -75,7 +75,7 @@ def setRHS(cls, config):
         cls.secondaryAdvFlux = null
     else:
         try:
-            cls.secondaryAdvFLux = getattr(compute.advFlux, secondary)
+            cls.secondaryAdvFlux = getattr(compute.advFlux, secondary)
         except AttributeError:
             raise pgConfigError(secondary)
 
