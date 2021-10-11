@@ -40,9 +40,9 @@ def readGrid(mb, path="./"):
             blk.initGridArrays()
 
             for name in ("x", "y", "z"):
-                blk.array[name][readS] = np.array(
-                    f["coordinates"][name]
-                ).reshape((ni, nj, nk), order="F")
+                blk.array[name][readS] = np.array(f["coordinates"][name]).reshape(
+                    (ni, nj, nk), order="F"
+                )
 
         if blk.blockType in ["restartBlock", "solverBlock"]:
             blk.initRestartArrays()
