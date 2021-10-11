@@ -27,7 +27,7 @@ void centralVisc(block_ b, const thtrdat_ th);
 
 // ./switches
 //    |------> pressure
-void pressure(block_ b);
+void entropy(block_ b);
 
 
 // ./thermo
