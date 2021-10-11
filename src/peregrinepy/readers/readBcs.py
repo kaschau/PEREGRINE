@@ -44,7 +44,7 @@ def readBcs(mb, pathToFile):
     for blk in mb:
         for face in blk.faces:
             try:
-                bcFam = face.connectivity["bcFam"]
+                bcFam = face.bcFam
             except KeyError:
                 print(
                     f"Warning, block {blk.nblki} face {face.nface} is assigned the bcFam {bcFam} however that family is not defined in bcFams.yaml"
