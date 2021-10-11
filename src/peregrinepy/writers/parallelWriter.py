@@ -163,6 +163,7 @@ def parallelWriteRestart(mb, path="./", gridPath="./", precision="double"):
     for blk in mb:
 
         extentCC = (blk.ni - 1) * (blk.nj - 1) * (blk.nk - 1)
+        ng = blk.ng
 
         fileName = f"{path}/q.{mb.nrt:08d}.{blk.nblki:06d}.h5"
 
@@ -183,20 +184,20 @@ def parallelWriteRestart(mb, path="./", gridPath="./", precision="double"):
                 dsetName = "rho"
                 qf["results"].create_dataset(dsetName, shape=(extentCC,), dtype=fdtype)
                 dset = qf["results"][dsetName]
-                dset[:] = blk.array["Q"][1:-1, 1:-1, 1:-1, 0].ravel(order="F")
+                dset[:] = blk.array["Q"][ng:-ng, ng:-ng, ng:-ng, 0].ravel(order="F")
             names = ["p", "u", "v", "w", "T"] + blk.speciesNames[0:-1]
             for j in range(len(names)):
                 dsetName = names[j]
                 qf["results"].create_dataset(dsetName, shape=(extentCC,), dtype=fdtype)
                 dset = qf["results"][dsetName]
-                dset[:] = blk.array["q"][1:-1, 1:-1, 1:-1, j].ravel(order="F")
+                dset[:] = blk.array["q"][ng:-ng, ng:-ng, ng:-ng, j].ravel(order="F")
             # Compute the nth species here
             dsetName = blk.speciesNames[-1]
             qf["results"].create_dataset(dsetName, shape=(extentCC,), dtype=fdtype)
             dset = qf["results"][dsetName]
             if blk.ns > 1:
                 dset[:] = 1.0 - np.sum(
-                    blk.array["q"][1:-1, 1:-1, 1:-1, 5::], axis=-1
+                    blk.array["q"][ng:-ng, ng:-ng, ng:-ng, 5::], axis=-1
                 ).ravel(order="F")
             elif blk.ns == 1:
                 dset[:] = 1.0

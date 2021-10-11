@@ -18,6 +18,7 @@ def generateHalo(blk):
         (blk.ni, blk.nj),
     )
 
+    # Construct masks of the faces, edges, and corners.
     for i, shape in zip(range(6), shapes):
         face = i + 1
         fM[face] = {}
