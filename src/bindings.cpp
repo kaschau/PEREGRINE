@@ -148,6 +148,12 @@ PYBIND11_MODULE(compute, m) {
         py::arg("block_ object"),
         py::arg("thtrdat_ object"));
 
+  // ./switches
+  py::module switches = m.def_submodule("switches", "switches");
+  //  |----> pressure.cpp
+  switches.def("pressure", &pressure, "Compute switches based on pressure",
+        py::arg("block_ object"));
+
   // ./thermo
   py::module thermo = m.def_submodule("thermo","thermo module");
   //  |----> cpg.cpp

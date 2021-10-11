@@ -25,6 +25,11 @@ void ausmPlusUp(block_ b, const thtrdat_ th, const double primary);
 void centralVisc(block_ b, const thtrdat_ th);
 
 
+// ./switches
+//    |------> pressure
+void pressure(block_ b);
+
+
 // ./thermo
 //    |------> cpg
 void cpg(block_ b,
