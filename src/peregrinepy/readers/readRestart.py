@@ -25,6 +25,12 @@ def readRestart(mb, path="./", nrt=0, animate=True):
 
     for blk in mb:
         variables = ["p", "u", "v", "w", "T"] + blk.speciesNames[0:-1]
+        if blk.blockType == "solver":
+            ng = blk.ng
+            readS = np.s_[ng:-ng, ng:-ng, ng:-ng]
+        else:
+            ng = 0
+            readS = np.s_[:, :, :]
 
         if animate:
             fileName = f"{path}/q.{nrt:08d}.{blk.nblki:06d}.h5"
@@ -37,7 +43,7 @@ def readRestart(mb, path="./", nrt=0, animate=True):
             blk.tme = list(f["iter"]["tme"])[0]
 
             for i, var in enumerate(variables):
-                blk.array["q"][1:-1, 1:-1, 1:-1, i] = np.array(
+                blk.array["q"][readS][i] = np.array(
                     f["results"][var]
                 ).reshape((blk.ni - 1, blk.nj - 1, blk.nk - 1), order="F")
 

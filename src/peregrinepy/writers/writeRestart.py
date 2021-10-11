@@ -47,6 +47,13 @@ def writeRestart(mb, path="./", gridPath="./", precision="double"):
         extent = blk.ni * blk.nj * blk.nk
         extentCC = (blk.ni - 1) * (blk.nj - 1) * (blk.nk - 1)
 
+        if blk.blockType == "solver":
+            ng = blk.ng
+            writeS = np.s_[ng:-ng, ng:-ng, ng:-ng]
+        else:
+            ng = 1
+            writeS = np.s_[:, :, :]
+
         fileName = f"{path}/q.{mb.nrt:08d}.{blk.nblki:06d}.h5"
 
         with h5py.File(fileName, "w") as qf:
@@ -66,20 +73,20 @@ def writeRestart(mb, path="./", gridPath="./", precision="double"):
                 dsetName = "rho"
                 qf["results"].create_dataset(dsetName, shape=(extentCC,), dtype=fdtype)
                 dset = qf["results"][dsetName]
-                dset[:] = blk.array["Q"][1:-1, 1:-1, 1:-1, 0].ravel(order="F")
+                dset[:] = blk.array["Q"][writeS][0].ravel(order="F")
             names = ["p", "u", "v", "w", "T"] + blk.speciesNames[0:-1]
             for j in range(len(names)):
                 dsetName = names[j]
                 qf["results"].create_dataset(dsetName, shape=(extentCC,), dtype=fdtype)
                 dset = qf["results"][dsetName]
-                dset[:] = blk.array["q"][1:-1, 1:-1, 1:-1, j].ravel(order="F")
+                dset[:] = blk.array["q"][writeS][j].ravel(order="F")
             # Compute the nth species here
             dsetName = blk.speciesNames[-1]
             qf["results"].create_dataset(dsetName, shape=(extentCC,), dtype=fdtype)
             dset = qf["results"][dsetName]
             if blk.ns > 1:
                 dset[:] = 1.0 - np.sum(
-                    blk.array["q"][1:-1, 1:-1, 1:-1, 5::], axis=-1
+                    blk.array["q"][writeS][5::], axis=-1
                 ).ravel(order="F")
             elif blk.ns == 1:
                 dset[:] = 1.0
