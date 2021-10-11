@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 
-""" restart_block.py
+""" restartBlock.py
 
 Authors:
 
 Kyle Schau
 
-This module defines a restart_block object that is used to compose a raptorpy.multiBlock.restart (see multiBlock.py).
+This module defines a restart_block object that is used to compose a peregrinepy.multiBlock.restart (see multiBlock.py).
 
 """
 

@@ -14,7 +14,7 @@ class myDumper(yaml.SafeDumper):
 
 def writeConfigFile(config, filePath="./"):
 
-    """This function write a RAPTOR input file dtms.inp from a raptorpy.files.input_file object
+    """This function write a RAPTOR input file dtms.inp from a peregrinepy.files.inputFile object
 
     Parameters
     ----------

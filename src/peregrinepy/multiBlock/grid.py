@@ -17,7 +17,7 @@ from .gridBlock import gridBlock
 
 
 class grid(topology):
-    """A list of raptorpy.grid.grid_block objects. Inherits from raptorpy.multiBlock.dataset"""
+    """A list of peregrinepy.multiBlock.gridBlock objects. Inherits from peregrinepy.multiBlock.topology"""
 
     mbType = "grid"
 

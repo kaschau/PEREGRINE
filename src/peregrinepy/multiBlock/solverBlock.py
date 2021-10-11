@@ -19,8 +19,6 @@ that a multiBlock datasets (see multiBlock.py) can be composed of.
 
 class solverBlock(restartBlock, block_):
     """
-    block object is the most basic object a raptorpy.multiBlock.dataset
-    (or one of its descendants) can be.
 
     Attributes
     ---------
