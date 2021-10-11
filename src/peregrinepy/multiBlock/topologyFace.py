@@ -1,14 +1,6 @@
-
-
 class topologyFace:
 
-    __slots__ = (
-        "nface",
-        "bcFam",
-        "bcType",
-        "neighbor",
-        "orientation"
-    )
+    __slots__ = ("nface", "bcFam", "bcType", "neighbor", "orientation")
 
     def __init__(self, nface):
         assert 1 <= nface <= 6, "nface must be between (1,6)"

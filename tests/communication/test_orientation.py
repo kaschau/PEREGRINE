@@ -5,7 +5,7 @@ import numpy as np
 class twoblock123:
     def __init__(self):
         self.config = pg.files.configFile()
-        self.mb = pg.multiBlock.solver(2, ["Air"])
+        self.mb = pg.multiBlock.solver(2, ["Air"], ng=2)
 
         pg.grid.create.multiBlockCube(
             self.mb,
@@ -41,6 +41,7 @@ def test_123():
     tb = twoblock123()
     blk0 = tb.mb[0]
     blk1 = tb.mb[1]
+    ng = blk0.ng
 
     # Reorient and update communication info
     pg.mpiComm.blockComm.setBlockCommunication(tb.mb)
@@ -55,12 +56,17 @@ def test_123():
         check1 = True
         for k in range(shape[2]):
             for j in range(shape[1]):
-                check0 = np.all(
-                    blk0.array[var][-3 + off, j, k] == blk1.array[var][0, j, k]
-                )
-                check1 = np.all(
-                    blk0.array[var][-1, j, k] == blk1.array[var][2 - off, j, k]
-                )
+                for i in range(ng):
+                    check0 = np.all(
+                        blk0.array[var][-(2 * ng + 1) + off + i, j, k]
+                        == blk1.array[var][i, j, k]
+                    )
+                    check1 = np.all(
+                        blk0.array[var][-ng + i, j, k]
+                        == blk1.array[var][ng + 1 - off + i, j, k]
+                    )
+                    if not check0 or not check1:
+                        break
                 if not check0 or not check1:
                     break
             if not check0 or not check1:

@@ -33,8 +33,6 @@ class gridBlock(topologyBlock):
         self.nj = 0
         self.nk = 0
 
-        self.ng = 0
-
         #########################################################
         # Data arrays
         #########################################################
@@ -77,22 +75,18 @@ class gridBlock(topologyBlock):
         """
         Create zeroed numpy arrays of correct size.
         """
+        if self.blockType == "solver":
+            ng = self.ng
+        else:
+            ng = 0
 
         # Primary grid coordinates
-        shape = (
-            [self.ni + 2, self.nj + 2, self.nk + 2]
-            if self.blockType == "solver"
-            else [self.ni, self.nj, self.nk]
-        )
+        shape = [self.ni + 2 * ng, self.nj + 2 * ng, self.nk + 2 * ng]
         for name in ["x", "y", "z"]:
             self.array[name] = np.zeros((shape))
 
         # Cell center locations, volumes, diffusive metrics
-        shape = (
-            [self.ni + 1, self.nj + 1, self.nk + 1]
-            if self.blockType == "solver"
-            else [self.ni - 1, self.nj - 1, self.nk - 1]
-        )
+        shape = [self.ni + 2 * ng - 1, self.nj + 2 * ng - 1, self.nk + 2 * ng - 1]
         for name in [
             "xc",
             "yc",
@@ -111,29 +105,17 @@ class gridBlock(topologyBlock):
             self.array[name] = np.zeros((shape))
 
         # i face normal, area vectors
-        shape = (
-            [self.ni + 2, self.nj + 1, self.nk + 1]
-            if self.blockType == "solver"
-            else [self.ni, self.nj - 1, self.nk - 1]
-        )
+        shape = [self.ni + 2 * ng, self.nj + 2 * ng - 1, self.nk + 2 * ng - 1]
         for name in ["isx", "isy", "isz", "iS", "inx", "iny", "inz"]:
             self.array[name] = np.zeros((shape))
 
         # j face normal, area vectors
-        shape = (
-            [self.ni + 1, self.nj + 2, self.nk + 1]
-            if self.blockType == "solver"
-            else [self.ni - 1, self.nj, self.nk - 1]
-        )
+        shape = [self.ni + 2 * ng - 1, self.nj + 2 * ng, self.nk + 2 * ng - 1]
         for name in ["jsx", "jsy", "jsz", "jS", "jnx", "jny", "jnz"]:
             self.array[name] = np.zeros((shape))
 
         # k face normal, area vectors
-        shape = (
-            [self.ni + 1, self.nj + 1, self.nk + 2]
-            if self.blockType == "solver"
-            else [self.ni - 1, self.nj - 1, self.nk]
-        )
+        shape = [self.ni + 2 * ng - 1, self.nj + 2 * ng - 1, self.nk + 2 * ng]
         for name in ["ksx", "ksy", "ksz", "kS", "knx", "kny", "knz"]:
             self.array[name] = np.zeros((shape))
 

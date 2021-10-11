@@ -47,8 +47,17 @@ class restartBlock(gridBlock):
         """
         Create zeroed numpy arrays of correct size.
         """
+        if self.blockType == "solver":
+            ng = self.ng
+        else:
+            ng = 0
 
-        cQshape = (self.ni + 1, self.nj + 1, self.nk + 1, 5 + self.ns - 1)
+        cQshape = (
+            self.ni + 2 * ng - 1,
+            self.nj + 2 * ng - 1,
+            self.nk + 2 * ng - 1,
+            5 + self.ns - 1,
+        )
         self.array["q"] = np.zeros((cQshape))
 
     def verifySpeciesSum(self, normalize=False):
