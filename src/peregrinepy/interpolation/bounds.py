@@ -23,8 +23,8 @@ def ptsInBlkBounds(blk, testPts):
     Parameters
     ----------
 
-    blk: raptorpy.block.grid_block
-       raptorpy.blocks.grid_block (or a descendant). Must have coordinate data populated
+    blk: peregrinepy.block.gridBlock peregrinepy.blocks.grid_block (or a descendant).
+         Must have coordinate data populated.
 
     testPts : np.array
        Numpy array of shape (numPts,3) defining (x,y,z) of each point to test
@@ -261,11 +261,11 @@ def findBounds(mbTo, mbFrom, verbose_search):
     Parameters
     ----------
 
-    mbFrom: raptorpy.multiBlock.grid
-       raptorpy.multiBlock.grid (or a descendant). Must have coordinate data populated
+    mbFrom: peregrinepy.multiBlock.grid
+       peregrinepy.multiBlock.grid (or a descendant). Must have coordinate data populated
 
-    mbTo: raptorpy.multiBlock.grid
-       raptorpy.multiBlock.grid (or a descendant). Must have coordinate data populated
+    mbTo: peregrinepy.multiBlock.grid
+       peregrinepy.multiBlock.grid (or a descendant). Must have coordinate data populated
 
     Returns
     -------
