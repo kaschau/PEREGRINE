@@ -1,15 +1,83 @@
 class topologyFace:
 
-    __slots__ = ("nface", "bcFam", "bcType", "neighbor", "orientation")
+    __slots__ = ("_nface", "_bcFam", "_bcType", "_neighbor", "_orientation")
 
     def __init__(self, nface):
         assert 1 <= nface <= 6, "nface must be between (1,6)"
 
-        self.nface = nface
-        self.bcFam = None
-        self.bcType = "adiabaticSlipWall"
-        self.neighbor = None
-        self.orientation = None
+        self._nface = nface
+        self._bcFam = None
+        self._bcType = "adiabaticSlipWall"
+        self._neighbor = None
+        self._orientation = None
+
+    @property
+    def nface(self):
+        return self._nface
+
+    @nface.setter
+    def nface(self, value):
+        assert type(value) is int, f"nface must be an integer not {type(value)}"
+        assert 1 <= value <= 6, "nface must be between (1,6)"
+        self._nface = value
+
+    @property
+    def bcFam(self):
+        return self._bcFam
+
+    @bcFam.setter
+    def bcFam(self, value):
+        tV = type(value)
+        if tV not in (type(None), str):
+            raise TypeError(f"bcFam must be a string not {type(value)}.")
+        self._bcFam = value
+
+    @property
+    def bcType(self):
+        return self._bcType
+
+    @bcType.setter
+    def bcType(self, value):
+        tV = type(value)
+        if tV not in (type(None), str):
+            raise TypeError(f"bcType must be a string not {tV}")
+        validBcTypes = (
+            # Interior, periodic
+            "b0", "b1",
+            # Inlets
+            "constantVelocitySubsonicInlet",
+            # Exits
+            "constantPressureSubsonicExit",
+            # Walls
+            "adiabaticNoSlipWall",
+            "adiabaticSlipWall",
+            "adiabaticMovingWall",
+            "isoTMovingWall",
+        )
+        assert value in validBcTypes, f"{value} is not a valid bcType. Must be one of {validBcTypes}"
+        self._bcType = value
+
+    @property
+    def neighbor(self):
+        return self._neighbor
+
+    @neighbor.setter
+    def neighbor(self, value):
+        tV = type(value)
+        if tV not in (type(None), int):
+            raise TypeError(f"neighbor must be a int not {type(value)}.")
+        self._neighbor = value
+
+    @property
+    def orientation(self):
+        return self._orientation
+
+    @orientation.setter
+    def orientation(self, value):
+        tV = type(value)
+        if tV not in (type(None), str):
+            raise TypeError(f"orientation must be a str not {type(value)}.")
+        self._orientation = value
 
     @property
     def neighborFace(self):
