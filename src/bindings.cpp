@@ -32,6 +32,7 @@ PYBIND11_MODULE(compute, m) {
     .def_readwrite("ni", &block_::ni)
     .def_readwrite("nj", &block_::nj)
     .def_readwrite("nk", &block_::nk)
+    .def_readwrite("ng", &block_::ng)
 
     .def_readwrite("ne", &block_::ne)
 

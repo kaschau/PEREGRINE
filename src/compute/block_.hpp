@@ -9,8 +9,8 @@
 struct block_ {
   int nblki;
   int ni,nj,nk;
+  int ng;
   int ne;
-  int ns;
 
   // Grid Arrays
   threeDview x,y,z;
