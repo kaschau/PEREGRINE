@@ -26,9 +26,9 @@ def blocksToBlock(blksFrom, blkTo, function="nearest", smooth=0.5):
     ----------
 
     blksFrom : list
-       List of raptorpy.blocks.restart_block
+       List of peregrinepy.blocks.restartBlock
 
-    blkTo : raptorpy.blocks.restart_block
+    blkTo : peregrinepy.blocks.restartBlock
        Restart block with populated coordinate data (x,y,z)
 
     function : string

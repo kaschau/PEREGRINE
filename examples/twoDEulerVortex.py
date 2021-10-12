@@ -35,6 +35,7 @@ def simulate():
     mb.initSolverArrays(config)
 
     blk = mb[0]
+    ng = blk.ng
 
     # SKEW THE GRID
     x0 = y0 = 0.0
@@ -49,11 +50,11 @@ def simulate():
     y = blk.array["y"]
     for E in range(NE):
         for N in range(NN):
-            x[E + 1, N + 1, :] = xMin + delX * (
+            x[E + ng, N + ng, :] = xMin + delX * (
                 E
                 + Ax * np.sin(2 * np.pi * kappa) * np.sin(lamX * np.pi * N * delY / Ly)
             )
-            y[E + 1, N + 1, :] = yMin + delY * (
+            y[E + ng, N + ng, :] = yMin + delY * (
                 N
                 + Ay * np.sin(2 * np.pi * kappa) * np.sin(lamY * np.pi * E * delX / Lx)
             )
@@ -115,8 +116,8 @@ def simulate():
     mb.eos(blk, mb.thtrdat, 0, "prims")
     pg.consistify(mb)
 
-    refX = xc[1:-1, int(NN / 2.0), 1] / Rc
-    refV = np.copy(blk.array["q"][1:-1, int(NN / 2.0), 1, 2] / uInf)
+    refX = xc[ng:-ng, int(NN / 2.0), ng] / Rc
+    refV = np.copy(blk.array["q"][ng:-ng, int(NN / 2.0), ng, 2] / uInf)
 
     # pg.writers.writeGrid(mb, config["io"]["griddir"])
     # pg.writers.writeRestart(mb, config["io"]["outputdir"], gridPath="../Grid")
@@ -129,7 +130,7 @@ def simulate():
         mb.step(dt)
 
     # plot v/Uinf
-    plt.plot(refX, blk.array["q"][1:-1, int(NN / 2.0), 1, 2] / uInf, label=f"{NE =}")
+    plt.plot(refX, blk.array["q"][ng:-ng, int(NN / 2.0), ng, 2] / uInf, label=f"{NE =}")
     plt.plot(refX, refV, "o", label="exact")
     plt.ylim([-0.016, 0.016])
     plt.xlim([-6, 6])

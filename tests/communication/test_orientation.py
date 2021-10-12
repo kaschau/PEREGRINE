@@ -5,7 +5,7 @@ import numpy as np
 class twoblock123:
     def __init__(self):
         self.config = pg.files.configFile()
-        self.mb = pg.multiBlock.solver(2, ["Air"])
+        self.mb = pg.multiBlock.solver(2, ["Air"], ng=2)
 
         pg.grid.create.multiBlockCube(
             self.mb,
@@ -41,6 +41,7 @@ def test_123():
     tb = twoblock123()
     blk0 = tb.mb[0]
     blk1 = tb.mb[1]
+    ng = blk0.ng
 
     # Reorient and update communication info
     pg.mpiComm.blockComm.setBlockCommunication(tb.mb)
@@ -55,12 +56,17 @@ def test_123():
         check1 = True
         for k in range(shape[2]):
             for j in range(shape[1]):
-                check0 = np.all(
-                    blk0.array[var][-3 + off, j, k] == blk1.array[var][0, j, k]
-                )
-                check1 = np.all(
-                    blk0.array[var][-1, j, k] == blk1.array[var][2 - off, j, k]
-                )
+                for i in range(ng):
+                    check0 = np.all(
+                        blk0.array[var][-(2 * ng + 1) + off + i, j, k]
+                        == blk1.array[var][i, j, k]
+                    )
+                    check1 = np.all(
+                        blk0.array[var][-ng + i, j, k]
+                        == blk1.array[var][ng + 1 - off + i, j, k]
+                    )
+                    if not check0 or not check1:
+                        break
                 if not check0 or not check1:
                     break
             if not check0 or not check1:
@@ -75,13 +81,14 @@ def test_135():
     tb = twoblock123()
     blk0 = tb.mb[0]
     blk1 = tb.mb[1]
+    ng = blk0.ng
 
     for var in ["x", "y", "z", "q"]:
         blk1.array[var] = np.moveaxis(
             np.flip(blk1.array[var], axis=2), (0, 1, 2), (0, 2, 1)
         )
-    blk1.nj = tb.xshape[2] - 2
-    blk1.nk = tb.xshape[1] - 2
+    blk1.nj = tb.xshape[2] - 2*ng
+    blk1.nk = tb.xshape[1] - 2*ng
 
     # Reorient second block and update communication info
     blk0.getFace(2).orientation = "135"
@@ -100,12 +107,17 @@ def test_135():
         check1 = True
         for k in range(shape[2]):
             for j in range(shape[1]):
-                check0 = np.all(
-                    blk0.array[var][-3 + off, j, k] == blk1.array[var][0, -(k + 1), j]
-                )
-                check1 = np.all(
-                    blk0.array[var][-1, j, k] == blk1.array[var][2 - off, -(k + 1), j]
-                )
+                for i in range(ng):
+                    check0 = np.all(
+                        blk0.array[var][-(2 * ng + 1) + off + i, j, k]
+                        == blk1.array[var][i, -(k + 1), j]
+                    )
+                    check1 = np.all(
+                        blk0.array[var][-ng + i, j, k]
+                        == blk1.array[var][ng + 1 - off + i, -(k + 1), j]
+                    )
+                    if not check0 or not check1:
+                        break
                 if not check0 or not check1:
                     break
             if not check0 or not check1:
@@ -124,11 +136,13 @@ def test_231():
 
     blk0 = tb.mb[0]
     blk1 = tb.mb[1]
+    ng = blk0.ng
+
     for var in ["x", "y", "z", "q"]:
         blk1.array[var] = np.moveaxis(blk1.array[var], (0, 1, 2), (1, 2, 0))
-    blk1.ni = tb.xshape[2] - 2
-    blk1.nj = tb.xshape[0] - 2
-    blk1.nk = tb.xshape[1] - 2
+    blk1.ni = tb.xshape[2] - 2 * ng
+    blk1.nj = tb.xshape[0] - 2 * ng
+    blk1.nk = tb.xshape[1] - 2 * ng
 
     # Reorient second block and update communication info
     blk0.getFace(2).orientation = "231"
@@ -160,12 +174,17 @@ def test_231():
         check1 = True
         for k in range(shape[2]):
             for j in range(shape[1]):
-                check0 = np.all(
-                    blk0.array[var][-3 + off, j, k] == blk1.array[var][k, 0, j]
-                )
-                check1 = np.all(
-                    blk0.array[var][-1, j, k] == blk1.array[var][k, 2 - off, j]
-                )
+                for i in range(ng):
+                    check0 = np.all(
+                        blk0.array[var][-(2 * ng + 1) + off + i, j, k]
+                        == blk1.array[var][k, i, j]
+                    )
+                    check1 = np.all(
+                        blk0.array[var][-ng + i, j, k]
+                        == blk1.array[var][k, ng + 1 - off + i, j]
+                    )
+                    if not check0 or not check1:
+                        break
                 if not check0 or not check1:
                     break
             if not check0 or not check1:
@@ -184,11 +203,13 @@ def test_321():
 
     blk0 = tb.mb[0]
     blk1 = tb.mb[1]
+    ng = blk0.ng
+
     for var in ["x", "y", "z", "q"]:
         blk1.array[var] = np.moveaxis(blk1.array[var], (0, 1, 2), (2, 0, 1))
-    blk1.ni = tb.xshape[1] - 2
-    blk1.nj = tb.xshape[2] - 2
-    blk1.nk = tb.xshape[0] - 2
+    blk1.ni = tb.xshape[1] - 2 * ng
+    blk1.nj = tb.xshape[2] - 2 * ng
+    blk1.nk = tb.xshape[0] - 2 * ng
 
     # Reorient second block and update communication info
     blk0.getFace(2).orientation = "312"
@@ -220,17 +241,20 @@ def test_321():
         check1 = True
         for k in range(shape[2]):
             for j in range(shape[1]):
-                check0 = np.all(
-                    blk0.array[var][-3 + off, j, k] == blk1.array[var][j, k, 0]
-                )
-                check1 = np.all(
-                    blk0.array[var][-1, j, k] == blk1.array[var][j, k, 2 - off]
-                )
+                for i in range(ng):
+                    check0 = np.all(
+                        blk0.array[var][-(2 * ng + 1) - off + i, j, k]
+                        == blk1.array[var][j, k, i]
+                    )
+                    check1 = np.all(
+                        blk0.array[var][-ng + i, j, k]
+                        == blk1.array[var][j, k, ng + 1 - off + i]
+                    )
+                    if not check0 or not check1:
+                        break
                 if not check0 or not check1:
-                    print(blk0.array[var][-3, j, k], blk1.array[var][j, k, 0])
                     break
             if not check0 or not check1:
-                print(blk0.array[var][-1, j, k], blk1.array[var][j, k, 2])
                 break
         passfail.append(check0)
         passfail.append(check1)
@@ -247,11 +271,13 @@ def test_432():
 
     blk0 = tb.mb[0]
     blk1 = tb.mb[1]
+    ng = blk0.ng
+
     for var in ["x", "y", "z", "q"]:
         blk1.array[var] = np.moveaxis(blk1.array[var], (0, 1, 2), (0, 2, 1))
-    blk1.ni = tb.xshape[0] - 2
-    blk1.nj = tb.xshape[2] - 2
-    blk1.nk = tb.xshape[1] - 2
+    blk1.ni = tb.xshape[0] - 2 * ng
+    blk1.nj = tb.xshape[2] - 2 * ng
+    blk1.nk = tb.xshape[1] - 2 * ng
 
     # Reorient second block and update communication info
     blk0.getFace(2).orientation = "432"
@@ -283,12 +309,17 @@ def test_432():
         check1 = True
         for k in range(shape[2]):
             for j in range(shape[1]):
-                check0 = np.all(
-                    blk0.array[var][-3 + off, j, k] == blk1.array[var][-1, k, j]
-                )
-                check1 = np.all(
-                    blk0.array[var][-1, j, k] == blk1.array[var][-3 + off, k, j]
-                )
+                for i in range(ng):
+                    check0 = np.all(
+                        blk0.array[var][-(2 * ng + 1) + off + i, j, k]
+                        == blk1.array[var][-(i + 1), k, j]
+                    )
+                    check1 = np.all(
+                        blk0.array[var][-(i + 1), j, k]
+                        == blk1.array[var][-(2 * ng + 1) + off + i, k, j]
+                    )
+                    if not check0 or not check1:
+                        break
                 if not check0 or not check1:
                     break
             if not check0 or not check1:
@@ -307,11 +338,13 @@ def test_513():
 
     blk0 = tb.mb[0]
     blk1 = tb.mb[1]
+    ng = blk0.ng
+
     for var in ["x", "y", "z", "q"]:
         blk1.array[var] = np.moveaxis(blk1.array[var], (0, 1, 2), (1, 0, 2))
-    blk1.ni = tb.xshape[1] - 2
-    blk1.nj = tb.xshape[0] - 2
-    blk1.nk = tb.xshape[2] - 2
+    blk1.ni = tb.xshape[1] - 2 * ng
+    blk1.nj = tb.xshape[0] - 2 * ng
+    blk1.nk = tb.xshape[2] - 2 * ng
 
     # Reorient second block and update communication info
     blk0.getFace(2).orientation = "513"
@@ -344,12 +377,17 @@ def test_513():
         check1 = True
         for k in range(shape[2]):
             for j in range(shape[1]):
-                check0 = np.all(
-                    blk0.array[var][-3 + off, j, k] == blk1.array[var][j, -1, k]
-                )
-                check1 = np.all(
-                    blk0.array[var][-1, j, k] == blk1.array[var][j, -3 + off, k]
-                )
+                for i in range(ng):
+                    check0 = np.all(
+                        blk0.array[var][-(2 * ng + 1) + off + i, j, k]
+                        == blk1.array[var][j, -(i+1), k]
+                    )
+                    check1 = np.all(
+                        blk0.array[var][-(i+1), j, k]
+                        == blk1.array[var][j, -(2 * ng + 1) + off + i, k]
+                    )
+                    if not check0 or not check1:
+                        break
                 if not check0 or not check1:
                     break
             if not check0 or not check1:
@@ -368,11 +406,13 @@ def test_621():
 
     blk0 = tb.mb[0]
     blk1 = tb.mb[1]
+    ng = blk0.ng
+
     for var in ["x", "y", "z", "q"]:
         blk1.array[var] = np.moveaxis(blk1.array[var], (0, 1, 2), (2, 1, 0))
-    blk1.ni = tb.xshape[2] - 2
-    blk1.nj = tb.xshape[1] - 2
-    blk1.nk = tb.xshape[0] - 2
+    blk1.ni = tb.xshape[2] - 2 * ng
+    blk1.nj = tb.xshape[1] - 2 * ng
+    blk1.nk = tb.xshape[0] - 2 * ng
 
     # Reorient second block and update communication info
     blk0.getFace(2).orientation = "621"
@@ -405,12 +445,17 @@ def test_621():
         check1 = True
         for k in range(shape[2]):
             for j in range(shape[1]):
-                check0 = np.all(
-                    blk0.array[var][-3 + off, j, k] == blk1.array[var][k, j, -1]
-                )
-                check1 = np.all(
-                    blk0.array[var][-1, j, k] == blk1.array[var][k, j, -3 + off]
-                )
+                for i in range(ng):
+                    check0 = np.all(
+                        blk0.array[var][-(2 * ng + 1) + off + i, j, k]
+                        == blk1.array[var][k, j, -(i+1)]
+                    )
+                    check1 = np.all(
+                        blk0.array[var][-(i+1), j, k]
+                        == blk1.array[var][k, j, -(2 * ng + 1) + off + i]
+                    )
+                    if not check0 or not check1:
+                        break
                 if not check0 or not check1:
                     break
             if not check0 or not check1:

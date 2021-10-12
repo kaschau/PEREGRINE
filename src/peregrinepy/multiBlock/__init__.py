@@ -118,8 +118,14 @@ def generateMultiBlockSolver(nblks, config, myblocks=None):
     # Get the number of species from the spdata file
     spdat = thtrdat(config)
     spn = spdat.speciesNames
+
+    # Get the number of ghost layers
+    if config["RHS"]["primaryAdvFlux"] == "fourthOrderKEEP":
+        ng = 2
+    else:
+        ng = 1
     # Instantiate the combined mbsolver+timeint object
-    cls = mbsolver(nblks, spn)
+    cls = mbsolver(nblks, spn, ng=ng)
 
     # In parallel we need to overwrite the generated block numbers
     if myblocks is not None:

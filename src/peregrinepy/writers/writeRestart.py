@@ -7,12 +7,12 @@ from copy import deepcopy
 
 
 def writeRestart(mb, path="./", gridPath="./", precision="double"):
-    """This function produces an hdf5 file from a raptorpy.multiBlock.restart for viewing in Paraview.
+    """This function produces an hdf5 file from a peregrinepy.multiBlock.restart for viewing in Paraview.
 
     Parameters
     ----------
 
-    mb : raptorpy.multiBlock.restart
+    mb : peregrinepy.multiBlock.restart
 
     filePath : str
         Path to location to write output files
@@ -47,6 +47,13 @@ def writeRestart(mb, path="./", gridPath="./", precision="double"):
         extent = blk.ni * blk.nj * blk.nk
         extentCC = (blk.ni - 1) * (blk.nj - 1) * (blk.nk - 1)
 
+        if blk.blockType == "solver":
+            ng = blk.ng
+            writeS = np.s_[ng:-ng, ng:-ng, ng:-ng]
+        else:
+            ng = 1
+            writeS = np.s_[:, :, :]
+
         fileName = f"{path}/q.{mb.nrt:08d}.{blk.nblki:06d}.h5"
 
         with h5py.File(fileName, "w") as qf:
@@ -66,20 +73,26 @@ def writeRestart(mb, path="./", gridPath="./", precision="double"):
                 dsetName = "rho"
                 qf["results"].create_dataset(dsetName, shape=(extentCC,), dtype=fdtype)
                 dset = qf["results"][dsetName]
-                dset[:] = blk.array["Q"][1:-1, 1:-1, 1:-1, 0].ravel(order="F")
+                try:
+                    dset[:] = blk.array["Q"][writeS + tuple([0])].ravel(order="F")
+                except TypeError:
+                    # Sometime we may not have density, so just make a zero array
+                    dset[:] = np.zeros(blk.array["q"][:, :, :, 0][writeS].shape).ravel(
+                        order="F"
+                    )
             names = ["p", "u", "v", "w", "T"] + blk.speciesNames[0:-1]
             for j in range(len(names)):
                 dsetName = names[j]
                 qf["results"].create_dataset(dsetName, shape=(extentCC,), dtype=fdtype)
                 dset = qf["results"][dsetName]
-                dset[:] = blk.array["q"][1:-1, 1:-1, 1:-1, j].ravel(order="F")
+                dset[:] = blk.array["q"][writeS + tuple([j])].ravel(order="F")
             # Compute the nth species here
             dsetName = blk.speciesNames[-1]
             qf["results"].create_dataset(dsetName, shape=(extentCC,), dtype=fdtype)
             dset = qf["results"][dsetName]
             if blk.ns > 1:
                 dset[:] = 1.0 - np.sum(
-                    blk.array["q"][1:-1, 1:-1, 1:-1, 5::], axis=-1
+                    blk.array["q"][writeS + slice(5, None, None)], axis=-1
                 ).ravel(order="F")
             elif blk.ns == 1:
                 dset[:] = 1.0

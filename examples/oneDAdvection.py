@@ -53,12 +53,13 @@ def simulate():
 
     mb.computeMetrics()
 
+    ng = blk.ng
     R = 281.4583333333333
     blk.array["q"][:, :, :, 0] = 1.0
     blk.array["q"][:, :, :, 1] = 1.0
-    initial_rho = 2.0 + np.sin(2 * np.pi * blk.array["xc"][1:-1, 0, 0])
+    initial_rho = 2.0 + np.sin(2 * np.pi * blk.array["xc"][ng:-ng, 0, 0])
     initial_T = 1.0 / (R * initial_rho)
-    blk.array["q"][1:-1, 1, 1, 4] = initial_T
+    blk.array["q"][ng:-ng, ng, ng, 4] = initial_T
 
     # Update cons
     mb.eos(blk, mb.thtrdat, 0, "prims")
@@ -77,10 +78,10 @@ def simulate():
     fig, ax1 = plt.subplots()
     ax1.set_title("1D Advection Results")
     ax1.set_xlabel(r"x")
-    x = blk.array["xc"][1:-1, 1, 1]
-    rho = blk.array["Q"][1:-1, 1, 1, 0]
-    p = blk.array["q"][1:-1, 1, 1, 0]
-    u = blk.array["q"][1:-1, 1, 1, 1]
+    x = blk.array["xc"][ng:-ng, ng, ng]
+    rho = blk.array["Q"][ng:-ng, ng, ng, 0]
+    p = blk.array["q"][ng:-ng, ng, ng, 0]
+    u = blk.array["q"][ng:-ng, ng, ng, ng]
     ax1.plot(x, rho, color="g", label="rho", linewidth=0.5)
     ax1.plot(x, p, color="r", label="p", linewidth=0.5)
     ax1.plot(x, u, color="k", label="u", linewidth=0.5)

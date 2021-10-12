@@ -21,6 +21,12 @@ def readGrid(mb, path="./"):
 
     for blk in mb:
         fileName = f"{path}/gv.{blk.nblki:06d}.h5"
+        if blk.blockType == "solver":
+            ng = blk.ng
+            readS = np.s_[ng:-ng, ng:-ng, ng:-ng]
+        else:
+            ng = 0
+            readS = np.s_[:, :, :]
 
         with h5py.File(fileName, "r") as f:
             ni = list(f["dimensions"]["ni"])[0]
@@ -34,14 +40,9 @@ def readGrid(mb, path="./"):
             blk.initGridArrays()
 
             for name in ("x", "y", "z"):
-                if blk.blockType == "solver":
-                    blk.array[name][1:-1, 1:-1, 1:-1] = np.array(
-                        f["coordinates"][name]
-                    ).reshape((ni, nj, nk), order="F")
-                else:
-                    blk.array[name][:] = np.array(f["coordinates"][name]).reshape(
-                        (ni, nj, nk), order="F"
-                    )
+                blk.array[name][readS] = np.array(f["coordinates"][name]).reshape(
+                    (ni, nj, nk), order="F"
+                )
 
         if blk.blockType in ["restartBlock", "solverBlock"]:
             blk.initRestartArrays()
