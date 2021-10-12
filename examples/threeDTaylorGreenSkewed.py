@@ -161,7 +161,6 @@ def simulate():
     plt.title(r"$\Delta(\rho s) / (\rho_0 s_0)$")
     plt.savefig("entropy.png")
     plt.clf()
-    plt.clf()
 
 
 if __name__ == "__main__":
