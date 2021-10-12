@@ -29,6 +29,8 @@ class solverFace(topologyFace):
         "recvBuffer4",
     )
 
+    faceType = "solver"
+
     def __init__(self, nface, ng=None):
         super().__init__(nface)
         assert 1 <= nface <= 6, "nface must be between (1,6)"
@@ -192,7 +194,7 @@ class solverFace(topologyFace):
             indx = 1
         elif self.nface in [5, 6]:
             indx = 2
-        if self.orientation[indx] in ['4', '5', '6']:
+        if self.orientation[indx] in ["4", "5", "6"]:
             self.sliceS3.reverse()
             self.sliceS4.reverse()
 
