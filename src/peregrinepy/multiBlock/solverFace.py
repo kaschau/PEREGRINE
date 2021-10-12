@@ -90,6 +90,11 @@ class solverFace(topologyFace):
         self.recvBuffer3 = None
         self.recvBuffer4 = None
 
+    @topologyFace.bcType.setter
+    def bcType(self, value):
+        super(solverFace, type(self)).bcType.fset(self, value)
+        self.setBcFunc()
+
     def setBcFunc(self):
 
         bc = self.bcType
