@@ -35,6 +35,7 @@ def simulate():
     mb.initSolverArrays(config)
 
     blk = mb[0]
+    ng = blk.ng
 
     for face in blk.faces:
         face.bcType = "b1"
@@ -50,7 +51,6 @@ def simulate():
     pg.mpiComm.blockComm.setBlockCommunication(mb)
 
     mb.unifyGrid()
-
     mb.computeMetrics()
 
     R = 281.4583333333333
@@ -89,23 +89,23 @@ def simulate():
 
             rke = np.sum(
                 0.5
-                * blk.array["Q"][1:-1, 1:-1, 1:-1, 0]
+                * blk.array["Q"][ng:-ng, ng:-ng, ng:-ng, 0]
                 * (
-                    blk.array["q"][1:-1, 1:-1, 1:-1, 1] ** 2
-                    + blk.array["q"][1:-1, 1:-1, 1:-1, 2] ** 2
-                    + blk.array["q"][1:-1, 1:-1, 1:-1, 3] ** 2
+                    blk.array["q"][ng:-ng, ng:-ng, ng:-ng, 1] ** 2
+                    + blk.array["q"][ng:-ng, ng:-ng, ng:-ng, 2] ** 2
+                    + blk.array["q"][ng:-ng, ng:-ng, ng:-ng, 3] ** 2
                 )
             )
             re = np.sum(
-                blk.array["Q"][1:-1, 1:-1, 1:-1, 0]
-                * (blk.array["q"][1:-1, 1:-1, 1:-1, 4] * cv)
+                blk.array["Q"][ng:-ng, ng:-ng, ng:-ng, 0]
+                * (blk.array["q"][ng:-ng, ng:-ng, ng:-ng, 4] * cv)
             )
 
             rS = np.sum(
-                blk.array["Q"][1:-1, 1:-1, 1:-1, 0]
+                blk.array["Q"][ng:-ng, ng:-ng, ng:-ng, 0]
                 * np.log10(
-                    blk.array["q"][1:-1, 1:-1, 1:-1, 0]
-                    * blk.array["Q"][1:-1, 1:-1, 1:-1, 0] ** (-gamma)
+                    blk.array["q"][ng:-ng, ng:-ng, ng:-ng, 0]
+                    * blk.array["Q"][ng:-ng, ng:-ng, ng:-ng, 0] ** (-gamma)
                 )
             )
 
