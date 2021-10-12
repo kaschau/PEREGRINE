@@ -64,9 +64,6 @@ def simulate():
 
     blk.getFace(4).bcVals = {"u": 5.0, "v": 0.0, "w": 0.0}
 
-    for face in blk.faces:
-        face.setBcFunc()
-
     mb.generateHalo()
 
     pg.mpiComm.blockComm.setBlockCommunication(mb)
