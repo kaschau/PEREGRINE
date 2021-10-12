@@ -39,8 +39,8 @@ class solverFace(topologyFace):
         # Face slices
         smallS0 = range(ng - 1, -1, -1)
         smallS2 = range(ng + 1, 2 * ng + 1)
-        largeS0 = range(-(ng + 2), -(2 * ng + 2), -1)
-        largeS2 = range(-ng, 0)
+        largeS0 = range(-ng, 0)
+        largeS2 = range(-(ng + 2), -(2 * ng + 2), -1)
         if nface == 1:
             self.s0_ = [s_[i, :, :] for i in smallS0]
             self.s1_ = s_[ng, :, :]
@@ -192,7 +192,7 @@ class solverFace(topologyFace):
             indx = 1
         elif self.nface in [5, 6]:
             indx = 2
-        if self.orientation[indx] in [4, 5, 6]:
+        if self.orientation[indx] in ['4', '5', '6']:
             self.sliceS3.reverse()
             self.sliceS4.reverse()
 
