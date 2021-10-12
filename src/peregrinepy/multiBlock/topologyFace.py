@@ -2,6 +2,8 @@ class topologyFace:
 
     __slots__ = ("_nface", "_bcFam", "_bcType", "_neighbor", "_orientation")
 
+    faceType = "topology"
+
     def __init__(self, nface):
         assert 1 <= nface <= 6, "nface must be between (1,6)"
 
@@ -43,7 +45,8 @@ class topologyFace:
             raise TypeError(f"bcType must be a string not {tV}")
         validBcTypes = (
             # Interior, periodic
-            "b0", "b1",
+            "b0",
+            "b1",
             # Inlets
             "constantVelocitySubsonicInlet",
             # Exits
@@ -54,8 +57,12 @@ class topologyFace:
             "adiabaticMovingWall",
             "isoTMovingWall",
         )
-        assert value in validBcTypes, f"{value} is not a valid bcType. Must be one of {validBcTypes}"
+        assert (
+            value in validBcTypes
+        ), f"{value} is not a valid bcType. Must be one of {validBcTypes}"
         self._bcType = value
+        if self.faceType == "solver":
+            self.setBcFunc()
 
     @property
     def neighbor(self):
