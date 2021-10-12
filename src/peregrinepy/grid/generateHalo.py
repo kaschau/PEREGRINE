@@ -1,311 +1,159 @@
-from numpy import s_
+import numpy as np
+
+s_ = np.s_
 
 
 def generateHalo(blk):
 
-    for var in ["x", "y", "z"]:
-        # face1
-        fs0_ = s_[0, 1 : blk.nj + 1, 1 : blk.nk + 1]
-        fs1_ = s_[1, 1 : blk.nj + 1, 1 : blk.nk + 1]
-        fs2_ = s_[2, 1 : blk.nj + 1, 1 : blk.nk + 1]
+    assert blk.blockType == "solver", "Only solver blocks can generate halos."
+
+    ng = blk.ng
+
+    fM = {}
+    shapes = (
+        (blk.nj, blk.nk),
+        (blk.nj, blk.nk),
+        (blk.ni, blk.nk),
+        (blk.ni, blk.nk),
+        (blk.ni, blk.nj),
+        (blk.ni, blk.nj),
+    )
+
+    # Construct masks of the faces, edges, and corners.
+    for i, shape in zip(range(6), shapes):
+        face = i + 1
+        fM[face] = {}
+        fM[face]["faceMask"] = np.zeros((shape[0] + 2 * ng, shape[1] + 2 * ng))
+        f = fM[face]["faceMask"]
+        f[ng : shape[0] + ng, ng : shape[1] + ng] = 1.0
+        fM[face]["faceMask"] = np.ma.make_mask(f)
+
+        fM[face]["edgeMask"] = np.zeros((shape[0] + 2 * ng, shape[1] + 2 * ng))
+        e = fM[face]["edgeMask"]
+        e[0:ng, ng : shape[1] + ng] = 1.0
+        e[ng : shape[0] + ng, 0:ng] = 1.0
+        e[-ng::, ng : shape[1] + ng] = 1.0
+        e[ng : shape[0] + ng, -ng::] = 1.0
+        fM[face]["edgeMask"] = np.ma.make_mask(e)
+
+        fM[face]["cornerMask"] = np.zeros((shape[0] + 2 * ng, shape[1] + 2 * ng))
+        c = fM[face]["cornerMask"]
+        c[0:ng, 0:ng] = 1.0
+        c[0:ng, -ng::] = 1.0
+        c[-ng::, 0:ng] = 1.0
+        c[-ng::, -ng::] = 1.0
+        fM[face]["cornerMask"] = np.ma.make_mask(c)
+
+    varis = ["x", "y", "z"]
+
+    # First make sure that the halo coordinates are zero
+    for i, var in enumerate(varis):
         x = blk.array[var]
-        x[fs0_] = 2.0 * x[fs1_] - x[fs2_]
+        x[0:ng, :, :] = 0.0
+        x[-ng::, :, :] = 0.0
+        x[:, 0:ng, :] = 0.0
+        x[:, -ng::, :] = 0.0
+        x[:, :, 0:ng] = 0.0
+        x[:, :, -ng::] = 0.0
 
-        # face2
-        fs0_ = s_[-1, 1 : blk.nj + 1, 1 : blk.nk + 1]
-        fs1_ = s_[-2, 1 : blk.nj + 1, 1 : blk.nk + 1]
-        fs2_ = s_[-3, 1 : blk.nj + 1, 1 : blk.nk + 1]
+    # All faces
+    for i, var in enumerate(varis):
         x = blk.array[var]
-        x[fs0_] = 2.0 * x[fs1_] - x[fs2_]
+        for n in range(ng):
+            s0 = ng - n - 1
+            s1 = ng
+            s2 = ng + n + 1
+            # face 1
+            mask = fM[1]["faceMask"]
+            x[s0, :, :][mask] = 2.0 * x[s1, :, :][mask] - x[s2, :, :][mask]
+            # face 3
+            mask = fM[3]["faceMask"]
+            x[:, s0, :][mask] = 2.0 * x[:, s1, :][mask] - x[:, s2, :][mask]
+            # face 5
+            mask = fM[5]["faceMask"]
+            x[:, :, s0][mask] = 2.0 * x[:, :, s1][mask] - x[:, :, s2][mask]
 
-        # face3
-        fs0_ = s_[1 : blk.ni + 1, 0, 1 : blk.nk + 1]
-        fs1_ = s_[1 : blk.ni + 1, 1, 1 : blk.nk + 1]
-        fs2_ = s_[1 : blk.ni + 1, 2, 1 : blk.nk + 1]
+            s0 = -ng + n
+            s1 = -ng - 1
+            s2 = -ng - n - 2
+            # face 2
+            mask = fM[2]["faceMask"]
+            x[s0, :, :][mask] = 2.0 * x[s1, :, :][mask] - x[s2, :, :][mask]
+            # face 4
+            mask = fM[4]["faceMask"]
+            x[:, s0, :][mask] = 2.0 * x[:, s1, :][mask] - x[:, s2, :][mask]
+            # face 6
+            mask = fM[6]["faceMask"]
+            x[:, :, s0][mask] = 2.0 * x[:, :, s1][mask] - x[:, :, s2][mask]
+
+    # All edges
+    for i, var in enumerate(varis):
         x = blk.array[var]
-        x[fs0_] = 2.0 * x[fs1_] - x[fs2_]
+        for n in range(ng):
+            s0 = ng - n - 1
+            s1 = ng
+            s2 = ng + n + 1
+            # face 1
+            mask = fM[1]["edgeMask"]
+            x[s0, :, :][mask] += 0.5 * (2.0 * x[s1, :, :][mask] - x[s2, :, :][mask])
+            # face 3
+            mask = fM[3]["edgeMask"]
+            x[:, s0, :][mask] += 0.5 * (2.0 * x[:, s1, :][mask] - x[:, s2, :][mask])
+            # face 5
+            mask = fM[5]["edgeMask"]
+            x[:, :, s0][mask] += 0.5 * (2.0 * x[:, :, s1][mask] - x[:, :, s2][mask])
 
-        # face4
-        fs0_ = s_[1 : blk.ni + 1, -1, 1 : blk.nk + 1]
-        fs1_ = s_[1 : blk.ni + 1, -2, 1 : blk.nk + 1]
-        fs2_ = s_[1 : blk.ni + 1, -3, 1 : blk.nk + 1]
+            s0 = -ng + n
+            s1 = -ng - 1
+            s2 = -ng - n - 2
+            # face 2
+            mask = fM[2]["edgeMask"]
+            x[s0, :, :][mask] += 0.5 * (2.0 * x[s1, :, :][mask] - x[s2, :, :][mask])
+            # face 4
+            mask = fM[4]["edgeMask"]
+            x[:, s0, :][mask] += 0.5 * (2.0 * x[:, s1, :][mask] - x[:, s2, :][mask])
+            # face 6
+            mask = fM[6]["edgeMask"]
+            x[:, :, s0][mask] += 0.5 * (2.0 * x[:, :, s1][mask] - x[:, :, s2][mask])
+
+    # All corners
+    for i, var in enumerate(varis):
         x = blk.array[var]
-        x[fs0_] = 2.0 * x[fs1_] - x[fs2_]
+        for n in range(ng):
+            s0 = ng - n - 1
+            s1 = ng
+            s2 = ng + n + 1
+            # face 1
+            mask = fM[1]["cornerMask"]
+            x[s0, :, :][mask] += (
+                1.0 / 3.0 * (2.0 * x[s1, :, :][mask] - x[s2, :, :][mask])
+            )
+            # face 3
+            mask = fM[3]["cornerMask"]
+            x[:, s0, :][mask] += (
+                1.0 / 3.0 * (2.0 * x[:, s1, :][mask] - x[:, s2, :][mask])
+            )
+            # face 5
+            mask = fM[5]["cornerMask"]
+            x[:, :, s0][mask] += (
+                1.0 / 3.0 * (2.0 * x[:, :, s1][mask] - x[:, :, s2][mask])
+            )
 
-        # face5
-        fs0_ = s_[1 : blk.ni + 1, 1 : blk.nj + 1, 0]
-        fs1_ = s_[1 : blk.ni + 1, 1 : blk.nj + 1, 1]
-        fs2_ = s_[1 : blk.ni + 1, 1 : blk.nj + 1, 2]
-        x = blk.array[var]
-        x[fs0_] = 2.0 * x[fs1_] - x[fs2_]
-
-        # face6
-        fs0_ = s_[1 : blk.ni + 1, 1 : blk.nj + 1, -1]
-        fs1_ = s_[1 : blk.ni + 1, 1 : blk.nj + 1, -2]
-        fs2_ = s_[1 : blk.ni + 1, 1 : blk.nj + 1, -3]
-        x = blk.array[var]
-        x[fs0_] = 2.0 * x[fs1_] - x[fs2_]
-
-        # edge13
-        fs10_ = s_[0, 0, 1 : blk.nk + 1]
-        fs11_ = s_[1, 0, 1 : blk.nk + 1]
-        fs12_ = s_[2, 0, 1 : blk.nk + 1]
-        fs21_ = s_[0, 1, 1 : blk.nk + 1]
-        fs22_ = s_[0, 2, 1 : blk.nk + 1]
-
-        x = blk.array[var]
-        x[fs10_] = 0.5 * ((2.0 * x[fs11_] - x[fs12_]) + (2.0 * x[fs21_] - x[fs22_]))
-
-        # edge14
-        fs10_ = s_[0, -1, 1 : blk.nk + 1]
-        fs11_ = s_[1, -1, 1 : blk.nk + 1]
-        fs12_ = s_[2, -1, 1 : blk.nk + 1]
-        fs21_ = s_[0, -2, 1 : blk.nk + 1]
-        fs22_ = s_[0, -3, 1 : blk.nk + 1]
-
-        x = blk.array[var]
-        x[fs10_] = 0.5 * ((2.0 * x[fs11_] - x[fs12_]) + (2.0 * x[fs21_] - x[fs22_]))
-
-        # edge15
-        fs10_ = s_[0, 1 : blk.nj + 1, 0]
-        fs11_ = s_[1, 1 : blk.nj + 1, 0]
-        fs12_ = s_[2, 1 : blk.nj + 1, 0]
-        fs21_ = s_[0, 1 : blk.nj + 1, 1]
-        fs22_ = s_[0, 1 : blk.nj + 1, 2]
-
-        x = blk.array[var]
-        x[fs10_] = 0.5 * ((2.0 * x[fs11_] - x[fs12_]) + (2.0 * x[fs21_] - x[fs22_]))
-
-        # edge16
-        fs10_ = s_[0, 1 : blk.nj + 1, -1]
-        fs11_ = s_[1, 1 : blk.nj + 1, -1]
-        fs12_ = s_[2, 1 : blk.nj + 1, -1]
-        fs21_ = s_[0, 1 : blk.nj + 1, -2]
-        fs22_ = s_[0, 1 : blk.nj + 1, -3]
-
-        x = blk.array[var]
-        x[fs10_] = 0.5 * ((2.0 * x[fs11_] - x[fs12_]) + (2.0 * x[fs21_] - x[fs22_]))
-
-        # edge23
-        fs10_ = s_[-1, 0, 1 : blk.nk + 1]
-        fs11_ = s_[-2, 0, 1 : blk.nk + 1]
-        fs12_ = s_[-3, 0, 1 : blk.nk + 1]
-        fs21_ = s_[-1, 1, 1 : blk.nk + 1]
-        fs22_ = s_[-1, 2, 1 : blk.nk + 1]
-
-        x = blk.array[var]
-        x[fs10_] = 0.5 * ((2.0 * x[fs11_] - x[fs12_]) + (2.0 * x[fs21_] - x[fs22_]))
-
-        # edge24
-        fs10_ = s_[-1, -1, 1 : blk.nk + 1]
-        fs11_ = s_[-2, -1, 1 : blk.nk + 1]
-        fs12_ = s_[-3, -1, 1 : blk.nk + 1]
-        fs21_ = s_[-1, -2, 1 : blk.nk + 1]
-        fs22_ = s_[-1, -3, 1 : blk.nk + 1]
-
-        x = blk.array[var]
-        x[fs10_] = 0.5 * ((2.0 * x[fs11_] - x[fs12_]) + (2.0 * x[fs21_] - x[fs22_]))
-
-        # edge25
-        fs10_ = s_[-1, 1 : blk.nj + 1, 0]
-        fs11_ = s_[-2, 1 : blk.nj + 1, 0]
-        fs12_ = s_[-3, 1 : blk.nj + 1, 0]
-        fs21_ = s_[-1, 1 : blk.nj + 1, 1]
-        fs22_ = s_[-1, 1 : blk.nj + 1, 2]
-
-        x = blk.array[var]
-        x[fs10_] = 0.5 * ((2.0 * x[fs11_] - x[fs12_]) + (2.0 * x[fs21_] - x[fs22_]))
-
-        # edge26
-        fs10_ = s_[-1, 1 : blk.nj + 1, -1]
-        fs11_ = s_[-2, 1 : blk.nj + 1, -1]
-        fs12_ = s_[-3, 1 : blk.nj + 1, -1]
-        fs21_ = s_[-1, 1 : blk.nj + 1, -2]
-        fs22_ = s_[-1, 1 : blk.nj + 1, -3]
-
-        x = blk.array[var]
-        x[fs10_] = 0.5 * ((2.0 * x[fs11_] - x[fs12_]) + (2.0 * x[fs21_] - x[fs22_]))
-
-        # edge35
-        fs10_ = s_[1 : blk.ni + 1, 0, 0]
-        fs11_ = s_[1 : blk.ni + 1, 1, 0]
-        fs12_ = s_[1 : blk.ni + 1, 2, 0]
-        fs21_ = s_[1 : blk.ni + 1, 0, 1]
-        fs22_ = s_[1 : blk.ni + 1, 0, 2]
-
-        x = blk.array[var]
-        x[fs10_] = 0.5 * ((2.0 * x[fs11_] - x[fs12_]) + (2.0 * x[fs21_] - x[fs22_]))
-
-        # edge36
-        fs10_ = s_[1 : blk.ni + 1, 0, -1]
-        fs11_ = s_[1 : blk.ni + 1, 1, -1]
-        fs12_ = s_[1 : blk.ni + 1, 2, -1]
-        fs21_ = s_[1 : blk.ni + 1, 0, -2]
-        fs22_ = s_[1 : blk.ni + 1, 0, -3]
-
-        x = blk.array[var]
-        x[fs10_] = 0.5 * ((2.0 * x[fs11_] - x[fs12_]) + (2.0 * x[fs21_] - x[fs22_]))
-
-        # edge45
-        fs10_ = s_[1 : blk.ni + 1, -1, 0]
-        fs11_ = s_[1 : blk.ni + 1, -2, 0]
-        fs12_ = s_[1 : blk.ni + 1, -3, 0]
-        fs21_ = s_[1 : blk.ni + 1, -1, 1]
-        fs22_ = s_[1 : blk.ni + 1, -1, 2]
-
-        x = blk.array[var]
-        x[fs10_] = 0.5 * ((2.0 * x[fs11_] - x[fs12_]) + (2.0 * x[fs21_] - x[fs22_]))
-
-        # edge46
-        fs10_ = s_[1 : blk.ni + 1, -1, -1]
-        fs11_ = s_[1 : blk.ni + 1, -2, -1]
-        fs12_ = s_[1 : blk.ni + 1, -3, -1]
-        fs21_ = s_[1 : blk.ni + 1, -1, -2]
-        fs22_ = s_[1 : blk.ni + 1, -1, -3]
-
-        x = blk.array[var]
-        x[fs10_] = 0.5 * ((2.0 * x[fs11_] - x[fs12_]) + (2.0 * x[fs21_] - x[fs22_]))
-
-        # corner135
-        fs10_ = s_[0, 0, 0]
-        fs11_ = s_[1, 0, 0]
-        fs12_ = s_[2, 0, 0]
-
-        fs21_ = s_[0, 1, 0]
-        fs22_ = s_[0, 2, 0]
-
-        fs31_ = s_[0, 0, 1]
-        fs32_ = s_[0, 0, 2]
-
-        x = blk.array[var]
-        x[fs10_] = (1.0 / 3.0) * (
-            (2.0 * x[fs11_] - x[fs12_])
-            + (2.0 * x[fs21_] - x[fs22_])
-            + (2.0 * x[fs31_] - x[fs32_])
-        )
-
-        # corner145
-        fs10_ = s_[0, -1, 0]
-        fs11_ = s_[1, -1, 0]
-        fs12_ = s_[2, -1, 0]
-
-        fs21_ = s_[0, -2, 0]
-        fs22_ = s_[0, -3, 0]
-
-        fs31_ = s_[0, -1, 1]
-        fs32_ = s_[0, -1, 2]
-
-        x = blk.array[var]
-        x[fs10_] = (1.0 / 3.0) * (
-            (2.0 * x[fs11_] - x[fs12_])
-            + (2.0 * x[fs21_] - x[fs22_])
-            + (2.0 * x[fs31_] - x[fs32_])
-        )
-
-        # corner136
-        fs10_ = s_[0, 0, -1]
-        fs11_ = s_[1, 0, -1]
-        fs12_ = s_[2, 0, -1]
-
-        fs21_ = s_[0, 1, -1]
-        fs22_ = s_[0, 2, -1]
-
-        fs31_ = s_[0, 0, -2]
-        fs32_ = s_[0, 0, -3]
-
-        x = blk.array[var]
-        x[fs10_] = (1.0 / 3.0) * (
-            (2.0 * x[fs11_] - x[fs12_])
-            + (2.0 * x[fs21_] - x[fs22_])
-            + (2.0 * x[fs31_] - x[fs32_])
-        )
-
-        # corner146
-        fs10_ = s_[0, -1, -1]
-        fs11_ = s_[1, -1, -1]
-        fs12_ = s_[2, -1, -1]
-
-        fs21_ = s_[0, -2, -1]
-        fs22_ = s_[0, -3, -1]
-
-        fs31_ = s_[0, -1, -2]
-        fs32_ = s_[0, -1, -3]
-
-        x = blk.array[var]
-        x[fs10_] = (1.0 / 3.0) * (
-            (2.0 * x[fs11_] - x[fs12_])
-            + (2.0 * x[fs21_] - x[fs22_])
-            + (2.0 * x[fs31_] - x[fs32_])
-        )
-
-        # corner235
-        fs10_ = s_[-1, 0, 0]
-        fs11_ = s_[-2, 0, 0]
-        fs12_ = s_[-3, 0, 0]
-
-        fs21_ = s_[-1, 1, 0]
-        fs22_ = s_[-1, 2, 0]
-
-        fs31_ = s_[-1, 0, 1]
-        fs32_ = s_[-1, 0, 2]
-
-        x = blk.array[var]
-        x[fs10_] = (1.0 / 3.0) * (
-            (2.0 * x[fs11_] - x[fs12_])
-            + (2.0 * x[fs21_] - x[fs22_])
-            + (2.0 * x[fs31_] - x[fs32_])
-        )
-
-        # corner245
-        fs10_ = s_[-1, -1, 0]
-        fs11_ = s_[-2, -1, 0]
-        fs12_ = s_[-3, -1, 0]
-
-        fs21_ = s_[-1, -2, 0]
-        fs22_ = s_[-1, -3, 0]
-
-        fs31_ = s_[-1, -1, 1]
-        fs32_ = s_[-1, -1, 2]
-
-        x = blk.array[var]
-        x[fs10_] = (1.0 / 3.0) * (
-            (2.0 * x[fs11_] - x[fs12_])
-            + (2.0 * x[fs21_] - x[fs22_])
-            + (2.0 * x[fs31_] - x[fs32_])
-        )
-
-        # corner236
-        fs10_ = s_[-1, 0, -1]
-        fs11_ = s_[-2, 0, -1]
-        fs12_ = s_[-3, 0, -1]
-
-        fs21_ = s_[-1, 1, -1]
-        fs22_ = s_[-1, 2, -1]
-
-        fs31_ = s_[-1, 0, -2]
-        fs32_ = s_[-1, 0, -3]
-
-        x = blk.array[var]
-        x[fs10_] = (1.0 / 3.0) * (
-            (2.0 * x[fs11_] - x[fs12_])
-            + (2.0 * x[fs21_] - x[fs22_])
-            + (2.0 * x[fs31_] - x[fs32_])
-        )
-
-        # corner246
-        fs10_ = s_[-1, -1, -1]
-        fs11_ = s_[-2, -1, -1]
-        fs12_ = s_[-3, -1, -1]
-
-        fs21_ = s_[-1, -2, -1]
-        fs22_ = s_[-1, -3, -1]
-
-        fs31_ = s_[-1, -1, -2]
-        fs32_ = s_[-1, -1, -3]
-
-        x = blk.array[var]
-        x[fs10_] = (1.0 / 3.0) * (
-            (2.0 * x[fs11_] - x[fs12_])
-            + (2.0 * x[fs21_] - x[fs22_])
-            + (2.0 * x[fs31_] - x[fs32_])
-        )
+            s0 = -ng + n
+            s1 = -ng - 1
+            s2 = -ng - n - 2
+            # face 2
+            mask = fM[2]["cornerMask"]
+            x[s0, :, :][mask] += (
+                1.0 / 3.0 * (2.0 * x[s1, :, :][mask] - x[s2, :, :][mask])
+            )
+            # face 4
+            mask = fM[4]["cornerMask"]
+            x[:, s0, :][mask] += (
+                1.0 / 3.0 * (2.0 * x[:, s1, :][mask] - x[:, s2, :][mask])
+            )
+            # face 6
+            mask = fM[6]["cornerMask"]
+            x[:, :, s0][mask] += (
+                1.0 / 3.0 * (2.0 * x[:, :, s1][mask] - x[:, :, s2][mask])
+            )

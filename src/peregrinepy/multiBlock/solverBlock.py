@@ -19,8 +19,6 @@ that a multiBlock datasets (see multiBlock.py) can be composed of.
 
 class solverBlock(restartBlock, block_):
     """
-    block object is the most basic object a raptorpy.multiBlock.dataset
-    (or one of its descendants) can be.
 
     Attributes
     ---------
@@ -29,16 +27,18 @@ class solverBlock(restartBlock, block_):
 
     blockType = "solver"
 
-    def __init__(self, nblki, sp_names):
+    def __init__(self, nblki, sp_names, ng):
         # The c++ stuff must be instantiated first,
         # so that inhereted python side
         # attributes are assigned values, not defined
         # in the upstream __init__s
         block_.__init__(self)
+        self.ng = ng
+
         restartBlock.__init__(self, nblki, sp_names)
 
         for fn in [1, 2, 3, 4, 5, 6]:
-            self.faces.append(solverFace(fn))
+            self.faces.append(solverFace(fn, self.ng))
 
         self.ne = 5 + self.ns - 1
 
@@ -80,15 +80,37 @@ class solverBlock(restartBlock, block_):
         else:
             raise ValueError("Are we ready for that?")
 
-        ccshape = [self.ni + 1, self.nj + 1, self.nk + 1]
-        ifshape = [self.ni + 2, self.nj + 1, self.nk + 1]
-        jfshape = [self.ni + 1, self.nj + 2, self.nk + 1]
-        kfshape = [self.ni + 1, self.nj + 1, self.nk + 2]
+        ng = self.ng
 
-        cQshape = [self.ni + 1, self.nj + 1, self.nk + 1, 5 + self.ns - 1]
-        ifQshape = [self.ni + 2, self.nj + 1, self.nk + 1, 5 + self.ns - 1]
-        jfQshape = [self.ni + 1, self.nj + 2, self.nk + 1, 5 + self.ns - 1]
-        kfQshape = [self.ni + 1, self.nj + 1, self.nk + 2, 5 + self.ns - 1]
+        ccshape = [self.ni + 2 * ng - 1, self.nj + 2 * ng - 1, self.nk + 2 * ng - 1]
+        ifshape = [self.ni + 2 * ng, self.nj + 2 * ng - 1, self.nk + 2 * ng - 1]
+        jfshape = [self.ni + 1, self.nj + 2 * ng, self.nk + 2 * ng - 1]
+        kfshape = [self.ni + 2 * ng - 1, self.nj + 2 * ng - 1, self.nk + 2 * ng]
+
+        cQshape = [
+            self.ni + 2 * ng - 1,
+            self.nj + 2 * ng - 1,
+            self.nk + 2 * ng - 1,
+            5 + self.ns - 1,
+        ]
+        ifQshape = [
+            self.ni + 2 * ng,
+            self.nj + 2 * ng - 1,
+            self.nk + 2 * ng - 1,
+            5 + self.ns - 1,
+        ]
+        jfQshape = [
+            self.ni + 2 * ng - 1,
+            self.nj + 2 * ng,
+            self.nk + 2 * ng - 1,
+            5 + self.ns - 1,
+        ]
+        kfQshape = [
+            self.ni + 2 * ng - 1,
+            self.nj + 2 * ng - 1,
+            self.nk + 2 * ng,
+            5 + self.ns - 1,
+        ]
 
         def npOrKokkos(names, shape):
             for name in names:
@@ -123,7 +145,7 @@ class solverBlock(restartBlock, block_):
         # ------------------------------------------------------------------- #
         #       Primary grid coordinates
         # ------------------------------------------------------------------- #
-        shape = [self.ni + 2, self.nj + 2, self.nk + 2]
+        shape = [self.ni + 2 * ng, self.nj + 2 * ng, self.nk + 2 * ng]
         npOrKokkos(["x", "y", "z"], shape)
 
         # ------------------------------------------------------------------- #
@@ -173,20 +195,35 @@ class solverBlock(restartBlock, block_):
         # ------------------------------------------------------------------- #
         #       Thermo
         # ------------------------------------------------------------------- #
-        shape = [self.ni + 1, self.nj + 1, self.nk + 1, 5 + self.ns]
+        shape = [
+            self.ni + 2 * ng - 1,
+            self.nj + 2 * ng - 1,
+            self.nk + 2 * ng - 1,
+            5 + self.ns,
+        ]
         npOrKokkos(["qh"], shape)
 
         # ------------------------------------------------------------------- #
         #       Transport
         # ------------------------------------------------------------------- #
-        shape = [self.ni + 1, self.nj + 1, self.nk + 1, 2 + self.ns - 1]
+        shape = [
+            self.ni + 2 * ng - 1,
+            self.nj + 2 * ng - 1,
+            self.nk + 2 * ng - 1,
+            2 + self.ns - 1,
+        ]
         npOrKokkos(["qt"], shape)
 
         # ------------------------------------------------------------------- #
         #       Chemistry
         # ------------------------------------------------------------------- #
         if config["thermochem"]["chemistry"]:
-            shape = [self.ni + 1, self.nj + 1, self.nk + 1, 1 + self.ns]
+            shape = [
+                self.ni + 2 * ng - 1,
+                self.nj + 2 * ng - 1,
+                self.nk + 2 * ng - 1,
+                1 + self.ns,
+            ]
             npOrKokkos(["omega"], shape)
 
         # ------------------------------------------------------------------- #

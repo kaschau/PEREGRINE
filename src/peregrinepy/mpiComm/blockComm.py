@@ -20,7 +20,9 @@ def communicate(mb, varis):
                 recv = face.recvBuffer4 if ndim == 4 else face.recvBuffer3
                 ssize = recv.size
                 reqs.append(
-                    comm.Irecv([recv, ssize, MPIDOUBLE], source=face.commRank, tag=face.tagR)
+                    comm.Irecv(
+                        [recv, ssize, MPIDOUBLE], source=face.commRank, tag=face.tagR
+                    )
                 )
 
         # Post non-blocking sends
@@ -35,7 +37,8 @@ def communicate(mb, varis):
                     if ndim == 4
                     else (face.sendBuffer3, face.sliceS3)
                 )
-                send[:] = face.orient(blk.array[var][sliceS])
+                for i, sS in enumerate(sliceS):
+                    send[i] = face.orient(blk.array[var][sS])
                 ssize = send.size
                 comm.Send([send, ssize, MPIDOUBLE], dest=face.commRank, tag=face.tagS)
 
@@ -52,7 +55,8 @@ def communicate(mb, varis):
                     if ndim == 4
                     else (face.recvBuffer3, face.sliceR3)
                 )
-                blk.array[var][sliceR] = recv[:]
+                for i, sR in enumerate(sliceR):
+                    blk.array[var][sR] = recv[i]
 
         comm.Barrier()
 

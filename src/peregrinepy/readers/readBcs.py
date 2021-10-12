@@ -8,11 +8,11 @@ def readBcs(mb, pathToFile):
     """
     This function parses a RAPTOR connectivity file given by
     file_path and adds the connectivity information to the
-    supplied raptorpy.multiBlock object
+    supplied peregrinepy.multiBlock object
 
     Parameters
     ----------
-    mb_data : raptorpy.multiBlock.dataset (or a descendant)
+    mb_data : peregrinepy.multiBlock.dataset (or a descendant)
 
     file_path : str
         Path to the conn.inp file to be read in

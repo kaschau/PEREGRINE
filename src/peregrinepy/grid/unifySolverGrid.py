@@ -45,25 +45,26 @@ def unifySolverGrid(mb):
                     neighbor = face.neighbor
                     commRank = face.commRank
                     tag = int(f"1{blk.nblki}2{neighbor}1{face.neighborFace}")
-                    face.sendBuffer3[:] = face.orient(
-                        blk.array[var][face.s2_] - blk.array[var][face.s1_]
-                    )
+                    for i, sS in enumerate(face.sliceS3):
+                        face.sendBuffer3[i] = face.orient(
+                            blk.array[var][sS] - blk.array[var][face.s1_]
+                        )
                     ssize = face.sendBuffer3.size
                     comm.Send(
                         [face.sendBuffer3, ssize, MPIDOUBLE], dest=commRank, tag=tag
                     )
 
             # wait and assign
-            count = 0
+            reqs = iter(reqs)
             for blk in mb:
                 for face in blk.faces:
                     bc = face.bcType
                     if bc != "b1":
                         continue
-                    Request.Wait(reqs[count])
-                    blk.array[var][face.s0_] = (
-                        blk.array[var][face.s1_] + face.recvBuffer3[:]
-                    )
-                    count += 1
+                    Request.Wait(reqs.__next__())
+                    for i, sR in enumerate(face.sliceR3):
+                        blk.array[var][sR] = (
+                            blk.array[var][face.s1_] + face.recvBuffer3[i]
+                        )
 
             comm.Barrier()

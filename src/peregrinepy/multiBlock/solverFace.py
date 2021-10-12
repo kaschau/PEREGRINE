@@ -9,6 +9,7 @@ s_ = np.s_
 class solverFace(topologyFace):
 
     __slots__ = (
+        "ng",
         "s0_",
         "s1_",
         "s2_",
@@ -28,35 +29,42 @@ class solverFace(topologyFace):
         "recvBuffer4",
     )
 
-    def __init__(self, nface):
+    def __init__(self, nface, ng=None):
         super().__init__(nface)
         assert 1 <= nface <= 6, "nface must be between (1,6)"
+        assert ng is not None, "ng must be specified to create a solverFace"
+
+        self.ng = ng
 
         # Face slices
+        smallS0 = range(ng - 1, -1, -1)
+        smallS2 = range(ng + 1, 2 * ng + 1)
+        largeS0 = range(-ng, 0)
+        largeS2 = range(-(ng + 2), -(2 * ng + 2), -1)
         if nface == 1:
-            self.s0_ = s_[0, :, :]
-            self.s1_ = s_[1, :, :]
-            self.s2_ = s_[2, :, :]
-        if nface == 2:
-            self.s0_ = s_[-1, :, :]
-            self.s1_ = s_[-2, :, :]
-            self.s2_ = s_[-3, :, :]
-        if nface == 3:
-            self.s0_ = s_[:, 0, :]
-            self.s1_ = s_[:, 1, :]
-            self.s2_ = s_[:, 2, :]
-        if nface == 4:
-            self.s0_ = s_[:, -1, :]
-            self.s1_ = s_[:, -2, :]
-            self.s2_ = s_[:, -3, :]
-        if nface == 5:
-            self.s0_ = s_[:, :, 0]
-            self.s1_ = s_[:, :, 1]
-            self.s2_ = s_[:, :, 2]
-        if nface == 6:
-            self.s0_ = s_[:, :, -1]
-            self.s1_ = s_[:, :, -2]
-            self.s2_ = s_[:, :, -3]
+            self.s0_ = [s_[i, :, :] for i in smallS0]
+            self.s1_ = s_[ng, :, :]
+            self.s2_ = [s_[i, :, :] for i in smallS2]
+        elif nface == 2:
+            self.s0_ = [s_[i, :, :] for i in largeS0]
+            self.s1_ = s_[-(ng + 1), :, :]
+            self.s2_ = [s_[i, :, :] for i in largeS2]
+        elif nface == 3:
+            self.s0_ = [s_[:, i, :] for i in smallS0]
+            self.s1_ = s_[:, ng, :]
+            self.s2_ = [s_[:, i, :] for i in smallS2]
+        elif nface == 4:
+            self.s0_ = [s_[:, i, :] for i in largeS0]
+            self.s1_ = s_[:, -(ng + 1), :]
+            self.s2_ = [s_[:, i, :] for i in largeS2]
+        elif nface == 5:
+            self.s0_ = [s_[:, :, i] for i in smallS0]
+            self.s1_ = s_[:, :, ng]
+            self.s2_ = [s_[:, :, i] for i in smallS2]
+        elif nface == 6:
+            self.s0_ = [s_[:, :, i] for i in largeS0]
+            self.s1_ = s_[:, :, -(ng + 1)]
+            self.s2_ = [s_[:, :, i] for i in largeS2]
 
         # Boundary condition values
         self.bcVals = frozenDict({})
@@ -103,73 +111,101 @@ class solverFace(topologyFace):
     def setCommBuffers(self, ni, nj, nk, ne, nblki):
         assert (
             self.orient is not None
-        ), "Must set orientFun before commBuffers, or perhaps you are trying to set buffers for a non communication face."
+        ), "Must set orientFunc before commBuffers, or perhaps you are trying to set buffers for a non communication face."
+        assert self.ng is not None, "ng must be specified to setCommBuffers"
 
         # Send and Recv slices
-        # The order of the face slice list always goes from smallest index to
-        #  largest index, where each slice is a ghost layer.
+        # The order of the recieve slice list always goes from smallest index to
+        #  largest index. Send lists begin in the same way, however if the
+        #  orientation requires this order to be flipped such that
+        #  the recv buffer arrives in the appropriate order we will do that later
+        #  in the funciton. Also note that the send/recv buffers can be seen as list
+        #  of slices. I.e. recv[0] is the first slice recieved, recv[1] is the next
+        #  slice recieved. This way, we can still treat each slice as a 2d object for
+        #  reorientation purposes.
         #  o----------o----------o|x----------x----------x
         #  |          |           |           |          |
         #  | recv[0]  |  recv[1]  |  send[0]  |  send[1] |
         #  |          |           |           |          |
         #  o----------o----------o|x----------x----------x
+        ng = self.ng
+
+        smallSfp = list(range(ng + 1, 2 * ng + 1))
+        smallRfp = list(range(0, ng))
+        largeSfp = list(range(-(2 * ng + 1), -(ng + 1)))
+        largeRfp = list(range(-ng, 0))
+
+        smallSc = list(range(ng, 2 * ng))
+        smallRc = list(range(0, ng))
+        largeSc = list(range(-2 * ng, -ng))
+        largeRc = list(range(-ng, 0))
 
         if self.nface == 1:
-            self.sliceS3 = s_[2, :, :]
-            self.sliceS4 = s_[1, :, :, :]
-            commfpshape = (nj + 2, nk + 2)
-            commcshape = (nj + 1, nk + 1, ne)
-            self.sliceR3 = s_[0, :, :]
-            self.sliceR4 = s_[0, :, :, :]
+            self.sliceS3 = [s_[i, :, :] for i in smallSfp]
+            self.sliceS4 = [s_[i, :, :, :] for i in smallSc]
+            commfpshape = (ng, nj + 2 * ng, nk + 2 * ng)
+            commcshape = (ng, nj + 2 * ng - 1, nk + 2 * ng - 1, ne)
+            self.sliceR3 = [s_[i, :, :] for i in smallRfp]
+            self.sliceR4 = [s_[i, :, :, :] for i in smallRc]
         elif self.nface == 2:
-
-            self.sliceS3 = s_[-3, :, :]
-            self.sliceS4 = s_[-2, :, :, :]
-            commfpshape = (nj + 2, nk + 2)
-            commcshape = (nj + 1, nk + 1, ne)
-            self.sliceR3 = s_[-1, :, :]
-            self.sliceR4 = s_[-1, :, :, :]
-
+            self.sliceS3 = [s_[i, :, :] for i in largeSfp]
+            self.sliceS4 = [s_[i, :, :, :] for i in largeSc]
+            commfpshape = (ng, nj + 2 * ng, nk + 2 * ng)
+            commcshape = (ng, nj + 2 * ng - 1, nk + 2 * ng - 1, ne)
+            self.sliceR3 = [s_[i, :, :] for i in largeRfp]
+            self.sliceR4 = [s_[i, :, :, :] for i in largeRc]
         elif self.nface == 3:
-            self.sliceS3 = s_[:, 2, :]
-            self.sliceS4 = s_[:, 1, :, :]
-            commfpshape = (ni + 2, nk + 2)
-            commcshape = (ni + 1, nk + 1, ne)
-            self.sliceR3 = s_[:, 0, :]
-            self.sliceR4 = s_[:, 0, :, :]
-
+            self.sliceS3 = [s_[:, i, :] for i in smallSfp]
+            self.sliceS4 = [s_[:, i, :, :] for i in smallSc]
+            commfpshape = (ng, ni + 2 * ng, nk + 2 * ng)
+            commcshape = (ng, ni + 2 * ng - 1, nk + 2 * ng - 1, ne)
+            self.sliceR3 = [s_[:, i, :] for i in smallRfp]
+            self.sliceR4 = [s_[:, i, :, :] for i in smallRc]
         elif self.nface == 4:
-            self.sliceS3 = s_[:, -3, :]
-            self.sliceS4 = s_[:, -2, :, :]
-            commfpshape = (ni + 2, nk + 2)
-            commcshape = (ni + 1, nk + 1, ne)
-            self.sliceR3 = s_[:, -1, :]
-            self.sliceR4 = s_[:, -1, :, :]
-
+            self.sliceS3 = [s_[:, i, :] for i in largeSfp]
+            self.sliceS4 = [s_[:, i, :, :] for i in largeSc]
+            commfpshape = (ng, ni + 2 * ng, nk + 2 * ng)
+            commcshape = (ng, ni + 2 * ng - 1, nk + 2 * ng - 1, ne)
+            self.sliceR3 = [s_[:, i, :] for i in largeRfp]
+            self.sliceR4 = [s_[:, i, :, :] for i in largeRc]
         elif self.nface == 5:
-            self.sliceS3 = s_[:, :, 2]
-            self.sliceS4 = s_[:, :, 1]
-            commfpshape = (ni + 2, nj + 2)
-            commcshape = (ni + 1, nj + 1, ne)
-            self.sliceR3 = s_[:, :, 0]
-            self.sliceR4 = s_[:, :, 0, :]
-
+            self.sliceS3 = [s_[:, :, i] for i in smallSfp]
+            self.sliceS4 = [s_[:, :, i, :] for i in smallSc]
+            commfpshape = (ng, ni + 2 * ng, nj + 2 * ng)
+            commcshape = (ng, ni + 2 * ng - 1, nj + 2 * ng - 1, ne)
+            self.sliceR3 = [s_[:, :, i] for i in smallRfp]
+            self.sliceR4 = [s_[:, :, i, :] for i in smallRc]
         elif self.nface == 6:
-            self.sliceS3 = s_[:, :, -3]
-            self.sliceS4 = s_[:, :, -2, :]
-            commfpshape = (ni + 2, nj + 2)
-            commcshape = (ni + 1, nj + 1, ne)
-            self.sliceR3 = s_[:, :, -1]
-            self.sliceR4 = s_[:, :, -1, :]
+            self.sliceS3 = [s_[:, :, i] for i in largeSfp]
+            self.sliceS4 = [s_[:, :, i, :] for i in largeSc]
+            commfpshape = (ng, ni + 2 * ng, nj + 2 * ng)
+            commcshape = (ng, ni + 2 * ng - 1, nj + 2 * ng - 1, ne)
+            self.sliceR3 = [s_[:, :, i] for i in largeRfp]
+            self.sliceR4 = [s_[:, :, i, :] for i in largeRc]
+
+        # We reverse the order of the send slices if the face's neighbor
+        # and this face axis is counter aligned. That way the recv buffer
+        # arrives good to go.
+        if self.nface in [1, 2]:
+            indx = 0
+        elif self.nface in [3, 4]:
+            indx = 1
+        elif self.nface in [5, 6]:
+            indx = 2
+        if self.orientation[indx] in ['4', '5', '6']:
+            self.sliceS3.reverse()
+            self.sliceS4.reverse()
 
         # We send the data in the correct shape already
         # Face and point shape
-        self.sendBuffer3 = np.ascontiguousarray(self.orient(np.empty(commfpshape)))
+        temp = self.orient(np.empty(commfpshape[1::]))
+        self.sendBuffer3 = np.ascontiguousarray(np.empty(tuple([ng]) + temp.shape))
         # We revieve the data in the correct shape already
         self.recvBuffer3 = np.ascontiguousarray(np.empty(commfpshape))
 
         # Cell
-        self.sendBuffer4 = np.ascontiguousarray(self.orient(np.empty(commcshape)))
+        temp = self.orient(np.empty(commcshape[1::]))
+        self.sendBuffer4 = np.ascontiguousarray(np.empty(tuple([ng]) + temp.shape))
         # We revieve the data in the correct shape already
         self.recvBuffer4 = np.ascontiguousarray(np.empty(commcshape))
 

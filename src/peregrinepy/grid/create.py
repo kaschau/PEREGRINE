@@ -127,7 +127,7 @@ def cube(blk, origin, lengths, dimensions):
     Parameters
     ----------
 
-    blk : raptorpy.blocks.grid_block (or one of its descendants)
+    blk : peregrinepy.blocks.grid_block (or one of its descendants)
 
     origin : list, tuple
        List/tuple of length 3 containing the location of the origin of the cube to be created
@@ -147,6 +147,7 @@ def cube(blk, origin, lengths, dimensions):
     blk.ni = dimensions[0]
     blk.nj = dimensions[1]
     blk.nk = dimensions[2]
+    ng = blk.ng
 
     blk.initGridArrays()
 
@@ -155,7 +156,7 @@ def cube(blk, origin, lengths, dimensions):
     z = np.linspace(origin[2], origin[2] + lengths[2], dimensions[2], dtype=np.float64)
 
     if blk.blockType == "solver":
-        s_i = np.s_[1:-1, 1:-1, 1:-1]
+        s_i = np.s_[ng:-ng, ng:-ng, ng:-ng]
     else:
         s_i = np.s_[:, :, :]
 
@@ -175,7 +176,7 @@ def multiBlockCube(
     dimsPerBlock=[10, 10, 10],
 ):
 
-    """Function to populate the coordinate arrays of a raptorpy.multiBlock.grid (or one of its descendants) in the shape of a cube
+    """Function to populate the coordinate arrays of a peregrinepy.multiBlock.grid (or one of its descendants) in the shape of a cube
        with prescribed location, extents, and discretization split into as manj  blocks as mb.nblks. Will also update
        connectivity of interblock faces. If the input multiBlock object is a restart block the shape and size of the flow
        data arrays are also updated.
@@ -183,7 +184,7 @@ def multiBlockCube(
     Parameters
     ----------
 
-    mb : raptorpy.multiBlock.grid (or one of its descendants)
+    mb : peregrinepy.multiBlock.grid (or one of its descendants)
 
     origin : list, tuple
        List/tuple of length 3 containing the location of the origin of the ENTIRE cube to be created
@@ -243,13 +244,13 @@ def annulus(blk, p1, p2, p3, sweep, thickness, dimensions):
 
     raise ValueError("The annulus is jacked, needs to be updated.")
 
-    """Function to populate the coordinate arrays of a provided raptorpy.grid.grid_block in the shape of an annulus with prescribed location, extents, and discretization.
+    """Function to populate the coordinate arrays of a provided peregrinepy.grid.grid_block in the shape of an annulus with prescribed location, extents, and discretization.
     If the input multiBlock object is a restart block the shape and size of the flow data arrays are also updated.
 
     Parameters
     ----------
 
-    blk : raptorpy.blocks.grid_block (or one of its descendants)
+    blk : peregrinepy.blocks.grid_block (or one of its descendants)
 
     p1 : list, tuple
        List/tuple of length 3 containing the location of the origin of the annulus to be created, i.e.
@@ -357,7 +358,7 @@ def multiBlockAnnulus(
     mb, p1, p2, p3, sweep, thickness, mbDims, dimsPerBlock, periodic=False
 ):
 
-    """Function to populate the coordinate arrays of a raptorpy.multiBlock.grid (or one of its descendants) in the shape
+    """Function to populate the coordinate arrays of a peregrinepy.multiBlock.grid (or one of its descendants) in the shape
        of an annulus with prescribed location, extents, and discretization split into as manj blocks as mb.nblks.
        Will also update connectivity of interblock faces. If the input multiBlock object is a restart block the shape
        and size of the flow data arrays are also updated.
@@ -365,7 +366,7 @@ def multiBlockAnnulus(
     Parameters
     ----------
 
-    mb : raptorpy.multiBlock.grid (or one of its descendants)
+    mb : peregrinepy.multiBlock.grid (or one of its descendants)
 
     p1 : list, tuple
        List/tuple of length 3 containing the location of the origin of the annulus to be created, i.e.
