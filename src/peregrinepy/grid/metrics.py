@@ -154,7 +154,7 @@ def metrics(blk):
     ) / 3.0e0
 
     # ----------------------------------------------------------------------------
-    # Cell center transformation metrics (ferda RD diffusion operator)
+    # Cell center transformation metrics (ferda FD diffusion operator)
     # ----------------------------------------------------------------------------
 
     # cell corner
