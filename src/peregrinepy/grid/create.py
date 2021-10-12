@@ -147,7 +147,10 @@ def cube(blk, origin, lengths, dimensions):
     blk.ni = dimensions[0]
     blk.nj = dimensions[1]
     blk.nk = dimensions[2]
-    ng = blk.ng
+    if blk.blockType == "solver":
+        ng = blk.ng
+    else:
+        ng = 0
 
     blk.initGridArrays()
 
