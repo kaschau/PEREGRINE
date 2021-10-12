@@ -73,8 +73,7 @@ class solverFace(topologyFace):
         # Boundary function
         self.bcFunc = walls.adiabaticSlipWall
 
-        # MPI variables - only set for solver blocks, but we will store them
-        # all the time for now
+        # MPI variables
         self.commRank = None
 
         self.orient = None
