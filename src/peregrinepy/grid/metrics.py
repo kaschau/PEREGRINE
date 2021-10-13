@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def metrics(blk):
+def metrics(blk, fdOrder=2):
 
     x = blk.array["x"]
     y = blk.array["y"]
@@ -157,55 +157,121 @@ def metrics(blk):
     # Cell center transformation metrics (ferda FD diffusion operator)
     # ----------------------------------------------------------------------------
 
-    # cell corner
-    x1 = x[0:-1, 0:-1, 0:-1]
-    x2 = x[0:-1, 1::, 0:-1]
-    x3 = x[1::, 1::, 0:-1]
-    x4 = x[1::, 0:-1, 0:-1]
-    x5 = x[0:-1, 0:-1, 1::]
-    x6 = x[0:-1, 1::, 1::]
-    x7 = x[1::, 1::, 1::]
-    x8 = x[1::, 0:-1, 1::]
+    if fdOrder == 2:
+        # cell corner
+        x1 = x[0:-1, 0:-1, 0:-1]
+        x2 = x[0:-1, 1::, 0:-1]
+        x3 = x[1::, 1::, 0:-1]
+        x4 = x[1::, 0:-1, 0:-1]
+        x5 = x[0:-1, 0:-1, 1::]
+        x6 = x[0:-1, 1::, 1::]
+        x7 = x[1::, 1::, 1::]
+        x8 = x[1::, 0:-1, 1::]
 
-    y1 = y[0:-1, 0:-1, 0:-1]
-    y2 = y[0:-1, 1::, 0:-1]
-    y3 = y[1::, 1::, 0:-1]
-    y4 = y[1::, 0:-1, 0:-1]
-    y5 = y[0:-1, 0:-1, 1::]
-    y6 = y[0:-1, 1::, 1::]
-    y7 = y[1::, 1::, 1::]
-    y8 = y[1::, 0:-1, 1::]
+        y1 = y[0:-1, 0:-1, 0:-1]
+        y2 = y[0:-1, 1::, 0:-1]
+        y3 = y[1::, 1::, 0:-1]
+        y4 = y[1::, 0:-1, 0:-1]
+        y5 = y[0:-1, 0:-1, 1::]
+        y6 = y[0:-1, 1::, 1::]
+        y7 = y[1::, 1::, 1::]
+        y8 = y[1::, 0:-1, 1::]
 
-    z1 = z[0:-1, 0:-1, 0:-1]
-    z2 = z[0:-1, 1::, 0:-1]
-    z3 = z[1::, 1::, 0:-1]
-    z4 = z[1::, 0:-1, 0:-1]
-    z5 = z[0:-1, 0:-1, 1::]
-    z6 = z[0:-1, 1::, 1::]
-    z7 = z[1::, 1::, 1::]
-    z8 = z[1::, 0:-1, 1::]
+        z1 = z[0:-1, 0:-1, 0:-1]
+        z2 = z[0:-1, 1::, 0:-1]
+        z3 = z[1::, 1::, 0:-1]
+        z4 = z[1::, 0:-1, 0:-1]
+        z5 = z[0:-1, 0:-1, 1::]
+        z6 = z[0:-1, 1::, 1::]
+        z7 = z[1::, 1::, 1::]
+        z8 = z[1::, 0:-1, 1::]
 
-    # Derivative of (x,y,z) w.r.t. (E,N,X)
-    dxdE = 0.25 * ((x4 - x1) + (x8 - x5) + (x3 - x2) + (x7 - x6))
-    dydE = 0.25 * ((y4 - y1) + (y8 - y5) + (y3 - y2) + (y7 - y6))
-    dzdE = 0.25 * ((z4 - z1) + (z8 - z5) + (z3 - z2) + (z7 - z6))
+        # Derivative of (x,y,z) w.r.t. (E,N,X)
+        dxdE = 0.25 * ((x4 - x1) + (x8 - x5) + (x3 - x2) + (x7 - x6))
+        dydE = 0.25 * ((y4 - y1) + (y8 - y5) + (y3 - y2) + (y7 - y6))
+        dzdE = 0.25 * ((z4 - z1) + (z8 - z5) + (z3 - z2) + (z7 - z6))
 
-    dxdN = 0.25 * ((x2 - x1) + (x3 - x4) + (x7 - x8) + (x6 - x5))
-    dydN = 0.25 * ((y2 - y1) + (y3 - y4) + (y7 - y8) + (y6 - y5))
-    dzdN = 0.25 * ((z2 - z1) + (z3 - z4) + (z7 - z8) + (z6 - z5))
+        dxdN = 0.25 * ((x2 - x1) + (x3 - x4) + (x7 - x8) + (x6 - x5))
+        dydN = 0.25 * ((y2 - y1) + (y3 - y4) + (y7 - y8) + (y6 - y5))
+        dzdN = 0.25 * ((z2 - z1) + (z3 - z4) + (z7 - z8) + (z6 - z5))
 
-    dxdX = 0.25 * ((x5 - x1) + (x8 - x4) + (x6 - x2) + (x7 - x3))
-    dydX = 0.25 * ((y5 - y1) + (y8 - y4) + (y6 - y2) + (y7 - y3))
-    dzdX = 0.25 * ((z5 - z1) + (z8 - z4) + (z6 - z2) + (z7 - z3))
+        dxdX = 0.25 * ((x5 - x1) + (x8 - x4) + (x6 - x2) + (x7 - x3))
+        dydX = 0.25 * ((y5 - y1) + (y8 - y4) + (y6 - y2) + (y7 - y3))
+        dzdX = 0.25 * ((z5 - z1) + (z8 - z4) + (z6 - z2) + (z7 - z3))
 
-    blk.array["dEdx"][:] = (dydN * dzdX - dydX * dzdN) / blk.array["J"]
-    blk.array["dEdy"][:] = (dxdN * dzdX - dxdX * dzdN) / -blk.array["J"]
-    blk.array["dEdz"][:] = (dxdN * dydX - dxdX * dydN) / blk.array["J"]
+        blk.array["dEdx"][:] = (dydN * dzdX - dydX * dzdN) / blk.array["J"]
+        blk.array["dEdy"][:] = (dxdN * dzdX - dxdX * dzdN) / -blk.array["J"]
+        blk.array["dEdz"][:] = (dxdN * dydX - dxdX * dydN) / blk.array["J"]
 
-    blk.array["dNdx"][:] = (dydE * dzdX - dydX * dzdE) / -blk.array["J"]
-    blk.array["dNdy"][:] = (dxdE * dzdX - dxdX * dzdE) / blk.array["J"]
-    blk.array["dNdz"][:] = (dxdE * dydX - dxdX * dzdE) / -blk.array["J"]
+        blk.array["dNdx"][:] = (dydE * dzdX - dydX * dzdE) / -blk.array["J"]
+        blk.array["dNdy"][:] = (dxdE * dzdX - dxdX * dzdE) / blk.array["J"]
+        blk.array["dNdz"][:] = (dxdE * dydX - dxdX * dzdE) / -blk.array["J"]
 
-    blk.array["dXdx"][:] = (dydE * dzdN - dydN * dzdE) / blk.array["J"]
-    blk.array["dXdy"][:] = (dxdE * dzdN - dxdN * dzdE) / -blk.array["J"]
-    blk.array["dXdz"][:] = (dxdE * dydN - dxdN * dydE) / blk.array["J"]
+        blk.array["dXdx"][:] = (dydE * dzdN - dydN * dzdE) / blk.array["J"]
+        blk.array["dXdy"][:] = (dxdE * dzdN - dxdN * dzdE) / -blk.array["J"]
+        blk.array["dXdz"][:] = (dxdE * dydN - dxdN * dydE) / blk.array["J"]
+
+    elif fdOrder == 4:
+        xc = blk.array["xc"]
+        yc = blk.array["yc"]
+        zc = blk.array["zc"]
+
+        dxdE = (
+            -xc[4::, :, :] + 8.0 * xc[3::, :, :] - 8.0 * xc[1::, :, :] + xc[0::, :, :]
+        ) / 12.0
+        dxdN = (
+            -xc[:, 4::, :] + 8.0 * xc[:, 3::, :] - 8.0 * xc[:, 1::, :] + xc[:, 0::, :]
+        ) / 12.0
+        dxdX = (
+            -xc[:, :, 4::] + 8.0 * xc[:, :, 3::] - 8.0 * xc[:, :, 1::] + xc[:, :, 0::]
+        ) / 12.0
+
+        dydE = (
+            -yc[4::, :, :] + 8.0 * yc[3::, :, :] - 8.0 * yc[1::, :, :] + yc[0::, :, :]
+        ) / 12.0
+        dydN = (
+            -yc[:, 4::, :] + 8.0 * yc[:, 3::, :] - 8.0 * yc[:, 1::, :] + yc[:, 0::, :]
+        ) / 12.0
+        dydX = (
+            -yc[:, :, 4::] + 8.0 * yc[:, :, 3::] - 8.0 * yc[:, :, 1::] + yc[:, :, 0::]
+        ) / 12.0
+
+        dzdE = (
+            -zc[4::, :, :] + 8.0 * zc[3::, :, :] - 8.0 * zc[1::, :, :] + zc[0::, :, :]
+        ) / 12.0
+        dzdN = (
+            -zc[:, 4::, :] + 8.0 * zc[:, 3::, :] - 8.0 * zc[:, 1::, :] + zc[:, 0::, :]
+        ) / 12.0
+        dzdX = (
+            -zc[:, :, 4::] + 8.0 * zc[:, :, 3::] - 8.0 * zc[:, :, 1::] + zc[:, :, 0::]
+        ) / 12.0
+
+        blk.array["dEdx"][2:-2, 2:-2, 2:-2] = (dydN * dzdX - dydX * dzdN) / blk.array[
+            "J"
+        ][2:-2, 2:-2, 2:-2]
+        blk.array["dEdy"][2:-2, 2:-2, 2:-2] = (dxdN * dzdX - dxdX * dzdN) / -blk.array[
+            "J"
+        ][2:-2, 2:-2, 2:-2]
+        blk.array["dEdz"][2:-2, 2:-2, 2:-2] = (dxdN * dydX - dxdX * dydN) / blk.array[
+            "J"
+        ][2:-2, 2:-2, 2:-2]
+
+        blk.array["dNdx"][2:-2, 2:-2, 2:-2] = (dydE * dzdX - dydX * dzdE) / -blk.array[
+            "J"
+        ][2:-2, 2:-2, 2:-2]
+        blk.array["dNdy"][2:-2, 2:-2, 2:-2] = (dxdE * dzdX - dxdX * dzdE) / blk.array[
+            "J"
+        ][2:-2, 2:-2, 2:-2]
+        blk.array["dNdz"][2:-2, 2:-2, 2:-2] = (dxdE * dydX - dxdX * dzdE) / -blk.array[
+            "J"
+        ][2:-2, 2:-2, 2:-2]
+
+        blk.array["dXdx"][2:-2, 2:-2, 2:-2] = (dydE * dzdN - dydN * dzdE) / blk.array[
+            "J"
+        ][2:-2, 2:-2, 2:-2]
+        blk.array["dXdy"][2:-2, 2:-2, 2:-2] = (dxdE * dzdN - dxdN * dzdE) / -blk.array[
+            "J"
+        ][2:-2, 2:-2, 2:-2]
+        blk.array["dXdz"][2:-2, 2:-2, 2:-2] = (dxdE * dydN - dxdN * dydE) / blk.array[
+            "J"
+        ][2:-2, 2:-2, 2:-2]

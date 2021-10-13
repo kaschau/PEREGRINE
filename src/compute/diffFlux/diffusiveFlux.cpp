@@ -8,7 +8,7 @@ void diffusiveFlux(block_ b, const thtrdat_ th) {
 //-------------------------------------------------------------------------------------------|
 // i flux face range
 //-------------------------------------------------------------------------------------------|
-  MDRange3 range_i({1,1,1},{b.ni+1,b.nj,b.nk});
+  MDRange3 range_i({b.ng,b.ng,1},{b.ni+2*b.ng-1,b.nj+2*b.ng-2,b.nk+2*b.ng-2});
   Kokkos::parallel_for("i face visc fluxes", range_i, KOKKOS_LAMBDA(const int i,
                                                                     const int j,
                                                                     const int k) {
@@ -114,7 +114,7 @@ void diffusiveFlux(block_ b, const thtrdat_ th) {
 //-------------------------------------------------------------------------------------------|
 // j flux face range
 //-------------------------------------------------------------------------------------------|
-  MDRange3 range_j({1,1,1},{b.ni,b.nj+1,b.nk});
+  MDRange3 range_j({b.ng,b.ng,b.ng}, {b.ni+2*b.ng-2,b.nj+2*b.ng-1,b.nk+2*b.ng-2});
   Kokkos::parallel_for("j face visc fluxes", range_j, KOKKOS_LAMBDA(const int i,
                                                                     const int j,
                                                                     const int k) {
@@ -220,7 +220,7 @@ void diffusiveFlux(block_ b, const thtrdat_ th) {
 //-------------------------------------------------------------------------------------------|
 // k flux face range
 //-------------------------------------------------------------------------------------------|
-  MDRange3 range_k({1,1,1},{b.ni,b.nj,b.nk+1});
+  MDRange3 range_k({b.ng,b.ng,b.ng},{b.ni+2*b.ng-2,b.nj+2*b.ng-2,b.nk+2*b.ng-1});
   Kokkos::parallel_for("k face visc fluxes", range_k, KOKKOS_LAMBDA(const int i,
                                                                     const int j,
                                                                     const int k) {

@@ -7,7 +7,7 @@ void dQzero(block_ b) {
 //-------------------------------------------------------------------------------------------|
 // Zero out dQ
 //-------------------------------------------------------------------------------------------|
-  MDRange4 range({1,1,1,0},{b.ni,b.nj,b.nk,b.ne});
+  MDRange4 range({b.ng,b.ng,b.ng,0},{b.ni+2*b.ng-1,b.nj+2*b.ng-1,b.nk+2*b.ng-1,b.ne});
   Kokkos::parallel_for("Apply current fluxes to RHS",
                        range,
                        KOKKOS_LAMBDA(const int i,
