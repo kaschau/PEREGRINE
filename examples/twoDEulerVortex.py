@@ -127,7 +127,7 @@ def simulate():
         mb.step(dt)
 
     # plot v/Uinf
-    plt.plot(refX, blk.array["q"][ng:-ng, int(NN / 2.0), ng, 2] / uInf, label=f"{NE =}")
+    plt.plot(refX, blk.array["q"][ng:-ng, int(NN / 2.0), ng, 2] / uInf, label=f"{NE = }")
     plt.plot(refX, refV, "o", label="exact")
     plt.ylim([-0.016, 0.016])
     plt.xlim([-6, 6])
