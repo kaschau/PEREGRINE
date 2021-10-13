@@ -32,9 +32,9 @@ class grid(topology):
         for blk in self:
             blk.initGridArrays()
 
-    def computeMetrics(self):
+    def computeMetrics(self, fdOrder=2):
         for blk in self:
-            blk.computeMetrics()
+            blk.computeMetrics(fdOrder=fdOrder)
 
     def generateHalo(self):
         for blk in self:
