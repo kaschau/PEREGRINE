@@ -81,5 +81,7 @@ void chem_GRI30(block_ b,
 void dQzero(block_ b);
 //    |------> dq2FD
 void dq2FD(block_ b);
+//    |------> dq4FD
+void dq4FD(block_ b);
 
 #endif
