@@ -3,7 +3,7 @@
 #include "block_.hpp"
 #include "thtrdat_.hpp"
 
-void secondOrderFD(block_ b, const thtrdat_ th) {
+void diffusiveFlux(block_ b, const thtrdat_ th) {
 
 //-------------------------------------------------------------------------------------------|
 // i flux face range

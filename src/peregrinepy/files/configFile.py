@@ -38,7 +38,7 @@ class configFile(frozenDict):
                 "secondaryAdvFlux": None,
                 "switchAdvFlux": None,
                 "diffusion": False,
-                "diffFlux": "secondOrderFD",
+                "diffOrder": 2,
             }
         )
 

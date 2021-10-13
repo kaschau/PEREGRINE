@@ -71,14 +71,13 @@ def simulate():
 
         mb.step(dt)
 
-    # Compute primatives from conserved Q
     fig, ax1 = plt.subplots()
     ax1.set_title("1D Advection Results")
     ax1.set_xlabel(r"x")
     x = blk.array["xc"][ng:-ng, ng, ng]
     rho = blk.array["Q"][ng:-ng, ng, ng, 0]
     p = blk.array["q"][ng:-ng, ng, ng, 0]
-    u = blk.array["q"][ng:-ng, ng, ng, ng]
+    u = blk.array["q"][ng:-ng, ng, ng, 1]
     ax1.plot(x, rho, color="g", label="rho", linewidth=0.5)
     ax1.plot(x, p, color="r", label="p", linewidth=0.5)
     ax1.plot(x, u, color="k", label="u", linewidth=0.5)

@@ -144,8 +144,8 @@ PYBIND11_MODULE(compute, m) {
 
   // ./diffFlux
   py::module diffFlux = m.def_submodule("diffFlux", "diffusive flux module");
-  //  |----> secondOrderFD.cpp
-  diffFlux.def("secondOrderFD", &secondOrderFD, "Compute centeral difference viscous fluxes via second order finite difference",
+  //  |----> diffusiveFlux.cpp
+  diffFlux.def("diffusiveFlux", &diffusiveFlux, "Compute centeral difference viscous fluxes. Order set by dqdx",
         py::arg("block_ object"),
         py::arg("thtrdat_ object"));
 

@@ -33,6 +33,7 @@ def simulate():
     mb.initSolverArrays(config)
 
     blk = mb[0]
+    ng = blk.ng
     for face in blk.faces:
         face.bcType = "adiabaticNoSlipWall"
 
@@ -70,13 +71,13 @@ def simulate():
     while mb.tme < 0.05:
 
         if mb.nrt % niterout == 0:
-            pgT.append(blk.array["q"][1, 1, 1, 4])
-            pgO2.append(blk.array["q"][1, 1, 1, 7])
+            pgT.append(blk.array["q"][ng, ng, ng, 4])
+            pgO2.append(blk.array["q"][ng, ng, ng, 7])
             ctT.append(gas.T)
             ctO2.append(gas.Y[2])
             t.append(mb.tme)
 
-            print(f"{mb.tme:.2e} {blk.array['q'][1,1,1,4]:.2f} {gas.T:.2f}")
+            print(f"{mb.tme:.2e} {blk.array['q'][ng,ng,ng,4]:.2f} {gas.T:.2f}")
 
         mb.step(dt)
         sim.advance(mb.tme)

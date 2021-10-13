@@ -21,8 +21,8 @@ void ausmPlusUp(block_ b, const thtrdat_ th, const double primary);
 
 
 // ./diffFlux
-//    |------> secondOrderFD
-void secondOrderFD(block_ b, const thtrdat_ th);
+//    |------> diffusiveFlux
+void diffusiveFlux(block_ b, const thtrdat_ th);
 
 
 // ./switches
