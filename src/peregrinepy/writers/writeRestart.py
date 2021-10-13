@@ -92,7 +92,7 @@ def writeRestart(mb, path="./", gridPath="./", precision="double"):
             dset = qf["results"][dsetName]
             if blk.ns > 1:
                 dset[:] = 1.0 - np.sum(
-                    blk.array["q"][writeS + slice(5, None, None)], axis=-1
+                    blk.array["q"][writeS + tuple([slice(5, None, None)])], axis=-1
                 ).ravel(order="F")
             elif blk.ns == 1:
                 dset[:] = 1.0
