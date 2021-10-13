@@ -230,6 +230,9 @@ PYBIND11_MODULE(compute, m) {
   //  |----> dq2FD.cpp
   utils.def("dq2FD", &dq2FD, "Second order approx of spatial derivative of q array via finite difference",
         py::arg("block_ object"));
+  //  |----> dq4FD.cpp
+  utils.def("dq4FD", &dq4FD, "Fourth order approx of spatial derivative of q array via finite difference",
+        py::arg("block_ object"));
 
 
   static auto _atexit = []() {
