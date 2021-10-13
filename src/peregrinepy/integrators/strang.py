@@ -80,7 +80,11 @@ class strang:
         # Take a full step in time for stiff operator
         ###############################################################
         for bindx, blk in enumerate(self):
-            it = product(range(1, blk.ni), range(1, blk.nj), range(1, blk.nk))
+            it = product(
+                range(blk.ng, blk.ni + 2 * blk.ng - 1),
+                range(blk.ng, blk.nj + 2 * blk.ng - 1),
+                range(blk.ng, blk.nk + 2 * blk.ng - 1),
+            )
             for ijk in it:
                 i, j, k = ijk
 
