@@ -108,7 +108,7 @@ def adiabaticMovingWall(eos, blk, face, thtrdat, terms):
             v[s0_] = 2.0 * face.bcVals["v"] - v[face.s1_]
             w[s0_] = 2.0 * face.bcVals["w"] - w[face.s1_]
 
-            TN[face.s0_] = TN[face.s1_]
+            TN[s0_] = TN[face.s1_]
 
         # Update conservatives
         eos(blk, thtrdat, nface, "prims")

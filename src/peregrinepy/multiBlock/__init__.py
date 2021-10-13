@@ -35,14 +35,17 @@ def setConsistify(cls, config):
             cls.trans = getattr(compute.transport, trans)
         except AttributeError:
             raise pgConfigError(trans)
-        cls.dqdxyz = compute.utils.dq2FD
+        dqO = config["RHS"]["diffOrder"]
+        try:
+            cls.dqdxyz = getattr(compute.utils, f"dq{dqO}FD")
+        except AttributeError:
+            raise pgConfigError(f"dq{dqO}FD")
     else:
         cls.trans = null
         cls.dqdxyz = null
 
     # Switching function between primary and secondary advective fluxes
-
-    # If we aren't using a secondary flux function, we rely on the
+    #  If we aren't using a secondary flux function, we rely on the
     #  initialization of the switch array "phi" = 0.0 and then
     #  just never change it.
     if config["RHS"]["secondaryAdvFlux"] is None:
@@ -81,11 +84,7 @@ def setRHS(cls, config):
 
     # Diffusive fluxes
     if config["RHS"]["diffusion"]:
-        diff = config["RHS"]["diffFlux"]
-        try:
-            cls.diffFlux = getattr(compute.diffFlux, diff)
-        except AttributeError:
-            raise pgConfigError(diff)
+        cls.diffFlux = compute.diffFlux.diffusiveFlux
     else:
         cls.diffFlux = null
 
@@ -95,7 +94,7 @@ def setRHS(cls, config):
         try:
             cls.expChem = getattr(compute.chemistry, mech)
         except AttributeError:
-            raise pgConfigError(diff)
+            raise pgConfigError(mech)
         # If we are using an implicit chemistry integration
         #  we need to set it here and set the explicit
         #  module to null so it is not called in RHS
