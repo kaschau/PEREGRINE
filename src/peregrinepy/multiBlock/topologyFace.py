@@ -61,8 +61,6 @@ class topologyFace:
             value in validBcTypes
         ), f"{value} is not a valid bcType. Must be one of {validBcTypes}"
         self._bcType = value
-        if self.faceType == "solver":
-            self.setBcFunc()
 
     @property
     def neighbor(self):

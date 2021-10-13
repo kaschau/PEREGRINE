@@ -18,10 +18,6 @@ class twoblock123:
         blk1 = self.mb[1]
         blk0.getFace(2).commRank = 0
         blk1.getFace(1).commRank = 0
-        for face in blk0.faces:
-            face.setBcFunc()
-        for face in blk1.faces:
-            face.setBcFunc()
 
         self.xshape = self.mb[0].array["x"].shape
         self.qshape = self.mb[0].array["q"].shape
@@ -156,10 +152,6 @@ def test_231():
     blk1.getFace(3).bcType = "b0"
     blk1.getFace(3).orientation = "312"
     blk1.getFace(3).commRank = 0
-    for face in blk0.faces:
-        face.setBcFunc()
-    for face in blk1.faces:
-        face.setBcFunc()
 
     pg.mpiComm.blockComm.setBlockCommunication(tb.mb)
 
@@ -223,10 +215,6 @@ def test_321():
     blk1.getFace(5).bcType = "b0"
     blk1.getFace(5).orientation = "231"
     blk1.getFace(5).commRank = 0
-    for face in blk0.faces:
-        face.setBcFunc()
-    for face in blk1.faces:
-        face.setBcFunc()
 
     pg.mpiComm.blockComm.setBlockCommunication(tb.mb)
 
@@ -291,10 +279,6 @@ def test_432():
     blk1.getFace(2).bcType = "b0"
     blk1.getFace(2).orientation = "432"
     blk1.getFace(2).commRank = 0
-    for face in blk0.faces:
-        face.setBcFunc()
-    for face in blk1.faces:
-        face.setBcFunc()
 
     pg.mpiComm.blockComm.setBlockCommunication(tb.mb)
 
@@ -359,11 +343,6 @@ def test_513():
     blk1.getFace(4).orientation = "243"
     blk1.getFace(4).commRank = 0
 
-    for face in blk0.faces:
-        face.setBcFunc()
-    for face in blk1.faces:
-        face.setBcFunc()
-
     pg.mpiComm.blockComm.setBlockCommunication(tb.mb)
 
     # Execute communication
@@ -426,11 +405,6 @@ def test_621():
     blk1.getFace(6).bcType = "b0"
     blk1.getFace(6).orientation = "324"
     blk1.getFace(6).commRank = 0
-
-    for face in blk0.faces:
-        face.setBcFunc()
-    for face in blk1.faces:
-        face.setBcFunc()
 
     pg.mpiComm.blockComm.setBlockCommunication(tb.mb)
 
