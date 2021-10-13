@@ -34,11 +34,11 @@ class configFile(frozenDict):
 
         self["RHS"] = frozenDict(
             {
-                "primaryAdvFlux": "centralEuler",
+                "primaryAdvFlux": "secondOrderKEEP",
                 "secondaryAdvFlux": None,
                 "switchAdvFlux": None,
                 "diffusion": False,
-                "diffFlux": "centralVisc",
+                "diffFlux": "secondOrderFD",
             }
         )
 
