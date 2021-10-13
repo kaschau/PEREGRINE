@@ -8,7 +8,7 @@ void secondOrderKEEP(block_ b, const thtrdat_ th, const double primary) {
 //-------------------------------------------------------------------------------------------|
 // i flux face range
 //-------------------------------------------------------------------------------------------|
-  MDRange3 range_i({b.ng,b.ng,1},{b.ni+2*b.ng-1,b.nj+2*b.ng-2,b.nk+2*b.ng-2});
+  MDRange3 range_i({b.ng,b.ng,b.ng},{b.ni+b.ng, b.nj+b.ng-1, b.nk+b.ng-1});
   Kokkos::parallel_for("i face conv fluxes", range_i, KOKKOS_LAMBDA(const int i,
                                                                     const int j,
                                                                     const int k) {
@@ -80,7 +80,7 @@ void secondOrderKEEP(block_ b, const thtrdat_ th, const double primary) {
 //-------------------------------------------------------------------------------------------|
 // j flux face range
 //-------------------------------------------------------------------------------------------|
-  MDRange3 range_j({b.ng,b.ng,b.ng}, {b.ni+2*b.ng-2,b.nj+2*b.ng-1,b.nk+2*b.ng-2});
+  MDRange3 range_j({b.ng,b.ng,b.ng},{b.ni+b.ng-1, b.nj+b.ng, b.nk+b.ng-1});
   Kokkos::parallel_for("j face conv fluxes", range_j, KOKKOS_LAMBDA(const int i,
                                                                     const int j,
                                                                     const int k) {
@@ -153,7 +153,7 @@ void secondOrderKEEP(block_ b, const thtrdat_ th, const double primary) {
 //-------------------------------------------------------------------------------------------|
 // k flux face range
 //-------------------------------------------------------------------------------------------|
-  MDRange3 range_k({b.ng,b.ng,b.ng},{b.ni+2*b.ng-2,b.nj+2*b.ng-2,b.nk+2*b.ng-1});
+  MDRange3 range_k({b.ng,b.ng,b.ng},{b.ni+b.ng-1, b.nj+b.ng-1, b.nk+b.ng});
   Kokkos::parallel_for("k face conv fluxes", range_k, KOKKOS_LAMBDA(const int i,
                                                                     const int j,
                                                                     const int k) {
