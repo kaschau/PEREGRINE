@@ -12,8 +12,8 @@
 MDRange3 get_range3(block_ b, int face, int i=0, int j=0, int k=0);
 
 // ./advFlux
-//    |------> centralEuler
-void centralEuler(block_ b, const thtrdat_ th, const double primary);
+//    |------> secondOrderKEEP
+void secondOrderKEEP(block_ b, const thtrdat_ th, const double primary);
 //    |------> rusanov
 void rusanov(block_ b, const thtrdat_ th, const double primary);
 //    |------> ausmPlusUp
@@ -21,8 +21,8 @@ void ausmPlusUp(block_ b, const thtrdat_ th, const double primary);
 
 
 // ./diffFlux
-//    |------> centralVisc
-void centralVisc(block_ b, const thtrdat_ th);
+//    |------> secondOrderFD
+void secondOrderFD(block_ b, const thtrdat_ th);
 
 
 // ./switches

@@ -126,8 +126,8 @@ PYBIND11_MODULE(compute, m) {
 
   // ./advFlux
   py::module advFlux = m.def_submodule("advFlux", "advective flux module");
-  //  |----> centralEuler.cpp
-  advFlux.def("centralEuler", &centralEuler, "Compute centeral difference euler fluxes",
+  //  |----> secondOrderKEEP.cpp
+  advFlux.def("secondOrderKEEP", &secondOrderKEEP, "Compute centeral difference euler fluxes via second order KEEP",
         py::arg("block_ object"),
         py::arg("thtrdat_ object"),
         py::arg("primary"));
@@ -144,8 +144,8 @@ PYBIND11_MODULE(compute, m) {
 
   // ./diffFlux
   py::module diffFlux = m.def_submodule("diffFlux", "diffusive flux module");
-  //  |----> centralVisc.cpp
-  diffFlux.def("centralVisc", &centralVisc, "Compute centeral difference viscous fluxes",
+  //  |----> secondOrderFD.cpp
+  diffFlux.def("secondOrderFD", &secondOrderFD, "Compute centeral difference viscous fluxes via second order finite difference",
         py::arg("block_ object"),
         py::arg("thtrdat_ object"));
 

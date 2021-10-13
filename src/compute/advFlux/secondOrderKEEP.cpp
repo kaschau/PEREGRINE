@@ -3,7 +3,7 @@
 #include "block_.hpp"
 #include "thtrdat_.hpp"
 
-void centralEuler(block_ b, const thtrdat_ th, const double primary) {
+void secondOrderKEEP(block_ b, const thtrdat_ th, const double primary) {
 
 //-------------------------------------------------------------------------------------------|
 // i flux face range
