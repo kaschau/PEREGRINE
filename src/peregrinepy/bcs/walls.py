@@ -81,10 +81,10 @@ def adiabaticSlipWall(eos, blk, face, thtrdat, terms):
         dTNdz = blk.array["dqdz"][:, :, :, 4::]
 
         for s0_ in face.s0_:
-            # negate velocity gradient (so gradient evaluates to zero on wall)
-            dvelodx[s0_] = -dvelodx[face.s1_]
-            dvelody[s0_] = -dvelody[face.s1_]
-            dvelodz[s0_] = -dvelodz[face.s1_]
+            # slip wall so we neumann the velocity gradients
+            dvelodx[s0_] = dvelodx[face.s1_]
+            dvelody[s0_] = dvelody[face.s1_]
+            dvelodz[s0_] = dvelodz[face.s1_]
             # negate temp and species gradient (so gradient evaluates to zero on wall)
             dTNdx[s0_] = -dTNdx[face.s1_]
             dTNdy[s0_] = -dTNdy[face.s1_]
