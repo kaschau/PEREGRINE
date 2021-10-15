@@ -120,12 +120,12 @@ void fourthOrderKEEP(block_ b, const thtrdat_ th, const double primary) {
                          );
 
         temppu += 0.5*(
-                        b.q(i+js-is,j,k,0)*(b.q(i+js   ,j,k,1)*b.isx(i,j,k)
-                                           +b.q(i+js   ,j,k,2)*b.isy(i,j,k)
-                                           +b.q(i+js   ,j,k,3)*b.isz(i,j,k) ) +
-                        b.q(i+js   ,j,k,0)*(b.q(i+js-is,j,k,1)*b.isx(i,j,k)
-                                           +b.q(i+js-is,j,k,2)*b.isy(i,j,k)
-                                           +b.q(i+js-is,j,k,3)*b.isz(i,j,k) )
+                        b.q(i+js-is,j,k,0)*(  b.q(i+js   ,j,k,1)*b.isx(i,j,k)
+                                            + b.q(i+js   ,j,k,2)*b.isy(i,j,k)
+                                            + b.q(i+js   ,j,k,3)*b.isz(i,j,k) ) +
+                        b.q(i+js   ,j,k,0)*(  b.q(i+js-is,j,k,1)*b.isx(i,j,k)
+                                            + b.q(i+js-is,j,k,2)*b.isy(i,j,k)
+                                            + b.q(i+js-is,j,k,3)*b.isz(i,j,k) )
                        );
       }
       rhoE += a*temprhoE;
