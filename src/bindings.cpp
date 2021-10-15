@@ -131,6 +131,11 @@ PYBIND11_MODULE(compute, m) {
         py::arg("block_ object"),
         py::arg("thtrdat_ object"),
         py::arg("primary"));
+  //  |----> fourthOrderKEEP.cpp
+  advFlux.def("fourthOrderKEEP", &fourthOrderKEEP, "Compute centeral difference euler fluxes via fourth order KEEP",
+        py::arg("block_ object"),
+        py::arg("thtrdat_ object"),
+        py::arg("primary"));
   //  |----> rusanov.cpp
   advFlux.def("rusanov", &rusanov, "Compute first order euler fluxes via rusanov",
         py::arg("block_ object"),
