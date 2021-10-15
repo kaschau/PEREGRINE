@@ -110,9 +110,9 @@ def howManyNG(config):
     ng = 1
 
     # First check advective term order
-    if config["RHS"]["primaryAdvFlux"] == "secondOrderKeep":
+    if config["RHS"]["primaryAdvFlux"] == "secondOrderKEEP":
         ng = max(ng, 1)
-    elif config["RHS"]["primaryAdvFlux"] == "fourthOrderKeep":
+    elif config["RHS"]["primaryAdvFlux"] == "fourthOrderKEEP":
         ng = max(ng, 2)
 
     # Now check diffusion term order
