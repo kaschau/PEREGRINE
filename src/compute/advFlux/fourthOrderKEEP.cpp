@@ -110,14 +110,14 @@ void fourthOrderKEEP(block_ b, const thtrdat_ th, const double primary) {
       temprhoE = 0.0;
       temppu = 0.0;
       for (int js=0; js <= is-1; js++) {
-        temprhoE += 0.5* ( b.Q(i+js,j,k,0) + b.Q(i+js-is,j,k,0) ) *
-                         (
-                         0.5*( b.qh(i+js,j,k,4)/b.Q(i,j,k,0) + b.qh(i+js-is,j,k,4)/b.Q(i+js-is,j,k,0) )
-                       + 0.5*(b.q(i+js,j,k,1)*b.q(i+js-is,j,k,1) +
-                              b.q(i+js,j,k,2)*b.q(i+js-is,j,k,2) +
-                              b.q(i+js,j,k,3)*b.q(i+js-is,j,k,3) )
+        temprhoE += 0.5* ( b.Q(i+js,j,k,0) + b.Q(i+js-is,j,k,0) )
+                       * (
+                           (  b.qh(i+js,j,k,4)/b.Q(i,j,k,0)
+                            + b.qh(i+js-is,j,k,4)/b.Q(i+js-is,j,k,0) )
+                         + (  b.q(i+js,j,k,1)*b.q(i+js-is,j,k,1)
+                            + b.q(i+js,j,k,2)*b.q(i+js-is,j,k,2)
+                            + b.q(i+js,j,k,3)*b.q(i+js-is,j,k,3) )
                          );
-
 
         temppu += 0.5*(
                         b.q(i+js-is,j,k,0)*(b.q(i+js   ,j,k,1)*b.isx(i,j,k)
