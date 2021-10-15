@@ -14,6 +14,8 @@ void fourthOrderKEEP(block_ b, const thtrdat_ th, const double primary) {
                                                                     const int k) {
 
     const int order = 4;
+    const int q = order/2;
+    const int narray = (q*q+q)/2;
     const std::array<double, 2> aq = {2.0/3.0, -1.0/12.0};
 
     double U;
@@ -21,21 +23,29 @@ void fourthOrderKEEP(block_ b, const thtrdat_ th, const double primary) {
     double vf=0.0;
     double wf=0.0;
 
+    // Reusable arrays
+    std::array<double, narray> uR,vR,wR,rhoR;
+
     double a;
     // Compute face normal volume flux vector
-    double tempu=0.0;
-    double tempv=0.0;
-    double tempw=0.0;
-    for (int is=1; is <= order/2; is++) {
-      a = aq[is-1];
+    double tempu;
+    double tempv;
+    double tempw;
+    int count=0;
+    for (int is=1; is <= q; is++) {
       tempu = 0.0;
       tempv = 0.0;
       tempw = 0.0;
       for (int js=0; js <= is-1; js++) {
-        tempu += 0.5*( b.q(i+js,j,k,1) + b.q(i+js-is,j,k,1) );
-        tempv += 0.5*( b.q(i+js,j,k,2) + b.q(i+js-is,j,k,2) );
-        tempw += 0.5*( b.q(i+js,j,k,3) + b.q(i+js-is,j,k,3) );
+        uR[count] = 0.5*( b.q(i+js,j,k,1) + b.q(i+js-is,j,k,1) );
+        vR[count] = 0.5*( b.q(i+js,j,k,2) + b.q(i+js-is,j,k,2) );
+        wR[count] = 0.5*( b.q(i+js,j,k,3) + b.q(i+js-is,j,k,3) );
+        tempu += uR[count];
+        tempv += vR[count];
+        tempw += wR[count];
+        count++;
       }
+      a = aq[is-1];
       uf += a*tempu;
       vf += a*tempv;
       wf += a*tempw;
@@ -53,11 +63,14 @@ void fourthOrderKEEP(block_ b, const thtrdat_ th, const double primary) {
     // Continuity rho*Ui
     double rho = 0.0;
     double temprho = 0.0;
-    for (int is=1; is <= order/2; is++) {
+    count = 0;
+    for (int is=1; is <= q; is++) {
       a = aq[is-1];
       temprho = 0.0;
       for (int js=0; js <= is-1; js++) {
-        temprho += 0.5*( b.Q(i+js,j,k,0) + b.Q(i+js-is,j,k,0) );
+        rhoR[count] = 0.5*( b.Q(i+js,j,k,0) + b.Q(i+js-is,j,k,0) );
+        temprho += rhoR[count];
+        count++;
       }
       rho += a*temprho;
     }
@@ -73,17 +86,19 @@ void fourthOrderKEEP(block_ b, const thtrdat_ th, const double primary) {
     double rhow=0.0;
     double p=0.0;
     double temprhou, temprhov, temprhow, tempp;
-    for (int is=1; is <= order/2; is++) {
+    count = 0;
+    for (int is=1; is <= q; is++) {
       a = aq[is-1];
       temprhou = 0.0;
       temprhov = 0.0;
       temprhow = 0.0;
       tempp = 0.0;
       for (int js=0; js <= is-1; js++) {
-        temprhou += 0.5*( b.Q(i+js,j,k,0) + b.Q(i+js-is,j,k,0) ) * 0.5*( b.q(i+js,j,k,1) + b.q(i+js-is,j,k,1) );
-        temprhov += 0.5*( b.Q(i+js,j,k,0) + b.Q(i+js-is,j,k,0) ) * 0.5*( b.q(i+js,j,k,2) + b.q(i+js-is,j,k,2) );
-        temprhow += 0.5*( b.Q(i+js,j,k,0) + b.Q(i+js-is,j,k,0) ) * 0.5*( b.q(i+js,j,k,3) + b.q(i+js-is,j,k,3) );
+        temprhou += rhoR[count] * uR[count];
+        temprhov += rhoR[count] * vR[count];
+        temprhow += rhoR[count] * wR[count];
         tempp    += 0.5*( b.q(i+js,j,k,0) + b.q(i+js-is,j,k,0) );
+        count++;
       }
       rhou += a*temprhou;
       rhov += a*temprhov;
@@ -106,20 +121,21 @@ void fourthOrderKEEP(block_ b, const thtrdat_ th, const double primary) {
     double pu=0.0;
     double temprhoE, temppu;
     double e,em;
-    for (int is=1; is <= order/2; is++) {
+    count = 0;
+    for (int is=1; is <= q; is++) {
       a = aq[is-1];
       temprhoE = 0.0;
       temppu = 0.0;
       for (int js=0; js <= is-1; js++) {
-        e = b.qh(i+js,j,k,4)/b.Q(i+js,j,k,0);
+        e = b.qh(i+js   ,j,k,4)/b.Q(i+js   ,j,k,0);
         em= b.qh(i+js-is,j,k,4)/b.Q(i+js-is,j,k,0);
 
-        temprhoE += 0.5* ( b.Q(i+js,j,k,0) + b.Q(i+js-is,j,k,0) )
-                       * ( 0.5*(  e + em )
-                         + 0.5*(  b.q(i+js,j,k,1)*b.q(i+js-is,j,k,1)
-                                + b.q(i+js,j,k,2)*b.q(i+js-is,j,k,2)
-                                + b.q(i+js,j,k,3)*b.q(i+js-is,j,k,3) )
-                         );
+        temprhoE +=  rhoR[count] * ( 0.5*(  e + em )
+                                   + 0.5*(  b.q(i+js,j,k,1)*b.q(i+js-is,j,k,1)
+                                          + b.q(i+js,j,k,2)*b.q(i+js-is,j,k,2)
+                                          + b.q(i+js,j,k,3)*b.q(i+js-is,j,k,3) )
+                                   );
+        count++;
 
         temppu += 0.5*(
                         b.q(i+js-is,j,k,0)*(  b.q(i+js   ,j,k,1)*b.isx(i,j,k)
@@ -144,11 +160,13 @@ void fourthOrderKEEP(block_ b, const thtrdat_ th, const double primary) {
 
       double rhoY = 0.0;
       double temprhoY = 0.0;
+      count = 0;
       for (int is=1; is <= order/2; is++) {
         a = aq[is-1];
         temprhoY = 0.0;
         for (int js=0; js <= is-1; js++) {
-          temprhoY += 0.5*( (b.Q(i+js,j,k,0) + b.Q(i+js-is,j,k,0) ) * 0.5*(b.q(i+js,j,k,5+n)+b.q(i+js-is,j,k,5+n) ));
+          temprhoY += rhoR[count] * 0.5*(b.q(i+js,j,k,5+n)+b.q(i+js-is,j,k,5+n));
+          count++;
         }
         rhoY += a*temprhoY;
       }
@@ -167,6 +185,8 @@ void fourthOrderKEEP(block_ b, const thtrdat_ th, const double primary) {
                                                                     const int k) {
 
     const int order = 4;
+    const int q = order/2;
+    const int narray = (q*q+q)/2;
     const std::array<double, 2> aq = {2.0/3.0, -1.0/12.0};
 
     double V;
@@ -174,21 +194,29 @@ void fourthOrderKEEP(block_ b, const thtrdat_ th, const double primary) {
     double vf=0.0;
     double wf=0.0;
 
+    // Reusable arrays
+    std::array<double, narray> uR,vR,wR,rhoR;
+
     double a;
     // Compute face normal volume flux vector
-    double tempu=0.0;
-    double tempv=0.0;
-    double tempw=0.0;
-    for (int is=1; is <= order/2; is++) {
-      a = aq[is-1];
+    double tempu;
+    double tempv;
+    double tempw;
+    int count=0;
+    for (int is=1; is <= q; is++) {
       tempu = 0.0;
       tempv = 0.0;
       tempw = 0.0;
       for (int js=0; js <= is-1; js++) {
-        tempu += 0.5*( b.q(i,j+js,k,1) + b.q(i,j+js-is,k,1) );
-        tempv += 0.5*( b.q(i,j+js,k,2) + b.q(i,j+js-is,k,2) );
-        tempw += 0.5*( b.q(i,j+js,k,3) + b.q(i,j+js-is,k,3) );
+        uR[count] = 0.5*( b.q(i,j+js,k,1) + b.q(i,j+js-is,k,1) );
+        vR[count] = 0.5*( b.q(i,j+js,k,2) + b.q(i,j+js-is,k,2) );
+        wR[count] = 0.5*( b.q(i,j+js,k,3) + b.q(i,j+js-is,k,3) );
+        tempu += uR[count];
+        tempv += vR[count];
+        tempw += wR[count];
+        count++;
       }
+      a = aq[is-1];
       uf += a*tempu;
       vf += a*tempv;
       wf += a*tempw;
@@ -203,14 +231,17 @@ void fourthOrderKEEP(block_ b, const thtrdat_ th, const double primary) {
 
     //Compute fluxes
 
-    // Continuity rho*Ui
+    // Continuity rho*Vi
     double rho = 0.0;
     double temprho = 0.0;
-    for (int is=1; is <= order/2; is++) {
+    count = 0;
+    for (int is=1; is <= q; is++) {
       a = aq[is-1];
       temprho = 0.0;
       for (int js=0; js <= is-1; js++) {
-        temprho += 0.5*( b.Q(i,j+js,k,0) + b.Q(i,j+js-is,k,0) );
+        rhoR[count] = 0.5*( b.Q(i,j+js,k,0) + b.Q(i,j+js-is,k,0) );
+        temprho += rhoR[count];
+        count++;
       }
       rho += a*temprho;
     }
@@ -218,25 +249,27 @@ void fourthOrderKEEP(block_ b, const thtrdat_ th, const double primary) {
 
     b.jF(i,j,k,0) = rho * V;
 
-    // x momentum rho*u*Ui+ p*Ax
-    // y momentum rho*v*Ui+ p*Ay
-    // w momentum rho*w*Ui+ p*Az
+    // x momentum rho*u*Vi+ p*Ax
+    // y momentum rho*v*Vi+ p*Ay
+    // w momentum rho*w*Vi+ p*Az
     double rhou=0.0;
     double rhov=0.0;
     double rhow=0.0;
     double p=0.0;
     double temprhou, temprhov, temprhow, tempp;
-    for (int is=1; is <= order/2; is++) {
+    count = 0;
+    for (int is=1; is <= q; is++) {
       a = aq[is-1];
       temprhou = 0.0;
       temprhov = 0.0;
       temprhow = 0.0;
       tempp = 0.0;
       for (int js=0; js <= is-1; js++) {
-        temprhou += 0.5*( b.Q(i,j+js,k,0) + b.Q(i,j+js-is,k,0) ) * 0.5*( b.q(i,j+js,k,1) + b.q(i,j+js-is,k,1) );
-        temprhov += 0.5*( b.Q(i,j+js,k,0) + b.Q(i,j+js-is,k,0) ) * 0.5*( b.q(i,j+js,k,2) + b.q(i,j+js-is,k,2) );
-        temprhow += 0.5*( b.Q(i,j+js,k,0) + b.Q(i,j+js-is,k,0) ) * 0.5*( b.q(i,j+js,k,3) + b.q(i,j+js-is,k,3) );
+        temprhou += rhoR[count] * uR[count];
+        temprhov += rhoR[count] * vR[count];
+        temprhow += rhoR[count] * wR[count];
         tempp    += 0.5*( b.q(i,j+js,k,0) + b.q(i,j+js-is,k,0) );
+        count++;
       }
       rhou += a*temprhou;
       rhov += a*temprhov;
@@ -254,12 +287,13 @@ void fourthOrderKEEP(block_ b, const thtrdat_ th, const double primary) {
 
     b.jF(i,j,k,3) = rhow * V + p*b.jsz(i,j,k) ;
 
-    // Total energy (rhoE+ p)*Ui)
+    // Total energy (rhoE+ p)*Vi)
     double rhoE=0.0;
     double pu=0.0;
     double temprhoE, temppu;
     double e,em;
-    for (int is=1; is <= order/2; is++) {
+    count = 0;
+    for (int is=1; is <= q; is++) {
       a = aq[is-1];
       temprhoE = 0.0;
       temppu = 0.0;
@@ -267,12 +301,12 @@ void fourthOrderKEEP(block_ b, const thtrdat_ th, const double primary) {
         e = b.qh(i,j+js   ,k,4)/b.Q(i,j+js   ,k,0);
         em= b.qh(i,j+js-is,k,4)/b.Q(i,j+js-is,k,0);
 
-        temprhoE += 0.5* ( b.Q(i,j+js,k,0) + b.Q(i,j+js-is,k,0) )
-                       * ( 0.5*(  e + em )
-                         + 0.5*(  b.q(i,j+js,k,1)*b.q(i,j+js-is,k,1)
-                                + b.q(i,j+js,k,2)*b.q(i,j+js-is,k,2)
-                                + b.q(i,j+js,k,3)*b.q(i,j+js-is,k,3) )
-                         );
+        temprhoE +=  rhoR[count] * ( 0.5*(  e + em )
+                                   + 0.5*(  b.q(i,j+js,k,1)*b.q(i,j+js-is,k,1)
+                                          + b.q(i,j+js,k,2)*b.q(i,j+js-is,k,2)
+                                          + b.q(i,j+js,k,3)*b.q(i,j+js-is,k,3) )
+                                   );
+        count++;
 
         temppu += 0.5*(
                         b.q(i,j+js-is,k,0)*(  b.q(i,j+js   ,k,1)*b.jsx(i,j,k)
@@ -297,11 +331,13 @@ void fourthOrderKEEP(block_ b, const thtrdat_ th, const double primary) {
 
       double rhoY = 0.0;
       double temprhoY = 0.0;
+      count = 0;
       for (int is=1; is <= order/2; is++) {
         a = aq[is-1];
         temprhoY = 0.0;
         for (int js=0; js <= is-1; js++) {
-          temprhoY += 0.5*( (b.Q(i,j+js,k,0) + b.Q(i,j+js-is,k,0) ) * 0.5*(b.q(i,j+js,k,5+n)+b.q(i,j+js-is,k,5+n) ));
+          temprhoY += rhoR[count] * 0.5*(b.q(i,j+js,k,5+n)+b.q(i,j+js-is,k,5+n));
+          count++;
         }
         rhoY += a*temprhoY;
       }
@@ -320,28 +356,38 @@ void fourthOrderKEEP(block_ b, const thtrdat_ th, const double primary) {
                                                                     const int k) {
 
     const int order = 4;
+    const int q = order/2;
+    const int narray = (q*q+q)/2;
     const std::array<double, 2> aq = {2.0/3.0, -1.0/12.0};
 
-    double W;
+    double V;
     double uf=0.0;
     double vf=0.0;
     double wf=0.0;
 
+    // Reusable arrays
+    std::array<double, narray> uR,vR,wR,rhoR;
+
     double a;
     // Compute face normal volume flux vector
-    double tempu=0.0;
-    double tempv=0.0;
-    double tempw=0.0;
-    for (int is=1; is <= order/2; is++) {
-      a = aq[is-1];
+    double tempu;
+    double tempv;
+    double tempw;
+    int count=0;
+    for (int is=1; is <= q; is++) {
       tempu = 0.0;
       tempv = 0.0;
       tempw = 0.0;
       for (int js=0; js <= is-1; js++) {
-        tempu += 0.5*( b.q(i,j,k+js,1) + b.q(i,j,k+js-is,1) );
-        tempv += 0.5*( b.q(i,j,k+js,2) + b.q(i,j,k+js-is,2) );
-        tempw += 0.5*( b.q(i,j,k+js,3) + b.q(i,j,k+js-is,3) );
+        uR[count] = 0.5*( b.q(i,j,k+js,1) + b.q(i,j,k+js-is,1) );
+        vR[count] = 0.5*( b.q(i,j,k+js,2) + b.q(i,j,k+js-is,2) );
+        wR[count] = 0.5*( b.q(i,j,k+js,3) + b.q(i,j,k+js-is,3) );
+        tempu += uR[count];
+        tempv += vR[count];
+        tempw += wR[count];
+        count++;
       }
+      a = aq[is-1];
       uf += a*tempu;
       vf += a*tempv;
       wf += a*tempw;
@@ -350,46 +396,51 @@ void fourthOrderKEEP(block_ b, const thtrdat_ th, const double primary) {
     vf *=2.0;
     wf *=2.0;
 
-    W = b.ksx(i,j,k)*uf +
+    V = b.ksx(i,j,k)*uf +
         b.ksy(i,j,k)*vf +
         b.ksz(i,j,k)*wf ;
 
     //Compute fluxes
 
-    // Continuity rho*Ui
+    // Continuity rho*Vi
     double rho = 0.0;
     double temprho = 0.0;
-    for (int is=1; is <= order/2; is++) {
+    count = 0;
+    for (int is=1; is <= q; is++) {
       a = aq[is-1];
       temprho = 0.0;
       for (int js=0; js <= is-1; js++) {
-        temprho += 0.5*( b.Q(i,j,k+js,0) + b.Q(i,j,k+js-is,0) );
+        rhoR[count] = 0.5*( b.Q(i,j,k+js,0) + b.Q(i,j,k+js-is,0) );
+        temprho += rhoR[count];
+        count++;
       }
       rho += a*temprho;
     }
     rho *=2.0;
 
-    b.kF(i,j,k,0) = rho * W;
+    b.kF(i,j,k,0) = rho * V;
 
-    // x momentum rho*u*Ui+ p*Ax
-    // y momentum rho*v*Ui+ p*Ay
-    // w momentum rho*w*Ui+ p*Az
+    // x momentum rho*u*Vi+ p*Ax
+    // y momentum rho*v*Vi+ p*Ay
+    // w momentum rho*w*Vi+ p*Az
     double rhou=0.0;
     double rhov=0.0;
     double rhow=0.0;
     double p=0.0;
     double temprhou, temprhov, temprhow, tempp;
-    for (int is=1; is <= order/2; is++) {
+    count = 0;
+    for (int is=1; is <= q; is++) {
       a = aq[is-1];
       temprhou = 0.0;
       temprhov = 0.0;
       temprhow = 0.0;
       tempp = 0.0;
       for (int js=0; js <= is-1; js++) {
-        temprhou += 0.5*( b.Q(i,j,k+js,0) + b.Q(i,j,k+js-is,0) ) * 0.5*( b.q(i,j,k+js,1) + b.q(i,j,k+js-is,1) );
-        temprhov += 0.5*( b.Q(i,j,k+js,0) + b.Q(i,j,k+js-is,0) ) * 0.5*( b.q(i,j,k+js,2) + b.q(i,j,k+js-is,2) );
-        temprhow += 0.5*( b.Q(i,j,k+js,0) + b.Q(i,j,k+js-is,0) ) * 0.5*( b.q(i,j,k+js,3) + b.q(i,j,k+js-is,3) );
+        temprhou += rhoR[count] * uR[count];
+        temprhov += rhoR[count] * vR[count];
+        temprhow += rhoR[count] * wR[count];
         tempp    += 0.5*( b.q(i,j,k+js,0) + b.q(i,j,k+js-is,0) );
+        count++;
       }
       rhou += a*temprhou;
       rhov += a*temprhov;
@@ -401,18 +452,19 @@ void fourthOrderKEEP(block_ b, const thtrdat_ th, const double primary) {
     rhou *=2.0;
     p *=2.0;
 
-    b.kF(i,j,k,1) = rhou * W + p*b.ksx(i,j,k) ;
+    b.kF(i,j,k,1) = rhou * V + p*b.ksx(i,j,k) ;
 
-    b.kF(i,j,k,2) = rhov * W + p*b.ksy(i,j,k) ;
+    b.kF(i,j,k,2) = rhov * V + p*b.ksy(i,j,k) ;
 
-    b.kF(i,j,k,3) = rhow * W + p*b.ksz(i,j,k) ;
+    b.kF(i,j,k,3) = rhow * V + p*b.ksz(i,j,k) ;
 
-    // Total energy (rhoE+ p)*Ui)
+    // Total energy (rhoE+ p)*Vi)
     double rhoE=0.0;
     double pu=0.0;
     double temprhoE, temppu;
     double e,em;
-    for (int is=1; is <= order/2; is++) {
+    count = 0;
+    for (int is=1; is <= q; is++) {
       a = aq[is-1];
       temprhoE = 0.0;
       temppu = 0.0;
@@ -420,12 +472,12 @@ void fourthOrderKEEP(block_ b, const thtrdat_ th, const double primary) {
         e = b.qh(i,j,k+js   ,4)/b.Q(i,j,k+js   ,0);
         em= b.qh(i,j,k+js-is,4)/b.Q(i,j,k+js-is,0);
 
-        temprhoE += 0.5* ( b.Q(i,j,k+js,0) + b.Q(i,j,k+js-is,0) )
-                       * ( 0.5*(  e + em )
-                         + 0.5*(  b.q(i,j,k+js,1)*b.q(i,j,k+js-is,1)
-                                + b.q(i,j,k+js,2)*b.q(i,j,k+js-is,2)
-                                + b.q(i,j,k+js,3)*b.q(i,j,k+js-is,3) )
-                         );
+        temprhoE +=  rhoR[count] * ( 0.5*(  e + em )
+                                   + 0.5*(  b.q(i,j,k+js,1)*b.q(i,j,k+js-is,1)
+                                          + b.q(i,j,k+js,2)*b.q(i,j,k+js-is,2)
+                                          + b.q(i,j,k+js,3)*b.q(i,j,k+js-is,3) )
+                                   );
+        count++;
 
         temppu += 0.5*(
                         b.q(i,j,k+js-is,0)*(  b.q(i,j,k+js   ,1)*b.ksx(i,j,k)
@@ -442,7 +494,7 @@ void fourthOrderKEEP(block_ b, const thtrdat_ th, const double primary) {
     rhoE *=2.0;
     pu   *=2.0;
 
-    b.kF(i,j,k,4) = rhoE * W + pu;
+    b.kF(i,j,k,4) = rhoE * V + pu;
 
     // Species
     for (int n=0; n<th.ns-1; n++)
@@ -450,16 +502,18 @@ void fourthOrderKEEP(block_ b, const thtrdat_ th, const double primary) {
 
       double rhoY = 0.0;
       double temprhoY = 0.0;
+      count = 0;
       for (int is=1; is <= order/2; is++) {
         a = aq[is-1];
         temprhoY = 0.0;
         for (int js=0; js <= is-1; js++) {
-          temprhoY += 0.5*( (b.Q(i,j,k+js,0) + b.Q(i,j,k+js-is,0) ) * 0.5*(b.q(i,j,k+js,5+n)+b.q(i,j,k+js-is,5+n) ));
+          temprhoY += rhoR[count] * 0.5*(b.q(i,j,k+js,5+n)+b.q(i,j,k+js-is,5+n));
+          count++;
         }
         rhoY += a*temprhoY;
       }
       rhoY *=2.0;
-      b.kF(i,j,k,5+n) = rhoY * W;
+      b.kF(i,j,k,5+n) = rhoY * V;
     }
 
   });
@@ -475,7 +529,6 @@ void fourthOrderKEEP(block_ b, const thtrdat_ th, const double primary) {
                                      const int j,
                                      const int k,
                                      const int l) {
-
 
     // Compute switch on face
     double iFphi  = std::max( b.phi(i,j,k,0) , b.phi(i-1,j,k,0) );
