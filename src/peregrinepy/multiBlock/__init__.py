@@ -106,6 +106,25 @@ def setRHS(cls, config):
         cls.impChem = null
 
 
+def howManyNG(config):
+    ng = 1
+
+    # First check advective term order
+    if config["RHS"]["primaryAdvFlux"] == "secondOrderKeep":
+        ng = max(ng, 1)
+    elif config["RHS"]["primaryAdvFlux"] == "fourthOrderKeep":
+        ng = max(ng, 2)
+
+    # Now check diffusion term order
+    dO = config["RHS"]["diffOrder"]
+    if dO == 2:
+        ng = max(ng, 1)
+    elif dO == 4:
+        ng = max(ng, 2)
+
+    return ng
+
+
 def generateMultiBlockSolver(nblks, config, myblocks=None):
 
     # Get the time integrator from config file
@@ -119,10 +138,7 @@ def generateMultiBlockSolver(nblks, config, myblocks=None):
     spn = spdat.speciesNames
 
     # Get the number of ghost layers
-    if config["RHS"]["primaryAdvFlux"] == "fourthOrderKEEP":
-        ng = 2
-    else:
-        ng = 1
+    ng = howManyNG(config)
     # Instantiate the combined mbsolver+timeint object
     cls = mbsolver(nblks, spn, ng=ng)
 
