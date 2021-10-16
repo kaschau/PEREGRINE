@@ -3,7 +3,6 @@
 #include "block_.hpp"
 #include <math.h>
 #include <numeric>
-#include <stdexcept>
 
 void entropy(block_ b) {
 
