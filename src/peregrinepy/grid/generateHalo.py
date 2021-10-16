@@ -7,16 +7,19 @@ def generateHalo(blk):
 
     assert blk.blockType == "solver", "Only solver blocks can generate halos."
 
+    ni = blk.ni
+    nj = blk.nj
+    nk = blk.nk
     ng = blk.ng
 
     fM = {}
     shapes = (
-        (blk.nj, blk.nk),
-        (blk.nj, blk.nk),
-        (blk.ni, blk.nk),
-        (blk.ni, blk.nk),
-        (blk.ni, blk.nj),
-        (blk.ni, blk.nj),
+        (nj, nk),
+        (nj, nk),
+        (ni, nk),
+        (ni, nk),
+        (ni, nj),
+        (ni, nj),
     )
 
     # Construct masks of the faces, edges, and corners.
@@ -47,7 +50,7 @@ def generateHalo(blk):
     varis = ["x", "y", "z"]
 
     # First make sure that the halo coordinates are zero
-    for i, var in enumerate(varis):
+    for var in varis:
         x = blk.array[var]
         x[0:ng, :, :] = 0.0
         x[-ng::, :, :] = 0.0
@@ -59,101 +62,292 @@ def generateHalo(blk):
     # All faces
     for i, var in enumerate(varis):
         x = blk.array[var]
+        # face 1
+        mask = fM[1]["faceMask"]
         for n in range(ng):
             s0 = ng - n - 1
-            s1 = ng
-            s2 = ng + n + 1
-            # face 1
-            mask = fM[1]["faceMask"]
+            if ni <= ng:
+                s1 = s0 + 1
+                s2 = s1 + 1
+            else:
+                s1 = ng
+                s2 = ng + n + 1
             x[s0, :, :][mask] = 2.0 * x[s1, :, :][mask] - x[s2, :, :][mask]
-            # face 3
-            mask = fM[3]["faceMask"]
+        # face 3
+        mask = fM[3]["faceMask"]
+        for n in range(ng):
+            s0 = ng - n - 1
+            if nj <= ng:
+                s1 = s0 + 1
+                s2 = s1 + 1
+            else:
+                s1 = ng
+                s2 = ng + n + 1
             x[:, s0, :][mask] = 2.0 * x[:, s1, :][mask] - x[:, s2, :][mask]
-            # face 5
-            mask = fM[5]["faceMask"]
+        # face 5
+        mask = fM[5]["faceMask"]
+        for n in range(ng):
+            s0 = ng - n - 1
+            if nk <= ng:
+                s1 = s0 + 1
+                s2 = s1 + 1
+            else:
+                s1 = ng
+                s2 = ng + n + 1
             x[:, :, s0][mask] = 2.0 * x[:, :, s1][mask] - x[:, :, s2][mask]
 
+        # face 2
+        mask = fM[2]["faceMask"]
+        for n in range(ng):
             s0 = -ng + n
-            s1 = -ng - 1
-            s2 = -ng - n - 2
-            # face 2
-            mask = fM[2]["faceMask"]
+            if ni <= ng:
+                s1 = s0 - 1
+                s2 = s1 - 1
+            else:
+                s1 = -ng - 1
+                s2 = -ng - n - 2
             x[s0, :, :][mask] = 2.0 * x[s1, :, :][mask] - x[s2, :, :][mask]
-            # face 4
-            mask = fM[4]["faceMask"]
+        # face 4
+        mask = fM[4]["faceMask"]
+        for n in range(ng):
+            s0 = -ng + n
+            if ni <= ng:
+                s1 = s0 - 1
+                s2 = s1 - 1
+            else:
+                s1 = -ng - 1
+                s2 = -ng - n - 2
             x[:, s0, :][mask] = 2.0 * x[:, s1, :][mask] - x[:, s2, :][mask]
-            # face 6
-            mask = fM[6]["faceMask"]
+        # face 6
+        mask = fM[6]["faceMask"]
+        for n in range(ng):
+            s0 = -ng + n
+            if ni <= ng:
+                s1 = s0 - 1
+                s2 = s1 - 1
+            else:
+                s1 = -ng - 1
+                s2 = -ng - n - 2
             x[:, :, s0][mask] = 2.0 * x[:, :, s1][mask] - x[:, :, s2][mask]
 
-    # All edges
+    #    # All edges
     for i, var in enumerate(varis):
         x = blk.array[var]
+        # face 1
+        mask = fM[1]["edgeMask"]
         for n in range(ng):
             s0 = ng - n - 1
-            s1 = ng
-            s2 = ng + n + 1
-            # face 1
-            mask = fM[1]["edgeMask"]
-            x[s0, :, :][mask] += 0.5 * (2.0 * x[s1, :, :][mask] - x[s2, :, :][mask])
-            # face 3
-            mask = fM[3]["edgeMask"]
-            x[:, s0, :][mask] += 0.5 * (2.0 * x[:, s1, :][mask] - x[:, s2, :][mask])
-            # face 5
-            mask = fM[5]["edgeMask"]
-            x[:, :, s0][mask] += 0.5 * (2.0 * x[:, :, s1][mask] - x[:, :, s2][mask])
+            if ni <= ng:
+                s1 = s0 + 1
+                s2 = s1 + 1
+            else:
+                s1 = ng
+                s2 = ng + n + 1
+            x[s0, :, :][mask] = np.where(
+                x[s0, :, :][mask] == 0.0,
+                2.0 * x[s1, :, :][mask] - x[s2, :, :][mask],
+                0.5 * x[s0, :, :][mask]
+                + 0.5 * (2.0 * x[s1, :, :][mask] - x[s2, :, :][mask]),
+            )
+        # face 3
+        mask = fM[3]["edgeMask"]
+        for n in range(ng):
+            s0 = ng - n - 1
+            if nj <= ng:
+                s1 = s0 + 1
+                s2 = s1 + 1
+            else:
+                s1 = ng
+                s2 = ng + n + 1
+            x[:, s0, :][mask] = np.where(
+                x[:, s0, :][mask] == 0.0,
+                2.0 * x[:, s1, :][mask] - x[:, s2, :][mask],
+                0.5 * x[:, s0, :][mask]
+                + 0.5 * (2.0 * x[:, s1, :][mask] - x[:, s2, :][mask]),
+            )
+        # face 5
+        mask = fM[5]["edgeMask"]
+        for n in range(ng):
+            s0 = ng - n - 1
+            if nk <= ng:
+                s1 = s0 + 1
+                s2 = s1 + 1
+            else:
+                s1 = ng
+                s2 = ng + n + 1
+            x[:, :, s0][mask] = np.where(
+                x[:, :, s0][mask] == 0.0,
+                2.0 * x[:, :, s1][mask] - x[:, :, s2][mask],
+                0.5 * x[:, :, s0][mask]
+                + 0.5 * (2.0 * x[:, :, s1][mask] - x[:, :, s2][mask]),
+            )
 
+        # face 2
+        mask = fM[2]["edgeMask"]
+        for n in range(ng):
             s0 = -ng + n
-            s1 = -ng - 1
-            s2 = -ng - n - 2
-            # face 2
-            mask = fM[2]["edgeMask"]
-            x[s0, :, :][mask] += 0.5 * (2.0 * x[s1, :, :][mask] - x[s2, :, :][mask])
-            # face 4
-            mask = fM[4]["edgeMask"]
-            x[:, s0, :][mask] += 0.5 * (2.0 * x[:, s1, :][mask] - x[:, s2, :][mask])
-            # face 6
-            mask = fM[6]["edgeMask"]
-            x[:, :, s0][mask] += 0.5 * (2.0 * x[:, :, s1][mask] - x[:, :, s2][mask])
+            if ni <= ng:
+                s1 = s0 - 1
+                s2 = s1 - 1
+            else:
+                s1 = -ng - 1
+                s2 = -ng - n - 2
+            x[s0, :, :][mask] = np.where(
+                x[s0, :, :][mask] == 0.0,
+                2.0 * x[s1, :, :][mask] - x[s2, :, :][mask],
+                0.5 * x[s0, :, :][mask]
+                + 0.5 * (2.0 * x[s1, :, :][mask] - x[s2, :, :][mask]),
+            )
+        # face 4
+        mask = fM[4]["edgeMask"]
+        for n in range(ng):
+            s0 = -ng + n
+            if nj <= ng:
+                s1 = s0 - 1
+                s2 = s1 - 1
+            else:
+                s1 = -ng - 1
+                s2 = -ng - n - 2
+            x[:, s0, :][mask] = np.where(
+                x[:, s0, :][mask] == 0.0,
+                2.0 * x[:, s1, :][mask] - x[:, s2, :][mask],
+                0.5 * x[:, s0, :][mask]
+                + 0.5 * (2.0 * x[:, s1, :][mask] - x[:, s2, :][mask]),
+            )
+        # face 6
+        mask = fM[6]["edgeMask"]
+        for n in range(ng):
+            s0 = -ng + n
+            if nk <= ng:
+                s1 = s0 - 1
+                s2 = s1 - 1
+            else:
+                s1 = -ng - 1
+                s2 = -ng - n - 2
+            x[:, :, s0][mask] = np.where(
+                x[:, :, s0][mask] == 0.0,
+                2.0 * x[:, :, s1][mask] - x[:, :, s2][mask],
+                0.5 * x[:, :, s0][mask]
+                + 0.5 * (2.0 * x[:, :, s1][mask] - x[:, :, s2][mask]),
+            )
 
     # All corners
     for i, var in enumerate(varis):
         x = blk.array[var]
+        temp = np.zeros(blk.array[var].shape)
+        # face 1
+        mask = fM[1]["cornerMask"]
         for n in range(ng):
             s0 = ng - n - 1
-            s1 = ng
-            s2 = ng + n + 1
-            # face 1
-            mask = fM[1]["cornerMask"]
-            x[s0, :, :][mask] += (
-                1.0 / 3.0 * (2.0 * x[s1, :, :][mask] - x[s2, :, :][mask])
-            )
-            # face 3
-            mask = fM[3]["cornerMask"]
-            x[:, s0, :][mask] += (
-                1.0 / 3.0 * (2.0 * x[:, s1, :][mask] - x[:, s2, :][mask])
-            )
-            # face 5
-            mask = fM[5]["cornerMask"]
-            x[:, :, s0][mask] += (
-                1.0 / 3.0 * (2.0 * x[:, :, s1][mask] - x[:, :, s2][mask])
-            )
+            if ni <= ng:
+                s1 = s0 + 1
+                s2 = s1 + 1
+            else:
+                s1 = ng
+                s2 = ng + n + 1
 
+            x[s0, :, :][mask] = np.where(
+                x[s0, :, :][mask] == 0.0,
+                2.0 * x[s1, :, :][mask] - x[s2, :, :][mask],
+                (temp[s0, :, :][mask] / (temp[s0, :, :][mask] + 1.0))
+                * x[s0, :, :][mask]
+                + (1.0 - (temp[s0, :, :][mask] / (temp[s0, :, :][mask] + 1.0)))
+                * (2.0 * x[s1, :, :][mask] - x[s2, :, :][mask]),
+            )
+            temp[s0, :, :][mask] += 1.0
+        # face 3
+        mask = fM[3]["cornerMask"]
+        for n in range(ng):
+            s0 = ng - n - 1
+            if nj <= ng:
+                s1 = s0 + 1
+                s2 = s1 + 1
+            else:
+                s1 = ng
+                s2 = ng + n + 1
+            x[:, s0, :][mask] = np.where(
+                x[:, s0, :][mask] == 0.0,
+                2.0 * x[:, s1, :][mask] - x[:, s2, :][mask],
+                (temp[:, s0, :][mask] / (temp[:, s0, :][mask] + 1.0))
+                * x[:, s0, :][mask]
+                + (1.0 - (temp[:, s0, :][mask] / (temp[:, s0, :][mask] + 1.0)))
+                * (2.0 * x[:, s1, :][mask] - x[:, s2, :][mask]),
+            )
+            temp[:, s0, :][mask] += 1.0
+        # face 5
+        for n in range(ng):
+            s0 = ng - n - 1
+            if nk <= ng:
+                s1 = s0 + 1
+                s2 = s1 + 1
+            else:
+                s1 = ng
+                s2 = ng + n + 1
+            mask = fM[5]["cornerMask"]
+            x[:, :, s0][mask] = np.where(
+                x[:, :, s0][mask] == 0.0,
+                2.0 * x[:, :, s1][mask] - x[:, :, s2][mask],
+                (temp[:, :, s0][mask] / (temp[:, :, s0][mask] + 1.0))
+                * x[:, :, s0][mask]
+                + (1.0 - (temp[:, :, s0][mask] / (temp[:, :, s0][mask] + 1.0)))
+                * (2.0 * x[:, :, s1][mask] - x[:, :, s2][mask]),
+            )
+            temp[:, :, s0][mask] += 1.0
+
+        # face 2
+        mask = fM[2]["cornerMask"]
+        for n in range(ng):
             s0 = -ng + n
-            s1 = -ng - 1
-            s2 = -ng - n - 2
-            # face 2
-            mask = fM[2]["cornerMask"]
-            x[s0, :, :][mask] += (
-                1.0 / 3.0 * (2.0 * x[s1, :, :][mask] - x[s2, :, :][mask])
+            if ni <= ng:
+                s1 = s0 - 1
+                s2 = s1 - 1
+            else:
+                s1 = -ng - 1
+                s2 = -ng - n - 2
+            x[s0, :, :][mask] = np.where(
+                x[s0, :, :][mask] == 0.0,
+                2.0 * x[s1, :, :][mask] - x[s2, :, :][mask],
+                (temp[s0, :, :][mask] / (temp[s0, :, :][mask] + 1.0))
+                * x[s0, :, :][mask]
+                + (1.0 - (temp[s0, :, :][mask] / (temp[s0, :, :][mask] + 1.0)))
+                * (2.0 * x[s1, :, :][mask] - x[s2, :, :][mask]),
             )
-            # face 4
-            mask = fM[4]["cornerMask"]
-            x[:, s0, :][mask] += (
-                1.0 / 3.0 * (2.0 * x[:, s1, :][mask] - x[:, s2, :][mask])
+            temp[s0, :, :][mask] += 1.0
+        # face 4
+        mask = fM[4]["cornerMask"]
+        for n in range(ng):
+            s0 = -ng + n
+            if nj <= ng:
+                s1 = s0 - 1
+                s2 = s1 - 1
+            else:
+                s1 = -ng - 1
+                s2 = -ng - n - 2
+            x[:, s0, :][mask] = np.where(
+                x[:, s0, :][mask] == 0.0,
+                2.0 * x[:, s1, :][mask] - x[:, s2, :][mask],
+                (temp[:, s0, :][mask] / (temp[:, s0, :][mask] + 1.0))
+                * x[:, s0, :][mask]
+                + (1.0 - (temp[:, s0, :][mask] / (temp[:, s0, :][mask] + 1.0)))
+                * (2.0 * x[:, s1, :][mask] - x[:, s2, :][mask]),
             )
-            # face 6
-            mask = fM[6]["cornerMask"]
-            x[:, :, s0][mask] += (
-                1.0 / 3.0 * (2.0 * x[:, :, s1][mask] - x[:, :, s2][mask])
+            temp[:, s0, :][mask] += 1.0
+        # face 6
+        mask = fM[6]["cornerMask"]
+        for n in range(ng):
+            s0 = -ng + n
+            if nk <= ng:
+                s1 = s0 - 1
+                s2 = s1 - 1
+            else:
+                s1 = -ng - 1
+                s2 = -ng - n - 2
+            x[:, :, s0][mask] = np.where(
+                x[:, :, s0][mask] == 0.0,
+                2.0 * x[:, :, s1][mask] - x[:, :, s2][mask],
+                (temp[:, :, s0][mask] / (temp[:, :, s0][mask] + 1.0))
+                * x[:, :, s0][mask]
+                + (1.0 - (temp[:, :, s0][mask] / (temp[:, :, s0][mask] + 1.0)))
+                * (2.0 * x[:, :, s1][mask] - x[:, :, s2][mask]),
             )
+            temp[:, :, s0][mask] += 1.0
