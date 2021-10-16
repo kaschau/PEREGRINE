@@ -30,6 +30,13 @@ void diffusiveFlux(block_ b, const thtrdat_ th);
 // ./switches
 //    |------> pressure
 void entropy(block_ b);
+//    |------> negateFluxes
+void noIFlux(block_ b);
+void noJFlux(block_ b);
+void noKFlux(block_ b);
+void noInoJFlux(block_ b);
+void noInoKFlux(block_ b);
+void noJnoKFlux(block_ b);
 
 
 // ./thermo

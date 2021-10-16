@@ -11,9 +11,9 @@ from ..misc import null
 
 
 class pgConfigError(Exception):
-    def __init__(self, option):
-        message = f"Unknown PEREGRINE config option {option}."
-        super().__init__(message)
+    def __init__(self, setting, option, altMessage=""):
+        message = f"Unknown PEREGRINE config {setting} option: {option}. "
+        super().__init__(message + altMessage)
 
 
 #########################################
@@ -26,7 +26,7 @@ def setConsistify(cls, config):
     try:
         cls.eos = getattr(compute.thermo, eos)
     except AttributeError:
-        raise pgConfigError(eos)
+        raise pgConfigError("eos", eos)
 
     # Diffusion, transport properties, spatial derivatives.
     if config["RHS"]["diffusion"]:
@@ -34,12 +34,13 @@ def setConsistify(cls, config):
         try:
             cls.trans = getattr(compute.transport, trans)
         except AttributeError:
-            raise pgConfigError(trans)
+            raise pgConfigError("trans", trans)
+
         dqO = config["RHS"]["diffOrder"]
         try:
             cls.dqdxyz = getattr(compute.utils, f"dq{dqO}FD")
         except AttributeError:
-            raise pgConfigError(f"dq{dqO}FD")
+            raise pgConfigError("diffOrder", f"dq{dqO}FD")
     else:
         cls.trans = null
         cls.dqdxyz = null
@@ -48,14 +49,24 @@ def setConsistify(cls, config):
     #  If we aren't using a secondary flux function, we rely on the
     #  initialization of the switch array "phi" = 0.0 and then
     #  just never change it.
-    if config["RHS"]["secondaryAdvFlux"] is None:
+    if config["RHS"]["switchAdvFlux"] is None:
         cls.switch = null
     else:
         switch = config["RHS"]["switchAdvFlux"]
         try:
             cls.switch = getattr(compute.switches, switch)
         except AttributeError:
-            raise pgConfigError(switch)
+            raise pgConfigError("switchAdvFlux", switch)
+        # Just as a check, we will make sure we didnt accidentially
+        #  set a switch (that is a non negating switch) without
+        #  setting a secondary flux
+        if config["RHS"]["secondaryAdvFlux"] is None and not config["RHS"][
+            "switchAdvFlux"
+        ].startswith("no"):
+            raise pgConfigError(
+                switch,
+                "You set a advective flux switching option without a secondary flux.",
+            )
 
 
 #########################################
@@ -70,7 +81,7 @@ def setRHS(cls, config):
         try:
             cls.primaryAdvFlux = getattr(compute.advFlux, primary)
         except AttributeError:
-            raise pgConfigError(primary)
+            raise pgConfigError("primaryAdvFlux", primary)
 
     # Secondary advective fluxes
     secondary = config["RHS"]["secondaryAdvFlux"]
@@ -80,7 +91,7 @@ def setRHS(cls, config):
         try:
             cls.secondaryAdvFlux = getattr(compute.advFlux, secondary)
         except AttributeError:
-            raise pgConfigError(secondary)
+            raise pgConfigError("secondaryAdvFlux", secondary)
 
     # Diffusive fluxes
     if config["RHS"]["diffusion"]:
@@ -94,7 +105,7 @@ def setRHS(cls, config):
         try:
             cls.expChem = getattr(compute.chemistry, mech)
         except AttributeError:
-            raise pgConfigError(mech)
+            raise pgConfigError("mechanism", mech)
         # If we are using an implicit chemistry integration
         #  we need to set it here and set the explicit
         #  module to null so it is not called in RHS

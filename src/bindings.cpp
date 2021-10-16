@@ -159,6 +159,13 @@ PYBIND11_MODULE(compute, m) {
   //  |----> entropy.cpp
   switches.def("entropy", &entropy, "Compute switches based on entropy",
         py::arg("block_ object"));
+  //  |----> negateFluxes.cpp
+  switches.def("noIFlux", &noIFlux, "Zero out primary flux via switch", py::arg("block_ object"));
+  switches.def("noJFlux", &noJFlux, "Zero out primary flux via switch", py::arg("block_ object"));
+  switches.def("noKFlux", &noKFlux, "Zero out primary flux via switch", py::arg("block_ object"));
+  switches.def("noInoJFlux", &noInoJFlux, "Zero out primary flux via switch", py::arg("block_ object"));
+  switches.def("noInoKFlux", &noInoKFlux, "Zero out primary flux via switch", py::arg("block_ object"));
+  switches.def("noJnoKFlux", &noJnoKFlux, "Zero out primary flux via switch", py::arg("block_ object"));
 
   // ./thermo
   py::module thermo = m.def_submodule("thermo","thermo module");
