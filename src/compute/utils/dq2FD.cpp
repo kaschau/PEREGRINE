@@ -6,10 +6,14 @@ void dq2FD(block_ b) {
 
 //-------------------------------------------------------------------------------------------|
 // Spatial derivatices of primative variables
+// estimated via second order finite difference
 //-------------------------------------------------------------------------------------------|
-  MDRange4 range({1,1,1,0},{b.ni,b.nj,b.nk,b.ne});
+  MDRange4 range_cc({b.ng, b.ng, b.ng,0},{b.ni+b.ng-1,
+                                          b.nj+b.ng-1,
+                                          b.nk+b.ng-1,
+                                          b.ne});
   Kokkos::parallel_for("Apply current fluxes to RHS",
-                       range,
+                       range_cc,
                        KOKKOS_LAMBDA(const int i,
                                      const int j,
                                      const int k,

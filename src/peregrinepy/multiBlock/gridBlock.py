@@ -119,8 +119,8 @@ class gridBlock(topologyBlock):
         for name in ["ksx", "ksy", "ksz", "kS", "knx", "kny", "knz"]:
             self.array[name] = np.zeros((shape))
 
-    def computeMetrics(self):
-        metrics(self)
+    def computeMetrics(self, fdOrder=2):
+        metrics(self, fdOrder=fdOrder)
 
     def generateHalo(self):
         generateHalo(self)
