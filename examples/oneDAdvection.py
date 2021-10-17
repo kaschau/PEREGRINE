@@ -54,9 +54,9 @@ def simulate():
     R = 281.4583333333333
     blk.array["q"][:, :, :, 0] = 1.0
     blk.array["q"][:, :, :, 1] = 1.0
-    initial_rho = 2.0 + np.sin(2 * np.pi * blk.array["xc"][ng:-ng, 0, 0])
+    initial_rho = 2.0 + np.sin(2 * np.pi * blk.array["xc"])
     initial_T = 1.0 / (R * initial_rho)
-    blk.array["q"][ng:-ng, ng, ng, 4] = initial_T
+    blk.array["q"][:, :, :, 4] = initial_T
 
     # Update cons
     mb.eos(blk, mb.thtrdat, 0, "prims")
@@ -83,7 +83,7 @@ def simulate():
     ax1.plot(x, u, color="k", label="u", linewidth=0.5)
     ax1.scatter(
         x,
-        initial_rho,
+        initial_rho[ng:-ng, ng:-ng, ng:-ng],
         marker="o",
         facecolor="w",
         edgecolor="b",

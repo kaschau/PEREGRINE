@@ -8,7 +8,7 @@ void secondOrderKEEP(block_ b, const thtrdat_ th, const double primary) {
 //-------------------------------------------------------------------------------------------|
 // i flux face range
 //-------------------------------------------------------------------------------------------|
-  MDRange3 range_i({1,1,1},{b.ni+1,b.nj,b.nk});
+  MDRange3 range_i({b.ng,b.ng,b.ng},{b.ni+b.ng, b.nj+b.ng-1, b.nk+b.ng-1});
   Kokkos::parallel_for("i face conv fluxes", range_i, KOKKOS_LAMBDA(const int i,
                                                                     const int j,
                                                                     const int k) {
@@ -50,12 +50,7 @@ void secondOrderKEEP(block_ b, const thtrdat_ th, const double primary) {
     double em;
 
     e = b.qh(i  ,j,k,4)/b.Q(i  ,j,k,0);
-
-
-
     em= b.qh(i-1,j,k,4)/b.Q(i-1,j,k,0);
-
-
 
     b.iF(i,j,k,4) =( rho *(0.5*(  e         +  em         )
                          + 0.5*(b.q(i,j,k,1)*b.q(i-1,j,k,1)  +
@@ -80,7 +75,7 @@ void secondOrderKEEP(block_ b, const thtrdat_ th, const double primary) {
 //-------------------------------------------------------------------------------------------|
 // j flux face range
 //-------------------------------------------------------------------------------------------|
-  MDRange3 range_j({1,1,1},{b.ni,b.nj+1,b.nk});
+  MDRange3 range_j({b.ng,b.ng,b.ng},{b.ni+b.ng-1, b.nj+b.ng, b.nk+b.ng-1});
   Kokkos::parallel_for("j face conv fluxes", range_j, KOKKOS_LAMBDA(const int i,
                                                                     const int j,
                                                                     const int k) {
@@ -123,12 +118,7 @@ void secondOrderKEEP(block_ b, const thtrdat_ th, const double primary) {
     double em;
 
     e = b.qh(i,j  ,k,4)/b.Q(i,j  ,k,0);
-
-
-
     em= b.qh(i,j-1,k,4)/b.Q(i,j-1,k,0);
-
-
 
     b.jF(i,j,k,4) =( rho *(0.5*(  e         +  em         )
                          + 0.5*(b.q(i,j,k,1)*b.q(i,j-1,k,1)  +
@@ -153,7 +143,7 @@ void secondOrderKEEP(block_ b, const thtrdat_ th, const double primary) {
 //-------------------------------------------------------------------------------------------|
 // k flux face range
 //-------------------------------------------------------------------------------------------|
-  MDRange3 range_k({1,1,1},{b.ni,b.nj,b.nk+1});
+  MDRange3 range_k({b.ng,b.ng,b.ng},{b.ni+b.ng-1, b.nj+b.ng-1, b.nk+b.ng});
   Kokkos::parallel_for("k face conv fluxes", range_k, KOKKOS_LAMBDA(const int i,
                                                                     const int j,
                                                                     const int k) {
@@ -195,12 +185,7 @@ void secondOrderKEEP(block_ b, const thtrdat_ th, const double primary) {
     double em;
 
     e = b.qh(i,j,k  ,4)/b.Q(i,j,k  ,0);
-
-
-
     em= b.qh(i,j,k-1,4)/b.Q(i,j,k-1,0);
-
-
 
     b.kF(i,j,k,4) =( rho *(0.5*(  e         +  em         )
                          + 0.5*(b.q(i,j,k,1)*b.q(i,j,k-1,1)  +
@@ -226,9 +211,9 @@ void secondOrderKEEP(block_ b, const thtrdat_ th, const double primary) {
 //-------------------------------------------------------------------------------------------|
 // Apply fluxes to cc range
 //-------------------------------------------------------------------------------------------|
-  MDRange4 range({1,1,1,0},{b.ni,b.nj,b.nk,b.ne});
+  MDRange4 range_cc({b.ng,b.ng,b.ng,0},{b.ni+b.ng-1,b.nj+b.ng-1,b.nk+b.ng-1,b.ne});
   Kokkos::parallel_for("Apply current fluxes to RHS",
-                       range,
+                       range_cc,
                        KOKKOS_LAMBDA(const int i,
                                      const int j,
                                      const int k,

@@ -14,6 +14,8 @@ MDRange3 get_range3(block_ b, int face, int i=0, int j=0, int k=0);
 // ./advFlux
 //    |------> secondOrderKEEP
 void secondOrderKEEP(block_ b, const thtrdat_ th, const double primary);
+//    |------> fourthOrderKEEP
+void fourthOrderKEEP(block_ b, const thtrdat_ th, const double primary);
 //    |------> rusanov
 void rusanov(block_ b, const thtrdat_ th, const double primary);
 //    |------> ausmPlusUp
@@ -28,6 +30,13 @@ void diffusiveFlux(block_ b, const thtrdat_ th);
 // ./switches
 //    |------> pressure
 void entropy(block_ b);
+//    |------> negateFluxes
+void noIFlux(block_ b);
+void noJFlux(block_ b);
+void noKFlux(block_ b);
+void noInoJFlux(block_ b);
+void noInoKFlux(block_ b);
+void noJnoKFlux(block_ b);
 
 
 // ./thermo
@@ -81,5 +90,7 @@ void chem_GRI30(block_ b,
 void dQzero(block_ b);
 //    |------> dq2FD
 void dq2FD(block_ b);
+//    |------> dq4FD
+void dq4FD(block_ b);
 
 #endif

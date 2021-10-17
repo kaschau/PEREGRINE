@@ -131,6 +131,11 @@ PYBIND11_MODULE(compute, m) {
         py::arg("block_ object"),
         py::arg("thtrdat_ object"),
         py::arg("primary"));
+  //  |----> fourthOrderKEEP.cpp
+  advFlux.def("fourthOrderKEEP", &fourthOrderKEEP, "Compute centeral difference euler fluxes via fourth order KEEP",
+        py::arg("block_ object"),
+        py::arg("thtrdat_ object"),
+        py::arg("primary"));
   //  |----> rusanov.cpp
   advFlux.def("rusanov", &rusanov, "Compute first order euler fluxes via rusanov",
         py::arg("block_ object"),
@@ -154,6 +159,13 @@ PYBIND11_MODULE(compute, m) {
   //  |----> entropy.cpp
   switches.def("entropy", &entropy, "Compute switches based on entropy",
         py::arg("block_ object"));
+  //  |----> negateFluxes.cpp
+  switches.def("noIFlux", &noIFlux, "Zero out primary flux via switch", py::arg("block_ object"));
+  switches.def("noJFlux", &noJFlux, "Zero out primary flux via switch", py::arg("block_ object"));
+  switches.def("noKFlux", &noKFlux, "Zero out primary flux via switch", py::arg("block_ object"));
+  switches.def("noInoJFlux", &noInoJFlux, "Zero out primary flux via switch", py::arg("block_ object"));
+  switches.def("noInoKFlux", &noInoKFlux, "Zero out primary flux via switch", py::arg("block_ object"));
+  switches.def("noJnoKFlux", &noJnoKFlux, "Zero out primary flux via switch", py::arg("block_ object"));
 
   // ./thermo
   py::module thermo = m.def_submodule("thermo","thermo module");
@@ -229,6 +241,9 @@ PYBIND11_MODULE(compute, m) {
         py::arg("block_ object"));
   //  |----> dq2FD.cpp
   utils.def("dq2FD", &dq2FD, "Second order approx of spatial derivative of q array via finite difference",
+        py::arg("block_ object"));
+  //  |----> dq4FD.cpp
+  utils.def("dq4FD", &dq4FD, "Fourth order approx of spatial derivative of q array via finite difference",
         py::arg("block_ object"));
 
 

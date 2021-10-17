@@ -3,11 +3,10 @@
 #include "block_.hpp"
 #include <math.h>
 #include <numeric>
-#include <stdexcept>
 
 void entropy(block_ b) {
 
-  MDRange3 range_cc({1,1,1},{b.ni,b.nj,b.nk});
+  MDRange3 range_cc({b.ng,b.ng,b.ng},{b.ni+b.ng-1,b.nj+b.ng-1,b.nk+b.ng-1});
 
   Kokkos::parallel_for("Compute switch from pressure",
                        range_cc,
