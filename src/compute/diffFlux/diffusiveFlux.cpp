@@ -114,7 +114,7 @@ void diffusiveFlux(block_ b, const thtrdat_ th) {
       b.iF(i,j,k,5+n) = -rho * Dij * gradYk;
     }
     // Apply n=ns species to correction
-    Dij  = 0.5 * ( b.qt(i,j,k,2+th.ns) + b.qt(i-1,j,k,2+th.ns) );
+    Dij  = 0.5 * ( b.qt(i,j,k,2+th.ns-1) + b.qt(i-1,j,k,2+th.ns-1) );
     Dcorr += Dij * gradYns;
 
     // Apply correction and species thermal flux
@@ -131,7 +131,7 @@ void diffusiveFlux(block_ b, const thtrdat_ th) {
     }
     // Apply the n=ns species to thermal diffusion
     Yns = std::max(Yns,0.0);
-    hk = 0.5 * (b.qh(i,j,k,5+th.ns) + b.qh(i-1,j,k,5+th.ns) );
+    hk = 0.5 * (b.qh(i,j,k,5+th.ns-1) + b.qh(i-1,j,k,5+th.ns-1) );
     b.iF(i,j,k,4) += (-rho*Dij*gradYns + Yns*rho*Dcorr)*hk;
 
   });
@@ -245,7 +245,7 @@ void diffusiveFlux(block_ b, const thtrdat_ th) {
       b.jF(i,j,k,5+n) = -rho * Dij * gradYk;
     }
     // Apply n=ns species to correction
-    Dij  = 0.5 * ( b.qt(i,j,k,2+th.ns) + b.qt(i,j-1,k,2+th.ns) );
+    Dij  = 0.5 * ( b.qt(i,j,k,2+th.ns-1) + b.qt(i,j-1,k,2+th.ns-1) );
     Dcorr += Dij * gradYns;
 
     // Apply correction and species thermal flux
@@ -262,7 +262,7 @@ void diffusiveFlux(block_ b, const thtrdat_ th) {
     }
     // Apply the n=ns species to thermal diffusion
     Yns = std::max(Yns,0.0);
-    hk = 0.5 * (b.qh(i,j,k,5+th.ns) + b.qh(i,j-1,k,5+th.ns) );
+    hk = 0.5 * (b.qh(i,j,k,5+th.ns-1) + b.qh(i,j-1,k,5+th.ns-1) );
     b.jF(i,j,k,4) += (-rho*Dij*gradYns + Yns*rho*Dcorr)*hk;
 
   });
@@ -376,7 +376,7 @@ void diffusiveFlux(block_ b, const thtrdat_ th) {
       b.kF(i,j,k,5+n) = -rho * Dij * gradYk;
     }
     // Apply n=ns species to correction
-    Dij  = 0.5 * ( b.qt(i,j,k,2+th.ns) + b.qt(i,j,k-1,2+th.ns) );
+    Dij  = 0.5 * ( b.qt(i,j,k,2+th.ns-1) + b.qt(i,j,k-1,2+th.ns-1) );
     Dcorr += Dij * gradYns;
 
     // Apply correction and species thermal flux
@@ -393,7 +393,7 @@ void diffusiveFlux(block_ b, const thtrdat_ th) {
     }
     // Apply the n=ns species to thermal diffusion
     Yns = std::max(Yns,0.0);
-    hk = 0.5 * (b.qh(i,j,k,5+th.ns) + b.qh(i,j,k-1,5+th.ns) );
+    hk = 0.5 * (b.qh(i,j,k,5+th.ns-1) + b.qh(i,j,k-1,5+th.ns-1) );
     b.kF(i,j,k,4) += (-rho*Dij*gradYns + Yns*rho*Dcorr)*hk;
 
   });
