@@ -96,18 +96,43 @@ void diffusiveFlux(block_ b, const thtrdat_ th) {
                       wf*txz*b.isz(i,j,k) ) - q;
 
     // Species
-    double Dij;
+    double gradYk, Dij, Dcorr=0.0;
+    double gradYns = 0.0;
+    double rho  = 0.5 * ( b.Q(i,j,k,0) + b.Q(i-1,j,k,0)     );
+    // Compute the species flux and correction term \sum(k=1,ns) Dij*gradYk
     for (int n=0; n<th.ns-1; n++)
     {
       Dij  = 0.5 * ( b.qt(i,j,k,2+n) + b.qt(i-1,j,k,2+n)     );
       dNdx = 0.5 * ( b.dqdx(i,j,k,5+n) + b.dqdx(i-1,j,k,5+n) );
       dNdy = 0.5 * ( b.dqdy(i,j,k,5+n) + b.dqdy(i-1,j,k,5+n) );
       dNdz = 0.5 * ( b.dqdz(i,j,k,5+n) + b.dqdz(i-1,j,k,5+n) );
-
-      b.iF(i,j,k,5+n) = -Dij*( dNdx * b.isx(i,j,k) +
-                               dNdy * b.isy(i,j,k) +
-                               dNdz * b.isz(i,j,k) );
+      gradYk = ( dNdx * b.isx(i,j,k) +
+                 dNdy * b.isy(i,j,k) +
+                 dNdz * b.isz(i,j,k) );
+      gradYns -= gradYk;
+      Dcorr += Dij*gradYk;
+      b.iF(i,j,k,5+n) = -rho * Dij * gradYk;
     }
+    // Apply n=ns species to correction
+    Dij  = 0.5 * ( b.qt(i,j,k,2+th.ns-1) + b.qt(i-1,j,k,2+th.ns-1) );
+    Dcorr += Dij * gradYns;
+
+    // Apply correction and species thermal flux
+    double Yk,hk;
+    double Yns = 1.0;
+    for (int n=0; n<th.ns-1; n++)
+    {
+      Yk = 0.5 * ( b.q(i,j,k,5+n) + b.q(i-1,j,k,5+n) );
+      Yns -= Yk;
+      b.iF(i,j,k,5+n) += Yk*rho*Dcorr;
+      // Species thermal diffusion
+      hk = 0.5 * (b.qh(i,j,k,5+n) + b.qh(i-1,j,k,5+n) );
+      b.iF(i,j,k,4) += b.iF(i,j,k,5+n)*hk;
+    }
+    // Apply the n=ns species to thermal diffusion
+    Yns = std::max(Yns,0.0);
+    hk = 0.5 * (b.qh(i,j,k,5+th.ns-1) + b.qh(i-1,j,k,5+th.ns-1) );
+    b.iF(i,j,k,4) += (-rho*Dij*gradYns + Yns*rho*Dcorr)*hk;
 
   });
 
@@ -202,18 +227,43 @@ void diffusiveFlux(block_ b, const thtrdat_ th) {
                       wf*txz*b.jsz(i,j,k) ) - q;
 
     // Species
-    double Dij;
+    double gradYk, Dij, Dcorr=0.0;
+    double gradYns = 0.0;
+    double rho  = 0.5 * ( b.Q(i,j,k,0) + b.Q(i,j-1,k,0)     );
+    // Compute the species flux and correction term \sum(k=1,ns) Dij*gradYk
     for (int n=0; n<th.ns-1; n++)
     {
       Dij  = 0.5 * ( b.qt(i,j,k,2+n) + b.qt(i,j-1,k,2+n)     );
       dNdx = 0.5 * ( b.dqdx(i,j,k,5+n) + b.dqdx(i,j-1,k,5+n) );
       dNdy = 0.5 * ( b.dqdy(i,j,k,5+n) + b.dqdy(i,j-1,k,5+n) );
       dNdz = 0.5 * ( b.dqdz(i,j,k,5+n) + b.dqdz(i,j-1,k,5+n) );
-
-      b.jF(i,j,k,5+n) = -Dij*( dNdx * b.jsx(i,j,k) +
-                               dNdy * b.jsy(i,j,k) +
-                               dNdz * b.jsz(i,j,k) );
+      gradYk = ( dNdx * b.jsx(i,j,k) +
+                 dNdy * b.jsy(i,j,k) +
+                 dNdz * b.jsz(i,j,k) );
+      gradYns -= gradYk;
+      Dcorr += Dij*gradYk;
+      b.jF(i,j,k,5+n) = -rho * Dij * gradYk;
     }
+    // Apply n=ns species to correction
+    Dij  = 0.5 * ( b.qt(i,j,k,2+th.ns-1) + b.qt(i,j-1,k,2+th.ns-1) );
+    Dcorr += Dij * gradYns;
+
+    // Apply correction and species thermal flux
+    double Yk,hk;
+    double Yns = 1.0;
+    for (int n=0; n<th.ns-1; n++)
+    {
+      Yk = 0.5 * ( b.q(i,j,k,5+n) + b.q(i,j-1,k,5+n) );
+      Yns -= Yk;
+      b.jF(i,j,k,5+n) += Yk*rho*Dcorr;
+      // Species thermal diffusion
+      hk = 0.5 * (b.qh(i,j,k,5+n) + b.qh(i,j-1,k,5+n) );
+      b.jF(i,j,k,4) += b.jF(i,j,k,5+n)*hk;
+    }
+    // Apply the n=ns species to thermal diffusion
+    Yns = std::max(Yns,0.0);
+    hk = 0.5 * (b.qh(i,j,k,5+th.ns-1) + b.qh(i,j-1,k,5+th.ns-1) );
+    b.jF(i,j,k,4) += (-rho*Dij*gradYns + Yns*rho*Dcorr)*hk;
 
   });
 
@@ -308,21 +358,45 @@ void diffusiveFlux(block_ b, const thtrdat_ th) {
                       wf*txz*b.ksz(i,j,k) ) - q;
 
     // Species
-    double Dij;
+    double gradYk, Dij, Dcorr=0.0;
+    double gradYns = 0.0;
+    double rho  = 0.5 * ( b.Q(i,j,k,0) + b.Q(i,j,k-1,0)     );
+    // Compute the species flux and correction term \sum(k=1,ns) Dij*gradYk
     for (int n=0; n<th.ns-1; n++)
     {
       Dij  = 0.5 * ( b.qt(i,j,k,2+n) + b.qt(i,j,k-1,2+n)     );
       dNdx = 0.5 * ( b.dqdx(i,j,k,5+n) + b.dqdx(i,j,k-1,5+n) );
       dNdy = 0.5 * ( b.dqdy(i,j,k,5+n) + b.dqdy(i,j,k-1,5+n) );
       dNdz = 0.5 * ( b.dqdz(i,j,k,5+n) + b.dqdz(i,j,k-1,5+n) );
-
-      b.kF(i,j,k,5+n) = -Dij*( dNdx * b.ksx(i,j,k) +
-                               dNdy * b.ksy(i,j,k) +
-                               dNdz * b.ksz(i,j,k) );
+      gradYk = ( dNdx * b.ksx(i,j,k) +
+                 dNdy * b.ksy(i,j,k) +
+                 dNdz * b.ksz(i,j,k) );
+      gradYns -= gradYk;
+      Dcorr += Dij*gradYk;
+      b.kF(i,j,k,5+n) = -rho * Dij * gradYk;
     }
+    // Apply n=ns species to correction
+    Dij  = 0.5 * ( b.qt(i,j,k,2+th.ns-1) + b.qt(i,j,k-1,2+th.ns-1) );
+    Dcorr += Dij * gradYns;
+
+    // Apply correction and species thermal flux
+    double Yk,hk;
+    double Yns = 1.0;
+    for (int n=0; n<th.ns-1; n++)
+    {
+      Yk = 0.5 * ( b.q(i,j,k,5+n) + b.q(i,j,k-1,5+n) );
+      Yns -= Yk;
+      b.kF(i,j,k,5+n) += Yk*rho*Dcorr;
+      // Species thermal diffusion
+      hk = 0.5 * (b.qh(i,j,k,5+n) + b.qh(i,j,k-1,5+n) );
+      b.kF(i,j,k,4) += b.kF(i,j,k,5+n)*hk;
+    }
+    // Apply the n=ns species to thermal diffusion
+    Yns = std::max(Yns,0.0);
+    hk = 0.5 * (b.qh(i,j,k,5+th.ns-1) + b.qh(i,j,k-1,5+th.ns-1) );
+    b.kF(i,j,k,4) += (-rho*Dij*gradYns + Yns*rho*Dcorr)*hk;
 
   });
-
 
 //-------------------------------------------------------------------------------------------|
 // Apply fluxes to cc range

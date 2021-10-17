@@ -51,7 +51,7 @@ Gives access to the primative variables.
 | **qt**    | **Transport**    |         |              |
 |           | mu               | 0       | Pa.s         |
 |           | kappa            | 1       | W/m/K        |
-|           | D[n]             | 2+ns-1  | m^2/s        |
+|           | D[n]             | 2+ns    | m^2/s        |
 | **omega** | **Chemistry**    |         |              |
 |           | dTdt             | 0       | K/s          |
 |           | d(rhoYi)dt       | 1..ns   | kg/s         |
