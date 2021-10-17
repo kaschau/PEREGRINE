@@ -179,7 +179,7 @@ void kineticTheory(block_ b,
   // thermal conductivity
   b.qt(i,j,k,1) = kappa;
   // Diffusion coefficients mass
-  for (int n=0; n<ns-1; n++)
+  for (int n=0; n<=ns-1; n++)
   {
     b.qt(i,j,k,2+n) = D[n];
   }
