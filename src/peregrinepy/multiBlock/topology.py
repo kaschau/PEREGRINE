@@ -38,6 +38,11 @@ class topology(UserList):
     def block_list(self):
         return [b.nblki for b in self]
 
+    def getBlock(self, nblki):
+        for blk in self:
+            if blk.nblki == nblki:
+                return blk
+
     def __repr__(self):
         string = "Topology multiBlock object:\n"
         string += f"{self.nblks} block(s)\n"

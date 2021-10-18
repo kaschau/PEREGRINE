@@ -21,8 +21,9 @@ Output will be a PEREGRINE compatible connectivity file 'conn.yaml' as well as h
 import argparse
 import os
 import peregrinepy as pg
+import yaml
 
-# from verify_grid import verify
+from verifyGrid import verify
 import numpy as np
 from scipy.io import FortranFile
 
@@ -32,8 +33,8 @@ parser = argparse.ArgumentParser(
 parser.add_argument(
     "-topo",
     action="store",
-    metavar="<topo_FILE>",
-    dest="topo_file_name",
+    metavar="<topoFile>",
+    dest="topoFileName",
     default="info.topo",
     help="topology file from MultiBlock-Info export from ICEM. Default is info.topo",
     type=str,
@@ -41,7 +42,7 @@ parser.add_argument(
 parser.add_argument(
     "-fmt",
     action="store",
-    metavar="<file_format>",
+    metavar="<fileFormat>",
     dest="fmt",
     default="tns3dmb",
     help="""Format used to export from ICEM **PAY ATTENTION TO THIS**. You must always export your ICEM grid in Multi-Block Info format to get the topo file. \nBut the
@@ -49,6 +50,18 @@ parser.add_argument(
                     Options:\n
                             tns3dmb  <Default>\n
                             mbi      Multi-Block Info""",
+    type=str,
+)
+parser.add_argument(
+    "-bcFam",
+    action="store",
+    metavar="<bcFam>",
+    dest="bcFam",
+    default="./bcFam.yaml",
+    help="""File to translate the labels given to boundary conditions in ICEM
+            to PEREGRINE bcType (i.e. constantVelocitySubsonicInlet, adiabaticNoSlipWall, etc.)\n
+            \n
+            NOTE: ALL labels from ICEM need an entry in the yaml file. Even walls.""",
     type=str,
 )
 
@@ -63,8 +76,8 @@ args = parser.parse_args()
 ##################
 
 if args.fmt == "tns3dmb":
-    file_name = "tns3dmb.dat"
-    with FortranFile(file_name, "r") as f90:
+    fileName = "tns3dmb.dat"
+    with FortranFile(fileName, "r") as f90:
 
         nblks = f90.read_ints(dtype=np.int32)[0]
         mb = pg.multiBlock.grid(nblks)
@@ -73,10 +86,10 @@ if args.fmt == "tns3dmb":
 
         for nxyz, blk in zip(nxyzs, mb):
             nx, ny, nz = nxyz
-            temp = f90.read_reals(dtype=np.float64).reshape(3, nz, ny, nx)
-            blk.x = temp[0]
-            blk.y = temp[1]
-            blk.z = temp[2]
+            temp = f90.read_reals(dtype=np.float64).reshape((nx, ny, nz, 3), order='F')
+            blk.array["x"] = temp[:, :, :, 0]
+            blk.array["y"] = temp[:, :, :, 1]
+            blk.array["z"] = temp[:, :, :, 2]
 
 ##########################
 # MULTIBLOCK-INFO FORMAT #
@@ -84,29 +97,29 @@ if args.fmt == "tns3dmb":
 elif args.fmt == "mbi":
     nblks = len([f for f in os.listdir() if f.startswith("info.dom")])
     print(f"Reading in {nblks} ICEM domain files")
-    print("    {}".format(args.topo_file_name))
+    print("    {}".format(args.topoFileName))
     mb = pg.multiBlock.grid(nblks)
 
     for blk in mb:
-        file_name = "info.dom{}".format(blk.nblki)
-        with open(file_name, "r") as f:
+        fileName = "info.dom{}".format(blk.nblki)
+        with open(fileName, "r") as f:
             line = f.readline().strip().split()
             nx = int(line[1])
             ny = int(line[2])
             nz = int(line[3])
-        points = np.genfromtxt(file_name, comments="domain.")
+        points = np.genfromtxt(fileName, comments="domain.")
 
-        blk.x = np.reshape(points[:, 0], (nx, ny, nz))
-        blk.y = np.reshape(points[:, 1], (nx, ny, nz))
-        blk.z = np.reshape(points[:, 2], (nx, ny, nz))
+        blk.array["x"] = np.reshape(points[:, 0], (nx, ny, nz))
+        blk.array["y"] = np.reshape(points[:, 1], (nx, ny, nz))
+        blk.array["z"] = np.reshape(points[:, 2], (nx, ny, nz))
 
 else:
     raise ValueError("Unknown file format given, see help menu")
 
+# Set all bc types to internal... we will set the external bc's later
 for blk in mb:
-    # Set all bc types to internal... we will set the external bc's later
-    for i in range(6):
-        blk.connectivity["{}".format(i + 1)]["bc"] = "b0"
+    for face in blk.faces:
+        blk.bcType = "b0"
 
 face_mapping = {
     "small_i": 1,
@@ -121,68 +134,88 @@ orientation_mapping = {"i": 1, "j": 2, "k": 3, "-i": 4, "-j": 5, "-k": 6}
 # ----------------------------------------------------------------- #
 # ------------- External Face Boundary Conditions ----------------- #
 # ----------------------------------------------------------------- #
+validBcTypes = (
+    # Inlets
+    "constantVelocitySubsonicInlet",
+    # Exits
+    "constantPressureSubsonicExit",
+    # Walls
+    "adiabaticNoSlipWall",
+    "adiabaticSlipWall",
+    "adiabaticMovingWall",
+    "isoTMovingWall",
+)
+# Read in bcFam.yaml file so we know what the bcType is for each label.
+with open(args.bcFam, "r") as f:
+    bcFam2Type = yaml.load(f, Loader=yaml.FullLoader)
+
 
 # Set boundary conditions
-reading_block = False
-with open(args.topo_file_name, "r") as f:
-    iter_lines = iter(f.readlines())
-    for raw_line in iter_lines:
+readingBlock = False
+with open(args.topoFileName, "r") as f:
+    iterLines = iter(f.readlines())
+    for rawLine in iterLines:
         # Are we starting a domain boundary condition section?
-        if raw_line.startswith("# Boundary conditions and/or"):
-            current_block = int(raw_line.strip().split(".")[-1])
-            blk = mb[current_block - 1]
-            reading_block = True
+        if rawLine.startswith("# Boundary conditions and/or"):
+            currentBlock = int(rawLine.strip().split(".")[-1]) - 1
+            blk = mb.getBlock(currentBlock)
+            readingBlock = True
             continue
-        elif raw_line == "\n":
+        elif rawLine == "\n":
             blk = None
-            reading_block = False
+            readingBlock = False
             pass
 
-        if reading_block:
-            tag = raw_line[
+        if readingBlock:
+            tag = rawLine[
                 0:2
-            ]  # Only 'I ', 'E ', and 'S ' will be picked up as RAPTOR tags
-            line = raw_line.strip().split()
-            bc_type = line[2]  # f= face, b=block, e=edge, v=vertex
-            tag_num = line[1]
+            ]
+            line = rawLine.strip().split()
+            faceBlockEdgeVertex = line[2]  # f= face, b=block, e=edge, v=vertex
+            tagNum = line[1]
             # Is this line an external face (not edge, vertex, etc.)
-            # Is this face tagged with a RAPTOR BC tag?
-            if bc_type == "f" and tag in ["I ", "E ", "S "]:
+            # Is this face tagged with a PEREGRINE BC tag?
+            if faceBlockEdgeVertex == "f":
                 mins = [line[3], line[4], line[5]]
                 maxs = [line[6], line[7], line[8]]
                 directions = ["i", "j", "k"]
                 for mini, maxi, direc in zip(mins, maxs, directions):
                     if mini == maxi and mini == "1":
                         face = face_mapping[f"small_{direc}"]
-                        rp_bc = f"{tag.lower()}{tag_num}".replace(" ", "")
-                        blk.connectivity[str(face)]["bc"] = rp_bc
                     elif mini == maxi and mini != "1":
                         face = face_mapping[f"large_{direc}"]
-                        rp_bc = f"{tag.lower()}{tag_num}".replace(" ", "")
-                        blk.connectivity[str(face)]["bc"] = rp_bc
+                    bcFam = f"{tag.lower()}{tagNum}".replace(" ", "")
+                    blk.getFace(face).bcFam = bcFam
+                    try:
+                        bcType = bcFam2Type[bcFam]
+                        if bcType not in validBcTypes:
+                            raise ValueError(f"{bcType} is not a valid PEREGRINE bcType")
+                        blk.getFace(face).bcType = bcType
+                    except KeyError:
+                        raise KeyError(f"No entry for bcFam {bcFam} in {args.bcFam} file.")
 
 # ----------------------------------------------------------------- #
 # ------------------ Periodic Face Connectivity ------------------- #
 # ----------------------------------------------------------------- #
-with open(args.topo_file_name, "r") as f:
-    iter_lines = iter(f.readlines())
-    for raw_line in iter_lines:
+with open(args.topoFileName, "r") as f:
+    iterLines = iter(f.readlines())
+    for rawLine in iterLines:
         # Are we starting a periodic info section?
-        if raw_line.startswith("# Periodic info for domain"):
-            current_block = int(raw_line.strip().split(".")[-1])
-            blk = mb[current_block - 1]
+        if rawLine.startswith("# Periodic info for domain"):
+            currentBlock = int(rawLine.strip().split(".")[-1]) - 1
+            blk = mb.getBlock(currentBlock)
 
             # Periodic info always a single pair format
-            this_block_line = next(iter_lines).replace("-", " -").strip().split()
-            if this_block_line == []:
+            thisBlockLine = next(iterLines).replace("-", " -").strip().split()
+            if thisBlockLine == []:
                 continue
-            adjacent_block_line = next(iter_lines).replace("-", " -").strip().split()
-            adjacent_block_number = int(adjacent_block_line[1].split(".")[-1])
+            adjacentBlockLine = next(iterLines).replace("-", " -").strip().split()
+            adjacentBlockNumber = int(adjacentBlockLine[1].split(".")[-1]) - 1
             # Seems like periodics do not get set to Part Name in info.topo, so we must rely
             # on only what is in the Periodic info section for block #'s, face #'s and orientation
-            mins = [this_block_line[6], this_block_line[7], this_block_line[8]]
-            maxs = [this_block_line[9], this_block_line[10], this_block_line[11]]
-            directions = [i.replace("-", "") for i in this_block_line[2:5]]
+            mins = [thisBlockLine[6], thisBlockLine[7], thisBlockLine[8]]
+            maxs = [thisBlockLine[9], thisBlockLine[10], thisBlockLine[11]]
+            directions = [i.replace("-", "") for i in thisBlockLine[2:5]]
             for mini, maxi, direc in zip(mins, maxs, directions):
                 if mini == maxi and mini == "1":
                     face = str(face_mapping[f"small_{direc}"])
@@ -195,20 +228,20 @@ with open(args.topo_file_name, "r") as f:
 
             # We will also double check that this is in fact a face connectivity, not a edge or vertex connectivity
             # b/c again, it seems like these files always list the faces first, then edges, then verticies.
-            bc_type = this_block_line[5]  # f= face, b=block, e=edge, v=vertex
-            if bc_type != "f":
+            faceBlockEdgeVertex = thisBlockLine[5]  # f= face, b=block, e=edge, v=vertex
+            if faceBlockEdgeVertex != "f":
                 raise ValueError(
-                    f"ERROR: we are expecting a face to be here to set face {face} of block{current_block}, but instead we are seeing a {bc_type}."
+                    f"ERROR: we are expecting a face to be here to set face {face} of block{currentBlock}, but instead we are seeing a {faceBlockEdgeVertex}."
                 )
 
             # It's clear something is different about the periodic orientations... this is my best guess as to how to treat them...
-            if this_block_line[2:5] == adjacent_block_line[2:5]:
+            if thisBlockLine[2:5] == adjacentBlockLine[2:5]:
                 orientation = {"i": "i", "j": "j", "k": "k"}
             else:
                 orientation = dict()
                 for i in range(3):
-                    curr = this_block_line[2 + i]
-                    adjc = adjacent_block_line[2 + i]
+                    curr = thisBlockLine[2 + i]
+                    adjc = adjacentBlockLine[2 + i]
 
                     # Check if the actual +/- i,j,k of the current block is the joining face between the adjacent block.
                     # If it is, then we honor the +/- of the adjacent block orientation.
@@ -238,41 +271,41 @@ with open(args.topo_file_name, "r") as f:
 
                     orientation[curr] = adjc
 
-            blk.faces[face].connectivity["neighbor"] = str(adjacent_block_number)
-            blk.faces[face].connectivity["bc"] = "b1"
+            blk.getFace(face).neighbor = str(adjacentBlockNumber)
+            blk.getFace(face).bcType = "b1"
             i_orient_num = orientation_mapping[orientation["i"]]
             j_orient_num = orientation_mapping[orientation["j"]]
             k_orient_num = orientation_mapping[orientation["k"]]
 
             pg_orientation = f"{i_orient_num}{j_orient_num}{k_orient_num}"
-            blk.face[face].connectivity["orientation"] = pg_orientation
+            blk.getFace(face).orientation = pg_orientation
             # If a block is periodic with itself, we must also set the opposite face as it will not be referenced again later
-            if current_block == adjacent_block_number:
-                blk.face[opp_face].connectivity["neighbor"] = str(current_block)
-                blk.face[opp_face].connectivity["bc"] = "b1"
-                blk.face[opp_face].connectivity["orientation"] = pg_orientation
+            if currentBlock == adjacentBlockNumber:
+                blk.getFace(opp_face).neighbor = str(currentBlock)
+                blk.getFace(opp_face).bc = "b1"
+                blk.getFace(opp_face).orientation = pg_orientation
 
 # ----------------------------------------------------------------- #
 # ---------------- Internal Face Connectivity --------------------- #
 # ----------------------------------------------------------------- #
 # Update connectivity
-with open(args.topo_file_name, "r") as f:
-    iter_lines = iter(f.readlines())
-    for raw_line in iter_lines:
+with open(args.topoFileName, "r") as f:
+    iterLines = iter(f.readlines())
+    for rawLine in iterLines:
         # Are we starting a domain connectivity section?
-        if raw_line.startswith("# Connectivity for domain"):
-            current_block = int(raw_line.strip().split(".")[-1])
-            blk = mb[current_block - 1]
+        if rawLine.startswith("# Connectivity for domain"):
+            currentBlock = int(rawLine.strip().split(".")[-1]) - 1
+            blk = mb.getBlock(currentBlock)
             # Collect the faces that were not set as external BCs and need connectivity info
-            internal_faces = []
-            for i in range(6):
-                if blk.connectivity[str(i + 1)]["bc"].replace(" ", "") == "b0":
-                    internal_faces.append(str(i + 1))
+            internalFaces = []
+            for face in blk.faces:
+                if face.bcType == "b0":
+                    internalFaces.append(face.nface)
             # March through the required faces
-            for internal_face in internal_faces:
-                this_block_line = next(iter_lines).replace("-", " -").strip().split()
-                adjacent_block_line = (
-                    next(iter_lines).replace("-", " -").strip().split()
+            for internalFace in internalFaces:
+                thisBlockLine = next(iterLines).replace("-", " -").strip().split()
+                adjacentBlockLine = (
+                    next(iterLines).replace("-", " -").strip().split()
                 )
 
                 # As a check, lets make sure that the face we are setting is the same as this section ICEM dictates
@@ -280,42 +313,42 @@ with open(args.topo_file_name, "r") as f:
                 # go in order of internal faces that need to be set, i.e. [1,2,3,4,5,6]
                 # Thats what we can are just cycling through the internal faces left in this block and trusting that
                 # This order will hold up.
-                mins = [this_block_line[6], this_block_line[7], this_block_line[8]]
-                maxs = [this_block_line[9], this_block_line[10], this_block_line[11]]
-                directions = [i.replace("-", "") for i in this_block_line[2:5]]
+                mins = [thisBlockLine[6], thisBlockLine[7], thisBlockLine[8]]
+                maxs = [thisBlockLine[9], thisBlockLine[10], thisBlockLine[11]]
+                directions = [i.replace("-", "") for i in thisBlockLine[2:5]]
                 for mini, maxi, direc in zip(mins, maxs, directions):
                     if mini == maxi and mini == "1":
                         face = face_mapping[f"small_{direc}"]
-                        if str(face) != internal_face:
+                        if str(face) != internalFace:
                             raise ValueError(
-                                f"Error, the order of the info.topo connectivity of block {current_block} is giving face {face} when we are expecting face {internal_face}"
+                                f"Error, the order of the info.topo connectivity of block {currentBlock} is giving face {face} when we are expecting face {internalFace}"
                             )
                     elif mini == maxi and mini != "1":
                         face = face_mapping[f"large_{direc}"]
-                        if str(face) != internal_face:
+                        if str(face) != internalFace:
                             raise ValueError(
-                                f"Error, the order of the info.topo connectivity of block {current_block} is giving face {face} when we are expecting face {internal_face}"
+                                f"Error, the order of the info.topo connectivity of block {currentBlock} is giving face {face} when we are expecting face {internalFace}"
                             )
 
                 # We will also double check that this is in fact a face connectivity, not a edge or vertex connectivity
                 # b/c again, it seems like these files always list the faces first, then edges, then verticies.
-                bc_type = this_block_line[5]  # f= face, b=block, e=edge, v=vertex
-                if bc_type != "f":
+                faceBlockEdgeVertex = thisBlockLine[5]  # f= face, b=block, e=edge, v=vertex
+                if faceBlockEdgeVertex != "f":
                     raise ValueError(
-                        f"ERROR: we are expecting a face to be here to set face {face} of block{current_block}, but instead we are seeing a {bc_type}."
+                        f"ERROR: we are expecting a face to be here to set face {face} of block{currentBlock}, but instead we are seeing a {faceBlockEdgeVertex}."
                     )
 
                 # With those checks done, lets actually set the connectivity, orientation, etc.
-                adjacent_block_number = int(
-                    adjacent_block_line[1].strip().split(".")[-1]
-                )
+                adjacentBlockNumber = int(
+                    adjacentBlockLine[1].strip().split(".")[-1]
+                ) - 1
 
                 # I don't know why, but the ICEM orientation is really, weird, so lets create a dict whose keys are
                 # the i,j,k of the current block, and the values are the +/- i,j,k of the adjacent block
                 orientation = dict()
                 for i in range(3):
-                    curr = this_block_line[2 + i]
-                    adjc = adjacent_block_line[2 + i]
+                    curr = thisBlockLine[2 + i]
+                    adjc = adjacentBlockLine[2 + i]
 
                     # Check if the actual +/- i,j,k of the current block is the joining face between the adjacent block.
                     # If it is, then we honor the +/- of the adjacent block orientation.
@@ -325,7 +358,7 @@ with open(args.topo_file_name, "r") as f:
                         if curr.startswith("-")
                         else f"large_{curr[-1]}"
                     )
-                    if face_mapping[face_num] == int(internal_face):
+                    if face_mapping[face_num] == int(internalFace):
                         if curr.startswith("-"):
                             pass
                         else:
@@ -345,25 +378,23 @@ with open(args.topo_file_name, "r") as f:
                     orientation[curr] = adjc
 
                 # Set the values
-                blk.faces[internal_face].connectivity["neighbor"] = str(
-                    adjacent_block_number
-                )
+                blk.getFaces(internalFace).neighbor = adjacentBlockNumber
 
                 i_orient_num = orientation_mapping[orientation["i"]]
                 j_orient_num = orientation_mapping[orientation["j"]]
                 k_orient_num = orientation_mapping[orientation["k"]]
 
                 pg_orientation = f"{i_orient_num}{j_orient_num}{k_orient_num}"
-                blk.faces[internal_face].connectivity["orientation"] = pg_orientation
+                blk.getFaces(internalFace).orientation = pg_orientation
 
-# if verify(mb):
-#     pass
+if verify(mb):
+    pass
 
 print("Writing out PEREGRINE connectivity file: conn.inp...")
-pg.writers.write_connectivity(mb, "./")
+pg.writers.writeConnectivity(mb)
 
-print("Writing out {} block RAPTOR grid files".format(mb.nblks))
-pg.writers.write_grid(mb, "./")
+print("Writing out {} block PEREGRINE grid files".format(mb.nblks))
+pg.writers.writeGrid(mb)
 
 
 print("ICEM to PEREGRINE translation done.")

@@ -32,20 +32,20 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Interpolate from one grid to another")
     parser.add_argument(
         "-from",
-        "--from_dir",
+        "--fromDir",
         action="store",
-        metavar="<from_dir>",
-        dest="from_dir",
+        metavar="<fromDir>",
+        dest="fromDir",
         default="./From",
         help="Directory containing the gv.*.h5 and q.*.h5 files to interpolate from. Default is ./From",
         type=str,
     )
     parser.add_argument(
         "-to",
-        "--to_dir",
+        "--toDir",
         action="store",
-        metavar="<to_dir>",
-        dest="to_dir",
+        metavar="<toDir>",
+        dest="toDir",
         default="./To",
         help="Directory containing the gv.*.h5 files to interpolate to. Default is ./To",
         type=str,
@@ -84,51 +84,50 @@ if __name__ == "__main__":
         "-vs",
         "--verbose-search",
         action="store_true",
-        dest="verbose_search",
+        dest="verboseSearch",
         help="If on, search will explicitly go through each block and be much slower, but the interpolation quality may improve expecially if you have a lot of curvy blocks.",
     )
 
     args = parser.parse_args()
 
-    from_dir = args.from_dir
-    to_dir = args.to_dir
+    fromDir = args.fromDir
+    toDir = args.toDir
     ns = args.ns
     function = args.function
     smooth = args.smooth
-    verbose_search = args.verbose_search
+    verboseSearch = args.verboseSearch
 
     # Read in from data
-    nblk_from = len([i for i in os.listdir(from_dir) if i.startswith("gv.")])
-    mb_from = mbr(nblk_from, ns)
-    from_nrst = int(
-        [i for i in os.listdir(from_dir) if i.startswith("q.")][0].strip().split(".")[1]
+    nblkFrom = len([i for i in os.listdir(fromDir) if i.startswith("gv.") and i.endswith(".h5")])
+    mbFrom = mbr(nblkFrom, ns)
+    fromNrst = int(
+        [i for i in os.listdir(fromDir) if i.startswith("q.")][0].strip().split(".")[1]
     )
-    readGrid(mb_from, from_dir)
-    readRestart(mb_from, from_dir, from_nrst)
+    readGrid(mbFrom, fromDir)
+    readRestart(mbFrom, fromDir, fromNrst)
 
     # Read in to data
-    nblk_to = len([i for i in os.listdir(to_dir) if i.startswith("gv.")])
-    mb_to = mbr(nblk_to, ns)
-    readGrid(mb_to, to_dir)
+    nblkTo = len([i for i in os.listdir(toDir) if i.startswith("gv.") and i.endswith(".h5")])
+    mbTo = mbr(nblkTo, ns)
+    readGrid(mbTo, toDir)
 
     # Compute bounding blocks of each block
-    bounds_list = interpolation.bounds.find_bounds(mb_to, mb_from, verbose_search)
-    if [] in bounds_list:
+    boundsList = interpolation.bounds.findBounds(mbTo, mbFrom, verboseSearch)
+    if [] in boundsList:
         raise ValueError(
             "ERROR: It looks like there are blocks in your to-grid that are completely outside your from-grid domain"
         )
 
-    bounding_blocks = []
-    for bounds in bounds_list:
-        bounding_blocks.append([mb_from[nblki - 1] for nblki in bounds])
+    boundingBlocks = []
+    for bounds in boundsList:
+        boundingBlocks.append([mbFrom.getBlock(nblki) for nblki in bounds])
 
-    for blk_to, bounds in zip(mb_to, bounding_blocks):
-        interpolation.blocks_to_block(bounds, blk_to, function, smooth)
+    for blkTo, bounds in zip(mbTo, boundingBlocks):
+        interpolation.blocks_to_block(bounds, blkTo, function, smooth)
 
     if ns > 1:
-        mb_to.check_species_sum(True)
+        mbTo.checkSpeciesSum(True)
 
-    mb_to.tme = mb_from.tme
-    mb_to.dtm = mb_from.dtm
+    mbTo.tme = mbFrom.tme
 
-    writeRestart(mb_to, to_dir)
+    writeRestart(mbTo, toDir)
