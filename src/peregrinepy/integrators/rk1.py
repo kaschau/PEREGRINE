@@ -21,3 +21,5 @@ class rk1:
         self.tme += dt
 
         consistify(self)
+
+    step.name = "rk1"

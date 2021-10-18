@@ -16,6 +16,9 @@ def simulate(configFilePath):
 
     mb = pg.bootstrapCase(config)
 
+    if rank == 0:
+        print(mb)
+
     for niter in range(config["simulation"]["niter"]):
 
         if mb.nrt % config["simulation"]["niterprint"] == 0:

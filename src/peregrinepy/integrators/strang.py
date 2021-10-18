@@ -112,3 +112,5 @@ class strang:
         ###############################################################
         self.nrt += 1
         self.tme += dt
+
+    step.name = "strang"
