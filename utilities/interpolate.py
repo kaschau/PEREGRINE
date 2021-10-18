@@ -24,6 +24,7 @@ from peregrinepy.readers import readGrid, readRestart
 from peregrinepy.writers import writeRestart
 from peregrinepy.multiBlock import restart as mbr
 from peregrinepy import interpolation
+import yaml
 import os
 
 
@@ -51,13 +52,13 @@ if __name__ == "__main__":
         type=str,
     )
     parser.add_argument(
-        "-ns",
-        "--ns",
+        "-spdata",
+        "--speciesData",
         required=True,
         action="store",
-        metavar="<number_of_sepecies>",
-        dest="ns",
-        help="Number of species in case",
+        metavar="<spdata>",
+        dest="spdata",
+        help="spdata yaml file (needed for species names)",
         type=int,
     )
     parser.add_argument(
@@ -92,14 +93,15 @@ if __name__ == "__main__":
 
     fromDir = args.fromDir
     toDir = args.toDir
-    ns = args.ns
+    with open(args.spdata, "r") as f:
+        speciesNames = yaml.load(f, Loader=yaml.FullLoader).keys()
     function = args.function
     smooth = args.smooth
     verboseSearch = args.verboseSearch
 
     # Read in from data
     nblkFrom = len([i for i in os.listdir(fromDir) if i.startswith("gv.") and i.endswith(".h5")])
-    mbFrom = mbr(nblkFrom, ns)
+    mbFrom = mbr(nblkFrom, speciesNames)
     fromNrst = int(
         [i for i in os.listdir(fromDir) if i.startswith("q.")][0].strip().split(".")[1]
     )
@@ -108,7 +110,7 @@ if __name__ == "__main__":
 
     # Read in to data
     nblkTo = len([i for i in os.listdir(toDir) if i.startswith("gv.") and i.endswith(".h5")])
-    mbTo = mbr(nblkTo, ns)
+    mbTo = mbr(nblkTo, speciesNames)
     readGrid(mbTo, toDir)
 
     # Compute bounding blocks of each block
@@ -125,7 +127,7 @@ if __name__ == "__main__":
     for blkTo, bounds in zip(mbTo, boundingBlocks):
         interpolation.blocks_to_block(bounds, blkTo, function, smooth)
 
-    if ns > 1:
+    if len(speciesNames) > 1:
         mbTo.checkSpeciesSum(True)
 
     mbTo.tme = mbFrom.tme
