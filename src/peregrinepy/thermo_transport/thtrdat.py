@@ -50,9 +50,12 @@ class thtrdat(thtrdat_):
                             f"You want to use species {sp}, but did not provide a {key}, and it is not in the PEREGRINE species database."
                         )
                 except TypeError:
-                    raise TypeError(
-                        "The top level in your spieces data input yaml file must only be species names."
-                    )
+                    try:
+                        prop.append(refsp[sp][key])
+                    except TypeError:
+                        raise TypeError(
+                            "The top level in your spieces data input yaml file must only be species names."
+                        )
             return prop
 
         ns = len(usersp.keys())
