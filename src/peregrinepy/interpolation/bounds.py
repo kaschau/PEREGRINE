@@ -252,7 +252,7 @@ def ptsInBlkBounds(blk, testPts):
         return hullBool
 
 
-def findBounds(mbTo, mbFrom, verbose_search):
+def findBounds(mbTo, mbFrom, verboseSearch):
     """
     Compares two multiBlock grids (or descendants) and
     determines which blocks from mbFrom each
@@ -274,8 +274,8 @@ def findBounds(mbTo, mbFrom, verbose_search):
        numbers of all the blocks from mbFrom that each block in mbTo reside in, spatially.
     """
 
-    mbFrom.compute_metrics(xc=True, xu=True, xv=True, xw=True)
-    mbTo.compute_metrics(xc=True, xu=True, xv=True, xw=True)
+    mbFrom.computeMetrics()
+    mbTo.computeMetrics()
 
     boundingBlocks = []
     for blkTo in mbTo:
@@ -293,7 +293,7 @@ def findBounds(mbTo, mbFrom, verbose_search):
             if True in inBlockBool:
                 currBlkIn.append(blkFrom.nblki)
                 ptFound = ptFound + inBlockBool
-            if not verbose_search:
+            if not verboseSearch:
                 if False not in ptFound:
                     break
 

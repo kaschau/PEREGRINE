@@ -23,51 +23,51 @@ from peregrinepy.multiBlock import grid as mbg
 import numpy as np
 
 
-def verify(mb_data):
+def verify(mb):
 
-    face_slice_mapping = {
-        "1": {"i": 0, "j": slice(None), "k": slice(None)},
-        "2": {"i": -1, "j": slice(None), "k": slice(None)},
-        "3": {"i": slice(None), "j": 0, "k": slice(None)},
-        "4": {"i": slice(None), "j": -1, "k": slice(None)},
-        "5": {"i": slice(None), "j": slice(None), "k": 0},
-        "6": {"i": slice(None), "j": slice(None), "k": -1},
-    }
-
-    face_to_orient_place_mapping = {
-        "1": "0",
-        "2": "0",
-        "3": "1",
-        "4": "1",
-        "5": "2",
-        "6": "2",
-    }
-    orient_to_small_face_mapping = {
-        "1": "2",
-        "2": "4",
-        "3": "6",
-        "4": "1",
-        "5": "3",
-        "6": "5",
-    }
-    orient_to_large_face_mapping = {
-        "1": "1",
-        "2": "3",
-        "3": "5",
-        "4": "2",
-        "5": "4",
-        "6": "6",
+    faceSliceMapping = {
+        1: {"i": 0, "j": slice(None), "k": slice(None)},
+        2: {"i": -1, "j": slice(None), "k": slice(None)},
+        3: {"i": slice(None), "j": 0, "k": slice(None)},
+        4: {"i": slice(None), "j": -1, "k": slice(None)},
+        5: {"i": slice(None), "j": slice(None), "k": 0},
+        6: {"i": slice(None), "j": slice(None), "k": -1},
     }
 
-    large_index_mapping = {0: "k", 1: "k", 2: "j"}
-    need_to_transpose = {
+    faceToOriendPlaceMapping = {
+        1: "0",
+        2: "0",
+        3: "1",
+        4: "1",
+        5: "2",
+        6: "2",
+    }
+    orientToSmallFaceMapping = {
+        "1": 2,
+        "2": 4,
+        "3": 6,
+        "4": 1,
+        "5": 3,
+        "6": 5,
+    }
+    orientToLargeFaceMapping = {
+        "1": 1,
+        "2": 3,
+        "3": 5,
+        "4": 2,
+        "5": 4,
+        "6": 6,
+    }
+
+    largeIndexMapping = {0: "k", 1: "k", 2: "j"}
+    needToTranspose = {
         "k": {"k": [1, 2, 4, 5], "j": [1, 4]},
         "j": {"k": [1, 2, 4, 5], "j": [1, 4]},
     }
 
-    def extract_face(blk, nface):
+    def extractFace(blk, nface):
 
-        face_i = face_slice_mapping[nface]
+        face_i = faceSliceMapping[nface]
 
         x = blk.array["x"][face_i["i"], face_i["j"], face_i["k"]]
         y = blk.array["y"][face_i["i"], face_i["j"], face_i["k"]]
@@ -75,19 +75,19 @@ def verify(mb_data):
 
         return x, y, z
 
-    def get_neighbor_face(nface, orientation, blk2):
+    def getNeighborFace(nface, orientation, blk2):
 
-        direction = orientation[int(face_to_orient_place_mapping[nface])]
+        direction = orientation[int(faceToOriendPlaceMapping[nface])]
 
-        if nface in ["2", "4", "6"]:
-            nface2 = orient_to_large_face_mapping[direction]
-        elif nface in ["1", "3", "5"]:
-            nface2 = orient_to_small_face_mapping[direction]
+        if nface in [2, 4, 6]:
+            nface2 = orientToLargeFaceMapping[direction]
+        elif nface in [1, 3, 5]:
+            nface2 = orientToSmallFaceMapping[direction]
 
         return nface2
 
     warn = False
-    for blk in mb_data:
+    for blk in mb:
         for face in blk.faces:
 
             nface = face.nface
@@ -102,34 +102,34 @@ def verify(mb_data):
             else:
                 periodic = False
 
-            (face_x, face_y, face_z) = extract_face(blk, face.nface)
+            (face_x, face_y, face_z) = extractFace(blk, face.nface)
 
-            blk2 = mb_data[neighbor - 1]
-            nface2 = get_neighbor_face(nface, orientation, blk2)
+            blk2 = mb.getBlock(neighbor)
+            nface2 = getNeighborFace(nface, orientation, blk2)
 
-            if int(blk2.connectivity[nface2]["connection"]) != blk.nblki:
+            if int(blk2.getFace(nface2).neighbor) != blk.nblki:
                 raise ValueError(
                     f"Block {blk.nblki}'s' face {nface} says it is connected to\nblock {blk2.nblki}'s' face {nface2}, however block {blk2.nblki}'s\nface {nface2} says it is connected to a different block."
                 )
 
-            (face2_x, face2_y, face2_z) = extract_face(blk2, nface2)
+            (face2_x, face2_y, face2_z) = extractFace(blk2, nface2)
 
             face_orientations = [
                 i
                 for j, i in enumerate(orientation)
-                if j != int(face_to_orient_place_mapping[nface])
+                if j != int(faceToOriendPlaceMapping[nface])
             ]
             normal_index = [
-                j for j in range(3) if j == int(face_to_orient_place_mapping[nface])
+                j for j in range(3) if j == int(faceToOriendPlaceMapping[nface])
             ][0]
             normal_index2 = [
-                j for j in range(3) if j == int(face_to_orient_place_mapping[nface2])
+                j for j in range(3) if j == int(faceToOriendPlaceMapping[nface2])
             ][0]
 
-            big_index = large_index_mapping[normal_index]
-            big_index2 = large_index_mapping[normal_index2]
+            bigIndex = largeIndexMapping[normal_index]
+            bigIndex2 = largeIndexMapping[normal_index2]
 
-            if int(face_orientations[1]) in need_to_transpose[big_index][big_index2]:
+            if int(face_orientations[1]) in needToTranspose[bigIndex][bigIndex2]:
                 face2_x = face2_x.T
                 face2_y = face2_y.T
                 face2_z = face2_z.T
@@ -187,31 +187,31 @@ if __name__ == "__main__":
     parser.add_argument(
         "-gpath",
         action="store",
-        metavar="<grid_path>",
-        dest="grid_path",
+        metavar="<gridPath>",
+        dest="gridPath",
         default="./",
         help="Path to grid files",
         type=str,
     )
     parser.add_argument(
-        "-cpath",
+        "-connPath",
         action="store",
-        metavar="<conn_path>",
-        dest="conn_path",
+        metavar="<connPath>",
+        dest="connPath",
         default="./",
-        help="Path to conn.inp file",
+        help="Path to conn.yaml",
         type=str,
     )
 
     args = parser.parse_args()
 
-    gp = args.grid_path
-    cp = args.conn_path
-    nblks = len([i for i in os.listdir(gp) if i.startswith("gv.")])
+    gp = args.gridPath
+    cp = args.connPath
+    nblks = len([i for i in os.listdir(gp) if i.startswith("gv.") and i.endswith(".h5")])
     mb = mbg(nblks)
 
     readGrid(mb, gp)
-    readConnectivity(mb, cp + "/conn.yaml")
+    readConnectivity(mb, cp)
 
     if verify(mb):
         print("Grid is valid!")

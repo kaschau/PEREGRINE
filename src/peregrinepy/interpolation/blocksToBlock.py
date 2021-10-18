@@ -62,7 +62,7 @@ def blocksToBlock(blksFrom, blkTo, function="nearest", smooth=0.5):
 
     for i in range(5 + blkTo.ns - 1):
         qvFrom = np.concatenate(
-            tuple([blk.array["q"][1:-1, 1:-1, 1:-1, i].ravel() for blk in blksFrom])
+            tuple([blk.array["q"][:, :, :, i].ravel() for blk in blksFrom])
         )
 
         if function == "nearest":
@@ -89,14 +89,6 @@ def blocksToBlock(blksFrom, blkTo, function="nearest", smooth=0.5):
         qvTo = np.where(qvTo > np.max(qvFrom), np.max(qvFrom), qvTo)
         qvTo = np.where(qvTo < np.min(qvFrom), np.min(qvFrom), qvTo)
 
-        blkTo.qv[1:-1, 1:-1, 1:-1, i] = qvTo.reshape(
-            blkTo.qv[1:-1, 1:-1, 1:-1, i].shape
+        blkTo.qv[:, :, :, i] = qvTo.reshape(
+            blkTo.qv[:, :, :, i].shape
         )
-
-        # Populate halo cells:
-        blkTo.array["q"][0, :, :, i] = blkTo.array["q"][i, 1, :, :, i]
-        blkTo.array["q"][-1, :, :, i] = blkTo.array["q"][i, -2, :, :, i]
-        blkTo.array["q"][:, 0, :, i] = blkTo.array["q"][i, :, 1, :, i]
-        blkTo.array["q"][:, -1, :, i] = blkTo.array["q"][i, :, -2, :, i]
-        blkTo.array["q"][:, :, 0, i] = blkTo.array["q"][i, :, :, 1, i]
-        blkTo.array["q"][:, :, -1, i] = blkTo.array["q"][i, :, :, -2, i]
