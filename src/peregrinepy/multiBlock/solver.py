@@ -19,8 +19,21 @@ from ..grid import unifySolverGrid
 
 class solver(restart):
     """A list of peregrinepy.restart.restart_block objects. Inherits from peregrinepy.multiBlock.grid"""
+    __slots__ = ("config",
+                 "thtrdat",
+                 "eos",
+                 "trans",
+                 "dqdxyz",
+                 "primaryAdvFlux",
+                 "switch",
+                 "secondaryAdvFlux",
+                 "diffFlux",
+                 "expChem",
+                 "impChem",
+                 "parallelXmf")
 
     mbType = "solver"
+
 
     def __init__(self, nblks, spNames, ng):
         assert type(spNames) is list, f"spNames must me a list not {type(spNames)}"
@@ -49,7 +62,7 @@ class solver(restart):
         # RHS method
         self.primaryAdvFlux = None
         self.secondaryAdvFlux = None
-        self.switchAdvFlux = None
+        self.switch = None
 
         self.diffFlux = None
 
@@ -68,3 +81,23 @@ class solver(restart):
 
     def unifyGrid(self):
         unifySolverGrid(self)
+
+    def __repr__(self):
+        string = "Solver multiBlock object:\n"
+        string += f"  {self.totalBlocks} total blocks\n"
+        string += f"  {self.thtrdat.speciesNames} species solved.\n"
+        string += f"  {self.step.name} time integration.\n"
+        string += f"  {self.eos.__name__} equation of state.\n"
+        string += f"  Primary Advective Flux: {self.primaryAdvFlux.__name__}.\n"
+        string += f"  Switching function: {self.switch.__name__}.\n"
+        string += f"  Secondary Advective Flux: {self.secondaryAdvFlux.__name__}.\n\n"
+        if self.config["RHS"]["diffusion"]:
+            string += f"  {self.trans.__name__} transport equation.\n"
+            string += f"  Spatial derivatives estimated with {self.config['RHS']['diffOrder']} order.\n"
+        else:
+            string += "  Diffusion terms not solved for.\n"
+        if self.config["thermochem"]["chemistry"]:
+            string += "  Explicit chemistry mechanism used: {self.expChem.__name__}.\n"
+            string += "  Implicit chemistry mechanism used: {self.impChem.__name__}.\n"
+
+        return string
