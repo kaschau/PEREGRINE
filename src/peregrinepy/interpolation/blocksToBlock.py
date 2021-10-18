@@ -60,7 +60,7 @@ def blocksToBlock(blksFrom, blkTo, function="nearest", smooth=0.5):
     blkFromY = np.concatenate(tuple([blk.array["yc"].ravel() for blk in blksFrom]))
     blkfromZ = np.concatenate(tuple([blk.array["zc"].ravel() for blk in blksFrom]))
 
-    for i in range(5 + blkTo.ns - 1):
+    for i in range(blksFrom[0].array["q"].shape[-1]):
         qvFrom = np.concatenate(
             tuple([blk.array["q"][:, :, :, i].ravel() for blk in blksFrom])
         )
