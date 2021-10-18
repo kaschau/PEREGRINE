@@ -32,7 +32,7 @@ def writeGrid(mb, path="./", precision="double", withHalo=False):
     domainElem = etree.SubElement(xdmfElem, "Domain")
 
     gridElem = etree.SubElement(domainElem, "Grid")
-    gridElem.set("Name", "RAPTOR Output")
+    gridElem.set("Name", "PEREGRINE Output")
     gridElem.set("GridType", "Collection")
     gridElem.set("CollectionType", "Spatial")
 
