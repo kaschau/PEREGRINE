@@ -82,11 +82,14 @@ if args.fmt == "tns3dmb":
         nblks = f90.read_ints(dtype=np.int32)[0]
         mb = pg.multiBlock.grid(nblks)
 
-        nxyzs = np.array_split(f90.read_ints(dtype=np.int32), nblks)
+        nijks = np.array_split(f90.read_ints(dtype=np.int32), nblks)
 
-        for nxyz, blk in zip(nxyzs, mb):
-            nx, ny, nz = nxyz
-            temp = f90.read_reals(dtype=np.float64).reshape((nx, ny, nz, 3), order='F')
+        for nijk, blk in zip(nijks, mb):
+            ni, nj, nk = nijk
+            temp = f90.read_reals(dtype=np.float64).reshape((ni, nj, nk, 3), order='F')
+            blk.ni = ni
+            blk.nj = nj
+            blk.nk = nk
             blk.array["x"] = temp[:, :, :, 0]
             blk.array["y"] = temp[:, :, :, 1]
             blk.array["z"] = temp[:, :, :, 2]
@@ -119,9 +122,9 @@ else:
 # Set all bc types to internal... we will set the external bc's later
 for blk in mb:
     for face in blk.faces:
-        blk.bcType = "b0"
+        face.bcType = "b0"
 
-face_mapping = {
+faceMapping = {
     "small_i": 1,
     "large_i": 2,
     "small_j": 3,
@@ -129,7 +132,7 @@ face_mapping = {
     "small_k": 5,
     "large_k": 6,
 }
-orientation_mapping = {"i": 1, "j": 2, "k": 3, "-i": 4, "-j": 5, "-k": 6}
+orientationMapping = {"i": 1, "j": 2, "k": 3, "-i": 4, "-j": 5, "-k": 6}
 
 # ----------------------------------------------------------------- #
 # ------------- External Face Boundary Conditions ----------------- #
@@ -167,32 +170,27 @@ with open(args.topoFileName, "r") as f:
             pass
 
         if readingBlock:
-            tag = rawLine[
-                0:2
-            ]
             line = rawLine.strip().split()
-            faceBlockEdgeVertex = line[2]  # f= face, b=block, e=edge, v=vertex
-            tagNum = line[1]
+            tag = line[0]
+            faceBlockEdgeVertex = line[1]  # f= face, b=block, e=edge, v=vertex
             # Is this line an external face (not edge, vertex, etc.)
             # Is this face tagged with a PEREGRINE BC tag?
             if faceBlockEdgeVertex == "f":
-                mins = [line[3], line[4], line[5]]
-                maxs = [line[6], line[7], line[8]]
+                if tag == "DEFAULT_SUBFACE":
+                    continue
+                assert tag in bcFam2Type.keys(), f"{tag} not found in {args.bcFam} file."
+                mins = [line[2], line[3], line[4]]
+                maxs = [line[5], line[6], line[7]]
                 directions = ["i", "j", "k"]
                 for mini, maxi, direc in zip(mins, maxs, directions):
                     if mini == maxi and mini == "1":
-                        face = face_mapping[f"small_{direc}"]
+                        thisFace = faceMapping[f"small_{direc}"]
                     elif mini == maxi and mini != "1":
-                        face = face_mapping[f"large_{direc}"]
-                    bcFam = f"{tag.lower()}{tagNum}".replace(" ", "")
-                    blk.getFace(face).bcFam = bcFam
-                    try:
-                        bcType = bcFam2Type[bcFam]
-                        if bcType not in validBcTypes:
-                            raise ValueError(f"{bcType} is not a valid PEREGRINE bcType")
-                        blk.getFace(face).bcType = bcType
-                    except KeyError:
-                        raise KeyError(f"No entry for bcFam {bcFam} in {args.bcFam} file.")
+                        thisFace = faceMapping[f"large_{direc}"]
+                blk.getFace(thisFace).bcFam = tag
+                bcType = bcFam2Type[tag]["bcType"]
+                assert bcType in validBcTypes, f"{bcType} is not a valid PEREGRINE bcType."
+                blk.getFace(thisFace).bcType = bcType
 
 # ----------------------------------------------------------------- #
 # ------------------ Periodic Face Connectivity ------------------- #
@@ -218,12 +216,12 @@ with open(args.topoFileName, "r") as f:
             directions = [i.replace("-", "") for i in thisBlockLine[2:5]]
             for mini, maxi, direc in zip(mins, maxs, directions):
                 if mini == maxi and mini == "1":
-                    face = str(face_mapping[f"small_{direc}"])
-                    opp_face = str(face_mapping[f"large_{direc}"])
+                    thisFace = faceMapping[f"small_{direc}"]
+                    oppFace = faceMapping[f"large_{direc}"]
                     break
                 elif mini == maxi and mini != "1":
-                    face = str(face_mapping[f"large_{direc}"])
-                    opp_face = str(face_mapping[f"small_{direc}"])
+                    thisFace = faceMapping[f"large_{direc}"]
+                    oppFace = faceMapping[f"small_{direc}"]
                     break
 
             # We will also double check that this is in fact a face connectivity, not a edge or vertex connectivity
@@ -231,7 +229,7 @@ with open(args.topoFileName, "r") as f:
             faceBlockEdgeVertex = thisBlockLine[5]  # f= face, b=block, e=edge, v=vertex
             if faceBlockEdgeVertex != "f":
                 raise ValueError(
-                    f"ERROR: we are expecting a face to be here to set face {face} of block{currentBlock}, but instead we are seeing a {faceBlockEdgeVertex}."
+                    f"ERROR: we are expecting a face to be here to set face {thisFace} of block{currentBlock}, but instead we are seeing a {faceBlockEdgeVertex}."
                 )
 
             # It's clear something is different about the periodic orientations... this is my best guess as to how to treat them...
@@ -246,12 +244,12 @@ with open(args.topoFileName, "r") as f:
                     # Check if the actual +/- i,j,k of the current block is the joining face between the adjacent block.
                     # If it is, then we honor the +/- of the adjacent block orientation.
                     # If not, we do not honor the +/- of the adjacent orientation and use the other.
-                    face_num = (
+                    faceNum = (
                         f"small_{curr[-1]}"
                         if curr.startswith("-")
                         else f"large_{curr[-1]}"
                     )
-                    if face_mapping[face_num] == int(face):
+                    if faceMapping[faceNum] == thisFace:
                         if curr.startswith("-"):
                             pass
                         else:
@@ -271,19 +269,19 @@ with open(args.topoFileName, "r") as f:
 
                     orientation[curr] = adjc
 
-            blk.getFace(face).neighbor = str(adjacentBlockNumber)
-            blk.getFace(face).bcType = "b1"
-            i_orient_num = orientation_mapping[orientation["i"]]
-            j_orient_num = orientation_mapping[orientation["j"]]
-            k_orient_num = orientation_mapping[orientation["k"]]
+            blk.getFace(thisFace).neighbor = adjacentBlockNumber
+            blk.getFace(thisFace).bcType = "b1"
+            i_orient_num = orientationMapping[orientation["i"]]
+            j_orient_num = orientationMapping[orientation["j"]]
+            k_orient_num = orientationMapping[orientation["k"]]
 
             pg_orientation = f"{i_orient_num}{j_orient_num}{k_orient_num}"
-            blk.getFace(face).orientation = pg_orientation
+            blk.getFace(thisFace).orientation = pg_orientation
             # If a block is periodic with itself, we must also set the opposite face as it will not be referenced again later
             if currentBlock == adjacentBlockNumber:
-                blk.getFace(opp_face).neighbor = str(currentBlock)
-                blk.getFace(opp_face).bc = "b1"
-                blk.getFace(opp_face).orientation = pg_orientation
+                blk.getFace(oppFace).neighbor = currentBlock
+                blk.getFace(oppFace).bcType = "b1"
+                blk.getFace(oppFace).orientation = pg_orientation
 
 # ----------------------------------------------------------------- #
 # ---------------- Internal Face Connectivity --------------------- #
@@ -318,16 +316,16 @@ with open(args.topoFileName, "r") as f:
                 directions = [i.replace("-", "") for i in thisBlockLine[2:5]]
                 for mini, maxi, direc in zip(mins, maxs, directions):
                     if mini == maxi and mini == "1":
-                        face = face_mapping[f"small_{direc}"]
-                        if str(face) != internalFace:
+                        thisFace = faceMapping[f"small_{direc}"]
+                        if thisFace != internalFace:
                             raise ValueError(
-                                f"Error, the order of the info.topo connectivity of block {currentBlock} is giving face {face} when we are expecting face {internalFace}"
+                                f"Error, the order of the info.topo connectivity of block {currentBlock} is giving face {thisFace} when we are expecting face {internalFace}"
                             )
                     elif mini == maxi and mini != "1":
-                        face = face_mapping[f"large_{direc}"]
-                        if str(face) != internalFace:
+                        thisFace = faceMapping[f"large_{direc}"]
+                        if thisFace != internalFace:
                             raise ValueError(
-                                f"Error, the order of the info.topo connectivity of block {currentBlock} is giving face {face} when we are expecting face {internalFace}"
+                                f"Error, the order of the info.topo connectivity of block {currentBlock} is giving face {thisFace} when we are expecting face {internalFace}"
                             )
 
                 # We will also double check that this is in fact a face connectivity, not a edge or vertex connectivity
@@ -335,13 +333,11 @@ with open(args.topoFileName, "r") as f:
                 faceBlockEdgeVertex = thisBlockLine[5]  # f= face, b=block, e=edge, v=vertex
                 if faceBlockEdgeVertex != "f":
                     raise ValueError(
-                        f"ERROR: we are expecting a face to be here to set face {face} of block{currentBlock}, but instead we are seeing a {faceBlockEdgeVertex}."
+                        f"ERROR: we are expecting a face to be here to set face {thisFace} of block{currentBlock}, but instead we are seeing a {faceBlockEdgeVertex}."
                     )
 
                 # With those checks done, lets actually set the connectivity, orientation, etc.
-                adjacentBlockNumber = int(
-                    adjacentBlockLine[1].strip().split(".")[-1]
-                ) - 1
+                adjacentBlockNumber = int(adjacentBlockLine[1].strip().split(".")[-1]) - 1
 
                 # I don't know why, but the ICEM orientation is really, weird, so lets create a dict whose keys are
                 # the i,j,k of the current block, and the values are the +/- i,j,k of the adjacent block
@@ -353,12 +349,12 @@ with open(args.topoFileName, "r") as f:
                     # Check if the actual +/- i,j,k of the current block is the joining face between the adjacent block.
                     # If it is, then we honor the +/- of the adjacent block orientation.
                     # If not, we do not honor the +/- of the adjacent orientation and use the other.
-                    face_num = (
+                    faceNum = (
                         f"small_{curr[-1]}"
                         if curr.startswith("-")
                         else f"large_{curr[-1]}"
                     )
-                    if face_mapping[face_num] == int(internalFace):
+                    if faceMapping[faceNum] == int(internalFace):
                         if curr.startswith("-"):
                             pass
                         else:
@@ -378,14 +374,14 @@ with open(args.topoFileName, "r") as f:
                     orientation[curr] = adjc
 
                 # Set the values
-                blk.getFaces(internalFace).neighbor = adjacentBlockNumber
+                blk.getFace(internalFace).neighbor = adjacentBlockNumber
 
-                i_orient_num = orientation_mapping[orientation["i"]]
-                j_orient_num = orientation_mapping[orientation["j"]]
-                k_orient_num = orientation_mapping[orientation["k"]]
+                iOrientNum = orientationMapping[orientation["i"]]
+                jOrientNum = orientationMapping[orientation["j"]]
+                kOrientNum = orientationMapping[orientation["k"]]
 
-                pg_orientation = f"{i_orient_num}{j_orient_num}{k_orient_num}"
-                blk.getFaces(internalFace).orientation = pg_orientation
+                pgOrientation = f"{iOrientNum}{jOrientNum}{kOrientNum}"
+                blk.getFace(internalFace).orientation = pgOrientation
 
 if verify(mb):
     pass
