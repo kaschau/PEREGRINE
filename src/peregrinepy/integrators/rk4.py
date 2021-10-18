@@ -65,3 +65,5 @@ class rk4:
 
         self.nrt += 1
         self.tme += dt
+
+    step.name = "rk4"
