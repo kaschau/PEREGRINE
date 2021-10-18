@@ -81,9 +81,9 @@ class strang:
         ###############################################################
         for bindx, blk in enumerate(self):
             it = product(
-                range(blk.ng, blk.ni + 2 * blk.ng - 1),
-                range(blk.ng, blk.nj + 2 * blk.ng - 1),
-                range(blk.ng, blk.nk + 2 * blk.ng - 1),
+                range(blk.ng, blk.ni + blk.ng - 1),
+                range(blk.ng, blk.nj + blk.ng - 1),
+                range(blk.ng, blk.nk + blk.ng - 1),
             )
             for ijk in it:
                 i, j, k = ijk
