@@ -59,8 +59,9 @@ def readBcs(mb, pathToFile):
                 )
 
             # Set the boundary condition values
-            for key in bcsIn[bcFam]["values"]:
-                face.bcVals[key] = bcsIn[bcFam]["values"][key]
+            if "bcVals" in bcsIn[bcFam].keys():
+                for key in bcsIn[bcFam]["bcVals"]:
+                    face.bcVals[key] = float(bcsIn[bcFam]["bcVals"][key])
 
             # Now add any un-specified species as zero (unless we have single component)
             if blk.ns != 1:

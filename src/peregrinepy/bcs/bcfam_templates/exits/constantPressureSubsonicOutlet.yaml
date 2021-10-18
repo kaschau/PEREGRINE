@@ -1,6 +1,6 @@
 ---
 
 dummy_exit:
-  bcType: constant_pressure_subsonic_outlet
-  values:
+  bcType: constantPressureSubsonicOutlet
+  bcVals:
     p: 101325.0
