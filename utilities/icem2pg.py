@@ -185,8 +185,12 @@ with open(args.topoFileName, "r") as f:
                 for mini, maxi, direc in zip(mins, maxs, directions):
                     if mini == maxi and mini == "1":
                         thisFace = faceMapping[f"small_{direc}"]
+                        break
                     elif mini == maxi and mini != "1":
                         thisFace = faceMapping[f"large_{direc}"]
+                        break
+                    else:
+                        thisFace = None
                 blk.getFace(thisFace).bcFam = tag
                 bcType = bcFam2Type[tag]["bcType"]
                 assert bcType in validBcTypes, f"{bcType} is not a valid PEREGRINE bcType."
