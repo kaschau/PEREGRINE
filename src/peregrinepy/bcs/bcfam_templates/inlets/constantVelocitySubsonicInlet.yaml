@@ -1,8 +1,8 @@
 ---
 
 dummy_inlet:
-  bcType: constant_velocity_subsonic_inlet
-  values:
+  bcType: constantVelocitySubsonicInlet
+  bcVals:
     u: 1.0
     v: 0.0
     w: 0.0

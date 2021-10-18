@@ -2,5 +2,5 @@
 
 dummy_wall:
   bcType: isoTSlipWall
-  values:
+  bcVals:
     T: 300.0
