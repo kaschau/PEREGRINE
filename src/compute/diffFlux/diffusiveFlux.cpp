@@ -51,7 +51,7 @@ void diffusiveFlux(block_ b, const thtrdat_ th) {
     // x momentum
     txx = c23*mu*(2.0*dudx - dvdy - dwdz);
     txy =     mu*(    dvdx + dudy       );
-    txz =     mu*(    dwdx        + dudy);
+    txz =     mu*(    dwdx        + dudz);
 
     b.iF(i,j,k,1) = - ( txx * b.isx(i,j,k) +
                         txy * b.isy(i,j,k) +
@@ -182,7 +182,7 @@ void diffusiveFlux(block_ b, const thtrdat_ th) {
     // x momentum
     txx = c23*mu*(2.0*dudx - dvdy - dwdz);
     txy =     mu*(    dvdx + dudy       );
-    txz =     mu*(    dwdx        + dudy);
+    txz =     mu*(    dwdx        + dudz);
 
     b.jF(i,j,k,1) = - ( txx * b.jsx(i,j,k) +
                         txy * b.jsy(i,j,k) +
@@ -313,7 +313,7 @@ void diffusiveFlux(block_ b, const thtrdat_ th) {
     // x momentum
     txx = c23*mu*(2.0*dudx - dvdy - dwdz);
     txy =     mu*(    dvdx + dudy       );
-    txz =     mu*(    dwdx        + dudy);
+    txz =     mu*(    dwdx        + dudz);
 
     b.kF(i,j,k,1) = - ( txx * b.ksx(i,j,k) +
                         txy * b.ksy(i,j,k) +
