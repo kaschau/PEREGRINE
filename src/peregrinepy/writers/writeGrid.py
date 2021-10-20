@@ -89,28 +89,18 @@ def writeGrid(mb, path="./", precision="double", withHalo=False):
         geometryElem = etree.SubElement(blockElem, "Geometry")
         geometryElem.set("GeometryType", "X_Y_Z")
 
-        dataXElem = etree.SubElement(geometryElem, "DataItem")
-        dataXElem.set("ItemType", "Hyperslab")
-        dataXElem.set("Dimensions", f"{blk.nk+2*ng} {blk.nj+2*ng} {blk.ni+2*ng}")
-        dataXElem.set("Type", "HyperSlab")
-        dataX1Elem = etree.SubElement(dataXElem, "DataItem")
-        dataX1Elem.set("DataType", "Int")
-        dataX1Elem.set("Dimensions", "3")
-        dataX1Elem.set("Format", "XML")
-        dataX1Elem.text = f"0 1 {extent}"
-        dataX2Elem = etree.SubElement(dataXElem, "DataItem")
-        dataX2Elem.set("NumberType", "Float")
-        dataX2Elem.set("ItemType", "Uniform")
-        dataX2Elem.set("Dimensions", f"{extent}")
-        dataX2Elem.set("Precision", "4")
-        dataX2Elem.set("Format", "HDF")
-        dataX2Elem.text = f"gv.{blk.nblki:06d}.h5:/coordinates/x"
+        dataX1Elem = etree.SubElement(geometryElem, "DataItem")
+        dataX1Elem.set("NumberType", "Float")
+        dataX1Elem.set("Dimensions", f"{blk.nk+2*ng} {blk.nj+2*ng} {blk.ni+2*ng}")
+        dataX1Elem.set("Precision", "8")
+        dataX1Elem.set("Format", "HDF")
+        dataX1Elem.text = f"gv.{blk.nblki:06d}.h5:/coordinates/x"
 
-        geometryElem.append(deepcopy(dataXElem))
-        geometryElem[-1][1].text = f"gv.{blk.nblki:06d}.h5:/coordinates/y"
+        geometryElem.append(deepcopy(dataX1Elem))
+        geometryElem[-1].text = f"gv.{blk.nblki:06d}.h5:/coordinates/y"
 
-        geometryElem.append(deepcopy(dataXElem))
-        geometryElem[-1][1].text = f"gv.{blk.nblki:06d}.h5:/coordinates/z"
+        geometryElem.append(deepcopy(dataX1Elem))
+        geometryElem[-1].text = f"gv.{blk.nblki:06d}.h5:/coordinates/z"
 
         gridElem.append(deepcopy(blockElem))
 
