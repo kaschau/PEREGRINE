@@ -156,8 +156,10 @@ PYBIND11_MODULE(compute, m) {
 
   // ./switches
   py::module switches = m.def_submodule("switches", "switches");
-  //  |----> entropy.cpp
+  //  |----> jameson.cpp
   switches.def("entropy", &entropy, "Compute switches based on entropy",
+        py::arg("block_ object"));
+  switches.def("pressure", &pressure, "Compute switches based on pressure",
         py::arg("block_ object"));
   //  |----> negateFluxes.cpp
   switches.def("noIFlux", &noIFlux, "Zero out primary flux via switch", py::arg("block_ object"));

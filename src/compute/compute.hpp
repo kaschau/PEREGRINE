@@ -28,8 +28,9 @@ void diffusiveFlux(block_ b, const thtrdat_ th);
 
 
 // ./switches
-//    |------> pressure
+//    |------> jameson
 void entropy(block_ b);
+void pressure(block_ b);
 //    |------> negateFluxes
 void noIFlux(block_ b);
 void noJFlux(block_ b);
