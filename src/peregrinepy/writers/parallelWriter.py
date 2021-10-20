@@ -88,30 +88,20 @@ def registerParallelXdmf(mb, path="./", gridPath="./"):
             geometryElem.set("GeometryType", "X_Y_Z")
 
             dataXElem = etree.SubElement(geometryElem, "DataItem")
-            dataXElem.set("ItemType", "Hyperslab")
+            dataXElem.set("NumberType", "Float")
             dataXElem.set("Dimensions", f"{nk} {nj} {ni}")
-            dataXElem.set("Type", "HyperSlab")
-            dataX1Elem = etree.SubElement(dataXElem, "DataItem")
-            dataX1Elem.set("DataType", "Int")
-            dataX1Elem.set("Dimensions", "3")
-            dataX1Elem.set("Format", "XML")
-            dataX1Elem.text = f"0 1 {extent}"
-            dataX2Elem = etree.SubElement(dataXElem, "DataItem")
-            dataX2Elem.set("NumberType", "Float")
-            dataX2Elem.set("ItemType", "Uniform")
-            dataX2Elem.set("Dimensions", f"{extent}")
-            dataX2Elem.set("Precision", "4")
-            dataX2Elem.set("Format", "HDF")
-            dataX2Elem.text = f"{gridPath}/gv.{nblki:06d}.h5:/coordinates/x"
+            dataXElem.set("Precision", "8")
+            dataXElem.set("Format", "HDF")
+            dataXElem.text = f"{gridPath}/gv.{nblki:06d}.h5:/coordinates/x"
 
             geometryElem.append(deepcopy(dataXElem))
-            geometryElem[-1][1].text = f"{gridPath}/gv.{nblki:06d}.h5:/coordinates/y"
+            geometryElem[-1].text = f"{gridPath}/gv.{nblki:06d}.h5:/coordinates/y"
 
             geometryElem.append(deepcopy(dataXElem))
-            geometryElem[-1][1].text = f"{gridPath}/gv.{nblki:06d}.h5:/coordinates/z"
+            geometryElem[-1].text = f"{gridPath}/gv.{nblki:06d}.h5:/coordinates/z"
 
             # Only solvers will call this
-            names = ["rho", "p", "u", "v", "w", "T"] + mb[0].speciesNames
+            names = ["rho", "p", "T"] + mb[0].speciesNames
 
             name = names[0]
             # Attributes
@@ -120,28 +110,39 @@ def registerParallelXdmf(mb, path="./", gridPath="./"):
             attributeElem.set("AttributeType", "Scalar")
             attributeElem.set("Center", "Cell")
             dataResElem = etree.SubElement(attributeElem, "DataItem")
-            dataResElem.set("ItemType", "Hyperslab")
+            dataResElem.set("NumberType", "Float")
             dataResElem.set("Dimensions", f"{nk-1} {nj-1} {ni-1}")
-            dataResElem.set("Type", "HyperSlab")
-            dataRes1Elem = etree.SubElement(dataResElem, "DataItem")
-            dataRes1Elem.set("DataType", "Int")
-            dataRes1Elem.set("Dimensions", "3")
-            dataRes1Elem.set("Format", "XML")
-            dataRes1Elem.text = f"0 1 {extentCC}"
-            dataRes2Elem = etree.SubElement(dataResElem, "DataItem")
-            dataRes2Elem.set("NumberType", "Float")
-            dataRes2Elem.set("Dimensions", f"{extentCC}")
-            dataRes2Elem.set("Precision", "4")
-            dataRes2Elem.set("Format", "HDF")
+            dataResElem.set("Precision", "8")
+            dataResElem.set("Format", "HDF")
 
             text = f"q.{mb.nrt:08d}.{nblki:06d}.h5:/results/{name}"
-            dataRes2Elem.text = text
+            dataResElem.text = text
 
             for name in names[1::]:
                 blockElem.append(deepcopy(attributeElem))
                 blockElem[-1].set("Name", name)
                 text = f"q.{mb.nrt:08d}.{nblki:06d}.h5:/results/{name}"
-                blockElem[-1][0][1].text = text
+                blockElem[-1][0].text = text
+
+            # Velocity Attributes
+            attributeElem = etree.SubElement(blockElem, "Attribute")
+            attributeElem.set("Name", "Velocity")
+            attributeElem.set("AttributeType", "Vector")
+            attributeElem.set("Center", "Cell")
+            function = etree.SubElement(attributeElem, "DataItem")
+            function.set("ItemType", "Function")
+            function.set("Function", "JOIN($0, $1, $2)")
+            function.set("Dimensions", f"{nk-1} {nj-1} {ni-1} 3")
+
+            for name in ["u", "v", "w"]:
+                dataResElem = etree.SubElement(function, "DataItem")
+                dataResElem.set("NumberType", "Float")
+                dataResElem.set("Dimensions", f"{nk-1} {nj-1} {ni-1}")
+                dataResElem.set("Precision", "8")
+                dataResElem.set("Format", "HDF")
+                dataResElem.set("Name", name)
+                text = f"q.{mb.nrt:08d}.{nblki:06d}.h5:/results/{name}"
+                dataResElem.text = text
 
             gridElem.append(deepcopy(blockElem))
 
@@ -213,8 +214,14 @@ def parallelWriteRestart(mb, path="./", gridPath="./", precision="double"):
             time = grid.find("Time")
             for var in grid.findall("Attribute"):
                 name = var.get("Name")
-                text = f"q.{mb.nrt:08d}.{nblki:06d}.h5:/results/{name}"
-                var[0][-1].text = text
+                if name != "Velocity":
+                    text = f"q.{mb.nrt:08d}.{nblki:06d}.h5:/results/{name}"
+                    var[0].text = text
+                else:
+                    for v in var.find("DataItem").findall("DataItem"):
+                        name = v.get("Name")
+                        text = f"q.{mb.nrt:08d}.{nblki:06d}.h5:/results/{name}"
+                        v.text = text
 
         saveFile = f"{path}/q.{mb.nrt:08d}.xmf"
         et.write(saveFile, pretty_print=True, encoding="UTF-8", xml_declaration=True)
