@@ -129,23 +129,19 @@ PYBIND11_MODULE(compute, m) {
   //  |----> secondOrderKEEP.cpp
   advFlux.def("secondOrderKEEP", &secondOrderKEEP, "Compute centeral difference euler fluxes via second order KEEP",
         py::arg("block_ object"),
-        py::arg("thtrdat_ object"),
-        py::arg("primary"));
+        py::arg("thtrdat_ object"));
   //  |----> fourthOrderKEEP.cpp
   advFlux.def("fourthOrderKEEP", &fourthOrderKEEP, "Compute centeral difference euler fluxes via fourth order KEEP",
         py::arg("block_ object"),
-        py::arg("thtrdat_ object"),
-        py::arg("primary"));
+        py::arg("thtrdat_ object"));
   //  |----> rusanov.cpp
   advFlux.def("rusanov", &rusanov, "Compute first order euler fluxes via rusanov",
         py::arg("block_ object"),
-        py::arg("thtrdat_ object"),
-        py::arg("primary"));
+        py::arg("thtrdat_ object"));
   //  |----> ausmPlusUp.cpp
   advFlux.def("ausmPlusUp", &ausmPlusUp, "Compute inviscid fluxes via AUSM+UP",
         py::arg("block_ object"),
-        py::arg("thtrdat_ object"),
-        py::arg("primary"));
+        py::arg("thtrdat_ object"));
 
   // ./diffFlux
   py::module diffFlux = m.def_submodule("diffFlux", "diffusive flux module");
@@ -238,6 +234,13 @@ PYBIND11_MODULE(compute, m) {
 
   // ./utils
   py::module utils = m.def_submodule("utils", "utility module");
+  //  |----> applyFluxes.cpp
+  utils.def("applyFlux", &applyFlux, "Apply flux directly",
+        py::arg("block_ object"),
+        py::arg("primary"));
+  utils.def("hybridFlux", &hybridFlux, "Blend flux with another",
+        py::arg("block_ object"),
+        py::arg("primary"));
   //  |----> dQzero.cpp
   utils.def("dQzero", &dQzero, "Zero out dQ array",
         py::arg("block_ object"));
