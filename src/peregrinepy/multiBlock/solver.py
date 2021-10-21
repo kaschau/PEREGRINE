@@ -19,21 +19,23 @@ from ..grid import unifySolverGrid
 
 class solver(restart):
     """A list of peregrinepy.restart.restart_block objects. Inherits from peregrinepy.multiBlock.grid"""
-    __slots__ = ("config",
-                 "thtrdat",
-                 "eos",
-                 "trans",
-                 "dqdxyz",
-                 "primaryAdvFlux",
-                 "applyPrimaryAdvFlux",
-                 "switch",
-                 "secondaryAdvFlux",
-                 "applySecondaryAdvFlux"
-                 "diffFlux",
-                 "applyDiffFlux",
-                 "expChem",
-                 "impChem",
-                 "parallelXmf")
+
+    __slots__ = (
+        "config",
+        "thtrdat",
+        "eos",
+        "trans",
+        "dqdxyz",
+        "primaryAdvFlux",
+        "applyPrimaryAdvFlux",
+        "switch",
+        "secondaryAdvFlux",
+        "applySecondaryAdvFlux" "diffFlux",
+        "applyDiffFlux",
+        "expChem",
+        "impChem",
+        "parallelXmf",
+    )
 
     mbType = "solver"
 

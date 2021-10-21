@@ -60,8 +60,15 @@ void tpg(block_ b,
 
 
 // ./transport
-//    |------> transport
+//    |------> kineticThreory
 void kineticTheory(block_ b,
+                   const thtrdat_ th,
+                   const int face,
+                   const int i=0,
+                   const int j=0,
+                   const int k=0);
+//    |------> constantProps
+void constantProps(block_ b,
                    const thtrdat_ th,
                    const int face,
                    const int i=0,

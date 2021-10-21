@@ -32,6 +32,9 @@ gas.TP = 298.0, 101325.0
 spl = {}
 
 for i, sp in enumerate(gas.species()):
+    temp = [0.0 for _ in range(gas.n_species)]
+    temp[i] = 1.0
+    gas.X = temp
 
     spl[sp.name] = {}
     s = spl[sp.name]
@@ -41,6 +44,10 @@ for i, sp in enumerate(gas.species()):
     s["MW"] = float(gas.molecular_weights[i])
 
     s["cp0"] = float(gas.standard_cp_R[i] * ct.gas_constant / gas.molecular_weights[i])
+
+    s["mu0"] = float(gas.species_viscosities[i])
+
+    s["kappa0"] = float(gas.thermal_conductivity)
 
     s["NASA7"] = [float(j) for j in list(sp.thermo.coeffs)]
 

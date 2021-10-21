@@ -200,12 +200,23 @@ PYBIND11_MODULE(compute, m) {
 
     .def_readwrite("mu_poly", &thtrdat_::mu_poly)
     .def_readwrite("kappa_poly", &thtrdat_::kappa_poly)
-    .def_readwrite("Dij_poly", &thtrdat_::Dij_poly);
+    .def_readwrite("Dij_poly", &thtrdat_::Dij_poly)
+
+    .def_readwrite("mu0", &thtrdat_::mu0)
+    .def_readwrite("kappa0", &thtrdat_::kappa0);
 
   // ./transport
   py::module transport = m.def_submodule("transport", "transport module");
   //  |----> kineticTheory.cpp
   transport.def("kineticTheory", &kineticTheory, "Update transport properties from primatives via kinetic theory",
+        py::arg("block_"),
+        py::arg("thtrdat_ object"),
+        py::arg("face"),
+        py::arg("i")=0,
+        py::arg("j")=0,
+        py::arg("k")=0);
+  //  |----> constantProps.cpp
+  transport.def("constantProps", &constantProps, "Update transport properties from primatives with constant properties",
         py::arg("block_"),
         py::arg("thtrdat_ object"),
         py::arg("face"),
