@@ -20,6 +20,8 @@ void fourthOrderKEEP(block_ b, const thtrdat_ th);
 void rusanov(block_ b, const thtrdat_ th);
 //    |------> ausmPlusUp
 void ausmPlusUp(block_ b, const thtrdat_ th);
+//    |------> jamesonDissipation
+void jamesonDissipation(block_ b, const thtrdat_ th);
 
 
 // ./diffFlux
@@ -96,7 +98,8 @@ void chem_GRI30(block_ b,
 // ./utils
 //    |------> applyFluxes
 void applyFlux(block_ b, const double primary);
-void hybridFlux(block_ b, const double primary);
+void applyHybridFlux(block_ b, const double primary);
+void applyDissipationFlux(block_ b, const double primary);
 //    |------> dQzero
 void dQzero(block_ b);
 //    |------> dq2FD

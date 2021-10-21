@@ -27,15 +27,15 @@ void entropy(block_ b) {
 
   double ri = abs(sip  - 2.0*    s +      sim)
           / ( abs(sip) + 2.0*abs(s) + abs(sim) + 1.0e-16 );
-  b.phi(i,j,k,0) = 1.0-ri;
+  b.phi(i,j,k,0) = ri;
 
   double rj = abs(sjp  - 2.0*    s  +     sjm)
           / ( abs(sjp) + 2.0*abs(s) + abs(sjm) + 1.0e-16 );
-  b.phi(i,j,k,1) = 1.0-rj;
+  b.phi(i,j,k,1) = rj;
 
   double rk = abs(skp  - 2.0*    s  +     skm)
           / ( abs(skp) + 2.0*abs(s) + abs(skm) + 1.0e-16 );
-  b.phi(i,j,k,2) = 1.0-rk;
+  b.phi(i,j,k,2) = rk;
 
   });
 }
@@ -62,16 +62,16 @@ void pressure(block_ b) {
   double pkm = b.q(i,j,k-1,0) ;
 
   double ri = abs( pip - 2.0*p + pim )
-            / abs( pip + 2.0*p + pim + 1.0e-16 );
-  b.phi(i,j,k,0) = 1.0-ri;
+            / abs( pip + 2.0*p + pim );
+  b.phi(i,j,k,0) = ri;
 
   double rj = abs( pjp - 2.0*p + pjm )
-            / abs( pjp + 2.0*p + pjm + 1.0e-16 );
-  b.phi(i,j,k,1) = 1.0-rj;
+            / abs( pjp + 2.0*p + pjm );
+  b.phi(i,j,k,1) = rj;
 
   double rk = abs( pkp - 2.0*p + pkm )
-            / abs( pkp + 2.0*p + pkm + 1.0e-16 );
-  b.phi(i,j,k,2) = 1.0-rk;
+            / abs( pkp + 2.0*p + pkm );
+  b.phi(i,j,k,2) = rk;
 
   });
 }

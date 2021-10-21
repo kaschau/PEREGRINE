@@ -87,7 +87,9 @@ def setRHS(cls, config):
     if shock is None or shock == "artificialDissipation":
         cls.applyPrimaryAdvFlux = compute.utils.applyFlux
     elif shock == "hybrid":
-        cls.applyPrimaryAdvFlux = compute.utils.hybridFlux
+        cls.applyPrimaryAdvFlux = compute.utils.applyHybridFlux
+    else:
+        raise pgConfigError("shockHandling", shock)
 
     # Secondary advective fluxes
     secondary = config["RHS"]["secondaryAdvFlux"]
@@ -99,13 +101,12 @@ def setRHS(cls, config):
         except AttributeError:
             raise pgConfigError("secondaryAdvFlux", secondary)
     # How to apply secondary flux
-    shock = config["RHS"]["shockHandling"]
     if shock is None:
         cls.applySecondaryAdvFlux = null
     elif shock == "artificialDissipation":
-        cls.applySecondaryAdvFlux = compute.utils.applyFlux
+        cls.applySecondaryAdvFlux = compute.utils.applyDissipationFlux
     elif shock == "hybrid":
-        cls.applySecondaryAdvFlux = compute.utils.hybridFlux
+        cls.applySecondaryAdvFlux = compute.utils.applyHybridFlux
 
     # Diffusive fluxes
     if config["RHS"]["diffusion"]:
@@ -137,9 +138,11 @@ def howManyNG(config):
     ng = 1
 
     # First check advective term order
-    if config["RHS"]["primaryAdvFlux"] == "secondOrderKEEP":
-        ng = max(ng, 1)
-    elif config["RHS"]["primaryAdvFlux"] == "fourthOrderKEEP":
+    if config["RHS"]["primaryAdvFlux"] == "fourthOrderKEEP":
+        ng = max(ng, 2)
+
+    # Check seconary advective term order
+    if config["RHS"]["secondaryAdvFlux"] == "jamesonDissipation":
         ng = max(ng, 2)
 
     # Now check diffusion term order
