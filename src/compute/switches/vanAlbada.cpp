@@ -28,6 +28,11 @@ void vanAlbada(block_ b) {
   double ri = (p - pim + 1e-16) / (pip - p + 1e-16);
   b.phi(i,j,k,0) = 1.0 - (ri + abs(ri))/(1.0 + pow(ri,2.0));
 
+  double rj = (p - pjm + 1e-16) / (pjp - p + 1e-16);
+  b.phi(i,j,k,1) = 1.0 - (rj + abs(rj))/(1.0 + pow(rj,2.0));
+
+  double rk = (p - pkm + 1e-16) / (pkp - p + 1e-16);
+  b.phi(i,j,k,2) = 1.0 - (rk + abs(rk))/(1.0 + pow(rk,2.0));
   });
 
 }
