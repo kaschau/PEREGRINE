@@ -13,13 +13,13 @@ MDRange3 get_range3(block_ b, int face, int i=0, int j=0, int k=0);
 
 // ./advFlux
 //    |------> secondOrderKEEP
-void secondOrderKEEP(block_ b, const thtrdat_ th, const double primary);
+void secondOrderKEEP(block_ b, const thtrdat_ th);
 //    |------> fourthOrderKEEP
-void fourthOrderKEEP(block_ b, const thtrdat_ th, const double primary);
+void fourthOrderKEEP(block_ b, const thtrdat_ th);
 //    |------> rusanov
-void rusanov(block_ b, const thtrdat_ th, const double primary);
+void rusanov(block_ b, const thtrdat_ th);
 //    |------> ausmPlusUp
-void ausmPlusUp(block_ b, const thtrdat_ th, const double primary);
+void ausmPlusUp(block_ b, const thtrdat_ th);
 
 
 // ./diffFlux
@@ -87,6 +87,9 @@ void chem_GRI30(block_ b,
 
 
 // ./utils
+//    |------> applyFluxes
+void applyFlux(block_ b, const double primary);
+void hybridFlux(block_ b, const double primary);
 //    |------> dQzero
 void dQzero(block_ b);
 //    |------> dq2FD

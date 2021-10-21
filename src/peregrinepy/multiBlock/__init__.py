@@ -82,6 +82,12 @@ def setRHS(cls, config):
             cls.primaryAdvFlux = getattr(compute.advFlux, primary)
         except AttributeError:
             raise pgConfigError("primaryAdvFlux", primary)
+    # How to apply primary flux
+    shock = config["RHS"]["shockHandling"]
+    if shock is None or shock == "artificialDissipation":
+        cls.applyPrimaryAdvFlux = compute.utils.applyFlux
+    elif shock == "hybrid":
+        cls.applyPrimaryAdvFlux = compute.utils.hybridFlux
 
     # Secondary advective fluxes
     secondary = config["RHS"]["secondaryAdvFlux"]
@@ -92,12 +98,22 @@ def setRHS(cls, config):
             cls.secondaryAdvFlux = getattr(compute.advFlux, secondary)
         except AttributeError:
             raise pgConfigError("secondaryAdvFlux", secondary)
+    # How to apply secondary flux
+    shock = config["RHS"]["shockHandling"]
+    if shock is None:
+        cls.applySecondaryAdvFlux = null
+    elif shock == "artificialDissipation":
+        cls.applySecondaryAdvFlux = compute.utils.applyFlux
+    elif shock == "hybrid":
+        cls.applySecondaryAdvFlux = compute.utils.hybridFlux
 
     # Diffusive fluxes
     if config["RHS"]["diffusion"]:
         cls.diffFlux = compute.diffFlux.diffusiveFlux
+        cls.applyDiffFlux = compute.utils.applyFlux
     else:
         cls.diffFlux = null
+        cls.applyDiffFlux = null
 
     # Chemical source terms
     if config["thermochem"]["chemistry"]:
