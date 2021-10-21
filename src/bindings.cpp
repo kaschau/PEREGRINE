@@ -157,12 +157,14 @@ PYBIND11_MODULE(compute, m) {
   // ./switches
   py::module switches = m.def_submodule("switches", "switches");
   //  |----> jameson.cpp
-  switches.def("entropy", &entropy, "Compute switches based on entropy",
+  switches.def("jamesonEntropy", &jamesonEntropy, "Compute switches based on entropy",
         py::arg("block_ object"));
-  switches.def("pressure", &pressure, "Compute switches based on pressure",
+  switches.def("jamesonPressure", &jamesonPressure, "Compute switches based on pressure",
         py::arg("block_ object"));
   //  |----> vanAlbada.cpp
-  switches.def("vanAlbada", &vanAlbada, "Compute switches based on van Albada limiter",
+  switches.def("vanAlbadaEntropy", &vanAlbadaEntropy, "Compute switches based on van Albada limiter",
+        py::arg("block_ object"));
+  switches.def("vanAlbadaPressure", &vanAlbadaPressure, "Compute switches based on van Albada limiter",
         py::arg("block_ object"));
   //  |----> negateFluxes.cpp
   switches.def("noIFlux", &noIFlux, "Zero out primary flux via switch", py::arg("block_ object"));
