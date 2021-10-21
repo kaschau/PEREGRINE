@@ -35,7 +35,7 @@ void applyHybridFlux(block_ b, const double primary) {
 // Apply fluxes to cc range
 //-------------------------------------------------------------------------------------------|
   MDRange4 range_cc({b.ng,b.ng,b.ng,0},{b.ni+b.ng-1,b.nj+b.ng-1,b.nk+b.ng-1,b.ne});
-  Kokkos::parallel_for("Apply current fluxes to RHS",
+  Kokkos::parallel_for("Apply hybrid fluxes to RHS",
                        range_cc,
                        KOKKOS_LAMBDA(const int i,
                                      const int j,
@@ -73,7 +73,7 @@ void applyDissipationFlux(block_ b, const double primary) {
 // Apply fluxes to cc range
 //-------------------------------------------------------------------------------------------|
   MDRange4 range_cc({b.ng,b.ng,b.ng,0},{b.ni+b.ng-1,b.nj+b.ng-1,b.nk+b.ng-1,b.ne});
-  Kokkos::parallel_for("Apply current fluxes to RHS",
+  Kokkos::parallel_for("Apply dissipaiton fluxes to RHS",
                        range_cc,
                        KOKKOS_LAMBDA(const int i,
                                      const int j,
