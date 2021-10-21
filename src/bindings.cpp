@@ -161,6 +161,9 @@ PYBIND11_MODULE(compute, m) {
         py::arg("block_ object"));
   switches.def("pressure", &pressure, "Compute switches based on pressure",
         py::arg("block_ object"));
+  //  |----> vanAlbada.cpp
+  switches.def("vanAlbada", &vanAlbada, "Compute switches based on van Albada limiter",
+        py::arg("block_ object"));
   //  |----> negateFluxes.cpp
   switches.def("noIFlux", &noIFlux, "Zero out primary flux via switch", py::arg("block_ object"));
   switches.def("noJFlux", &noJFlux, "Zero out primary flux via switch", py::arg("block_ object"));

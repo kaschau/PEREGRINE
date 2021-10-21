@@ -33,6 +33,8 @@ void diffusiveFlux(block_ b, const thtrdat_ th);
 //    |------> jameson
 void entropy(block_ b);
 void pressure(block_ b);
+//    |------> vanAlbada
+void vanAlbada(block_ b);
 //    |------> negateFluxes
 void noIFlux(block_ b);
 void noJFlux(block_ b);
