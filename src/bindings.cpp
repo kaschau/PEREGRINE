@@ -130,6 +130,10 @@ PYBIND11_MODULE(compute, m) {
   advFlux.def("secondOrderKEEP", &secondOrderKEEP, "Compute centeral difference euler fluxes via second order KEEP",
         py::arg("block_ object"),
         py::arg("thtrdat_ object"));
+  //  |----> jamesonDissipation.cpp
+  advFlux.def("jamesonDissipation", &jamesonDissipation, "Compute jameson dissipation",
+        py::arg("block_ object"),
+        py::arg("thtrdat_ object"));
   //  |----> fourthOrderKEEP.cpp
   advFlux.def("fourthOrderKEEP", &fourthOrderKEEP, "Compute centeral difference euler fluxes via fourth order KEEP",
         py::arg("block_ object"),
@@ -249,7 +253,10 @@ PYBIND11_MODULE(compute, m) {
   utils.def("applyFlux", &applyFlux, "Apply flux directly",
         py::arg("block_ object"),
         py::arg("primary"));
-  utils.def("hybridFlux", &hybridFlux, "Blend flux with another",
+  utils.def("applyHybridFlux", &applyHybridFlux, "Blend flux with another",
+        py::arg("block_ object"),
+        py::arg("primary"));
+  utils.def("applyDissipationFlux", &applyDissipationFlux, "Apply artificial dissipation flux",
         py::arg("block_ object"),
         py::arg("primary"));
   //  |----> dQzero.cpp
