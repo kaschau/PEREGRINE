@@ -43,9 +43,13 @@ def readRestart(mb, path="./", nrt=0, animate=True):
             blk.tme = list(f["iter"]["tme"])[0]
 
             for i, var in enumerate(variables):
-                blk.array["q"][readS + tuple([i])] = np.array(
-                    f["results"][var]
-                ).reshape((blk.ni - 1, blk.nj - 1, blk.nk - 1), order="F")
+                try:
+                    blk.array["q"][readS + tuple([i])] = np.array(
+                        f["results"][var]
+                    ).reshape((blk.ni - 1, blk.nj - 1, blk.nk - 1), order="F")
+                except KeyError:
+                    if blk.nblki == 0:
+                        print(f"Warning, {var} not found in restart. Leaving as is.")
 
     # Set the mb values as well
     mb.nrt = mb[0].nrt
