@@ -119,16 +119,21 @@ def setRHS(cls, config):
     # Chemical source terms
     if config["thermochem"]["chemistry"]:
         mech = config["thermochem"]["mechanism"]
-        try:
-            cls.expChem = getattr(compute.chemistry, mech)
-        except AttributeError:
-            raise pgConfigError("mechanism", mech)
+        if config["solver"]["timeIntegration"] in ["rk1", "rk3", "rk4"]:
+            try:
+                cls.expChem = getattr(compute.chemistry, mech)
+                cls.impChem = null
+            except AttributeError:
+                raise pgConfigError("mechanism", mech)
         # If we are using an implicit chemistry integration
         #  we need to set it here and set the explicit
         #  module to null so it is not called in RHS
-        if config["solver"]["timeIntegration"] in ["strang"]:
-            cls.impChem = cls.expChem
-            cls.expChem = null
+        elif config["solver"]["timeIntegration"] in ["strang"]:
+            try:
+                cls.expChem = null
+                cls.impChem = getattr(compute.chemistry, mech)
+            except AttributeError:
+                raise pgConfigError("mechanism", mech)
     else:
         cls.expChem = null
         cls.impChem = null
