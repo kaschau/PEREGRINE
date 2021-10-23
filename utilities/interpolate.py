@@ -100,7 +100,9 @@ if __name__ == "__main__":
     verboseSearch = args.verboseSearch
 
     # Read in from data
-    nblkFrom = len([i for i in os.listdir(fromDir) if i.startswith("gv.") and i.endswith(".h5")])
+    nblkFrom = len(
+        [i for i in os.listdir(fromDir) if i.startswith("gv.") and i.endswith(".h5")]
+    )
     mbFrom = mbr(nblkFrom, speciesNames)
     fromNrst = int(
         [i for i in os.listdir(fromDir) if i.startswith("q.")][0].strip().split(".")[1]
@@ -109,7 +111,9 @@ if __name__ == "__main__":
     readRestart(mbFrom, fromDir, fromNrst)
 
     # Read in to data
-    nblkTo = len([i for i in os.listdir(toDir) if i.startswith("gv.") and i.endswith(".h5")])
+    nblkTo = len(
+        [i for i in os.listdir(toDir) if i.startswith("gv.") and i.endswith(".h5")]
+    )
     mbTo = mbr(nblkTo, speciesNames)
     readGrid(mbTo, toDir)
 

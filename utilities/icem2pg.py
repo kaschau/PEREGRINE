@@ -86,7 +86,7 @@ if args.fmt == "tns3dmb":
 
         for nijk, blk in zip(nijks, mb):
             ni, nj, nk = nijk
-            temp = f90.read_reals(dtype=np.float64).reshape((ni, nj, nk, 3), order='F')
+            temp = f90.read_reals(dtype=np.float64).reshape((ni, nj, nk, 3), order="F")
             blk.ni = ni
             blk.nj = nj
             blk.nk = nk
@@ -178,7 +178,9 @@ with open(args.topoFileName, "r") as f:
             if faceBlockEdgeVertex == "f":
                 if tag == "DEFAULT_SUBFACE":
                     continue
-                assert tag in bcFam2Type.keys(), f"{tag} not found in {args.bcFam} file."
+                assert (
+                    tag in bcFam2Type.keys()
+                ), f"{tag} not found in {args.bcFam} file."
                 mins = [line[2], line[3], line[4]]
                 maxs = [line[5], line[6], line[7]]
                 directions = ["i", "j", "k"]
@@ -193,7 +195,9 @@ with open(args.topoFileName, "r") as f:
                         thisFace = None
                 blk.getFace(thisFace).bcFam = tag
                 bcType = bcFam2Type[tag]["bcType"]
-                assert bcType in validBcTypes, f"{bcType} is not a valid PEREGRINE bcType."
+                assert (
+                    bcType in validBcTypes
+                ), f"{bcType} is not a valid PEREGRINE bcType."
                 blk.getFace(thisFace).bcType = bcType
 
 # ----------------------------------------------------------------- #
@@ -306,9 +310,7 @@ with open(args.topoFileName, "r") as f:
             # March through the required faces
             for internalFace in internalFaces:
                 thisBlockLine = next(iterLines).replace("-", " -").strip().split()
-                adjacentBlockLine = (
-                    next(iterLines).replace("-", " -").strip().split()
-                )
+                adjacentBlockLine = next(iterLines).replace("-", " -").strip().split()
 
                 # As a check, lets make sure that the face we are setting is the same as this section ICEM dictates
                 # Looking at the connectivity section in the info.topo file, it seems like these face connectivities
@@ -334,14 +336,18 @@ with open(args.topoFileName, "r") as f:
 
                 # We will also double check that this is in fact a face connectivity, not a edge or vertex connectivity
                 # b/c again, it seems like these files always list the faces first, then edges, then verticies.
-                faceBlockEdgeVertex = thisBlockLine[5]  # f= face, b=block, e=edge, v=vertex
+                faceBlockEdgeVertex = thisBlockLine[
+                    5
+                ]  # f= face, b=block, e=edge, v=vertex
                 if faceBlockEdgeVertex != "f":
                     raise ValueError(
                         f"ERROR: we are expecting a face to be here to set face {thisFace} of block{currentBlock}, but instead we are seeing a {faceBlockEdgeVertex}."
                     )
 
                 # With those checks done, lets actually set the connectivity, orientation, etc.
-                adjacentBlockNumber = int(adjacentBlockLine[1].strip().split(".")[-1]) - 1
+                adjacentBlockNumber = (
+                    int(adjacentBlockLine[1].strip().split(".")[-1]) - 1
+                )
 
                 # I don't know why, but the ICEM orientation is really, weird, so lets create a dict whose keys are
                 # the i,j,k of the current block, and the values are the +/- i,j,k of the adjacent block
