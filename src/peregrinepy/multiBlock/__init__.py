@@ -82,6 +82,14 @@ def setRHS(cls, config):
             cls.primaryAdvFlux = getattr(compute.advFlux, primary)
         except AttributeError:
             raise pgConfigError("primaryAdvFlux", primary)
+    # How to apply primary flux
+    shock = config["RHS"]["shockHandling"]
+    if shock is None or shock == "artificialDissipation":
+        cls.applyPrimaryAdvFlux = compute.utils.applyFlux
+    elif shock == "hybrid":
+        cls.applyPrimaryAdvFlux = compute.utils.applyHybridFlux
+    else:
+        raise pgConfigError("shockHandling", shock)
 
     # Secondary advective fluxes
     secondary = config["RHS"]["secondaryAdvFlux"]
@@ -92,26 +100,40 @@ def setRHS(cls, config):
             cls.secondaryAdvFlux = getattr(compute.advFlux, secondary)
         except AttributeError:
             raise pgConfigError("secondaryAdvFlux", secondary)
+    # How to apply secondary flux
+    if shock is None:
+        cls.applySecondaryAdvFlux = null
+    elif shock == "artificialDissipation":
+        cls.applySecondaryAdvFlux = compute.utils.applyDissipationFlux
+    elif shock == "hybrid":
+        cls.applySecondaryAdvFlux = compute.utils.applyHybridFlux
 
     # Diffusive fluxes
     if config["RHS"]["diffusion"]:
         cls.diffFlux = compute.diffFlux.diffusiveFlux
+        cls.applyDiffFlux = compute.utils.applyFlux
     else:
         cls.diffFlux = null
+        cls.applyDiffFlux = null
 
     # Chemical source terms
     if config["thermochem"]["chemistry"]:
         mech = config["thermochem"]["mechanism"]
-        try:
-            cls.expChem = getattr(compute.chemistry, mech)
-        except AttributeError:
-            raise pgConfigError("mechanism", mech)
+        if config["solver"]["timeIntegration"] in ["rk1", "rk3", "rk4"]:
+            try:
+                cls.expChem = getattr(compute.chemistry, mech)
+                cls.impChem = null
+            except AttributeError:
+                raise pgConfigError("mechanism", mech)
         # If we are using an implicit chemistry integration
         #  we need to set it here and set the explicit
         #  module to null so it is not called in RHS
-        if config["solver"]["timeIntegration"] in ["strang"]:
-            cls.impChem = cls.expChem
-            cls.expChem = null
+        elif config["solver"]["timeIntegration"] in ["strang"]:
+            try:
+                cls.expChem = null
+                cls.impChem = getattr(compute.chemistry, mech)
+            except AttributeError:
+                raise pgConfigError("mechanism", mech)
     else:
         cls.expChem = null
         cls.impChem = null
@@ -121,9 +143,11 @@ def howManyNG(config):
     ng = 1
 
     # First check advective term order
-    if config["RHS"]["primaryAdvFlux"] == "secondOrderKEEP":
-        ng = max(ng, 1)
-    elif config["RHS"]["primaryAdvFlux"] == "fourthOrderKEEP":
+    if config["RHS"]["primaryAdvFlux"] == "fourthOrderKEEP":
+        ng = max(ng, 2)
+
+    # Check seconary advective term order
+    if config["RHS"]["secondaryAdvFlux"] == "jamesonDissipation":
         ng = max(ng, 2)
 
     # Now check diffusion term order

@@ -9,14 +9,17 @@ def RHS(mb):
 
     # Primary advective fluxes
     for blk in mb:
-        mb.primaryAdvFlux(blk, mb.thtrdat, 1.0)
+        mb.primaryAdvFlux(blk, mb.thtrdat)
+        mb.applyPrimaryAdvFlux(blk, 1.0)
     # Secondary advective fluxes
     for blk in mb:
-        mb.secondaryAdvFlux(blk, mb.thtrdat, 0.0)
+        mb.secondaryAdvFlux(blk, mb.thtrdat)
+        mb.applySecondaryAdvFlux(blk, 0.0)
 
     # Diffusive fluxes
     for blk in mb:
         mb.diffFlux(blk, mb.thtrdat)
+        mb.applyDiffFlux(blk, -1.0)
 
     # Chemical source terms
     for blk in mb:

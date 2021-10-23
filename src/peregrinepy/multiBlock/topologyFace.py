@@ -49,8 +49,11 @@ class topologyFace:
             "b1",
             # Inlets
             "constantVelocitySubsonicInlet",
+            "constantVelocitySupersonicInlet",
             # Exits
             "constantPressureSubsonicExit",
+            "supersonicExit",
+            "constantPressureNonReflectingSubsonicExit"
             # Walls
             "adiabaticNoSlipWall",
             "adiabaticSlipWall",
