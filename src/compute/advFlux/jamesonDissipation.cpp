@@ -12,7 +12,7 @@ void jamesonDissipation(block_ b, const thtrdat_ th) {
   Kokkos::parallel_for("i face conv fluxes", range_i, KOKKOS_LAMBDA(const int i,
                                                                     const int j,
                                                                     const int k) {
-    const double kappa2 = 0.25;
+    const double kappa2 = 1.0;
     const double kappa4 = 1.0/256.0;
 
     const double eps2 = kappa2 * std::max(b.phi(i,j,k,0), b.phi(i-1,j,k,0));
@@ -38,24 +38,24 @@ void jamesonDissipation(block_ b, const thtrdat_ th) {
 
     // u momentum dissipation
     double u2, u4;
-    u2 = b.q(i  ,j,k,1) -     b.q(i-1,j,k,1);
-    u4 = b.q(i+1,j,k,1) - 3.0*b.q(i  ,j,k,1) + 3.0*b.q(i-1,j,k,1) - b.q(i-2,j,k,1);
+    u2 = b.Q(i  ,j,k,1) -     b.Q(i-1,j,k,1);
+    u4 = b.Q(i+1,j,k,1) - 3.0*b.Q(i  ,j,k,1) + 3.0*b.Q(i-1,j,k,1) - b.Q(i-2,j,k,1);
 
-    b.iF(i,j,k,1) = a*(eps2*rho2*u2 - eps4*rho4*u4) ;
+    b.iF(i,j,k,1) = a*(eps2*u2 - eps4*u4) ;
 
     // v momentum dissipation
     double v2, v4;
-    v2 = b.q(i  ,j,k,2) -     b.q(i-1,j,k,2);
-    v4 = b.q(i+1,j,k,2) - 3.0*b.q(i  ,j,k,2) + 3.0*b.q(i-1,j,k,2) - b.q(i-2,j,k,2);
+    v2 = b.Q(i  ,j,k,2) -     b.Q(i-1,j,k,2);
+    v4 = b.Q(i+1,j,k,2) - 3.0*b.Q(i  ,j,k,2) + 3.0*b.Q(i-1,j,k,2) - b.Q(i-2,j,k,2);
 
-    b.iF(i,j,k,2) = a*(eps2*rho2*v2 - eps4*rho4*v4) ;
+    b.iF(i,j,k,2) = a*(eps2*v2 - eps4*v4) ;
 
     // w momentum dissipation
     double w2, w4;
-    w2 = b.q(i  ,j,k,3) -     b.q(i-1,j,k,3);
-    w4 = b.q(i+1,j,k,3) - 3.0*b.q(i  ,j,k,3) + 3.0*b.q(i-1,j,k,3) - b.q(i-2,j,k,3);
+    w2 = b.Q(i  ,j,k,3) -     b.Q(i-1,j,k,3);
+    w4 = b.Q(i+1,j,k,3) - 3.0*b.Q(i  ,j,k,3) + 3.0*b.Q(i-1,j,k,3) - b.Q(i-2,j,k,3);
 
-    b.iF(i,j,k,3) = a*(eps2*rho2*w2 - eps4*rho4*w4) ;
+    b.iF(i,j,k,3) = a*(eps2*w2 - eps4*w4) ;
 
     // total energy dissipation
     double e2,k2, e4,k4;
@@ -71,9 +71,9 @@ void jamesonDissipation(block_ b, const thtrdat_ th) {
     for (int n=0; n<th.ns-1; n++)
     {
       double Y2, Y4;
-      Y2 = b.q(i  ,j,k,5+n) -     b.q(i-1,j,k,5+n);
-      Y4 = b.q(i+1,j,k,5+n) - 3.0*b.q(i  ,j,k,5+n) + 3.0*b.q(i-1,j,k,5+n) - b.q(i-2,j,k,5+n);
-      b.iF(i,j,k,5+n) = a*(eps2*rho2*Y2 - eps4*rho4*Y4) ;
+      Y2 = b.Q(i  ,j,k,5+n) -     b.Q(i-1,j,k,5+n);
+      Y4 = b.Q(i+1,j,k,5+n) - 3.0*b.Q(i  ,j,k,5+n) + 3.0*b.Q(i-1,j,k,5+n) - b.Q(i-2,j,k,5+n);
+      b.iF(i,j,k,5+n) = a*(eps2*Y2 - eps4*Y4) ;
     }
 
   });
@@ -86,7 +86,7 @@ void jamesonDissipation(block_ b, const thtrdat_ th) {
                                                                     const int j,
                                                                     const int k) {
 
-    const double kappa2 = 0.25;
+    const double kappa2 = 1.0;
     const double kappa4 = 1.0/256.0;
 
     const double eps2 = kappa2 * std::max(b.phi(i,j,k,0), b.phi(i,j-1,k,0));
@@ -112,24 +112,24 @@ void jamesonDissipation(block_ b, const thtrdat_ th) {
 
     // u momentum dissipation
     double u2, u4;
-    u2 = b.q(i,j  ,k,1) -     b.q(i,j-1,k,1);
-    u4 = b.q(i,j+1,k,1) - 3.0*b.q(i,j  ,k,1) + 3.0*b.q(i,j-1,k,1) - b.q(i,j-2,k,1);
+    u2 = b.Q(i,j  ,k,1) -     b.Q(i,j-1,k,1);
+    u4 = b.Q(i,j+1,k,1) - 3.0*b.Q(i,j  ,k,1) + 3.0*b.Q(i,j-1,k,1) - b.Q(i,j-2,k,1);
 
-    b.jF(i,j,k,1) = a*(eps2*rho2*u2 - eps4*rho4*u4) ;
+    b.jF(i,j,k,1) = a*(eps2*u2 - eps4*u4) ;
 
     // v momentum dissipation
     double v2, v4;
-    v2 = b.q(i,j  ,k,2) -     b.q(i,j-1,k,2);
-    v4 = b.q(i,j+1,k,2) - 3.0*b.q(i,j  ,k,2) + 3.0*b.q(i,j-1,k,2) - b.q(i,j-2,k,2);
+    v2 = b.Q(i,j  ,k,2) -     b.Q(i,j-1,k,2);
+    v4 = b.Q(i,j+1,k,2) - 3.0*b.Q(i,j  ,k,2) + 3.0*b.Q(i,j-1,k,2) - b.Q(i,j-2,k,2);
 
-    b.jF(i,j,k,2) = a*(eps2*rho2*v2 - eps4*rho4*v4) ;
+    b.jF(i,j,k,2) = a*(eps2*v2 - eps4*v4) ;
 
     // w momentum dissipation
     double w2, w4;
-    w2 = b.q(i,j  ,k,3) -     b.q(i,j-1,k,3);
-    w4 = b.q(i,j+1,k,3) - 3.0*b.q(i,j  ,k,3) + 3.0*b.q(i,j-1,k,3) - b.q(i,j-2,k,3);
+    w2 = b.Q(i,j  ,k,3) -     b.Q(i,j-1,k,3);
+    w4 = b.Q(i,j+1,k,3) - 3.0*b.Q(i,j  ,k,3) + 3.0*b.Q(i,j-1,k,3) - b.Q(i,j-2,k,3);
 
-    b.jF(i,j,k,3) = a*(eps2*rho2*w2 - eps4*rho4*w4) ;
+    b.jF(i,j,k,3) = a*(eps2*w2 - eps4*w4) ;
 
     // total energy dissipation
     double e2,k2, e4,k4;
@@ -145,9 +145,9 @@ void jamesonDissipation(block_ b, const thtrdat_ th) {
     for (int n=0; n<th.ns-1; n++)
     {
       double Y2, Y4;
-      Y2 = b.q(i,j  ,k,5+n) -     b.q(i,j-1,k,5+n);
-      Y4 = b.q(i,j+1,k,5+n) - 3.0*b.q(i,j  ,k,5+n) + 3.0*b.q(i,j-1,k,5+n) - b.q(i,j-2,k,5+n);
-      b.jF(i,j,k,5+n) = a*(eps2*rho2*Y2 - eps4*rho4*Y4) ;
+      Y2 = b.Q(i,j  ,k,5+n) -     b.Q(i,j-1,k,5+n);
+      Y4 = b.Q(i,j+1,k,5+n) - 3.0*b.Q(i,j  ,k,5+n) + 3.0*b.Q(i,j-1,k,5+n) - b.Q(i,j-2,k,5+n);
+      b.jF(i,j,k,5+n) = a*(eps2*Y2 - eps4*Y4) ;
     }
 
   });
@@ -160,7 +160,7 @@ void jamesonDissipation(block_ b, const thtrdat_ th) {
                                                                     const int j,
                                                                     const int k) {
 
-    const double kappa2 = 0.25;
+    const double kappa2 = 1.0;
     const double kappa4 = 1.0/256.0;
 
     const double eps2 = kappa2 * std::max(b.phi(i,j,k,0), b.phi(i,j,k-1,0));
@@ -186,24 +186,24 @@ void jamesonDissipation(block_ b, const thtrdat_ th) {
 
     // u momentum dissipation
     double u2, u4;
-    u2 = b.q(i,j,k  ,1) -     b.q(i,j,k-1,1);
-    u4 = b.q(i,j,k+1,1) - 3.0*b.q(i,j,k  ,1) + 3.0*b.q(i,j,k-1,1) - b.q(i,j,k-2,1);
+    u2 = b.Q(i,j,k  ,1) -     b.Q(i,j,k-1,1);
+    u4 = b.Q(i,j,k+1,1) - 3.0*b.Q(i,j,k  ,1) + 3.0*b.Q(i,j,k-1,1) - b.Q(i,j,k-2,1);
 
-    b.kF(i,j,k,1) = a*(eps2*rho2*u2 - eps4*rho4*u4) ;
+    b.kF(i,j,k,1) = a*(eps2*u2 - eps4*rho4*u4) ;
 
     // v momentum dissipation
     double v2, v4;
-    v2 = b.q(i,j,k  ,2) -     b.q(i,j,k-1,2);
-    v4 = b.q(i,j,k+1,2) - 3.0*b.q(i,j,k  ,2) + 3.0*b.q(i,j,k-1,2) - b.q(i,j,k-2,2);
+    v2 = b.Q(i,j,k  ,2) -     b.Q(i,j,k-1,2);
+    v4 = b.Q(i,j,k+1,2) - 3.0*b.Q(i,j,k  ,2) + 3.0*b.Q(i,j,k-1,2) - b.Q(i,j,k-2,2);
 
-    b.kF(i,j,k,2) = a*(eps2*rho2*v2 - eps4*rho4*v4) ;
+    b.kF(i,j,k,2) = a*(eps2*v2 - eps4*v4) ;
 
     // w momentum dissipation
     double w2, w4;
-    w2 = b.q(i,j,k  ,3) -     b.q(i,j,k-1,3);
-    w4 = b.q(i,j,k+1,3) - 3.0*b.q(i,j,k  ,3) + 3.0*b.q(i,j,k-1,3) - b.q(i,j,k-2,3);
+    w2 = b.Q(i,j,k  ,3) -     b.Q(i,j,k-1,3);
+    w4 = b.Q(i,j,k+1,3) - 3.0*b.Q(i,j,k  ,3) + 3.0*b.Q(i,j,k-1,3) - b.Q(i,j,k-2,3);
 
-    b.kF(i,j,k,3) = a*(eps2*rho2*w2 - eps4*rho4*w4) ;
+    b.kF(i,j,k,3) = a*(eps2*w2 - eps4*w4) ;
 
     // total energy dissipation
     double e2,k2, e4,k4;
@@ -219,9 +219,9 @@ void jamesonDissipation(block_ b, const thtrdat_ th) {
     for (int n=0; n<th.ns-1; n++)
     {
       double Y2, Y4;
-      Y2 = b.q(i,j,k  ,5+n) -     b.q(i,j,k-1,5+n);
-      Y4 = b.q(i,j,k+1,5+n) - 3.0*b.q(i,j,k  ,5+n) + 3.0*b.q(i,j,k-1,5+n) - b.q(i,j,k-2,5+n);
-      b.kF(i,j,k,5+n) = a*(eps2*rho2*Y2 - eps4*rho4*Y4) ;
+      Y2 = b.Q(i,j,k  ,5+n) -     b.Q(i,j,k-1,5+n);
+      Y4 = b.Q(i,j,k+1,5+n) - 3.0*b.Q(i,j,k  ,5+n) + 3.0*b.Q(i,j,k-1,5+n) - b.Q(i,j,k-2,5+n);
+      b.kF(i,j,k,5+n) = a*(eps2*Y2 - eps4*Y4) ;
     }
 
   });
