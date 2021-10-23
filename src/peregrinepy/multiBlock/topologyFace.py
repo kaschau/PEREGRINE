@@ -53,7 +53,7 @@ class topologyFace:
             # Exits
             "constantPressureSubsonicExit",
             "supersonicExit",
-            "constantPressureNonReflectingSubsonicExit"
+            "constantPressureNonReflectingSubsonicExit",
             # Walls
             "adiabaticNoSlipWall",
             "adiabaticSlipWall",
