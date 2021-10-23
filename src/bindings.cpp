@@ -1,6 +1,3 @@
-
-//#include "kokkos_types.hpp"
-//#include "Block.hpp"
 #include "Kokkos_Core.hpp"
 #include "compute.hpp"
 #include "block_.hpp"

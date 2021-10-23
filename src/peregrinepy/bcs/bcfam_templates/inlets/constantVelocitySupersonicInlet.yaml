@@ -1,0 +1,11 @@
+---
+
+dummy_inlet:
+  bcType: constantVelocitySupersonicInlet
+  bcVals:
+    p: 101325.0
+    u: 1.0
+    v: 0.0
+    w: 0.0
+    T: 300.0
+    Air: 1.0
