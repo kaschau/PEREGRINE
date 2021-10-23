@@ -30,6 +30,10 @@ struct thtrdat_ {
   // coefficients are created in-situ
   std::vector<std::vector<double>> Dij_poly;
 
+  // Constant properties
+  std::vector<double> mu0;
+  std::vector<double> kappa0;
+
 };
 
 #endif

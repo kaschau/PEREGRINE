@@ -1,6 +1,3 @@
-
-//#include "kokkos_types.hpp"
-//#include "Block.hpp"
 #include "Kokkos_Core.hpp"
 #include "compute.hpp"
 #include "block_.hpp"
@@ -129,23 +126,23 @@ PYBIND11_MODULE(compute, m) {
   //  |----> secondOrderKEEP.cpp
   advFlux.def("secondOrderKEEP", &secondOrderKEEP, "Compute centeral difference euler fluxes via second order KEEP",
         py::arg("block_ object"),
-        py::arg("thtrdat_ object"),
-        py::arg("primary"));
+        py::arg("thtrdat_ object"));
+  //  |----> jamesonDissipation.cpp
+  advFlux.def("jamesonDissipation", &jamesonDissipation, "Compute jameson dissipation",
+        py::arg("block_ object"),
+        py::arg("thtrdat_ object"));
   //  |----> fourthOrderKEEP.cpp
   advFlux.def("fourthOrderKEEP", &fourthOrderKEEP, "Compute centeral difference euler fluxes via fourth order KEEP",
         py::arg("block_ object"),
-        py::arg("thtrdat_ object"),
-        py::arg("primary"));
+        py::arg("thtrdat_ object"));
   //  |----> rusanov.cpp
   advFlux.def("rusanov", &rusanov, "Compute first order euler fluxes via rusanov",
         py::arg("block_ object"),
-        py::arg("thtrdat_ object"),
-        py::arg("primary"));
+        py::arg("thtrdat_ object"));
   //  |----> ausmPlusUp.cpp
   advFlux.def("ausmPlusUp", &ausmPlusUp, "Compute inviscid fluxes via AUSM+UP",
         py::arg("block_ object"),
-        py::arg("thtrdat_ object"),
-        py::arg("primary"));
+        py::arg("thtrdat_ object"));
 
   // ./diffFlux
   py::module diffFlux = m.def_submodule("diffFlux", "diffusive flux module");
@@ -157,9 +154,14 @@ PYBIND11_MODULE(compute, m) {
   // ./switches
   py::module switches = m.def_submodule("switches", "switches");
   //  |----> jameson.cpp
-  switches.def("entropy", &entropy, "Compute switches based on entropy",
+  switches.def("jamesonEntropy", &jamesonEntropy, "Compute switches based on entropy",
         py::arg("block_ object"));
-  switches.def("pressure", &pressure, "Compute switches based on pressure",
+  switches.def("jamesonPressure", &jamesonPressure, "Compute switches based on pressure",
+        py::arg("block_ object"));
+  //  |----> vanAlbada.cpp
+  switches.def("vanAlbadaEntropy", &vanAlbadaEntropy, "Compute switches based on van Albada limiter",
+        py::arg("block_ object"));
+  switches.def("vanAlbadaPressure", &vanAlbadaPressure, "Compute switches based on van Albada limiter",
         py::arg("block_ object"));
   //  |----> negateFluxes.cpp
   switches.def("noIFlux", &noIFlux, "Zero out primary flux via switch", py::arg("block_ object"));
@@ -204,12 +206,23 @@ PYBIND11_MODULE(compute, m) {
 
     .def_readwrite("mu_poly", &thtrdat_::mu_poly)
     .def_readwrite("kappa_poly", &thtrdat_::kappa_poly)
-    .def_readwrite("Dij_poly", &thtrdat_::Dij_poly);
+    .def_readwrite("Dij_poly", &thtrdat_::Dij_poly)
+
+    .def_readwrite("mu0", &thtrdat_::mu0)
+    .def_readwrite("kappa0", &thtrdat_::kappa0);
 
   // ./transport
   py::module transport = m.def_submodule("transport", "transport module");
   //  |----> kineticTheory.cpp
   transport.def("kineticTheory", &kineticTheory, "Update transport properties from primatives via kinetic theory",
+        py::arg("block_"),
+        py::arg("thtrdat_ object"),
+        py::arg("face"),
+        py::arg("i")=0,
+        py::arg("j")=0,
+        py::arg("k")=0);
+  //  |----> constantProps.cpp
+  transport.def("constantProps", &constantProps, "Update transport properties from primatives with constant properties",
         py::arg("block_"),
         py::arg("thtrdat_ object"),
         py::arg("face"),
@@ -238,6 +251,16 @@ PYBIND11_MODULE(compute, m) {
 
   // ./utils
   py::module utils = m.def_submodule("utils", "utility module");
+  //  |----> applyFluxes.cpp
+  utils.def("applyFlux", &applyFlux, "Apply flux directly",
+        py::arg("block_ object"),
+        py::arg("primary"));
+  utils.def("applyHybridFlux", &applyHybridFlux, "Blend flux with another",
+        py::arg("block_ object"),
+        py::arg("primary"));
+  utils.def("applyDissipationFlux", &applyDissipationFlux, "Apply artificial dissipation flux",
+        py::arg("block_ object"),
+        py::arg("primary"));
   //  |----> dQzero.cpp
   utils.def("dQzero", &dQzero, "Zero out dQ array",
         py::arg("block_ object"));

@@ -76,7 +76,9 @@ def writeRestart(mb, path="./", gridPath="./", precision="double"):
                     dset[:] = blk.array["Q"][writeS + tuple([0])].ravel(order="F")
                 except TypeError:
                     # Sometime we may not have density, so just make a zero array
-                    dset[:] = np.zeros(blk.array["q"][:, :, :, 0][writeS].shape).ravel(order="F")
+                    dset[:] = np.zeros(blk.array["q"][:, :, :, 0][writeS].shape).ravel(
+                        order="F"
+                    )
             names = ["p", "u", "v", "w", "T"] + blk.speciesNames[0:-1]
             for j in range(len(names)):
                 dsetName = names[j]
@@ -89,7 +91,8 @@ def writeRestart(mb, path="./", gridPath="./", precision="double"):
             dset = qf["results"][dsetName]
             if blk.ns > 1:
                 dset[:] = 1.0 - np.sum(
-                    blk.array["q"][writeS + tuple([slice(5, None, None)])], axis=-1).ravel(order="F")
+                    blk.array["q"][writeS + tuple([slice(5, None, None)])], axis=-1
+                ).ravel(order="F")
             elif blk.ns == 1:
                 dset[:] = 1.0
 

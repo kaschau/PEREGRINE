@@ -13,13 +13,15 @@ MDRange3 get_range3(block_ b, int face, int i=0, int j=0, int k=0);
 
 // ./advFlux
 //    |------> secondOrderKEEP
-void secondOrderKEEP(block_ b, const thtrdat_ th, const double primary);
+void secondOrderKEEP(block_ b, const thtrdat_ th);
 //    |------> fourthOrderKEEP
-void fourthOrderKEEP(block_ b, const thtrdat_ th, const double primary);
+void fourthOrderKEEP(block_ b, const thtrdat_ th);
 //    |------> rusanov
-void rusanov(block_ b, const thtrdat_ th, const double primary);
+void rusanov(block_ b, const thtrdat_ th);
 //    |------> ausmPlusUp
-void ausmPlusUp(block_ b, const thtrdat_ th, const double primary);
+void ausmPlusUp(block_ b, const thtrdat_ th);
+//    |------> jamesonDissipation
+void jamesonDissipation(block_ b, const thtrdat_ th);
 
 
 // ./diffFlux
@@ -29,8 +31,11 @@ void diffusiveFlux(block_ b, const thtrdat_ th);
 
 // ./switches
 //    |------> jameson
-void entropy(block_ b);
-void pressure(block_ b);
+void jamesonEntropy(block_ b);
+void jamesonPressure(block_ b);
+//    |------> vanAlbada
+void vanAlbadaEntropy(block_ b);
+void vanAlbadaPressure(block_ b);
 //    |------> negateFluxes
 void noIFlux(block_ b);
 void noJFlux(block_ b);
@@ -60,8 +65,15 @@ void tpg(block_ b,
 
 
 // ./transport
-//    |------> transport
+//    |------> kineticThreory
 void kineticTheory(block_ b,
+                   const thtrdat_ th,
+                   const int face,
+                   const int i=0,
+                   const int j=0,
+                   const int k=0);
+//    |------> constantProps
+void constantProps(block_ b,
                    const thtrdat_ th,
                    const int face,
                    const int i=0,
@@ -87,6 +99,10 @@ void chem_GRI30(block_ b,
 
 
 // ./utils
+//    |------> applyFluxes
+void applyFlux(block_ b, const double primary);
+void applyHybridFlux(block_ b, const double primary);
+void applyDissipationFlux(block_ b, const double primary);
 //    |------> dQzero
 void dQzero(block_ b);
 //    |------> dq2FD
