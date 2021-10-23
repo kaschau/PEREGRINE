@@ -59,13 +59,13 @@ void jamesonDissipation(block_ b, const thtrdat_ th) {
 
     // total energy dissipation
     double e2,k2, e4,k4;
-    e2 = b.Q(i,j,k,4)/b.Q(i,j,k,0) - b.Q(i-1,j,k,4)/b.Q(i-1,j,k,0);
-    e4 =       b.Q(i+1,j,k,4)/b.Q(i+1,j,k,0)
-         - 3.0*b.Q(i  ,j,k,4)/b.Q(i  ,j,k,0)
-         + 3.0*b.Q(i-1,j,k,4)/b.Q(i-1,j,k,0)
-         -     b.Q(i-2,j,k,4)/b.Q(i-2,j,k,0);
+    e2 = b.Q(i,j,k,4) - b.Q(i-1,j,k,4);
+    e4 =       b.Q(i+1,j,k,4)
+         - 3.0*b.Q(i  ,j,k,4)
+         + 3.0*b.Q(i-1,j,k,4)
+         -     b.Q(i-2,j,k,4);
 
-    b.iF(i,j,k,4) = a*(eps2*rho2*e2 - eps4*rho4*e4) ;
+    b.iF(i,j,k,4) = a*(eps2*e2 - eps4*e4) ;
 
     // Species
     for (int n=0; n<th.ns-1; n++)
