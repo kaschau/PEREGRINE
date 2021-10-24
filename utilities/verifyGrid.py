@@ -34,7 +34,7 @@ def verify(mb):
         6: {"i": slice(None), "j": slice(None), "k": -1},
     }
 
-    faceToOriendPlaceMapping = {
+    faceToOrientPlaceMapping = {
         1: "0",
         2: "0",
         3: "1",
@@ -77,7 +77,7 @@ def verify(mb):
 
     def getNeighborFace(nface, orientation, blk2):
 
-        direction = orientation[int(faceToOriendPlaceMapping[nface])]
+        direction = orientation[int(faceToOrientPlaceMapping[nface])]
 
         if nface in [2, 4, 6]:
             nface2 = orientToLargeFaceMapping[direction]
@@ -114,32 +114,32 @@ def verify(mb):
 
             (face2_x, face2_y, face2_z) = extractFace(blk2, nface2)
 
-            face_orientations = [
+            faceOrientations = [
                 i
                 for j, i in enumerate(orientation)
-                if j != int(faceToOriendPlaceMapping[nface])
+                if j != int(faceToOrientPlaceMapping[nface])
             ]
-            normal_index = [
-                j for j in range(3) if j == int(faceToOriendPlaceMapping[nface])
+            normalIndex = [
+                j for j in range(3) if j == int(faceToOrientPlaceMapping[nface])
             ][0]
-            normal_index2 = [
-                j for j in range(3) if j == int(faceToOriendPlaceMapping[nface2])
+            normalIndex2 = [
+                j for j in range(3) if j == int(faceToOrientPlaceMapping[nface2])
             ][0]
 
-            bigIndex = largeIndexMapping[normal_index]
-            bigIndex2 = largeIndexMapping[normal_index2]
+            bigIndex = largeIndexMapping[normalIndex]
+            bigIndex2 = largeIndexMapping[normalIndex2]
 
-            if int(face_orientations[1]) in needToTranspose[bigIndex][bigIndex2]:
+            if int(faceOrientations[1]) in needToTranspose[bigIndex][bigIndex2]:
                 face2_x = face2_x.T
                 face2_y = face2_y.T
                 face2_z = face2_z.T
 
-            if face_orientations[1] in ["4", "5", "6"]:
+            if faceOrientations[0] in ["4", "5", "6"]:
                 face2_x = np.flip(face2_x, 0)
                 face2_y = np.flip(face2_y, 0)
                 face2_z = np.flip(face2_z, 0)
 
-            if face_orientations[0] in ["4", "5", "6"]:
+            if faceOrientations[1] in ["4", "5", "6"]:
                 face2_x = np.flip(face2_x, 1)
                 face2_y = np.flip(face2_y, 1)
                 face2_z = np.flip(face2_z, 1)

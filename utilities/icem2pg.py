@@ -107,14 +107,14 @@ elif args.fmt == "mbi":
         fileName = "info.dom{}".format(blk.nblki)
         with open(fileName, "r") as f:
             line = f.readline().strip().split()
-            nx = int(line[1])
-            ny = int(line[2])
-            nz = int(line[3])
+            ni = int(line[1])
+            nj = int(line[2])
+            nk = int(line[3])
         points = np.genfromtxt(fileName, comments="domain.")
 
-        blk.array["x"] = np.reshape(points[:, 0], (nx, ny, nz))
-        blk.array["y"] = np.reshape(points[:, 1], (nx, ny, nz))
-        blk.array["z"] = np.reshape(points[:, 2], (nx, ny, nz))
+        blk.array["x"] = np.reshape(points[:, 0], (ni, nj, nk))
+        blk.array["y"] = np.reshape(points[:, 1], (ni, nj, nk))
+        blk.array["z"] = np.reshape(points[:, 2], (ni, nj, nk))
 
 else:
     raise ValueError("Unknown file format given, see help menu")
