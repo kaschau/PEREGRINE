@@ -1,23 +1,24 @@
 import peregrinepy as pg
 import numpy as np
 import cantera as ct
+import sys
 from pathlib import Path
 
 # np.random.seed(111)
 
-###############################################################################
-# Test for all positive i aligned orientations
-###############################################################################
+##################################################################################
+##### Test for all positive i aligned orientations
+##################################################################################
 
 
-def test_tpg():
+def test_cpg():
     import kokkos
 
     kokkos.initialize()
 
     relpath = str(Path(__file__).parent)
-    ctfile = relpath + "/ct_test_tpg.yaml"
-    thfile = relpath + "/thtr_ct_test_tpg.yaml"
+    ctfile = relpath + "/ct_test_cpg.yaml"
+    thfile = relpath + "/thtr_ct_test_cpg.yaml"
     gas = ct.Solution(ctfile)
     p = np.random.uniform(low=10000, high=100000)
     T = np.random.uniform(low=100, high=1000)
@@ -28,7 +29,7 @@ def test_tpg():
 
     config = pg.files.configFile()
     config["thermochem"]["spdata"] = thfile
-    config["thermochem"]["eos"] = "tpg"
+    config["thermochem"]["eos"] = "cpg"
     config["RHS"]["diffusion"] = False
 
     mb = pg.multiBlock.generateMultiBlockSolver(1, config)
@@ -38,24 +39,27 @@ def test_tpg():
     mb.initSolverArrays(config)
 
     blk = mb[0]
+    ng = blk.ng
 
     mb.generateHalo()
     mb.computeMetrics()
 
     blk.array["q"][:, :, :, 0] = p
+    blk.array["q"][:, :, :, 1:4] = 0.0
     blk.array["q"][:, :, :, 4] = T
     blk.array["q"][:, :, :, 5::] = Y[0:-1]
 
     # Update cons
-    pg.compute.thermo.tpg(blk, mb.thtrdat, 0, "prims")
+    assert mb.eos.__name__ == "cpg"
+    mb.eos(blk, mb.thtrdat, 0, "prims")
 
     # test the properties
-    pgcons = blk.array["Q"][1, 1, 1]
-    pgprim = blk.array["q"][1, 1, 1]
-    pgthrm = blk.array["qh"][1, 1, 1]
+    pgcons = blk.array["Q"][ng, ng, ng]
+    pgprim = blk.array["q"][ng, ng, ng]
+    pgthrm = blk.array["qh"][ng, ng, ng]
 
     def print_diff(name, c, p):
-        diff = np.abs(c - p) / p * 100
+        diff = np.abs(c - p) / c * 100
         print(f"{name:<6s}: {c:16.8e} | {p:16.8e} | {diff:16.15e}")
 
         return diff
@@ -132,7 +136,7 @@ def test_tpg():
     pd.append(print_diff("gamma", gas.cp / gas.cv, pgthrm[0]))
     pd.append(print_diff("cp", gas.cp, pgthrm[1]))
     pd.append(print_diff("h", gas.enthalpy_mass, pgthrm[2] / pgcons[0]))
-    for i, n in enumerate(gas.species_names[0:-1]):
+    for i, n in enumerate(gas.species_names):
         pd.append(
             print_diff(
                 "h_" + n,
@@ -150,7 +154,3 @@ def test_tpg():
 
     passfail = np.all(np.array(pd) < 0.0001)
     assert passfail
-
-
-if __name__ == "__main__":
-    test_tpg()
