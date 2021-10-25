@@ -5,7 +5,8 @@ import numpy as np
 class twoblock123:
     def __init__(self):
         self.config = pg.files.configFile()
-        self.mb = pg.multiBlock.solver(2, ["Air"], ng=2)
+        ng = 1 + int(np.random.random() / 0.5)
+        self.mb = pg.multiBlock.solver(2, ["Air"], ng=ng)
 
         pg.grid.create.multiBlockCube(
             self.mb,
@@ -106,11 +107,11 @@ def test_135():
                 for i in range(ng):
                     check0 = np.all(
                         blk0.array[var][-(2 * ng + 1) + off + i, j, k]
-                        == blk1.array[var][i, -(k + 1), j]
+                        == blk1.array[var][i, k, -(j + 1)]
                     )
                     check1 = np.all(
                         blk0.array[var][-ng + i, j, k]
-                        == blk1.array[var][ng + 1 - off + i, -(k + 1), j]
+                        == blk1.array[var][ng + 1 - off + i, k, -(j + 1)]
                     )
                     if not check0 or not check1:
                         break
