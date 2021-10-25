@@ -3,6 +3,7 @@ import sys
 import kokkos
 import peregrinepy as pg
 import numpy as np
+import time
 
 np.seterr(all="raise")
 
@@ -18,6 +19,7 @@ def simulate(configFilePath):
 
     if rank == 0:
         print(mb)
+        ts = time.time()
 
     for niter in range(config["simulation"]["niter"]):
 
@@ -37,6 +39,14 @@ def simulate(configFilePath):
             pg.writers.parallelWriter.parallelWriteRestart(
                 mb, config["io"]["outputdir"]
             )
+
+    if rank == 0:
+        elapsed = time.time() - ts
+        hrs, rem = divmod(elapsed, 3600.0)
+        mins, secs = divmod(rem, 60.0)
+        print("PEREGRINE simulation completed.\n"
+              f"Simulation time: {hrs}H:{mins}M:{secs}S\n "
+              )
 
 
 if __name__ == "__main__":
