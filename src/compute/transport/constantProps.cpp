@@ -95,10 +95,10 @@ void constantProps(block_ b,
   // thermal conductivity
   b.qt(i,j,k,1) = kappa;
   // Diffusion coefficients mass
+  // NOTE: Unity Lewis number approximation!
   for (int n=0; n<=ns-1; n++)
   {
-    // TODO: We can figure this out later. Maybe unity Lewis approximation
-    b.qt(i,j,k,2+n) = 0.0;
+    b.qt(i,j,k,2+n) = b.Q(i,j,k,0) * b.qh(i,j,k,1) / kappa;
   }
 
   });
