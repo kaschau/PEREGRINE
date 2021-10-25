@@ -271,11 +271,11 @@ class solverFace(topologyFace):
         function += "T" if transpose else ""
 
         # Do we need to flip along 0 axis?
-        flip0 = faceOrientations[1] in [4, 5, 6]
+        flip0 = faceOrientations[0] in [4, 5, 6]
         function += "f0" if flip0 else ""
 
         # Do we need to flip along 1 axis?
-        flip1 = faceOrientations[0] in [4, 5, 6]
+        flip1 = faceOrientations[1] in [4, 5, 6]
         function += "f1" if flip1 else ""
 
         # Do we need to do anything?
