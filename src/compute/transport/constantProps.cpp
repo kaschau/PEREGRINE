@@ -21,8 +21,6 @@ void constantProps(block_ b,
                                      const int j,
                                      const int k) {
 
-  // poly'l degree
-  const int deg = 4;
   int ns=th.ns;
   double Y[ns],X[ns];
 
@@ -67,9 +65,10 @@ void constantProps(block_ b,
   }
 
   double mu = 0.0;
+  double phitemp;
   for (int n=0; n<=ns-1; n++)
   {
-    double phitemp = 0.0;
+    phitemp = 0.0;
     for (int n2=0; n2<=ns-1; n2++)
     {
       phitemp += phi[n][n2]*X[n2];
@@ -98,7 +97,7 @@ void constantProps(block_ b,
   // NOTE: Unity Lewis number approximation!
   for (int n=0; n<=ns-1; n++)
   {
-    b.qt(i,j,k,2+n) = b.Q(i,j,k,0) * b.qh(i,j,k,1) / kappa;
+    b.qt(i,j,k,2+n) = kappa / ( b.Q(i,j,k,0) * b.qh(i,j,k,1) );
   }
 
   });
