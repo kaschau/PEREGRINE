@@ -145,6 +145,7 @@ void kineticTheory(block_ b,
 
   // mass diffusion coefficient mixture
   double D[ns];
+  double temp;
   for (int n=0; n<=ns-1; n++)
   {
     sum1 = 0.0;
@@ -162,7 +163,6 @@ void kineticTheory(block_ b,
     //Account for pressure
     sum1 *= p;
     //HACK must be a better way to give zero for sum2 when MWmix == th.MW[n]*X[n]
-    double temp;
     temp = p * X[n] / ( MWmix - th.MW[n]*X[n] );
     if ( isinf(temp) )
     {
