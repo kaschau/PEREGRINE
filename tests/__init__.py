@@ -1,1 +1,1 @@
-from . import communication, thermo, transport, shock
+from . import chemistry, communication, eos, shock, transport

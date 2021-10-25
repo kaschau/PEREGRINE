@@ -1,8 +1,6 @@
 import peregrinepy as pg
 import numpy as np
 import cantera as ct
-
-import sys
 from pathlib import Path
 
 # np.random.seed(111)
@@ -36,6 +34,7 @@ def test_kineticTheory():
     config = pg.files.configFile()
     config["thermochem"]["spdata"] = thfile
     config["thermochem"]["eos"] = "tpg"
+    config["thermochem"]["trans"] = "kineticTheory"
     config["RHS"]["diffusion"] = True
 
     mb = pg.multiBlock.generateMultiBlockSolver(1, config)
@@ -55,7 +54,8 @@ def test_kineticTheory():
     blk.array["q"][:, :, :, 5::] = Y[0:-1]
 
     # Update transport
-    pg.compute.transport.kineticTheory(blk, mb.thtrdat, 0)
+    assert mb.trans.__name__ == "kineticTheory"
+    mb.trans(blk, mb.thtrdat, 0)
 
     # test the properties
     pgprim = blk.array["q"][1, 1, 1]
