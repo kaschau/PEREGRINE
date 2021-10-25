@@ -45,7 +45,7 @@ def simulate(configFilePath):
         hrs, rem = divmod(elapsed, 3600.0)
         mins, secs = divmod(rem, 60.0)
         print("PEREGRINE simulation completed.\n"
-              f"Simulation time: {hrs}H:{mins}M:{secs}S\n "
+              f"Simulation time: {hrs}h: {mins}m: {int(secs)}s\n "
               )
 
 
