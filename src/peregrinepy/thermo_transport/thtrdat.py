@@ -343,6 +343,6 @@ class thtrdat(thtrdat_):
                         )
 
                 self.Dij_poly = Dij
-            elif config["RHS"]["trans"] == "constantProps":
+            elif config["thremochem"]["trans"] == "constantProps":
                 self.mu0 = completeSpecies("mu0")
                 self.kappa0 = completeSpecies("kappa0")
