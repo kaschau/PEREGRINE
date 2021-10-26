@@ -17,7 +17,21 @@ def simulate(configFilePath):
 
     mb = pg.bootstrapCase(config)
 
+    # Get some stats about the simulation
+    nCells = pg.mpiComm.mpiUtils.getNumCells(mb)
+    slowest, slowestProc = pg.mpiComm.mpiUtils.getLoadEfficiency(mb)
     if rank == 0:
+        string = " >>> ******************************** <<<\n"
+        string += "              PEREGRINE CFD\n"
+        string += " >>> ******************************** <<<\n"
+        string += " Simulation Summary:"
+        print(string)
+        if slowest == 100.0:
+            print("  Perfect load balancing achieved. 10 points to Gryffindor")
+        else:
+            print(
+                f"  Worst load: rank {slowestProc}, {slowest: .2f}% of perfect load balance.",
+            )
         print(mb)
         ts = time.time()
 
@@ -44,9 +58,11 @@ def simulate(configFilePath):
         elapsed = time.time() - ts
         hrs, rem = divmod(elapsed, 3600.0)
         mins, secs = divmod(rem, 60.0)
-        print("PEREGRINE simulation completed.\n"
-              f"Simulation time: {hrs}h: {mins}m: {int(secs)}s\n "
-              )
+        print(
+            "PEREGRINE simulation completed.\n"
+            f"Simulation time: {hrs}h : {mins}m : {int(secs)}s\n"
+            f"Time/Iteration/Cell: {elapsed/config['simulation']['niter']/nCells}\n"
+        )
 
 
 if __name__ == "__main__":
