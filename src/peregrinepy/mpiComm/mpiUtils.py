@@ -28,7 +28,7 @@ def getLoadEfficiency(mb):
 
     comm, rank, size = getCommRankSize()
 
-    myCells = np.array([0])
+    myCells = np.array([0.0])
     for blk in mb:
         myCells[0] += (blk.ni - 1) * (blk.nj - 1) * (blk.nk - 1)
 
@@ -39,7 +39,7 @@ def getLoadEfficiency(mb):
 
     if rank == 0:
         perfect = np.mean(recv)
-        slowest = perfect / np.max(recv) * 100
+        slowest = perfect / np.max(recv) * 100.0
         slowestProc = np.argmax(recv)
     else:
         slowest = None
