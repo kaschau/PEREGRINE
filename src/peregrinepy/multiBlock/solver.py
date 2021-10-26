@@ -90,9 +90,8 @@ class solver(restart):
         unifySolverGrid(self)
 
     def __repr__(self):
-        string = "Solver multiBlock object:\n"
-        string += f"  Total blocks: {self.totalBlocks}\n"
-        string += f"  Number of species: {self.thtrdat.speciesNames}\n"
+        string = f"  Total blocks: {self.totalBlocks}\n"
+        string += f"  Species: {self.thtrdat.speciesNames}\n"
         string += f"  Time integrator: {self.step.name}\n"
         string += f"  Shock Handling: {self.config['RHS']['shockHandling']}.\n"
         string += f"  Primary Advective Flux: {self.primaryAdvFlux.__name__}.\n"

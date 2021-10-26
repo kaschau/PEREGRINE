@@ -30,7 +30,7 @@ def simulate(configFilePath):
             print("  Perfect load balancing achieved. 10 points to Gryffindor")
         else:
             print(
-                f"  Worst load: rank {slowestProc}, {slowest: .2f}% of perfect load balance.",
+                f"  Load Balance Eff: {slowest: .2f}% (rank {slowestProc})",
             )
         print(mb)
         ts = time.time()
