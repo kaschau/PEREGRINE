@@ -28,7 +28,7 @@ void cpg(block_ b,
 
   // Updates all conserved quantities from primatives
   // Along the way, we need to compute mixture properties
-  // gamma, cp, h, e, hi
+  // gamma, cp, h, e
   // So we store these as well.
 
   int ns=th.ns;
@@ -40,7 +40,7 @@ void cpg(block_ b,
   double rho,rhoinv;
   double rhou,rhov,rhow;
   double e,rhoE;
-  double rhoY[ns],hi[ns];
+  double rhoY[ns];
   double gamma,cp,h,c;
   double Rmix;
 
@@ -141,12 +141,11 @@ void cpg(block_ b,
   double rho,rhoinv;
   double rhou,rhov,rhow;
   double e,rhoE;
-  double rhoY[ns];
 
   double p;
-  double u,v,w,tke;
+  double tke;
   double T;
-  double Y[ns],hi[ns];
+  double Y[ns];
   double gamma,cp,h,c;
   double Rmix;
 

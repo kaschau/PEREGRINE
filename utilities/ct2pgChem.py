@@ -152,7 +152,6 @@ def ct2pg_chem(ctyaml, cpp):
         "\n"
         f"  const int ns={ns};\n"
         f"  const int nr={nr};\n"
-        f"  const int l_tbc={nl_tbc};\n"
         "  double T,logT,prefRuT;\n"
         "  double Y[ns],cs[ns];\n"
         "\n"
@@ -253,7 +252,7 @@ def ct2pg_chem(ctyaml, cpp):
         "  // ----------------------------------------------------------- >\n"
         "\n"
         "  double q_f[nr],k_f[nr];\n"
-        "  double q_b[nr],k_b[nr];\n"
+        "  double q_b[nr];\n"
         "\n"
         "  double dG[nr],K_c[nr],q[nr]; \n\n"
     )

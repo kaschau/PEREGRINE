@@ -40,7 +40,6 @@ void chem_CH4_O2_Stanford_Skeletal(block_ b,
 
   const int ns=12;
   const int nr=38;
-  const int l_tbc=7;
   double T,logT,prefRuT;
   double Y[ns],cs[ns];
 
@@ -120,7 +119,7 @@ void chem_CH4_O2_Stanford_Skeletal(block_ b,
   // ----------------------------------------------------------- >
 
   double q_f[nr],k_f[nr];
-  double q_b[nr],k_b[nr];
+  double q_b[nr];
 
   double dG[nr],K_c[nr],q[nr]; 
 

@@ -81,7 +81,6 @@ void chem_GRI30(block_ b,
 
   const int ns=53;
   const int nr=325;
-  const int l_tbc=50;
   double T,logT,prefRuT;
   double Y[ns],cs[ns];
 
@@ -247,7 +246,7 @@ void chem_GRI30(block_ b,
   // ----------------------------------------------------------- >
 
   double q_f[nr],k_f[nr];
-  double q_b[nr],k_b[nr];
+  double q_b[nr];
 
   double dG[nr],K_c[nr],q[nr]; 
 
