@@ -58,7 +58,7 @@ void jamesonDissipation(block_ b, const thtrdat_ th) {
     b.iF(i,j,k,3) = a*(eps2*w2 - eps4*w4) ;
 
     // total energy dissipation
-    double e2,k2, e4,k4;
+    double e2, e4;
     e2 = b.Q(i,j,k,4) - b.Q(i-1,j,k,4);
     e4 =       b.Q(i+1,j,k,4)
          - 3.0*b.Q(i  ,j,k,4)
@@ -132,7 +132,7 @@ void jamesonDissipation(block_ b, const thtrdat_ th) {
     b.jF(i,j,k,3) = a*(eps2*w2 - eps4*w4) ;
 
     // total energy dissipation
-    double e2,k2, e4,k4;
+    double e2, e4;
     e2 = b.Q(i,j,k,4) - b.Q(i,j-1,k,4);
     e4 =       b.Q(i,j+1,k,4)
          - 3.0*b.Q(i,j  ,k,4)
@@ -206,7 +206,7 @@ void jamesonDissipation(block_ b, const thtrdat_ th) {
     b.kF(i,j,k,3) = a*(eps2*w2 - eps4*w4) ;
 
     // total energy dissipation
-    double e2,k2, e4,k4;
+    double e2, e4;
     e2 = b.Q(i,j,k,4) - b.Q(i,j,k-1,4);
     e4 =       b.Q(i,j,k+1,4)
          - 3.0*b.Q(i,j,k  ,4)

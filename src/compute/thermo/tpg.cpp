@@ -165,10 +165,9 @@ void tpg(block_ b,
   double rho,rhoinv;
   double rhou,rhov,rhow;
   double e,rhoE;
-  double rhoY[ns];
 
   double p;
-  double u,v,w,tke;
+  double tke;
   double T;
   double Y[ns],hi[ns];
   double gamma,cp,h,c;
@@ -201,7 +200,6 @@ void tpg(block_ b,
   e = (rhoE - tke)*rhoinv;
 
   // Iterate on to find temperature
-  double Tmin=1, Tmax=10000;
   int nitr=0, maxitr = 100;
   double tol = 1e-8;
   double error = 1e100;

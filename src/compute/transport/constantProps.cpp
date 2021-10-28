@@ -24,7 +24,7 @@ void constantProps(block_ b,
   int ns=th.ns;
   double Y[ns],X[ns];
 
-  double Rmix,MWmix;
+  double MWmix;
 
   // Compute nth species Y
   Y[ns-1] = 1.0;

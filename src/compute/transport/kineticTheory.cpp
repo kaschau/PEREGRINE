@@ -28,7 +28,7 @@ void kineticTheory(block_ b,
   double T;
   double Y[ns],X[ns];
 
-  double Rmix,MWmix;
+  double MWmix;
 
   p = b.q(i,j,k,0);
   T = b.q(i,j,k,4);
