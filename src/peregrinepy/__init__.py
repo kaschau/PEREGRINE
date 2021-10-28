@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import mpi4py.rc
+mpi4py.rc.initialize = False
 
 from ._version import __version__
 from . import grid

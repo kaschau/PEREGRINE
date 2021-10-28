@@ -1,6 +1,7 @@
 #!/usr/bin/env -S python -m mpi4py
 import sys
 import kokkos
+from mpi4py import MPI
 import peregrinepy as pg
 import numpy as np
 import time
@@ -9,7 +10,6 @@ np.seterr(all="raise")
 
 
 def simulate(configFilePath):
-    # Import but do not initialise MPI
 
     comm, rank, size = pg.mpiComm.mpiUtils.getCommRankSize()
 

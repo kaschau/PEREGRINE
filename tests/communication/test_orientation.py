@@ -1,5 +1,6 @@
 import peregrinepy as pg
 import numpy as np
+from pytest_easyMPI import mpi_parallel
 
 
 class twoblock123:
@@ -33,6 +34,7 @@ class twoblock123:
 ##############################################
 # Test for all positive i aligned orientations
 ##############################################
+@mpi_parallel(1)
 def test_123():
 
     tb = twoblock123()
@@ -74,6 +76,7 @@ def test_123():
     assert False not in passfail
 
 
+@mpi_parallel(1)
 def test_135():
     tb = twoblock123()
     blk0 = tb.mb[0]
@@ -128,6 +131,7 @@ def test_135():
 ##############################################
 # Test for all positive j aligned orientations
 ##############################################
+@mpi_parallel(1)
 def test_231():
     tb = twoblock123()
 
@@ -191,6 +195,7 @@ def test_231():
 ##############################################
 # Test for all positive k aligned orientations
 ##############################################
+@mpi_parallel(1)
 def test_321():
     tb = twoblock123()
 
@@ -255,6 +260,7 @@ def test_321():
 ##############################################
 # Test for all negative i aligned orientations
 ##############################################
+@mpi_parallel(1)
 def test_432():
     tb = twoblock123()
 
@@ -318,6 +324,7 @@ def test_432():
 ##############################################
 # Test for all negative j aligned orientations
 ##############################################
+@mpi_parallel(1)
 def test_513():
     tb = twoblock123()
 
@@ -381,6 +388,7 @@ def test_513():
 ##############################################
 # Test for all negative k aligned orientations
 ##############################################
+@mpi_parallel(1)
 def test_621():
     tb = twoblock123()
 

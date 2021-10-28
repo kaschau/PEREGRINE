@@ -1,6 +1,5 @@
 import peregrinepy as pg
 import numpy as np
-import cantera as ct
 from pathlib import Path
 
 # np.random.seed(111)
@@ -16,9 +15,6 @@ def test_constantProps():
     kokkos.initialize()
 
     relpath = str(Path(__file__).parent)
-    ct.add_directory(
-        relpath + "/../../src/peregrinepy/thermo_transport/database/source"
-    )
     config = pg.files.configFile()
     config["thermochem"]["spdata"] = relpath + "/AIR.yaml"
     config["thermochem"]["eos"] = "cpg"
