@@ -1,13 +1,10 @@
 import peregrinepy as pg
 import numpy as np
 import cantera as ct
-import sys
 from pathlib import Path
 
-# np.random.seed(111)
-
 ##################################################################################
-##### Test for all positive i aligned orientations
+# Test for all positive i aligned orientations
 ##################################################################################
 
 
@@ -109,7 +106,7 @@ def test_cpg():
     blk.array["q"][:, :, :, 0] = 0.0
     blk.array["q"][:, :, :, 4] = 0.0
     blk.array["q"][:, :, :, 5::] = np.zeros(len(Y[0:-1]))
-    pg.consistify(mb)
+    mb.eos(blk, mb.thtrdat, 0, "cons")
 
     print("********  Conservatives to Primatives ***************")
     print(f'       {"Cantera":<15}  | {"PEREGRINE":<15} | {"%Error":<5}')
