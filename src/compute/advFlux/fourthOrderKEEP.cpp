@@ -14,9 +14,9 @@ void fourthOrderKEEP(block_ b, const thtrdat_ th) {
                                                                     const int k) {
 
     const int order = 4;
-    const int q = order/2;
-    const int narray = (q*q+q)/2;
-    const std::array<double, 2> aq = {2.0/3.0, -1.0/12.0};
+    constexpr int q = order/2;
+    constexpr int narray = (q*q+q)/2;
+    constexpr double aq[2] = {2.0/3.0, -1.0/12.0};
 
     double U;
     double uf=0.0;
@@ -24,7 +24,7 @@ void fourthOrderKEEP(block_ b, const thtrdat_ th) {
     double wf=0.0;
 
     // Reusable arrays
-    std::array<double, narray> uR,vR,wR,rhoR;
+    double uR[narray],vR[narray],wR[narray],rhoR[narray];
 
     double a;
     // Compute face normal volume flux vector
@@ -157,7 +157,6 @@ void fourthOrderKEEP(block_ b, const thtrdat_ th) {
     // Species
     for (int n=0; n<th.ns-1; n++)
     {
-
       double rhoY = 0.0;
       double temprhoY = 0.0;
       count = 0;
@@ -185,9 +184,9 @@ void fourthOrderKEEP(block_ b, const thtrdat_ th) {
                                                                     const int k) {
 
     const int order = 4;
-    const int q = order/2;
-    const int narray = (q*q+q)/2;
-    const std::array<double, 2> aq = {2.0/3.0, -1.0/12.0};
+    constexpr int q = order/2;
+    constexpr int narray = (q*q+q)/2;
+    constexpr double aq[2] = {2.0/3.0, -1.0/12.0};
 
     double V;
     double uf=0.0;
@@ -195,7 +194,7 @@ void fourthOrderKEEP(block_ b, const thtrdat_ th) {
     double wf=0.0;
 
     // Reusable arrays
-    std::array<double, narray> uR,vR,wR,rhoR;
+    double uR[narray],vR[narray],wR[narray],rhoR[narray];
 
     double a;
     // Compute face normal volume flux vector
@@ -328,7 +327,6 @@ void fourthOrderKEEP(block_ b, const thtrdat_ th) {
     // Species
     for (int n=0; n<th.ns-1; n++)
     {
-
       double rhoY = 0.0;
       double temprhoY = 0.0;
       count = 0;
@@ -356,17 +354,17 @@ void fourthOrderKEEP(block_ b, const thtrdat_ th) {
                                                                     const int k) {
 
     const int order = 4;
-    const int q = order/2;
-    const int narray = (q*q+q)/2;
-    const std::array<double, 2> aq = {2.0/3.0, -1.0/12.0};
+    constexpr int q = order/2;
+    constexpr int narray = (q*q+q)/2;
+    constexpr double aq[2] = {2.0/3.0, -1.0/12.0};
 
-    double V;
+    double W;
     double uf=0.0;
     double vf=0.0;
     double wf=0.0;
 
     // Reusable arrays
-    std::array<double, narray> uR,vR,wR,rhoR;
+    double uR[narray],vR[narray],wR[narray],rhoR[narray];
 
     double a;
     // Compute face normal volume flux vector
@@ -396,13 +394,13 @@ void fourthOrderKEEP(block_ b, const thtrdat_ th) {
     vf *=2.0;
     wf *=2.0;
 
-    V = b.ksx(i,j,k)*uf +
+    W = b.ksx(i,j,k)*uf +
         b.ksy(i,j,k)*vf +
         b.ksz(i,j,k)*wf ;
 
     //Compute fluxes
 
-    // Continuity rho*Vi
+    // Continuity rho*Wi
     double rho = 0.0;
     double temprho = 0.0;
     count = 0;
@@ -418,11 +416,11 @@ void fourthOrderKEEP(block_ b, const thtrdat_ th) {
     }
     rho *=2.0;
 
-    b.kF(i,j,k,0) = rho * V;
+    b.kF(i,j,k,0) = rho * W;
 
-    // x momentum rho*u*Vi+ p*Ax
-    // y momentum rho*v*Vi+ p*Ay
-    // w momentum rho*w*Vi+ p*Az
+    // x momentum rho*u*Wi+ p*Ax
+    // y momentum rho*v*Wi+ p*Ay
+    // w momentum rho*w*Wi+ p*Az
     double rhou=0.0;
     double rhov=0.0;
     double rhow=0.0;
@@ -452,13 +450,13 @@ void fourthOrderKEEP(block_ b, const thtrdat_ th) {
     rhou *=2.0;
     p *=2.0;
 
-    b.kF(i,j,k,1) = rhou * V + p*b.ksx(i,j,k) ;
+    b.kF(i,j,k,1) = rhou * W + p*b.ksx(i,j,k) ;
 
-    b.kF(i,j,k,2) = rhov * V + p*b.ksy(i,j,k) ;
+    b.kF(i,j,k,2) = rhov * W + p*b.ksy(i,j,k) ;
 
-    b.kF(i,j,k,3) = rhow * V + p*b.ksz(i,j,k) ;
+    b.kF(i,j,k,3) = rhow * W + p*b.ksz(i,j,k) ;
 
-    // Total energy (rhoE+ p)*Vi)
+    // Total energy (rhoE+ p)*Wi)
     double rhoE=0.0;
     double pu=0.0;
     double temprhoE, temppu;
@@ -494,12 +492,11 @@ void fourthOrderKEEP(block_ b, const thtrdat_ th) {
     rhoE *=2.0;
     pu   *=2.0;
 
-    b.kF(i,j,k,4) = rhoE * V + pu;
+    b.kF(i,j,k,4) = rhoE * W + pu;
 
     // Species
     for (int n=0; n<th.ns-1; n++)
     {
-
       double rhoY = 0.0;
       double temprhoY = 0.0;
       count = 0;
@@ -513,7 +510,7 @@ void fourthOrderKEEP(block_ b, const thtrdat_ th) {
         rhoY += a*temprhoY;
       }
       rhoY *=2.0;
-      b.kF(i,j,k,5+n) = rhoY * V;
+      b.kF(i,j,k,5+n) = rhoY * W;
     }
 
   });
