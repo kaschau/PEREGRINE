@@ -4,7 +4,6 @@
 #include "thtrdat_.hpp"
 #include "compute.hpp"
 #include <math.h>
-#include <numeric>
 #include <stdexcept>
 
 void cpg(block_ b,
@@ -16,31 +15,34 @@ void cpg(block_ b,
    const int k/*=0*/) {
 
   MDRange3 range = get_range3(b, face, i, j, k);
+  Kokkos::Experimental::UniqueToken<exec_space> token;
+  const int numIds = token.size();
 
+  const int ns=th.ns;
+  twoDview Y("Y", ns, numIds);
 
   if ( given.compare("prims") == 0 )
   {
+  twoDview rhoY("rhoY", th.ns, numIds);
   Kokkos::parallel_for("Compute all conserved quantities from primatives via cpg",
                        range,
                        KOKKOS_LAMBDA(const int i,
                                      const int j,
                                      const int k) {
+  int id = token.acquire();
 
   // Updates all conserved quantities from primatives
   // Along the way, we need to compute mixture properties
   // gamma, cp, h, e
   // So we store these as well.
 
-  int ns=th.ns;
   double p;
   double u,v,w,tke;
   double T;
-  double Y[ns];
 
   double rho,rhoinv;
   double rhou,rhov,rhow;
   double e,rhoE;
-  double rhoY[ns];
   double gamma,cp,h,c;
   double Rmix;
 
@@ -50,21 +52,21 @@ void cpg(block_ b,
   w = b.q(i,j,k,3);
   T = b.q(i,j,k,4);
   // Compute nth species Y
-  Y[ns-1] = 1.0;
+  Y(ns-1,id) = 1.0;
   for (int n=0; n<ns-1; n++)
   {
-    Y[n] = b.q(i,j,k,5+n);
-    Y[ns-1] -= Y[n];
+    Y(n,id) = b.q(i,j,k,5+n);
+    Y(ns-1,id) -= Y(n,id);
   }
-  Y[ns-1] = std::max(0.0,Y[ns-1]);
+  Y(ns-1,id) = fmax(0.0,Y(ns-1,id));
 
   // Update mixture properties
   Rmix = 0.0;
   cp   = 0.0;
   for (int n=0; n<=ns-1; n++)
   {
-    Rmix += Y[n]*th.Ru/th.MW[n];
-    cp   += Y[n]*th.cp0[n];
+    Rmix += Y(n,id)*th.Ru/th.MW(n);
+    cp   += Y(n,id)*th.cp0(n);
   }
   // Compute mixuture enthalpy
   h = cp*T;
@@ -94,7 +96,7 @@ void cpg(block_ b,
   // Compute species mass
   for (int n=0; n<=ns-1; n++)
   {
-    rhoY[n] = Y[n]*rho;
+    rhoY(n,id) = Y(n,id)*rho;
   }
 
   // Set values of new properties
@@ -109,7 +111,7 @@ void cpg(block_ b,
   // Species mass
   for (int n=0; n<ns-1; n++)
   {
-    b.Q(i,j,k,5+n) = rhoY[n];
+    b.Q(i,j,k,5+n) = rhoY(n,id);
   }
   // gamma,cp,h,c,e,hi
   b.qh(i,j,k,0) = gamma;
@@ -119,9 +121,10 @@ void cpg(block_ b,
   b.qh(i,j,k,4) = rho*e;
   for (int n=0; n<=ns-1; n++)
   {
-    b.qh(i,j,k,5+n) = T*th.cp0[n];
+    b.qh(i,j,k,5+n) = T*th.cp0(n);
   }
 
+  token.release(id);
   });
   }
   else if ( given.compare("cons") == 0 )
@@ -131,13 +134,13 @@ void cpg(block_ b,
                        KOKKOS_LAMBDA(const int i,
                                      const int j,
                                      const int k) {
+  int id = token.acquire();
 
   // Updates all primatives from conserved quantities
   // Along the way, we need to compute mixture properties
   // gamma, cp, h, e, hi
   // So we store these as well.
 
-  int ns=th.ns;
   double rho,rhoinv;
   double rhou,rhov,rhow;
   double e,rhoE;
@@ -145,7 +148,6 @@ void cpg(block_ b,
   double p;
   double tke;
   double T;
-  double Y[ns];
   double gamma,cp,h,c;
   double Rmix;
 
@@ -162,13 +164,13 @@ void cpg(block_ b,
   rhoE = b.Q(i,j,k,4);
 
   // Compute species mass fraction
-  Y[ns-1] = 1.0;
+  Y(ns-1,id) = 1.0;
   for (int n=0; n<ns-1; n++)
   {
-    Y[n] = b.Q(i,j,k,5+n)/b.Q(i,j,k,0);
-    Y[ns-1] -= Y[n];
+    Y(n,id) = b.Q(i,j,k,5+n)/b.Q(i,j,k,0);
+    Y(ns-1,id) -= Y(n,id);
   }
-  Y[ns-1] = std::max(0.0,Y[ns-1]);
+  Y(ns-1,id) = fmax(0.0,Y(ns-1,id));
 
   // Internal energy
   e = (rhoE - tke)*rhoinv;
@@ -178,8 +180,8 @@ void cpg(block_ b,
   cp   = 0.0;
   for (int n=0; n<=ns-1; n++)
   {
-    Rmix += Y[n]*th.Ru/th.MW[n];
-    cp   += Y[n]*th.cp0[n];
+    Rmix += Y(n,id)*th.Ru/th.MW(n);
+    cp   += Y(n,id)*th.cp0(n);
   }
 
   // Compute mixuture temperature,pressure
@@ -202,7 +204,7 @@ void cpg(block_ b,
   b.q(i,j,k,4) = T;
   for (int n=0; n<ns-1; n++)
   {
-    b.q(i,j,k,5+n) = Y[n];
+    b.q(i,j,k,5+n) = Y(n,id);
   }
   // gamma,cp,h,c,e,hi
   b.qh(i,j,k,0) = gamma;
@@ -212,9 +214,10 @@ void cpg(block_ b,
   b.qh(i,j,k,4) = rho*e;
   for (int n=0; n<=ns-1; n++)
   {
-    b.qh(i,j,k,5+n) = T*th.cp0[n];
+    b.qh(i,j,k,5+n) = T*th.cp0(n);
   }
 
+  token.release(id);
   });
   }
   else

@@ -1,6 +1,7 @@
 #ifndef __thtrdat__H__
 #define __thtrdat__H__
 
+#include "kokkos_types.hpp"
 #include <vector>
 #include <string>
 
@@ -13,26 +14,25 @@ struct thtrdat_ {
   int ns;
   double Ru;
 
-  std::vector<std::string> species_names;
-  std::vector<double> MW;
+  oneDview MW;
 
   // Constant cp values (reference cp)
-  std::vector<double> cp0;
+  oneDview cp0;
   // NASA7 polynomial coefficients
-  std::vector<std::vector<double>> NASA7;
+  twoDview NASA7;
 
   // Generated temperature dependent viscosity poly'l coeff
-  std::vector<std::vector<double>> mu_poly;
+  twoDview muPoly;
   // Generated temperature dependent thermal conductivity poly'l coeff
-  std::vector<std::vector<double>> kappa_poly;
+  twoDview kappaPoly;
   // Generated temperature dependent binary diffusion poly'l coeff
   // NOTE: pressure dependence is applied when the mixture diffusion
   // coefficients are created in-situ
-  std::vector<std::vector<double>> Dij_poly;
+  twoDview DijPoly;
 
   // Constant properties
-  std::vector<double> mu0;
-  std::vector<double> kappa0;
+  oneDview mu0;
+  oneDview kappa0;
 
 };
 

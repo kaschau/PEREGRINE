@@ -2,6 +2,7 @@
 #include "kokkos_types.hpp"
 #include "block_.hpp"
 #include "thtrdat_.hpp"
+#include "math.h"
 
 void ausmPlusUp(block_ b, const thtrdat_ th) {
 
@@ -52,7 +53,7 @@ void ausmPlusUp(block_ b, const thtrdat_ th) {
 
     double Mo;
     const double MinfSQ = 0.1;
-    Mo = sqrt( std::min(1.0,std::max(MbarSQ,MinfSQ)) );
+    Mo = sqrt( fmin(1.0,fmax(MbarSQ,MinfSQ)) );
     double fa = Mo*(2.0-Mo);
 
     double M1Plus, M1Minus;
@@ -72,7 +73,7 @@ void ausmPlusUp(block_ b, const thtrdat_ th) {
     const double sigma = 1.0;
     double rho12 = 0.5*(rhoR + rhoL);
 
-    M12 = M4Plus + M4Minus - Kp/fa*(std::max(1.0-sigma*MbarSQ, 0.0)) * (pR-pL)/(rho12*pow(a12,2.0));
+    M12 = M4Plus + M4Minus - Kp/fa*(fmax(1.0-sigma*MbarSQ, 0.0)) * (pR-pL)/(rho12*pow(a12,2.0));
 
     double mDot12 = (M12 > 0.0) ? a12*M12*rhoL : a12*M12*rhoR;
 
@@ -158,7 +159,7 @@ void ausmPlusUp(block_ b, const thtrdat_ th) {
 
     double Mo;
     const double MinfSQ = 0.1;
-    Mo = sqrt( std::min(1.0,std::max(MbarSQ,MinfSQ)) );
+    Mo = sqrt( fmin(1.0,fmax(MbarSQ,MinfSQ)) );
     double fa = Mo*(2.0-Mo);
 
     double M1Plus, M1Minus;
@@ -178,7 +179,7 @@ void ausmPlusUp(block_ b, const thtrdat_ th) {
     const double sigma = 1.0;
     double rho12 = 0.5*(rhoR + rhoL);
 
-    M12 = M4Plus + M4Minus - Kp/fa*(std::max(1.0-sigma*MbarSQ, 0.0)) * (pR-pL)/(rho12*pow(a12,2.0));
+    M12 = M4Plus + M4Minus - Kp/fa*(fmax(1.0-sigma*MbarSQ, 0.0)) * (pR-pL)/(rho12*pow(a12,2.0));
 
     double mDot12 = (M12 > 0.0) ? a12*M12*rhoL : a12*M12*rhoR;
 
@@ -264,7 +265,7 @@ void ausmPlusUp(block_ b, const thtrdat_ th) {
 
     double Mo;
     const double MinfSQ = 0.1;
-    Mo = sqrt( std::min(1.0,std::max(MbarSQ,MinfSQ)) );
+    Mo = sqrt( fmin(1.0,fmax(MbarSQ,MinfSQ)) );
     double fa = Mo*(2.0-Mo);
 
     double M1Plus, M1Minus;
@@ -284,7 +285,7 @@ void ausmPlusUp(block_ b, const thtrdat_ th) {
     const double sigma = 1.0;
     double rho12 = 0.5*(rhoR + rhoL);
 
-    M12 = M4Plus + M4Minus - Kp/fa*(std::max(1.0-sigma*MbarSQ, 0.0)) * (pR-pL)/(rho12*pow(a12,2.0));
+    M12 = M4Plus + M4Minus - Kp/fa*(fmax(1.0-sigma*MbarSQ, 0.0)) * (pR-pL)/(rho12*pow(a12,2.0));
 
     double mDot12 = (M12 > 0.0) ? a12*M12*rhoL : a12*M12*rhoR;
 

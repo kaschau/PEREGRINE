@@ -77,8 +77,10 @@ class solverBlock(restartBlock, block_):
 
         if config["Kokkos"]["Space"] in ["OpenMP", "Serial", "Default"]:
             space = kokkos.HostSpace
+        elif config["Kokkos"]["Space"] in ["Cuda"]:
+            space = kokkos.CudaSpace
         else:
-            raise ValueError("Are we ready for that?")
+            raise ValueError("What space?")
 
         ng = self.ng
 
