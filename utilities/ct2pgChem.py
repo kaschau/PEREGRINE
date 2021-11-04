@@ -169,7 +169,7 @@ def ct2pg_chem(ctyaml, cpp):
         f"  Y[{ns-1}] = fmax(0.0,Y[{ns-1}]);\n"
         "\n"
         "  // Conecntrations\n"
-        f"  double cs[{ns}];"
+        f"  double cs[{ns}];\n"
         f"  for (int n=0; n<={ns-1}; n++)\n"
         "  {\n"
         "    cs[n] = rho*Y[n]/th.MW(n);\n"

@@ -93,7 +93,8 @@ void chem_GRI30(block_ b, thtrdat_ th, int face/*=0*/, int i/*=0*/, int j/*=0*/,
   Y[52] = fmax(0.0,Y[52]);
 
   // Conecntrations
-  double cs[53];  for (int n=0; n<=52; n++)
+  double cs[53];
+  for (int n=0; n<=52; n++)
   {
     cs[n] = rho*Y[n]/th.MW(n);
   }

@@ -61,7 +61,7 @@ def simulate(configFilePath):
         print(
             "PEREGRINE simulation completed.\n"
             f"Simulation time: {hrs}h : {mins}m : {int(secs)}s\n"
-            f"Time/Iteration/Cell: {elapsed/config['simulation']['niter']/nCells}\n"
+            f"Seconds/Iteration/Cell: {elapsed/config['simulation']['niter']/nCells}\n"
         )
 
 
