@@ -2,6 +2,7 @@
 #include "kokkos_types.hpp"
 #include "block_.hpp"
 #include "thtrdat_.hpp"
+#include "math.h"
 
 void jamesonDissipation(block_ b, const thtrdat_ th) {
 
@@ -15,8 +16,8 @@ void jamesonDissipation(block_ b, const thtrdat_ th) {
     const double kappa2 = 1.0;
     const double kappa4 = 1.0/256.0;
 
-    const double eps2 = kappa2 * std::max(b.phi(i,j,k,0), b.phi(i-1,j,k,0));
-    const double eps4 = std::max( 0.0, kappa4 - eps2 );
+    const double eps2 = kappa2 * fmax(b.phi(i,j,k,0), b.phi(i-1,j,k,0));
+    const double eps4 = fmax( 0.0, kappa4 - eps2 );
 
     // Compute face normal volume flux vector
     const double uf = 0.5*(b.q(i,j,k,1)+b.q(i-1,j,k,1));
@@ -89,8 +90,8 @@ void jamesonDissipation(block_ b, const thtrdat_ th) {
     const double kappa2 = 1.0;
     const double kappa4 = 1.0/256.0;
 
-    const double eps2 = kappa2 * std::max(b.phi(i,j,k,0), b.phi(i,j-1,k,0));
-    const double eps4 = std::max( 0.0, kappa4 - eps2 );
+    const double eps2 = kappa2 * fmax(b.phi(i,j,k,0), b.phi(i,j-1,k,0));
+    const double eps4 = fmax( 0.0, kappa4 - eps2 );
 
     // Compute face normal volume flux vector
     const double uf = 0.5*(b.q(i,j,k,1)+b.q(i,j-1,k,1));
@@ -163,8 +164,8 @@ void jamesonDissipation(block_ b, const thtrdat_ th) {
     const double kappa2 = 1.0;
     const double kappa4 = 1.0/256.0;
 
-    const double eps2 = kappa2 * std::max(b.phi(i,j,k,0), b.phi(i,j,k-1,0));
-    const double eps4 = std::max( 0.0, kappa4 - eps2 );
+    const double eps2 = kappa2 * fmax(b.phi(i,j,k,0), b.phi(i,j,k-1,0));
+    const double eps4 = fmax( 0.0, kappa4 - eps2 );
 
     // Compute face normal volume flux vector
     const double uf = 0.5*(b.q(i,j,k,1)+b.q(i,j,k-1,1));
