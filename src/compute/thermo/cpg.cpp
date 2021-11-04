@@ -65,8 +65,8 @@ void cpg(block_ b,
   cp   = 0.0;
   for (int n=0; n<=ns-1; n++)
   {
-    Rmix += Y(n,id)*th.Ru/th.MW[n];
-    cp   += Y(n,id)*th.cp0[n];
+    Rmix += Y(n,id)*th.Ru/th.MW(n);
+    cp   += Y(n,id)*th.cp0(n);
   }
   // Compute mixuture enthalpy
   h = cp*T;
@@ -121,7 +121,7 @@ void cpg(block_ b,
   b.qh(i,j,k,4) = rho*e;
   for (int n=0; n<=ns-1; n++)
   {
-    b.qh(i,j,k,5+n) = T*th.cp0[n];
+    b.qh(i,j,k,5+n) = T*th.cp0(n);
   }
 
   token.release(id);
@@ -180,8 +180,8 @@ void cpg(block_ b,
   cp   = 0.0;
   for (int n=0; n<=ns-1; n++)
   {
-    Rmix += Y(n,id)*th.Ru/th.MW[n];
-    cp   += Y(n,id)*th.cp0[n];
+    Rmix += Y(n,id)*th.Ru/th.MW(n);
+    cp   += Y(n,id)*th.cp0(n);
   }
 
   // Compute mixuture temperature,pressure
@@ -214,7 +214,7 @@ void cpg(block_ b,
   b.qh(i,j,k,4) = rho*e;
   for (int n=0; n<=ns-1; n++)
   {
-    b.qh(i,j,k,5+n) = T*th.cp0[n];
+    b.qh(i,j,k,5+n) = T*th.cp0(n);
   }
 
   token.release(id);

@@ -66,7 +66,7 @@ void tpg(block_ b,
   Rmix = 0.0;
   for (int n=0; n<=ns-1; n++)
   {
-    Rmix += th.Ru  *Y(n,id)/th.MW[n];
+    Rmix += th.Ru  *Y(n,id)/th.MW(n);
   }
 
   // Update mixture properties
@@ -75,20 +75,20 @@ void tpg(block_ b,
   int m;
   for (int n=0; n<=ns-1; n++)
   {
-    m = ( T <= th.NASA7[n][0] ) ? 8 : 1;
+    m = ( T <= th.NASA7(n,0) ) ? 8 : 1;
 
-    cps(n,id) =(th.NASA7[n][m+0]            +
-             th.NASA7[n][m+1]*    T      +
-             th.NASA7[n][m+2]*pow(T,2.0) +
-             th.NASA7[n][m+3]*pow(T,3.0) +
-             th.NASA7[n][m+4]*pow(T,4.0) )*th.Ru/th.MW[n];
+    cps(n,id) =(th.NASA7(n,m+0)            +
+                th.NASA7(n,m+1)*    T      +
+                th.NASA7(n,m+2)*pow(T,2.0) +
+                th.NASA7(n,m+3)*pow(T,3.0) +
+                th.NASA7(n,m+4)*pow(T,4.0) )*th.Ru/th.MW(n);
 
-    hi(n,id)  =(th.NASA7[n][m+0]                  +
-             th.NASA7[n][m+1]*    T      / 2.0 +
-             th.NASA7[n][m+2]*pow(T,2.0) / 3.0 +
-             th.NASA7[n][m+3]*pow(T,3.0) / 4.0 +
-             th.NASA7[n][m+4]*pow(T,4.0) / 5.0 +
-             th.NASA7[n][m+5]/    T            )*T*th.Ru/th.MW[n];
+    hi(n,id)  =(th.NASA7(n,m+0)                  +
+                th.NASA7(n,m+1)*    T      / 2.0 +
+                th.NASA7(n,m+2)*pow(T,2.0) / 3.0 +
+                th.NASA7(n,m+3)*pow(T,3.0) / 4.0 +
+                th.NASA7(n,m+4)*pow(T,4.0) / 5.0 +
+                th.NASA7(n,m+5)/    T            )*T*th.Ru/th.MW(n);
 
     cp   += cps(n,id)*Y(n,id);
     h    +=  hi(n,id)*Y(n,id);
@@ -210,7 +210,7 @@ void tpg(block_ b,
   Rmix = 0.0;
   for (int n=0; n<=ns-1; n++)
   {
-    Rmix += th.Ru  *Y(n,id)/th.MW[n];
+    Rmix += th.Ru  *Y(n,id)/th.MW(n);
   }
 
   // Newtons method to find T
@@ -221,20 +221,20 @@ void tpg(block_ b,
     cp = 0.0;
     for (int n=0; n<=ns-1; n++)
     {
-      int m = ( T <= th.NASA7[n][0] ) ? 8 : 1;
+      int m = ( T <= th.NASA7(n,0) ) ? 8 : 1;
 
-      cps(n,id) =(th.NASA7[n][m+0]            +
-               th.NASA7[n][m+1]*    T      +
-               th.NASA7[n][m+2]*pow(T,2.0) +
-               th.NASA7[n][m+3]*pow(T,3.0) +
-               th.NASA7[n][m+4]*pow(T,4.0) )*th.Ru/th.MW[n];
+      cps(n,id) =(th.NASA7(n,m+0)            +
+                  th.NASA7(n,m+1)*    T      +
+                  th.NASA7(n,m+2)*pow(T,2.0) +
+                  th.NASA7(n,m+3)*pow(T,3.0) +
+                  th.NASA7(n,m+4)*pow(T,4.0) )*th.Ru/th.MW(n);
 
-      hi(n,id)  =(th.NASA7[n][m+0]                  +
-               th.NASA7[n][m+1]*    T      / 2.0 +
-               th.NASA7[n][m+2]*pow(T,2.0) / 3.0 +
-               th.NASA7[n][m+3]*pow(T,3.0) / 4.0 +
-               th.NASA7[n][m+4]*pow(T,4.0) / 5.0 +
-               th.NASA7[n][m+5]/    T            )*T*th.Ru/th.MW[n];
+      hi(n,id)  =(th.NASA7(n,m+0)                  +
+                  th.NASA7(n,m+1)*    T      / 2.0 +
+                  th.NASA7(n,m+2)*pow(T,2.0) / 3.0 +
+                  th.NASA7(n,m+3)*pow(T,3.0) / 4.0 +
+                  th.NASA7(n,m+4)*pow(T,4.0) / 5.0 +
+                  th.NASA7(n,m+5)/    T            )*T*th.Ru/th.MW(n);
 
       cp   += cps(n,id)*Y(n,id);
       h    +=  hi(n,id)*Y(n,id);
