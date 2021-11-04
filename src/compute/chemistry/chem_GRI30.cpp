@@ -52,6 +52,8 @@
 // Y( 50) = C3H8
 // Y( 51) = CH2CHO
 // Y( 52) = CH3CHO
+
+// 325 reactions.
 // ========================================================== //
 
 #include "Kokkos_Core.hpp"
@@ -70,7 +72,6 @@ void chem_GRI30(block_ b, thtrdat_ th, int face/*=0*/, int i/*=0*/, int j/*=0*/,
   Kokkos::Experimental::UniqueToken<exec_space> token;
   int numIds = token.size();
   const int ns=53;
-  const int nr=325;
   twoDview Y("Y", ns, numIds);
   twoDview cs("cs", ns, numIds);
   twoDview gbs("gbs", ns, numIds);

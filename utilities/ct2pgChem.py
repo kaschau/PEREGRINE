@@ -126,6 +126,8 @@ def ct2pg_chem(ctyaml, cpp):
     for i, sp in enumerate(gas.species_names):
         pg_mech.write(f"// Y({i:>3d}) = {sp}\n")
     pg_mech.write(
+        "\n"
+        f"// {nr} reactions.\n"
         "// ========================================================== //\n\n"
     )
 
@@ -146,7 +148,6 @@ def ct2pg_chem(ctyaml, cpp):
         "  Kokkos::Experimental::UniqueToken<exec_space> token;\n"
         "  int numIds = token.size();\n"
         f"  const int ns={ns};\n"
-        f"  const int nr={nr};\n"
         '  twoDview Y("Y", ns, numIds);\n'
         '  twoDview cs("cs", ns, numIds);\n'
         '  twoDview gbs("gbs", ns, numIds);\n'
