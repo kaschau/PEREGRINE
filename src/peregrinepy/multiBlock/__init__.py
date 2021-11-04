@@ -41,6 +41,7 @@ def setConsistify(cls, config):
             cls.dqdxyz = getattr(compute.utils, f"dq{dqO}FD")
         except AttributeError:
             raise pgConfigError("diffOrder", f"dq{dqO}FD")
+        cls.commList += ["dqdx", "dqdy", "dqdz"]
     else:
         cls.trans = null
         cls.dqdxyz = null
@@ -57,6 +58,7 @@ def setConsistify(cls, config):
             cls.switch = getattr(compute.switches, switch)
         except AttributeError:
             raise pgConfigError("switchAdvFlux", switch)
+
         # Just as a check, we will make sure we didnt accidentially
         #  set a switch (that is a non negating switch) without
         #  setting a secondary flux
@@ -67,6 +69,7 @@ def setConsistify(cls, config):
                 switch,
                 "You set a advective flux switching option without a secondary flux.",
             )
+        cls.commList += ["phi"]
 
 
 #########################################

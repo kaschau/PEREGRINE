@@ -52,7 +52,8 @@ void chem_CH4_O2_Stanford_Skeletal(block_ b, thtrdat_ th, int face/*=0*/, int i/
   Y[11] = fmax(0.0,Y[11]);
 
   // Conecntrations
-  double cs[12];  for (int n=0; n<=11; n++)
+  double cs[12];
+  for (int n=0; n<=11; n++)
   {
     cs[n] = rho*Y[n]/th.MW(n);
   }

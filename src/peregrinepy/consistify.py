@@ -12,9 +12,6 @@ def consistify(mb):
     # First communicate conservatives
     communicate(mb, ["Q"])
 
-    # Keep a list of arrays we need to communicate as we change them
-    commList = []
-
     # Now update derived arrays for ENTIRE block,
     #  even exterior halos.
     for blk in mb:
@@ -40,14 +37,9 @@ def consistify(mb):
             for face in blk.faces:
                 face.bcFunc(mb.eos, blk, face, mb.thtrdat, "viscous")
 
-        # communicate viscous halos
-        commList += ["dqdx", "dqdy", "dqdz"]
-
     # Update switch
     for blk in mb:
         mb.switch(blk)
-    if mb.switch.__name__ != "null":
-        commList += ["phi"]
 
     # Communicate necessary halos
-    communicate(mb, commList)
+    communicate(mb, mb.commList)
