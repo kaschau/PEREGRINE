@@ -176,7 +176,7 @@ def ct2pg_chem(ctyaml, cpp):
         "  // Conecntrations\n"
         "  for (int n=0; n<=ns-1; n++)\n"
         "  {\n"
-        "    cs(n,id) = rho*Y(n,id)/th.MW[n];\n"
+        "    cs(n,id) = rho*Y(n,id)/th.MW(n);\n"
         "  }\n"
         "\n"
     )
@@ -226,20 +226,20 @@ def ct2pg_chem(ctyaml, cpp):
         "\n"
         "  for (int n=0; n<=ns-1; n++)\n"
         "  {\n"
-        "    m = ( T <= th.NASA7[n][0] ) ? 8 : 1;\n"
+        "    m = ( T <= th.NASA7(n,0) ) ? 8 : 1;\n"
         "\n"
-        "    hi     = th.NASA7[n][m+0]                  +\n"
-        "             th.NASA7[n][m+1]*    T      / 2.0 +\n"
-        "             th.NASA7[n][m+2]*pow(T,2.0) / 3.0 +\n"
-        "             th.NASA7[n][m+3]*pow(T,3.0) / 4.0 +\n"
-        "             th.NASA7[n][m+4]*pow(T,4.0) / 5.0 +\n"
-        "             th.NASA7[n][m+5]/    T            ;\n"
-        "    scs    = th.NASA7[n][m+0]*log(T)           +\n"
-        "             th.NASA7[n][m+1]*    T            +\n"
-        "             th.NASA7[n][m+2]*pow(T,2.0) / 2.0 +\n"
-        "             th.NASA7[n][m+3]*pow(T,3.0) / 3.0 +\n"
-        "             th.NASA7[n][m+4]*pow(T,4.0) / 4.0 +\n"
-        "             th.NASA7[n][m+6]                  ;\n"
+        "    hi     = th.NASA7(n,m+0)                  +\n"
+        "             th.NASA7(n,m+1)*    T      / 2.0 +\n"
+        "             th.NASA7(n,m+2)*pow(T,2.0) / 3.0 +\n"
+        "             th.NASA7(n,m+3)*pow(T,3.0) / 4.0 +\n"
+        "             th.NASA7(n,m+4)*pow(T,4.0) / 5.0 +\n"
+        "             th.NASA7(n,m+5)/    T            ;\n"
+        "    scs    = th.NASA7(n,m+0)*log(T)           +\n"
+        "             th.NASA7(n,m+1)*    T            +\n"
+        "             th.NASA7(n,m+2)*pow(T,2.0) / 2.0 +\n"
+        "             th.NASA7(n,m+3)*pow(T,3.0) / 3.0 +\n"
+        "             th.NASA7(n,m+4)*pow(T,4.0) / 4.0 +\n"
+        "             th.NASA7(n,m+6)                  ;\n"
         "\n"
         "    gbs(n,id) = hi-scs                         ;\n"
         "  }\n"
@@ -444,10 +444,10 @@ def ct2pg_chem(ctyaml, cpp):
                 out_string.append(f" {s:+}*q[{j}]")
 
         if len(out_string) == 0:
-            pg_mech.write(f"  b.omega(i,j,k,{i+1}) = th.MW[{i}] * (0.0")
+            pg_mech.write(f"  b.omega(i,j,k,{i+1}) = th.MW({i}) * (0.0")
         else:
             out_string[0] = out_string[0].replace("+", "")
-            pg_mech.write(f"  b.omega(i,j,k,{i+1}) = th.MW[{i}] * (")
+            pg_mech.write(f"  b.omega(i,j,k,{i+1}) = th.MW({i}) * (")
             for item in out_string:
                 pg_mech.write(item)
         pg_mech.write(");\n")

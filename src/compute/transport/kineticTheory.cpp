@@ -57,17 +57,17 @@ void kineticTheory(block_ b,
   double mass=0.0;
   for (int n=0; n<=ns-1; n++)
   {
-    mass += Y(n,id)/th.MW[n];
+    mass += Y(n,id)/th.MW(n);
   }
   for (int n=0; n<=ns-1; n++)
   {
-    X(n,id) = Y(n,id)/th.MW[n]/mass;
+    X(n,id) = Y(n,id)/th.MW(n)/mass;
   }
   // Mean molecular weight
   MWmix = 0.0;
   for (int n=0; n<=ns-1; n++)
   {
-    MWmix += X(n,id)*th.MW[n];
+    MWmix += X(n,id)*th.MW(n);
   }
 
   // Evaluate all property polynomials
@@ -79,24 +79,24 @@ void kineticTheory(block_ b,
   for (int n=0; n<=ns-1; n++)
   {
     //Set to constant value first
-    mu_sp(n,id) = th.mu_poly[n][deg];
-    kappa_sp(n,id) = th.kappa_poly[n][deg];
+    mu_sp(n,id) = th.mu_poly(n,deg);
+    kappa_sp(n,id) = th.kappa_poly(n,deg);
     for (int n2=n; n2<=ns-1; n2++)
     {
       indx = int(ns*(ns-1)/2 - (ns-n)*(ns-n-1)/2 + n2);
-      Dij(n,n2,id) = th.Dij_poly[indx][deg];
+      Dij(n,n2,id) = th.Dij_poly(indx,deg);
     }
 
     // Evaluate polynomial
     for (int ply=0; ply<deg; ply++)
     {
-      mu_sp(n,id)    += th.mu_poly[   n][ply]*pow(logT,float(deg-ply));
-      kappa_sp(n,id) += th.kappa_poly[n][ply]*pow(logT,float(deg-ply));
+      mu_sp(n,id)    += th.mu_poly(   n,ply)*pow(logT,float(deg-ply));
+      kappa_sp(n,id) += th.kappa_poly(n,ply)*pow(logT,float(deg-ply));
 
       for (int n2=n; n2<=ns-1; n2++)
       {
         indx = int(ns*(ns-1)/2 - (ns-n)*(ns-n-1)/2 + n2);
-        Dij(n,n2,id) += th.Dij_poly[indx][ply]*pow(logT,float(deg-ply));
+        Dij(n,n2,id) += th.Dij_poly(indx,ply)*pow(logT,float(deg-ply));
       }
     }
 
@@ -120,8 +120,8 @@ void kineticTheory(block_ b,
     double phitemp = 0.0;
     for (int n2=0; n2<=ns-1; n2++)
     {
-      phi =  pow((1.0 + sqrt(mu_sp(n,id)/mu_sp(n2,id)*sqrt(th.MW[n2]/th.MW[n]))),2.0) /
-                       ( sqrt(8.0)*sqrt(1+th.MW[n]/th.MW[n2]));
+      phi =  pow((1.0 + sqrt(mu_sp(n,id)/mu_sp(n2,id)*sqrt(th.MW(n2)/th.MW(n)))),2.0) /
+                       ( sqrt(8.0)*sqrt(1+th.MW(n)/th.MW(n2)));
       phitemp += phi*X(n2,id);
     }
     mu += mu_sp(n,id)*X(n,id)/phitemp;
@@ -153,13 +153,13 @@ void kineticTheory(block_ b,
         continue;
       }
       sum1 += X(n2,id) / Dij(n,n2,id);
-      sum2 += X(n2,id) * th.MW[n2] / Dij(n,n2,id);
+      sum2 += X(n2,id) * th.MW(n2) / Dij(n,n2,id);
 
     }
     //Account for pressure
     sum1 *= p;
-    //HACK must be a better way to give zero for sum2 when MWmix == th.MW[n]*X[n]
-    temp = p * X(n,id) / ( MWmix - th.MW[n]*X(n,id) );
+    //HACK must be a better way to give zero for sum2 when MWmix == th.MW(n)*X(n)
+    temp = p * X(n,id) / ( MWmix - th.MW(n)*X(n,id) );
     if ( isinf(temp) )
     {
       D(n,id) = 0.0;

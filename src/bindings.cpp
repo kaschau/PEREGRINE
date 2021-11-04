@@ -198,7 +198,6 @@ PYBIND11_MODULE(compute, m) {
     .def_readwrite("ns", &thtrdat_::ns)
     .def_readwrite("Ru", &thtrdat_::Ru)
 
-    .def_readwrite("species_names", &thtrdat_::species_names)
     .def_readwrite("MW", &thtrdat_::MW)
 
     .def_readwrite("cp0", &thtrdat_::cp0)

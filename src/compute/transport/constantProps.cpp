@@ -43,17 +43,17 @@ void constantProps(block_ b,
   double mass=0.0;
   for (int n=0; n<=ns-1; n++)
   {
-    mass += Y(n,id)/th.MW[n];
+    mass += Y(n,id)/th.MW(n);
   }
   for (int n=0; n<=ns-1; n++)
   {
-    X(n,id) = Y(n,id)/th.MW[n]/mass;
+    X(n,id) = Y(n,id)/th.MW(n)/mass;
   }
   // Mean molecular weight
   MWmix = 0.0;
   for (int n=0; n<=ns-1; n++)
   {
-    MWmix += X(n,id)*th.MW[n];
+    MWmix += X(n,id)*th.MW(n);
   }
 
   // viscosity mixture
@@ -65,11 +65,11 @@ void constantProps(block_ b,
     phitemp = 0.0;
     for (int n2=0; n2<=ns-1; n2++)
     {
-      phi =  pow((1.0 + sqrt(th.mu0[n]/th.mu0[n2]*sqrt(th.MW[n2]/th.MW[n]))),2.0) /
-                ( sqrt(8.0)*sqrt(1+th.MW[n]/th.MW[n2]));
+      phi =  pow((1.0 + sqrt(th.mu0(n)/th.mu0(n2)*sqrt(th.MW(n2)/th.MW(n)))),2.0) /
+                ( sqrt(8.0)*sqrt(1+th.MW(n)/th.MW(n2)));
       phitemp += phi*X(n2,id);
     }
-    mu += th.mu0[n]*X(n,id)/phitemp;
+    mu += th.mu0(n)*X(n,id)/phitemp;
   }
 
   // thermal conductivity mixture
@@ -79,8 +79,8 @@ void constantProps(block_ b,
   double sum2=0.0;
   for (int n=0; n<=ns-1; n++)
   {
-    sum1 += X(n,id) * th.kappa0[n];
-    sum2 += X(n,id) / th.kappa0[n];
+    sum1 += X(n,id) * th.kappa0(n);
+    sum2 += X(n,id) / th.kappa0(n);
   }
   kappa = 0.5*(sum1+1.0/sum2);
 
