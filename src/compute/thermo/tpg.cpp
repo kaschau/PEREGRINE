@@ -4,7 +4,6 @@
 #include "thtrdat_.hpp"
 #include "compute.hpp"
 #include <math.h>
-#include <numeric>
 #include <stdexcept>
 
 void tpg(block_ b,
