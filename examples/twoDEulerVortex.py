@@ -15,6 +15,7 @@ from mpi4py import MPI
 import kokkos
 import peregrinepy as pg
 import numpy as np
+import time
 import matplotlib.pyplot as plt
 
 np.seterr(all="raise")
@@ -122,10 +123,13 @@ def simulate():
 
     dt = 0.1 * (Lx / NE) / aInf
     tEnd = Lx / uInf
+
+    ts = time.time()
     while mb.tme < tEnd:
         if mb.nrt % 50 == 0:
             pg.misc.progressBar(mb.tme, tEnd)
         mb.step(dt)
+    print(f"Time integration took {time.time()-ts} seconds.")
 
     # plot v/Uinf
     plt.plot(
