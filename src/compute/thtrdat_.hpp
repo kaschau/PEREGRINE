@@ -22,13 +22,13 @@ struct thtrdat_ {
   twoDview NASA7;
 
   // Generated temperature dependent viscosity poly'l coeff
-  twoDview mu_poly;
+  twoDview muPoly;
   // Generated temperature dependent thermal conductivity poly'l coeff
-  twoDview kappa_poly;
+  twoDview kappaPoly;
   // Generated temperature dependent binary diffusion poly'l coeff
   // NOTE: pressure dependence is applied when the mixture diffusion
   // coefficients are created in-situ
-  twoDview Dij_poly;
+  twoDview DijPoly;
 
   // Constant properties
   oneDview mu0;

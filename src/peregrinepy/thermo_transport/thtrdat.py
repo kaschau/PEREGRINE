@@ -97,7 +97,7 @@ class thtrdat(thtrdat_):
                 ) = kineticTheoryPoly(usersp, refsp, config["thermochem"]["eos"])
 
                 self.muPoly = kokkos.array(
-                    self.arrya["muPoly"],
+                    self.array["muPoly"],
                     dtype=kokkos.double,
                     space=space,
                     dynamic=False,
