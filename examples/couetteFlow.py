@@ -22,14 +22,17 @@ def simulate():
     config["simulation"]["dt"] = 2.0e-5
     config["simulation"]["niter"] = 50000
     config["RHS"]["diffusion"] = True
+    config["thermochem"]["trans"] = "constantProps"
+    config["thermochem"]["spdata"] = ["Air"]
 
     ny = 10
+    h = 0.025
     mb = pg.multiBlock.generateMultiBlockSolver(1, config)
     pg.grid.create.multiBlockCube(
         mb,
         mbDims=[1, 1, 1],
         dimsPerBlock=[2, ny, 2],
-        lengths=[0.01, 0.025, 0.01],
+        lengths=[0.01, h, 0.01],
     )
 
     mb.initSolverArrays(config)
@@ -81,28 +84,46 @@ def simulate():
     mb.eos(blk, mb.thtrdat, 0, "prims")
     pg.consistify(mb)
 
-    for niter in range(config["simulation"]["niter"]):
+    mu = np.unique(mb.thtrdat.array["mu0"])[0]
+    rho = np.unique(blk.array["Q"][:, :, :, 0])[0]
+    nu = mu / rho
+
+    outputTimes = [0.0005, 0.005, 0.05]
+    doneOutput = [False, False, False]
+    outputU = []
+    simTme = max(outputTimes) * h ** 2 / nu
+    while mb.tme < simTme:
         mb.step(config["simulation"]["dt"])
 
         if mb.nrt % 200 == 0:
-            pg.misc.progressBar(mb.nrt, config["simulation"]["niter"])
+            pg.misc.progressBar(mb.tme, simTme)
+
+        for i, oT in enumerate(outputTimes):
+            t = oT * h ** 2 / nu
+            if mb.tme >= t and not doneOutput[i]:
+                outputU.append(blk.array["q"][ng, ng:-ng, ng, 1].copy())
+                doneOutput[i] = True
 
     fig, ax1 = plt.subplots()
+    ax1.grid(True, linestyle="--")
     ax1.set_title("Couette Results")
-    ax1.set_xlabel(r"x")
-    y = blk.array["yc"][ng, ng:-ng, ng]
-    u = blk.array["q"][ng, ng:-ng, ng, 1]
-    ax1.plot(u, y, color="k", label="u", linewidth=0.5)
+    ax1.set_xlabel(r"$u/U$")
+    ax1.set_ylabel(r"$y/h$")
+    y = blk.array["yc"][ng, ng:-ng, ng] / h
+    y = np.append(y, [1.0])
+    legends = [str(i) for i in outputTimes]
+    for oU, legend in zip(outputU, legends):
+        ax1.plot(np.append(oU, [wallSpeed]) / wallSpeed, y, label=legend, linewidth=0.5)
     ax1.scatter(
-        np.linspace(0, wallSpeed, y.shape[0]),
+        np.linspace(0, 1, y.shape[0]),
         y,
         marker="o",
         facecolor="w",
         edgecolor="b",
-        label="exact",
+        label="Steady State",
         linewidth=0.5,
     )
-    ax1.legend()
+    ax1.legend(title=r"$h^2t/\nu$")
     plt.show()
     plt.close()
 
