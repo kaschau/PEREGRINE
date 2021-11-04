@@ -30,8 +30,14 @@ class thtrdat(thtrdat_):
         else:
             raise ValueError("What space?")
 
-        # Get user species data
-        usersp = findUserSpData(config)
+        # Get user species data, the spData from the config file is just a list of strings,
+        # then we assume we just want to grab those species, otherwise we use the thtr.yaml file.
+        if type(config["thermochem"]["spdata"]) == list:
+            usersp = {}
+            for key in config["thermochem"]["spdata"]:
+                usersp[key] = None
+        else:
+            usersp = findUserSpData(config)
         # Now we get the reference data to fill in missing information not provided by the user
         relpath = str(Path(__file__).parent)
         with open(f"{relpath}/database/speciesLibrary.yaml", "r") as f:
