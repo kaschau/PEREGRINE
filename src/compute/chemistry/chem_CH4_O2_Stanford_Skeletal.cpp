@@ -11,6 +11,8 @@
 // Y(  9) = CO
 // Y( 10) = CH2O
 // Y( 11) = CO2
+
+// 38 reactions.
 // ========================================================== //
 
 #include "Kokkos_Core.hpp"
@@ -29,7 +31,6 @@ void chem_CH4_O2_Stanford_Skeletal(block_ b, thtrdat_ th, int face/*=0*/, int i/
   Kokkos::Experimental::UniqueToken<exec_space> token;
   int numIds = token.size();
   const int ns=12;
-  const int nr=38;
   twoDview Y("Y", ns, numIds);
   twoDview cs("cs", ns, numIds);
   twoDview gbs("gbs", ns, numIds);
