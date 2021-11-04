@@ -250,16 +250,30 @@ def ct2pg_chem(ctyaml, cpp):
     out_string = (
         "  // ----------------------------------------------------------- >\n"
         "  // Rate Constants. ------------------------------------------- >\n"
+        "  // FallOff Modifications. ------------------------------------ >\n"
+        "  // Forward, backward, net rates of progress. ----------------- >\n"
         "  // ----------------------------------------------------------- >\n"
         "\n"
-        f"  double k_f[{nr}], dG[{nr}],K_c[{nr}]; \n\n"
+        "  double k_f, dG, K_c; \n\n"
     )
     pg_mech.write(out_string)
 
+    out_string = (
+        "  double Fcent;\n"
+        "  double pmod;\n"
+        "  double Pr,k0;\n"
+        "  double A,f1,F_pdr;\n"
+        "  double C,N;\n"
+        "\n"
+    )
+    pg_mech.write(out_string)
+
+    out_string = "  double q_f, q_b;\n" + f"  double q[{nr}];\n\n"
+    pg_mech.write(out_string)
+
     for i in range(nr):
-        out_string = (
-            f"  k_f[{i}] = " + rate_const_string(A_f[i], m_f[i], Ea_f[i]) + ";\n"
-        )
+        pg_mech.write(f"  // Reaction #{i}\n")
+        out_string = "  k_f = " + rate_const_string(A_f[i], m_f[i], Ea_f[i]) + ";\n"
 
         pg_mech.write(out_string)
         nu_sum = nu_b[:, i] - nu_f[:, i]
@@ -272,7 +286,7 @@ def ct2pg_chem(ctyaml, cpp):
             elif s != 0:
                 out_string.append(f" {s:+}*gbs[{j}]")
         out_string[0] = out_string[0].replace("+", "")
-        pg_mech.write(f"   dG[{i}] = ")
+        pg_mech.write("   dG = ")
         for item in out_string:
             pg_mech.write(item)
         pg_mech.write(";\n")
@@ -280,48 +294,35 @@ def ct2pg_chem(ctyaml, cpp):
         sum_nu_sum = np.sum(nu_sum)
         if sum_nu_sum != 0.0:
             if sum_nu_sum == 1.0:
-                out_string = f"  K_c[{i}] = prefRuT*exp(-dG[{i}]);"
+                out_string = "  K_c = prefRuT*exp(-dG);"
             elif sum_nu_sum == -1.0:
-                out_string = f"  K_c[{i}] = exp(-dG[{i}])/prefRuT;"
+                out_string = "  K_c = exp(-dG)/prefRuT;"
             else:
-                out_string = f"  K_c[{i}] = pow(prefRuT,{sum_nu_sum})*exp(-dG[{i}]);"
+                out_string = f"  K_c = pow(prefRuT,{sum_nu_sum})*exp(-dG);"
         else:
-            out_string = f"  K_c[{i}] = exp(-dG[{i}]);"
+            out_string = "  K_c = exp(-dG);"
         pg_mech.write(out_string)
-        pg_mech.write("\n\n")
+        pg_mech.write("\n")
 
-    # -----------------------------------------------------------------------------
-    # FallOff Modifications
-    # -----------------------------------------------------------------------------
-
-    out_string = (
-        "  // ----------------------------------------------------------- >\n"
-        "  // FallOff Modifications. ------------------------------------ >\n"
-        "  // ----------------------------------------------------------- >\n"
-        "\n"
-        f"  double Fcent[{nl_tbc}];\n"
-        f"  double pmod[{nl_tbc}];\n"
-        "  double Pr,k0;\n"
-        "  double A,f1,F_pdr;\n"
-        "  double C,N;\n"
-        "\n"
-    )
-    pg_mech.write(out_string)
-
-    for i, r in enumerate([gas.reaction(j) for j in l_tbc]):
+        # -----------------------------------------------------------------------------
+        # FallOff Modifications
+        # -----------------------------------------------------------------------------
+        r = gas.reactions()[i]
+        if i in l_tbc:
+            j = l_tbc.index(i)
         if r.reaction_type == "three-body":  # ThreeBodyReaction
-            pg_mech.write(f"  //  Three Body Reaction #{l_tbc[i]}\n")
+            pg_mech.write(f"  //  Three Body Reaction #{i}\n")
         elif r.reaction_type == "falloff":  # FallOff Reactions
             if r.falloff.type in ["Simple", "Lindemann"]:
-                pg_mech.write(f"  //  Lindeman Reaction #{l_tbc[i]}\n")
-                pg_mech.write(f"  Fcent[{i}] = 1.0;\n")
+                pg_mech.write(f"  //  Lindeman Reaction #{i}\n")
+                pg_mech.write("  Fcent = 1.0;\n")
                 pg_mech.write(
-                    "  k0 = " + rate_const_string(A_o[i], m_o[i], Ea_o[i]) + ";\n"
+                    "  k0 = " + rate_const_string(A_o[j], m_o[j], Ea_o[j]) + ";\n"
                 )
                 out_string = (
-                    f"  Pr = S_tbc[{l_tbc[i]}]*k0/k_f[{l_tbc[i]}];\n"
-                    f"  pmod[{i}] = Pr/(1.0 + Pr);\n"
-                    f"  k_f[{l_tbc[i]}] = k_f[{l_tbc[i]}]*pmod[{i}];\n"
+                    f"  Pr = S_tbc[{i}]*k0/k_f;\n"
+                    f"  pmod = Pr/(1.0 + Pr);\n"
+                    f"  k_f = k_f*pmod;\n"
                 )
                 pg_mech.write(out_string)
 
@@ -329,32 +330,31 @@ def ct2pg_chem(ctyaml, cpp):
                 alpha = r.falloff.parameters[0]
                 Tsss = r.falloff.parameters[1]
                 Ts = r.falloff.parameters[2]
-                pg_mech.write(f"  //  Troe Reaction #{l_tbc[i]}\n")
+                pg_mech.write(f"  //  Troe Reaction #{i}\n")
                 tp = r.falloff.parameters
                 if tp[-1] == 0:  # Three Parameter Troe form
-                    out_string = f"  Fcent[{i}] = (1.0 - ({alpha}))*exp(-T/({Tsss})) + ({alpha}) *exp(-T/({Ts}));\n"
+                    out_string = f"  Fcent = (1.0 - ({alpha}))*exp(-T/({Tsss})) + ({alpha}) *exp(-T/({Ts}));\n"
                     pg_mech.write(out_string)
                 elif tp[-1] != 0:  # Four Parameter Troe form
                     Tss = r.falloff.parameters[3]
-                    out_string = f"  Fcent[{i}] = (1.0 - ({alpha}))*exp(-T/({Tsss})) + ({alpha}) *exp(-T/({Ts})) + exp(-({Tss})/T);\n"
+                    out_string = f"  Fcent = (1.0 - ({alpha}))*exp(-T/({Tsss})) + ({alpha}) *exp(-T/({Ts})) + exp(-({Tss})/T);\n"
                     pg_mech.write(out_string)
 
                 out_string = (
-                    f"  C = - 0.4 - 0.67*log10(Fcent[{i}]);\n"
-                    f"  N =   0.75 - 1.27*log10(Fcent[{i}]);\n"
+                    "  C = - 0.4 - 0.67*log10(Fcent);\n"
+                    "  N =   0.75 - 1.27*log10(Fcent);\n"
                 )
                 pg_mech.write(out_string)
                 pg_mech.write(
-                    "  k0 = " + rate_const_string(A_o[i], m_o[i], Ea_o[i]) + ";\n"
+                    "  k0 = " + rate_const_string(A_o[j], m_o[j], Ea_o[j]) + ";\n"
                 )
                 out_string = (
-                    f"  Pr = S_tbc[{l_tbc[i]}]*k0/k_f[{l_tbc[i]}];\n"
+                    f"  Pr = S_tbc[{i}]*k0/k_f;\n"
                     "  A = log10(Pr) + C;\n"
                     "  f1 = A/(N - 0.14*A);\n"
-                    f"  F_pdr = pow(10.0,log10(Fcent[{i}])/(1.0+f1*f1));\n"
-                    "\n"
-                    f"  pmod[{i}] =  Pr/(1.0 + Pr) * F_pdr;\n"
-                    f"  k_f[{l_tbc[i]}] = k_f[{l_tbc[i]}]*pmod[{i}];\n"
+                    "  F_pdr = pow(10.0,log10(Fcent)/(1.0+f1*f1));\n"
+                    "  pmod = Pr/(1.0 + Pr) * F_pdr;\n"
+                    "  k_f = k_f*pmod;\n"
                 )
 
                 pg_mech.write(out_string)
@@ -364,25 +364,10 @@ def ct2pg_chem(ctyaml, cpp):
                 )
             else:
                 raise UnknownFalloffType(r.falloff.type, i, r.equation)
-            pg_mech.write("\n")
 
-    pg_mech.write("\n\n")
-
-    # -----------------------------------------------------------------------------
-    # Rates of progress
-    # -----------------------------------------------------------------------------
-
-    out_string = (
-        "  // ----------------------------------------------------------- >\n"
-        "  // Forward, backward, net rates of progress. ----------------- >\n"
-        "  // ----------------------------------------------------------- >\n"
-        "\n"
-        "  double q_f, q_b;\n"
-        f"  double q[{nr}];\n"
-    )
-    pg_mech.write(out_string)
-
-    for i, r in enumerate(gas.reactions()):
+        # -----------------------------------------------------------------------------
+        # Rates of progress
+        # -----------------------------------------------------------------------------
         out_string = []
         for j, s in enumerate(nu_f[:, i]):
             if s == 1.0:
@@ -391,9 +376,9 @@ def ct2pg_chem(ctyaml, cpp):
                 out_string.append(f" * pow(cs[{j}],{float(s)})")
         # S_tbc has already been applied to falloffs above!!!
         if r.reaction_type == "falloff":
-            pg_mech.write(f"  q_f =   k_f[{i}]")
+            pg_mech.write("  q_f =   k_f")
         else:
-            pg_mech.write(f"  q_f =   S_tbc[{i}] * k_f[{i}]")
+            pg_mech.write(f"  q_f =   S_tbc[{i}] * k_f")
         for item in out_string:
             pg_mech.write(item)
         pg_mech.write(";\n")
@@ -406,9 +391,9 @@ def ct2pg_chem(ctyaml, cpp):
                 out_string.append(f" * pow(cs[{j}],{float(s)})")
         # S_tbc has already been applied to falloffs above!!!
         if r.reaction_type == "falloff":
-            pg_mech.write(f"  q_b = - k_f[{i}]/K_c[{i}]")
+            pg_mech.write("  q_b = - k_f/K_c")
         else:
-            pg_mech.write(f"  q_b = - S_tbc[{i}] * k_f[{i}]/K_c[{i}]")
+            pg_mech.write(f"  q_b = - S_tbc[{i}] * k_f/K_c")
         for item in out_string:
             pg_mech.write(item)
         pg_mech.write(";\n")
