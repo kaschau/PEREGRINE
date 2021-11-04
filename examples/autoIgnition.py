@@ -5,6 +5,7 @@ Auto ignition flame calculation.
 
 """
 
+from mpi4py import MPI
 import kokkos
 import peregrinepy as pg
 import cantera as ct
