@@ -4,7 +4,6 @@
 #include "thtrdat_.hpp"
 #include "compute.hpp"
 #include <math.h>
-#include <numeric>
 
 void constantProps(block_ b,
              const thtrdat_ th,
