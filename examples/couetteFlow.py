@@ -4,6 +4,8 @@
 Couette Flow with top wall moving at 5m/s
 
 """
+
+from mpi4py import MPI
 import kokkos
 import peregrinepy as pg
 import numpy as np

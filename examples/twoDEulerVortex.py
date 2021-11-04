@@ -11,6 +11,7 @@ Should reproduce figure 3 depending on resolution setting.
 
 """
 
+from mpi4py import MPI
 import kokkos
 import peregrinepy as pg
 import numpy as np
