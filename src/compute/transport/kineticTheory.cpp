@@ -79,24 +79,24 @@ void kineticTheory(block_ b,
   for (int n=0; n<=ns-1; n++)
   {
     //Set to constant value first
-    mu_sp(n,id) = th.mu_poly(n,deg);
-    kappa_sp(n,id) = th.kappa_poly(n,deg);
+    mu_sp(n,id) = th.muPoly(n,deg);
+    kappa_sp(n,id) = th.kappaPoly(n,deg);
     for (int n2=n; n2<=ns-1; n2++)
     {
       indx = int(ns*(ns-1)/2 - (ns-n)*(ns-n-1)/2 + n2);
-      Dij(n,n2,id) = th.Dij_poly(indx,deg);
+      Dij(n,n2,id) = th.DijPoly(indx,deg);
     }
 
     // Evaluate polynomial
     for (int ply=0; ply<deg; ply++)
     {
-      mu_sp(n,id)    += th.mu_poly(   n,ply)*pow(logT,float(deg-ply));
-      kappa_sp(n,id) += th.kappa_poly(n,ply)*pow(logT,float(deg-ply));
+      mu_sp(n,id)    += th.muPoly(   n,ply)*pow(logT,float(deg-ply));
+      kappa_sp(n,id) += th.kappaPoly(n,ply)*pow(logT,float(deg-ply));
 
       for (int n2=n; n2<=ns-1; n2++)
       {
         indx = int(ns*(ns-1)/2 - (ns-n)*(ns-n-1)/2 + n2);
-        Dij(n,n2,id) += th.Dij_poly(indx,ply)*pow(logT,float(deg-ply));
+        Dij(n,n2,id) += th.DijPoly(indx,ply)*pow(logT,float(deg-ply));
       }
     }
 

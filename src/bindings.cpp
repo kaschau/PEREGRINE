@@ -203,9 +203,9 @@ PYBIND11_MODULE(compute, m) {
     .def_readwrite("cp0", &thtrdat_::cp0)
     .def_readwrite("NASA7", &thtrdat_::NASA7)
 
-    .def_readwrite("mu_poly", &thtrdat_::mu_poly)
-    .def_readwrite("kappa_poly", &thtrdat_::kappa_poly)
-    .def_readwrite("Dij_poly", &thtrdat_::Dij_poly)
+    .def_readwrite("muPoly", &thtrdat_::muPoly)
+    .def_readwrite("kappaPoly", &thtrdat_::kappaPoly)
+    .def_readwrite("DijPoly", &thtrdat_::DijPoly)
 
     .def_readwrite("mu0", &thtrdat_::mu0)
     .def_readwrite("kappa0", &thtrdat_::kappa0);
