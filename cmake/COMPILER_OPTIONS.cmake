@@ -38,6 +38,11 @@ endif()
 
 if( ${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU" )
 
+# Dont allow VLAs so we catch them here
+  set( CMAKE_CXX_FLAGS
+       "-Werror=vla \
+       " CACHE STRING "" FORCE )
+
 # Release build type compiler flags
   set( CMAKE_CXX_FLAGS_RELEASE
        "-O2 \

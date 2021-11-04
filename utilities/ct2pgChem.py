@@ -126,6 +126,8 @@ def ct2pg_chem(ctyaml, cpp):
     for i, sp in enumerate(gas.species_names):
         pg_mech.write(f"// Y({i:>3d}) = {sp}\n")
     pg_mech.write(
+        "\n"
+        f"// {nr} reactions.\n"
         "// ========================================================== //\n\n"
     )
 
@@ -143,38 +145,39 @@ def ct2pg_chem(ctyaml, cpp):
         "// cc range\n"
         "// --------------------------------------------------------------|\n"
         "  MDRange3 range = get_range3(b, face, i, j, k);\n"
+        "  Kokkos::Experimental::UniqueToken<exec_space> token;\n"
+        "  int numIds = token.size();\n"
+        f"  const int ns={ns};\n"
+        '  twoDview Y("Y", ns, numIds);\n'
+        '  twoDview cs("cs", ns, numIds);\n'
+        '  twoDview gbs("gbs", ns, numIds);\n'
         "\n"
         '  Kokkos::parallel_for("Compute chemical source terms",\n'
         "                       range,\n"
         "                       KOKKOS_LAMBDA(const int i,\n"
         "                                     const int j,\n"
         "                                     const int k) {\n"
+        "  int id = token.acquire();\n"
         "\n"
-        f"  const int ns={ns};\n"
-        f"  const int nr={nr};\n"
         "  double T,logT,prefRuT;\n"
-        "  double Y[ns],cs[ns];\n"
-        "\n"
-        "  double rho;\n"
-        "\n"
+        "  double rho = b.Q(i,j,k,0);\n"
         "  T = b.q(i,j,k,4);\n"
         "  logT = log(T);\n"
         "  prefRuT = 101325.0/(th.Ru*T);\n"
-        "  rho = b.Q(i,j,k,0);\n"
         "\n"
         "  // Compute nth species Y\n"
-        "  Y[ns-1] = 1.0;\n"
+        "  Y(ns-1,id) = 1.0;\n"
         "  for (int n=0; n<ns-1; n++)\n"
         "  {\n"
-        "    Y[n] = b.q(i,j,k,5+n);\n"
-        "    Y[ns-1] -= Y[n];\n"
+        "    Y(n,id) = b.q(i,j,k,5+n);\n"
+        "    Y(ns-1,id) -= Y(n,id);\n"
         "  }\n"
-        "  Y[ns-1] = std::max(0.0,Y[ns-1]);\n"
+        "  Y(ns-1,id) = fmax(0.0,Y(ns-1,id));\n"
         "\n"
         "  // Conecntrations\n"
         "  for (int n=0; n<=ns-1; n++)\n"
         "  {\n"
-        "    cs[n] = rho*Y[n]/th.MW[n];\n"
+        "    cs(n,id) = rho*Y(n,id)/th.MW(n);\n"
         "  }\n"
         "\n"
     )
@@ -190,8 +193,11 @@ def ct2pg_chem(ctyaml, cpp):
         "  // Chaperon efficiencies. ------------------------------------ >\n"
         "  // ----------------------------------------------------------- >\n"
         "\n"
-        "  std::array<double, nr> S_tbc;\n"
-        "  S_tbc.fill(1.0);\n\n"
+        f"  double S_tbc[{nr}];\n"
+        f"  for (int n = 0; n < {nr}; n++)\n"
+        "  {\n"
+        "     S_tbc[n] = 1.0;\n"
+        "  }\n\n"
     )
     pg_mech.write(out_string)
 
@@ -202,9 +208,9 @@ def ct2pg_chem(ctyaml, cpp):
             eff = aij[tbc][j]
             if eff > 0.0:
                 if eff != 1.0:
-                    out_string.append(f" + {eff}*cs[{j}]")
+                    out_string.append(f" + {eff}*cs({j},id)")
                 else:
-                    out_string.append(f" + cs[{j}]")
+                    out_string.append(f" + cs({j},id)")
         out_string[0] = out_string[0].replace(" + ", "")
         pg_mech.write(f"  S_tbc[{i}] = ")
         for item in out_string:
@@ -218,26 +224,25 @@ def ct2pg_chem(ctyaml, cpp):
         "\n"
         "  int m;\n"
         "  double hi,scs;\n"
-        "  double gbs[ns];\n"
         "\n"
         "  for (int n=0; n<=ns-1; n++)\n"
         "  {\n"
-        "    m = ( T <= th.NASA7[n][0] ) ? 8 : 1;\n"
+        "    m = ( T <= th.NASA7(n,0) ) ? 8 : 1;\n"
         "\n"
-        "    hi     = th.NASA7[n][m+0]                  +\n"
-        "             th.NASA7[n][m+1]*    T      / 2.0 +\n"
-        "             th.NASA7[n][m+2]*pow(T,2.0) / 3.0 +\n"
-        "             th.NASA7[n][m+3]*pow(T,3.0) / 4.0 +\n"
-        "             th.NASA7[n][m+4]*pow(T,4.0) / 5.0 +\n"
-        "             th.NASA7[n][m+5]/    T            ;\n"
-        "    scs    = th.NASA7[n][m+0]*log(T)           +\n"
-        "             th.NASA7[n][m+1]*    T            +\n"
-        "             th.NASA7[n][m+2]*pow(T,2.0) / 2.0 +\n"
-        "             th.NASA7[n][m+3]*pow(T,3.0) / 3.0 +\n"
-        "             th.NASA7[n][m+4]*pow(T,4.0) / 4.0 +\n"
-        "             th.NASA7[n][m+6]                  ;\n"
+        "    hi     = th.NASA7(n,m+0)                  +\n"
+        "             th.NASA7(n,m+1)*    T      / 2.0 +\n"
+        "             th.NASA7(n,m+2)*pow(T,2.0) / 3.0 +\n"
+        "             th.NASA7(n,m+3)*pow(T,3.0) / 4.0 +\n"
+        "             th.NASA7(n,m+4)*pow(T,4.0) / 5.0 +\n"
+        "             th.NASA7(n,m+5)/    T            ;\n"
+        "    scs    = th.NASA7(n,m+0)*log(T)           +\n"
+        "             th.NASA7(n,m+1)*    T            +\n"
+        "             th.NASA7(n,m+2)*pow(T,2.0) / 2.0 +\n"
+        "             th.NASA7(n,m+3)*pow(T,3.0) / 3.0 +\n"
+        "             th.NASA7(n,m+4)*pow(T,4.0) / 4.0 +\n"
+        "             th.NASA7(n,m+6)                  ;\n"
         "\n"
-        "    gbs[n] = hi-scs                         ;\n"
+        "    gbs(n,id) = hi-scs                         ;\n"
         "  }\n"
         "\n"
     )
@@ -251,10 +256,10 @@ def ct2pg_chem(ctyaml, cpp):
         "  // Rate Constants. ------------------------------------------- >\n"
         "  // ----------------------------------------------------------- >\n"
         "\n"
-        "  double q_f[nr],k_f[nr];\n"
-        "  double q_b[nr];\n"
+        f"  double q_f[{nr}],k_f[{nr}];\n"
+        f"  double q_b[{nr}];\n"
         "\n"
-        "  double dG[nr],K_c[nr],q[nr]; \n\n"
+        f"  double dG[{nr}],K_c[{nr}],q[{nr}]; \n\n"
     )
     pg_mech.write(out_string)
 
@@ -268,11 +273,11 @@ def ct2pg_chem(ctyaml, cpp):
         out_string = []
         for j, s in enumerate(nu_sum):
             if s == 1:
-                out_string.append(f" + gbs[{j}]")
+                out_string.append(f" + gbs({j},id)")
             elif s == -1:
-                out_string.append(f" - gbs[{j}]")
+                out_string.append(f" - gbs({j},id)")
             elif s != 0:
-                out_string.append(f" {s:+}*gbs[{j}]")
+                out_string.append(f" {s:+}*gbs({j},id)")
         out_string[0] = out_string[0].replace("+", "")
         pg_mech.write(f"   dG[{i}] = ")
         for item in out_string:
@@ -386,9 +391,9 @@ def ct2pg_chem(ctyaml, cpp):
         out_string = []
         for j, s in enumerate(nu_f[:, i]):
             if s == 1.0:
-                out_string.append(f" * cs[{j}]")
+                out_string.append(f" * cs({j},id)")
             elif s > 0.0:
-                out_string.append(f" * pow(cs[{j}],{float(s)})")
+                out_string.append(f" * pow(cs({j},id),{float(s)})")
         # S_tbc has already been applied to falloffs above!!!
         if r.reaction_type == "falloff":
             pg_mech.write(f"  q_f[{i}] =   k_f[{i}]")
@@ -401,9 +406,9 @@ def ct2pg_chem(ctyaml, cpp):
         out_string = []
         for j, s in enumerate(nu_b[:, i]):
             if s == 1:
-                out_string.append(f" * cs[{j}]")
+                out_string.append(f" * cs({j},id)")
             elif s > 0.0:
-                out_string.append(f" * pow(cs[{j}],{float(s)})")
+                out_string.append(f" * pow(cs({j},id),{float(s)})")
         # S_tbc has already been applied to falloffs above!!!
         if r.reaction_type == "falloff":
             pg_mech.write(f"  q_b[{i}] = - k_f[{i}]/K_c[{i}]")
@@ -440,10 +445,10 @@ def ct2pg_chem(ctyaml, cpp):
                 out_string.append(f" {s:+}*q[{j}]")
 
         if len(out_string) == 0:
-            pg_mech.write(f"  b.omega(i,j,k,{i+1}) = th.MW[{i}] * (0.0")
+            pg_mech.write(f"  b.omega(i,j,k,{i+1}) = th.MW({i}) * (0.0")
         else:
             out_string[0] = out_string[0].replace("+", "")
-            pg_mech.write(f"  b.omega(i,j,k,{i+1}) = th.MW[{i}] * (")
+            pg_mech.write(f"  b.omega(i,j,k,{i+1}) = th.MW({i}) * (")
             for item in out_string:
                 pg_mech.write(item)
         pg_mech.write(");\n")
@@ -469,7 +474,7 @@ def ct2pg_chem(ctyaml, cpp):
     pg_mech.write(out_string)
 
     # END
-    out_string = "  });\n" "}"
+    out_string = "  token.release(id);\n  });\n" "}"
     pg_mech.write(out_string)
     pg_mech.close()
 

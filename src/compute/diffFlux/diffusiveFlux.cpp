@@ -2,6 +2,7 @@
 #include "kokkos_types.hpp"
 #include "block_.hpp"
 #include "thtrdat_.hpp"
+#include "math.h"
 
 void diffusiveFlux(block_ b, const thtrdat_ th) {
 
@@ -130,7 +131,7 @@ void diffusiveFlux(block_ b, const thtrdat_ th) {
       b.iF(i,j,k,4) += b.iF(i,j,k,5+n)*hk;
     }
     // Apply the n=ns species to thermal diffusion
-    Yns = std::max(Yns,0.0);
+    Yns = fmax(Yns,0.0);
     hk = 0.5 * (b.qh(i,j,k,5+th.ns-1) + b.qh(i-1,j,k,5+th.ns-1) );
     b.iF(i,j,k,4) += (-rho*Dij*gradYns + Yns*rho*Dcorr)*hk;
 
@@ -261,7 +262,7 @@ void diffusiveFlux(block_ b, const thtrdat_ th) {
       b.jF(i,j,k,4) += b.jF(i,j,k,5+n)*hk;
     }
     // Apply the n=ns species to thermal diffusion
-    Yns = std::max(Yns,0.0);
+    Yns = fmax(Yns,0.0);
     hk = 0.5 * (b.qh(i,j,k,5+th.ns-1) + b.qh(i,j-1,k,5+th.ns-1) );
     b.jF(i,j,k,4) += (-rho*Dij*gradYns + Yns*rho*Dcorr)*hk;
 
@@ -392,7 +393,7 @@ void diffusiveFlux(block_ b, const thtrdat_ th) {
       b.kF(i,j,k,4) += b.kF(i,j,k,5+n)*hk;
     }
     // Apply the n=ns species to thermal diffusion
-    Yns = std::max(Yns,0.0);
+    Yns = fmax(Yns,0.0);
     hk = 0.5 * (b.qh(i,j,k,5+th.ns-1) + b.qh(i,j,k-1,5+th.ns-1) );
     b.kF(i,j,k,4) += (-rho*Dij*gradYns + Yns*rho*Dcorr)*hk;
 

@@ -4,7 +4,6 @@
 #include "thtrdat_.hpp"
 #include "compute.hpp"
 #include <math.h>
-#include <numeric>
 
 void constantProps(block_ b,
              const thtrdat_ th,
@@ -14,56 +13,51 @@ void constantProps(block_ b,
              const int k/*=0*/) {
 
   MDRange3 range = get_range3(b, face, i, j, k);
+  Kokkos::Experimental::UniqueToken<exec_space> token;
+  int numIds = token.size();
+
+  const int ns=th.ns;
+  twoDview Y("Y", ns, numIds);
+  twoDview X("X", ns, numIds);
 
   Kokkos::parallel_for("Compute transport properties mu,kappa,Dij from poly'l",
                        range,
                        KOKKOS_LAMBDA(const int i,
                                      const int j,
                                      const int k) {
-
-  int ns=th.ns;
-  double Y[ns],X[ns];
+  int id = token.acquire();
 
   double MWmix;
 
   // Compute nth species Y
-  Y[ns-1] = 1.0;
+  Y(ns-1,id) = 1.0;
   for (int n=0; n<ns-1; n++)
   {
-    Y[n] = b.q(i,j,k,5+n);
-    Y[ns-1] -= Y[n];
+    Y(n,id) = b.q(i,j,k,5+n);
+    Y(ns-1,id) -= Y(n,id);
   }
-  Y[ns-1] = std::max(0.0,Y[ns-1]);
+  Y(ns-1,id) = fmax(0.0,Y(ns-1,id));
 
   // Update mixture properties
   // Mole fractions
   double mass=0.0;
   for (int n=0; n<=ns-1; n++)
   {
-    mass += Y[n]/th.MW[n];
+    mass += Y(n,id)/th.MW(n);
   }
   for (int n=0; n<=ns-1; n++)
   {
-    X[n] = Y[n]/th.MW[n]/mass;
+    X(n,id) = Y(n,id)/th.MW(n)/mass;
   }
   // Mean molecular weight
   MWmix = 0.0;
   for (int n=0; n<=ns-1; n++)
   {
-    MWmix += X[n]*th.MW[n];
+    MWmix += X(n,id)*th.MW(n);
   }
 
   // viscosity mixture
-  double phi[ns][ns];
-  for (int n=0; n<=ns-1; n++)
-  {
-    for (int n2=0; n2<=ns-1; n2++)
-    {
-      phi[n][n2] =  pow((1.0 + sqrt(th.mu0[n]/th.mu0[n2]*sqrt(th.MW[n2]/th.MW[n]))),2.0) /
-                       ( sqrt(8.0)*sqrt(1+th.MW[n]/th.MW[n2]));
-    }
-  }
-
+  double phi;
   double mu = 0.0;
   double phitemp;
   for (int n=0; n<=ns-1; n++)
@@ -71,9 +65,11 @@ void constantProps(block_ b,
     phitemp = 0.0;
     for (int n2=0; n2<=ns-1; n2++)
     {
-      phitemp += phi[n][n2]*X[n2];
+      phi =  pow((1.0 + sqrt(th.mu0(n)/th.mu0(n2)*sqrt(th.MW(n2)/th.MW(n)))),2.0) /
+                ( sqrt(8.0)*sqrt(1+th.MW(n)/th.MW(n2)));
+      phitemp += phi*X(n2,id);
     }
-    mu += th.mu0[n]*X[n]/phitemp;
+    mu += th.mu0(n)*X(n,id)/phitemp;
   }
 
   // thermal conductivity mixture
@@ -83,8 +79,8 @@ void constantProps(block_ b,
   double sum2=0.0;
   for (int n=0; n<=ns-1; n++)
   {
-    sum1 += X[n] * th.kappa0[n];
-    sum2 += X[n] / th.kappa0[n];
+    sum1 += X(n,id) * th.kappa0(n);
+    sum2 += X(n,id) / th.kappa0(n);
   }
   kappa = 0.5*(sum1+1.0/sum2);
 
@@ -100,5 +96,6 @@ void constantProps(block_ b,
     b.qt(i,j,k,2+n) = kappa / ( b.Q(i,j,k,0) * b.qh(i,j,k,1) );
   }
 
+  token.release(id);
   });
 }

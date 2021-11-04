@@ -1,6 +1,7 @@
 #include "Kokkos_Core.hpp"
 #include "kokkos_types.hpp"
 #include "block_.hpp"
+#include "math.h"
 
 void applyFlux(block_ b, const double primary) {
 
@@ -44,12 +45,12 @@ void applyHybridFlux(block_ b, const double primary) {
 
 
     // Compute switch on face
-    double iFphi  = std::max( b.phi(i,j,k,0) , b.phi(i-1,j,k,0) );
-    double iFphi1 = std::max( b.phi(i,j,k,0) , b.phi(i+1,j,k,0) );
-    double jFphi  = std::max( b.phi(i,j,k,1) , b.phi(i,j-1,k,1) );
-    double jFphi1 = std::max( b.phi(i,j,k,1) , b.phi(i,j+1,k,1) );
-    double kFphi  = std::max( b.phi(i,j,k,2) , b.phi(i,j,k-1,2) );
-    double kFphi1 = std::max( b.phi(i,j,k,2) , b.phi(i,j,k+1,2) );
+    double iFphi  = fmax( b.phi(i,j,k,0) , b.phi(i-1,j,k,0) );
+    double iFphi1 = fmax( b.phi(i,j,k,0) , b.phi(i+1,j,k,0) );
+    double jFphi  = fmax( b.phi(i,j,k,1) , b.phi(i,j-1,k,1) );
+    double jFphi1 = fmax( b.phi(i,j,k,1) , b.phi(i,j+1,k,1) );
+    double kFphi  = fmax( b.phi(i,j,k,2) , b.phi(i,j,k-1,2) );
+    double kFphi1 = fmax( b.phi(i,j,k,2) , b.phi(i,j,k+1,2) );
 
     double dPrimary = 2.0*primary - 1.0;
 
