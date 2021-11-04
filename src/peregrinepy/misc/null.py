@@ -1,2 +1,2 @@
-def null(*args):
+def null(*args, **kwargs):
     pass

@@ -17,28 +17,23 @@ def consistify(mb):
     for blk in mb:
         mb.eos(blk, mb.thtrdat, -1, "cons")
 
-    # Apply euler boundary conditions
-    for blk in mb:
+        # Apply euler boundary conditions
         for face in blk.faces:
             face.bcFunc(mb.eos, blk, face, mb.thtrdat, "euler")
 
-    # Update transport properties
-    for blk in mb:
+        # Update transport properties
         mb.trans(blk, mb.thtrdat, -1)
 
-    # Update spatial derivatives
-    for blk in mb:
+        # Update spatial derivatives
         mb.dqdxyz(blk)
 
-    # TODO: can we get rid of this if check?
-    if mb.config["RHS"]["diffusion"]:
-        # Apply viscous boundary conditions
-        for blk in mb:
+        # TODO: can we get rid of this if check?
+        if mb.config["RHS"]["diffusion"]:
+            # Apply viscous boundary conditions
             for face in blk.faces:
                 face.bcFunc(mb.eos, blk, face, mb.thtrdat, "viscous")
 
-    # Update switch
-    for blk in mb:
+        # Update switch
         mb.switch(blk)
 
     # Communicate necessary halos
