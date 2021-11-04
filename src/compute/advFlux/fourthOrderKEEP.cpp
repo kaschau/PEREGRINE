@@ -9,14 +9,15 @@ void fourthOrderKEEP(block_ b, const thtrdat_ th) {
 // i flux face range
 //-------------------------------------------------------------------------------------------|
   MDRange3 range_i({b.ng,b.ng,b.ng},{b.ni+b.ng, b.nj+b.ng-1, b.nk+b.ng-1});
+
+  const int order = 4;
+  constexpr int q = order/2;
+  constexpr int narray = (q*q+q)/2;
+  constexpr double aq[2] = {2.0/3.0, -1.0/12.0};
+
   Kokkos::parallel_for("i face conv fluxes", range_i, KOKKOS_LAMBDA(const int i,
                                                                     const int j,
                                                                     const int k) {
-
-    const int order = 4;
-    constexpr int q = order/2;
-    constexpr int narray = (q*q+q)/2;
-    constexpr double aq[2] = {2.0/3.0, -1.0/12.0};
 
     double U;
     double uf=0.0;

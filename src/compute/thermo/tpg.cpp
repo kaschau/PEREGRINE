@@ -16,34 +16,38 @@ void tpg(block_ b,
    const int k/*=0*/) {
 
   MDRange3 range = get_range3(b, face, i, j, k);
+  Kokkos::Experimental::UniqueToken<exec_space> token;
+  const int numIds = token.size();
+
+  const int ns=th.ns;
+  twoDview Y("Y", ns, numIds);
+  twoDview hi("hi", ns, numIds);
+  twoDview cps("cps", ns, numIds);
 
   if ( given.compare("prims") == 0 )
   {
+  twoDview rhoY("rhoY", ns, numIds);
   Kokkos::parallel_for("Compute all conserved quantities from primatives via tgp",
                        range,
                        KOKKOS_LAMBDA(const int i,
                                      const int j,
                                      const int k) {
+  int id = token.acquire();
 
   // Updates all conserved quantities from primatives
   // Along the way, we need to compute mixture properties
   // gamma, cp, h, e, hi
   // So we store these as well.
 
-  int    ns=th.ns;
   double p;
   double u,v,w,tke;
   double T;
-  double Y[ns];
 
   double rho,rhoinv;
   double rhou,rhov,rhow;
   double e,rhoE;
-  double rhoY[ns],hi[ns];
   double gamma,cp,h,c;
   double Rmix;
-
-  double cps[ns];
 
   p = b.q(i,j,k,0);
   u = b.q(i,j,k,1);
@@ -51,19 +55,19 @@ void tpg(block_ b,
   w = b.q(i,j,k,3);
   T = b.q(i,j,k,4);
   // Compute nth species Y
-  Y[ns-1] = 1.0;
+  Y(ns-1,id) = 1.0;
   for (int n=0; n<ns-1; n++)
   {
-    Y[n] = b.q(i,j,k,5+n);
-    Y[ns-1] -= Y[n];
+    Y(n,id) = b.q(i,j,k,5+n);
+    Y(ns-1,id) -= Y(n,id);
   }
-  Y[ns-1] = std::max(0.0,Y[ns-1]);
+  Y(ns-1,id) = fmax(0.0,Y(ns-1,id));
 
   // Compute Rmix
   Rmix = 0.0;
   for (int n=0; n<=ns-1; n++)
   {
-    Rmix += th.Ru  *Y[n]/th.MW[n];
+    Rmix += th.Ru  *Y(n,id)/th.MW[n];
   }
 
   // Update mixture properties
@@ -74,21 +78,21 @@ void tpg(block_ b,
   {
     m = ( T <= th.NASA7[n][0] ) ? 8 : 1;
 
-    cps[n] =(th.NASA7[n][m+0]            +
+    cps(n,id) =(th.NASA7[n][m+0]            +
              th.NASA7[n][m+1]*    T      +
              th.NASA7[n][m+2]*pow(T,2.0) +
              th.NASA7[n][m+3]*pow(T,3.0) +
              th.NASA7[n][m+4]*pow(T,4.0) )*th.Ru/th.MW[n];
 
-    hi[n]  =(th.NASA7[n][m+0]                  +
+    hi(n,id)  =(th.NASA7[n][m+0]                  +
              th.NASA7[n][m+1]*    T      / 2.0 +
              th.NASA7[n][m+2]*pow(T,2.0) / 3.0 +
              th.NASA7[n][m+3]*pow(T,3.0) / 4.0 +
              th.NASA7[n][m+4]*pow(T,4.0) / 5.0 +
              th.NASA7[n][m+5]/    T            )*T*th.Ru/th.MW[n];
 
-    cp   += cps[n]*Y[n];
-    h    +=  hi[n]*Y[n];
+    cp   += cps(n,id)*Y(n,id);
+    h    +=  hi(n,id)*Y(n,id);
   }
 
   // Compute mixuture enthalpy
@@ -118,7 +122,7 @@ void tpg(block_ b,
   // Compute species mass
   for (int n=0; n<=ns-1; n++)
   {
-    rhoY[n] = Y[n]*rho;
+    rhoY(n,id) = Y(n,id)*rho;
   }
 
   // Set values of new properties
@@ -133,7 +137,7 @@ void tpg(block_ b,
   // Species mass
   for (int n=0; n<ns-1; n++)
   {
-    b.Q(i,j,k,5+n) = rhoY[n];
+    b.Q(i,j,k,5+n) = rhoY(n,id);
   }
   // gamma,cp,h,c,e,hi
   b.qh(i,j,k,0) = gamma;
@@ -143,25 +147,27 @@ void tpg(block_ b,
   b.qh(i,j,k,4) = rho*e;
   for (int n=0; n<=ns-1; n++)
   {
-    b.qh(i,j,k,5+n) = hi[n];
+    b.qh(i,j,k,5+n) = hi(n,id);
   }
 
+  token.release(id);
   });
   }
   else if ( given.compare("cons") == 0 )
   {
+  twoDview rhoY("rhoY", ns, numIds);
   Kokkos::parallel_for("Compute primatives from conserved quantities via tpg",
                        range,
                        KOKKOS_LAMBDA(const int i,
                                      const int j,
                                      const int k) {
+  int id = token.acquire();
 
   // Updates all primatives from conserved quantities
   // Along the way, we need to compute mixture properties
   // gamma, cp, h, e, hi
   // So we store these as well.
 
-  int    ns=th.ns;
   double rho,rhoinv;
   double rhou,rhov,rhow;
   double e,rhoE;
@@ -169,11 +175,8 @@ void tpg(block_ b,
   double p;
   double tke;
   double T;
-  double Y[ns],hi[ns];
   double gamma,cp,h,c;
   double Rmix;
-
-  double cps[ns];
 
   rho = b.Q(i,j,k,0);
   rhoinv = 1.0/b.Q(i,j,k,0);
@@ -188,13 +191,13 @@ void tpg(block_ b,
   rhoE = b.Q(i,j,k,4);
 
   // Compute species mass fraction
-  Y[ns-1] = 1.0;
+  Y(ns-1,id) = 1.0;
   for (int n=0; n<ns-1; n++)
   {
-    Y[n] = b.Q(i,j,k,5+n)/b.Q(i,j,k,0);
-    Y[ns-1] -= Y[n];
+    Y(n,id) = b.Q(i,j,k,5+n)/b.Q(i,j,k,0);
+    Y(ns-1,id) -= Y(n,id);
   }
-  Y[ns-1] = std::max(0.0,Y[ns-1]);
+  Y(ns-1,id) = fmax(0.0,Y(ns-1,id));
 
   // Internal energy
   e = (rhoE - tke)*rhoinv;
@@ -208,7 +211,7 @@ void tpg(block_ b,
   Rmix = 0.0;
   for (int n=0; n<=ns-1; n++)
   {
-    Rmix += th.Ru  *Y[n]/th.MW[n];
+    Rmix += th.Ru  *Y(n,id)/th.MW[n];
   }
 
   // Newtons method to find T
@@ -221,21 +224,21 @@ void tpg(block_ b,
     {
       int m = ( T <= th.NASA7[n][0] ) ? 8 : 1;
 
-      cps[n] =(th.NASA7[n][m+0]            +
+      cps(n,id) =(th.NASA7[n][m+0]            +
                th.NASA7[n][m+1]*    T      +
                th.NASA7[n][m+2]*pow(T,2.0) +
                th.NASA7[n][m+3]*pow(T,3.0) +
                th.NASA7[n][m+4]*pow(T,4.0) )*th.Ru/th.MW[n];
 
-      hi[n]  =(th.NASA7[n][m+0]                  +
+      hi(n,id)  =(th.NASA7[n][m+0]                  +
                th.NASA7[n][m+1]*    T      / 2.0 +
                th.NASA7[n][m+2]*pow(T,2.0) / 3.0 +
                th.NASA7[n][m+3]*pow(T,3.0) / 4.0 +
                th.NASA7[n][m+4]*pow(T,4.0) / 5.0 +
                th.NASA7[n][m+5]/    T            )*T*th.Ru/th.MW[n];
 
-      cp   += cps[n]*Y[n];
-      h    +=  hi[n]*Y[n];
+      cp   += cps(n,id)*Y(n,id);
+      h    +=  hi(n,id)*Y(n,id);
     }
 
     T = T - (e - (h - Rmix*T))/(-cp - Rmix);
@@ -260,7 +263,7 @@ void tpg(block_ b,
   b.q(i,j,k,4) = T;
   for (int n=0; n<ns-1; n++)
   {
-    b.q(i,j,k,5+n) = Y[n];
+    b.q(i,j,k,5+n) = Y(n,id);
   }
   // gamma,cp,h,c,e,hi
   b.qh(i,j,k,0) = gamma;
@@ -270,9 +273,10 @@ void tpg(block_ b,
   b.qh(i,j,k,4) = rho*e;
   for (int n=0; n<=ns-1; n++)
   {
-    b.qh(i,j,k,5+n) = hi[n];
+    b.qh(i,j,k,5+n) = hi(n,id);
   }
 
+  token.release(id);
   });
   }
   else
