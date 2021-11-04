@@ -7,20 +7,16 @@ def RHS(mb):
     for blk in mb:
         utils.dQzero(blk)
 
-    # Primary advective fluxes
-    for blk in mb:
+        # Primary advective fluxes
         mb.primaryAdvFlux(blk, mb.thtrdat)
-        mb.applyPrimaryAdvFlux(blk, 1.0)
-    # Secondary advective fluxes
-    for blk in mb:
+        mb.applyPrimaryAdvFlux(blk, primary=1.0)
+        # Secondary advective fluxes
         mb.secondaryAdvFlux(blk, mb.thtrdat)
-        mb.applySecondaryAdvFlux(blk, 0.0)
+        mb.applySecondaryAdvFlux(blk, primary=0.0)
 
-    # Diffusive fluxes
-    for blk in mb:
+        # Diffusive fluxes
         mb.diffFlux(blk, mb.thtrdat)
-        mb.applyDiffFlux(blk, -1.0)
+        mb.applyDiffFlux(blk, primary=-1.0)
 
-    # Chemical source terms
-    for blk in mb:
+        # Chemical source terms
         mb.expChem(blk, mb.thtrdat)
