@@ -75,7 +75,7 @@ class CMakeBuild(build_ext):
 
 setup(
     name="peregrinepy",
-    version="1.4",
+    version="1.5",
     author="Kyle Schau",
     author_email="ksachau89@gmail.com",
     description="A hybrid Python/C++ CFD Code",
