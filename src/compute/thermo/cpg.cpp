@@ -36,21 +36,18 @@ void cpg(block_ b,
   // gamma, cp, h, e
   // So we store these as well.
 
-  double p;
-  double u,v,w,tke;
-  double T;
+  double& p = b.q(i,j,k,0);
+  double& u = b.q(i,j,k,1);
+  double& v = b.q(i,j,k,2);
+  double& w = b.q(i,j,k,3);
+  double& T = b.q(i,j,k,4);
 
   double rho,rhoinv;
   double rhou,rhov,rhow;
-  double e,rhoE;
+  double e,tke,rhoE;
   double gamma,cp,h,c;
   double Rmix;
 
-  p = b.q(i,j,k,0);
-  u = b.q(i,j,k,1);
-  v = b.q(i,j,k,2);
-  w = b.q(i,j,k,3);
-  T = b.q(i,j,k,4);
   // Compute nth species Y
   Y(ns-1,id) = 1.0;
   for (int n=0; n<ns-1; n++)
@@ -141,27 +138,24 @@ void cpg(block_ b,
   // gamma, cp, h, e, hi
   // So we store these as well.
 
-  double rho,rhoinv;
-  double rhou,rhov,rhow;
-  double e,rhoE;
+  double& rho = b.Q(i,j,k,0);
+  double rhoinv = 1.0/rho;
+  double& rhou = b.Q(i,j,k,1);
+  double& rhov = b.Q(i,j,k,2);
+  double& rhow = b.Q(i,j,k,3);
+  double& rhoE = b.Q(i,j,k,4);
 
   double p;
-  double tke;
+  double e,tke;
   double T;
   double gamma,cp,h,c;
   double Rmix;
 
-  rho = b.Q(i,j,k,0);
-  rhoinv = 1.0/b.Q(i,j,k,0);
-  rhou = b.Q(i,j,k,1);
-  rhov = b.Q(i,j,k,2);
-  rhow = b.Q(i,j,k,3);
   // Compute TKE
   tke = 0.5*(pow(rhou,2.0) +
              pow(rhov,2.0) +
              pow(rhow,2.0))*
                  rhoinv    ;
-  rhoE = b.Q(i,j,k,4);
 
   // Compute species mass fraction
   Y(ns-1,id) = 1.0;

@@ -47,16 +47,16 @@ void vanAlbadaPressure(block_ b) {
                                      const int j,
                                      const int k) {
 
-  double p   = b.q(i  ,j,k,0) ;
+  double& p   = b.q(i  ,j,k,0) ;
 
-  double pip = b.q(i+1,j,k,0) ;
-  double pim = b.q(i-1,j,k,0) ;
+  double& pip = b.q(i+1,j,k,0) ;
+  double& pim = b.q(i-1,j,k,0) ;
 
-  double pjp = b.q(i,j+1,k,0) ;
-  double pjm = b.q(i,j-1,k,0) ;
+  double& pjp = b.q(i,j+1,k,0) ;
+  double& pjm = b.q(i,j-1,k,0) ;
 
-  double pkp = b.q(i,j,k+1,0) ;
-  double pkm = b.q(i,j,k-1,0) ;
+  double& pkp = b.q(i,j,k+1,0) ;
+  double& pkm = b.q(i,j,k-1,0) ;
 
   double ri = (p - pim + 1e-16) / (pip - p + 1e-16);
   b.phi(i,j,k,0) = 1.0 - (ri + abs(ri))/(1.0 + pow(ri,2.0));

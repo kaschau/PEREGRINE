@@ -50,16 +50,16 @@ void jamesonPressure(block_ b) {
                                      const int j,
                                      const int k) {
 
-  double p   = b.q(i  ,j,k,0) ;
+  double& p   = b.q(i  ,j,k,0) ;
 
-  double pip = b.q(i+1,j,k,0) ;
-  double pim = b.q(i-1,j,k,0) ;
+  double& pip = b.q(i+1,j,k,0) ;
+  double& pim = b.q(i-1,j,k,0) ;
 
-  double pjp = b.q(i,j+1,k,0) ;
-  double pjm = b.q(i,j-1,k,0) ;
+  double& pjp = b.q(i,j+1,k,0) ;
+  double& pjm = b.q(i,j-1,k,0) ;
 
-  double pkp = b.q(i,j,k+1,0) ;
-  double pkm = b.q(i,j,k-1,0) ;
+  double& pkp = b.q(i,j,k+1,0) ;
+  double& pkm = b.q(i,j,k-1,0) ;
 
   double ri = abs( pip - 2.0*p + pim )
             / abs( pip + 2.0*p + pim );
