@@ -1,6 +1,5 @@
 import yaml
 from pathlib import Path
-import numpy as np
 import kokkos
 from ..compute.thermo import thtrdat_
 from .completeSpecies import completeSpecies
