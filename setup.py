@@ -75,7 +75,7 @@ class CMakeBuild(build_ext):
 
 setup(
     name="peregrinepy",
-    version="0.1",
+    version="1.4",
     author="Kyle Schau",
     author_email="ksachau89@gmail.com",
     description="A hybrid Python/C++ CFD Code",
@@ -87,7 +87,7 @@ setup(
     package_dir={"": "src"},
     # add an extension module named 'python_cpp_example' to the package
     # 'python_cpp_example'
-    ext_modules=[CMakeExtension("peregrinepy/peregrinepy")],
+    ext_modules=[CMakeExtension("peregrinepy")],
     # add custom build_ext command
     cmdclass=dict(build_ext=CMakeBuild),
     # Testing folder
