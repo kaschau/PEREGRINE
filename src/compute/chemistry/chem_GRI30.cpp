@@ -76,12 +76,11 @@ void chem_GRI30(block_ b, thtrdat_ th, int face/*=0*/, int i/*=0*/, int j/*=0*/,
                                      const int j,
                                      const int k) {
 
-  double T,logT,prefRuT;
-  double rho = b.Q(i,j,k,0);
+  double& T = b.q(i,j,k,4);
+  double& rho = b.Q(i,j,k,0);
   double Y[53];
-  T = b.q(i,j,k,4);
-  logT = log(T);
-  prefRuT = 101325.0/(th.Ru*T);
+  const double logT = log(T);
+  const double prefRuT = 101325.0/(th.Ru*T);
 
   // Compute nth species Y
   Y[52] = 1.0;

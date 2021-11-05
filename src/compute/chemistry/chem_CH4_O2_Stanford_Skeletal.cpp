@@ -35,12 +35,11 @@ void chem_CH4_O2_Stanford_Skeletal(block_ b, thtrdat_ th, int face/*=0*/, int i/
                                      const int j,
                                      const int k) {
 
-  double T,logT,prefRuT;
-  double rho = b.Q(i,j,k,0);
+  double& T = b.q(i,j,k,4);
+  double& rho = b.Q(i,j,k,0);
   double Y[12];
-  T = b.q(i,j,k,4);
-  logT = log(T);
-  prefRuT = 101325.0/(th.Ru*T);
+  const double logT = log(T);
+  const double prefRuT = 101325.0/(th.Ru*T);
 
   // Compute nth species Y
   Y[11] = 1.0;
