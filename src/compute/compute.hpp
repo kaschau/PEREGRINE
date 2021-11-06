@@ -3,13 +3,15 @@
 
 #include "kokkos_types.hpp"
 #include "block_.hpp"
+#include "face_.hpp"
 #include "thtrdat_.hpp"
 #include <string>
 
 ///////////////////////////////////////////////////////////
 ////////////////// Compute Functions //////////////////////
 ///////////////////////////////////////////////////////////
-MDRange3 get_range3(block_ b, int face, int i=0, int j=0, int k=0);
+MDRange2 get_range2(block_ b, const int nface);
+MDRange3 get_range3(block_ b, const int nface, const int i=0, const int j=0, const int k=0);
 
 // ./advFlux
 //    |------> secondOrderKEEP
@@ -22,6 +24,10 @@ void rusanov(block_ b, const thtrdat_ th);
 void ausmPlusUp(block_ b, const thtrdat_ th);
 //    |------> jamesonDissipation
 void jamesonDissipation(block_ b, const thtrdat_ th);
+
+// ./boundaryConditions
+//    |------> inlets
+void constantVelocitySubsonicInlet(block_ b, const face_ th);
 
 
 // ./diffFlux

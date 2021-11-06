@@ -1,7 +1,5 @@
 class topologyFace:
 
-    __slots__ = ("_nface", "_bcFam", "_bcType", "_neighbor", "_orientation")
-
     faceType = "topology"
 
     def __init__(self, nface):

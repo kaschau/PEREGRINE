@@ -1,6 +1,7 @@
 #include "Kokkos_Core.hpp"
 #include "compute.hpp"
 #include "block_.hpp"
+#include "face_.hpp"
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
@@ -13,6 +14,7 @@ namespace py = pybind11;
 //--------------------------------------------------------------------------------------//
 
 void bindAdvFlux(py::module_ &);
+void bindBoundaryConditions(py::module_ &);
 void bindChemistry(py::module_ &);
 void bindDiffFlux(py::module_ &);
 void bindSwitches(py::module_ &);
@@ -25,6 +27,7 @@ PYBIND11_MODULE(compute, m) {
   m.attr("KokkosLocation") = &KokkosLocation;
 
   bindAdvFlux(m);
+  bindBoundaryConditions(m);
   bindChemistry(m);
   bindDiffFlux(m);
   bindSwitches(m);
@@ -132,6 +135,12 @@ PYBIND11_MODULE(compute, m) {
     // Switch
     .def_readwrite("phi", &block_::phi );
 
+  py::class_<face_>(m, "face_", py::dynamic_attr())
+    .def(py::init<>())
+
+    .def_readwrite("_nface", &face_::_nface)
+    .def_readwrite("qBcVals", &face_::qBcVals)
+    .def_readwrite("QBcVals", &face_::QBcVals);
 
   static auto _atexit = []() {
     if (Kokkos::is_initialized()) Kokkos::finalize();
