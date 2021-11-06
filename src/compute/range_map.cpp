@@ -3,15 +3,15 @@
 #include <stdexcept>
 
 MDRange3 get_range3(block_ b,
-                       int face,
-                       int i/*=0*/,
-                       int j/*=0*/,
-                       int k/*=0*/){
+                const int nface,
+                const int i/*=0*/,
+                const int j/*=0*/,
+                const int k/*=0*/){
 
 
     MDRange3 range;
 
-    switch (face) {
+    switch (nface) {
       case -1 :
         // total block
         range = MDRange3({0, 0, 0}, {b.ni+2*b.ng-1, b.nj+2*b.ng-1, b.nk+2*b.ng-1});
@@ -50,6 +50,31 @@ MDRange3 get_range3(block_ b,
         break;
       default :
         throw std::invalid_argument( "Unknown argument to get_range3");
+    }
+
+    return range;
+}
+
+MDRange2 get_range2(block_ b,
+                       int nface){
+
+    MDRange2 range;
+
+    switch (nface) {
+      case 1: case 2:
+        // face 1,2 range
+        range = MDRange2({0, 0}, {b.nj+2*b.ng-1, b.nk+2*b.ng-1});
+        break;
+      case 3: case 4:
+        // face 3,4 range
+        range = MDRange2({0, 0}, {b.ni+2*b.ng-1, b.nk+2*b.ng-1});
+        break;
+      case 5: case 6:
+        // face 5,6 range
+        range = MDRange2({0, 0}, {b.ni+2*b.ng-1, b.nj+2*b.ng-1});
+        break;
+      default :
+        throw std::invalid_argument( "Unknown argument to get_range2");
     }
 
     return range;

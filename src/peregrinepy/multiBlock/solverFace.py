@@ -1,38 +1,18 @@
 import numpy as np
 from .topologyFace import topologyFace
-from ..misc import frozenDict, null
-from ..bcs import inlets, exits, walls
+from ..misc import null
+from ..compute import face_, bcs
 
 s_ = np.s_
 
 
-class solverFace(topologyFace):
-
-    __slots__ = (
-        "ng",
-        "s0_",
-        "s1_",
-        "s2_",
-        "bcVals",
-        "bcFunc",
-        "commRank",
-        "orient",
-        "sliceS3",
-        "sliceS4",
-        "sliceR3",
-        "sliceR4",
-        "tagS",
-        "sendBuffer3",
-        "sendBuffer4",
-        "tagR",
-        "recvBuffer3",
-        "recvBuffer4",
-    )
+class solverFace(topologyFace, face_):
 
     faceType = "solver"
 
     def __init__(self, nface, ng=None):
-        super().__init__(nface)
+        face_.__init__(self)
+        topologyFace.__init__(self, nface)
         assert 1 <= nface <= 6, "nface must be between (1,6)"
         assert ng is not None, "ng must be specified to create a solverFace"
 
@@ -69,9 +49,10 @@ class solverFace(topologyFace):
             self.s2_ = [s_[:, :, i] for i in largeS2]
 
         # Boundary condition values
-        self.bcVals = frozenDict({})
+        self.bcArrays = {"qBcVals": None, "QBcVals": None}
         # Boundary function
-        self.bcFunc = walls.adiabaticSlipWall
+        # self.bcFunc = bcs.walls.adiabaticSlipWall
+        self.bcFunc = bcs.inlets.constantVelocitySubsonicInlet
 
         # MPI variables
         self.commRank = None
@@ -100,17 +81,17 @@ class solverFace(topologyFace):
         if bc in ["b0", "b1"]:
             self.bcFunc = null
         elif bc == "constantVelocitySubsonicInlet":
-            self.bcFunc = inlets.constantVelocitySubsonicInlet
+            self.bcFunc = bcs.inlets.constantVelocitySubsonicInlet
         elif bc == "constantPressureSubsonicExit":
-            self.bcFunc = exits.constantPressureSubsonicExit
+            self.bcFunc = bcs.exits.constantPressureSubsonicExit
         elif bc == "adiabaticNoSlipWall":
-            self.bcFunc = walls.adiabaticNoSlipWall
+            self.bcFunc = bcs.walls.adiabaticNoSlipWall
         elif bc == "adiabaticSlipWall":
-            self.bcFunc = walls.adiabaticSlipWall
+            self.bcFunc = bcs.walls.adiabaticSlipWall
         elif bc == "adiabaticMovingWall":
-            self.bcFunc = walls.adiabaticMovingWall
+            self.bcFunc = bcs.walls.adiabaticMovingWall
         elif bc == "isoTMovingWall":
-            self.bcFunc = walls.isoTMovingWall
+            self.bcFunc = bcs.walls.isoTMovingWall
         else:
             raise KeyError(f"{bc} is not a valid bcType")
 
