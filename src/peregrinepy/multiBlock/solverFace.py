@@ -49,7 +49,7 @@ class solverFace(topologyFace, face_):
             self.s2_ = [s_[:, :, i] for i in largeS2]
 
         # Boundary condition values
-        self.bcArrays = {"qBcVals": None, "QBcVals": None}
+        self.array = {"qBcVals": None, "QBcVals": None}
         # Boundary function
         self.bcFunc = bcs.walls.adiabaticSlipWall
 

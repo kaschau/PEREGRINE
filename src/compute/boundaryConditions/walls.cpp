@@ -58,6 +58,8 @@ void adiabaticNoSlipWall(
 
     for (int g = 0; g < b.ng; g++) {
       s0 -= plus * g;
+      s2 += plus * g;
+
       threeDsubview dqdx0 = getHaloSlice(b.dqdx, face._nface, s0);
       threeDsubview dqdy0 = getHaloSlice(b.dqdy, face._nface, s0);
       threeDsubview dqdz0 = getHaloSlice(b.dqdz, face._nface, s0);
@@ -69,34 +71,37 @@ void adiabaticNoSlipWall(
       Kokkos::parallel_for(
           "Constant velocity subsonic inlet euler terms", range_face,
           KOKKOS_LAMBDA(const int i, const int j) {
-            // extrapolate velocity gradients
-            dqdx0(i, j, 1) = 2.0 * dqdx1(i,j,1) - dqdx2(i, j, 1);
-            dqdx0(i, j, 2) = 2.0 * dqdx1(i,j,2) - dqdx2(i, j, 2);
-            dqdx0(i, j, 3) = 2.0 * dqdx1(i,j,3) - dqdx2(i, j, 2);
+            // extrapolate pressure, velocity gradients
+            dqdx0(i, j, 0) = 2.0 * dqdx1(i, j, 0) - dqdx2(i, j, 0);
+            dqdx0(i, j, 1) = 2.0 * dqdx1(i, j, 1) - dqdx2(i, j, 1);
+            dqdx0(i, j, 2) = 2.0 * dqdx1(i, j, 2) - dqdx2(i, j, 2);
+            dqdx0(i, j, 3) = 2.0 * dqdx1(i, j, 3) - dqdx2(i, j, 3);
 
-            dqdy0(i, j, 1) = 2.0 * dqdy1(i,j,1) - dqdy2(i, j, 1);
-            dqdy0(i, j, 2) = 2.0 * dqdy1(i,j,2) - dqdy2(i, j, 2);
-            dqdy0(i, j, 3) = 2.0 * dqdy1(i,j,3) - dqdy2(i, j, 2);
+            dqdy0(i, j, 0) = 2.0 * dqdy1(i, j, 0) - dqdy2(i, j, 0);
+            dqdy0(i, j, 1) = 2.0 * dqdy1(i, j, 1) - dqdy2(i, j, 1);
+            dqdy0(i, j, 2) = 2.0 * dqdy1(i, j, 2) - dqdy2(i, j, 2);
+            dqdy0(i, j, 3) = 2.0 * dqdy1(i, j, 3) - dqdy2(i, j, 3);
 
-            dqdz0(i, j, 1) = 2.0 * dqdz1(i,j,1) - dqdz2(i, j, 1);
-            dqdz0(i, j, 2) = 2.0 * dqdz1(i,j,2) - dqdz2(i, j, 2);
-            dqdz0(i, j, 3) = 2.0 * dqdz1(i,j,3) - dqdz2(i, j, 2);
+            dqdz0(i, j, 0) = 2.0 * dqdz1(i, j, 0) - dqdz2(i, j, 0);
+            dqdz0(i, j, 1) = 2.0 * dqdz1(i, j, 1) - dqdz2(i, j, 1);
+            dqdz0(i, j, 2) = 2.0 * dqdz1(i, j, 2) - dqdz2(i, j, 2);
+            dqdz0(i, j, 3) = 2.0 * dqdz1(i, j, 3) - dqdz2(i, j, 3);
 
-            // negate temp and species gradient (so gradient evaluates to zero on wall)
-            dqdx0(i, j, 4) = - dqdx1(i, j, 4);
-            dqdy0(i, j, 4) = - dqdy1(i, j, 4);
-            dqdz0(i, j, 4) = - dqdz1(i, j, 4);
+            // negate temp and species gradient (so gradient evaluates to zero
+            // on wall)
+            dqdx0(i, j, 4) = -dqdx1(i, j, 4);
+            dqdy0(i, j, 4) = -dqdy1(i, j, 4);
+            dqdz0(i, j, 4) = -dqdz1(i, j, 4);
 
             for (int n = 5; n < b.ne; n++) {
-              dqdx0(i, j, n) = - dqdx1(i, j, n);
-              dqdy0(i, j, n) = - dqdy1(i, j, n);
-              dqdz0(i, j, n) = - dqdz1(i, j, n);
+              dqdx0(i, j, n) = -dqdx1(i, j, n);
+              dqdy0(i, j, n) = -dqdy1(i, j, n);
+              dqdz0(i, j, n) = -dqdz1(i, j, n);
             }
           });
     }
   }
 };
-
 
 void adiabaticSlipWall(
     block_ b, const face_ face,
@@ -112,20 +117,20 @@ void adiabaticSlipWall(
   if (terms.compare("euler") == 0) {
 
     threeDsubview q1 = getHaloSlice(b.q, face._nface, s1);
-    twoDsubview nx,ny,nz;
+    twoDsubview nx, ny, nz;
 
     if (face._nface == 1 || face._nface == 2) {
       nx = getHaloSlice(b.inx, face._nface, s1);
-      ny = getHaloSlice(b.inx, face._nface, s1);
-      nz = getHaloSlice(b.inx, face._nface, s1);
-    }else if (face._nface == 3 || face._nface == 4) {
+      ny = getHaloSlice(b.iny, face._nface, s1);
+      nz = getHaloSlice(b.inz, face._nface, s1);
+    } else if (face._nface == 3 || face._nface == 4) {
       nx = getHaloSlice(b.jnx, face._nface, s1);
-      ny = getHaloSlice(b.jnx, face._nface, s1);
-      nz = getHaloSlice(b.jnx, face._nface, s1);
-    }else if (face._nface == 5 || face._nface == 6) {
+      ny = getHaloSlice(b.jny, face._nface, s1);
+      nz = getHaloSlice(b.jnz, face._nface, s1);
+    } else if (face._nface == 5 || face._nface == 6) {
       nx = getHaloSlice(b.knx, face._nface, s1);
-      ny = getHaloSlice(b.knx, face._nface, s1);
-      nz = getHaloSlice(b.knx, face._nface, s1);
+      ny = getHaloSlice(b.kny, face._nface, s1);
+      nz = getHaloSlice(b.knz, face._nface, s1);
     }
 
     MDRange2 range_face = MDRange2({0, 0}, {q1.extent(0), q1.extent(1)});
@@ -142,9 +147,9 @@ void adiabaticSlipWall(
             q0(i, j, 0) = q1(i, j, 0);
 
             // flip velo on wall
-            q0(i, j, 1) = q1(i, j, 1) - 2.0 * q1(i, j, 1) * nx(i,j);
-            q0(i, j, 2) = q1(i, j, 2) - 2.0 * q1(i, j, 2) * ny(i,j);
-            q0(i, j, 3) = q1(i, j, 3) - 2.0 * q1(i, j, 3) * nz(i,j);
+            q0(i, j, 1) = q1(i, j, 1) - 2.0 * q1(i, j, 1) * nx(i, j);
+            q0(i, j, 2) = q1(i, j, 2) - 2.0 * q1(i, j, 2) * ny(i, j);
+            q0(i, j, 3) = q1(i, j, 3) - 2.0 * q1(i, j, 3) * nz(i, j);
 
             // match temperature
             q0(i, j, 4) = q1(i, j, 4);
@@ -173,33 +178,36 @@ void adiabaticSlipWall(
           "Constant velocity subsonic inlet euler terms", range_face,
           KOKKOS_LAMBDA(const int i, const int j) {
             // neumann velocity gradients
-            dqdx0(i, j, 1) = dqdx1(i,j,1);
-            dqdx0(i, j, 2) = dqdx1(i,j,2);
-            dqdx0(i, j, 3) = dqdx1(i,j,3);
+            dqdx0(i, j, 0) = dqdx1(i, j, 0);
+            dqdx0(i, j, 1) = dqdx1(i, j, 1);
+            dqdx0(i, j, 2) = dqdx1(i, j, 2);
+            dqdx0(i, j, 3) = dqdx1(i, j, 3);
 
-            dqdy0(i, j, 1) = dqdy1(i,j,1);
-            dqdy0(i, j, 2) = dqdy1(i,j,2);
-            dqdy0(i, j, 3) = dqdy1(i,j,3);
+            dqdy0(i, j, 0) = dqdy1(i, j, 0);
+            dqdy0(i, j, 1) = dqdy1(i, j, 1);
+            dqdy0(i, j, 2) = dqdy1(i, j, 2);
+            dqdy0(i, j, 3) = dqdy1(i, j, 3);
 
-            dqdz0(i, j, 1) = dqdz1(i,j,1);
-            dqdz0(i, j, 2) = dqdz1(i,j,2);
-            dqdz0(i, j, 3) = dqdz1(i,j,3);
+            dqdz0(i, j, 0) = dqdz1(i, j, 0);
+            dqdz0(i, j, 1) = dqdz1(i, j, 1);
+            dqdz0(i, j, 2) = dqdz1(i, j, 2);
+            dqdz0(i, j, 3) = dqdz1(i, j, 3);
 
-            // negate temp and species gradient (so gradient evaluates to zero on wall)
-            dqdx0(i, j, 4) = - dqdx1(i, j, 4);
-            dqdy0(i, j, 4) = - dqdy1(i, j, 4);
-            dqdz0(i, j, 4) = - dqdz1(i, j, 4);
+            // negate temp and species gradient (so gradient evaluates to zero
+            // on wall)
+            dqdx0(i, j, 4) = -dqdx1(i, j, 4);
+            dqdy0(i, j, 4) = -dqdy1(i, j, 4);
+            dqdz0(i, j, 4) = -dqdz1(i, j, 4);
 
             for (int n = 5; n < b.ne; n++) {
-              dqdx0(i, j, n) = - dqdx1(i, j, n);
-              dqdy0(i, j, n) = - dqdy1(i, j, n);
-              dqdz0(i, j, n) = - dqdz1(i, j, n);
+              dqdx0(i, j, n) = -dqdx1(i, j, n);
+              dqdy0(i, j, n) = -dqdy1(i, j, n);
+              dqdz0(i, j, n) = -dqdz1(i, j, n);
             }
           });
     }
   }
 };
-
 
 void adiabaticMovingWall(
     block_ b, const face_ face,
@@ -254,6 +262,7 @@ void adiabaticMovingWall(
 
     for (int g = 0; g < b.ng; g++) {
       s0 -= plus * g;
+      s2 += plus * g;
       threeDsubview dqdx0 = getHaloSlice(b.dqdx, face._nface, s0);
       threeDsubview dqdy0 = getHaloSlice(b.dqdy, face._nface, s0);
       threeDsubview dqdz0 = getHaloSlice(b.dqdz, face._nface, s0);
@@ -266,33 +275,36 @@ void adiabaticMovingWall(
           "Constant velocity subsonic inlet euler terms", range_face,
           KOKKOS_LAMBDA(const int i, const int j) {
             // extrapolate velocity gradients
-            dqdx0(i, j, 1) = 2.0 * dqdx1(i,j,1) - dqdx2(i,j,1);
-            dqdx0(i, j, 2) = 2.0 * dqdx1(i,j,2) - dqdx2(i,j,2);
-            dqdx0(i, j, 3) = 2.0 * dqdx1(i,j,3) - dqdx2(i,j,3);
+            dqdx0(i, j, 0) = 2.0 * dqdx1(i, j, 0) - dqdx2(i, j, 0);
+            dqdx0(i, j, 1) = 2.0 * dqdx1(i, j, 1) - dqdx2(i, j, 1);
+            dqdx0(i, j, 2) = 2.0 * dqdx1(i, j, 2) - dqdx2(i, j, 2);
+            dqdx0(i, j, 3) = 2.0 * dqdx1(i, j, 3) - dqdx2(i, j, 3);
 
-            dqdy0(i, j, 1) = 2.0 * dqdy1(i,j,1) - dqdy2(i,j,1);
-            dqdy0(i, j, 2) = 2.0 * dqdy1(i,j,2) - dqdy2(i,j,2);
-            dqdy0(i, j, 3) = 2.0 * dqdy1(i,j,3) - dqdy2(i,j,3);
+            dqdy0(i, j, 0) = 2.0 * dqdy1(i, j, 0) - dqdy2(i, j, 0);
+            dqdy0(i, j, 1) = 2.0 * dqdy1(i, j, 1) - dqdy2(i, j, 1);
+            dqdy0(i, j, 2) = 2.0 * dqdy1(i, j, 2) - dqdy2(i, j, 2);
+            dqdy0(i, j, 3) = 2.0 * dqdy1(i, j, 3) - dqdy2(i, j, 3);
 
-            dqdz0(i, j, 1) = 2.0 * dqdz1(i,j,1) - dqdz2(i,j,1);
-            dqdz0(i, j, 2) = 2.0 * dqdz1(i,j,2) - dqdz2(i,j,2);
-            dqdz0(i, j, 3) = 2.0 * dqdz1(i,j,3) - dqdz2(i,j,3);
+            dqdz0(i, j, 0) = 2.0 * dqdz1(i, j, 0) - dqdz2(i, j, 0);
+            dqdz0(i, j, 1) = 2.0 * dqdz1(i, j, 1) - dqdz2(i, j, 1);
+            dqdz0(i, j, 2) = 2.0 * dqdz1(i, j, 2) - dqdz2(i, j, 2);
+            dqdz0(i, j, 3) = 2.0 * dqdz1(i, j, 3) - dqdz2(i, j, 3);
 
-            // negate temp and species gradient (so gradient evaluates to zero on wall)
-            dqdx0(i, j, 4) = - dqdx1(i, j, 4);
-            dqdy0(i, j, 4) = - dqdy1(i, j, 4);
-            dqdz0(i, j, 4) = - dqdz1(i, j, 4);
+            // negate temp and species gradient (so gradient evaluates to zero
+            // on wall)
+            dqdx0(i, j, 4) = -dqdx1(i, j, 4);
+            dqdy0(i, j, 4) = -dqdy1(i, j, 4);
+            dqdz0(i, j, 4) = -dqdz1(i, j, 4);
 
             for (int n = 5; n < b.ne; n++) {
-              dqdx0(i, j, n) = - dqdx1(i, j, n);
-              dqdy0(i, j, n) = - dqdy1(i, j, n);
-              dqdz0(i, j, n) = - dqdz1(i, j, n);
+              dqdx0(i, j, n) = -dqdx1(i, j, n);
+              dqdy0(i, j, n) = -dqdy1(i, j, n);
+              dqdz0(i, j, n) = -dqdz1(i, j, n);
             }
           });
     }
   }
 };
-
 
 void isoTMovingWall(
     block_ b, const face_ face,
@@ -312,7 +324,6 @@ void isoTMovingWall(
 
     for (int g = 0; g < b.ng; g++) {
       s0 -= plus * g;
-      s2 += plus * g;
 
       threeDsubview q0 = getHaloSlice(b.q, face._nface, s0);
 
@@ -347,6 +358,7 @@ void isoTMovingWall(
 
     for (int g = 0; g < b.ng; g++) {
       s0 -= plus * g;
+      s2 += plus * g;
       threeDsubview dqdx0 = getHaloSlice(b.dqdx, face._nface, s0);
       threeDsubview dqdy0 = getHaloSlice(b.dqdy, face._nface, s0);
       threeDsubview dqdz0 = getHaloSlice(b.dqdz, face._nface, s0);
@@ -359,28 +371,30 @@ void isoTMovingWall(
           "Constant velocity subsonic inlet euler terms", range_face,
           KOKKOS_LAMBDA(const int i, const int j) {
             // extrapolate velocity gradients
-            dqdx0(i, j, 1) = 2.0 * dqdx1(i,j,1) - dqdx2(i,j,1);
-            dqdx0(i, j, 2) = 2.0 * dqdx1(i,j,2) - dqdx2(i,j,2);
-            dqdx0(i, j, 3) = 2.0 * dqdx1(i,j,3) - dqdx2(i,j,3);
-
-            dqdy0(i, j, 1) = 2.0 * dqdy1(i,j,1) - dqdy2(i,j,1);
-            dqdy0(i, j, 2) = 2.0 * dqdy1(i,j,2) - dqdy2(i,j,2);
-            dqdy0(i, j, 3) = 2.0 * dqdy1(i,j,3) - dqdy2(i,j,3);
-
-            dqdz0(i, j, 1) = 2.0 * dqdz1(i,j,1) - dqdz2(i,j,1);
-            dqdz0(i, j, 2) = 2.0 * dqdz1(i,j,2) - dqdz2(i,j,2);
-            dqdz0(i, j, 3) = 2.0 * dqdz1(i,j,3) - dqdz2(i,j,3);
-
             // extrapolate temp gradient
-            dqdz0(i, j, 4) = 2.0 * dqdz1(i,j,4) - dqdz2(i,j,4);
-            dqdz0(i, j, 4) = 2.0 * dqdz1(i,j,4) - dqdz2(i,j,4);
-            dqdz0(i, j, 4) = 2.0 * dqdz1(i,j,4) - dqdz2(i,j,4);
+            dqdx0(i, j, 0) = 2.0 * dqdx1(i, j, 0) - dqdx2(i, j, 0);
+            dqdx0(i, j, 1) = 2.0 * dqdx1(i, j, 1) - dqdx2(i, j, 1);
+            dqdx0(i, j, 2) = 2.0 * dqdx1(i, j, 2) - dqdx2(i, j, 2);
+            dqdx0(i, j, 3) = 2.0 * dqdx1(i, j, 3) - dqdx2(i, j, 3);
+            dqdx0(i, j, 4) = 2.0 * dqdx1(i, j, 4) - dqdx2(i, j, 4);
+
+            dqdy0(i, j, 0) = 2.0 * dqdy1(i, j, 0) - dqdy2(i, j, 0);
+            dqdy0(i, j, 1) = 2.0 * dqdy1(i, j, 1) - dqdy2(i, j, 1);
+            dqdy0(i, j, 2) = 2.0 * dqdy1(i, j, 2) - dqdy2(i, j, 2);
+            dqdy0(i, j, 3) = 2.0 * dqdy1(i, j, 3) - dqdy2(i, j, 3);
+            dqdy0(i, j, 4) = 2.0 * dqdy1(i, j, 4) - dqdy2(i, j, 4);
+
+            dqdz0(i, j, 0) = 2.0 * dqdz1(i, j, 0) - dqdz2(i, j, 0);
+            dqdz0(i, j, 1) = 2.0 * dqdz1(i, j, 1) - dqdz2(i, j, 1);
+            dqdz0(i, j, 2) = 2.0 * dqdz1(i, j, 2) - dqdz2(i, j, 2);
+            dqdz0(i, j, 3) = 2.0 * dqdz1(i, j, 3) - dqdz2(i, j, 3);
+            dqdz0(i, j, 4) = 2.0 * dqdz1(i, j, 4) - dqdz2(i, j, 4);
 
             // negate species gradient (so gradient evaluates to zero on wall)
             for (int n = 5; n < b.ne; n++) {
-              dqdx0(i, j, n) = - dqdx1(i, j, n);
-              dqdy0(i, j, n) = - dqdy1(i, j, n);
-              dqdz0(i, j, n) = - dqdz1(i, j, n);
+              dqdx0(i, j, n) = -dqdx1(i, j, n);
+              dqdy0(i, j, n) = -dqdy1(i, j, n);
+              dqdz0(i, j, n) = -dqdz1(i, j, n);
             }
           });
     }
