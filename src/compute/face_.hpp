@@ -10,7 +10,7 @@ struct face_ {
 
   // face number
   int _nface;
-  // Grid Arrays
+  // Boundary condition value arrays
   oneDview qBcVals, QBcVals;
 
 };
