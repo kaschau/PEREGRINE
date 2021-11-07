@@ -86,7 +86,37 @@ threeDsubview getHaloSlice(fourDview view, const int nface, int slice) {
     break;
   default:
     std::cout << nface;
-    throw std::invalid_argument(" <-- Unknown argument to subviewSlice");
+    throw std::invalid_argument(" <-- Unknown argument to getHaloSlice");
+  }
+
+  return subview;
+};
+
+twoDsubview getHaloSlice(threeDview view, const int nface, int slice) {
+
+  twoDsubview subview;
+  switch (nface) {
+  case 1:
+  case 2:
+    // face 1 halo
+    subview =
+        Kokkos::subview(view, slice, Kokkos::ALL, Kokkos::ALL);
+    break;
+  case 3:
+  case 4:
+    // face 3,4 face slices
+    subview =
+        Kokkos::subview(view, Kokkos::ALL, slice, Kokkos::ALL);
+    break;
+  case 5:
+  case 6:
+    // face 5,6 face slices
+    subview =
+        Kokkos::subview(view, Kokkos::ALL, Kokkos::ALL, slice);
+    break;
+  default:
+    std::cout << nface;
+    throw std::invalid_argument(" <-- Unknown argument to getHaloSlice");
   }
 
   return subview;
