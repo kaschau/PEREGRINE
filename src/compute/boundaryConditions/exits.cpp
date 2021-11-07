@@ -35,7 +35,7 @@ void constantPressureSubsonicExit(
             q0(i, j, 0) = 2.0 * face.qBcVals(0) - q1(i, j, 0);
 
             // extrapolate everything else
-            for (int l = 1; l <= b.ne; l++) {
+            for (int l = 1; l < b.ne; l++) {
               q0(i, j, l) = 2.0 * q1(i, j, l) - q2(i, j, l);
             }
           });

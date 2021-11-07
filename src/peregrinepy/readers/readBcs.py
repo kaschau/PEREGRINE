@@ -60,8 +60,8 @@ def readBcs(mb, pathToFile):
                 )
 
             # Set the boundary condition values
-            face.bcArrays["qBcVals"] = np.zeros(5 + blk.ns)
-            face.bcArrays["QBcVals"] = np.zeros(5 + blk.ns)
+            face.array["qBcVals"] = np.zeros(5 + blk.ns - 1)
+            face.array["QBcVals"] = np.zeros(5 + blk.ns - 1)
             qIndexMap = {"p": 0, "u": 1, "v": 2, "w": 3, "T": 4}
             QIndexMap = {"rho": 0, "rhou": 1, "rhov": 2, "rhow": 3, "rhoE": 4}
             for i in range(blk.ns):
@@ -72,19 +72,11 @@ def readBcs(mb, pathToFile):
                 for key in bcsIn[bcFam]["bcVals"]:
                     if key in qIndexMap.keys():
                         indx = qIndexMap[key]
-                        face.bcArrays["qBcVals"][indx] = float(
-                            bcsIn[bcFam]["bcVals"][key]
-                        )
+                        face.array["qBcVals"][indx] = float(bcsIn[bcFam]["bcVals"][key])
                     elif key in QIndexMap.keys():
-                        face.bcArrays["QBcVals"][indx] = float(
-                            bcsIn[bcFam]["bcVals"][key]
-                        )
+                        face.array["QBcVals"][indx] = float(bcsIn[bcFam]["bcVals"][key])
                     else:
                         raise KeyError("ERROR, unknown input bcVal: {key}")
-
-            # Now add any un-specified species as zero (unless we have single component)
-            if blk.ns == 1:
-                face.bcArrays["qBcVals"][-1] = 1.0
 
             # If we are a solver face, we need to create the kokkos arrays
             if face.faceType == "solver":
