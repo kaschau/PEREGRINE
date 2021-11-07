@@ -11,5 +11,7 @@ void bindBoundaryConditions(py::module_ &m) {
   py::module inlets = bcs.def_submodule("inlets", "inlet boundary conditions module");
   inlets.def("constantVelocitySubsonicInlet", &constantVelocitySubsonicInlet, "Const velo subsonic inlet",
         py::arg("block_ object"),
-        py::arg("face_ object"));
+        py::arg("face_ object"),
+        py::arg("eos pointer"),
+        py::arg("thtrdat_ object"));
 }

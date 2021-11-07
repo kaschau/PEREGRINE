@@ -3,8 +3,9 @@
 #include "compute.hpp"
 #include "face_.hpp"
 #include "kokkos_types.hpp"
+#include "thtrdat_.hpp"
 
-void constantVelocitySubsonicInlet(block_ b, const face_ face) {
+void constantVelocitySubsonicInlet(block_ b, const face_ face, const std::function<void(block_ , thtrdat_ , int , std::string)> &eos, thtrdat_ th) {
   //-------------------------------------------------------------------------------------------|
   // Apply BC to face, slice by slice.
   //-------------------------------------------------------------------------------------------|
@@ -44,4 +45,6 @@ void constantVelocitySubsonicInlet(block_ b, const face_ face) {
           }
         });
   }
+
+  eos(b, th, face._nface, "prims");
 };
