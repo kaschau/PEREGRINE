@@ -1,6 +1,7 @@
 #include "compute.hpp"
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
+#include <pybind11/functional.h>
 
 namespace py = pybind11;
 
@@ -13,5 +14,6 @@ void bindBoundaryConditions(py::module_ &m) {
         py::arg("block_ object"),
         py::arg("face_ object"),
         py::arg("eos pointer"),
-        py::arg("thtrdat_ object"));
+        py::arg("thtrdat_ object"),
+        py::arg("terms"));
 }

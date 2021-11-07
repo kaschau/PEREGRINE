@@ -2,9 +2,9 @@
 #define __compute_H__
 
 #include "Kokkos_Core.hpp"
-#include "kokkos_types.hpp"
 #include "block_.hpp"
 #include "face_.hpp"
+#include "kokkos_types.hpp"
 #include "thtrdat_.hpp"
 #include <string>
 
@@ -12,9 +12,11 @@
 ////////////////// Compute Functions //////////////////////
 ///////////////////////////////////////////////////////////
 // ./range_map.cpp
-MDRange3 get_range3(block_ b, const int nface, const int i=0, const int j=0, const int k=0);
+MDRange3 get_range3(block_ b, const int nface, const int i = 0, const int j = 0,
+                    const int k = 0);
 threeDsubview getHaloSlice(fourDview view, const int nface, int slice);
-void setHaloSlices(int& s0, int& s1, int& s2, int& plus, const int ni, const int nj, const int nk, const int ng, const int nface);
+void setHaloSlices(int &s0, int &s1, int &s2, int &plus, const int ni,
+                   const int nj, const int nk, const int ng, const int nface);
 
 // ./advFlux
 //    |------> secondOrderKEEP
@@ -30,13 +32,14 @@ void jamesonDissipation(block_ b, const thtrdat_ th);
 
 // ./boundaryConditions
 //    |------> inlets
-void constantVelocitySubsonicInlet(block_ b, const face_ face, const std::function<void(block_ , thtrdat_ , int , std::string)> &eos, thtrdat_ th);
-
+void constantVelocitySubsonicInlet(
+    block_ b, const face_ face,
+    const std::function<void(block_, thtrdat_, int, std::string)> &eos,
+    thtrdat_ th, std::string terms);
 
 // ./diffFlux
 //    |------> diffusiveFlux
 void diffusiveFlux(block_ b, const thtrdat_ th);
-
 
 // ./switches
 //    |------> jameson
@@ -53,59 +56,30 @@ void noInoJFlux(block_ b);
 void noInoKFlux(block_ b);
 void noJnoKFlux(block_ b);
 
-
 // ./thermo
 //    |------> cpg
-void cpg(block_ b,
-         const thtrdat_ th,
-         const int face,
-         const std::string given,
-         const int i=0,
-         const int j=0,
-         const int k=0);
+void cpg(block_ b, const thtrdat_ th, const int face, const std::string given,
+         const int i = 0, const int j = 0, const int k = 0);
 //    |------> tpg
-void tpg(block_ b,
-         const thtrdat_ th,
-         const int face,
-         const std::string given,
-         const int i=0,
-         const int j=0,
-         const int k=0);
-
+void tpg(block_ b, const thtrdat_ th, const int face, const std::string given,
+         const int i = 0, const int j = 0, const int k = 0);
 
 // ./transport
 //    |------> kineticThreory
-void kineticTheory(block_ b,
-                   const thtrdat_ th,
-                   const int face,
-                   const int i=0,
-                   const int j=0,
-                   const int k=0);
+void kineticTheory(block_ b, const thtrdat_ th, const int face, const int i = 0,
+                   const int j = 0, const int k = 0);
 //    |------> constantProps
-void constantProps(block_ b,
-                   const thtrdat_ th,
-                   const int face,
-                   const int i=0,
-                   const int j=0,
-                   const int k=0);
-
+void constantProps(block_ b, const thtrdat_ th, const int face, const int i = 0,
+                   const int j = 0, const int k = 0);
 
 // ./chemistry
 //    |------> CH4_O2_Stanford_Skeletal
-void chem_CH4_O2_Stanford_Skeletal(block_ b,
-                             const thtrdat_ th,
-                             const int face,
-                             const int i=0,
-                             const int j=0,
-                             const int k=0);
+void chem_CH4_O2_Stanford_Skeletal(block_ b, const thtrdat_ th, const int face,
+                                   const int i = 0, const int j = 0,
+                                   const int k = 0);
 //    |------> GRI30
-void chem_GRI30(block_ b,
-          const thtrdat_ th,
-          const int face,
-          const int i=0,
-          const int j=0,
-          const int k=0);
-
+void chem_GRI30(block_ b, const thtrdat_ th, const int face, const int i = 0,
+                const int j = 0, const int k = 0);
 
 // ./utils
 //    |------> applyFluxes
