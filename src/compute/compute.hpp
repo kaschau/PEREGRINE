@@ -1,6 +1,7 @@
 #ifndef __compute_H__
 #define __compute_H__
 
+#include "Kokkos_Core.hpp"
 #include "kokkos_types.hpp"
 #include "block_.hpp"
 #include "face_.hpp"
@@ -10,8 +11,10 @@
 ///////////////////////////////////////////////////////////
 ////////////////// Compute Functions //////////////////////
 ///////////////////////////////////////////////////////////
-MDRange2 get_range2(block_ b, const int nface);
+// ./range_map.cpp
 MDRange3 get_range3(block_ b, const int nface, const int i=0, const int j=0, const int k=0);
+threeDsubview getHaloSlice(fourDview view, const int nface, int slice);
+void setHaloSlices(int& s0, int& s1, int& s2, int& plus, const int ni, const int nj, const int nk, const int ng, const int nface);
 
 // ./advFlux
 //    |------> secondOrderKEEP
