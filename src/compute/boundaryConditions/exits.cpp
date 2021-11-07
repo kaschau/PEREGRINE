@@ -5,7 +5,7 @@
 #include "kokkos_types.hpp"
 #include "thtrdat_.hpp"
 
-void constantVelocitySubsonicInlet(
+void constantPressureSubsonicExit(
     block_ b, const face_ face,
     const std::function<void(block_, thtrdat_, int, std::string)> &eos,
     thtrdat_ th, std::string terms) {
@@ -31,22 +31,12 @@ void constantVelocitySubsonicInlet(
       Kokkos::parallel_for(
           "Constant velocity subsonic inlet euler terms", range_face,
           KOKKOS_LAMBDA(const int i, const int j) {
-            // extrapolate pressure
-            q0(i, j, 0) = 2.0 * q1(i, j, 0) - q2(i, j, 0);
+            // set pressure
+            q0(i, j, 0) = 2.0 * face.qBcVals(0) - q1(i, j, 0);
 
-            // apply velo on face
-            q0(i, j, 1) = 2.0 * face.qBcVals(1) - q1(i, j, 1);
-            q0(i, j, 2) = 2.0 * face.qBcVals(2) - q1(i, j, 2);
-            q0(i, j, 3) = 2.0 * face.qBcVals(3) - q1(i, j, 3);
-
-            // apply temperature on face
-            q0(i, j, 4) = 2.0 * face.qBcVals(4) - q1(i, j, 4);
-
-            // apply species on face
-            // TODO: This is an unprotected extrapolation.
-            // Is this a good thing to be doing?
-            for (int n = 5; n < b.ne; n++) {
-              q0(i, j, n) = 2.0 * face.qBcVals(n) - q1(i, j, n);
+            // extrapolate everything else
+            for (int l = 1; l <= b.ne; l++) {
+              q0(i, j, l) = 2.0 * q1(i, j, l) - q2(i, j, l);
             }
           });
     }
@@ -79,8 +69,7 @@ void constantVelocitySubsonicInlet(
   }
 };
 
-
-void supersonicInlet(
+void supersonicExit(
     block_ b, const face_ face,
     const std::function<void(block_, thtrdat_, int, std::string)> &eos,
     thtrdat_ th, std::string terms) {
@@ -94,7 +83,9 @@ void supersonicInlet(
   if (terms.compare("euler") == 0) {
 
     threeDsubview q1 = getHaloSlice(b.q, face._nface, s1);
-    MDRange2 range_face = MDRange2({0, 0}, {q1.extent(0), q1.extent(1)});
+    MDRange3 range_face =
+        MDRange3({0, 0, 0}, {static_cast<long>(q1.extent(0)),
+                             static_cast<long>(q1.extent(1)), b.ne});
 
     for (int g = 0; g < b.ng; g++) {
       s0 -= plus * g;
@@ -105,24 +96,9 @@ void supersonicInlet(
 
       Kokkos::parallel_for(
           "Constant velocity subsonic inlet euler terms", range_face,
-          KOKKOS_LAMBDA(const int i, const int j) {
-            // apply pressure on face
-            q0(i, j, 0) = 2.0 * face.qBcVals(0) - q1(i, j, 0);
-
-            // apply velo on face
-            q0(i, j, 1) = 2.0 * face.qBcVals(1) - q1(i, j, 1);
-            q0(i, j, 2) = 2.0 * face.qBcVals(2) - q1(i, j, 2);
-            q0(i, j, 3) = 2.0 * face.qBcVals(3) - q1(i, j, 3);
-
-            // apply temperature on face
-            q0(i, j, 4) = 2.0 * face.qBcVals(4) - q1(i, j, 4);
-
-            // apply species on face
-            // TODO: This is an unprotected extrapolation.
-            // Is this a good thing to be doing?
-            for (int n = 5; n < b.ne; n++) {
-              q0(i, j, n) = 2.0 * face.qBcVals(n) - q1(i, j, n);
-            }
+          KOKKOS_LAMBDA(const int i, const int j, const int l) {
+            // extrapolate everything
+            q0(i, j, l) = 2.0 * q1(i, j, l) - q2(i, j, l);
           });
     }
     eos(b, th, face._nface, "prims");

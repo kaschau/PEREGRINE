@@ -51,8 +51,7 @@ class solverFace(topologyFace, face_):
         # Boundary condition values
         self.bcArrays = {"qBcVals": None, "QBcVals": None}
         # Boundary function
-        # self.bcFunc = bcs.walls.adiabaticSlipWall
-        self.bcFunc = bcs.inlets.constantVelocitySubsonicInlet
+        self.bcFunc = bcs.walls.adiabaticSlipWall
 
         # MPI variables
         self.commRank = None

@@ -15,6 +15,7 @@
 MDRange3 get_range3(block_ b, const int nface, const int i = 0, const int j = 0,
                     const int k = 0);
 threeDsubview getHaloSlice(fourDview view, const int nface, int slice);
+twoDsubview getHaloSlice(threeDview view, const int nface, int slice);
 void setHaloSlices(int &s0, int &s1, int &s2, int &plus, const int ni,
                    const int nj, const int nk, const int ng, const int nface);
 
@@ -33,6 +34,36 @@ void jamesonDissipation(block_ b, const thtrdat_ th);
 // ./boundaryConditions
 //    |------> inlets
 void constantVelocitySubsonicInlet(
+    block_ b, const face_ face,
+    const std::function<void(block_, thtrdat_, int, std::string)> &eos,
+    thtrdat_ th, std::string terms);
+void supersonicInlet(
+    block_ b, const face_ face,
+    const std::function<void(block_, thtrdat_, int, std::string)> &eos,
+    thtrdat_ th, std::string terms);
+//    |------> walls
+void adiabaticNoSlipWall(
+    block_ b, const face_ face,
+    const std::function<void(block_, thtrdat_, int, std::string)> &eos,
+    thtrdat_ th, std::string terms);
+void adiabaticSlipWall(
+    block_ b, const face_ face,
+    const std::function<void(block_, thtrdat_, int, std::string)> &eos,
+    thtrdat_ th, std::string terms);
+void adiabaticMovingWall(
+    block_ b, const face_ face,
+    const std::function<void(block_, thtrdat_, int, std::string)> &eos,
+    thtrdat_ th, std::string terms);
+void isoTMovingWall(
+    block_ b, const face_ face,
+    const std::function<void(block_, thtrdat_, int, std::string)> &eos,
+    thtrdat_ th, std::string terms);
+//    |------> exits
+void constantPressureSubsonicExit(
+    block_ b, const face_ face,
+    const std::function<void(block_, thtrdat_, int, std::string)> &eos,
+    thtrdat_ th, std::string terms);
+void supersonicExit(
     block_ b, const face_ face,
     const std::function<void(block_, thtrdat_, int, std::string)> &eos,
     thtrdat_ th, std::string terms);
