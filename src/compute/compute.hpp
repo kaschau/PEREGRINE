@@ -30,7 +30,7 @@ void jamesonDissipation(block_ b, const thtrdat_ th);
 
 // ./boundaryConditions
 //    |------> inlets
-void constantVelocitySubsonicInlet(block_ b, const face_ th);
+void constantVelocitySubsonicInlet(block_ b, const face_ face, const std::function<void(block_ , thtrdat_ , int , std::string)> &eos, thtrdat_ th);
 
 
 // ./diffFlux
