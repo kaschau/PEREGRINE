@@ -77,21 +77,18 @@ class solverFace(topologyFace, face_):
     def setBcFunc(self):
 
         bc = self.bcType
+        tempBcFunc = self.bcFunc
         if bc in ["b0", "b1"]:
             self.bcFunc = null
-        elif bc == "constantVelocitySubsonicInlet":
-            self.bcFunc = bcs.inlets.constantVelocitySubsonicInlet
-        elif bc == "constantPressureSubsonicExit":
-            self.bcFunc = bcs.exits.constantPressureSubsonicExit
-        elif bc == "adiabaticNoSlipWall":
-            self.bcFunc = bcs.walls.adiabaticNoSlipWall
-        elif bc == "adiabaticSlipWall":
-            self.bcFunc = bcs.walls.adiabaticSlipWall
-        elif bc == "adiabaticMovingWall":
-            self.bcFunc = bcs.walls.adiabaticMovingWall
-        elif bc == "isoTMovingWall":
-            self.bcFunc = bcs.walls.isoTMovingWall
         else:
+            for bcmodule in [bcs.inlets, bcs.exists, bcs.walls]:
+                try:
+                    self.bcFunc = getattr(bcmodule, bc)
+                    break
+                except AttributeError:
+                    pass
+
+        if self.bcFunc == tempBcFunc:
             raise KeyError(f"{bc} is not a valid bcType")
 
     def setCommBuffers(self, ni, nj, nk, ne, nblki):
