@@ -32,4 +32,4 @@ void dq2FD(block_ b) {
                       0.5*( b.q(i  ,j  ,k+1,l) - b.q(i  ,j  ,k-1,l) ) * b.dXdz(i,j,k) ;
   });
 
-};
+}

@@ -15,9 +15,9 @@ def adiabaticNoSlipWall(eos, blk, face, thtrdat, terms):
         eos(blk, thtrdat, nface, "prims")
 
     elif terms == "viscous":
-        dvelodx = blk.array["dqdx"][:, :, :, 1:4]
-        dvelody = blk.array["dqdy"][:, :, :, 1:4]
-        dvelodz = blk.array["dqdz"][:, :, :, 1:4]
+        dvelodx = blk.array["dqdx"][:, :, :, 0:4]
+        dvelody = blk.array["dqdy"][:, :, :, 0:4]
+        dvelodz = blk.array["dqdz"][:, :, :, 0:4]
 
         dTNdx = blk.array["dqdx"][:, :, :, 4::]
         dTNdy = blk.array["dqdy"][:, :, :, 4::]
@@ -58,6 +58,7 @@ def adiabaticSlipWall(eos, blk, face, thtrdat, terms):
         else:
             raise ValueError("Unknown nface")
 
+        TN = blk.array["q"][:, :, :, 4::]
         for s0_ in face.s0_:
             p[s0_] = p[face.s1_]
 
@@ -65,7 +66,6 @@ def adiabaticSlipWall(eos, blk, face, thtrdat, terms):
             v[s0_] = v[face.s1_] - 2.0 * v[face.s1_] * ny[face.s1_]
             w[s0_] = w[face.s1_] - 2.0 * w[face.s1_] * nz[face.s1_]
 
-            TN = blk.array["q"][:, :, :, 4::]
             TN[s0_] = TN[face.s1_]
 
         # Update conservatives
@@ -73,9 +73,9 @@ def adiabaticSlipWall(eos, blk, face, thtrdat, terms):
 
     elif terms == "viscous":
 
-        dvelodx = blk.array["dqdx"][:, :, :, 1:4]
-        dvelody = blk.array["dqdy"][:, :, :, 1:4]
-        dvelodz = blk.array["dqdz"][:, :, :, 1:4]
+        dvelodx = blk.array["dqdx"][:, :, :, 0:4]
+        dvelody = blk.array["dqdy"][:, :, :, 0:4]
+        dvelodz = blk.array["dqdz"][:, :, :, 0:4]
         dTNdx = blk.array["dqdx"][:, :, :, 4::]
         dTNdy = blk.array["dqdy"][:, :, :, 4::]
         dTNdz = blk.array["dqdz"][:, :, :, 4::]
@@ -115,9 +115,9 @@ def adiabaticMovingWall(eos, blk, face, thtrdat, terms):
 
     elif terms == "viscous":
         # extrapolate velocity gradient
-        dvelodx = blk.array["dqdx"][:, :, :, 1:4]
-        dvelody = blk.array["dqdy"][:, :, :, 1:4]
-        dvelodz = blk.array["dqdz"][:, :, :, 1:4]
+        dvelodx = blk.array["dqdx"][:, :, :, 0:4]
+        dvelody = blk.array["dqdy"][:, :, :, 0:4]
+        dvelodz = blk.array["dqdz"][:, :, :, 0:4]
 
         dTNdx = blk.array["dqdx"][:, :, :, 4::]
         dTNdy = blk.array["dqdy"][:, :, :, 4::]

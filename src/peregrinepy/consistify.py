@@ -19,7 +19,7 @@ def consistify(mb):
 
         # Apply euler boundary conditions
         for face in blk.faces:
-            face.bcFunc(mb.eos, blk, face, mb.thtrdat, "euler")
+            face.bcFunc(blk, face, mb.eos, mb.thtrdat, "euler")
 
         # Update transport properties
         mb.trans(blk, mb.thtrdat, -1)
@@ -31,7 +31,7 @@ def consistify(mb):
         if mb.config["RHS"]["diffusion"]:
             # Apply viscous boundary conditions
             for face in blk.faces:
-                face.bcFunc(mb.eos, blk, face, mb.thtrdat, "viscous")
+                face.bcFunc(blk, face, mb.eos, mb.thtrdat, "viscous")
 
         # Update switch
         mb.switch(blk)

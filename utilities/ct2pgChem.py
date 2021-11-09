@@ -139,12 +139,12 @@ def ct2pg_chem(ctyaml, cpp):
         '#include "compute.hpp"\n'
         "#include <math.h>\n"
         "\n"
-        f'void {cpp.replace(".cpp","")}(block_ b, thtrdat_ th, int face/*=0*/, int i/*=0*/, int j/*=0*/, int k/*=0*/) {{\n'
+        f'void {cpp.replace(".cpp","")}(block_ b, thtrdat_ th, int face/*=0*/, int indxI/*=0*/, int indxJ/*=0*/, int indxK/*=0*/) {{\n'
         "\n"
         "// --------------------------------------------------------------|\n"
         "// cc range\n"
         "// --------------------------------------------------------------|\n"
-        "  MDRange3 range = get_range3(b, face, i, j, k);\n"
+        "  MDRange3 range = get_range3(b, face, indxI, indxJ, indxK);\n"
         "\n"
         '  Kokkos::parallel_for("Compute chemical source terms",\n'
         "                       range,\n"
@@ -152,12 +152,11 @@ def ct2pg_chem(ctyaml, cpp):
         "                                     const int j,\n"
         "                                     const int k) {\n"
         "\n"
-        "  double T,logT,prefRuT;\n"
-        "  double rho = b.Q(i,j,k,0);\n"
+        "  double& T = b.q(i,j,k,4);\n"
+        "  double& rho = b.Q(i,j,k,0);\n"
         f"  double Y[{ns}];\n"
-        "  T = b.q(i,j,k,4);\n"
-        "  logT = log(T);\n"
-        "  prefRuT = 101325.0/(th.Ru*T);\n"
+        "  const double logT = log(T);\n"
+        "  const double prefRuT = 101325.0/(th.Ru*T);\n"
         "\n"
         "  // Compute nth species Y\n"
         f"  Y[{ns-1}] = 1.0;\n"

@@ -7,12 +7,12 @@
 
 void kineticTheory(block_ b,
              const thtrdat_ th,
-             const int face,
-             const int i/*=0*/,
-             const int j/*=0*/,
-             const int k/*=0*/) {
+             const int nface,
+             const int indxI/*=0*/,
+             const int indxJ/*=0*/,
+             const int indxK/*=0*/) {
 
-  MDRange3 range = get_range3(b, face, i, j, k);
+  MDRange3 range = get_range3(b, nface, indxI, indxJ, indxK);
   Kokkos::Experimental::UniqueToken<exec_space> token;
   int numIds = token.size();
 
@@ -27,6 +27,7 @@ void kineticTheory(block_ b,
   threeDview Dij("Dij", ns, ns, numIds);
   twoDview D("D", ns, numIds);
 
+  // poly'l degree
   const int deg = 4;
 
   Kokkos::parallel_for("Compute transport properties mu,kappa,Dij from poly'l",
@@ -36,13 +37,10 @@ void kineticTheory(block_ b,
                                      const int k) {
   int id = token.acquire();
 
-  // poly'l degree
-  double p;
-  double T;
-  double MWmix;
+  double& p = b.q(i,j,k,0);
+  double& T = b.q(i,j,k,4);
 
-  p = b.q(i,j,k,0);
-  T = b.q(i,j,k,4);
+
   // Compute nth species Y
   Y(ns-1,id) = 1.0;
   for (int n=0; n<ns-1; n++)
@@ -59,19 +57,17 @@ void kineticTheory(block_ b,
   {
     mass += Y(n,id)/th.MW(n);
   }
-  for (int n=0; n<=ns-1; n++)
-  {
-    X(n,id) = Y(n,id)/th.MW(n)/mass;
-  }
-  // Mean molecular weight
+
+  // Mean molecular weight, mole fraction
+  double MWmix;
   MWmix = 0.0;
   for (int n=0; n<=ns-1; n++)
   {
+    X(n,id) = Y(n,id)/th.MW(n)/mass;
     MWmix += X(n,id)*th.MW(n);
   }
 
   // Evaluate all property polynomials
-
   int indx;
   double logT = log(T);
   double sqrt_T = exp(0.5*logT);

@@ -38,6 +38,7 @@ set(CMAKE_INTERPROCEDURAL_OPTIMIZATION OFF )
 #Add all da files
 file( GLOB compute_src ${PROJECT_SOURCE_DIR}/src/compute/*.cpp
                        ${PROJECT_SOURCE_DIR}/src/compute/advFlux/*.cpp
+                       ${PROJECT_SOURCE_DIR}/src/compute/boundaryConditions/*.cpp
                        ${PROJECT_SOURCE_DIR}/src/compute/diffFlux/*.cpp
                        ${PROJECT_SOURCE_DIR}/src/compute/thermo/*.cpp
                        ${PROJECT_SOURCE_DIR}/src/compute/switches/*.cpp
