@@ -77,7 +77,7 @@ void constantVelocitySubsonicInlet(
           });
     }
   }
-};
+}
 
 
 void supersonicInlet(
@@ -152,4 +152,4 @@ void supersonicInlet(
           });
     }
   }
-};
+}

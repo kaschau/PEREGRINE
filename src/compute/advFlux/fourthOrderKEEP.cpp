@@ -184,11 +184,6 @@ void fourthOrderKEEP(block_ b, const thtrdat_ th) {
                                                                     const int j,
                                                                     const int k) {
 
-    const int order = 4;
-    constexpr int q = order/2;
-    constexpr int narray = (q*q+q)/2;
-    constexpr double aq[2] = {2.0/3.0, -1.0/12.0};
-
     double V;
     double uf=0.0;
     double vf=0.0;
@@ -354,11 +349,6 @@ void fourthOrderKEEP(block_ b, const thtrdat_ th) {
                                                                     const int j,
                                                                     const int k) {
 
-    const int order = 4;
-    constexpr int q = order/2;
-    constexpr int narray = (q*q+q)/2;
-    constexpr double aq[2] = {2.0/3.0, -1.0/12.0};
-
     double W;
     double uf=0.0;
     double vf=0.0;
@@ -516,4 +506,4 @@ void fourthOrderKEEP(block_ b, const thtrdat_ th) {
 
   });
 
-};
+}

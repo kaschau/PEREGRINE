@@ -323,4 +323,4 @@ void ausmPlusUp(block_ b, const thtrdat_ th) {
 
   });
 
-};
+}

@@ -12,8 +12,8 @@
 ////////////////// Compute Functions //////////////////////
 ///////////////////////////////////////////////////////////
 // ./range_map.cpp
-MDRange3 get_range3(block_ b, const int nface, const int i = 0, const int j = 0,
-                    const int k = 0);
+MDRange3 get_range3(block_ b, const int nface, const int indxI = 0, const int indxJ = 0,
+                    const int indxK = 0);
 threeDsubview getHaloSlice(fourDview view, const int nface, int slice);
 twoDsubview getHaloSlice(threeDview view, const int nface, int slice);
 void setHaloSlices(int &s0, int &s1, int &s2, int &plus, const int ni,
@@ -90,33 +90,33 @@ void noJnoKFlux(block_ b);
 // ./thermo
 //    |------> cpg
 void cpg(block_ b, const thtrdat_ th, const int face, const std::string given,
-         const int i = 0, const int j = 0, const int k = 0);
+         const int indxI = 0, const int indxJ = 0, const int indxK = 0);
 //    |------> tpg
 void tpg(block_ b, const thtrdat_ th, const int face, const std::string given,
-         const int i = 0, const int j = 0, const int k = 0);
+         const int indxI = 0, const int indxJ = 0, const int indxK = 0);
 
 // ./transport
 //    |------> kineticThreory
-void kineticTheory(block_ b, const thtrdat_ th, const int face, const int i = 0,
-                   const int j = 0, const int k = 0);
+void kineticTheory(block_ b, const thtrdat_ th, const int face, const int indxI = 0,
+                   const int indxJ = 0, const int indxK = 0);
 //    |------> constantProps
-void constantProps(block_ b, const thtrdat_ th, const int face, const int i = 0,
-                   const int j = 0, const int k = 0);
+void constantProps(block_ b, const thtrdat_ th, const int face, const int indxI = 0,
+                   const int indxJ = 0, const int indxK = 0);
 
 // ./chemistry
 //    |------> CH4_O2_Stanford_Skeletal
 void chem_CH4_O2_Stanford_Skeletal(block_ b, const thtrdat_ th, const int face,
-                                   const int i = 0, const int j = 0,
-                                   const int k = 0);
+                                   const int indxI = 0, const int indxJ = 0,
+                                   const int indxK = 0);
 //    |------> GRI30
-void chem_GRI30(block_ b, const thtrdat_ th, const int face, const int i = 0,
-                const int j = 0, const int k = 0);
+void chem_GRI30(block_ b, const thtrdat_ th, const int face, const int indxI = 0,
+                const int indxJ = 0, const int indxK = 0);
 
 // ./utils
 //    |------> applyFluxes
-void applyFlux(block_ b, const double primary);
+void applyFlux(block_ b, double []);
 void applyHybridFlux(block_ b, const double primary);
-void applyDissipationFlux(block_ b, const double primary);
+void applyDissipationFlux(block_ b, double []);
 //    |------> dQzero
 void dQzero(block_ b);
 //    |------> dq2FD

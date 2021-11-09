@@ -3,7 +3,7 @@
 #include "block_.hpp"
 #include "math.h"
 
-void applyFlux(block_ b, const double primary) {
+void applyFlux(block_ b, double []) {
 
 //-------------------------------------------------------------------------------------------|
 // Apply fluxes to cc range
@@ -27,7 +27,7 @@ void applyFlux(block_ b, const double primary) {
 
   });
 
-};
+}
 
 
 void applyHybridFlux(block_ b, const double primary) {
@@ -66,9 +66,9 @@ void applyHybridFlux(block_ b, const double primary) {
 
   });
 
-};
+}
 
-void applyDissipationFlux(block_ b, const double primary) {
+void applyDissipationFlux(block_ b, double []) {
 
 //-------------------------------------------------------------------------------------------|
 // Apply fluxes to cc range
@@ -92,4 +92,4 @@ void applyDissipationFlux(block_ b, const double primary) {
 
   });
 
-};
+}

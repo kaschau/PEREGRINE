@@ -22,12 +22,12 @@
 #include "compute.hpp"
 #include <math.h>
 
-void chem_CH4_O2_Stanford_Skeletal(block_ b, thtrdat_ th, int face/*=0*/, int i/*=0*/, int j/*=0*/, int k/*=0*/) {
+void chem_CH4_O2_Stanford_Skeletal(block_ b, thtrdat_ th, int face/*=0*/, int indxI/*=0*/, int indxJ/*=0*/, int indxK/*=0*/) {
 
 // --------------------------------------------------------------|
 // cc range
 // --------------------------------------------------------------|
-  MDRange3 range = get_range3(b, face, i, j, k);
+  MDRange3 range = get_range3(b, face, indxI, indxJ, indxK);
 
   Kokkos::parallel_for("Compute chemical source terms",
                        range,
