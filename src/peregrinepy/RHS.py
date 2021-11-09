@@ -9,14 +9,15 @@ def RHS(mb):
 
         # Primary advective fluxes
         mb.primaryAdvFlux(blk, mb.thtrdat)
-        mb.applyPrimaryAdvFlux(blk, primary=1.0)
+        mb.applyPrimaryAdvFlux(blk, 1.0)  # <-- 1.0 is for primary flux
+
         # Secondary advective fluxes
         mb.secondaryAdvFlux(blk, mb.thtrdat)
-        mb.applySecondaryAdvFlux(blk, primary=0.0)
+        mb.applySecondaryAdvFlux(blk, 0.0)  # <-- 1.0 is for secondary flux
 
         # Diffusive fluxes
         mb.diffFlux(blk, mb.thtrdat)
-        mb.applyDiffFlux(blk, primary=-1.0)
+        mb.applyDiffFlux(blk, -1.0)  # <-- -1.0 is arbitrary, see applyFlux.cpp
 
         # Chemical source terms
         mb.expChem(blk, mb.thtrdat)

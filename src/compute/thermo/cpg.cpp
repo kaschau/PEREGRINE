@@ -10,11 +10,11 @@ void cpg(block_ b,
    const thtrdat_ th,
    const int nface,
    const std::string given,
-   const int i/*=0*/,
-   const int j/*=0*/,
-   const int k/*=0*/) {
+   const int indxI/*=0*/,
+   const int indxJ/*=0*/,
+   const int indxK/*=0*/) {
 
-  MDRange3 range = get_range3(b, nface, i, j, k);
+  MDRange3 range = get_range3(b, nface, indxI, indxJ, indxK);
   Kokkos::Experimental::UniqueToken<exec_space> token;
   const int numIds = token.size();
 

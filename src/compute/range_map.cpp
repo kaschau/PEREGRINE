@@ -2,8 +2,8 @@
 #include "kokkos_types.hpp"
 #include <stdexcept>
 
-MDRange3 get_range3(block_ b, const int nface, const int i /*=0*/,
-                    const int j /*=0*/, const int k /*=0*/) {
+MDRange3 get_range3(block_ b, const int nface, const int indxI /*=0*/,
+                    const int indxJ /*=0*/, const int indxK /*=0*/) {
 
   MDRange3 range;
 
@@ -53,7 +53,7 @@ MDRange3 get_range3(block_ b, const int nface, const int i /*=0*/,
     break;
   case 10:
     // specify i,j,k turn it into a function call (kinda)
-    range = MDRange3({i, j, k}, {i + 1, j + 1, k + 1});
+    range = MDRange3({indxI, indxJ, indxK}, {indxI + 1, indxJ + 1, indxK + 1});
     break;
   default:
     throw std::invalid_argument("Unknown argument to get_range3");
@@ -90,7 +90,7 @@ threeDsubview getHaloSlice(fourDview view, const int nface, int slice) {
   }
 
   return subview;
-};
+}
 
 twoDsubview getHaloSlice(threeDview view, const int nface, int slice) {
 
@@ -120,7 +120,7 @@ twoDsubview getHaloSlice(threeDview view, const int nface, int slice) {
   }
 
   return subview;
-};
+}
 
 void setHaloSlices(int &s0, int &s1, int &s2, int &plus, const int ni,
                    const int nj, const int nk, const int ng, const int nface) {

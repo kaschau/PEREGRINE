@@ -67,7 +67,7 @@ void constantPressureSubsonicExit(
           });
     }
   }
-};
+}
 
 void supersonicExit(
     block_ b, const face_ face,
@@ -128,4 +128,4 @@ void supersonicExit(
           });
     }
   }
-};
+}

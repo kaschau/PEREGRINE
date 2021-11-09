@@ -139,12 +139,12 @@ def ct2pg_chem(ctyaml, cpp):
         '#include "compute.hpp"\n'
         "#include <math.h>\n"
         "\n"
-        f'void {cpp.replace(".cpp","")}(block_ b, thtrdat_ th, int face/*=0*/, int i/*=0*/, int j/*=0*/, int k/*=0*/) {{\n'
+        f'void {cpp.replace(".cpp","")}(block_ b, thtrdat_ th, int face/*=0*/, int indxI/*=0*/, int indxJ/*=0*/, int indxK/*=0*/) {{\n'
         "\n"
         "// --------------------------------------------------------------|\n"
         "// cc range\n"
         "// --------------------------------------------------------------|\n"
-        "  MDRange3 range = get_range3(b, face, i, j, k);\n"
+        "  MDRange3 range = get_range3(b, face, indxI, indxJ, indxK);\n"
         "\n"
         '  Kokkos::parallel_for("Compute chemical source terms",\n'
         "                       range,\n"

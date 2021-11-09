@@ -101,7 +101,7 @@ void adiabaticNoSlipWall(
           });
     }
   }
-};
+}
 
 void adiabaticSlipWall(
     block_ b, const face_ face,
@@ -207,7 +207,7 @@ void adiabaticSlipWall(
           });
     }
   }
-};
+}
 
 void adiabaticMovingWall(
     block_ b, const face_ face,
@@ -304,7 +304,7 @@ void adiabaticMovingWall(
           });
     }
   }
-};
+}
 
 void isoTMovingWall(
     block_ b, const face_ face,
@@ -399,4 +399,4 @@ void isoTMovingWall(
           });
     }
   }
-};
+}

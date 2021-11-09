@@ -7,12 +7,12 @@
 
 void kineticTheory(block_ b,
              const thtrdat_ th,
-             const int face,
-             const int i/*=0*/,
-             const int j/*=0*/,
-             const int k/*=0*/) {
+             const int nface,
+             const int indxI/*=0*/,
+             const int indxJ/*=0*/,
+             const int indxK/*=0*/) {
 
-  MDRange3 range = get_range3(b, face, i, j, k);
+  MDRange3 range = get_range3(b, nface, indxI, indxJ, indxK);
   Kokkos::Experimental::UniqueToken<exec_space> token;
   int numIds = token.size();
 

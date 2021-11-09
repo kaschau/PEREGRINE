@@ -227,4 +227,4 @@ void jamesonDissipation(block_ b, const thtrdat_ th) {
 
   });
 
-};
+}
