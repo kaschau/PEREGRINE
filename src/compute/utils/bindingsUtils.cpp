@@ -10,13 +10,13 @@ void bindUtils(py::module_ &m) {
   //  |----> applyFluxes.cpp
   utils.def("applyFlux", &applyFlux, "Apply flux directly",
         py::arg("block_ object"),
-        py::arg("primary"));
+        py::arg(""));
   utils.def("applyHybridFlux", &applyHybridFlux, "Blend flux with another",
         py::arg("block_ object"),
         py::arg("primary"));
   utils.def("applyDissipationFlux", &applyDissipationFlux, "Apply artificial dissipation flux",
         py::arg("block_ object"),
-        py::arg("primary"));
+        py::arg(""));
   //  |----> dQzero.cpp
   utils.def("dQzero", &dQzero, "Zero out dQ array",
         py::arg("block_ object"));

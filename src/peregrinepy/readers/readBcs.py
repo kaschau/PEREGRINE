@@ -2,6 +2,7 @@
 
 import yaml
 from ..mpiComm import mpiUtils
+import numpy as np
 
 
 def readBcs(mb, pathToFile):
@@ -55,20 +56,47 @@ def readBcs(mb, pathToFile):
             # Make sure the type in the input file matches the type in the connectivity
             if bcsIn[bcFam]["bcType"] != face.bcType:
                 raise KeyError(
-                    f'Warning, block {blk.nblki} face {face.nface} does not match the bcType between input *{bcsIn[bcFam]["bcType"]}* and connectivity *{face.bcType}*.'
+                    f'ERROR, block {blk.nblki} face {face.nface} does not match the bcType between input *{bcsIn[bcFam]["bcType"]}* and connectivity *{face.bcType}*.'
                 )
 
             # Set the boundary condition values
+            face.array["qBcVals"] = np.zeros(5 + blk.ns - 1)
+            face.array["QBcVals"] = np.zeros(5 + blk.ns - 1)
+            qIndexMap = {"p": 0, "u": 1, "v": 2, "w": 3, "T": 4}
+            QIndexMap = {"rho": 0, "rhou": 1, "rhov": 2, "rhow": 3, "rhoE": 4}
+            for i in range(blk.ns):
+                qIndexMap[blk.speciesNames[i]] = 5 + i
+                QIndexMap["rho" + blk.speciesNames[i]] = 5 + i
+
             if "bcVals" in bcsIn[bcFam].keys():
                 for key in bcsIn[bcFam]["bcVals"]:
-                    face.bcVals[key] = float(bcsIn[bcFam]["bcVals"][key])
+                    if key in qIndexMap.keys():
+                        indx = qIndexMap[key]
+                        face.array["qBcVals"][indx] = float(bcsIn[bcFam]["bcVals"][key])
+                    elif key in QIndexMap.keys():
+                        face.array["QBcVals"][indx] = float(bcsIn[bcFam]["bcVals"][key])
+                    else:
+                        raise KeyError("ERROR, unknown input bcVal: {key}")
 
-            # Now add any un-specified species as zero (unless we have single component)
-            if blk.ns != 1:
-                for sn in blk.speciesNames[0:-1]:
-                    if sn not in face.bcVals.keys():
-                        face.bcVals[sn] = 0.0
-            else:
-                face.bcVals[blk.speciesNames[0]] = 1.0
+            # If we are a solver face, we need to create the kokkos arrays
+            if face.faceType == "solver":
+                import kokkos
 
-            face.bcVals._freeze()
+                if mb.config["Kokkos"]["Space"] in ["OpenMP", "Serial", "Default"]:
+                    space = kokkos.HostSpace
+                elif mb.config["Kokkos"]["Space"] in ["Cuda"]:
+                    space = kokkos.CudaSpace
+                else:
+                    raise ValueError("What space?")
+
+                for name in ["qBcVals", "QBcVals"]:
+                    setattr(
+                        face,
+                        name,
+                        kokkos.array(
+                            face.array[name],
+                            dtype=kokkos.double,
+                            space=space,
+                            dynamic=False,
+                        ),
+                    )

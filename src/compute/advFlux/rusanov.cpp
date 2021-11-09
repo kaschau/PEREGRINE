@@ -261,4 +261,4 @@ void rusanov(block_ b, const thtrdat_ th) {
 
   });
 
-};
+}

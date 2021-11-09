@@ -1,7 +1,5 @@
 class topologyFace:
 
-    __slots__ = ("_nface", "_bcFam", "_bcType", "_neighbor", "_orientation")
-
     faceType = "topology"
 
     def __init__(self, nface):
@@ -49,11 +47,10 @@ class topologyFace:
             "b1",
             # Inlets
             "constantVelocitySubsonicInlet",
-            "constantVelocitySupersonicInlet",
+            "supersonicInlet",
             # Exits
             "constantPressureSubsonicExit",
             "supersonicExit",
-            "constantPressureNonReflectingSubsonicExit",
             # Walls
             "adiabaticNoSlipWall",
             "adiabaticSlipWall",

@@ -69,7 +69,10 @@ def simulate():
         blk.getFace(face).bcType = "adiabaticSlipWall"
         blk.getFace(face).commRank = 0
 
-    blk.getFace(4).bcVals = {"u": wallSpeed, "v": 0.0, "w": 0.0}
+    bcArray = np.zeros(blk.ne)
+    bcArray[1] = wallSpeed
+    blk.getFace(4).array["qBcVals"] = bcArray
+    pg.misc.numpyToKokkosArray(bcArray, blk.getFace(4), "qBcVals", kokkos.HostSpace)
 
     pg.mpiComm.blockComm.setBlockCommunication(mb)
 
