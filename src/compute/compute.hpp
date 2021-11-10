@@ -31,6 +31,7 @@ void ausmPlusUp(block_ b, const thtrdat_ th);
 //    |------> jamesonDissipation
 void jamesonDissipation(block_ b, const thtrdat_ th);
 
+
 // ./boundaryConditions
 //    |------> inlets
 void constantVelocitySubsonicInlet(
@@ -68,40 +69,6 @@ void supersonicExit(
     const std::function<void(block_, thtrdat_, int, std::string)> &eos,
     thtrdat_ th, std::string terms);
 
-// ./diffFlux
-//    |------> diffusiveFlux
-void diffusiveFlux(block_ b, const thtrdat_ th);
-
-// ./switches
-//    |------> jameson
-void jamesonEntropy(block_ b);
-void jamesonPressure(block_ b);
-//    |------> vanAlbada
-void vanAlbadaEntropy(block_ b);
-void vanAlbadaPressure(block_ b);
-//    |------> negateFluxes
-void noIFlux(block_ b);
-void noJFlux(block_ b);
-void noKFlux(block_ b);
-void noInoJFlux(block_ b);
-void noInoKFlux(block_ b);
-void noJnoKFlux(block_ b);
-
-// ./thermo
-//    |------> cpg
-void cpg(block_ b, const thtrdat_ th, const int face, const std::string given,
-         const int indxI = 0, const int indxJ = 0, const int indxK = 0);
-//    |------> tpg
-void tpg(block_ b, const thtrdat_ th, const int face, const std::string given,
-         const int indxI = 0, const int indxJ = 0, const int indxK = 0);
-
-// ./transport
-//    |------> kineticThreory
-void kineticTheory(block_ b, const thtrdat_ th, const int face, const int indxI = 0,
-                   const int indxJ = 0, const int indxK = 0);
-//    |------> constantProps
-void constantProps(block_ b, const thtrdat_ th, const int face, const int indxI = 0,
-                   const int indxJ = 0, const int indxK = 0);
 
 // ./chemistry
 //    |------> CH4_O2_Stanford_Skeletal
@@ -111,6 +78,51 @@ void chem_CH4_O2_Stanford_Skeletal(block_ b, const thtrdat_ th, const int face,
 //    |------> GRI30
 void chem_GRI30(block_ b, const thtrdat_ th, const int face, const int indxI = 0,
                 const int indxJ = 0, const int indxK = 0);
+
+
+// ./diffFlux
+//    |------> diffusiveFlux
+void diffusiveFlux(block_ b, const thtrdat_ th);
+
+
+// ./switches
+//    |------> jameson
+void jamesonEntropy(block_ b);
+void jamesonPressure(block_ b);
+//    |------> vanAlbada
+void vanAlbadaEntropy(block_ b);
+void vanAlbadaPressure(block_ b);
+
+
+// ./thermo
+//    |------> cpg
+void cpg(block_ b, const thtrdat_ th, const int face, const std::string given,
+         const int indxI = 0, const int indxJ = 0, const int indxK = 0);
+//    |------> tpg
+void tpg(block_ b, const thtrdat_ th, const int face, const std::string given,
+         const int indxI = 0, const int indxJ = 0, const int indxK = 0);
+
+
+// ./timeIntegration
+//    |------> rk3Stages.cpp
+void rk3s1(block_ b, const double dt);
+void rk3s2(block_ b, const double dt);
+void rk3s3(block_ b, const double dt);
+//    |------> rk4Stages.cpp
+void rk4s1(block_ b, const double dt);
+void rk4s2(block_ b, const double dt);
+void rk4s3(block_ b, const double dt);
+void rk4s4(block_ b, const double dt);
+
+
+// ./transport
+//    |------> kineticThreory
+void kineticTheory(block_ b, const thtrdat_ th, const int face, const int indxI = 0,
+                   const int indxJ = 0, const int indxK = 0);
+//    |------> constantProps
+void constantProps(block_ b, const thtrdat_ th, const int face, const int indxI = 0,
+                   const int indxJ = 0, const int indxK = 0);
+
 
 // ./utils
 //    |------> applyFluxes
@@ -123,5 +135,10 @@ void dQzero(block_ b);
 void dq2FD(block_ b);
 //    |------> dq4FD
 void dq4FD(block_ b);
+//    |------> axpby
+void AEQB(fourDview A, fourDview B);
+void ApEQxB(fourDview A, const double x, fourDview B);
+void AEQxB(fourDview A, const double x, fourDview B);
+void CEQxApyB(fourDview C, const double x, fourDview A, const double y, fourDview B);
 
 #endif
