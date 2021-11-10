@@ -1,6 +1,8 @@
 from abc import ABCMeta
 from ..RHS import RHS
 from ..consistify import consistify
+from ..compute.utils import AEQB
+from ..compute.timeIntegration import rk3s1, rk3s2, rk3s3
 
 
 class rk3:
@@ -19,39 +21,29 @@ class rk3:
 
         # store zeroth stage solution
         for blk in self:
-            blk.array["rhs0"][:] = blk.array["Q"][:]
+            AEQB(blk.rhs0, blk.Q)
 
         # First Stage
-
         RHS(self)
 
         for blk in self:
-            blk.array["rhs1"][:] = dt * blk.array["dQ"]
-            blk.array["Q"][:] = blk.array["rhs0"] + blk.array["rhs1"]
+            rk3s1(blk, dt)
 
         consistify(self)
 
         # Second Stage
-
         RHS(self)
 
         for blk in self:
-            blk.array["Q"][:] = (
-                0.75 * blk.array["rhs0"]
-                + 0.25 * blk.array["Q"]
-                + 0.25 * blk.array["dQ"] * dt
-            )
+            rk3s2(blk, dt)
 
         consistify(self)
 
         # Third Stage
-
         RHS(self)
 
         for blk in self:
-            blk.array["Q"][:] = (
-                blk.array["rhs0"] + 2.0 * blk.array["Q"] + 2.0 * blk.array["dQ"] * dt
-            ) / 3.0
+            rk3s3(blk, dt)
 
         consistify(self)
 

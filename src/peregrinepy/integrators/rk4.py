@@ -1,6 +1,8 @@
 from abc import ABCMeta
 from ..RHS import RHS
 from ..consistify import consistify
+from ..compute.utils import AEQB
+from ..compute.timeIntegration import rk4s1, rk4s2, rk4s3, rk4s4
 
 
 class rk4:
@@ -13,53 +15,37 @@ class rk4:
 
         # store zeroth stage solution
         for blk in self:
-            blk.array["rhs0"][:] = blk.array["Q"][:]
+            AEQB(blk.rhs0, blk.Q)
 
         # First Stage
-
         RHS(self)
 
         for blk in self:
-            blk.array["rhs1"][:] = dt * blk.array["dQ"]
-            blk.array["Q"][:] = blk.array["rhs0"] + 0.5 * blk.array["rhs1"]
+            rk4s1(blk, dt)
 
         consistify(self)
 
         # Second Stage
-
         RHS(self)
 
         for blk in self:
-            blk.array["rhs2"][:] = dt * blk.array["dQ"]
-            blk.array["Q"][:] = blk.array["rhs0"] + 0.5 * blk.array["rhs2"]
+            rk4s2(blk, dt)
 
         consistify(self)
 
         # Third Stage
-
         RHS(self)
 
         for blk in self:
-            blk.array["rhs3"][:] = dt * blk.array["dQ"]
-            blk.array["Q"][:] = blk.array["rhs0"] + blk.array["rhs3"]
+            rk4s3(blk, dt)
 
         consistify(self)
 
         # Fourth Stage
-
         RHS(self)
 
         for blk in self:
-            blk.array["Q"][:] = (
-                blk.array["rhs0"]
-                + (
-                    blk.array["rhs1"]
-                    + 2.0 * blk.array["rhs2"]
-                    + 2.0 * blk.array["rhs3"]
-                    + dt * blk.array["dQ"]
-                )
-                / 6.0
-            )
+            rk4s4(blk, dt)
 
         consistify(self)
 
