@@ -1,4 +1,4 @@
-#!/usr/env/bin python3
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 """This utility converts the output of gridpro into PEREGRINE readable grid and connectivity files.
@@ -77,8 +77,8 @@ gpSurfaceToPgBc = {
     "pdc:INTERBLK": "b0",
     "pdc:PERIODIC": "b1",
     "pdc:WALL": "adiabaticNoSlipWall",
-    "pdc:user5": "constantPressureSubsonicInlet",
-    "pdc:user6": "constantPressureSubsonicInlet",
+    "pdc:user5": "constantVelocitySubsonicInlet",
+    "pdc:user6": "constantPressureSubsonicExit",
     "pdc:user7": "user7",
     "pdc:user8": "user8",
     "pdc:user9": "user9",
@@ -152,15 +152,15 @@ for i in range(nblks):
     line = gpConnFile.readline().split()
     for j in range(6):
         line[2 + j * 4] = pgBlkPtys[i][j].split()[0]
-        line[3 + j * 4] = pgBlkPtys[i][j].split()[1]
+
     pgConns.append(line[2:-1])
 
 mb = mbg(nblks)
 for temp, blk in zip(pgConns, mb):
     for face in blk.faces:
         faceData = temp[(int(face.nface) - 1) * 4 : (int(face.nface) - 1) * 4 + 4]
-        face.bcType = "{}{}".format(faceData[0], faceData[1])
-        face.connection = faceData[2]
+        face.bcType = f"{faceData[0]}"
+        face.connection = int(faceData[2])
         face.orientation = faceData[3]
 
 go = True
