@@ -18,6 +18,7 @@ void AEQB(fourDview A, fourDview B) {
       });
 }
 
+
 void ApEQxB(fourDview A, const double x, fourDview B) {
   //-------------------------------------------------------------------------------------------|
   // A += x*B
@@ -34,6 +35,7 @@ void ApEQxB(fourDview A, const double x, fourDview B) {
       });
 }
 
+
 void AEQxB(fourDview A, const double x, fourDview B) {
   //-------------------------------------------------------------------------------------------|
   // A = xB
@@ -49,6 +51,7 @@ void AEQxB(fourDview A, const double x, fourDview B) {
         A(i, j, k, l) = x * B(i, j, k, l);
       });
 }
+
 
 void CEQxApyB(fourDview C, const double x, fourDview A, const double y,
               fourDview B) {
