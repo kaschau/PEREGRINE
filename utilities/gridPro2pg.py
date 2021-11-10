@@ -160,8 +160,8 @@ for temp, blk in zip(pgConns, mb):
     for face in blk.faces:
         faceData = temp[(int(face.nface) - 1) * 4 : (int(face.nface) - 1) * 4 + 4]
         face.bcType = f"{faceData[0]}"
-        face.connection = int(faceData[2])
-        face.orientation = faceData[3]
+        face.neighbor = None if int(faceData[2]) == 0 else int(faceData[2]) - 1
+        face.orientation = None if "0" in faceData[3] else faceData[3]
 
 go = True
 while go:
@@ -180,15 +180,18 @@ for blk in mb:
     gpBlkFile.seek(blockStart)
     blk_shape = tuple([int(b) for b in gpBlkFile.readline().strip().split()])
 
+    blk.ni = blk_shape[0]
+    blk.nj = blk_shape[1]
+    blk.nk = blk_shape[2]
+
     if args.isBinary:
         byte = gpBlkFile.read(8 * blk_shape[0] * blk_shape[1] * blk_shape[2] * 3)
-        temp = np.fromstring(byte, dtype=np.float64).reshape(
+        temp = np.frombuffer(byte, dtype=np.float64).reshape(
             (blk_shape[0] * blk_shape[1] * blk_shape[2], 3)
         )
-
-        blk.array["x"] = temp[:, 0].reshape(blk_shape, order="F")
-        blk.array["y"] = temp[:, 1].reshape(blk_shape, order="F")
-        blk.array["z"] = temp[:, 2].reshape(blk_shape, order="F")
+        blk.array["x"] = temp[:, 0].reshape(blk_shape)
+        blk.array["y"] = temp[:, 1].reshape(blk_shape)
+        blk.array["z"] = temp[:, 2].reshape(blk_shape)
 
         gpBlkFile.read(1)
     else:
