@@ -20,6 +20,7 @@ void bindDiffFlux(py::module_ &);
 void bindSwitches(py::module_ &);
 void bindThermo(py::module_ &);
 void bindTransport(py::module_ &);
+void bindTimeIntegration(py::module_ &);
 void bindUtils(py::module_ &);
 
 PYBIND11_MODULE(compute, m) {
@@ -33,6 +34,7 @@ PYBIND11_MODULE(compute, m) {
   bindSwitches(m);
   bindThermo(m);
   bindTransport(m);
+  bindTimeIntegration(m);
   bindUtils(m);
 
 ////////////////////////////////////////////////////////////////////////////////

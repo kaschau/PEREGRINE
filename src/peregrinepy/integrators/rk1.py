@@ -1,6 +1,7 @@
 from abc import ABCMeta
 from ..RHS import RHS
 from ..consistify import consistify
+from ..compute.utils import ApEQxB
 
 
 class rk1:
@@ -15,7 +16,8 @@ class rk1:
 
         # add it to current solution
         for blk in self:
-            blk.array["Q"][:] += dt * blk.array["dQ"]
+            # Q = dt * dQ
+            ApEQxB(blk.Q, dt, blk.dQ)
 
         self.nrt += 1
         self.tme += dt

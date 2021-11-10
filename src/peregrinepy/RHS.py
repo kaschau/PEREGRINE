@@ -3,8 +3,8 @@ from .compute import utils
 
 def RHS(mb):
 
-    # Zero out dQ array
     for blk in mb:
+        # Zero out dQ array
         utils.dQzero(blk)
 
         # Primary advective fluxes

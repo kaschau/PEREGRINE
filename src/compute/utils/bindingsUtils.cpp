@@ -26,5 +26,23 @@ void bindUtils(py::module_ &m) {
   //  |----> dq4FD.cpp
   utils.def("dq4FD", &dq4FD, "Fourth order approx of spatial derivative of q array via finite difference",
         py::arg("block_ object"));
+  //    |------> axpby
+  utils.def("AEQB", &AEQB, "A = B",
+        py::arg("A view"),
+        py::arg("B view"));
+  utils.def("ApEQxB", &ApEQxB, "A += x*B",
+        py::arg("A view"),
+        py::arg("x double"),
+        py::arg("B view"));
+  utils.def("AEQxB", &AEQxB, "A = x*B",
+        py::arg("A view"),
+        py::arg("x double"),
+        py::arg("B view"));
+  utils.def("CEQxApyB", &CEQxApyB, "C = x*A + y*B",
+        py::arg("C view"),
+        py::arg("x double"),
+        py::arg("A view"),
+        py::arg("y double"),
+        py::arg("B view"));
 
 }
