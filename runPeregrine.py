@@ -35,23 +35,22 @@ def simulate(configFilePath):
         print(mb)
         ts = time.time()
 
+    # Time integration
     dt = config["simulation"]["dt"]
     niter = config["simulation"]["niter"]
     niterout = config["simulation"]["niterout"]
+    niterprint = config["simulation"]["niterprint"]
     for niter in range(niter):
-
-        if mb.nrt % config["simulation"]["niterprint"] == 0:
-            cfl = np.array(pg.compute.utils.CFLmax(mb))
-            comm.Allreduce(MPI.IN_PLACE, cfl, op=MPI.MAX)
-            if rank == 0:
-                print(
-                    " >>> -------------------------------- <<<\n",
-                    f"    nrt: {mb.nrt:6>}, tme: {mb.tme:.6E}\n"
-                    f"     dt:{dt:.6E}\n"
-                    f"     MAX Acoustic   CFL: {cfl[0]*dt:.3E}\n"
-                    f"     MAX Convective CFL: {cfl[1]*dt:.3E}\n"
-                    " >>> -------------------------------- <<<\n",
-                )
+        dt, CFLmaxA, CFLmaxC = pg.mpiComm.mpiUtils.getDtMaxCFL(mb)
+        if mb.nrt % niterprint == 0 and rank == 0:
+            print(
+                " >>> -------------------------------- <<<\n",
+                f"    nrt: {mb.nrt:6>}, tme: {mb.tme:.6E}\n"
+                f"     dt:{dt:.6E}\n"
+                f"     MAX Acoustic   CFL: {CFLmaxA*dt:.3E}\n"
+                f"     MAX Convective CFL: {CFLmaxC*dt:.3E}\n"
+                " >>> -------------------------------- <<<\n",
+            )
 
         mb.step(dt)
 
