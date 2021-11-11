@@ -44,11 +44,11 @@ def simulate(configFilePath):
         dt, CFLmaxA, CFLmaxC = pg.mpiComm.mpiUtils.getDtMaxCFL(mb)
         if mb.nrt % niterprint == 0 and rank == 0:
             print(
-                " >>> -------------------------------- <<<\n",
-                f"    nrt: {mb.nrt:6>}, tme: {mb.tme:.6E}\n"
-                f"             dt : {dt:.6E}\n"
-                f"     MAX Acoustic   CFL: {CFLmaxA*dt:.3E}\n"
-                f"     MAX Convective CFL: {CFLmaxC*dt:.3E}\n"
+                f" >>> --------- nrt: {mb.nrt:<6} ---------- <<<\n",
+                f"    tme: {mb.tme:.6E} s\n"
+                f"     dt : {dt:.6E} s\n"
+                f"     MAX Acoustic   CFL: {CFLmaxA*dt:.3f}\n"
+                f"     MAX Convective CFL: {CFLmaxC*dt:.3f}\n"
                 " >>> -------------------------------- <<<\n",
             )
 
