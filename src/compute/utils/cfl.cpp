@@ -41,12 +41,27 @@ std::tuple<double, double> CFLmax(block_ b) {
     double uJ = abs(0.5*(b.jny(i  ,j  ,k  )+b.jnx(i  ,j+1,k  ))*u);
     double uK = abs(0.5*(b.kny(i  ,j  ,k  )+b.knx(i  ,j  ,k+1))*u);
 
-    CFLA = fmax(CFLA, fmax(uI/dI, uJ/dJ));
+    if (b.ni > 2) {
+        CFLA = fmax(CFLA, uI/dI);
+    }
+    if (b.nj > 2) {
+        CFLA = fmax(CFLA, uJ/dJ);
+    }
+    if (b.nk > 2) {
+        CFLA = fmax(CFLA, uK/dK);
+    }
 
     // Find max acoustic CFL
     double& c = b.qh(i,j,k,3);
-    //CFLC = fmax(CFLC, fmax(c/dI, fmax(c/dJ, c/dK)));
-    CFLC = fmax(CFLC, fmax(c/dI, c/dJ));
+    if (b.ni > 2) {
+        CFLC = fmax(CFLC, c/dI);
+    }
+    if (b.nj > 2) {
+        CFLC = fmax(CFLC, c/dJ);
+    }
+    if (b.nk > 2) {
+        CFLC = fmax(CFLC, c/dK);
+    }
 
   }, Kokkos::Max<double>(CFLmaxA),
      Kokkos::Max<double>(CFLmaxC));
