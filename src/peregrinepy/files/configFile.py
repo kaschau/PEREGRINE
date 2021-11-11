@@ -27,6 +27,8 @@ class configFile(frozenDict):
                 "animate": True,
                 "niterout": 10,
                 "niterprint": 1,
+                "variableTimeStep": False,
+                "maxCFL": 0.1,
             }
         )
 
