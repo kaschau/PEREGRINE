@@ -140,5 +140,6 @@ void AEQB(fourDview A, fourDview B);
 void ApEQxB(fourDview A, const double x, fourDview B);
 void AEQxB(fourDview A, const double x, fourDview B);
 void CEQxApyB(fourDview C, const double x, fourDview A, const double y, fourDview B);
+std::tuple<double, double> CFLmax(block_ b);
 
 #endif
