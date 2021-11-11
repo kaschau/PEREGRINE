@@ -7,6 +7,7 @@
 #include "kokkos_types.hpp"
 #include "thtrdat_.hpp"
 #include "vector"
+#include "array"
 #include <string>
 
 ///////////////////////////////////////////////////////////
@@ -141,6 +142,6 @@ void AEQB(fourDview A, fourDview B);
 void ApEQxB(fourDview A, const double x, fourDview B);
 void AEQxB(fourDview A, const double x, fourDview B);
 void CEQxApyB(fourDview C, const double x, fourDview A, const double y, fourDview B);
-std::tuple<double, double> CFLmax(std::vector<block_> mb);
+std::array<double, 2> CFLmax(std::vector<block_> mb);
 
 #endif

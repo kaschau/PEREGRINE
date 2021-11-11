@@ -2,9 +2,10 @@
 #include "kokkos_types.hpp"
 #include "block_.hpp"
 #include "vector"
+#include "array"
 #include "math.h"
 
-std::tuple<double, double> CFLmax(std::vector<block_> mb) {
+std::array<double, 2> CFLmax(std::vector<block_> mb) {
 
 //-------------------------------------------------------------------------------------------|
 // Compute the max acoustic and convective CFL factor speed/dx
@@ -45,26 +46,19 @@ std::tuple<double, double> CFLmax(std::vector<block_> mb) {
       double uJ = abs(0.5*(b.jny(i  ,j  ,k  )+b.jnx(i  ,j+1,k  ))*u);
       double uK = abs(0.5*(b.kny(i  ,j  ,k  )+b.knx(i  ,j  ,k+1))*u);
 
-      if (b.ni > 2) {
-          CFLA = fmax(CFLA, uI/dI);
-      }
-      if (b.nj > 2) {
-          CFLA = fmax(CFLA, uJ/dJ);
-      }
-      if (b.nk > 2) {
-          CFLA = fmax(CFLA, uK/dK);
-      }
-
-      // Find max acoustic CFL
       double& c = b.qh(i,j,k,3);
+
       if (b.ni > 2) {
-          CFLC = fmax(CFLC, c/dI);
+          CFLA = fmax(CFLA, c/dI);
+          CFLC = fmax(CFLC, uI/dI);
       }
       if (b.nj > 2) {
-          CFLC = fmax(CFLC, c/dJ);
+          CFLA = fmax(CFLA, c/dJ);
+          CFLC = fmax(CFLC, uJ/dJ);
       }
       if (b.nk > 2) {
-          CFLC = fmax(CFLC, c/dK);
+          CFLA = fmax(CFLA, c/dK);
+          CFLC = fmax(CFLC, uK/dK);
       }
 
     }, Kokkos::Max<double>(CFLmaxA),
@@ -74,6 +68,6 @@ std::tuple<double, double> CFLmax(std::vector<block_> mb) {
   returnMaxA = fmax(CFLmaxA, returnMaxA);
   returnMaxC = fmax(CFLmaxC, returnMaxC);
 
-  return std::make_tuple(returnMaxA, returnMaxC);
+  return {returnMaxA, returnMaxC};
 
 }
