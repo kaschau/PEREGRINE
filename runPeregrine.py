@@ -46,7 +46,7 @@ def simulate(configFilePath):
             print(
                 " >>> -------------------------------- <<<\n",
                 f"    nrt: {mb.nrt:6>}, tme: {mb.tme:.6E}\n"
-                f"     dt:{dt:.6E}\n"
+                f"             dt : {dt:.6E}\n"
                 f"     MAX Acoustic   CFL: {CFLmaxA*dt:.3E}\n"
                 f"     MAX Convective CFL: {CFLmaxC*dt:.3E}\n"
                 " >>> -------------------------------- <<<\n",
