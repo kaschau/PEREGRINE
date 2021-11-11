@@ -1,4 +1,5 @@
 from mpi4py import MPI
+from ..compute.utils import CFLmax
 import numpy as np
 
 
@@ -46,3 +47,19 @@ def getLoadEfficiency(mb):
         slowestProc = None
 
     return slowest, slowestProc
+
+
+def getDtMaxCFL(mb):
+
+    comm, rank, size = getCommRankSize()
+
+    cfl = np.array(CFLmax(mb))
+    comm.Allreduce(MPI.IN_PLACE, cfl, op=MPI.MAX)
+
+    if mb.config["simulation"]["variableTimeStep"]:
+        cflMAX = mb.config["simulation"]["maxCFL"]
+        dt = min(cflMAX / cfl[0], cflMAX / cfl[1])
+    else:
+        dt = mb.config["simulation"]["dt"]
+
+    return dt, cfl[0], cfl[1]

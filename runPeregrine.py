@@ -35,19 +35,26 @@ def simulate(configFilePath):
         print(mb)
         ts = time.time()
 
-    for niter in range(config["simulation"]["niter"]):
+    # Time integration
+    dt = config["simulation"]["dt"]
+    niter = config["simulation"]["niter"]
+    niterout = config["simulation"]["niterout"]
+    niterprint = config["simulation"]["niterprint"]
+    for niter in range(niter):
+        dt, CFLmaxA, CFLmaxC = pg.mpiComm.mpiUtils.getDtMaxCFL(mb)
+        if mb.nrt % niterprint == 0 and rank == 0:
+            print(
+                " >>> -------------------------------- <<<\n",
+                f"    nrt: {mb.nrt:6>}, tme: {mb.tme:.6E}\n"
+                f"             dt : {dt:.6E}\n"
+                f"     MAX Acoustic   CFL: {CFLmaxA*dt:.3E}\n"
+                f"     MAX Convective CFL: {CFLmaxC*dt:.3E}\n"
+                " >>> -------------------------------- <<<\n",
+            )
 
-        if mb.nrt % config["simulation"]["niterprint"] == 0:
-            if rank == 0:
-                print(
-                    " >>> -------------------------------- <<<\n",
-                    f"nrt: {mb.nrt:6>}, tme: {mb.tme:.6E}\n"
-                    " >>> -------------------------------- <<<\n",
-                )
+        mb.step(dt)
 
-        mb.step(config["simulation"]["dt"])
-
-        if mb.nrt % config["simulation"]["niterout"] == 0:
+        if mb.nrt % niterout == 0:
             if rank == 0:
                 print("Saving restart.\n")
             pg.writers.parallelWriter.parallelWriteRestart(
