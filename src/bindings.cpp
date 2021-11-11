@@ -68,7 +68,7 @@ PYBIND11_MODULE(compute, m) {
     .def_readwrite("yc", &block_::yc)
     .def_readwrite("zc", &block_::zc)
     .def_readwrite("J" , &block_::J )
-      // Cell center metrics
+    // Cell center metrics
     .def_readwrite("dEdx" , &block_::dEdx )
     .def_readwrite("dEdy" , &block_::dEdy )
     .def_readwrite("dEdz" , &block_::dEdz )
@@ -78,6 +78,10 @@ PYBIND11_MODULE(compute, m) {
     .def_readwrite("dXdx" , &block_::dXdx )
     .def_readwrite("dXdy" , &block_::dXdy )
     .def_readwrite("dXdz" , &block_::dXdz )
+    // i Face centers
+    .def_readwrite("ixc", &block_::ixc)
+    .def_readwrite("iyc", &block_::iyc)
+    .def_readwrite("izc", &block_::izc)
     // i face area vector
     .def_readwrite("isx", &block_::isx)
     .def_readwrite("isy", &block_::isy)
@@ -86,6 +90,10 @@ PYBIND11_MODULE(compute, m) {
     .def_readwrite("inx", &block_::inx)
     .def_readwrite("iny", &block_::iny)
     .def_readwrite("inz", &block_::inz)
+    // j Face centers
+    .def_readwrite("jxc", &block_::jxc)
+    .def_readwrite("jyc", &block_::jyc)
+    .def_readwrite("jzc", &block_::jzc)
     // j face area vector
     .def_readwrite("jsx", &block_::jsx)
     .def_readwrite("jsy", &block_::jsy)
@@ -94,6 +102,10 @@ PYBIND11_MODULE(compute, m) {
     .def_readwrite("jnx", &block_::jnx)
     .def_readwrite("jny", &block_::jny)
     .def_readwrite("jnz", &block_::jnz)
+    // k Face centers
+    .def_readwrite("kxc", &block_::kxc)
+    .def_readwrite("kyc", &block_::kyc)
+    .def_readwrite("kzc", &block_::kzc)
     // k face area vector
     .def_readwrite("ksx", &block_::ksx)
     .def_readwrite("ksy", &block_::ksy)

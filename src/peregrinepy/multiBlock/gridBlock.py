@@ -59,13 +59,13 @@ class gridBlock(topologyBlock):
         ]:
             self.array[f"{d}"] = None
         # i face area vectors
-        for d in ["isx", "isy", "isz", "iS", "inx", "iny", "inz"]:
+        for d in ["ixc", "iyc", "izc", "isx", "isy", "isz", "iS", "inx", "iny", "inz"]:
             self.array[f"{d}"] = None
         # j face area vectors
-        for d in ["jsx", "jsy", "jsz", "jS", "jnx", "jny", "jnz"]:
+        for d in ["jxc", "jyc", "jzc", "jsx", "jsy", "jsz", "jS", "jnx", "jny", "jnz"]:
             self.array[f"{d}"] = None
         # k face area vectors
-        for d in ["ksx", "ksy", "ksz", "kS", "knx", "kny", "knz"]:
+        for d in ["kxc", "kyc", "kzc", "ksx", "ksy", "ksz", "kS", "knx", "kny", "knz"]:
             self.array[f"{d}"] = None
 
         if self.blockType == "grid":
@@ -106,17 +106,50 @@ class gridBlock(topologyBlock):
 
         # i face normal, area vectors
         shape = [self.ni + 2 * ng, self.nj + 2 * ng - 1, self.nk + 2 * ng - 1]
-        for name in ["isx", "isy", "isz", "iS", "inx", "iny", "inz"]:
+        for name in [
+            "ixc",
+            "iyc",
+            "izc",
+            "isx",
+            "isy",
+            "isz",
+            "iS",
+            "inx",
+            "iny",
+            "inz",
+        ]:
             self.array[name] = np.zeros((shape))
 
         # j face normal, area vectors
         shape = [self.ni + 2 * ng - 1, self.nj + 2 * ng, self.nk + 2 * ng - 1]
-        for name in ["jsx", "jsy", "jsz", "jS", "jnx", "jny", "jnz"]:
+        for name in [
+            "jxc",
+            "jyc",
+            "jzc",
+            "jsx",
+            "jsy",
+            "jsz",
+            "jS",
+            "jnx",
+            "jny",
+            "jnz",
+        ]:
             self.array[name] = np.zeros((shape))
 
         # k face normal, area vectors
         shape = [self.ni + 2 * ng - 1, self.nj + 2 * ng - 1, self.nk + 2 * ng]
-        for name in ["ksx", "ksy", "ksz", "kS", "knx", "kny", "knz"]:
+        for name in [
+            "kxc",
+            "kyc",
+            "kzc",
+            "ksx",
+            "ksy",
+            "ksz",
+            "kS",
+            "knx",
+            "kny",
+            "knz",
+        ]:
             self.array[name] = np.zeros((shape))
 
     def computeMetrics(self, fdOrder=2):
