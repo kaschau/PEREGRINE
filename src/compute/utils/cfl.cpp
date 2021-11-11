@@ -6,7 +6,7 @@
 std::tuple<double, double> CFLmax(block_ b) {
 
 //-------------------------------------------------------------------------------------------|
-// Compute the max acoustic and convective CFL
+// Compute the max acoustic and convective CFL factor speed/dx
 //-------------------------------------------------------------------------------------------|
   double CFLmaxA, CFLmaxC;
 
