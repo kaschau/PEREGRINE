@@ -44,5 +44,7 @@ void bindUtils(py::module_ &m) {
         py::arg("A view"),
         py::arg("y double"),
         py::arg("B view"));
-
+  //    |------> cfl
+  utils.def("CFLmax", &CFLmax, "Find max acoustic and convective CFL factors c/dx",
+        py::arg("block_ object"));
 }

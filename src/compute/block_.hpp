@@ -20,10 +20,16 @@ struct block_ {
   threeDview dEdx,dEdy,dEdz;
   threeDview dNdx,dNdy,dNdz;
   threeDview dXdx,dXdy,dXdz;
+  // i face centers
+  threeDview ixc,iyc,izc;
   // i face area vectors
   threeDview isx,isy,isz,iS,inx,iny,inz;
+  // j face centers
+  threeDview jxc,jyc,jzc;
   // j face area vectors
   threeDview jsx,jsy,jsz,jS,jnx,jny,jnz;
+  // k face centers
+  threeDview kxc,kyc,kzc;
   // k face area vectors
   threeDview ksx,ksy,ksz,kS,knx,kny,knz;
 

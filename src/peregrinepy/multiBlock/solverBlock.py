@@ -165,18 +165,21 @@ class solverBlock(restartBlock, block_):
         #       i face vector components and areas
         # ------------------------------------------------------------------- #
         shape = ifshape
+        npOrKokkos(["ixc", "iyc", "izc"], ifshape)
         npOrKokkos(["isx", "isy", "isz", "iS", "inx", "iny", "inz"], ifshape)
 
         # ------------------------------------------------------------------- #
         #       j face vector components and areas
         # ------------------------------------------------------------------- #
         shape = jfshape
+        npOrKokkos(["jxc", "jyc", "jzc"], jfshape)
         npOrKokkos(["jsx", "jsy", "jsz", "jS", "jnx", "jny", "jnz"], shape)
 
         # ------------------------------------------------------------------- #
         #       k face vector components and areas
         # ------------------------------------------------------------------- #
         shape = kfshape
+        npOrKokkos(["kxc", "kyc", "kzc"], kfshape)
         npOrKokkos(["ksx", "ksy", "ksz", "kS", "knx", "kny", "knz"], shape)
 
         #######################################################################
