@@ -353,5 +353,6 @@ def generateHalo(blk):
             )
             temp[:, :, s0][mask] += 1.0
 
-    for var in ["x", "y", "z"]:
-        kokkos.deep_copy(getattr(blk, var), blk.mirror[var])
+    if blk._isInitialized:
+        for var in ["x", "y", "z"]:
+            kokkos.deep_copy(getattr(blk, var), blk.mirror[var])

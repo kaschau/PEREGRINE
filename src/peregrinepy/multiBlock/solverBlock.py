@@ -35,6 +35,11 @@ class solverBlock(restartBlock, block_):
         # attributes are assigned values, not defined
         # in the upstream __init__s
         block_.__init__(self)
+
+        # Flag to determine if a block's solver arrays are
+        # initialized or not
+        self._isInitialized = False
+
         self.ng = ng
 
         restartBlock.__init__(self, nblki, sp_names)
@@ -83,6 +88,7 @@ class solverBlock(restartBlock, block_):
         """
         Create the Kokkos work arrays and python side numpy wrappers
         """
+        self._isInitialized = True
 
         if config["Kokkos"]["Space"] in ["OpenMP", "Serial", "Default"]:
             space = kokkos.HostSpace
