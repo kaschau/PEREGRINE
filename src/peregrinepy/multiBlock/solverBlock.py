@@ -154,7 +154,7 @@ class solverBlock(restartBlock, block_):
                         self.mirror[name][ijk] = self.array[name][ijk]
                     self.array[name] = None
                     self.array[name] = np.array(self.mirror[name], copy=False)
-                    kokkos.deep_copy(getattr(blk, name), self.mirror[name])
+                    kokkos.deep_copy(getattr(self, name), self.mirror[name])
 
         #######################################################################
         # Grid Arrays
