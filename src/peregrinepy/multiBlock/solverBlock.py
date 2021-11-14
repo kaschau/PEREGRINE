@@ -4,6 +4,8 @@ import numpy as np
 from ..compute import block_
 from .restartBlock import restartBlock
 from .solverFace import solverFace
+from ..misc import frozenDict
+from itertools import product
 
 """ block.py
 
@@ -48,27 +50,34 @@ class solverBlock(restartBlock, block_):
         # Conserved variables
         for d in ["Q", "dQ"]:
             self.array[f"{d}"] = None
+            self.mirror[f"{d}"] = None
         # Spatial derivative of primative array
         for d in ["dqdx", "dqdy", "dqdz"]:
             self.array[f"{d}"] = None
+            self.mirror[f"{d}"] = None
         # thermo,trans arrays
         for d in ["qh", "qt"]:
             self.array[f"{d}"] = None
+            self.mirror[f"{d}"] = None
         # chemistry
         for d in ["omega"]:
             self.array[f"{d}"] = None
+            self.mirror[f"{d}"] = None
         # RK stages
         for d in ["rhs0", "rhs1", "rhs2", "rhs3"]:
             self.array[f"{d}"] = None
+            self.mirror[f"{d}"] = None
         # Face fluxes
         for d in ["iF", "jF", "kF"]:
             self.array[f"{d}"] = None
+            self.mirror[f"{d}"] = None
         # Face flux switches
         for d in ["phi"]:
             self.array[f"{d}"] = None
+            self.mirror[f"{d}"] = None
 
-        if self.blockType == "solver":
-            self.array._freeze()
+        self.array._freeze()
+        self.mirror._freeze()
 
     def initSolverArrays(self, config):
         """
@@ -116,30 +125,29 @@ class solverBlock(restartBlock, block_):
 
         def npOrKokkos(names, shape):
             for name in names:
+                setattr(
+                    self,
+                    name,
+                    kokkos.array(
+                        name,
+                        shape=shape,
+                        dtype=kokkos.double,
+                        space=space,
+                        dynamic=False,
+                    ),
+                )
+                self.mirror[name] = kokkos.create_mirror_view(
+                    getattr(self, name), copy=False
+                )
                 if self.array[name] is None:
-                    setattr(
-                        self,
-                        name,
-                        kokkos.array(
-                            name,
-                            shape=shape,
-                            dtype=kokkos.double,
-                            space=space,
-                            dynamic=False,
-                        ),
-                    )
-                    self.array[name] = np.array(getattr(self, name), copy=False)
+                    self.array[name] = np.array(self.mirror[name], copy=False)
                 else:
-                    setattr(
-                        self,
-                        name,
-                        kokkos.array(
-                            self.array[name],
-                            dtype=kokkos.double,
-                            space=space,
-                            dynamic=False,
-                        ),
-                    )
+                    extents = self.array[name].shape
+                    it = product(*[range(0, nx) for nx in extents])
+                    for ijk in it:
+                        self.mirror[name][ijk] = self.array[name][ijk]
+                    self.array[name] = None
+                    self.array[name] = np.array(self.mirror[name], copy=False)
 
         #######################################################################
         # Grid Arrays

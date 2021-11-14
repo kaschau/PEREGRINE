@@ -39,6 +39,7 @@ class restartBlock(gridBlock):
         # Conserved variables
         for d in ["q"]:
             self.array[f"{d}"] = None
+            self.mirror[f"{d}"] = None
 
         if self.blockType == "restart":
             self.array._freeze()
