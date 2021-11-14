@@ -29,7 +29,7 @@ def communicate(mb, varis):
         # Post non-blocking sends
         for blk in mb:
             # Need to update host data
-            if blk.isInitialized:
+            if blk._isInitialized:
                 kokkos.deep_copy(blk.mirror[var], getattr(blk, var))
             ndim = blk.array[var].ndim
             for face in blk.faces:
@@ -62,7 +62,7 @@ def communicate(mb, varis):
                 for i, sR in enumerate(sliceR):
                     blk.array[var][sR] = recv[i]
             # Push back up the device
-            if blk.isInitialized:
+            if blk._isInitialized:
                 kokkos.deep_copy(getattr(blk, var), blk.mirror[var])
 
         comm.Barrier()
