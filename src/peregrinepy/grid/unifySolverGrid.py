@@ -7,7 +7,7 @@ from .. import mpiComm
 def unifySolverGrid(mb):
 
     for blk in mb:
-        assert blk.blockType == "solverBlock", "Only solverBlocks can be unified"
+        assert blk.blockType == "solver", "Only solverBlocks can be unified"
         blk.generateHalo()
 
     # Lets just be clean and create the edges and corners
