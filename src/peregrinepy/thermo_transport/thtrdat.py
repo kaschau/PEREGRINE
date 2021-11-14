@@ -65,7 +65,7 @@ class thtrdat(thtrdat_):
         # Species MW
         MW = completeSpecies("MW", usersp, refsp)
         self.MW = kokkos.array(
-            name="MW",
+            "MW",
             shape=MW.shape,
             dtype=kokkos.double,
             space=space,
@@ -85,7 +85,7 @@ class thtrdat(thtrdat_):
             # J/(kg.K)
             cp0 = completeSpecies("cp0", usersp, refsp)
             self.cp0 = kokkos.array(
-                name="cp0",
+                "cp0",
                 shape=cp0.shape,
                 dtype=kokkos.double,
                 space=space,
@@ -99,7 +99,7 @@ class thtrdat(thtrdat_):
         elif config["thermochem"]["eos"] == "tpg":
             NASA7 = completeSpecies("NASA7", usersp, refsp)
             self.NASA7 = kokkos.array(
-                name="NASA7",
+                "NASA7",
                 shape=NASA7.shape,
                 dtype=kokkos.double,
                 space=space,
@@ -130,7 +130,7 @@ class thtrdat(thtrdat_):
                 ) = kineticTheoryPoly(usersp, refsp, config["thermochem"]["eos"])
 
                 self.muPoly = kokkos.array(
-                    name="muPoly",
+                    "muPoly",
                     shape=muPoly.shape,
                     dtype=kokkos.double,
                     space=space,
@@ -143,7 +143,7 @@ class thtrdat(thtrdat_):
                 self.array["muPoly"] = completeSpecies("muPoly", usersp, refsp)
 
                 self.kappaPoly = kokkos.array(
-                    name="kappaPoly",
+                    "kappaPoly",
                     shape=kappaPoly.shape,
                     dtype=kokkos.double,
                     space=space,
@@ -156,7 +156,7 @@ class thtrdat(thtrdat_):
                 self.array["kappaPoly"] = completeSpecies("kappaPoly", usersp, refsp)
 
                 self.DijPoly = kokkos.array(
-                    name="DijPoly",
+                    "DijPoly",
                     shape=DijPoly.shape,
                     dtype=kokkos.double,
                     space=space,
@@ -172,7 +172,7 @@ class thtrdat(thtrdat_):
 
                 mu0 = completeSpecies("mu0", usersp, refsp)
                 self.mu0 = kokkos.array(
-                    name="mu0",
+                    "mu0",
                     shape=mu0.shape,
                     dtype=kokkos.double,
                     space=space,
@@ -186,7 +186,7 @@ class thtrdat(thtrdat_):
 
                 kappa0 = completeSpecies("kappa0", usersp, refsp)
                 self.kappa0 = kokkos.array(
-                    name="kappa0",
+                    "kappa0",
                     shape=kappa0.shape,
                     dtype=kokkos.double,
                     space=space,
