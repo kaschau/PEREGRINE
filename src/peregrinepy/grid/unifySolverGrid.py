@@ -19,7 +19,8 @@ def unifySolverGrid(mb):
     for var in ["x", "y", "z"]:
         for blk in mb:
             # Need to update host data
-            kokkos.deep_copy(blk.mirror[var], getattr(blk, var))
+            if blk._isInitialized:
+                kokkos.deep_copy(blk.mirror[var], getattr(blk, var))
         for _ in range(3):
             reqs = []
             # Post non-blocking recieves
@@ -76,4 +77,5 @@ def unifySolverGrid(mb):
 
         for blk in mb:
             # Push back up the device
-            kokkos.deep_copy(getattr(blk, var), blk.mirror[var])
+            if blk._isInitialized:
+                kokkos.deep_copy(getattr(blk, var), blk.mirror[var])
