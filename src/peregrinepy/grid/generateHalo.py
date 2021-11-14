@@ -1,3 +1,4 @@
+import kokkos
 import numpy as np
 
 s_ = np.s_
@@ -351,3 +352,6 @@ def generateHalo(blk):
                 * (2.0 * x[:, :, s1][mask] - x[:, :, s2][mask]),
             )
             temp[:, :, s0][mask] += 1.0
+
+    for var in ["x", "y", "z"]:
+        kokkos.deep_copy(getattr(blk, var), blk.mirror[var])
