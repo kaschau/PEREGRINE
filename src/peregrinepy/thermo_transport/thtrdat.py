@@ -1,6 +1,7 @@
+import kokkos
+import numpy as np
 import yaml
 from pathlib import Path
-import kokkos
 from ..compute.thermo import thtrdat_
 from .completeSpecies import completeSpecies
 from .findUserSpData import findUserSpData
@@ -11,6 +12,16 @@ class thtrdat(thtrdat_):
         thtrdat_.__init__(self)
 
         self.array = {
+            "MW": None,
+            "cp0": None,
+            "NASA7": None,
+            "muPoly": None,
+            "kappaPoly": None,
+            "DijPoly": None,
+            "mu0": None,
+            "kappa0": None,
+        }
+        self.mirror = {
             "MW": None,
             "cp0": None,
             "NASA7": None,
@@ -52,13 +63,18 @@ class thtrdat(thtrdat_):
         self.speciesNames = speciesNames
 
         # Species MW
-        self.array["MW"] = completeSpecies("MW", usersp, refsp)
+        MW = completeSpecies("MW", usersp, refsp)
         self.MW = kokkos.array(
-            self.array["MW"],
+            name="MW",
+            shape=MW.shape,
             dtype=kokkos.double,
             space=space,
             dynamic=False,
         )
+        self.mirror["MW"] = kokkos.create_mirror_view(self.MW)
+        self.array["MW"] = np.array(self.mirror["MW"], copy=False)
+        self.array["MW"][:] = MW[:]
+        kokkos.deep_copy(self.MW, self.mirror["MW"])
 
         ########################################
         # Set thermodynamic properties
@@ -67,21 +83,33 @@ class thtrdat(thtrdat_):
         if config["thermochem"]["eos"] == "cpg":
             # Values for constant Cp
             # J/(kg.K)
-            self.array["cp0"] = completeSpecies("cp0", usersp, refsp)
+            cp0 = completeSpecies("cp0", usersp, refsp)
             self.cp0 = kokkos.array(
-                self.array["cp0"],
+                name="cp0",
+                shape=cp0.shape,
                 dtype=kokkos.double,
                 space=space,
                 dynamic=False,
             )
+            self.mirror["cp0"] = kokkos.create_mirror_view(self.cp0)
+            self.array["cp0"] = np.array(self.mirror["cp0"], copy=False)
+            self.array["cp0"][:] = cp0[:]
+            kokkos.deep_copy(self.cp0, self.mirror["cp0"])
+
         elif config["thermochem"]["eos"] == "tpg":
-            self.array["NASA7"] = completeSpecies("NASA7", usersp, refsp)
+            NASA7 = completeSpecies("NASA7", usersp, refsp)
             self.NASA7 = kokkos.array(
-                self.array["NASA7"],
+                name="NASA7",
+                shape=NASA7.shape,
                 dtype=kokkos.double,
                 space=space,
                 dynamic=False,
             )
+            self.mirror["NASA7"] = kokkos.create_mirror_view(self.NASA7)
+            self.array["NASA7"] = np.array(self.mirror["NASA7"], copy=False)
+            self.array["NASA7"][:] = NASA7[:]
+            kokkos.deep_copy(self.NASA7, self.mirror["NASA7"])
+            self.array["NASA7"] = completeSpecies("NASA7", usersp, refsp)
         else:
             raise KeyError(
                 f'PEREGRINE ERROR: Unknown EOS {config["thermochem"]["eos"]}'
@@ -96,43 +124,76 @@ class thtrdat(thtrdat_):
                 from .kineticTheoryPoly import kineticTheoryPoly
 
                 (
-                    self.array["muPoly"],
-                    self.array["kappaPoly"],
-                    self.array["DijPoly"],
+                    muPoly,
+                    kappaPoly,
+                    DijPoly,
                 ) = kineticTheoryPoly(usersp, refsp, config["thermochem"]["eos"])
 
                 self.muPoly = kokkos.array(
-                    self.array["muPoly"],
+                    name="muPoly",
+                    shape=muPoly.shape,
                     dtype=kokkos.double,
                     space=space,
                     dynamic=False,
                 )
+                self.mirror["muPoly"] = kokkos.create_mirror_view(self.muPoly)
+                self.array["muPoly"] = np.array(self.mirror["muPoly"], copy=False)
+                self.array["muPoly"][:] = muPoly[:]
+                kokkos.deep_copy(self.muPoly, self.mirror["muPoly"])
+                self.array["muPoly"] = completeSpecies("muPoly", usersp, refsp)
+
                 self.kappaPoly = kokkos.array(
-                    self.array["kappaPoly"],
+                    name="kappaPoly",
+                    shape=kappaPoly.shape,
                     dtype=kokkos.double,
                     space=space,
                     dynamic=False,
                 )
+                self.mirror["kappaPoly"] = kokkos.create_mirror_view(self.kappaPoly)
+                self.array["kappaPoly"] = np.array(self.mirror["kappaPoly"], copy=False)
+                self.array["kappaPoly"][:] = kappaPoly[:]
+                kokkos.deep_copy(self.kappaPoly, self.mirror["kappaPoly"])
+                self.array["kappaPoly"] = completeSpecies("kappaPoly", usersp, refsp)
+
                 self.DijPoly = kokkos.array(
-                    self.array["DijPoly"],
+                    name="DijPoly",
+                    shape=DijPoly.shape,
                     dtype=kokkos.double,
                     space=space,
                     dynamic=False,
                 )
+                self.mirror["DijPoly"] = kokkos.create_mirror_view(self.DijPoly)
+                self.array["DijPoly"] = np.array(self.mirror["DijPoly"], copy=False)
+                self.array["DijPoly"][:] = DijPoly[:]
+                kokkos.deep_copy(self.DijPoly, self.mirror["DijPoly"])
+                self.array["DijPoly"] = completeSpecies("DijPoly", usersp, refsp)
+
             elif config["thermochem"]["trans"] == "constantProps":
 
-                self.array["mu0"] = completeSpecies("mu0", usersp, refsp)
+                mu0 = completeSpecies("mu0", usersp, refsp)
                 self.mu0 = kokkos.array(
-                    self.array["mu0"],
+                    name="mu0",
+                    shape=mu0.shape,
                     dtype=kokkos.double,
                     space=space,
                     dynamic=False,
                 )
+                self.mirror["mu0"] = kokkos.create_mirror_view(self.mu0)
+                self.array["mu0"] = np.array(self.mirror["mu0"], copy=False)
+                self.array["mu0"][:] = mu0[:]
+                kokkos.deep_copy(self.mu0, self.mirror["mu0"])
+                self.array["mu0"] = completeSpecies("mu0", usersp, refsp)
 
-                self.array["kappa0"] = completeSpecies("kappa0", usersp, refsp)
+                kappa0 = completeSpecies("kappa0", usersp, refsp)
                 self.kappa0 = kokkos.array(
-                    self.array["kappa0"],
+                    name="kappa0",
+                    shape=kappa0.shape,
                     dtype=kokkos.double,
                     space=space,
                     dynamic=False,
                 )
+                self.mirror["kappa0"] = kokkos.create_mirror_view(self.kappa0)
+                self.array["kappa0"] = np.array(self.mirror["kappa0"], copy=False)
+                self.array["kappa0"][:] = kappa0[:]
+                kokkos.deep_copy(self.kappa0, self.mirror["kappa0"])
+                self.array["kappa0"] = completeSpecies("kappa0", usersp, refsp)
