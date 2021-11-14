@@ -143,7 +143,7 @@ class solverBlock(restartBlock, block_):
                     self.array[name] = np.array(self.mirror[name], copy=False)
                 else:
                     extents = self.array[name].shape
-                    it = product(*[range(0, nx) for nx in extents])
+                    it = product(*[range(nx) for nx in extents])
                     for ijk in it:
                         self.mirror[name][ijk] = self.array[name][ijk]
                     self.array[name] = None

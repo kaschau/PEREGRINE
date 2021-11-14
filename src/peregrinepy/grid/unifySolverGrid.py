@@ -1,3 +1,4 @@
+import kokkos
 from mpi4py.MPI import DOUBLE as MPIDOUBLE
 from mpi4py.MPI import Request
 from .. import mpiComm
@@ -38,6 +39,8 @@ def unifySolverGrid(mb):
 
             # Post non-blocking sends
             for blk in mb:
+                # Need to update host data
+                kokkos.deep_copy(blk.mirror[var], getattr(blk, var))
                 for face in blk.faces:
                     bc = face.bcType
                     if bc != "b1":
@@ -66,5 +69,7 @@ def unifySolverGrid(mb):
                         blk.array[var][sR] = (
                             blk.array[var][face.s1_] + face.recvBuffer3[i]
                         )
+                # Push back up the device
+                kokkos.deep_copy(getattr(blk, var), blk.mirror[var])
 
             comm.Barrier()
