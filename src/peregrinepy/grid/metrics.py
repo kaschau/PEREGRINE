@@ -1,3 +1,4 @@
+import kokkos
 import numpy as np
 
 
@@ -46,6 +47,9 @@ def metrics(blk, fdOrder=2):
         + z[1::, 1::, 0:-1]
         + z[1::, 1::, 1::]
     )
+    if blk.blockType == "solverBlock":
+        for var in ["xc", "yc", "zc"]:
+            kokkos.deep_copy(getattr(blk, var), blk.mirror[var])
 
     # ----------------------------------------------------------------------------
     # i face centers, area, normal vectors
@@ -82,6 +86,20 @@ def metrics(blk, fdOrder=2):
     blk.array["inx"][:] = blk.array["isx"] / blk.array["iS"]
     blk.array["iny"][:] = blk.array["isy"] / blk.array["iS"]
     blk.array["inz"][:] = blk.array["isz"] / blk.array["iS"]
+    if blk.blockType == "solverBlock":
+        for var in [
+            "ixc",
+            "iyc",
+            "izc",
+            "isx",
+            "isy",
+            "isz",
+            "iS",
+            "inx",
+            "iny",
+            "inz",
+        ]:
+            kokkos.deep_copy(getattr(blk, var), blk.mirror[var])
 
     # ----------------------------------------------------------------------------
     # j face center, area, normal vectors
@@ -119,6 +137,21 @@ def metrics(blk, fdOrder=2):
     blk.array["jny"][:] = blk.array["jsy"] / blk.array["jS"]
     blk.array["jnz"][:] = blk.array["jsz"] / blk.array["jS"]
 
+    if blk.blockType == "solverBlock":
+        for var in [
+            "jxc",
+            "jyc",
+            "jzc",
+            "jsx",
+            "jsy",
+            "jsz",
+            "jS",
+            "jnx",
+            "jny",
+            "jnz",
+        ]:
+            kokkos.deep_copy(getattr(blk, var), blk.mirror[var])
+
     # ----------------------------------------------------------------------------
     # k face center, area, normal vectors
     # ----------------------------------------------------------------------------
@@ -154,6 +187,20 @@ def metrics(blk, fdOrder=2):
     blk.array["knx"][:] = blk.array["ksx"] / blk.array["kS"]
     blk.array["kny"][:] = blk.array["ksy"] / blk.array["kS"]
     blk.array["knz"][:] = blk.array["ksz"] / blk.array["kS"]
+    if blk.blockType == "solverBlock":
+        for var in [
+            "kxc",
+            "kyc",
+            "kzc",
+            "ksx",
+            "ksy",
+            "ksz",
+            "kS",
+            "knx",
+            "kny",
+            "knz",
+        ]:
+            kokkos.deep_copy(getattr(blk, var), blk.mirror[var])
 
     # ----------------------------------------------------------------------------
     # Cell center volumes
@@ -180,6 +227,9 @@ def metrics(blk, fdOrder=2):
         )
     ) / 3.0e0
 
+    if blk.blockType == "solverBlock":
+        for var in ["J"]:
+            kokkos.deep_copy(getattr(blk, var), blk.mirror[var])
     # ----------------------------------------------------------------------------
     # Cell center transformation metrics (ferda FD diffusion operator)
     # ----------------------------------------------------------------------------
@@ -329,3 +379,17 @@ def metrics(blk, fdOrder=2):
         blk.array["dXdz"][2:-2, 2:-2, 2:-2] = (dxdE * dydN - dxdN * dydE) / blk.array[
             "J"
         ][2:-2, 2:-2, 2:-2]
+
+    if blk.blockType == "solverBlock":
+        for var in [
+            "dEdx",
+            "dEdy",
+            "dEdz",
+            "dNdx",
+            "dNdy",
+            "dNdz",
+            "dXdx",
+            "dXdy",
+            "dXdz",
+        ]:
+            kokkos.deep_copy(getattr(blk, var), blk.mirror[var])
