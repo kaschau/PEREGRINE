@@ -42,7 +42,7 @@ def simulate():
 
     mb.unifyGrid()
 
-    mb.computeMetrics()
+    mb.computeMetrics(config["RHS"]["diffOrder"])
 
     T, p = 1100.0, 101325
     gas = ct.Solution("CH4_O2_Stanford_Skeletal.yaml")
