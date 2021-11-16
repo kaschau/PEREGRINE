@@ -1,13 +1,10 @@
-# -*- coding: utf-8 -*-
-
-""" create.py
+"""
 
 Authors:
 
 Kyle Schau
 
-
-This module holds functions for creating grid_block objects of various forms.
+This module holds functions for creating grids of various forms.
 
 """
 
@@ -241,6 +238,11 @@ def multiBlockCube(
 
                 # Update connectivity
                 cubicConnectivity(blk, mbDims, blkNum, i, j, k)
+
+    for blk in mb:
+        if blk._isInitialized:
+            for var in ["x", "y", "z"]:
+                blk.updateDeviceArray(var)
 
 
 def annulus(blk, p1, p2, p3, sweep, thickness, dimensions):
@@ -481,7 +483,7 @@ def multiBlockAnnulus(
 
                 # Update connectivity
                 conn = blk.connectivity
-                cubicConnectivity(face, mbDims, blkNum, i, j, k)
+                cubicConnectivity(blk, mbDims, blkNum, i, j, k)
 
                 # k faces
                 if connect:
@@ -504,3 +506,8 @@ def multiBlockAnnulus(
                             mbDims[2] - 1
                         )
                         conn["6"]["orientation"] = "123"
+
+    for blk in mb:
+        if blk._isInitialized:
+            for var in ["x", "y", "z"]:
+                blk.updateDeviceArray(var)
