@@ -1,10 +1,10 @@
 #!/usr/bin/env -S python -m mpi4py
 import sys
-import kokkos
 from mpi4py import MPI
+import kokkos
 import peregrinepy as pg
 import numpy as np
-import time
+from time import perf_counter
 
 np.seterr(all="raise")
 
@@ -33,7 +33,7 @@ def simulate(configFilePath):
                 f"  Load Balance Eff: {slowest: .2f}% (rank {slowestProc})",
             )
         print(mb)
-        ts = time.time()
+        ts = perf_counter()
 
     # Time integration
     dt = config["simulation"]["dt"]
@@ -62,7 +62,7 @@ def simulate(configFilePath):
             )
 
     if rank == 0:
-        elapsed = time.time() - ts
+        elapsed = perf_counter() - ts
         hrs, rem = divmod(elapsed, 3600.0)
         mins, secs = divmod(rem, 60.0)
         print(
