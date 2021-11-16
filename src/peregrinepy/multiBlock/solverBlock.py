@@ -4,8 +4,7 @@ import numpy as np
 from ..compute import block_
 from .restartBlock import restartBlock
 from .solverFace import solverFace
-from ..misc import frozenDict
-from itertools import product
+from ..misc import frozenDict, createViewMirrorArray
 
 """ block.py
 
@@ -129,36 +128,6 @@ class solverBlock(restartBlock, block_):
             5 + self.ns - 1,
         ]
 
-        def npOrKokkos(names, shape):
-            for name in names:
-                setattr(
-                    self,
-                    name,
-                    kokkos.array(
-                        name,
-                        shape=shape,
-                        dtype=kokkos.double,
-                        space=space,
-                        dynamic=False,
-                    ),
-                )
-                self.mirror[name] = kokkos.create_mirror_view(
-                    getattr(self, name), copy=False
-                )
-                if self.array[name] is None:
-                    self.array[name] = np.array(self.mirror[name], copy=False)
-                else:
-                    extents = self.array[name].shape
-                    assert all(
-                        [i == j for i, j in zip(shape, extents)]
-                    ), "Requested shape does not equal existing numpy array shape."
-                    it = product(*[range(nx) for nx in extents])
-                    for ijk in it:
-                        self.mirror[name][ijk] = self.array[name][ijk]
-                    self.array[name] = None
-                    self.array[name] = np.array(self.mirror[name], copy=False)
-                    kokkos.deep_copy(getattr(self, name), self.mirror[name])
-
         #######################################################################
         # Grid Arrays
         #######################################################################
@@ -166,36 +135,44 @@ class solverBlock(restartBlock, block_):
         #       Primary grid coordinates
         # ------------------------------------------------------------------- #
         shape = [self.ni + 2 * ng, self.nj + 2 * ng, self.nk + 2 * ng]
-        npOrKokkos(["x", "y", "z"], shape)
+        createViewMirrorArray(self, ["x", "y", "z"], shape, space)
 
         # ------------------------------------------------------------------- #
         #       Cell center
         # ------------------------------------------------------------------- #
         shape = ccshape
-        npOrKokkos(["xc", "yc", "zc", "J"], shape)
+        createViewMirrorArray(self, ["xc", "yc", "zc", "J"], shape, space)
         # Cell center metrics
-        npOrKokkos(
+        createViewMirrorArray(
+            self,
             ["dEdx", "dEdy", "dEdz", "dNdx", "dNdy", "dNdz", "dXdx", "dXdy", "dXdz"],
             shape,
+            space,
         )
 
         # ------------------------------------------------------------------- #
         #       i face vector components and areas
         # ------------------------------------------------------------------- #
-        npOrKokkos(["ixc", "iyc", "izc"], ifshape)
-        npOrKokkos(["isx", "isy", "isz", "iS", "inx", "iny", "inz"], ifshape)
+        createViewMirrorArray(self, ["ixc", "iyc", "izc"], ifshape, space)
+        createViewMirrorArray(
+            self, ["isx", "isy", "isz", "iS", "inx", "iny", "inz"], ifshape, space
+        )
 
         # ------------------------------------------------------------------- #
         #       j face vector components and areas
         # ------------------------------------------------------------------- #
-        npOrKokkos(["jxc", "jyc", "jzc"], jfshape)
-        npOrKokkos(["jsx", "jsy", "jsz", "jS", "jnx", "jny", "jnz"], jfshape)
+        createViewMirrorArray(self, ["jxc", "jyc", "jzc"], jfshape, space)
+        createViewMirrorArray(
+            self, ["jsx", "jsy", "jsz", "jS", "jnx", "jny", "jnz"], jfshape, space
+        )
 
         # ------------------------------------------------------------------- #
         #       k face vector components and areas
         # ------------------------------------------------------------------- #
-        npOrKokkos(["kxc", "kyc", "kzc"], kfshape)
-        npOrKokkos(["ksx", "ksy", "ksz", "kS", "knx", "kny", "knz"], kfshape)
+        createViewMirrorArray(self, ["kxc", "kyc", "kzc"], kfshape, space)
+        createViewMirrorArray(
+            self, ["ksx", "ksy", "ksz", "kS", "knx", "kny", "knz"], kfshape, space
+        )
 
         #######################################################################
         # Flow Arrays
@@ -203,12 +180,12 @@ class solverBlock(restartBlock, block_):
         # ------------------------------------------------------------------- #
         #       Conservative, Primative, dQ
         # ------------------------------------------------------------------- #
-        npOrKokkos(["Q", "q", "dQ"], cQshape)
+        createViewMirrorArray(self, ["Q", "q", "dQ"], cQshape, space)
 
         # ------------------------------------------------------------------- #
         #       Spatial derivative of primative array
         # ------------------------------------------------------------------- #
-        npOrKokkos(["dqdx", "dqdy", "dqdz"], cQshape)
+        createViewMirrorArray(self, ["dqdx", "dqdy", "dqdz"], cQshape, space)
 
         # ------------------------------------------------------------------- #
         #       Thermo
@@ -219,7 +196,7 @@ class solverBlock(restartBlock, block_):
             self.nk + 2 * ng - 1,
             5 + self.ns,
         ]
-        npOrKokkos(["qh"], shape)
+        createViewMirrorArray(self, ["qh"], shape, space)
 
         # ------------------------------------------------------------------- #
         #       Transport
@@ -230,7 +207,7 @@ class solverBlock(restartBlock, block_):
             self.nk + 2 * ng - 1,
             2 + self.ns,
         ]
-        npOrKokkos(["qt"], shape)
+        createViewMirrorArray(self, ["qt"], shape, space)
 
         # ------------------------------------------------------------------- #
         #       Chemistry
@@ -242,7 +219,7 @@ class solverBlock(restartBlock, block_):
                 self.nk + 2 * ng - 1,
                 1 + self.ns,
             ]
-            npOrKokkos(["omega"], shape)
+            createViewMirrorArray(self, ["omega"], shape, space)
 
         # ------------------------------------------------------------------- #
         #       RK Stages
@@ -251,7 +228,7 @@ class solverBlock(restartBlock, block_):
         names = [
             f"rhs{i}" for i in range(nstorage[config["solver"]["timeIntegration"]])
         ]
-        npOrKokkos(names, cQshape)
+        createViewMirrorArray(self, names, cQshape, space)
 
         # ------------------------------------------------------------------- #
         #       Fluxes
@@ -261,9 +238,9 @@ class solverBlock(restartBlock, block_):
             (jfQshape, ["jF"]),
             (kfQshape, ["kF"]),
         ):
-            npOrKokkos(names, shape)
+            createViewMirrorArray(self, names, shape, space)
 
         # ------------------------------------------------------------------- #
         #       Switches
         # ------------------------------------------------------------------- #
-        npOrKokkos(["phi"], cQshape)
+        createViewMirrorArray(self, ["phi"], cQshape, space)
