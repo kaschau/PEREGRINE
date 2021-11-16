@@ -242,7 +242,7 @@ def multiBlockCube(
     for blk in mb:
         if blk._isInitialized:
             for var in ["x", "y", "z"]:
-                blk.updateDeviceArray(var)
+                blk.updateDeviceView(var)
 
 
 def annulus(blk, p1, p2, p3, sweep, thickness, dimensions):
@@ -510,4 +510,4 @@ def multiBlockAnnulus(
     for blk in mb:
         if blk._isInitialized:
             for var in ["x", "y", "z"]:
-                blk.updateDeviceArray(var)
+                blk.updateDeviceView(var)
