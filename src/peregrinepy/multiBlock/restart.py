@@ -27,7 +27,7 @@ class restart(grid):
             temp = [restartBlock(i, spNames) for i in range(nblks)]
             super().__init__(nblks, temp)
         else:
-            super().__init__(nblks, None)
+            super().__init__(nblks, ls)
 
         self.nrt = 0
         self.tme = 0

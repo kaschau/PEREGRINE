@@ -22,7 +22,7 @@ class restartBlock(gridBlock):
 
     blockType = "restart"
 
-    def __init__(self, nblki, speciesNames=[]):
+    def __init__(self, nblki, speciesNames):
         super().__init__(nblki)
 
         self.nrt = 0
