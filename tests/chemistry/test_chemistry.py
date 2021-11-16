@@ -3,7 +3,6 @@ import peregrinepy as pg
 import numpy as np
 import cantera as ct
 
-import sys
 from pathlib import Path
 
 # np.random.seed(111)

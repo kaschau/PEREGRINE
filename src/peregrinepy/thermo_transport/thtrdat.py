@@ -5,33 +5,39 @@ from pathlib import Path
 from ..compute.thermo import thtrdat_
 from .completeSpecies import completeSpecies
 from .findUserSpData import findUserSpData
-from ..misc import createViewMirrorArray
+from ..misc import frozenDict, createViewMirrorArray
 
 
 class thtrdat(thtrdat_):
     def __init__(self, config):
         thtrdat_.__init__(self)
 
-        self.array = {
-            "MW": None,
-            "cp0": None,
-            "NASA7": None,
-            "muPoly": None,
-            "kappaPoly": None,
-            "DijPoly": None,
-            "mu0": None,
-            "kappa0": None,
-        }
-        self.mirror = {
-            "MW": None,
-            "cp0": None,
-            "NASA7": None,
-            "muPoly": None,
-            "kappaPoly": None,
-            "DijPoly": None,
-            "mu0": None,
-            "kappa0": None,
-        }
+        self.array = frozenDict(
+            {
+                "MW": None,
+                "cp0": None,
+                "NASA7": None,
+                "muPoly": None,
+                "kappaPoly": None,
+                "DijPoly": None,
+                "mu0": None,
+                "kappa0": None,
+            }
+        )
+        self.mirror = frozenDict(
+            {
+                "MW": None,
+                "cp0": None,
+                "NASA7": None,
+                "muPoly": None,
+                "kappaPoly": None,
+                "DijPoly": None,
+                "mu0": None,
+                "kappa0": None,
+            }
+        )
+        self.array._freeze()
+        self.mirror._freeze()
 
         # Determine what kokkos space we are living in
         if config["Kokkos"]["Space"] in ["OpenMP", "Serial", "Default"]:
