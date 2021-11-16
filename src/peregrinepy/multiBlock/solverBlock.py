@@ -243,3 +243,17 @@ class solverBlock(restartBlock, block_):
         #       Switches
         # ------------------------------------------------------------------- #
         createViewMirrorArray(self, ["phi"], cQshape, space)
+
+    def setBlockCommunication(self):
+
+        for face in self.faces:
+            if face.neighbor is None:
+                continue
+            face.setOrientFunc(self.ni, self.nj, self.nk, self.ne)
+            face.setCommBuffers(self.ni, self.nj, self.nk, self.ne, self.nblki)
+
+    def updateDeviceArray(self, var):
+        kokkos.deep_copy(getattr(self, var), self.mirror[var])
+
+    def updateHostArray(self, var):
+        kokkos.deep_copy(self.mirror[var], getattr(self, var))

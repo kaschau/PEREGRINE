@@ -50,7 +50,7 @@ class TestRusanovSod:
         for face in blk.faces:
             face.bcType = "adiabaticSlipWall"
 
-        pg.mpiComm.blockComm.setBlockCommunication(mb)
+        mb.setBlockCommunication()
         mb.unifyGrid()
         mb.computeMetrics(config["RHS"]["diffOrder"])
         indx = np.where(blk.array["xc"][:, 1, 1] > x0)

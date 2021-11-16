@@ -12,7 +12,7 @@ def unifySolverGrid(mb):
 
     # Lets just be clean and create the edges and corners
     for _ in range(3):
-        mpiComm.blockComm.communicate(mb, ["x", "y", "z"])
+        mpiComm.communicate(mb, ["x", "y", "z"])
 
     comm, rank, size = mpiComm.mpiUtils.getCommRankSize()
 

@@ -45,7 +45,7 @@ def simulate():
     blk.getFace(2).orientation = "123"
     blk.getFace(2).commRank = 0
 
-    pg.mpiComm.blockComm.setBlockCommunication(mb)
+    mb.setBlockCommunication()
 
     mb.unifyGrid()
 
