@@ -101,7 +101,7 @@ class solverBlock(restartBlock, block_):
 
         ccshape = [self.ni + 2 * ng - 1, self.nj + 2 * ng - 1, self.nk + 2 * ng - 1]
         ifshape = [self.ni + 2 * ng, self.nj + 2 * ng - 1, self.nk + 2 * ng - 1]
-        jfshape = [self.ni + 1, self.nj + 2 * ng, self.nk + 2 * ng - 1]
+        jfshape = [self.ni + 2 * ng - 1, self.nj + 2 * ng, self.nk + 2 * ng - 1]
         kfshape = [self.ni + 2 * ng - 1, self.nj + 2 * ng - 1, self.nk + 2 * ng]
 
         cQshape = [
@@ -149,6 +149,9 @@ class solverBlock(restartBlock, block_):
                     self.array[name] = np.array(self.mirror[name], copy=False)
                 else:
                     extents = self.array[name].shape
+                    assert [
+                        i == j for i, j in zip(shape, extents)
+                    ], "Requested shape does not equal existing numpy array shape."
                     it = product(*[range(nx) for nx in extents])
                     for ijk in it:
                         self.mirror[name][ijk] = self.array[name][ijk]
@@ -179,23 +182,20 @@ class solverBlock(restartBlock, block_):
         # ------------------------------------------------------------------- #
         #       i face vector components and areas
         # ------------------------------------------------------------------- #
-        shape = ifshape
         npOrKokkos(["ixc", "iyc", "izc"], ifshape)
         npOrKokkos(["isx", "isy", "isz", "iS", "inx", "iny", "inz"], ifshape)
 
         # ------------------------------------------------------------------- #
         #       j face vector components and areas
         # ------------------------------------------------------------------- #
-        shape = jfshape
         npOrKokkos(["jxc", "jyc", "jzc"], jfshape)
-        npOrKokkos(["jsx", "jsy", "jsz", "jS", "jnx", "jny", "jnz"], shape)
+        npOrKokkos(["jsx", "jsy", "jsz", "jS", "jnx", "jny", "jnz"], jfshape)
 
         # ------------------------------------------------------------------- #
         #       k face vector components and areas
         # ------------------------------------------------------------------- #
-        shape = kfshape
         npOrKokkos(["kxc", "kyc", "kzc"], kfshape)
-        npOrKokkos(["ksx", "ksy", "ksz", "kS", "knx", "kny", "knz"], shape)
+        npOrKokkos(["ksx", "ksy", "ksz", "kS", "knx", "kny", "knz"], kfshape)
 
         #######################################################################
         # Flow Arrays
@@ -203,14 +203,12 @@ class solverBlock(restartBlock, block_):
         # ------------------------------------------------------------------- #
         #       Conservative, Primative, dQ
         # ------------------------------------------------------------------- #
-        shape = cQshape
-        npOrKokkos(["Q", "q", "dQ"], shape)
+        npOrKokkos(["Q", "q", "dQ"], cQshape)
 
         # ------------------------------------------------------------------- #
         #       Spatial derivative of primative array
         # ------------------------------------------------------------------- #
-        shape = cQshape
-        npOrKokkos(["dqdx", "dqdy", "dqdz"], shape)
+        npOrKokkos(["dqdx", "dqdy", "dqdz"], cQshape)
 
         # ------------------------------------------------------------------- #
         #       Thermo
@@ -249,12 +247,11 @@ class solverBlock(restartBlock, block_):
         # ------------------------------------------------------------------- #
         #       RK Stages
         # ------------------------------------------------------------------- #
-        shape = cQshape
         nstorage = {"rk1": 0, "rk3": 2, "rk4": 4, "strang": 2}
         names = [
             f"rhs{i}" for i in range(nstorage[config["solver"]["timeIntegration"]])
         ]
-        npOrKokkos(names, shape)
+        npOrKokkos(names, cQshape)
 
         # ------------------------------------------------------------------- #
         #       Fluxes
@@ -269,5 +266,4 @@ class solverBlock(restartBlock, block_):
         # ------------------------------------------------------------------- #
         #       Switches
         # ------------------------------------------------------------------- #
-        shape = cQshape
-        npOrKokkos(["phi"], shape)
+        npOrKokkos(["phi"], cQshape)
