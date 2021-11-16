@@ -11,6 +11,14 @@ from distutils.version import LooseVersion
 from setuptools.command.build_ext import build_ext
 
 
+# Get version
+vfile = open("src/peregrinepy/_version.py").read()
+vsrch = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]", vfile, re.M)
+
+if vsrch:
+    version = vsrch.group(1)
+
+
 class CMakeExtension(Extension):
     def __init__(self, name, sourcedir=""):
         Extension.__init__(self, name, sources=[])
@@ -73,13 +81,32 @@ class CMakeBuild(build_ext):
         print()  # Add an empty line for cleaner output
 
 
+# Hard dependencies
+install_requires = [
+    "h5py >= 2.6",
+    "mpi4py >= 3.0",
+    "numpy >= 1.20",
+    "scipy >= 1.5",
+    "lxml >= 4.6",
+]
+
+long_description = """
+peregrinepy is the python encapsulation of PEREGRINE. A multi-block,
+multi-physics solver for advection-diffusion problems. The structure
+of the code is designed such that peregrinepy can be a light weight
+pre/post processing aid, as well as the driver that calls compute
+kernels insitu. All physics are solved for in C++ using the kokkos
+model for portability between any architecture.
+"""
+
 setup(
     name="peregrinepy",
-    version="1.6",
+    version=version,
     author="Kyle Schau",
     author_email="ksachau89@gmail.com",
     description="A hybrid Python/C++ CFD Code",
-    long_description="",
+    long_description=long_description,
+    install_requires=install_requires,
     # tell setuptools to look for any packages under 'src'
     packages=find_packages("src"),
     # tell setuptools that all packages will be under the 'src' directory
@@ -91,6 +118,7 @@ setup(
     # add custom build_ext command
     cmdclass=dict(build_ext=CMakeBuild),
     # Testing folder
+    python_requires=">=3.8",
     test_suite="tests",
     zip_safe=False,
 )
