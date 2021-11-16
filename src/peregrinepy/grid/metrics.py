@@ -48,7 +48,7 @@ def metrics(blk, fdOrder):
     )
     if blk.blockType == "solverBlock" and blk._isInitialized:
         for var in ["xc", "yc", "zc"]:
-            blk.updateDeviceArray(var)
+            blk.updateDeviceView(var)
 
     # ----------------------------------------------------------------------------
     # i face centers, area, normal vectors
@@ -98,7 +98,7 @@ def metrics(blk, fdOrder):
             "iny",
             "inz",
         ]:
-            blk.updateDeviceArray(var)
+            blk.updateDeviceView(var)
 
     # ----------------------------------------------------------------------------
     # j face center, area, normal vectors
@@ -149,7 +149,7 @@ def metrics(blk, fdOrder):
             "jny",
             "jnz",
         ]:
-            blk.updateDeviceArray(var)
+            blk.updateDeviceView(var)
 
     # ----------------------------------------------------------------------------
     # k face center, area, normal vectors
@@ -199,7 +199,7 @@ def metrics(blk, fdOrder):
             "kny",
             "knz",
         ]:
-            blk.updateDeviceArray(var)
+            blk.updateDeviceView(var)
 
     # ----------------------------------------------------------------------------
     # Cell center volumes
@@ -228,7 +228,7 @@ def metrics(blk, fdOrder):
 
     if blk.blockType == "solverBlock" and blk._isInitialized:
         for var in ["J"]:
-            blk.updateDeviceArray(var)
+            blk.updateDeviceView(var)
 
     # ----------------------------------------------------------------------------
     # Cell center transformation metrics (ferda FD diffusion operator)
@@ -392,4 +392,4 @@ def metrics(blk, fdOrder):
             "dXdy",
             "dXdz",
         ]:
-            blk.updateDeviceArray(var)
+            blk.updateDeviceView(var)

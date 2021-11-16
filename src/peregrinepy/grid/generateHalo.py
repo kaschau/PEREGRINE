@@ -354,4 +354,4 @@ def generateHalo(blk):
 
     if blk._isInitialized:
         for var in ["x", "y", "z"]:
-            blk.updateDeviceArray(var)
+            blk.updateDeviceView(var)
