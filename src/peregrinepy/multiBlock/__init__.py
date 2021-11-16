@@ -169,6 +169,7 @@ def generateMultiBlockSolver(nblks, config, myblocks=None):
     ti = config["solver"]["timeIntegration"]
     tic = getIntegrator(ti)
     name = "solver" + ti
+    # Merge the time integration class with the multiblock solver class
     mbsolver = type(name, (solver, tic), dict(name=name))
 
     # Get the species names from the spdata file

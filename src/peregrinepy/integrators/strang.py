@@ -7,6 +7,13 @@ from ..compute.utils import AEQB
 from ..compute.timeIntegration import rk3s1, rk3s2, rk3s3
 
 
+def stiff(t, y, blk, thtrdat, impChem, i, j, k):
+    blk.array["q"][i, j, k, 4::] = y
+    impChem(blk, thtrdat, 10, i, j, k)
+
+    return blk.array["omega"][i, j, k, 0:-1]
+
+
 class strang:
     """
     Strang-splitting
@@ -22,15 +29,6 @@ class strang:
 
     def __init__(self):
         pass
-
-    def stiff(t, y, mb, bindx, i, j, k):
-        mb[bindx].array["q"][i, j, k, 4::] = y
-        mb.impChem(mb[bindx], mb.thtrdat, 10, i, j, k)
-
-        return mb[bindx].array["omega"][i, j, k, 0:-1]
-
-    solver = ode(stiff)
-    solver.set_integrator("vode", method="bdf", with_jacobian=True)
 
     def non_stiff(self, dt):
         # store zeroth stage solution
@@ -74,6 +72,8 @@ class strang:
         ###############################################################
         # Take a full step in time for stiff operator
         ###############################################################
+        ODE = ode(stiff)
+        ODE.set_integrator("vode", method="bdf", with_jacobian=True)
         for bindx, blk in enumerate(self):
             it = product(
                 range(blk.ng, blk.ni + blk.ng - 1),
@@ -84,13 +84,11 @@ class strang:
                 i, j, k = ijk
 
                 y0 = blk.array["q"][i, j, k, 4::]
-                self.solver.set_initial_value(y0, 0.0)
-                self.solver.set_f_params(self, bindx, i, j, k)
-                self.solver.integrate(dt)
+                ODE.set_initial_value(y0, 0.0)
+                ODE.set_f_params(blk, self.thtrdat, self.impChem, i, j, k)
+                ODE.integrate(dt)
 
-                blk.array["Q"][i, j, k, 5::] = (
-                    self.solver.y[1::] * blk.array["Q"][i, j, k, 0]
-                )
+                blk.array["Q"][i, j, k, 5::] = ODE.y[1::] * blk.array["Q"][i, j, k, 0]
 
             consistify(self)
 
