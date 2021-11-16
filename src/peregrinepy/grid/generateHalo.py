@@ -1,4 +1,3 @@
-import kokkos
 import numpy as np
 
 s_ = np.s_
@@ -355,4 +354,4 @@ def generateHalo(blk):
 
     if blk._isInitialized:
         for var in ["x", "y", "z"]:
-            kokkos.deep_copy(getattr(blk, var), blk.mirror[var])
+            blk.updateDeviceArray(var)

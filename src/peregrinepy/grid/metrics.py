@@ -1,4 +1,3 @@
-import kokkos
 import numpy as np
 
 
@@ -49,7 +48,7 @@ def metrics(blk, fdOrder):
     )
     if blk.blockType == "solverBlock" and blk._isInitialized:
         for var in ["xc", "yc", "zc"]:
-            kokkos.deep_copy(getattr(blk, var), blk.mirror[var])
+            blk.updateDeviceArray(var)
 
     # ----------------------------------------------------------------------------
     # i face centers, area, normal vectors
@@ -99,7 +98,7 @@ def metrics(blk, fdOrder):
             "iny",
             "inz",
         ]:
-            kokkos.deep_copy(getattr(blk, var), blk.mirror[var])
+            blk.updateDeviceArray(var)
 
     # ----------------------------------------------------------------------------
     # j face center, area, normal vectors
@@ -150,7 +149,7 @@ def metrics(blk, fdOrder):
             "jny",
             "jnz",
         ]:
-            kokkos.deep_copy(getattr(blk, var), blk.mirror[var])
+            blk.updateDeviceArray(var)
 
     # ----------------------------------------------------------------------------
     # k face center, area, normal vectors
@@ -200,7 +199,7 @@ def metrics(blk, fdOrder):
             "kny",
             "knz",
         ]:
-            kokkos.deep_copy(getattr(blk, var), blk.mirror[var])
+            blk.updateDeviceArray(var)
 
     # ----------------------------------------------------------------------------
     # Cell center volumes
@@ -229,7 +228,8 @@ def metrics(blk, fdOrder):
 
     if blk.blockType == "solverBlock" and blk._isInitialized:
         for var in ["J"]:
-            kokkos.deep_copy(getattr(blk, var), blk.mirror[var])
+            blk.updateDeviceArray(var)
+
     # ----------------------------------------------------------------------------
     # Cell center transformation metrics (ferda FD diffusion operator)
     # ----------------------------------------------------------------------------
@@ -392,4 +392,4 @@ def metrics(blk, fdOrder):
             "dXdy",
             "dXdz",
         ]:
-            kokkos.deep_copy(getattr(blk, var), blk.mirror[var])
+            blk.updateDeviceArray(var)
