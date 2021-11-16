@@ -35,7 +35,7 @@ class TestConstantPropsTrans:
         blk = mb[0]
 
         mb.generateHalo()
-        mb.computeMetrics()
+        mb.computeMetrics(config["RHS"]["diffOrder"])
 
         p = np.random.uniform(low=10000, high=1000000)
         T = np.random.uniform(low=200, high=3500)

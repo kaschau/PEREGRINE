@@ -55,7 +55,7 @@ class TestKineticTheoryTrans:
         blk = mb[0]
 
         mb.generateHalo()
-        mb.computeMetrics()
+        mb.computeMetrics(config["RHS"]["diffOrder"])
 
         gas.TPY = T, p, Y
         blk.array["q"][:, :, :, 0] = p

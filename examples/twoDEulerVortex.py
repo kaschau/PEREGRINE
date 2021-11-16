@@ -78,7 +78,7 @@ def simulate():
     pg.mpiComm.blockComm.setBlockCommunication(mb)
 
     mb.unifyGrid()
-    mb.computeMetrics()
+    mb.computeMetrics(config["RHS"]["diffOrder"])
 
     Rc = 1.0
     rhoInf = 1.0

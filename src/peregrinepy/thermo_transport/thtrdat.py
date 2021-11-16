@@ -116,7 +116,6 @@ class thtrdat(thtrdat_):
                 createViewMirrorArray(self, ["kappaPoly"], shape, space)
 
                 self.array["DijPoly"] = DijPoly
-                print(DijPoly.shape)
                 shape = [int(ns * (ns + 1) / 2), 5]
                 createViewMirrorArray(self, ["DijPoly"], shape, space)
 

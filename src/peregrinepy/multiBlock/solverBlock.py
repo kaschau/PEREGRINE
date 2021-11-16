@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 import kokkos
-import numpy as np
 from ..compute import block_
 from .restartBlock import restartBlock
 from .solverFace import solverFace
-from ..misc import frozenDict, createViewMirrorArray
+from ..misc import createViewMirrorArray
 
 """ block.py
 

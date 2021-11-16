@@ -49,7 +49,7 @@ def simulate():
 
     mb.unifyGrid()
 
-    mb.computeMetrics()
+    mb.computeMetrics(config["RHS"]["diffOrder"])
 
     ng = blk.ng
     R = 281.4583333333333
