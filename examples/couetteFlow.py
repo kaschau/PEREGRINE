@@ -77,7 +77,7 @@ def simulate():
     pg.mpiComm.blockComm.setBlockCommunication(mb)
 
     mb.unifyGrid()
-    mb.computeMetrics()
+    mb.computeMetrics(config["RHS"]["diffOrder"])
 
     ng = blk.ng
     blk.array["q"][ng:-ng, ng:-ng, ng, 0] = 101325.0

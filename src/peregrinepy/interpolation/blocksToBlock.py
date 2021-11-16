@@ -51,9 +51,9 @@ def blocksToBlock(blksFrom, blkTo, function="nearest", smooth=0.5):
     print(f"Interpolating block {blkTo.nblki}")
 
     for blk in blksFrom:
-        blk.computeMetrics()
+        blk.computeMetrics(fdOrder=2)
 
-    blkTo.computeMetrics()
+    blkTo.computeMetrics(fdOrder=2)
 
     # qv interpolation
     blkFromX = np.concatenate(tuple([blk.array["xc"].ravel() for blk in blksFrom]))

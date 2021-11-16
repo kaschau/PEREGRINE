@@ -58,7 +58,7 @@ class TestChemistry:
         blk = mb[0]
 
         mb.generateHalo()
-        mb.computeMetrics()
+        mb.computeMetrics(config["RHS"]["diffOrder"])
 
         blk.array["q"][:, :, :, 0] = p
         blk.array["q"][:, :, :, 4] = T

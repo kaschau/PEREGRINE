@@ -52,7 +52,7 @@ class TestRusanovSod:
 
         pg.mpiComm.blockComm.setBlockCommunication(mb)
         mb.unifyGrid()
-        mb.computeMetrics()
+        mb.computeMetrics(config["RHS"]["diffOrder"])
         indx = np.where(blk.array["xc"][:, 1, 1] > x0)
 
         # Initialize domain to Left properties

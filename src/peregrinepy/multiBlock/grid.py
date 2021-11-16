@@ -32,7 +32,7 @@ class grid(topology):
         for blk in self:
             blk.initGridArrays()
 
-    def computeMetrics(self, fdOrder=2):
+    def computeMetrics(self, fdOrder):
         for blk in self:
             blk.computeMetrics(fdOrder=fdOrder)
 

@@ -2,7 +2,7 @@ import kokkos
 import numpy as np
 
 
-def metrics(blk, fdOrder=2):
+def metrics(blk, fdOrder):
 
     x = blk.array["x"]
     y = blk.array["y"]
