@@ -21,13 +21,13 @@ class restart(grid):
 
     mbType = "restart"
 
-    def __init__(self, nblks, spNames, ls=[]):
+    def __init__(self, nblks, spNames, ls=None):
 
-        if ls == []:
+        if ls is None:
             temp = [restartBlock(i, spNames) for i in range(nblks)]
             super().__init__(nblks, temp)
         else:
-            super().__init__(nblks, ls)
+            super().__init__(nblks, None)
 
         self.nrt = 0
         self.tme = 0

@@ -21,8 +21,8 @@ class grid(topology):
 
     mbType = "grid"
 
-    def __init__(self, nblks, ls=[]):
-        if ls == []:
+    def __init__(self, nblks, ls=None):
+        if ls is None:
             temp = [gridBlock(i) for i in range(nblks)]
             super().__init__(nblks, temp)
         else:

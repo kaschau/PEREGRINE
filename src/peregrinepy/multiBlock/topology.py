@@ -21,8 +21,8 @@ class topology(UserList):
 
     mbType = "topology"
 
-    def __init__(self, nblks, ls=[]):
-        if ls == []:
+    def __init__(self, nblks, ls=None):
+        if ls is None:
             temp = [topologyBlock(i) for i in range(nblks)]
             super().__init__(temp)
         else:
