@@ -91,10 +91,10 @@ def simulate():
         face.orientation = "123"
         face.commRank = 0
 
-    pg.mpiComm.blockComm.setBlockCommunication(mb)
+    mb.setBlockCommunication()
 
     mb.unifyGrid()
-    mb.computeMetrics()
+    mb.computeMetrics(config["RHS"]["diffOrder"])
 
     R = 281.4583333333333
     cp = 1000.0

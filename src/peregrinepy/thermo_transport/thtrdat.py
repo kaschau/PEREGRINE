@@ -1,25 +1,42 @@
+import kokkos
 import yaml
 from pathlib import Path
-import kokkos
 from ..compute.thermo import thtrdat_
 from .completeSpecies import completeSpecies
 from .findUserSpData import findUserSpData
+from ..misc import frozenDict, createViewMirrorArray
 
 
 class thtrdat(thtrdat_):
     def __init__(self, config):
         thtrdat_.__init__(self)
 
-        self.array = {
-            "MW": None,
-            "cp0": None,
-            "NASA7": None,
-            "muPoly": None,
-            "kappaPoly": None,
-            "DijPoly": None,
-            "mu0": None,
-            "kappa0": None,
-        }
+        self.array = frozenDict(
+            {
+                "MW": None,
+                "cp0": None,
+                "NASA7": None,
+                "muPoly": None,
+                "kappaPoly": None,
+                "DijPoly": None,
+                "mu0": None,
+                "kappa0": None,
+            }
+        )
+        self.mirror = frozenDict(
+            {
+                "MW": None,
+                "cp0": None,
+                "NASA7": None,
+                "muPoly": None,
+                "kappaPoly": None,
+                "DijPoly": None,
+                "mu0": None,
+                "kappa0": None,
+            }
+        )
+        self.array._freeze()
+        self.mirror._freeze()
 
         # Determine what kokkos space we are living in
         if config["Kokkos"]["Space"] in ["OpenMP", "Serial", "Default"]:
@@ -53,12 +70,8 @@ class thtrdat(thtrdat_):
 
         # Species MW
         self.array["MW"] = completeSpecies("MW", usersp, refsp)
-        self.MW = kokkos.array(
-            self.array["MW"],
-            dtype=kokkos.double,
-            space=space,
-            dynamic=False,
-        )
+        shape = [ns]
+        createViewMirrorArray(self, ["MW"], shape, space)
 
         ########################################
         # Set thermodynamic properties
@@ -68,20 +81,13 @@ class thtrdat(thtrdat_):
             # Values for constant Cp
             # J/(kg.K)
             self.array["cp0"] = completeSpecies("cp0", usersp, refsp)
-            self.cp0 = kokkos.array(
-                self.array["cp0"],
-                dtype=kokkos.double,
-                space=space,
-                dynamic=False,
-            )
+            shape = [ns]
+            createViewMirrorArray(self, ["cp0"], shape, space)
+
         elif config["thermochem"]["eos"] == "tpg":
             self.array["NASA7"] = completeSpecies("NASA7", usersp, refsp)
-            self.NASA7 = kokkos.array(
-                self.array["NASA7"],
-                dtype=kokkos.double,
-                space=space,
-                dynamic=False,
-            )
+            shape = [ns, 15]
+            createViewMirrorArray(self, ["NASA7"], shape, space)
         else:
             raise KeyError(
                 f'PEREGRINE ERROR: Unknown EOS {config["thermochem"]["eos"]}'
@@ -96,43 +102,29 @@ class thtrdat(thtrdat_):
                 from .kineticTheoryPoly import kineticTheoryPoly
 
                 (
-                    self.array["muPoly"],
-                    self.array["kappaPoly"],
-                    self.array["DijPoly"],
+                    muPoly,
+                    kappaPoly,
+                    DijPoly,
                 ) = kineticTheoryPoly(usersp, refsp, config["thermochem"]["eos"])
 
-                self.muPoly = kokkos.array(
-                    self.array["muPoly"],
-                    dtype=kokkos.double,
-                    space=space,
-                    dynamic=False,
-                )
-                self.kappaPoly = kokkos.array(
-                    self.array["kappaPoly"],
-                    dtype=kokkos.double,
-                    space=space,
-                    dynamic=False,
-                )
-                self.DijPoly = kokkos.array(
-                    self.array["DijPoly"],
-                    dtype=kokkos.double,
-                    space=space,
-                    dynamic=False,
-                )
+                self.array["muPoly"] = muPoly
+                shape = [ns, 5]
+                createViewMirrorArray(self, ["muPoly"], shape, space)
+
+                self.array["kappaPoly"] = kappaPoly
+                shape = [ns, 5]
+                createViewMirrorArray(self, ["kappaPoly"], shape, space)
+
+                self.array["DijPoly"] = DijPoly
+                shape = [int(ns * (ns + 1) / 2), 5]
+                createViewMirrorArray(self, ["DijPoly"], shape, space)
+
             elif config["thermochem"]["trans"] == "constantProps":
 
                 self.array["mu0"] = completeSpecies("mu0", usersp, refsp)
-                self.mu0 = kokkos.array(
-                    self.array["mu0"],
-                    dtype=kokkos.double,
-                    space=space,
-                    dynamic=False,
-                )
+                shape = [ns]
+                createViewMirrorArray(self, ["mu0"], shape, space)
 
                 self.array["kappa0"] = completeSpecies("kappa0", usersp, refsp)
-                self.kappa0 = kokkos.array(
-                    self.array["kappa0"],
-                    dtype=kokkos.double,
-                    space=space,
-                    dynamic=False,
-                )
+                shape = [ns]
+                createViewMirrorArray(self, ["kappa0"], shape, space)

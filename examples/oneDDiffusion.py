@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env -S python -m mpi4py
 """
 
 Test case from
@@ -21,7 +21,9 @@ import matplotlib.pyplot as plt
 def simulate():
 
     config = pg.files.configFile()
-    config["RHS"]["diffusion"] = False
+    config["thermochem"]["spdata"] = "ab-cpg.yaml"
+    config["RHS"]["diffusion"] = True
+    config["RHS"]["primaryAdvFlux"] = "rusanov"
     mb = pg.multiBlock.generateMultiBlockSolver(1, config)
     pg.grid.create.multiBlockCube(
         mb,
@@ -35,62 +37,41 @@ def simulate():
     for face in blk.faces:
         face.bcType = "adiabaticSlipWall"
 
-    blk.getFace(1).bcType = "b1"
-    blk.getFace(1).neighbor = 0
-    blk.getFace(1).orientation = "123"
-    blk.getFace(1).commRank = 0
-
-    blk.getFace(2).bcType = "b1"
-    blk.getFace(2).neighbor = 0
-    blk.getFace(2).orientation = "123"
-    blk.getFace(2).commRank = 0
-
     mb.setBlockCommunication()
 
     mb.unifyGrid()
-
     mb.computeMetrics(config["RHS"]["diffOrder"])
 
     ng = blk.ng
-    R = 281.4583333333333
-    blk.array["q"][:, :, :, 0] = 1.0
-    blk.array["q"][:, :, :, 1] = 1.0
-    initial_rho = 2.0 + np.sin(2 * np.pi * blk.array["xc"])
-    initial_T = 1.0 / (R * initial_rho)
-    blk.array["q"][:, :, :, 4] = initial_T
+    blk.array["q"][:, :, :, 0] = 101325.0
+    # Make equal mass
+    MWA = mb.thtrdat.array["MW"][0]
+    MWB = mb.thtrdat.array["MW"][1]
+    blk.array["q"][:, :, :, 4] = np.where(
+        blk.array["xc"] < 0.5, 300.0 * MWA / MWB, 300.0
+    )
+    blk.array["q"][:, :, :, 5] = np.where(blk.array["xc"] < 0.5, 1.0, 0.0)
 
     # Update cons
     mb.eos(blk, mb.thtrdat, 0, "prims")
     pg.consistify(mb)
 
-    dt = 0.1 * 0.025
-    tEnd = 11.0
-    while mb.tme < tEnd:
-
-        if mb.nrt % 50 == 0:
-            pg.misc.progressBar(mb.tme, tEnd)
-
+    dt = 1e-5
+    nrt = 50000
+    while mb.nrt < nrt:
         mb.step(dt)
+        if mb.nrt % 100 == 0:
+            pg.misc.progressBar(mb.nrt, nrt)
 
     fig, ax1 = plt.subplots()
-    ax1.set_title("1D Advection Results")
+    ax1.set_title("1D Diffusion Results")
     ax1.set_xlabel(r"x")
     x = blk.array["xc"][ng:-ng, ng, ng]
-    rho = blk.array["Q"][ng:-ng, ng, ng, 0]
-    p = blk.array["q"][ng:-ng, ng, ng, 0]
-    u = blk.array["q"][ng:-ng, ng, ng, 1]
-    ax1.plot(x, rho, color="g", label="rho", linewidth=0.5)
-    ax1.plot(x, p, color="r", label="p", linewidth=0.5)
-    ax1.plot(x, u, color="k", label="u", linewidth=0.5)
-    ax1.scatter(
-        x,
-        initial_rho[ng:-ng, ng:-ng, ng:-ng],
-        marker="o",
-        facecolor="w",
-        edgecolor="b",
-        label="exact",
-        linewidth=0.5,
-    )
+    A = blk.array["q"][ng:-ng, ng, ng, 5]
+    B = 1.0 - blk.array["q"][ng:-ng, ng, ng, 5]
+    ax1.plot(x, A, marker="o", color="r", label="A", linewidth=1.0)
+    ax1.plot(x, B, linestyle="--", color="k", label="B", linewidth=1.5)
+    ax1.set_ylim([0.49, 0.51])
     ax1.legend()
     plt.show()
     plt.close()

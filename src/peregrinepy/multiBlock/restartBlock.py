@@ -22,7 +22,7 @@ class restartBlock(gridBlock):
 
     blockType = "restart"
 
-    def __init__(self, nblki, speciesNames=[]):
+    def __init__(self, nblki, speciesNames):
         super().__init__(nblki)
 
         self.nrt = 0
@@ -39,6 +39,7 @@ class restartBlock(gridBlock):
         # Conserved variables
         for d in ["q"]:
             self.array[f"{d}"] = None
+            self.mirror[f"{d}"] = None
 
         if self.blockType == "restart":
             self.array._freeze()

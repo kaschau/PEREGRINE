@@ -21,8 +21,8 @@ class grid(topology):
 
     mbType = "grid"
 
-    def __init__(self, nblks, ls=[]):
-        if ls == []:
+    def __init__(self, nblks, ls=None):
+        if ls is None:
             temp = [gridBlock(i) for i in range(nblks)]
             super().__init__(nblks, temp)
         else:
@@ -32,7 +32,7 @@ class grid(topology):
         for blk in self:
             blk.initGridArrays()
 
-    def computeMetrics(self, fdOrder=2):
+    def computeMetrics(self, fdOrder):
         for blk in self:
             blk.computeMetrics(fdOrder=fdOrder)
 

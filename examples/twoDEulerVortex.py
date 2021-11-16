@@ -15,7 +15,7 @@ from mpi4py import MPI
 import kokkos
 import peregrinepy as pg
 import numpy as np
-import time
+from time import perf_counter
 import matplotlib.pyplot as plt
 
 np.seterr(all="raise")
@@ -75,10 +75,10 @@ def simulate():
         face.orientation = "000"
         face.commRank = None
 
-    pg.mpiComm.blockComm.setBlockCommunication(mb)
+    mb.setBlockCommunication()
 
     mb.unifyGrid()
-    mb.computeMetrics()
+    mb.computeMetrics(config["RHS"]["diffOrder"])
 
     Rc = 1.0
     rhoInf = 1.0
@@ -124,12 +124,12 @@ def simulate():
     dt = 0.1 * (Lx / NE) / aInf
     tEnd = Lx / uInf
 
-    ts = time.time()
+    ts = perf_counter()
     while mb.tme < tEnd:
         if mb.nrt % 50 == 0:
             pg.misc.progressBar(mb.tme, tEnd)
         mb.step(dt)
-    print(f"Time integration took {time.time()-ts} seconds.")
+    print(f"Time integration took {perf_counter()-ts} seconds.")
 
     # plot v/Uinf
     plt.plot(

@@ -38,13 +38,17 @@ class gridBlock(topologyBlock):
         #########################################################
         # Python side data
         self.array = frozenDict()
+        # Kokkos mirrors (only used for solverBlocks)
+        self.mirror = frozenDict()
         # Coordinate arrays
         for d in ["x", "y", "z"]:
             self.array[f"{d}"] = None
+            self.mirror[f"{d}"] = None
         # Grid metrics
         # Cell centers
         for d in ["xc", "yc", "zc", "J"]:
             self.array[f"{d}"] = None
+            self.mirror[f"{d}"] = None
         # Cell center metrics
         for d in [
             "dEdx",
@@ -58,15 +62,19 @@ class gridBlock(topologyBlock):
             "dXdz",
         ]:
             self.array[f"{d}"] = None
+            self.mirror[f"{d}"] = None
         # i face area vectors
         for d in ["ixc", "iyc", "izc", "isx", "isy", "isz", "iS", "inx", "iny", "inz"]:
             self.array[f"{d}"] = None
+            self.mirror[f"{d}"] = None
         # j face area vectors
         for d in ["jxc", "jyc", "jzc", "jsx", "jsy", "jsz", "jS", "jnx", "jny", "jnz"]:
             self.array[f"{d}"] = None
+            self.mirror[f"{d}"] = None
         # k face area vectors
         for d in ["kxc", "kyc", "kzc", "ksx", "ksy", "ksz", "kS", "knx", "kny", "knz"]:
             self.array[f"{d}"] = None
+            self.mirror[f"{d}"] = None
 
         if self.blockType == "grid":
             self.array._freeze()
@@ -152,7 +160,7 @@ class gridBlock(topologyBlock):
         ]:
             self.array[name] = np.zeros((shape))
 
-    def computeMetrics(self, fdOrder=2):
+    def computeMetrics(self, fdOrder):
         metrics(self, fdOrder=fdOrder)
 
     def generateHalo(self):
