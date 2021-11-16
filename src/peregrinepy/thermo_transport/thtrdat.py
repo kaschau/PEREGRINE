@@ -1,5 +1,4 @@
 import kokkos
-import numpy as np
 import yaml
 from pathlib import Path
 from ..compute.thermo import thtrdat_
