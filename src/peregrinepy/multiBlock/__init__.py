@@ -4,7 +4,7 @@ from .restart import restart
 from .solver import solver
 
 from ..integrators import getIntegrator
-from ..thermo_transport import thtrdat
+from ..thermo_transport import thtrdat, findUserSpData
 from peregrinepy import compute
 
 from ..misc import null
@@ -171,9 +171,8 @@ def generateMultiBlockSolver(nblks, config, myblocks=None):
     name = "solver" + ti
     mbsolver = type(name, (solver, tic), dict(name=name))
 
-    # Get the number of species from the spdata file
-    spdat = thtrdat(config)
-    spn = spdat.speciesNames
+    # Get the species names from the spdata file
+    spn = list(findUserSpData(config).keys())
 
     # Get the number of ghost layers
     ng = howManyNG(config)
@@ -191,7 +190,7 @@ def generateMultiBlockSolver(nblks, config, myblocks=None):
     # Set the config file on
     cls.config = config
     # Set the thtrdat object on
-    cls.thtrdat = spdat
+    cls.thtrdat = thtrdat(config)
 
     # Set the compute routines for consistify
     setConsistify(cls, config)
