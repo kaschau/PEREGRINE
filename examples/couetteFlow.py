@@ -74,7 +74,7 @@ def simulate():
     blk.getFace(4).array["qBcVals"] = bcArray
     pg.misc.numpyToKokkosArray(bcArray, blk.getFace(4), "qBcVals", kokkos.HostSpace)
 
-    pg.mpiComm.blockComm.setBlockCommunication(mb)
+    mb.setBlockCommunication()
 
     mb.unifyGrid()
     mb.computeMetrics(config["RHS"]["diffOrder"])

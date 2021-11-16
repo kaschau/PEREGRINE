@@ -48,7 +48,7 @@ def simulate():
 
     mb.generateHalo()
 
-    pg.mpiComm.blockComm.setBlockCommunication(mb)
+    mb.setBlockCommunication()
 
     mb.unifyGrid()
     mb.computeMetrics(config["RHS"]["diffOrder"])

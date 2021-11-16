@@ -91,7 +91,7 @@ def simulate():
         face.orientation = "123"
         face.commRank = 0
 
-    pg.mpiComm.blockComm.setBlockCommunication(mb)
+    mb.setBlockCommunication()
 
     mb.unifyGrid()
     mb.computeMetrics(config["RHS"]["diffOrder"])

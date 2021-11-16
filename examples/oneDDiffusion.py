@@ -37,7 +37,7 @@ def simulate():
     for face in blk.faces:
         face.bcType = "adiabaticSlipWall"
 
-    pg.mpiComm.blockComm.setBlockCommunication(mb)
+    mb.setBlockCommunication()
 
     mb.unifyGrid()
     mb.computeMetrics(config["RHS"]["diffOrder"])
