@@ -149,9 +149,9 @@ class solverBlock(restartBlock, block_):
                     self.array[name] = np.array(self.mirror[name], copy=False)
                 else:
                     extents = self.array[name].shape
-                    assert [
-                        i == j for i, j in zip(shape, extents)
-                    ], "Requested shape does not equal existing numpy array shape."
+                    assert all(
+                        [i == j for i, j in zip(shape, extents)]
+                    ), "Requested shape does not equal existing numpy array shape."
                     it = product(*[range(nx) for nx in extents])
                     for ijk in it:
                         self.mirror[name][ijk] = self.array[name][ijk]
