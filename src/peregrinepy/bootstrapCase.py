@@ -52,7 +52,7 @@ def bootstrapCase(config):
     ################################################################
     # Now set the MPI communication info for each block
     ################################################################
-    pg.mpiComm.blockComm.setBlockCommunication(mb)
+    mb.setBlockCommunication()
 
     ################################################################
     # Initialize the solver arrays
@@ -63,7 +63,7 @@ def bootstrapCase(config):
     # Unify the grid via halo construction, compute metrics
     ################################################################
     mb.unifyGrid()
-    mb.computeMetrics()
+    mb.computeMetrics(config["RHS"]["diffOrder"])
 
     ################################################################
     # Read in boundary conditions

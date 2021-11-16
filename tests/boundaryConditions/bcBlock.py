@@ -24,7 +24,7 @@ def create(bc="adiabaticSlipWall"):
     )
 
     mb.generateHalo()
-    mb.computeMetrics()
+    mb.computeMetrics(config["RHS"]["diffOrder"])
 
     mb.initSolverArrays(config)
 

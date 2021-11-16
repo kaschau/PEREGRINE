@@ -27,6 +27,9 @@ def communicate(mb, varis):
 
         # Post non-blocking sends
         for blk in mb:
+            # Need to update host data
+            if blk._isInitialized:
+                blk.updateHostArray(var)
             ndim = blk.array[var].ndim
             for face in blk.faces:
                 if face.neighbor is None:
@@ -57,15 +60,8 @@ def communicate(mb, varis):
                 )
                 for i, sR in enumerate(sliceR):
                     blk.array[var][sR] = recv[i]
+            # Push back up the device
+            if blk._isInitialized:
+                blk.updateDeviceArray(var)
 
         comm.Barrier()
-
-
-def setBlockCommunication(mb):
-
-    for blk in mb:
-        for face in blk.faces:
-            if face.neighbor is None:
-                continue
-            face.setOrientFunc(blk.ni, blk.nj, blk.nk, blk.ne)
-            face.setCommBuffers(blk.ni, blk.nj, blk.nk, blk.ne, blk.nblki)

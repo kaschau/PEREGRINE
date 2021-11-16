@@ -351,3 +351,7 @@ def generateHalo(blk):
                 * (2.0 * x[:, :, s1][mask] - x[:, :, s2][mask]),
             )
             temp[:, :, s0][mask] += 1.0
+
+    if blk._isInitialized:
+        for var in ["x", "y", "z"]:
+            blk.updateDeviceArray(var)

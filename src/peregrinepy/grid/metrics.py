@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def metrics(blk, fdOrder=2):
+def metrics(blk, fdOrder):
 
     x = blk.array["x"]
     y = blk.array["y"]
@@ -46,6 +46,9 @@ def metrics(blk, fdOrder=2):
         + z[1::, 1::, 0:-1]
         + z[1::, 1::, 1::]
     )
+    if blk.blockType == "solverBlock" and blk._isInitialized:
+        for var in ["xc", "yc", "zc"]:
+            blk.updateDeviceArray(var)
 
     # ----------------------------------------------------------------------------
     # i face centers, area, normal vectors
@@ -82,6 +85,20 @@ def metrics(blk, fdOrder=2):
     blk.array["inx"][:] = blk.array["isx"] / blk.array["iS"]
     blk.array["iny"][:] = blk.array["isy"] / blk.array["iS"]
     blk.array["inz"][:] = blk.array["isz"] / blk.array["iS"]
+    if blk.blockType == "solverBlock" and blk._isInitialized:
+        for var in [
+            "ixc",
+            "iyc",
+            "izc",
+            "isx",
+            "isy",
+            "isz",
+            "iS",
+            "inx",
+            "iny",
+            "inz",
+        ]:
+            blk.updateDeviceArray(var)
 
     # ----------------------------------------------------------------------------
     # j face center, area, normal vectors
@@ -119,6 +136,21 @@ def metrics(blk, fdOrder=2):
     blk.array["jny"][:] = blk.array["jsy"] / blk.array["jS"]
     blk.array["jnz"][:] = blk.array["jsz"] / blk.array["jS"]
 
+    if blk.blockType == "solverBlock" and blk._isInitialized:
+        for var in [
+            "jxc",
+            "jyc",
+            "jzc",
+            "jsx",
+            "jsy",
+            "jsz",
+            "jS",
+            "jnx",
+            "jny",
+            "jnz",
+        ]:
+            blk.updateDeviceArray(var)
+
     # ----------------------------------------------------------------------------
     # k face center, area, normal vectors
     # ----------------------------------------------------------------------------
@@ -154,6 +186,20 @@ def metrics(blk, fdOrder=2):
     blk.array["knx"][:] = blk.array["ksx"] / blk.array["kS"]
     blk.array["kny"][:] = blk.array["ksy"] / blk.array["kS"]
     blk.array["knz"][:] = blk.array["ksz"] / blk.array["kS"]
+    if blk.blockType == "solverBlock" and blk._isInitialized:
+        for var in [
+            "kxc",
+            "kyc",
+            "kzc",
+            "ksx",
+            "ksy",
+            "ksz",
+            "kS",
+            "knx",
+            "kny",
+            "knz",
+        ]:
+            blk.updateDeviceArray(var)
 
     # ----------------------------------------------------------------------------
     # Cell center volumes
@@ -179,6 +225,10 @@ def metrics(blk, fdOrder=2):
             + blk.array["ksz"][:, :, 1::]
         )
     ) / 3.0e0
+
+    if blk.blockType == "solverBlock" and blk._isInitialized:
+        for var in ["J"]:
+            blk.updateDeviceArray(var)
 
     # ----------------------------------------------------------------------------
     # Cell center transformation metrics (ferda FD diffusion operator)
@@ -329,3 +379,17 @@ def metrics(blk, fdOrder=2):
         blk.array["dXdz"][2:-2, 2:-2, 2:-2] = (dxdE * dydN - dxdN * dydE) / blk.array[
             "J"
         ][2:-2, 2:-2, 2:-2]
+
+    if blk.blockType == "solverBlock" and blk.isInitialized:
+        for var in [
+            "dEdx",
+            "dEdy",
+            "dEdz",
+            "dNdx",
+            "dNdy",
+            "dNdz",
+            "dXdx",
+            "dXdy",
+            "dXdz",
+        ]:
+            blk.updateDeviceArray(var)

@@ -6,15 +6,20 @@ from .. import mpiComm
 def unifySolverGrid(mb):
 
     for blk in mb:
+        assert blk.blockType == "solver", "Only solverBlocks can be unified"
         blk.generateHalo()
 
     # Lets just be clean and create the edges and corners
     for _ in range(3):
-        mpiComm.blockComm.communicate(mb, ["x", "y", "z"])
+        mpiComm.communicate(mb, ["x", "y", "z"])
 
     comm, rank, size = mpiComm.mpiUtils.getCommRankSize()
 
     for var in ["x", "y", "z"]:
+        for blk in mb:
+            # Need to update host data
+            if blk._isInitialized:
+                blk.updateHostView(var)
         for _ in range(3):
             reqs = []
             # Post non-blocking recieves
@@ -68,3 +73,8 @@ def unifySolverGrid(mb):
                         )
 
             comm.Barrier()
+
+        for blk in mb:
+            # Push back up the device
+            if blk._isInitialized:
+                blk.updateDeviceView(var)

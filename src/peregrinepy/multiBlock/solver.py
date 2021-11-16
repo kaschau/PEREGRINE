@@ -90,6 +90,10 @@ class solver(restart):
     def unifyGrid(self):
         unifySolverGrid(self)
 
+    def setBlockCommunication(self):
+        for blk in self:
+            blk.setBlockCommunication()
+
     def __repr__(self):
         string = f"  Total blocks: {self.totalBlocks}\n"
         string += f"  Species: {self.thtrdat.speciesNames}\n"

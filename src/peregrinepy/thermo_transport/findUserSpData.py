@@ -10,11 +10,18 @@ def findUserSpData(config):
     # then we look in the local directory
     # then we look in the PEREGRINE data base
     # then we see if we have an absolute path
+    spdata = config["thermochem"]["spdata"]
+    if type(spdata) == list:
+        usersp = {i: None for i in spdata}
+        return usersp
+    else:
+        pass
+
     spdataLocs = [
-        f'{config["io"]["inputdir"]}/{config["thermochem"]["spdata"]}',
-        f'./{config["thermochem"]["spdata"]}',
-        f'{relpath}/database/{config["thermochem"]["spdata"]}',
-        config["thermochem"]["spdata"],
+        f'{config["io"]["inputdir"]}/{spdata}',
+        f"./{spdata}",
+        f"{relpath}/database/{spdata}",
+        spdata,
     ]
     for loc in spdataLocs:
         try:

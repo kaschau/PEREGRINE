@@ -1,3 +1,3 @@
 from . import mpiUtils
-from . import blockComm
+from .communicate import communicate
 from .mpiReadConfig import mpiReadConfig

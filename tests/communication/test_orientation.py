@@ -43,9 +43,9 @@ def test_123():
     ng = blk0.ng
 
     # Reorient and update communication info
-    pg.mpiComm.blockComm.setBlockCommunication(tb.mb)
+    tb.mb.setBlockCommunication()
     # Execute communication
-    pg.mpiComm.blockComm.communicate(tb.mb, ["x", "y", "z", "q"])
+    pg.mpiComm.communicate(tb.mb, ["x", "y", "z", "q"])
 
     passfail = []
     for var, shape, off in zip(
@@ -94,10 +94,10 @@ def test_135():
     blk0.getFace(2).orientation = "135"
     blk1.getFace(1).orientation = "162"
 
-    pg.mpiComm.blockComm.setBlockCommunication(tb.mb)
+    tb.mb.setBlockCommunication()
 
     # Execute communication
-    pg.mpiComm.blockComm.communicate(tb.mb, ["x", "y", "z", "q"])
+    pg.mpiComm.communicate(tb.mb, ["x", "y", "z", "q"])
 
     passfail = []
     for var, shape, off in zip(
@@ -158,10 +158,10 @@ def test_231():
     blk1.getFace(3).orientation = "312"
     blk1.getFace(3).commRank = 0
 
-    pg.mpiComm.blockComm.setBlockCommunication(tb.mb)
+    tb.mb.setBlockCommunication()
 
     # Execute communication
-    pg.mpiComm.blockComm.communicate(tb.mb, ["x", "y", "z", "q"])
+    pg.mpiComm.communicate(tb.mb, ["x", "y", "z", "q"])
 
     passfail = []
     for var, shape, off in zip(
@@ -222,10 +222,10 @@ def test_321():
     blk1.getFace(5).orientation = "231"
     blk1.getFace(5).commRank = 0
 
-    pg.mpiComm.blockComm.setBlockCommunication(tb.mb)
+    tb.mb.setBlockCommunication()
 
     # Execute communication
-    pg.mpiComm.blockComm.communicate(tb.mb, ["x", "y", "z", "q"])
+    pg.mpiComm.communicate(tb.mb, ["x", "y", "z", "q"])
 
     passfail = []
     for var, shape, off in zip(
@@ -287,10 +287,10 @@ def test_432():
     blk1.getFace(2).orientation = "432"
     blk1.getFace(2).commRank = 0
 
-    pg.mpiComm.blockComm.setBlockCommunication(tb.mb)
+    tb.mb.setBlockCommunication()
 
     # Execute communication
-    pg.mpiComm.blockComm.communicate(tb.mb, ["x", "y", "z", "q"])
+    pg.mpiComm.communicate(tb.mb, ["x", "y", "z", "q"])
 
     passfail = []
     for var, shape, off in zip(
@@ -351,10 +351,10 @@ def test_513():
     blk1.getFace(4).orientation = "243"
     blk1.getFace(4).commRank = 0
 
-    pg.mpiComm.blockComm.setBlockCommunication(tb.mb)
+    tb.mb.setBlockCommunication()
 
     # Execute communication
-    pg.mpiComm.blockComm.communicate(tb.mb, ["x", "y", "z", "q"])
+    pg.mpiComm.communicate(tb.mb, ["x", "y", "z", "q"])
 
     passfail = []
     for var, shape, off in zip(
@@ -415,10 +415,10 @@ def test_621():
     blk1.getFace(6).orientation = "324"
     blk1.getFace(6).commRank = 0
 
-    pg.mpiComm.blockComm.setBlockCommunication(tb.mb)
+    tb.mb.setBlockCommunication()
 
     # Execute communication
-    pg.mpiComm.blockComm.communicate(tb.mb, ["x", "y", "z", "q"])
+    pg.mpiComm.communicate(tb.mb, ["x", "y", "z", "q"])
 
     passfail = []
     for var, shape, off in zip(
