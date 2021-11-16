@@ -140,7 +140,6 @@ class thtrdat(thtrdat_):
                 self.array["muPoly"] = np.array(self.mirror["muPoly"], copy=False)
                 self.array["muPoly"][:] = muPoly[:]
                 kokkos.deep_copy(self.muPoly, self.mirror["muPoly"])
-                self.array["muPoly"] = completeSpecies("muPoly", usersp, refsp)
 
                 self.kappaPoly = kokkos.array(
                     "kappaPoly",
@@ -153,7 +152,6 @@ class thtrdat(thtrdat_):
                 self.array["kappaPoly"] = np.array(self.mirror["kappaPoly"], copy=False)
                 self.array["kappaPoly"][:] = kappaPoly[:]
                 kokkos.deep_copy(self.kappaPoly, self.mirror["kappaPoly"])
-                self.array["kappaPoly"] = completeSpecies("kappaPoly", usersp, refsp)
 
                 self.DijPoly = kokkos.array(
                     "DijPoly",
@@ -166,7 +164,6 @@ class thtrdat(thtrdat_):
                 self.array["DijPoly"] = np.array(self.mirror["DijPoly"], copy=False)
                 self.array["DijPoly"][:] = DijPoly[:]
                 kokkos.deep_copy(self.DijPoly, self.mirror["DijPoly"])
-                self.array["DijPoly"] = completeSpecies("DijPoly", usersp, refsp)
 
             elif config["thermochem"]["trans"] == "constantProps":
 
@@ -182,7 +179,6 @@ class thtrdat(thtrdat_):
                 self.array["mu0"] = np.array(self.mirror["mu0"], copy=False)
                 self.array["mu0"][:] = mu0[:]
                 kokkos.deep_copy(self.mu0, self.mirror["mu0"])
-                self.array["mu0"] = completeSpecies("mu0", usersp, refsp)
 
                 kappa0 = completeSpecies("kappa0", usersp, refsp)
                 self.kappa0 = kokkos.array(
@@ -196,4 +192,3 @@ class thtrdat(thtrdat_):
                 self.array["kappa0"] = np.array(self.mirror["kappa0"], copy=False)
                 self.array["kappa0"][:] = kappa0[:]
                 kokkos.deep_copy(self.kappa0, self.mirror["kappa0"])
-                self.array["kappa0"] = completeSpecies("kappa0", usersp, refsp)
