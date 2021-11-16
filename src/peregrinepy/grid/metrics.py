@@ -85,6 +85,7 @@ def metrics(blk, fdOrder):
     blk.array["inx"][:] = blk.array["isx"] / blk.array["iS"]
     blk.array["iny"][:] = blk.array["isy"] / blk.array["iS"]
     blk.array["inz"][:] = blk.array["isz"] / blk.array["iS"]
+
     if blk.blockType == "solverBlock" and blk._isInitialized:
         for var in [
             "ixc",
@@ -186,6 +187,7 @@ def metrics(blk, fdOrder):
     blk.array["knx"][:] = blk.array["ksx"] / blk.array["kS"]
     blk.array["kny"][:] = blk.array["ksy"] / blk.array["kS"]
     blk.array["knz"][:] = blk.array["ksz"] / blk.array["kS"]
+
     if blk.blockType == "solverBlock" and blk._isInitialized:
         for var in [
             "kxc",

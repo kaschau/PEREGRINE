@@ -1,6 +1,6 @@
 import numpy as np
 from .topologyFace import topologyFace
-from ..misc import null
+from ..misc import null, frozenDict, createViewMirrorArray
 from ..compute import face_, bcs
 
 s_ = np.s_
@@ -49,7 +49,8 @@ class solverFace(topologyFace, face_):
             self.s2_ = [s_[:, :, i] for i in largeS2]
 
         # Boundary condition values
-        self.array = {"qBcVals": None, "QBcVals": None}
+        self.array = frozenDict({"qBcVals": None, "QBcVals": None})
+        self.mirror = frozenDict({"qBcVals": None, "QBcVals": None})
         # Boundary function
         self.bcFunc = bcs.walls.adiabaticSlipWall
 

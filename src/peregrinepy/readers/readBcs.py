@@ -81,6 +81,7 @@ def readBcs(mb, pathToFile):
             # If we are a solver face, we need to create the kokkos arrays
             if face.faceType == "solver":
                 import kokkos
+                from ..misc import createViewMirrorArray
 
                 if mb.config["Kokkos"]["Space"] in ["OpenMP", "Serial", "Default"]:
                     space = kokkos.HostSpace
@@ -89,14 +90,6 @@ def readBcs(mb, pathToFile):
                 else:
                     raise ValueError("What space?")
 
-                for name in ["qBcVals", "QBcVals"]:
-                    setattr(
-                        face,
-                        name,
-                        kokkos.array(
-                            face.array[name],
-                            dtype=kokkos.double,
-                            space=space,
-                            dynamic=False,
-                        ),
-                    )
+                names = ["qBcVals", "QBcVals"]
+                shape = [blk.ne]
+                createViewMirrorArray(face, names, shape, space)
