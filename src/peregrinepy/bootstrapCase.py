@@ -33,7 +33,6 @@ def bootstrapCase(config):
     # Now we figure out which processor each block's neighbor
     # is on
     ################################################################
-
     for blk in mb:
         for face in blk.faces:
             neighbor = face.neighbor
@@ -55,11 +54,6 @@ def bootstrapCase(config):
     mb.setBlockCommunication()
 
     ################################################################
-    # Initialize the solver arrays
-    ################################################################
-    mb.initSolverArrays(config)
-
-    ################################################################
     # Unify the grid via halo construction, compute metrics
     ################################################################
     mb.unifyGrid()
@@ -79,6 +73,11 @@ def bootstrapCase(config):
         config["simulation"]["restartFrom"],
         config["simulation"]["animate"],
     )
+
+    ################################################################
+    # Initialize the solver arrays
+    ################################################################
+    mb.initSolverArrays(config)
 
     ################################################################
     # Register parallel writer
