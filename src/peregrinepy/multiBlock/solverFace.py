@@ -1,6 +1,6 @@
 import numpy as np
 from .topologyFace import topologyFace
-from ..misc import null, frozenDict, createViewMirrorArray
+from ..misc import null, frozenDict
 from ..compute import face_, bcs
 
 s_ = np.s_
