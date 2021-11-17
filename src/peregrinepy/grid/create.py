@@ -240,7 +240,7 @@ def multiBlockCube(
                 cubicConnectivity(blk, mbDims, blkNum, i, j, k)
 
     for blk in mb:
-        if blk._isInitialized:
+        if blk.blockType == "solver" and blk._isInitialized:
             for var in ["x", "y", "z"]:
                 blk.updateDeviceView(var)
 
@@ -508,6 +508,6 @@ def multiBlockAnnulus(
                         conn["6"]["orientation"] = "123"
 
     for blk in mb:
-        if blk._isInitialized:
+        if blk.blockType == "solver" and blk._isInitialized:
             for var in ["x", "y", "z"]:
                 blk.updateDeviceView(var)

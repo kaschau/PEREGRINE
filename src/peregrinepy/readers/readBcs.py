@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 
+import numpy as np
 import yaml
 from ..mpiComm import mpiUtils
-import numpy as np
+from .. import bcs
 
 
 def readBcs(mb, pathToFile):
@@ -60,13 +61,12 @@ def readBcs(mb, pathToFile):
                 )
 
             # Set the boundary condition values
-            face.array["qBcVals"] = np.zeros(5 + blk.ns - 1)
-            face.array["QBcVals"] = np.zeros(5 + blk.ns - 1)
+            face.array["qBcVals"] = np.zeros(blk.ne)
+            face.array["QBcVals"] = np.zeros(blk.ne)
             qIndexMap = {"p": 0, "u": 1, "v": 2, "w": 3, "T": 4}
-            QIndexMap = {"rho": 0, "rhou": 1, "rhov": 2, "rhow": 3, "rhoE": 4}
             for i in range(blk.ns):
                 qIndexMap[blk.speciesNames[i]] = 5 + i
-                QIndexMap["rho" + blk.speciesNames[i]] = 5 + i
+            QIndexMap = {"massFluxPerUnitArea": 0}
 
             if "bcVals" in bcsIn[bcFam].keys():
                 for key in bcsIn[bcFam]["bcVals"]:
@@ -78,9 +78,23 @@ def readBcs(mb, pathToFile):
                     else:
                         raise KeyError("ERROR, unknown input bcVal: {key}")
 
+            # Certain boundary conditions need prep work, so call them here
+            found = False
+            for bcmodule in [bcs.inlets, bcs.exits, bcs.walls]:
+                try:
+                    func = getattr(bcmodule, "prep_" + face.bcType)
+                    func(blk, face)
+                    found = True
+                    break
+                except AttributeError:
+                    pass
+            if not found:
+                raise ValueError(f"Could not run the prep_ function for {face.bcType}")
+
             # If we are a solver face, we need to create the kokkos arrays
             if face.faceType == "solver":
                 import kokkos
+                from ..misc import createViewMirrorArray
 
                 if mb.config["Kokkos"]["Space"] in ["OpenMP", "Serial", "Default"]:
                     space = kokkos.HostSpace
@@ -89,14 +103,6 @@ def readBcs(mb, pathToFile):
                 else:
                     raise ValueError("What space?")
 
-                for name in ["qBcVals", "QBcVals"]:
-                    setattr(
-                        face,
-                        name,
-                        kokkos.array(
-                            face.array[name],
-                            dtype=kokkos.double,
-                            space=space,
-                            dynamic=False,
-                        ),
-                    )
+                names = ["qBcVals", "QBcVals"]
+                shape = [blk.ne]
+                createViewMirrorArray(face, names, shape, space)

@@ -44,6 +44,10 @@ void supersonicInlet(
     block_ b, const face_ face,
     const std::function<void(block_, thtrdat_, int, std::string)> &eos,
     thtrdat_ th, std::string terms);
+void constantMassFluxSubsonicInlet(
+    block_ b, const face_ face,
+    const std::function<void(block_, thtrdat_, int, std::string)> &eos,
+    thtrdat_ th, std::string terms);
 //    |------> walls
 void adiabaticNoSlipWall(
     block_ b, const face_ face,

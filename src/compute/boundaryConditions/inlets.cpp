@@ -153,3 +153,130 @@ void supersonicInlet(
     }
   }
 }
+
+void constantMassFluxSubsonicInlet(
+    block_ b, const face_ face,
+    const std::function<void(block_, thtrdat_, int, std::string)> &eos,
+    thtrdat_ th, std::string terms) {
+  //-------------------------------------------------------------------------------------------|
+  // Apply BC to face, slice by slice.
+  //-------------------------------------------------------------------------------------------|
+  const int ng = b.ng;
+  int s0, s1, s2, plus;
+  setHaloSlices(s0, s1, s2, plus, b.ni, b.nj, b.nk, ng, face._nface);
+
+  if (terms.compare("euler") == 0) {
+
+    threeDsubview q1 = getHaloSlice(b.q, face._nface, s1);
+    MDRange2 range_face = MDRange2({0, 0}, {q1.extent(0), q1.extent(1)});
+
+    for (int g = 0; g < b.ng; g++) {
+      s0 -= plus * g;
+      s2 += plus * g;
+
+      threeDsubview q0 = getHaloSlice(b.q, face._nface, s0);
+      threeDsubview q2 = getHaloSlice(b.q, face._nface, s2);
+
+      Kokkos::parallel_for(
+          "Constant velocity subsonic inlet euler terms", range_face,
+          KOKKOS_LAMBDA(const int i, const int j) {
+            // extrapolate pressure
+            q0(i, j, 0) = 2.0 * q1(i, j, 0) - q2(i, j, 0);
+
+            // apply zero velo on face to make subsequent updates easier
+            q0(i, j, 1) = 0.0;
+            q0(i, j, 2) = 0.0;
+            q0(i, j, 3) = 0.0;
+
+            // apply temperature on face
+            q0(i, j, 4) = 2.0 * face.qBcVals(4) - q1(i, j, 4);
+
+            // apply species on face
+            // TODO: This is an unprotected extrapolation.
+            // Is this a good thing to be doing?
+            for (int n = 5; n < b.ne; n++) {
+              q0(i, j, n) = 2.0 * face.qBcVals(n) - q1(i, j, n);
+            }
+          });
+    }
+    eos(b, th, face._nface, "prims");
+
+    // We now have a valid density value
+    // set momentums, and velocities to match the desired mass flux
+    // NOTE: We have to be careful with the indexing to accomodate fourth
+    // order. In particular, we cannot just use s1 for all the extrapolations
+    // so we have to make s2 start with s1 then increment
+
+    // Reset first slice indicies, and make s2 start at s1
+    s0 += plus * (ng-1);
+    s2 -= plus * (ng-1);
+    s2 -= plus ;
+
+    for (int g = 0; g < b.ng; g++) {
+      s0 -= plus * g;
+      s2 += plus * g;
+
+      threeDsubview q0 = getHaloSlice(b.q, face._nface, s0);
+      threeDsubview q2 = getHaloSlice(b.q, face._nface, s2);
+      threeDsubview Q0 = getHaloSlice(b.Q, face._nface, s0);
+      threeDsubview Q2 = getHaloSlice(b.Q, face._nface, s2);
+
+      Kokkos::parallel_for(
+          "Constant velocity subsonic inlet euler terms", range_face,
+          KOKKOS_LAMBDA(const int i, const int j) {
+            // Target rhoU
+            double &rhou = face.QBcVals(1);
+            double &rhov = face.QBcVals(2);
+            double &rhow = face.QBcVals(3);
+
+            // Set the velocities in the halo such that
+            // 1/2(rho1+rho2)*1/2(u1+u2) evaluates to our desired rhou
+            q0(i, j, 1) =
+                4.0 * rhou / (Q0(i, j, 0) + Q2(i, j, 0)) - q2(i, j, 1);
+            q0(i, j, 2) =
+                4.0 * rhov / (Q0(i, j, 0) + Q2(i, j, 0)) - q2(i, j, 2);
+            q0(i, j, 3) =
+                4.0 * rhow / (Q0(i, j, 0) + Q2(i, j, 0)) - q2(i, j, 3);
+
+            // update momentum
+            double &rho = Q0(i, j, 0);
+            Q0(i, j, 1) = q0(i, j, 1) * rho;
+            Q0(i, j, 2) = q0(i, j, 2) * rho;
+            Q0(i, j, 3) = q0(i, j, 3) * rho;
+
+            // we have created tke in halo, compute that and add it to
+            // the existing rhoE, which is just internal energy at this point
+            double tke = 0.5 *
+                         (pow(q0(i, j, 1), 2.0) + pow(q0(i, j, 2), 2.0) +
+                          pow(q0(i, j, 3), 2.0)) *
+                         rho;
+            Q0(i, j, 4) += tke;
+          });
+    }
+
+  } else if (terms.compare("viscous") == 0) {
+
+    threeDsubview dqdx1 = getHaloSlice(b.dqdx, face._nface, s1);
+    threeDsubview dqdy1 = getHaloSlice(b.dqdy, face._nface, s1);
+    threeDsubview dqdz1 = getHaloSlice(b.dqdz, face._nface, s1);
+
+    MDRange3 range_face =
+        MDRange3({0, 0, 0}, {static_cast<long>(dqdx1.extent(0)),
+                             static_cast<long>(dqdx1.extent(1)), b.ne});
+    for (int g = 0; g < b.ng; g++) {
+      s0 -= plus * g;
+      threeDsubview dqdx0 = getHaloSlice(b.dqdx, face._nface, s0);
+      threeDsubview dqdy0 = getHaloSlice(b.dqdy, face._nface, s0);
+      threeDsubview dqdz0 = getHaloSlice(b.dqdz, face._nface, s0);
+
+      Kokkos::parallel_for(
+          "Constant velocity subsonic inlet euler terms", range_face,
+          KOKKOS_LAMBDA(const int i, const int j, const int l) {
+            // neumann all gradients
+            dqdx0(i, j, l) = dqdx1(i, j, l);
+            dqdy0(i, j, l) = dqdy1(i, j, l);
+            dqdz0(i, j, l) = dqdz1(i, j, l);
+          });
+    }
+  }
+}
