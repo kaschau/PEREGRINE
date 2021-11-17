@@ -1,5 +1,5 @@
-import peregrinepy as pg
 import kokkos
+import peregrinepy as pg
 import numpy as np
 
 
@@ -66,11 +66,13 @@ def create(bc="adiabaticSlipWall"):
     vbc = np.random.uniform(low=1, high=1000)
     wbc = np.random.uniform(low=1, high=1000)
     Tbc = np.random.uniform(low=100, high=1000)
+    mDotPerAbc = np.random.uniform(low=1, high=1000)
     if blk.ns > 1:
         Ybc = np.random.uniform(low=0.0, high=1.0, size=blk.ns)
         Ybc = Ybc / np.sum(Ybc)
     for face in blk.faces:
         face.bcType = bc
+        # Primative bcs
         face.array["qBcVals"] = np.zeros((blk.ne))
         face.array["qBcVals"][0] = pbc
         face.array["qBcVals"][1] = ubc
@@ -80,8 +82,21 @@ def create(bc="adiabaticSlipWall"):
         if blk.ns > 1:
             for n in range(blk.ns - 1):
                 face.array["qBcVals"][5 + n] = Ybc[n]
-        face.qBcVals = kokkos.array(
-            face.array["qBcVals"], space=kokkos.HostSpace, dynamic=False
+
+        # Conservative like bcs
+        face.array["QBcVals"] = np.zeros((blk.ne))
+        face.array["QBcVals"][0] = mDotPerAbc
+
+        for bcmodule in [pg.bcs.inlets, pg.bcs.exits, pg.bcs.walls]:
+            try:
+                func = getattr(bcmodule, "prep_" + face.bcType)
+                func(blk, face)
+                break
+            except AttributeError:
+                pass
+
+        pg.misc.createViewMirrorArray(
+            face, ["qBcVals", "QBcVals"], (blk.ne,), kokkos.HostSpace
         )
 
     return mb
