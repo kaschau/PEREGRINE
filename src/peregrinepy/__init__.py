@@ -12,4 +12,5 @@ from . import multiBlock
 from .bootstrapCase import bootstrapCase
 from .consistify import consistify
 from .RHS import RHS
+from . import bcs
 from . import thermo_transport

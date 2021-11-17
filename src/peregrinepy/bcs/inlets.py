@@ -1,72 +1,51 @@
-def constantVelocitySubsonicInlet(eos, blk, face, thtrdat, terms):
+import numpy as np
 
+
+def prep_constantVelocitySubsonicInlet(blk, face):
+    pass
+
+
+def prep_supersonicInlet(blk, face):
+    pass
+
+
+def prep_constantMassFluxSubsonicInlet(blk, face):
     nface = face.nface
 
-    if terms == "euler":
-        p = blk.array["q"][:, :, :, 0]
-        u = blk.array["q"][:, :, :, 1]
-        v = blk.array["q"][:, :, :, 2]
-        w = blk.array["q"][:, :, :, 3]
-        T = blk.array["q"][:, :, :, 4]
+    s1_ = face.s1_
+    # Estimate the inlet face normal
+    if nface == 1:
+        nx = np.mean(blk.array["inx"][s1_])
+        ny = np.mean(blk.array["iny"][s1_])
+        nz = np.mean(blk.array["inz"][s1_])
+    elif nface == 2:
+        nx = np.mean(-blk.array["inx"][s1_])
+        ny = np.mean(-blk.array["iny"][s1_])
+        nz = np.mean(-blk.array["inz"][s1_])
+    elif nface == 3:
+        nx = np.mean(blk.array["jnx"][s1_])
+        ny = np.mean(blk.array["jny"][s1_])
+        nz = np.mean(blk.array["jnz"][s1_])
+    elif nface == 4:
+        nx = np.mean(-blk.array["jnx"][s1_])
+        ny = np.mean(-blk.array["jny"][s1_])
+        nz = np.mean(-blk.array["jnz"][s1_])
+    elif nface == 5:
+        nx = np.mean(blk.array["knx"][s1_])
+        ny = np.mean(blk.array["kny"][s1_])
+        nz = np.mean(blk.array["knz"][s1_])
+    elif nface == 6:
+        nx = np.mean(-blk.array["knx"][s1_])
+        ny = np.mean(-blk.array["kny"][s1_])
+        nz = np.mean(-blk.array["knz"][s1_])
 
-        for s0_, s2_ in zip(face.s0_, face.s2_):
-            # extrapolate pressure
-            p[s0_] = 2.0 * p[face.s1_] - p[s2_]
+    # Thos value was set from readBcs
+    mDotPerUnitArea = face.array["QBcVals"][0]
 
-            # apply velo on face
-            u[s0_] = 2.0 * face.bcVals["u"] - u[face.s1_]
-            v[s0_] = 2.0 * face.bcVals["v"] - v[face.s1_]
-            w[s0_] = 2.0 * face.bcVals["w"] - w[face.s1_]
+    # renormalize normals, just in case
+    nx, ny, nz = np.array([nx, ny, nz]) / np.linalg.norm([nx, ny, nz])
 
-            T[s0_] = 2.0 * face.bcVals["T"] - T[face.s1_]
-
-            for n, sn in enumerate(thtrdat.speciesNames[0:-1]):
-                N = blk.array["q"][:, :, :, 5 + n]
-                N[s0_] = 2.0 * face.bcVals[sn] - N[face.s1_]
-
-        # Update conserved
-        eos(blk, thtrdat, nface, "prims")
-
-    elif terms == "viscous":
-        for s0_ in face.s0_:
-            # neumann all gradients
-            blk.array["dqdx"][s0_] = blk.array["dqdx"][face.s1_]
-            blk.array["dqdy"][s0_] = blk.array["dqdy"][face.s1_]
-            blk.array["dqdz"][s0_] = blk.array["dqdz"][face.s1_]
-
-
-def supersonicInlet(eos, blk, face, thtrdat, terms):
-
-    nface = face.nface
-
-    if terms == "euler":
-        p = blk.array["q"][:, :, :, 0]
-        u = blk.array["q"][:, :, :, 1]
-        v = blk.array["q"][:, :, :, 2]
-        w = blk.array["q"][:, :, :, 3]
-        T = blk.array["q"][:, :, :, 4]
-
-        for s0_, s2_ in zip(face.s0_, face.s2_):
-            # apply pressure on face
-            p[s0_] = 2.0 * face.bcVals["p"] - p[s2_]
-
-            # apply velo on face
-            u[s0_] = 2.0 * face.bcVals["u"] - u[face.s1_]
-            v[s0_] = 2.0 * face.bcVals["v"] - v[face.s1_]
-            w[s0_] = 2.0 * face.bcVals["w"] - w[face.s1_]
-
-            T[s0_] = 2.0 * face.bcVals["T"] - T[face.s1_]
-
-            for n, sn in enumerate(thtrdat.speciesNames[0:-1]):
-                N = blk.array["q"][:, :, :, 5 + n]
-                N[s0_] = 2.0 * face.bcVals[sn] - N[face.s1_]
-
-        # Update conserved
-        eos(blk, thtrdat, nface, "prims")
-
-    elif terms == "viscous":
-        for s0_ in face.s0_:
-            # neumann all gradients
-            blk.array["dqdx"][s0_] = blk.array["dqdx"][face.s1_]
-            blk.array["dqdy"][s0_] = blk.array["dqdy"][face.s1_]
-            blk.array["dqdz"][s0_] = blk.array["dqdz"][face.s1_]
+    # Set target values of rhou, rhov, rhow
+    face.array["QBcVals"][1] = nx * mDotPerUnitArea
+    face.array["QBcVals"][2] = ny * mDotPerUnitArea
+    face.array["QBcVals"][3] = nz * mDotPerUnitArea

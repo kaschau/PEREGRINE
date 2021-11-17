@@ -3,7 +3,7 @@ import peregrinepy as pg
 import numpy as np
 
 
-def create(bc="adiabaticSlipWall"):
+def create(bc):
     config = pg.files.configFile()
     if np.random.random() > 0.5:
         config["RHS"]["primaryAdvFlux"] = "secondOrderKEEP"
@@ -35,16 +35,19 @@ def create(bc="adiabaticSlipWall"):
         face.array["QBcVals"] = np.random.random(blk.ne)
 
     qshape = blk.array["q"][:, :, :, 0].shape
-    p = np.random.uniform(low=10000, high=100000, size=qshape)
+    # NOTE: Nov, 2021 KAS: The currently un protected extrapolation of
+    # boundary conditions were making the constantMassFluxInlet test case
+    # behave poorly (negative species, etc.). So instead of random physical
+    # values everywhere we narrow the scope a bit. Maybe down the line
+    # we see how necessary it is to protect those BC extraplations.
+    p = np.random.uniform(low=101325 * 0.9, high=101325 * 1.1)
     u = np.random.uniform(low=1, high=1000, size=qshape)
     v = np.random.uniform(low=1, high=1000, size=qshape)
     w = np.random.uniform(low=1, high=1000, size=qshape)
-    T = np.random.uniform(low=100, high=1000, size=qshape)
+    T = np.random.uniform(low=300 * 0.9, high=300 * 1.1)
     if blk.ns > 1:
-        Y = np.random.uniform(
-            low=0.0, high=1.0, size=tuple(list(qshape) + [blk.ns - 1])
-        )
-        Y = Y / np.sum(Y, axis=-1)[:, :, :, np.newaxis]
+        Y = np.random.uniform(low=0.0, high=1.0, size=(blk.ns - 1))
+        Y = Y / np.sum(Y)
 
     blk.array["q"][:, :, :, 0] = p
     blk.array["q"][:, :, :, 1] = u
@@ -61,16 +64,18 @@ def create(bc="adiabaticSlipWall"):
     blk.array["dqdy"][:] = np.random.random((dqdxshape))
     blk.array["dqdz"][:] = np.random.random((dqdxshape))
 
-    pbc = np.random.uniform(low=10000, high=100000)
-    ubc = np.random.uniform(low=1, high=1000)
-    vbc = np.random.uniform(low=1, high=1000)
-    wbc = np.random.uniform(low=1, high=1000)
-    Tbc = np.random.uniform(low=100, high=1000)
-    mDotPerAbc = np.random.uniform(low=1, high=1000)
     if blk.ns > 1:
         Ybc = np.random.uniform(low=0.0, high=1.0, size=blk.ns)
         Ybc = Ybc / np.sum(Ybc)
+
     for face in blk.faces:
+        pbc = np.random.uniform(low=101325 * 0.9, high=101325 * 1.1)
+        ubc = np.random.uniform(low=1, high=1000)
+        vbc = np.random.uniform(low=1, high=1000)
+        wbc = np.random.uniform(low=1, high=1000)
+        Tbc = np.random.uniform(low=300 * 0.9, high=300 * 1.1)
+        mDotPerAbc = np.random.uniform(low=1, high=1000)
+
         face.bcType = bc
         # Primative bcs
         face.array["qBcVals"] = np.zeros((blk.ne))

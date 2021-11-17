@@ -23,6 +23,12 @@ void bindBoundaryConditions(py::module_ &m) {
              py::arg("eos pointer"),
              py::arg("thtrdat_ object"),
              py::arg("terms"));
+  inlets.def("constantMassFluxSubsonicInlet", &constantMassFluxSubsonicInlet, "Const mass flux subsonic inlet",
+             py::arg("block_ object"),
+             py::arg("face_ object"),
+             py::arg("eos pointer"),
+             py::arg("thtrdat_ object"),
+             py::arg("terms"));
 
   //  |----> walls.cpp
   py::module walls = bcs.def_submodule("walls", "walls boundary conditions module");
