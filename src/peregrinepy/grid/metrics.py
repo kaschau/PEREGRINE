@@ -46,7 +46,7 @@ def metrics(blk, fdOrder):
         + z[1::, 1::, 0:-1]
         + z[1::, 1::, 1::]
     )
-    if blk.blockType == "solverBlock" and blk._isInitialized:
+    if blk.blockType == "solver" and blk._isInitialized:
         for var in ["xc", "yc", "zc"]:
             blk.updateDeviceView(var)
 
@@ -86,7 +86,7 @@ def metrics(blk, fdOrder):
     blk.array["iny"][:] = blk.array["isy"] / blk.array["iS"]
     blk.array["inz"][:] = blk.array["isz"] / blk.array["iS"]
 
-    if blk.blockType == "solverBlock" and blk._isInitialized:
+    if blk.blockType == "solver" and blk._isInitialized:
         for var in [
             "ixc",
             "iyc",
@@ -137,7 +137,7 @@ def metrics(blk, fdOrder):
     blk.array["jny"][:] = blk.array["jsy"] / blk.array["jS"]
     blk.array["jnz"][:] = blk.array["jsz"] / blk.array["jS"]
 
-    if blk.blockType == "solverBlock" and blk._isInitialized:
+    if blk.blockType == "solver" and blk._isInitialized:
         for var in [
             "jxc",
             "jyc",
@@ -188,7 +188,7 @@ def metrics(blk, fdOrder):
     blk.array["kny"][:] = blk.array["ksy"] / blk.array["kS"]
     blk.array["knz"][:] = blk.array["ksz"] / blk.array["kS"]
 
-    if blk.blockType == "solverBlock" and blk._isInitialized:
+    if blk.blockType == "solver" and blk._isInitialized:
         for var in [
             "kxc",
             "kyc",
@@ -228,7 +228,7 @@ def metrics(blk, fdOrder):
         )
     ) / 3.0e0
 
-    if blk.blockType == "solverBlock" and blk._isInitialized:
+    if blk.blockType == "solver" and blk._isInitialized:
         for var in ["J"]:
             blk.updateDeviceView(var)
 
@@ -382,7 +382,7 @@ def metrics(blk, fdOrder):
             "J"
         ][2:-2, 2:-2, 2:-2]
 
-    if blk.blockType == "solverBlock" and blk.isInitialized:
+    if blk.blockType == "solver" and blk._isInitialized:
         for var in [
             "dEdx",
             "dEdy",

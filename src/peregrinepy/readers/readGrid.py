@@ -44,7 +44,5 @@ def readGrid(mb, path="./"):
                     (ni, nj, nk), order="F"
                 )
 
-        if blk.blockType in ["restartBlock", "solverBlock"]:
+        if blk.blockType in ["restart", "solver"]:
             blk.initRestartArrays()
-        if blk.blockType == "solverBlock":
-            blk.initSolverArrays()
