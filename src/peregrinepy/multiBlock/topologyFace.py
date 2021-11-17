@@ -48,6 +48,7 @@ class topologyFace:
             # Inlets
             "constantVelocitySubsonicInlet",
             "supersonicInlet",
+            "constantMassFluxSubsonicInlet",
             # Exits
             "constantPressureSubsonicExit",
             "supersonicExit",
