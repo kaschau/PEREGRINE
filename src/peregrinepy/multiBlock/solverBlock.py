@@ -88,15 +88,9 @@ class solverBlock(restartBlock, block_):
         """
         self._isInitialized = True
 
-        if config["Kokkos"]["Space"] in ["OpenMP", "Serial", "Default"]:
-            space = kokkos.HostSpace
-        elif config["Kokkos"]["Space"] in ["Cuda"]:
-            space = kokkos.CudaSpace
-        else:
-            raise ValueError("What space?")
+        space = config["Kokkos"]["Space"]
 
         ng = self.ng
-
         ccshape = [self.ni + 2 * ng - 1, self.nj + 2 * ng - 1, self.nk + 2 * ng - 1]
         ifshape = [self.ni + 2 * ng, self.nj + 2 * ng - 1, self.nk + 2 * ng - 1]
         jfshape = [self.ni + 2 * ng - 1, self.nj + 2 * ng, self.nk + 2 * ng - 1]
