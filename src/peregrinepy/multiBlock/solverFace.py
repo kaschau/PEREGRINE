@@ -77,22 +77,18 @@ class solverFace(topologyFace, face_):
 
     def setBcFunc(self):
 
-        bc = self.bcType
-        found = False
-        if bc in ["b0", "b1"]:
+        bcType = self.bcType
+        if bcType in ["b0", "b1"]:
             self.bcFunc = null
-            found = True
         else:
             for bcmodule in [bcs.inlets, bcs.exits, bcs.walls]:
                 try:
-                    self.bcFunc = getattr(bcmodule, bc)
-                    found = True
+                    self.bcFunc = getattr(bcmodule, bcType)
                     break
                 except AttributeError:
                     pass
-
-        if not found:
-            raise KeyError(f"{bc} is not a valid bcType")
+            else:
+                raise KeyError(f"{bcType} is not a valid bcType")
 
     def setCommBuffers(self, ni, nj, nk, ne, nblki):
         assert (

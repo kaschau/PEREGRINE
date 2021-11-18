@@ -137,9 +137,15 @@ class TestWalls:
             for s0_ in face.s0_:
                 assert np.allclose(p[s0_], p[face.s1_])
 
-                assert np.allclose(u[s0_], 2.0 * face.array["qBcVals"][1] - u[face.s1_])
-                assert np.allclose(v[s0_], 2.0 * face.array["qBcVals"][2] - v[face.s1_])
-                assert np.allclose(w[s0_], 2.0 * face.array["qBcVals"][3] - w[face.s1_])
+                assert np.allclose(
+                    u[s0_], 2.0 * face.array["qBcVals"][:, :, 1] - u[face.s1_]
+                )
+                assert np.allclose(
+                    v[s0_], 2.0 * face.array["qBcVals"][:, :, 2] - v[face.s1_]
+                )
+                assert np.allclose(
+                    w[s0_], 2.0 * face.array["qBcVals"][:, :, 3] - w[face.s1_]
+                )
 
                 assert np.allclose(TN[s0_], TN[face.s1_])
 
@@ -186,11 +192,19 @@ class TestWalls:
             for s0_ in face.s0_:
                 assert np.allclose(p[s0_], p[face.s1_])
 
-                assert np.allclose(u[s0_], 2.0 * face.array["qBcVals"][1] - u[face.s1_])
-                assert np.allclose(v[s0_], 2.0 * face.array["qBcVals"][2] - v[face.s1_])
-                assert np.allclose(w[s0_], 2.0 * face.array["qBcVals"][3] - w[face.s1_])
+                assert np.allclose(
+                    u[s0_], 2.0 * face.array["qBcVals"][:, :, 1] - u[face.s1_]
+                )
+                assert np.allclose(
+                    v[s0_], 2.0 * face.array["qBcVals"][:, :, 2] - v[face.s1_]
+                )
+                assert np.allclose(
+                    w[s0_], 2.0 * face.array["qBcVals"][:, :, 3] - w[face.s1_]
+                )
 
-                assert np.allclose(T[s0_], 2.0 * face.array["qBcVals"][4] - T[face.s1_])
+                assert np.allclose(
+                    T[s0_], 2.0 * face.array["qBcVals"][:, :, 4] - T[face.s1_]
+                )
                 if blk.ns > 1:
                     assert np.allclose(Y[s0_], Y[face.s1_])
 

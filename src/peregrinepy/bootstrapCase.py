@@ -60,11 +60,6 @@ def bootstrapCase(config):
     mb.computeMetrics(config["RHS"]["diffOrder"])
 
     ################################################################
-    # Read in boundary conditions
-    ################################################################
-    pg.readers.readBcs(mb, config["io"]["inputdir"])
-
-    ################################################################
     # Read in restart
     ################################################################
     pg.readers.readRestart(
@@ -78,6 +73,11 @@ def bootstrapCase(config):
     # Initialize the solver arrays
     ################################################################
     mb.initSolverArrays(config)
+
+    ################################################################
+    # Read in boundary conditions
+    ################################################################
+    pg.readers.readBcs(mb, config["io"]["inputdir"])
 
     ################################################################
     # Register parallel writer

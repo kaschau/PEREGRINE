@@ -33,18 +33,27 @@ class TestInlets:
                 assert np.allclose(p[s0_], 2.0 * p[face.s1_] - p[s2_])
 
                 # apply velo on face
-                assert np.allclose(u[s0_], 2.0 * face.array["qBcVals"][1] - u[face.s1_])
-                assert np.allclose(v[s0_], 2.0 * face.array["qBcVals"][2] - v[face.s1_])
-                assert np.allclose(w[s0_], 2.0 * face.array["qBcVals"][3] - w[face.s1_])
+                assert np.allclose(
+                    u[s0_], 2.0 * face.array["qBcVals"][:, :, 1] - u[face.s1_]
+                )
+                assert np.allclose(
+                    v[s0_], 2.0 * face.array["qBcVals"][:, :, 2] - v[face.s1_]
+                )
+                assert np.allclose(
+                    w[s0_], 2.0 * face.array["qBcVals"][:, :, 3] - w[face.s1_]
+                )
 
                 # apply T and Ns in face
-                assert np.allclose(T[s0_], 2.0 * face.array["qBcVals"][4] - T[face.s1_])
+                assert np.allclose(
+                    T[s0_], 2.0 * face.array["qBcVals"][:, :, 4] - T[face.s1_]
+                )
 
                 if blk.ns > 1:
                     for n in range(blk.ns - 1):
                         N = blk.array["q"][:, :, :, 5 + n]
                         assert np.allclose(
-                            N[s0_], 2.0 * face.array["qBcVals"][5 + n] - N[face.s1_]
+                            N[s0_],
+                            2.0 * face.array["qBcVals"][:, :, 5 + n] - N[face.s1_],
                         )
 
             face.bcFunc(blk, face, mb.eos, mb.thtrdat, "viscous")
@@ -69,21 +78,32 @@ class TestInlets:
 
             for s0_, s2_ in zip(face.s0_, face.s2_):
                 # extrapolate pressure
-                assert np.allclose(p[s0_], 2.0 * face.array["qBcVals"][0] - p[face.s1_])
+                assert np.allclose(
+                    p[s0_], 2.0 * face.array["qBcVals"][:, :, 0] - p[face.s1_]
+                )
 
                 # apply velo on face
-                assert np.allclose(u[s0_], 2.0 * face.array["qBcVals"][1] - u[face.s1_])
-                assert np.allclose(v[s0_], 2.0 * face.array["qBcVals"][2] - v[face.s1_])
-                assert np.allclose(w[s0_], 2.0 * face.array["qBcVals"][3] - w[face.s1_])
+                assert np.allclose(
+                    u[s0_], 2.0 * face.array["qBcVals"][:, :, 1] - u[face.s1_]
+                )
+                assert np.allclose(
+                    v[s0_], 2.0 * face.array["qBcVals"][:, :, 2] - v[face.s1_]
+                )
+                assert np.allclose(
+                    w[s0_], 2.0 * face.array["qBcVals"][:, :, 3] - w[face.s1_]
+                )
 
                 # apply T and Ns in face
-                assert np.allclose(T[s0_], 2.0 * face.array["qBcVals"][4] - T[face.s1_])
+                assert np.allclose(
+                    T[s0_], 2.0 * face.array["qBcVals"][:, :, 4] - T[face.s1_]
+                )
 
                 if blk.ns > 1:
                     for n in range(blk.ns - 1):
                         N = blk.array["q"][:, :, :, 5 + n]
                         assert np.allclose(
-                            N[s0_], 2.0 * face.array["qBcVals"][5 + n] - N[face.s1_]
+                            N[s0_],
+                            2.0 * face.array["qBcVals"][:, :, 5 + n] - N[face.s1_],
                         )
 
             face.bcFunc(blk, face, mb.eos, mb.thtrdat, "viscous")
@@ -124,13 +144,16 @@ class TestInlets:
                 assert np.allclose(p[s0_], 2.0 * p[face.s1_] - p[s2_])
 
                 # apply T and Ns in face
-                assert np.allclose(T[s0_], 2.0 * face.array["qBcVals"][4] - T[face.s1_])
+                assert np.allclose(
+                    T[s0_], 2.0 * face.array["qBcVals"][:, :, 4] - T[face.s1_]
+                )
 
                 if blk.ns > 1:
                     for n in range(blk.ns - 1):
                         N = blk.array["q"][:, :, :, 5 + n]
                         assert np.allclose(
-                            N[s0_], 2.0 * face.array["qBcVals"][5 + n] - N[face.s1_]
+                            N[s0_],
+                            2.0 * face.array["qBcVals"][:, :, 5 + n] - N[face.s1_],
                         )
 
             # mass flux on face
@@ -140,7 +163,7 @@ class TestInlets:
                 mult = 1.0
 
             faceArea = np.sum(S)
-            targetMassFlux = face.array["QBcVals"][0] * faceArea
+            targetMassFlux = face.array["QBcVals"][0, 0, 0] * faceArea
             computedMassFlux = mult * np.sum(F)
 
             s0_ = face.s0_[0]

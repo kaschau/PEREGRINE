@@ -11,7 +11,7 @@ struct face_ {
   // face number
   int _nface;
   // Boundary condition value arrays
-  oneDview qBcVals, QBcVals;
+  threeDview qBcVals, QBcVals;
 
 };
 

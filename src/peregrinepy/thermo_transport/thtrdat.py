@@ -39,12 +39,7 @@ class thtrdat(thtrdat_):
         self.mirror._freeze()
 
         # Determine what kokkos space we are living in
-        if config["Kokkos"]["Space"] in ["OpenMP", "Serial", "Default"]:
-            space = kokkos.HostSpace
-        elif config["Kokkos"]["Space"] in ["Cuda"]:
-            space = kokkos.CudaSpace
-        else:
-            raise ValueError("What space?")
+        space = config["Kokkos"]["Space"]
 
         # Get user species data, the spData from the config file is just a list of strings,
         # then we assume we just want to grab those species, otherwise we use the thtr.yaml file.
