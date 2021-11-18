@@ -83,5 +83,5 @@ def readBcs(mb, pathToFile):
                 space = mb.config["Kokkos"]["Space"]
 
                 names = ["qBcVals", "QBcVals"]
-                shape = [blk.ne]
+                shape = blk.array["q"][face.s1_].shape
                 createViewMirrorArray(face, names, shape, space)
