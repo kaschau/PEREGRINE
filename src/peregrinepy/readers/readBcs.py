@@ -45,12 +45,7 @@ def readBcs(mb, pathToFile):
 
     for blk in mb:
         for face in blk.faces:
-            try:
-                bcFam = face.bcFam
-            except KeyError:
-                print(
-                    f"Warning, block {blk.nblki} face {face.nface} is assigned the bcFam {bcFam} however that family is not defined in bcFams.yaml"
-                )
+            bcFam = face.bcFam
             if bcFam is None:
                 continue
 
@@ -61,47 +56,31 @@ def readBcs(mb, pathToFile):
                 )
 
             # Set the boundary condition values
-            face.array["qBcVals"] = np.zeros(blk.ne)
-            face.array["QBcVals"] = np.zeros(blk.ne)
-            qIndexMap = {"p": 0, "u": 1, "v": 2, "w": 3, "T": 4}
-            for i in range(blk.ns):
-                qIndexMap[blk.speciesNames[i]] = 5 + i
-            QIndexMap = {"massFluxPerUnitArea": 0}
+            face.array["qBcVals"] = np.zeros(blk.array["q"][face.s1_].shape)
+            face.array["QBcVals"] = np.zeros(blk.array["Q"][face.s1_].shape)
 
-            if "bcVals" in bcsIn[bcFam].keys():
-                for key in bcsIn[bcFam]["bcVals"]:
-                    if key in qIndexMap.keys():
-                        indx = qIndexMap[key]
-                        face.array["qBcVals"][indx] = float(bcsIn[bcFam]["bcVals"][key])
-                    elif key in QIndexMap.keys():
-                        face.array["QBcVals"][indx] = float(bcsIn[bcFam]["bcVals"][key])
-                    else:
-                        raise KeyError("ERROR, unknown input bcVal: {key}")
+            # If there are no values to set, continue
+            if "bcVals" not in bcsIn[bcFam]:
+                continue
 
-            # Certain boundary conditions need prep work, so call them here
-            found = False
+            # Certain boundary conditions need prep work,
+            # such as constant mass or profiles, so call them here
+            inputValues = bcsIn[bcFam]["bcVals"]
             for bcmodule in [bcs.inlets, bcs.exits, bcs.walls]:
                 try:
                     func = getattr(bcmodule, "prep_" + face.bcType)
-                    func(blk, face)
-                    found = True
+                    func(blk, face, inputValues)
                     break
                 except AttributeError:
                     pass
-            if not found:
-                raise ValueError(f"Could not run the prep_ function for {face.bcType}")
+            else:
+                raise ValueError(f"Could not find the prep_ function for {face.bcType}")
 
             # If we are a solver face, we need to create the kokkos arrays
             if face.faceType == "solver":
-                import kokkos
                 from ..misc import createViewMirrorArray
 
-                if mb.config["Kokkos"]["Space"] in ["OpenMP", "Serial", "Default"]:
-                    space = kokkos.HostSpace
-                elif mb.config["Kokkos"]["Space"] in ["Cuda"]:
-                    space = kokkos.CudaSpace
-                else:
-                    raise ValueError("What space?")
+                space = mb.config["Kokkos"]["Space"]
 
                 names = ["qBcVals", "QBcVals"]
                 shape = [blk.ne]

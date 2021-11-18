@@ -78,30 +78,34 @@ def create(bc):
 
         face.bcType = bc
         # Primative bcs
-        face.array["qBcVals"] = np.zeros((blk.ne))
-        face.array["qBcVals"][0] = pbc
-        face.array["qBcVals"][1] = ubc
-        face.array["qBcVals"][2] = vbc
-        face.array["qBcVals"][3] = wbc
-        face.array["qBcVals"][4] = Tbc
+        face.array["qBcVals"] = np.zeros((blk.array["q"][face.s1_].shape))
+        inputBcValues = {}
+        inputBcValues["p"] = pbc
+        inputBcValues["u"] = ubc
+        inputBcValues["v"] = vbc
+        inputBcValues["w"] = wbc
+        inputBcValues["T"] = Tbc
         if blk.ns > 1:
-            for n in range(blk.ns - 1):
-                face.array["qBcVals"][5 + n] = Ybc[n]
+            for n, spn in enumerate(blk.speciesNames[0:-1]):
+                inputBcValues[spn] = Ybc[n]
 
         # Conservative like bcs
-        face.array["QBcVals"] = np.zeros((blk.ne))
-        face.array["QBcVals"][0] = mDotPerAbc
+        face.array["QBcVals"] = np.zeros((blk.array["Q"][face.s1_].shape))
+        inputBcValues["mDotPerUnitArea"] = mDotPerAbc
+        # Just so we can check we set the target mdot to the zeroth (unuzed)
+        # index of the QBcVals
+        face.array["QBcVals"][:, :, 0] = mDotPerAbc
 
         for bcmodule in [pg.bcs.inlets, pg.bcs.exits, pg.bcs.walls]:
             try:
                 func = getattr(bcmodule, "prep_" + face.bcType)
-                func(blk, face)
+                func(blk, face, inputBcValues)
                 break
             except AttributeError:
                 pass
 
         pg.misc.createViewMirrorArray(
-            face, ["qBcVals", "QBcVals"], (blk.ne,), kokkos.HostSpace
+            face, ["qBcVals", "QBcVals"], face.array["qBcVals"].shape, "Default"
         )
 
     return mb

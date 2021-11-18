@@ -32,7 +32,9 @@ class TestExits:
                 assert np.allclose(q[s0_], 2.0 * q[face.s1_] - q[s2_])
 
                 # apply pressure
-                assert np.allclose(p[s0_], 2.0 * face.array["qBcVals"][0] - p[face.s1_])
+                assert np.allclose(
+                    p[s0_], 2.0 * face.array["qBcVals"][:, :, 0] - p[face.s1_]
+                )
 
             face.bcFunc(blk, face, mb.eos, mb.thtrdat, "viscous")
             for s0_ in face.s0_:
