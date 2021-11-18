@@ -66,7 +66,7 @@ def readBcs(mb, pathToFile):
             # Certain boundary conditions need prep work,
             # such as constant mass or profiles, so call them here
             inputValues = bcsIn[bcFam]["bcVals"]
-            for bcmodule in [bcs.inlets, bcs.exits, bcs.walls]:
+            for bcmodule in [bcs.prepInlets, bcs.prepExits, bcs.prepWalls]:
                 try:
                     func = getattr(bcmodule, "prep_" + face.bcType)
                     func(blk, face, inputValues)
