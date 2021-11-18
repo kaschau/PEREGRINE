@@ -96,7 +96,7 @@ def create(bc):
         # index of the QBcVals
         face.array["QBcVals"][:, :, 0] = mDotPerAbc
 
-        for bcmodule in [pg.bcs.inlets, pg.bcs.exits, pg.bcs.walls]:
+        for bcmodule in [pg.bcs.prepInlets, pg.bcs.prepExits, pg.bcs.prepWalls]:
             try:
                 func = getattr(bcmodule, "prep_" + face.bcType)
                 func(blk, face, inputBcValues)

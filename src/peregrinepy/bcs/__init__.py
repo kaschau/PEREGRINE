@@ -1,3 +1,3 @@
-from . import inlets
-from . import exits
-from . import walls
+from . import prepInlets
+from . import prepExits
+from . import prepWalls
