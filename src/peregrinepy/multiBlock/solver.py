@@ -22,7 +22,7 @@ class solver(restart):
 
     __slots__ = (
         "config",
-        "thtrdat",
+        "kokkosSpace" "thtrdat",
         "eos",
         "trans",
         "dqdxyz",

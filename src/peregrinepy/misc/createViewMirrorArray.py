@@ -4,6 +4,14 @@ from itertools import product
 
 
 def createViewMirrorArray(obj, names, shape, space):
+
+    if space in ["OpenMP", "Serial", "Default"]:
+        kokkosSpace = kokkos.HostSpace
+    elif space in ["Cuda"]:
+        kokkosSpace = kokkos.CudaSpace
+    else:
+        raise ValueError("What space?")
+
     for name in names:
         setattr(
             obj,
@@ -12,7 +20,7 @@ def createViewMirrorArray(obj, names, shape, space):
                 name,
                 shape=shape,
                 dtype=kokkos.double,
-                space=space,
+                space=kokkosSpace,
                 dynamic=False,
             ),
         )

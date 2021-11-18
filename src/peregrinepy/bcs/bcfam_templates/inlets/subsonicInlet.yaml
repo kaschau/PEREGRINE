@@ -9,3 +9,4 @@ dummy_inlet:
     w: 0.0
     T: 300.0
     Air: 1.0
+    profile: False

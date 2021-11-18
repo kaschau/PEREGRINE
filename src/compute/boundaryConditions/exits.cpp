@@ -32,7 +32,7 @@ void constantPressureSubsonicExit(
           "Constant velocity subsonic inlet euler terms", range_face,
           KOKKOS_LAMBDA(const int i, const int j) {
             // set pressure
-            q0(i, j, 0) = 2.0 * face.qBcVals(0) - q1(i, j, 0);
+            q0(i, j, 0) = 2.0 * face.qBcVals(i,j,0) - q1(i, j, 0);
 
             // extrapolate everything else
             for (int l = 1; l < b.ne; l++) {
