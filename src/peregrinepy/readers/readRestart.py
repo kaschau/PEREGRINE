@@ -2,6 +2,7 @@
 
 import numpy as np
 import h5py
+from ..misc import progressBar
 
 
 def readRestart(mb, path="./", nrt=0, animate=True):
@@ -50,6 +51,9 @@ def readRestart(mb, path="./", nrt=0, animate=True):
                 except KeyError:
                     if blk.nblki == 0:
                         print(f"Warning, {var} not found in restart. Leaving as is.")
+
+        if mb.mbType in ["grid", "restart"]:
+            progressBar(blk.nblki + 1, len(mb), f"Reading in restartBlock {blk.nblki}")
 
     # Set the mb values as well
     mb.nrt = mb[0].nrt
