@@ -11,6 +11,7 @@ must be planes.
 import numpy as np
 import peregrinepy as pg
 from verifyGrid import verify
+from analyzeGrid import analyzeGrid
 
 
 def faceSlice(nface):
@@ -339,14 +340,8 @@ def cutPath(mb, nblki, cutAxis):
     return blocksToCut
 
 
-if __name__ == "__main__":
-
-    mb = pg.multiBlock.grid(4)
-    pg.grid.create.multiBlockCube(mb, mbDims=[2, 2, 1], dimsPerBlock=[11, 11, 11])
-
-    cutOps = [[0, "j", 2], [0, "i", 1]]
+def performCutOperations(mb, cutOps):
     for nblki, axis, nCuts in cutOps:
-
         cutBlk = mb.getBlock(nblki)
         ogNx = getattr(cutBlk, f"n{axis}")
 
@@ -360,6 +355,7 @@ if __name__ == "__main__":
             incompleteBlocks = []
             foundFaces = []
             for cutNblki, cutAxis, switch in blocksToCut:
+                assert getattr(mb.getBlock(cutNblki), f"n{cutAxis}") == cutNx
                 index = switchCutIndex if switch else cutIndex
                 cutBlock(mb, cutNblki, cutAxis, index, incompleteBlocks, foundFaces)
 
@@ -368,9 +364,143 @@ if __name__ == "__main__":
             assert incompleteBlocks == []
             assert foundFaces == []
 
-    # NOT FLOOR OR CEIL ITS START FROM 0 or -1 index!!!
 
-    pg.writers.writeGrid(mb, "./")
-    pg.writers.writeConnectivity(mb, "./")
+if __name__ == "__main__":
+    import argparse
+    import os
+
+    parser = argparse.ArgumentParser(
+        description="Cut a grid arbitrary number of times along arbitrary axis",
+        formatter_class=argparse.RawTextHelpFormatter,
+    )
+    parser.add_argument(
+        "-from",
+        "--fromDir",
+        action="store",
+        metavar="<fromDir>",
+        dest="fromDir",
+        default="./from",
+        help="Directory containing the gv.* and conn.yaml files to cut. Default is ./from",
+        type=str,
+    )
+    parser.add_argument(
+        "-to",
+        "--toDir",
+        action="store",
+        metavar="<toDir>",
+        dest="toDir",
+        default="./to",
+        help="Directory where files will be output. Default is ./to",
+        type=str,
+    )
+    parser.add_argument(
+        "-cutOps",
+        "--specifyCutOps",
+        action="store_true",
+        dest="cutOps",
+        help="".join(
+            [
+                "Cut grid by sequence of operations specified in ./cutOps.txt which has the format: \n",
+                "# blockToCut, cutAxis, nCuts\n",
+                "     0,         i,       2,\n\n",
+                "The above would cut the zeroth block along the i axis twice.",
+            ]
+        ),
+    )
+    parser.add_argument(
+        "-maxSize",
+        "--maxBlockSize",
+        action="store",
+        metavar="<nCells>",
+        dest="maxBlockSize",
+        default=0,
+        help="If this option is specified, the utility will automatically cut down the grid such that the max block size (ni*nj*nk) < targetBlockSize",
+        type=int,
+    )
+
+    args = parser.parse_args()
+
+    fromDir = args.fromDir
+    toDir = args.toDir
+
+    cutOps = args.cutOps
+    maxBlockSize = args.maxBlockSize
+
+    if cutOps and maxBlockSize > 0:
+        raise ValueError("Cannot specify both cutOps and maxBlockSize")
+
+    nblks = len([f for f in os.listdir(f"./{fromDir}") if f.endswith(".h5")])
+    mb = pg.multiBlock.grid(nblks)
+    pg.readers.readGrid(mb, fromDir)
+    pg.readers.readConnectivity(mb, fromDir)
+
+    if cutOps:
+        cutOperations = []
+        with open("./cutOps.txt", "r") as f:
+            lines = [
+                ln.strip() for ln in f.readlines() if not ln.strip().startswith("#")
+            ]
+            for line in lines:
+                ln = line.split(",")
+                nblk = int(ln[0])
+                axis = ln[1]
+                nCuts = int(ln[2])
+
+                cutOperations.append([nblk, axis, nCuts])
+
+        performCutOperations(mb, cutOperations)
+
+    elif maxBlockSize > 0:
+
+        results = analyzeGrid(mb)
+        maxCells = results["maxCells"]
+
+        while maxCells > maxBlockSize:
+            blockToCut = mb.getBlock(results["maxNblki"])
+            nis = np.array(results["maxNx"])
+            requiredCutsPerAxis = [0, 0, 0]
+            for a in range(3):
+                trialNsplits = np.ones(3, dtype=np.int32)
+                trialNcells = maxCells + 1
+                while trialNcells > maxBlockSize:
+                    trialNsplits[a] += 1.0
+                    # How many times do we need to cut this axis before block size is less than maxBlockSize?
+                    trialNcells = np.product(nis / trialNsplits)
+                requiredCutsPerAxis[a] = trialNsplits[a] - 1
+
+            # We now know how many times we need to cut each block to get the max block below maxBlockSize
+            # Find the cut axis that produces the minimum number of new blocks
+            newBlocks = [0, 0, 0]
+            axes = ["i", "j", "k"]
+            for a in range(3):
+                newBlocks[a] = len(cutPath(mb, blockToCut.nblki, axes[a])) * (
+                    requiredCutsPerAxis[a] - 1
+                )
+
+            # Chose the cut axis with minimum
+            index = newBlocks.index(min(newBlocks))
+            cutOperations = [[blockToCut.nblki, axes[index], requiredCutsPerAxis[a]]]
+            performCutOperations(mb, cutOperations)
+
+            results = analyzeGrid(mb)
+            maxCells = results["maxCells"]
 
     assert verify(mb)
+
+    results = analyzeGrid(mb)
+
+    maxNblki = results["maxNblki"]
+    maxCells = results["maxCells"]
+    minNblki = results["minNblki"]
+    minCells = results["minCells"]
+    mean = results["mean"]
+    stdv = results["stdv"]
+
+    ni, nj, nk = results["maxNx"]
+    print(f"max block is {maxNblki} with {maxCells} cells, {ni = }, {nj = }, {nk = }.")
+    ni, nj, nk = results["minNx"]
+    print(f"min block is {minNblki} with {minCells} cells, {ni = }, {nj = }, {nk = }.")
+    print(f"{mean = }, {stdv = }")
+
+    pg.writers.writeGrid(mb, toDir)
+    pg.writers.writeConnectivity(mb, toDir)
