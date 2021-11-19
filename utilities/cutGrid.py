@@ -9,7 +9,6 @@ must be planes.
 """
 
 import numpy as np
-import math
 import peregrinepy as pg
 from verifyGrid import verify
 
@@ -35,16 +34,13 @@ def extractCorners(mb, incompleteBlocks, foundFaces):
     if incompleteBlocks == []:
         return corners
 
-    for blk in mb:
-        if blk.nblki not in incompleteBlocks:
-            continue
-        index = incompleteBlocks.index(blk.nblki)
-        incompleteFaces = foundFaces[index]
+    for index, nblki in enumerate(incompleteBlocks):
 
+        blk = mb.getBlock(nblki)
         for var in corners:
             corners[var].append([])
 
-        for found, face in zip(incompleteFaces, blk.faces):
+        for found, face in zip(foundFaces[index], blk.faces):
             if found:
                 faceCorners = [None, None, None, None]
                 for var in corners:
@@ -94,9 +90,9 @@ def findInteriorNeighbor(mb, incompleteBlocks, foundFaces):
                 continue
             if foundFaces[index][face.nface - 1]:
                 continue
-            setX = {i for i in corners["x"][index][face.nface - 1]}
-            setY = {i for i in corners["y"][index][face.nface - 1]}
-            setZ = {i for i in corners["z"][index][face.nface - 1]}
+            meanX = np.mean([i for i in corners["x"][index][face.nface - 1]])
+            meanY = np.mean([i for i in corners["y"][index][face.nface - 1]])
+            meanZ = np.mean([i for i in corners["z"][index][face.nface - 1]])
             for testIndex, nblki in enumerate(incompleteBlocks):
                 testBlk = mb.getBlock(nblki)
                 for testFace in testBlk.faces:
@@ -104,10 +100,21 @@ def findInteriorNeighbor(mb, incompleteBlocks, foundFaces):
                         continue
                     if blk.nblki == testBlk.nblki and face.nface == testFace.nface:
                         continue
-                    testSetX = {i for i in corners["x"][testIndex][testFace.nface - 1]}
-                    testSetY = {i for i in corners["y"][testIndex][testFace.nface - 1]}
-                    testSetZ = {i for i in corners["z"][testIndex][testFace.nface - 1]}
-                    if setX == testSetX and setY == testSetY and setZ == testSetZ:
+                    testMeanX = np.mean(
+                        [i for i in corners["x"][testIndex][testFace.nface - 1]]
+                    )
+                    testMeanY = np.mean(
+                        [i for i in corners["y"][testIndex][testFace.nface - 1]]
+                    )
+                    testMeanZ = np.mean(
+                        [i for i in corners["z"][testIndex][testFace.nface - 1]]
+                    )
+                    dist = np.sqrt(
+                        (meanX - testMeanX) ** 2
+                        + (meanY - testMeanY) ** 2
+                        + (meanZ - testMeanZ) ** 2
+                    )
+                    if dist < 1e-9:
                         face.neighbor = testBlk.nblki
                         testFace.neighbor = blk.nblki
                         foundFaces[index][face.nface - 1] = True
@@ -266,10 +273,9 @@ def cutBlock(mb, nblki, cutAxis, cutIndex, incompleteBlocks, foundFaces):
         newSplitFace.orientation = oldSplitFace.orientation
         newSplitFace.bcFam = oldSplitFace.bcFam
         newSplitFace.bcType = oldSplitFace.bcType
-        # We will manually find the neighbor later, if needed.
-        newSplitFace.neighbor = None
         # If this face is a boundary, then we can add it to the found faces
-        if not newSplitFace.bcType.startswith("b"):
+        if oldSplitFace.neighbor is None:
+            newSplitFace.neighbor = None
             foundFaces[-2][nface - 1] = True
             foundFaces[-1][nface - 1] = True
 
@@ -294,7 +300,7 @@ def cutBlock(mb, nblki, cutAxis, cutIndex, incompleteBlocks, foundFaces):
 def cutPath(mb, nblki, cutAxis):
 
     axisMap = {"i": 0, "j": 1, "k": 2}
-    orientationMap = {"1": "i", "2": "i", "3": "j", "4": "j", "5": "k", "6": "k"}
+    orientationMap = {"1": "i", "2": "j", "3": "k", "4": "i", "5": "j", "6": "k"}
 
     blocksToCut = [[nblki, cutAxis, "floor"]]
     blocksToCheck = [[nblki, cutAxis, "floor"]]
@@ -306,9 +312,9 @@ def cutPath(mb, nblki, cutAxis):
 
         if checkAxis == "i":
             splitFaces = [3, 4, 5, 6]
-        elif cutAxis == "j":
+        elif checkAxis == "j":
             splitFaces = [1, 2, 5, 6]
-        elif cutAxis == "k":
+        elif checkAxis == "k":
             splitFaces = [1, 2, 3, 4]
 
         for splitFace in splitFaces:
@@ -334,51 +340,31 @@ def cutPath(mb, nblki, cutAxis):
 
 if __name__ == "__main__":
 
-    mb = pg.multiBlock.grid(4)
-    pg.grid.create.multiBlockCube(mb, mbDims=[1, 2, 2], dimsPerBlock=[11, 11, 11])
+    mb = pg.multiBlock.grid(27)
+    pg.grid.create.multiBlockCube(mb, mbDims=[3, 3, 3], dimsPerBlock=[11, 11, 11])
 
-    cutOps = [[0, "i", 2]]
-    for nblki, axis, nCuts in cutOps:
-        nx = getattr(mb.getBlock(nblki), f"n{axis}")
+    # cutOps = [[0, "i", 1]]
+    nblki = 13
+    axis = "k"
+    nx = getattr(mb.getBlock(nblki), f"n{axis}")
 
-        for cut in range(nCuts - 1):
-            blocksToCut = cutPath(mb, nblki, axis)
-            print([a[0] for a in blocksToCut])
+    blocksToCut = cutPath(mb, nblki, axis)
 
-            incompleteBlocks = []
-            foundFaces = []
-            for cutNblki, cutAxis, ceilOrFloor in blocksToCut:
-                print(cutNblki, cutAxis, ceilOrFloor)
-                func = getattr(math, ceilOrFloor)
-                cutIndex = func(nx * (nCuts - cut - 1) / (nCuts - cut))
-                cutNx = getattr(mb.getBlock(cutNblki), f"n{cutAxis}")
+    incompleteBlocks = []
+    foundFaces = []
+    cutIndex = int(nx / 2.0)
 
-                cutBlock(mb, cutNblki, cutAxis, cutIndex, incompleteBlocks, foundFaces)
+    for cutNblki, cutAxis, ceilOrFloor in blocksToCut:
+        cutBlock(mb, cutNblki, cutAxis, cutIndex, incompleteBlocks, foundFaces)
 
-            findInteriorNeighbor(mb, incompleteBlocks, foundFaces)
-            print(incompleteBlocks)
-            findPeriodicNeighbor(mb, incompleteBlocks, foundFaces)
-            assert incompleteBlocks == []
-            assert foundFaces == []
+    findInteriorNeighbor(mb, incompleteBlocks, foundFaces)
+    findPeriodicNeighbor(mb, incompleteBlocks, foundFaces)
+    assert incompleteBlocks == []
+    assert foundFaces == []
 
-    # mb = pg.multiBlock.grid(1)
-    # pg.grid.create.multiBlockCube(mb, mbDims=[1, 1, 1], dimsPerBlock=[11, 11, 11])
-
-    # pg.writers.writeGrid(mb, "./unsplit")
-    # pg.writers.writeConnectivity(mb, "./unsplit")
-
-    # incompleteBlocks = []
-    # foundFaces = []
-
-    # findInteriorNeighbor(mb, incompleteBlocks, foundFaces)
-    # findPeriodicNeighbor(mb, incompleteBlocks, foundFaces)
+    # NOT FLOOR OR CEIL ITS START FROM 0 or -1 index!!!
 
     pg.writers.writeGrid(mb, "./")
     pg.writers.writeConnectivity(mb, "./")
 
-    # mbRef = pg.multiBlock.grid(2)
-    # pg.grid.create.multiBlockCube(mbRef, mbDims=[2, 1, 1], dimsPerBlock=[11, 11, 11])
-    # pg.writers.writeGrid(mbRef, "./reference")
-    # pg.writers.writeConnectivity(mbRef, "./reference")
-
-    # assert verify(mb)
+    assert verify(mb)
