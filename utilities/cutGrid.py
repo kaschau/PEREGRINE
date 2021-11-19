@@ -461,11 +461,15 @@ if __name__ == "__main__":
                 requiredCutsPerAxis = [0, 0, 0]
                 for a in range(3):
                     trialNsplits = np.ones(3, dtype=np.int32)
-                    trialNcells = maxCells + 1
+                    trialNcells = maxCells
                     while trialNcells > maxBlockSize:
                         trialNsplits[a] += 1
                         # How many times do we need to cut this axis before block size is less than maxBlockSize?
                         trialNcells = np.product(nis / trialNsplits)
+                        if trialNsplits[a] >= nis[a]:
+                            raise ValueError(
+                                "I have to split the largest block to single cell sizes to meet your requested maxBlockSize. Are you sure thats a reasonable block size?"
+                            )
                     requiredCutsPerAxis[a] = trialNsplits[a] - 1
 
                 # We now know how many times we need to cut each block to get the max block below maxBlockSize
