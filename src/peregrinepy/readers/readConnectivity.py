@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
 import yaml
-from ..mpiComm import mpiUtils
+
+# from ..mpiComm import mpiUtils
 
 
 def readConnectivity(mb, pathToFile):
@@ -23,15 +24,21 @@ def readConnectivity(mb, pathToFile):
         Adds the connectivity information to mb
 
     """
-    comm, rank, size = mpiUtils.getCommRankSize()
 
-    # only the zeroth rank reads in the file
-    if rank == 0:
-        with open(f"{pathToFile}/conn.yaml", "r") as connFile:
-            conn = yaml.load(connFile, Loader=yaml.FullLoader)
-    else:
-        conn = None
-    conn = comm.bcast(conn, root=0)
+    # We are going to try reading the conn without parallel
+    #
+    # comm, rank, size = mpiUtils.getCommRankSize()
+
+    # # only the zeroth rank reads in the file
+    # if rank == 0:
+    #     with open(f"{pathToFile}/conn.yaml", "r") as connFile:
+    #         conn = yaml.load(connFile, Loader=yaml.FullLoader)
+    # else:
+    #     conn = None
+    # conn = comm.bcast(conn, root=0)
+
+    with open(f"{pathToFile}/conn.yaml", "r") as connFile:
+        conn = yaml.load(connFile, Loader=yaml.FullLoader)
 
     for blk in mb:
         myConn = conn[f"Block{blk.nblki}"]
