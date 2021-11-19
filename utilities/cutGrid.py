@@ -462,7 +462,7 @@ if __name__ == "__main__":
                 trialNsplits = np.ones(3, dtype=np.int32)
                 trialNcells = maxCells + 1
                 while trialNcells > maxBlockSize:
-                    trialNsplits[a] += 1.0
+                    trialNsplits[a] += 1
                     # How many times do we need to cut this axis before block size is less than maxBlockSize?
                     trialNcells = np.product(nis / trialNsplits)
                 requiredCutsPerAxis[a] = trialNsplits[a] - 1
