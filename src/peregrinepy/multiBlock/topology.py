@@ -35,13 +35,23 @@ class topology(UserList):
         return len(self)
 
     @property
-    def block_list(self):
+    def blockList(self):
         return [b.nblki for b in self]
 
     def getBlock(self, nblki):
         for blk in self:
             if blk.nblki == nblki:
                 return blk
+
+    def appendBlock(self):
+        if self.mbType in ["restart", "solver"]:
+            raise TypeError("Cannot append restart of solver multiBlocks.")
+        maxNblki = 0
+        for blk in self:
+            maxNblki = blk.nblki if blk.nblki > maxNblki else maxNblki
+        tmp_blk = self[0].__class__(maxNblki + 1)
+
+        self.append(tmp_blk)
 
     def __repr__(self):
         string = "Topology multiBlock object:\n"

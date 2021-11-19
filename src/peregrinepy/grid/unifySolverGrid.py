@@ -49,7 +49,7 @@ def unifySolverGrid(mb):
                         continue
                     neighbor = face.neighbor
                     commRank = face.commRank
-                    tag = int(f"1{blk.nblki}2{neighbor}1{face.neighborFace}")
+                    tag = int(f"1{blk.nblki}2{neighbor}1{face.neighborNface}")
                     for i, sS in enumerate(face.sliceS3):
                         face.sendBuffer3[i] = face.orient(
                             blk.array[var][sS] - blk.array[var][face.s1_]

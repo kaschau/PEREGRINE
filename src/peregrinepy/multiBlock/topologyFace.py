@@ -7,7 +7,7 @@ class topologyFace:
 
         self._nface = nface
         self._bcFam = None
-        self._bcType = "adiabaticSlipWall"
+        self._bcType = "adiabaticNoSlipWall"
         self._neighbor = None
         self._orientation = None
 
@@ -86,7 +86,7 @@ class topologyFace:
         self._orientation = value
 
     @property
-    def neighborFace(self):
+    def neighborNface(self):
 
         nface = self.nface
         orientation = self.orientation

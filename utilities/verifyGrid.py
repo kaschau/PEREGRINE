@@ -1,18 +1,14 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+
 """This utility goes through a grid face by face, verifying that all the block's connectivities agree,
 and that the coordinates of matching faces are identical.
 
 Inputs are the path to the grid files, and path to the conn.inp file.
 
-It can handle b 1 periodicity in the conn.inp, however it will now compare the x,y,z coordinate locations
+It can handle b 1 periodicity in the conn.inp, however it will not compare the x,y,z coordinate locations
 of the faces.
 
-Example
--------
-/path/to/raptorpy/utilities/verify_grid.py -gpath './' -cpath './'
-
-Output will print any errors to the screen
+Output will print any discrepencies to the screen
 
 """
 
