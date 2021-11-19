@@ -9,6 +9,7 @@ must be planes.
 """
 
 import numpy as np
+import math
 import peregrinepy as pg
 from verifyGrid import verify
 
@@ -290,40 +291,94 @@ def cutBlock(mb, nblki, cutAxis, cutIndex, incompleteBlocks, foundFaces):
     newBlk.ni, newBlk.nj, newBlk.nk = newBlk.array["x"].shape
 
 
+def cutPath(mb, nblki, cutAxis):
+
+    axisMap = {"i": 0, "j": 1, "k": 2}
+    orientationMap = {"1": "i", "2": "i", "3": "j", "4": "j", "5": "k", "6": "k"}
+
+    blocksToCut = [[nblki, cutAxis, "floor"]]
+    blocksToCheck = [[nblki, cutAxis, "floor"]]
+
+    while blocksToCheck != []:
+        checkBlk = mb.getBlock(blocksToCheck[0][0])
+        checkAxis = blocksToCheck[0][1]
+        ceilOrFloor = blocksToCheck[0][2]
+
+        if checkAxis == "i":
+            splitFaces = [3, 4, 5, 6]
+        elif cutAxis == "j":
+            splitFaces = [1, 2, 5, 6]
+        elif cutAxis == "k":
+            splitFaces = [1, 2, 3, 4]
+
+        for splitFace in splitFaces:
+            face = checkBlk.getFace(splitFace)
+            neighbor = face.neighbor
+            if neighbor is None or neighbor in [item[0] for item in blocksToCut]:
+                continue
+            neighborOrientation = face.neighborOrientation
+            neighborOrientationIndex = neighborOrientation[axisMap[cutAxis]]
+            neighborAxis = orientationMap[neighborOrientationIndex]
+            if neighborOrientationIndex in ["2", "4", "6"]:
+                neighborCeilOrFloor = "floor" if ceilOrFloor == "ceil" else "floor"
+            else:
+                neighborCeilOrFloor = ceilOrFloor
+
+            blocksToCheck.append([neighbor, neighborAxis, neighborCeilOrFloor])
+            blocksToCut.append([neighbor, neighborAxis, neighborCeilOrFloor])
+
+        blocksToCheck.pop(0)
+
+    return blocksToCut
+
+
 if __name__ == "__main__":
 
-    mb = pg.multiBlock.grid(1)
-    pg.grid.create.multiBlockCube(mb, mbDims=[1, 1, 1], dimsPerBlock=[11, 11, 11])
+    mb = pg.multiBlock.grid(4)
+    pg.grid.create.multiBlockCube(mb, mbDims=[1, 2, 2], dimsPerBlock=[11, 11, 11])
 
-    blk = mb[0]
-    face = blk.getFace(3)
-    face.neighbor = 0
-    face.orientation = "123"
-    face.bcType = "b1"
-    face = blk.getFace(4)
-    face.neighbor = 0
-    face.orientation = "123"
-    face.bcType = "b1"
+    cutOps = [[0, "i", 2]]
+    for nblki, axis, nCuts in cutOps:
+        nx = getattr(mb.getBlock(nblki), f"n{axis}")
 
-    pg.writers.writeGrid(mb, "./unsplit")
-    pg.writers.writeConnectivity(mb, "./unsplit")
+        for cut in range(nCuts - 1):
+            blocksToCut = cutPath(mb, nblki, axis)
+            print([a[0] for a in blocksToCut])
 
-    incompleteBlocks = []
-    foundFaces = []
+            incompleteBlocks = []
+            foundFaces = []
+            for cutNblki, cutAxis, ceilOrFloor in blocksToCut:
+                print(cutNblki, cutAxis, ceilOrFloor)
+                func = getattr(math, ceilOrFloor)
+                cutIndex = func(nx * (nCuts - cut - 1) / (nCuts - cut))
+                cutNx = getattr(mb.getBlock(cutNblki), f"n{cutAxis}")
 
-    cutBlock(mb, 0, "i", 5, incompleteBlocks, foundFaces)
-    findInteriorNeighbor(mb, incompleteBlocks, foundFaces)
-    findPeriodicNeighbor(mb, incompleteBlocks, foundFaces)
-    print(incompleteBlocks, foundFaces)
-    assert incompleteBlocks == []
-    assert foundFaces == []
+                cutBlock(mb, cutNblki, cutAxis, cutIndex, incompleteBlocks, foundFaces)
+
+            findInteriorNeighbor(mb, incompleteBlocks, foundFaces)
+            print(incompleteBlocks)
+            findPeriodicNeighbor(mb, incompleteBlocks, foundFaces)
+            assert incompleteBlocks == []
+            assert foundFaces == []
+
+    # mb = pg.multiBlock.grid(1)
+    # pg.grid.create.multiBlockCube(mb, mbDims=[1, 1, 1], dimsPerBlock=[11, 11, 11])
+
+    # pg.writers.writeGrid(mb, "./unsplit")
+    # pg.writers.writeConnectivity(mb, "./unsplit")
+
+    # incompleteBlocks = []
+    # foundFaces = []
+
+    # findInteriorNeighbor(mb, incompleteBlocks, foundFaces)
+    # findPeriodicNeighbor(mb, incompleteBlocks, foundFaces)
 
     pg.writers.writeGrid(mb, "./")
     pg.writers.writeConnectivity(mb, "./")
 
-    mbRef = pg.multiBlock.grid(2)
-    pg.grid.create.multiBlockCube(mbRef, mbDims=[2, 1, 1], dimsPerBlock=[11, 11, 11])
-    pg.writers.writeGrid(mbRef, "./reference")
-    pg.writers.writeConnectivity(mbRef, "./reference")
+    # mbRef = pg.multiBlock.grid(2)
+    # pg.grid.create.multiBlockCube(mbRef, mbDims=[2, 1, 1], dimsPerBlock=[11, 11, 11])
+    # pg.writers.writeGrid(mbRef, "./reference")
+    # pg.writers.writeConnectivity(mbRef, "./reference")
 
-    assert verify(mb)
+    # assert verify(mb)
