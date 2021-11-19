@@ -302,13 +302,14 @@ def cutPath(mb, nblki, cutAxis):
     axisMap = {"i": 0, "j": 1, "k": 2}
     orientationMap = {"1": "i", "2": "j", "3": "k", "4": "i", "5": "j", "6": "k"}
 
-    blocksToCut = [[nblki, cutAxis, "floor"]]
-    blocksToCheck = [[nblki, cutAxis, "floor"]]
+    #              [ block, axis, switchBool ]
+    blocksToCut = [[nblki, cutAxis, False]]
+    blocksToCheck = [[nblki, cutAxis, False]]
 
     while blocksToCheck != []:
         checkBlk = mb.getBlock(blocksToCheck[0][0])
         checkAxis = blocksToCheck[0][1]
-        ceilOrFloor = blocksToCheck[0][2]
+        checkSwitch = blocksToCheck[0][2]
 
         if checkAxis == "i":
             splitFaces = [3, 4, 5, 6]
@@ -325,13 +326,13 @@ def cutPath(mb, nblki, cutAxis):
             neighborOrientation = face.neighborOrientation
             neighborOrientationIndex = neighborOrientation[axisMap[cutAxis]]
             neighborAxis = orientationMap[neighborOrientationIndex]
-            if neighborOrientationIndex in ["2", "4", "6"]:
-                neighborCeilOrFloor = "floor" if ceilOrFloor == "ceil" else "floor"
+            if neighborOrientationIndex in ["4", "5", "6"]:
+                neighborSwitch = False if checkSwitch else True
             else:
-                neighborCeilOrFloor = ceilOrFloor
+                neighborSwitch = checkSwitch
 
-            blocksToCheck.append([neighbor, neighborAxis, neighborCeilOrFloor])
-            blocksToCut.append([neighbor, neighborAxis, neighborCeilOrFloor])
+            blocksToCheck.append([neighbor, neighborAxis, neighborSwitch])
+            blocksToCut.append([neighbor, neighborAxis, neighborSwitch])
 
         blocksToCheck.pop(0)
 
@@ -340,27 +341,32 @@ def cutPath(mb, nblki, cutAxis):
 
 if __name__ == "__main__":
 
-    mb = pg.multiBlock.grid(27)
-    pg.grid.create.multiBlockCube(mb, mbDims=[3, 3, 3], dimsPerBlock=[11, 11, 11])
+    mb = pg.multiBlock.grid(4)
+    pg.grid.create.multiBlockCube(mb, mbDims=[2, 2, 1], dimsPerBlock=[11, 11, 11])
 
-    # cutOps = [[0, "i", 1]]
-    nblki = 13
-    axis = "k"
-    nx = getattr(mb.getBlock(nblki), f"n{axis}")
+    cutOps = [[0, "j", 2], [0, "i", 1]]
+    for nblki, axis, nCuts in cutOps:
 
-    blocksToCut = cutPath(mb, nblki, axis)
+        cutBlk = mb.getBlock(nblki)
+        ogNx = getattr(cutBlk, f"n{axis}")
 
-    incompleteBlocks = []
-    foundFaces = []
-    cutIndex = int(nx / 2.0)
+        for cut in range(nCuts):
+            blocksToCut = cutPath(mb, nblki, axis)
+            cutNx = getattr(cutBlk, f"n{axis}")
 
-    for cutNblki, cutAxis, ceilOrFloor in blocksToCut:
-        cutBlock(mb, cutNblki, cutAxis, cutIndex, incompleteBlocks, foundFaces)
+            cutIndex = int(ogNx * (nCuts - cut) / (nCuts + 1))
+            switchCutIndex = cutNx - cutIndex - 1
 
-    findInteriorNeighbor(mb, incompleteBlocks, foundFaces)
-    findPeriodicNeighbor(mb, incompleteBlocks, foundFaces)
-    assert incompleteBlocks == []
-    assert foundFaces == []
+            incompleteBlocks = []
+            foundFaces = []
+            for cutNblki, cutAxis, switch in blocksToCut:
+                index = switchCutIndex if switch else cutIndex
+                cutBlock(mb, cutNblki, cutAxis, index, incompleteBlocks, foundFaces)
+
+            findInteriorNeighbor(mb, incompleteBlocks, foundFaces)
+            findPeriodicNeighbor(mb, incompleteBlocks, foundFaces)
+            assert incompleteBlocks == []
+            assert foundFaces == []
 
     # NOT FLOOR OR CEIL ITS START FROM 0 or -1 index!!!
 
