@@ -39,9 +39,15 @@ class topology(UserList):
         return [b.nblki for b in self]
 
     def getBlock(self, nblki):
-        for blk in self:
-            if blk.nblki == nblki:
-                return blk
+        try:
+            # Usually the blocks are in order
+            assert nblki == self[nblki].nblki
+            return self[nblki]
+        except AssertionError:
+            # Otherwise manually search for it
+            for blk in self:
+                if blk.nblki == nblki:
+                    return blk
 
     def appendBlock(self):
         if self.mbType in ["restart", "solver"]:
