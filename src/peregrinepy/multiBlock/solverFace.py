@@ -192,7 +192,7 @@ class solverFace(topologyFace, face_):
         self.recvBuffer4 = np.ascontiguousarray(np.empty(commcshape))
 
         self.tagR = int(f"1{self.neighbor}2{nblki}1{self.nface}")
-        self.tagS = int(f"1{nblki}2{self.neighbor}1{self.neighborFace}")
+        self.tagS = int(f"1{nblki}2{self.neighbor}1{self.neighborNface}")
 
     def setOrientFunc(self, ni, nj, nk, ne):
         assert 0 not in [
@@ -215,7 +215,7 @@ class solverFace(topologyFace, face_):
         if neighbor is None:
             return
 
-        neighborFace = self.neighborFace
+        neighborNface = self.neighborNface
         orientation = self.orientation
 
         # What are the orientations of our face plane? i.e. if we are
@@ -232,7 +232,7 @@ class solverFace(topologyFace, face_):
         ][0]
         # What is my neighbor's face normal index
         normalIndex2 = [
-            j for j in range(3) if j == faceToOrientIndexMapping[neighborFace]
+            j for j in range(3) if j == faceToOrientIndexMapping[neighborNface]
         ][0]
 
         # What is the larger index for our face orientation? i < j < k
