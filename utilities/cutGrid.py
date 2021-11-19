@@ -63,6 +63,9 @@ def extractCorners(mb, incompleteBlocks, foundFaces):
 
 
 def findInteriorNeighbor(mb, incompleteBlocks, foundFaces):
+    if len(incompleteBlocks) == []:
+        return
+
     corners = extractCorners(mb, incompleteBlocks, foundFaces)
     assert all(
         [
@@ -70,19 +73,11 @@ def findInteriorNeighbor(mb, incompleteBlocks, foundFaces):
             for var in corners
         ]
     )
-    if len(incompleteBlocks) == []:
-        return
 
-    for blk in mb:
-        if blk.nblki not in incompleteBlocks:
-            continue
-        index = incompleteBlocks.index(blk.nblki)
+    for index, nblki in enumerate(incompleteBlocks):
+        blk = mb.getBlock(nblki)
         # Is this block complete?
         if all(foundFaces[index]):
-            incompleteBlocks.pop(index)
-            foundFaces.pop(index)
-            for var in corners:
-                corners[var].pop(index)
             continue
 
         # Now we go block by block, face by face and look for matching faces
@@ -121,15 +116,22 @@ def findInteriorNeighbor(mb, incompleteBlocks, foundFaces):
                         foundFaces[index][face.nface - 1] = True
                         foundFaces[testIndex][testFace.nface - 1] = True
 
-        # Is this block complete?
-        if all(foundFaces[index]):
-            incompleteBlocks.pop(index)
-            foundFaces.pop(index)
-            for var in corners:
-                corners[var].pop(index)
+    # Filter out all complete blocks
+    completeIndex = []
+    for index, found in enumerate(foundFaces):
+        if all(found):
+            completeIndex.append(index)
+    for index in sorted(completeIndex, reverse=True):
+        incompleteBlocks.pop(index)
+        foundFaces.pop(index)
+        for var in corners:
+            corners[var].pop(index)
 
 
 def findPeriodicNeighbor(mb, incompleteBlocks, foundFaces):
+    if len(incompleteBlocks) == []:
+        return
+
     corners = extractCorners(mb, incompleteBlocks, foundFaces)
     assert all(
         [
@@ -137,19 +139,12 @@ def findPeriodicNeighbor(mb, incompleteBlocks, foundFaces):
             for var in corners
         ]
     )
-    if len(incompleteBlocks) == []:
-        return
 
-    for blk in mb:
-        if blk.nblki not in incompleteBlocks:
-            continue
-        index = incompleteBlocks.index(blk.nblki)
+    for index, nblki in enumerate(incompleteBlocks):
+        blk = mb.getBlock(nblki)
+
         # Is this block complete?
         if all(foundFaces[index]):
-            incompleteBlocks.pop(index)
-            foundFaces.pop(index)
-            for var in corners:
-                corners[var].pop(index)
             continue
 
         # Now we go block by block, face by face and look for matching faces
@@ -199,12 +194,16 @@ def findPeriodicNeighbor(mb, incompleteBlocks, foundFaces):
                         foundFaces[index][face.nface - 1] = True
                         foundFaces[testIndex][testFace.nface - 1] = True
 
-        # Is this block complete?
-        if all(foundFaces[index]):
-            incompleteBlocks.pop(index)
-            foundFaces.pop(index)
-            for var in corners:
-                corners[var].pop(index)
+    # Filter out all complete blocks
+    completeIndex = []
+    for index, found in enumerate(foundFaces):
+        if all(found):
+            completeIndex.append(index)
+    for index in sorted(completeIndex, reverse=True):
+        incompleteBlocks.pop(index)
+        foundFaces.pop(index)
+        for var in corners:
+            corners[var].pop(index)
 
 
 def cutBlock(mb, nblki, cutAxis, cutIndex, incompleteBlocks, foundFaces):
