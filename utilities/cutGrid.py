@@ -454,35 +454,41 @@ if __name__ == "__main__":
         results = analyzeGrid(mb)
         maxCells = results["maxCells"]
 
-        while maxCells > maxBlockSize:
-            blockToCut = mb.getBlock(results["maxNblki"])
-            nis = np.array(results["maxNx"])
-            requiredCutsPerAxis = [0, 0, 0]
-            for a in range(3):
-                trialNsplits = np.ones(3, dtype=np.int32)
-                trialNcells = maxCells + 1
-                while trialNcells > maxBlockSize:
-                    trialNsplits[a] += 1
-                    # How many times do we need to cut this axis before block size is less than maxBlockSize?
-                    trialNcells = np.product(nis / trialNsplits)
-                requiredCutsPerAxis[a] = trialNsplits[a] - 1
+        with open("cutLog.log", "w") as f:
+            while maxCells > maxBlockSize:
+                blockToCut = mb.getBlock(results["maxNblki"])
+                nis = np.array(results["maxNx"])
+                requiredCutsPerAxis = [0, 0, 0]
+                for a in range(3):
+                    trialNsplits = np.ones(3, dtype=np.int32)
+                    trialNcells = maxCells + 1
+                    while trialNcells > maxBlockSize:
+                        trialNsplits[a] += 1
+                        # How many times do we need to cut this axis before block size is less than maxBlockSize?
+                        trialNcells = np.product(nis / trialNsplits)
+                    requiredCutsPerAxis[a] = trialNsplits[a] - 1
 
-            # We now know how many times we need to cut each block to get the max block below maxBlockSize
-            # Find the cut axis that produces the minimum number of new blocks
-            newBlocks = [0, 0, 0]
-            axes = ["i", "j", "k"]
-            for a in range(3):
-                newBlocks[a] = len(cutPath(mb, blockToCut.nblki, axes[a])) * (
-                    requiredCutsPerAxis[a] - 1
+                # We now know how many times we need to cut each block to get the max block below maxBlockSize
+                # Find the cut axis that produces the minimum number of new blocks
+                newBlocks = [0, 0, 0]
+                axes = ["i", "j", "k"]
+                for a in range(3):
+                    newBlocks[a] = len(cutPath(mb, blockToCut.nblki, axes[a])) * (
+                        requiredCutsPerAxis[a] - 1
+                    )
+
+                # Chose the cut axis with minimum
+                index = newBlocks.index(min(newBlocks))
+                cutOperations = [
+                    [blockToCut.nblki, axes[index], requiredCutsPerAxis[a]]
+                ]
+                f.write(
+                    f"{blockToCut.nblki}, {axes[index]}, {requiredCutsPerAxis[a]}\n"
                 )
+                performCutOperations(mb, cutOperations)
 
-            # Chose the cut axis with minimum
-            index = newBlocks.index(min(newBlocks))
-            cutOperations = [[blockToCut.nblki, axes[index], requiredCutsPerAxis[a]]]
-            performCutOperations(mb, cutOperations)
-
-            results = analyzeGrid(mb)
-            maxCells = results["maxCells"]
+                results = analyzeGrid(mb)
+                maxCells = results["maxCells"]
 
     assert verify(mb)
 
