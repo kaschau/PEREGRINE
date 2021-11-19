@@ -5,7 +5,7 @@ and that the coordinates of matching faces are identical.
 
 Inputs are the path to the grid files, and path to the conn.inp file.
 
-It can handle b 1 periodicity in the conn.inp, however it will now compare the x,y,z coordinate locations
+It can handle b 1 periodicity in the conn.inp, however it will not compare the x,y,z coordinate locations
 of the faces.
 
 Example

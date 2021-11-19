@@ -1,4 +1,12 @@
 #!/usr/bin/env python3
+"""
+A utility to cut up a peregrine grid into smaller blocks.
+
+Current limitations: Right now we are relying on dot products to find periodic faces.
+This means that we can only handle translational periodicity, and the periodic faces
+must be planes.
+
+"""
 
 import numpy as np
 import peregrinepy as pg
@@ -21,7 +29,11 @@ def faceSlice(nface):
 
 
 def extractCorners(mb, incompleteBlocks, foundFaces):
+    assert len(incompleteBlocks) == len(foundFaces)
     corners = {"x": [], "y": [], "z": []}
+    if incompleteBlocks == []:
+        return corners
+
     for blk in mb:
         if blk.nblki not in incompleteBlocks:
             continue
@@ -52,7 +64,7 @@ def extractCorners(mb, incompleteBlocks, foundFaces):
     return corners
 
 
-def findNeighbor(mb, incompleteBlocks, foundFaces):
+def findInteriorNeighbor(mb, incompleteBlocks, foundFaces):
     corners = extractCorners(mb, incompleteBlocks, foundFaces)
     assert all(
         [
@@ -60,22 +72,25 @@ def findNeighbor(mb, incompleteBlocks, foundFaces):
             for var in corners
         ]
     )
+    if len(incompleteBlocks) == []:
+        return
 
     for blk in mb:
-        # Is this block already complete?
         if blk.nblki not in incompleteBlocks:
             continue
         index = incompleteBlocks.index(blk.nblki)
-        # Is this block already complete?
+        # Is this block complete?
         if all(foundFaces[index]):
             incompleteBlocks.pop(index)
             foundFaces.pop(index)
             for var in corners:
                 corners[var].pop(index)
-
             continue
+
         # Now we go block by block, face by face and look for matching faces
         for face in blk.faces:
+            if face.bcType != "b0":
+                continue
             if foundFaces[index][face.nface - 1]:
                 continue
             setX = {i for i in corners["x"][index][face.nface - 1]}
@@ -84,29 +99,113 @@ def findNeighbor(mb, incompleteBlocks, foundFaces):
             for testIndex, nblki in enumerate(incompleteBlocks):
                 testBlk = mb.getBlock(nblki)
                 for testFace in testBlk.faces:
+                    if foundFaces[testIndex][testFace.nface - 1]:
+                        continue
                     if blk.nblki == testBlk.nblki and face.nface == testFace.nface:
                         continue
                     testSetX = {i for i in corners["x"][testIndex][testFace.nface - 1]}
                     testSetY = {i for i in corners["y"][testIndex][testFace.nface - 1]}
                     testSetZ = {i for i in corners["z"][testIndex][testFace.nface - 1]}
                     if setX == testSetX and setY == testSetY and setZ == testSetZ:
-                        print("HERE")
-                        print(blk.nblki, face.nface)
                         face.neighbor = testBlk.nblki
                         testFace.neighbor = blk.nblki
                         foundFaces[index][face.nface - 1] = True
                         foundFaces[testIndex][testFace.nface - 1] = True
 
+        # Is this block complete?
+        if all(foundFaces[index]):
+            incompleteBlocks.pop(index)
+            foundFaces.pop(index)
+            for var in corners:
+                corners[var].pop(index)
+
+
+def findPeriodicNeighbor(mb, incompleteBlocks, foundFaces):
+    corners = extractCorners(mb, incompleteBlocks, foundFaces)
+    assert all(
+        [
+            len(corners[var]) == len(incompleteBlocks) == len(foundFaces)
+            for var in corners
+        ]
+    )
+    if len(incompleteBlocks) == []:
+        return
+
+    for blk in mb:
+        if blk.nblki not in incompleteBlocks:
+            continue
+        index = incompleteBlocks.index(blk.nblki)
+        # Is this block complete?
+        if all(foundFaces[index]):
+            incompleteBlocks.pop(index)
+            foundFaces.pop(index)
+            for var in corners:
+                corners[var].pop(index)
+            continue
+
+        # Now we go block by block, face by face and look for matching faces
+        for face in blk.faces:
+            if foundFaces[index][face.nface - 1]:
+                continue
+            assert face.bcType.startswith("b") and face.bcType != "b0"
+            Xs = corners["x"][index][face.nface - 1]
+            Ys = corners["y"][index][face.nface - 1]
+            Zs = corners["z"][index][face.nface - 1]
+            faceCenterX = np.mean(Xs)
+            faceCenterY = np.mean(Ys)
+            faceCenterZ = np.mean(Zs)
+
+            p0 = np.array([Xs[0], Ys[0], Zs[0]])
+            p1 = np.array([Xs[1], Ys[1], Zs[1]])
+            p2 = np.array([Xs[3], Ys[3], Zs[3]])
+            pFace = np.array([faceCenterX, faceCenterY, faceCenterZ])
+            cross = np.cross(p1 - p0, p2 - p0)
+            cross = cross / np.linalg.norm(cross)
+
+            for testIndex, nblki in enumerate(incompleteBlocks):
+                testBlk = mb.getBlock(nblki)
+                for testFace in testBlk.faces:
+                    if foundFaces[testIndex][testFace.nface - 1]:
+                        continue
+                    assert testFace.bcType.startswith("b") and testFace.bcType != "b0"
+                    if blk.nblki == testBlk.nblki and face.nface == testFace.nface:
+                        continue
+                    testXs = corners["x"][testIndex][testFace.nface - 1]
+                    testYs = corners["y"][testIndex][testFace.nface - 1]
+                    testZs = corners["z"][testIndex][testFace.nface - 1]
+                    testFaceCenterX = np.mean(testXs)
+                    testFaceCenterY = np.mean(testYs)
+                    testFaceCenterZ = np.mean(testZs)
+
+                    # See if test face is in place with face so we dont accidentially pick it up
+                    pTest = np.array(
+                        [testFaceCenterX, testFaceCenterY, testFaceCenterZ]
+                    )
+                    testVector = pTest - pFace
+                    testVector = testVector / np.linalg.norm(testVector)
+                    dot = np.abs(np.dot(cross, testVector))
+                    if dot == 1.0:
+                        face.neighbor = testBlk.nblki
+                        testFace.neighbor = blk.nblki
+                        foundFaces[index][face.nface - 1] = True
+                        foundFaces[testIndex][testFace.nface - 1] = True
+
+        # Is this block complete?
+        if all(foundFaces[index]):
+            incompleteBlocks.pop(index)
+            foundFaces.pop(index)
+            for var in corners:
+                corners[var].pop(index)
+
 
 def cutBlock(mb, nblki, cutAxis, cutIndex, incompleteBlocks, foundFaces):
 
     oldBlk = mb.getBlock(nblki)
+
+    # Make sure we arent trying to split at an index greater than the number of grid points
     assert (
-        getattr(oldBlk, f"n{cutAxis}") > 2
-    ), f"Error, trying to cut block {nblki} along axis {cutAxis} with only 2 grid points."
-    assert cutIndex < getattr(
-        oldBlk, f"n{cutAxis}"
-    ), f"Error, trying to cut block {nblki} along axis {cutAxis} at index {cutIndex} > {getattr(oldBlk, f'n{cutAxis}')}."
+        cutIndex < getattr(oldBlk, f"n{cutAxis}") - 1
+    ), f"Error, trying to cut block {nblki} along axis {cutAxis} at index {cutIndex} >= n{cutAxis} == {getattr(oldBlk, f'n{cutAxis}')-1}."
     mb.appendBlock()
     newBlk = mb[-1]
     # Add to incomplete blocks and found faces
@@ -169,8 +268,9 @@ def cutBlock(mb, nblki, cutAxis, cutIndex, incompleteBlocks, foundFaces):
         # We will manually find the neighbor later, if needed.
         newSplitFace.neighbor = None
         # If this face is a boundary, then we can add it to the found faces
-        foundFaces[-2][nface - 1] = True
-        foundFaces[-1][nface - 1] = True
+        if not newSplitFace.bcType.startswith("b"):
+            foundFaces[-2][nface - 1] = True
+            foundFaces[-1][nface - 1] = True
 
     # Now transfer the coordinate arrays
     if cutAxis == "i":
@@ -193,7 +293,17 @@ def cutBlock(mb, nblki, cutAxis, cutIndex, incompleteBlocks, foundFaces):
 if __name__ == "__main__":
 
     mb = pg.multiBlock.grid(1)
-    pg.grid.create.multiBlockCube(mb, mbDims=[1, 1, 1], dimsPerBlock=[11, 10, 10])
+    pg.grid.create.multiBlockCube(mb, mbDims=[1, 1, 1], dimsPerBlock=[11, 11, 11])
+
+    blk = mb[0]
+    face = blk.getFace(3)
+    face.neighbor = 0
+    face.orientation = "123"
+    face.bcType = "b1"
+    face = blk.getFace(4)
+    face.neighbor = 0
+    face.orientation = "123"
+    face.bcType = "b1"
 
     pg.writers.writeGrid(mb, "./unsplit")
     pg.writers.writeConnectivity(mb, "./unsplit")
@@ -202,20 +312,17 @@ if __name__ == "__main__":
     foundFaces = []
 
     cutBlock(mb, 0, "i", 5, incompleteBlocks, foundFaces)
-    findNeighbor(mb, incompleteBlocks, foundFaces)
-
-    incompleteBlocks = []
-    foundFaces = []
-    cutBlock(mb, 0, "i", 2, incompleteBlocks, foundFaces)
-    print(incompleteBlocks)
-    print(foundFaces)
-    findNeighbor(mb, incompleteBlocks, foundFaces)
+    findInteriorNeighbor(mb, incompleteBlocks, foundFaces)
+    findPeriodicNeighbor(mb, incompleteBlocks, foundFaces)
+    print(incompleteBlocks, foundFaces)
+    assert incompleteBlocks == []
+    assert foundFaces == []
 
     pg.writers.writeGrid(mb, "./")
     pg.writers.writeConnectivity(mb, "./")
 
     mbRef = pg.multiBlock.grid(2)
-    pg.grid.create.multiBlockCube(mbRef, mbDims=[2, 1, 1], dimsPerBlock=[11, 10, 10])
+    pg.grid.create.multiBlockCube(mbRef, mbDims=[2, 1, 1], dimsPerBlock=[11, 11, 11])
     pg.writers.writeGrid(mbRef, "./reference")
     pg.writers.writeConnectivity(mbRef, "./reference")
 
