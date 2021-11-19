@@ -4,6 +4,7 @@ import h5py
 import numpy as np
 from lxml import etree
 from copy import deepcopy
+from ..misc import progressBar
 
 
 def writeRestart(mb, path="./", gridPath="./", precision="double"):
@@ -168,6 +169,9 @@ def writeRestart(mb, path="./", gridPath="./", precision="double"):
             dataResElem.text = text
 
         gridElem.append(deepcopy(blockElem))
+
+        if mb.mbType in ["grid", "restart"]:
+            progressBar(blk.nblki + 1, len(mb), f"Writing out block {blk.nblki}")
 
     et = etree.ElementTree(xdmfElem)
     saveFile = f"{path}/q.{mb.nrt:08d}.xmf"
