@@ -325,14 +325,14 @@ def cutPath(mb, nblki, cutAxis):
                 continue
             neighborOrientation = face.neighborOrientation
             neighborOrientationIndex = neighborOrientation[axisMap[cutAxis]]
-            neighborAxis = orientationMap[neighborOrientationIndex]
             if neighborOrientationIndex in ["4", "5", "6"]:
                 neighborSwitch = False if checkSwitch else True
             else:
                 neighborSwitch = checkSwitch
 
-            blocksToCheck.append([neighbor, neighborAxis, neighborSwitch])
-            blocksToCut.append([neighbor, neighborAxis, neighborSwitch])
+            neighborCutAxis = orientationMap[neighborOrientationIndex]
+            blocksToCheck.append([neighbor, neighborCutAxis, neighborSwitch])
+            blocksToCut.append([neighbor, neighborCutAxis, neighborSwitch])
 
         blocksToCheck.pop(0)
 
