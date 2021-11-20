@@ -14,10 +14,23 @@ def bootstrapCase(config):
     blocksForProcs = comm.bcast(blocksForProcs, root=0)
     comm.Barrier()
 
+    # Check that we have correct number of processors
     if len(blocksForProcs) != size:
         if rank == 0:
             print(
                 "ERROR!! Number of requested processors in blocksForProcs does not equal number of processors!"
+            )
+        comm.Abort()
+    # Check we have correct number of blks
+    summ = 0
+    maxx = 0
+    for group in blocksForProcs:
+        summ += len(group)
+        maxx = max(maxx, max(group))
+    if summ - 1 != maxx:
+        if rank == 0:
+            print(
+                "ERROR!! Number of blocks in blockForProcs.inp does not equal total number of blocks."
             )
         comm.Abort()
 
