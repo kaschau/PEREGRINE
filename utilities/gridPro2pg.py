@@ -21,6 +21,7 @@ from peregrinepy.writers import writeGrid, writeConnectivity
 import numpy as np
 from peregrinepy.multiBlock import grid as mbg
 from verifyGrid import verify
+import yaml
 
 parser = argparse.ArgumentParser(
     description="Convert binary GridPro files into grid and connectivity files used by PEREGRINE"
@@ -53,6 +54,18 @@ parser.add_argument(
     type=str,
 )
 parser.add_argument(
+    "-bcFam",
+    action="store",
+    metavar="<bcFam>",
+    dest="bcFam",
+    default="./bcFam.yaml",
+    help="""File to translate the labels given to boundary conditions in ICEM
+            to PEREGRINE bcType (i.e. constantVelocitySubsonicInlet, adiabaticNoSlipWall, etc.)\n
+            \n
+            NOTE: ALL labels from ICEM need an entry in the yaml file. Even walls.""",
+    type=str,
+)
+parser.add_argument(
     "--binary",
     action="store_true",
     dest="isBinary",
@@ -73,17 +86,15 @@ if args.isBinary:
 else:
     gpBlkFile = open(args.gpBlkFileName, "r")
 
-gpSurfaceToPgBc = {
+
+# Read in bcFam.yaml file so we know what the bcType is for each label.
+with open(args.bcFam, "r") as f:
+    bcFamDict = yaml.load(f, Loader=yaml.FullLoader)
+gpSurfaceToPgBcType = {
     "pdc:INTERBLK": "b0",
     "pdc:PERIODIC": "b1",
     "pdc:WALL": "adiabaticNoSlipWall",
-    "pdc:user5": "constantVelocitySubsonicInlet",
-    "pdc:user6": "constantPressureSubsonicExit",
-    "pdc:user7": "user7",
-    "pdc:user8": "user8",
-    "pdc:user9": "user9",
-    "pdc:user10": "user10",
-    "pdc:user11": "user11",
+    "pdc:user8": "adiabaticSlipWall",
 }
 
 go = True
@@ -127,7 +138,10 @@ surfaceToBc = dict()
 for i in range(nprops):
     line = gpPtyFile.readline().replace("(", "").replace(")", "").split()
     if line[0] in presentSurfaces:
-        surfaceToBc[line[0]] = gpSurfaceToPgBc[line[2]]
+        try:
+            surfaceToBc[line[0]] = gpSurfaceToPgBcType[line[2]]
+        except KeyError:
+            surfaceToBc[line[0]] = line[2].strip("pdc:")
 
 pgBlkPtys = []
 for i in range(nblks):
@@ -159,7 +173,12 @@ mb = mbg(nblks)
 for temp, blk in zip(pgConns, mb):
     for face in blk.faces:
         faceData = temp[(int(face.nface) - 1) * 4 : (int(face.nface) - 1) * 4 + 4]
-        face.bcType = f"{faceData[0]}"
+        if faceData[0] in bcFamDict:
+            face.bcFam = f"{faceData[0]}"
+            face.bcType = bcFamDict[faceData[0]]["bcType"]
+        else:
+            face.bcType = f"{faceData[0]}"
+            face.bcFam = None
         face.neighbor = None if int(faceData[2]) == 0 else int(faceData[2]) - 1
         face.orientation = None if "0" in faceData[3] else faceData[3]
 
