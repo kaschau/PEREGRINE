@@ -2,10 +2,8 @@
 
 import yaml
 
-# from ..mpiComm import mpiUtils
 
-
-def readConnectivity(mb, pathToFile):
+def readConnectivity(mb, pathToFile, parallel=False):
     """
     This function parses a PEREGRINE connectivity file given
     by pathToFile and adds the connectivity information to
@@ -25,20 +23,22 @@ def readConnectivity(mb, pathToFile):
 
     """
 
-    # We are going to try reading the conn without parallel
-    #
-    # comm, rank, size = mpiUtils.getCommRankSize()
+    if parallel:
+        from ..mpiComm import mpiUtils
 
-    # # only the zeroth rank reads in the file
-    # if rank == 0:
-    #     with open(f"{pathToFile}/conn.yaml", "r") as connFile:
-    #         conn = yaml.load(connFile, Loader=yaml.FullLoader)
-    # else:
-    #     conn = None
-    # conn = comm.bcast(conn, root=0)
+        comm, rank, size = mpiUtils.getCommRankSize()
 
-    with open(f"{pathToFile}/conn.yaml", "r") as connFile:
-        conn = yaml.load(connFile, Loader=yaml.FullLoader)
+        # only the zeroth rank reads in the file
+        if rank == 0:
+            with open(f"{pathToFile}/conn.yaml", "r") as connFile:
+                conn = yaml.load(connFile, Loader=yaml.FullLoader)
+        else:
+            conn = None
+            conn = comm.bcast(conn, root=0)
+
+    else:
+        with open(f"{pathToFile}/conn.yaml", "r") as connFile:
+            conn = yaml.load(connFile, Loader=yaml.FullLoader)
 
     for blk in mb:
         myConn = conn[f"Block{blk.nblki}"]

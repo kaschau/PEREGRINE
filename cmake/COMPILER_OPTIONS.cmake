@@ -7,9 +7,9 @@
 #--------------------------------- INTEL ----------------------------------
 #__________________________________________________________________________
 
-# if( ${CMAKE_CXX_COMPILER_ID} STREQUAL "Intel" )
-#
-# endif()
+if( ${CMAKE_CXX_COMPILER_ID} STREQUAL "Intel" )
+  set( CMAKE_CXX_FLAGS "-diag-disable=15009 " CACHE STRING "" FORCE )
+endif()
 
 #__________________________________________________________________________
 #
