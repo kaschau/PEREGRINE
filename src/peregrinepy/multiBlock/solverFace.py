@@ -191,8 +191,8 @@ class solverFace(topologyFace, face_):
         # We revieve the data in the correct shape already
         self.recvBuffer4 = np.ascontiguousarray(np.empty(commcshape))
 
-        self.tagR = int(f"1{self.neighbor}2{nblki}1{self.nface}")
-        self.tagS = int(f"1{nblki}2{self.neighbor}1{self.neighborNface}")
+        self.tagR = int(f"{nblki}*6+{self.nface}")
+        self.tagS = int(f"{self.neighbor}*6+{self.Nface}")
 
     def setOrientFunc(self, ni, nj, nk, ne):
         assert 0 not in [
