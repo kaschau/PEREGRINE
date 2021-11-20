@@ -10,8 +10,8 @@ from ..mpiComm.mpiUtils import getCommRankSize
 def registerParallelXdmf(mb, path="./", gridPath="./"):
 
     comm, rank, size = getCommRankSize()
-    # the mb with BLock0 must get a list of all other block's ni,nj,nj
-    myBlockList = [blk.nblki for blk in mb]
+    # the mb with Block0 must get a list of all other block's ni,nj,nj
+    myBlockList = mb.blockList()
     myNiList = [[blk.ni, blk.nj, blk.nk] for blk in mb]
 
     if rank == 0:
@@ -48,8 +48,8 @@ def registerParallelXdmf(mb, path="./", gridPath="./"):
 
     # Flatten the list, then sort in block order
     if rank == 0:
-        totalBlockList = [nblki for l in totalBlockList for nblki in l]
-        totalNiList = [ni for l in totalNiList for ni in l]
+        totalBlockList = [nblki for b in totalBlockList for nblki in b]
+        totalNiList = [ni for n in totalNiList for ni in n]
         totalBlockList, totalNiList = (
             list(t) for t in zip(*sorted(zip(totalBlockList, totalNiList)))
         )
@@ -70,9 +70,6 @@ def registerParallelXdmf(mb, path="./", gridPath="./"):
             ni = n[0]
             nj = n[1]
             nk = n[2]
-
-            extent = ni * nj * nk
-            extentCC = (ni - 1) * (nj - 1) * (nk - 1)
 
             blockElem = etree.Element("Grid")
             blockElem.set("Name", f"B{nblki:06d}")
