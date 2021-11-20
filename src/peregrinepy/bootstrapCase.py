@@ -27,7 +27,7 @@ def bootstrapCase(config):
     ################################################################
     # Read in the connectivity
     ################################################################
-    pg.readers.readConnectivity(mb, config["io"]["inputdir"])
+    pg.readers.readConnectivity(mb, config["io"]["inputdir"], parallel=True)
 
     ################################################################
     # Now we figure out which processor each block's neighbor
