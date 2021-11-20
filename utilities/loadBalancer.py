@@ -13,7 +13,7 @@ def getSortedBlockSizes(mb):
     sizes = np.empty(mb.nblks, dtype=np.int32)
     nblkis = np.empty(mb.nblks, dtype=np.int32)
     for i, blk in enumerate(mb):
-        sizes[i] = blk.ni * blk.nj * blk.nk
+        sizes[i] = (blk.ni - 1) * (blk.nj - 1) * (blk.nk - 1)
         nblkis[i] = blk.nblki
 
     perm = sizes.argsort()
