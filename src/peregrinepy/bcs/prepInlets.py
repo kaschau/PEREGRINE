@@ -110,7 +110,6 @@ def prep_constantMassFluxSubsonicInlet(blk, face, valueDict):
     face.array["QBcVals"][:, :, 2] = ny * mDotPerUnitArea
     face.array["QBcVals"][:, :, 3] = nz * mDotPerUnitArea
 
-    face.array["qBcVals"][:, :, 0] = valueDict["p"]
     face.array["qBcVals"][:, :, 4] = valueDict["T"]
     for i, spn in enumerate(blk.speciesNames[0:-1]):
         try:
