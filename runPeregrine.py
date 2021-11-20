@@ -19,18 +19,18 @@ def simulate(configFilePath):
 
     # Get some stats about the simulation
     nCells = pg.mpiComm.mpiUtils.getNumCells(mb)
-    slowest, slowestProc = pg.mpiComm.mpiUtils.getLoadEfficiency(mb)
+    efficiency, slowestProc = pg.mpiComm.mpiUtils.getLoadEfficiency(mb)
     if rank == 0:
         string = " >>> ******************************** <<<\n"
         string += "              PEREGRINE CFD\n"
         string += " >>> ******************************** <<<\n"
         string += " Simulation Summary:"
         print(string)
-        if slowest == 100.0:
+        if efficiency == 100.0:
             print("  Perfect load balancing achieved. 10 points to Gryffindor")
         else:
             print(
-                f"  Load Balance Eff: {slowest: .2f}% (rank {slowestProc})",
+                f"  Load Balance Eff: {efficiency: .2f}% (rank {slowestProc})",
             )
         print(mb)
         ts = perf_counter()

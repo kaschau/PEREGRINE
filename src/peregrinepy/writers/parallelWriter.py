@@ -11,7 +11,7 @@ def registerParallelXdmf(mb, path="./", gridPath="./"):
 
     comm, rank, size = getCommRankSize()
     # the mb with Block0 must get a list of all other block's ni,nj,nj
-    myBlockList = mb.blockList()
+    myBlockList = mb.blockList
     myNiList = [[blk.ni, blk.nj, blk.nk] for blk in mb]
 
     if rank == 0:
