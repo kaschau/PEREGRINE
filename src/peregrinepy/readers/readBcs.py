@@ -28,7 +28,7 @@ def readBcs(mb, pathToFile):
     comm, rank, size = mpiUtils.getCommRankSize()
 
     # only the zeroth block reads in the file
-    if 0 in mb.block_list:
+    if rank == 0:
         try:
             with open(f"{pathToFile}/bcFams.yaml", "r") as connFile:
                 bcsIn = yaml.load(connFile, Loader=yaml.FullLoader)

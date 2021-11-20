@@ -29,13 +29,13 @@ def getLoadEfficiency(mb):
 
     comm, rank, size = getCommRankSize()
 
-    myCells = np.array([0.0])
+    myCells = np.array([0], dtype=np.int32)
     for blk in mb:
         myCells[0] += (blk.ni - 1) * (blk.nj - 1) * (blk.nk - 1)
 
     recv = None
     if rank == 0:
-        recv = np.empty(size)
+        recv = np.empty(size, dtype=np.int32)
     comm.Gather(myCells, recv, root=0)
 
     if rank == 0:

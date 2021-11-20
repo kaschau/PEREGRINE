@@ -34,7 +34,7 @@ def readConnectivity(mb, pathToFile, parallel=False):
                 conn = yaml.load(connFile, Loader=yaml.FullLoader)
         else:
             conn = None
-            conn = comm.bcast(conn, root=0)
+        conn = comm.bcast(conn, root=0)
 
     else:
         with open(f"{pathToFile}/conn.yaml", "r") as connFile:
