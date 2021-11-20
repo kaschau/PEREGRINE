@@ -17,7 +17,7 @@ import numpy as np
 def analyzeGrid(mb):
     size = np.zeros(mb.nblks, dtype=np.int32)
     for blk in mb:
-        size[blk.nblki] = blk.ni * blk.nj * blk.nk
+        size[blk.nblki] = (blk.ni - 1) * (blk.nj - 1) * (blk.nk - 1)
 
     assert np.min(size) > 0
 
