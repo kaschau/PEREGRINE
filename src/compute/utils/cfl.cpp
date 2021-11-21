@@ -50,7 +50,6 @@ std::array<double, 2> CFLmax(std::vector<block_> mb) {
                    pow(0.5 * (b.kny(i, j, k) + b.kny(i, j, k + 1)) * v, 2.0) +
                    pow(0.5 * (b.knz(i, j, k) + b.knz(i, j, k + 1)) * w, 2.0));
 
-          printf("nx= %f, ny=%f nz=%f \n", b.inx(i,j,k),b.iny(i,j,k),b.inz(i,j,k));
           double &c = b.qh(i, j, k, 3);
 
           if (b.ni > 2) {
