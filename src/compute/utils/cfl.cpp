@@ -38,18 +38,19 @@ std::array<double, 2> CFLmax(std::vector<block_> mb) {
           double &w = b.q(i, j, k, 3);
 
           double uI =
-              sqrt(pow(0.5 * (b.inx(i, j, k) + b.inx(i + 1, j, k)) * u, 2.0) *
-                   pow(0.5 * (b.iny(i, j, k) + b.iny(i + 1, j, k)) * v, 2.0) *
+              sqrt(pow(0.5 * (b.inx(i, j, k) + b.inx(i + 1, j, k)) * u, 2.0) +
+                   pow(0.5 * (b.iny(i, j, k) + b.iny(i + 1, j, k)) * v, 2.0) +
                    pow(0.5 * (b.inz(i, j, k) + b.inz(i + 1, j, k)) * w, 2.0));
           double uJ =
-              sqrt(pow(0.5 * (b.jnx(i, j, k) + b.jnx(i, j + 1, k)) * u, 2.0) *
-                   pow(0.5 * (b.jny(i, j, k) + b.jny(i, j + 1, k)) * v, 2.0) *
+              sqrt(pow(0.5 * (b.jnx(i, j, k) + b.jnx(i, j + 1, k)) * u, 2.0) +
+                   pow(0.5 * (b.jny(i, j, k) + b.jny(i, j + 1, k)) * v, 2.0) +
                    pow(0.5 * (b.jnz(i, j, k) + b.jnz(i, j + 1, k)) * w, 2.0));
           double uK =
-              sqrt(pow(0.5 * (b.knx(i, j, k) + b.knx(i, j, k + 1)) * u, 2.0) *
-                   pow(0.5 * (b.kny(i, j, k) + b.kny(i, j, k + 1)) * v, 2.0) *
+              sqrt(pow(0.5 * (b.knx(i, j, k) + b.knx(i, j, k + 1)) * u, 2.0) +
+                   pow(0.5 * (b.kny(i, j, k) + b.kny(i, j, k + 1)) * v, 2.0) +
                    pow(0.5 * (b.knz(i, j, k) + b.knz(i, j, k + 1)) * w, 2.0));
 
+          printf("nx= %f, ny=%f nz=%f \n", b.inx(i,j,k),b.iny(i,j,k),b.inz(i,j,k));
           double &c = b.qh(i, j, k, 3);
 
           if (b.ni > 2) {
