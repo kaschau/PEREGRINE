@@ -83,18 +83,23 @@ class TestWalls:
                 ny = blk.array["kny"]
                 nz = blk.array["knz"]
 
+            if nface in [1, 3, 5]:
+                plus = 1.0
+            else:
+                plus = -1.0
+
             face.bcFunc(blk, face, mb.eos, mb.thtrdat, "euler")
             for s0_ in face.s0_:
                 assert np.allclose(p[s0_], p[face.s1_])
 
                 assert np.allclose(
-                    u[s0_], u[face.s1_] - 2.0 * u[face.s1_] * nx[face.s1_]
+                    u[s0_], u[face.s1_] - 2.0 * u[face.s1_] * plus * nx[face.s1_]
                 )
                 assert np.allclose(
-                    v[s0_], v[face.s1_] - 2.0 * v[face.s1_] * ny[face.s1_]
+                    v[s0_], v[face.s1_] - 2.0 * v[face.s1_] * plus * ny[face.s1_]
                 )
                 assert np.allclose(
-                    w[s0_], w[face.s1_] - 2.0 * w[face.s1_] * nz[face.s1_]
+                    w[s0_], w[face.s1_] - 2.0 * w[face.s1_] * plus * nz[face.s1_]
                 )
 
                 assert np.allclose(TN[s0_], TN[face.s1_])
