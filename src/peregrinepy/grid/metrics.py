@@ -82,6 +82,8 @@ def metrics(blk, fdOrder):
         blk.array["isx"] ** 2 + blk.array["isy"] ** 2 + blk.array["isz"] ** 2
     )
 
+    np.clip(blk.array["iS"], 1e-16, None, out=blk.array["iS"])
+
     blk.array["inx"][:] = blk.array["isx"] / blk.array["iS"]
     blk.array["iny"][:] = blk.array["isy"] / blk.array["iS"]
     blk.array["inz"][:] = blk.array["isz"] / blk.array["iS"]
@@ -132,6 +134,8 @@ def metrics(blk, fdOrder):
     blk.array["jS"][:] = np.sqrt(
         blk.array["jsx"] ** 2 + blk.array["jsy"] ** 2 + blk.array["jsz"] ** 2
     )
+
+    np.clip(blk.array["jS"], 1e-16, None, out=blk.array["jS"])
 
     blk.array["jnx"][:] = blk.array["jsx"] / blk.array["jS"]
     blk.array["jny"][:] = blk.array["jsy"] / blk.array["jS"]
@@ -184,6 +188,8 @@ def metrics(blk, fdOrder):
         blk.array["ksx"] ** 2 + blk.array["ksy"] ** 2 + blk.array["ksz"] ** 2
     )
 
+    np.clip(blk.array["kS"], 1e-16, None, out=blk.array["kS"])
+
     blk.array["knx"][:] = blk.array["ksx"] / blk.array["kS"]
     blk.array["kny"][:] = blk.array["ksy"] / blk.array["kS"]
     blk.array["knz"][:] = blk.array["ksz"] / blk.array["kS"]
@@ -227,6 +233,8 @@ def metrics(blk, fdOrder):
             + blk.array["ksz"][:, :, 1::]
         )
     ) / 3.0e0
+
+    np.clip(blk.array["J"], 1e-16, None, out=blk.array["J"])
 
     if blk.blockType == "solver" and blk._isInitialized:
         for var in ["J"]:
