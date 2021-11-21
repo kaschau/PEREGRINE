@@ -24,7 +24,8 @@ def simulate(configFilePath):
         string = " >>> ******************************** <<<\n"
         string += "              PEREGRINE CFD\n"
         string += " >>> ******************************** <<<\n"
-        string += " Simulation Summary:"
+        string += " Simulation Summary:\n"
+        string += f"  Total cells: {nCells}"
         print(string)
         if efficiency == 100.0:
             print("  Perfect load balancing achieved. 10 points to Gryffindor")
