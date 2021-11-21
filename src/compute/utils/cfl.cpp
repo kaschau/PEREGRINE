@@ -66,7 +66,7 @@ std::array<double, 2> CFLmax(std::vector<block_> mb) {
   }
 
   returnMaxA = fmax(CFLmaxA, returnMaxA);
-  returnMaxC = fmax(CFLmaxC, returnMaxC);
+  returnMaxC = fmax(fmax(CFLmaxC, returnMaxC), 1e-16);
 
   return {returnMaxA, returnMaxC};
 
