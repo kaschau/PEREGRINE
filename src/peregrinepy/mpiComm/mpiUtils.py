@@ -53,7 +53,7 @@ def getDtMaxCFL(mb):
 
     comm, rank, size = getCommRankSize()
 
-    cfl = np.array(CFLmax(mb))
+    cfl = np.array(CFLmax(mb), dtype=np.float64)
     comm.Allreduce(MPI.IN_PLACE, cfl, op=MPI.MAX)
 
     if mb.config["simulation"]["variableTimeStep"]:
