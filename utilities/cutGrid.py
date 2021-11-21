@@ -440,7 +440,7 @@ if __name__ == "__main__":
                 ln.strip() for ln in f.readlines() if not ln.strip().startswith("#")
             ]
             for line in lines:
-                ln = line.split(",")
+                ln = [i.strip() for i in line.split(",")]
                 nblk = int(ln[0])
                 axis = ln[1]
                 nCuts = int(ln[2])
