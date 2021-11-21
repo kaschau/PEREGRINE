@@ -93,7 +93,7 @@ class thtrdat(thtrdat_):
         ################################
 
         if config["RHS"]["diffusion"]:
-            if config["thermochem"]["trans"] == "kineticTheory":
+            if "kineticTheory" in config["thermochem"]["trans"]:
                 from .kineticTheoryPoly import kineticTheoryPoly
 
                 (
@@ -123,3 +123,7 @@ class thtrdat(thtrdat_):
                 self.array["kappa0"] = completeSpecies("kappa0", usersp, refsp)
                 shape = [ns]
                 createViewMirrorArray(self, ["kappa0"], shape, space)
+            else:
+                raise KeyError(
+                    f'PEREGRINE ERROR: Unknown TRANS {config["thermochem"]["trans"]}'
+                )

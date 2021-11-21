@@ -23,4 +23,12 @@ void bindTransport(py::module_ &m) {
         py::arg("i")=0,
         py::arg("j")=0,
         py::arg("k")=0);
+  //  |----> kineticTheoryUnityLewis.cpp
+  transport.def("kineticTheoryUnityLewis", &kineticTheoryUnityLewis, "Update transport properties from primatives via kinetic theory, using unity Lewis assumption for Dij",
+        py::arg("block_"),
+        py::arg("thtrdat_ object"),
+        py::arg("face"),
+        py::arg("i")=0,
+        py::arg("j")=0,
+        py::arg("k")=0);
 }
