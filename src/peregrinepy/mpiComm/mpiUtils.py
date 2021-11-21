@@ -22,7 +22,7 @@ def getNumCells(mb):
 
     comm.Allreduce(MPI.IN_PLACE, nCells, op=MPI.SUM)
 
-    return nCells
+    return nCells[0]
 
 
 def getLoadEfficiency(mb):
