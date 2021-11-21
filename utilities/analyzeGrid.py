@@ -26,6 +26,7 @@ def analyzeGrid(mb):
     bigBlk = mb.getBlock(maxBlk)
     smallBlk = mb.getBlock(minBlk)
     results = {}
+    results["totalCells"] = np.sum(size)
     results["maxNblki"] = maxBlk
     results["maxCells"] = np.max(size)
     results["maxNx"] = [bigBlk.ni, bigBlk.nj, bigBlk.nk]
@@ -70,6 +71,7 @@ if __name__ == "__main__":
     stdv = results["stdv"]
 
     ni, nj, nk = results["maxNx"]
+    print(f"Total cells: {results['totalCells']}")
     print(f"max block is {maxNblki} with {maxCells} cells, {ni = }, {nj = }, {nk = }.")
     ni, nj, nk = results["minNx"]
     print(f"min block is {minNblki} with {minCells} cells, {ni = }, {nj = }, {nk = }.")
