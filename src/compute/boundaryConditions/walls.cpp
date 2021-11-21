@@ -147,9 +147,9 @@ void adiabaticSlipWall(
             q0(i, j, 0) = q1(i, j, 0);
 
             // flip velo on wall
-            q0(i, j, 1) = q1(i, j, 1) - 2.0 * q1(i, j, 1) * nx(i, j);
-            q0(i, j, 2) = q1(i, j, 2) - 2.0 * q1(i, j, 2) * ny(i, j);
-            q0(i, j, 3) = q1(i, j, 3) - 2.0 * q1(i, j, 3) * nz(i, j);
+            q0(i, j, 1) = q1(i, j, 1) - 2.0 * q1(i, j, 1) * plus * nx(i, j);
+            q0(i, j, 2) = q1(i, j, 2) - 2.0 * q1(i, j, 2) * plus * ny(i, j);
+            q0(i, j, 3) = q1(i, j, 3) - 2.0 * q1(i, j, 3) * plus * nz(i, j);
 
             // match temperature
             q0(i, j, 4) = q1(i, j, 4);
@@ -238,9 +238,9 @@ void adiabaticMovingWall(
             q0(i, j, 0) = q1(i, j, 0);
 
             // flip velo on wall
-            q0(i, j, 1) = 2.0 * face.qBcVals(i,j,1) - q1(i, j, 1);
-            q0(i, j, 2) = 2.0 * face.qBcVals(i,j,2) - q1(i, j, 2);
-            q0(i, j, 3) = 2.0 * face.qBcVals(i,j,3) - q1(i, j, 3);
+            q0(i, j, 1) = 2.0 * face.qBcVals(i, j, 1) - q1(i, j, 1);
+            q0(i, j, 2) = 2.0 * face.qBcVals(i, j, 2) - q1(i, j, 2);
+            q0(i, j, 3) = 2.0 * face.qBcVals(i, j, 3) - q1(i, j, 3);
 
             // match temperature
             q0(i, j, 4) = q1(i, j, 4);
@@ -334,12 +334,12 @@ void isoTMovingWall(
             q0(i, j, 0) = q1(i, j, 0);
 
             // flip velo on wall
-            q0(i, j, 1) = 2.0 * face.qBcVals(i,j,1) - q1(i, j, 1);
-            q0(i, j, 2) = 2.0 * face.qBcVals(i,j,2) - q1(i, j, 2);
-            q0(i, j, 3) = 2.0 * face.qBcVals(i,j,3) - q1(i, j, 3);
+            q0(i, j, 1) = 2.0 * face.qBcVals(i, j, 1) - q1(i, j, 1);
+            q0(i, j, 2) = 2.0 * face.qBcVals(i, j, 2) - q1(i, j, 2);
+            q0(i, j, 3) = 2.0 * face.qBcVals(i, j, 3) - q1(i, j, 3);
 
             // set temperature
-            q0(i, j, 4) = 2.0 * face.qBcVals(i,j,4) - q1(i, j, 4);
+            q0(i, j, 4) = 2.0 * face.qBcVals(i, j, 4) - q1(i, j, 4);
             // match species
             for (int n = 5; n < b.ne; n++) {
               q0(i, j, n) = q1(i, j, n);
