@@ -63,3 +63,24 @@ def getDtMaxCFL(mb):
         dt = mb.config["simulation"]["dt"]
 
     return dt, cfl[0], cfl[1]
+
+
+def checkNan(mb):
+
+    comm, rank, size = getCommRankSize()
+
+    abort = np.array([0], np.int32)
+    for blk in mb:
+        blk.updateHostView("Q")
+        if np.any(np.isnan(blk.array["Q"])):
+            print(f"nan detected in block {blk.nblki}")
+            print(np.argwhere(np.isnan(blk.array["Q"])))
+            abort[0] += 1
+        if np.any(np.isinf(blk.array["Q"])):
+            print(f"inf detected in block {blk.nblki}")
+            print(np.argwhere(np.isinf(blk.array["Q"])))
+            abort[0] += 1
+
+    comm.Allreduce(MPI.IN_PLACE, abort, op=MPI.SUM)
+
+    return abort[0]

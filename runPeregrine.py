@@ -41,6 +41,7 @@ def simulate(configFilePath):
     niter = config["simulation"]["niter"]
     niterout = config["simulation"]["niterout"]
     niterprint = config["simulation"]["niterprint"]
+    checkNan = config["simulation"]["checkNan"]
     for niter in range(niter):
         dt, CFLmaxA, CFLmaxC = pg.mpiComm.mpiUtils.getDtMaxCFL(mb)
         if mb.nrt % niterprint == 0 and rank == 0:
@@ -61,6 +62,18 @@ def simulate(configFilePath):
             pg.writers.parallelWriter.parallelWriteRestart(
                 mb, config["io"]["outputdir"]
             )
+
+        if checkNan:
+            if mb.nrt % checkNan == 0:
+                abort = pg.mpiComm.mpiUtils.checkNan(mb)
+                if abort > 0:
+                    pg.writers.parallelWriter.parallelWriteRestart(
+                        mb, config["io"]["outputdir"]
+                    )
+                    comm.Barrier()
+                    if rank == 0:
+                        print("Aborting.")
+                        comm.Abort()
 
     if rank == 0:
         elapsed = perf_counter() - ts

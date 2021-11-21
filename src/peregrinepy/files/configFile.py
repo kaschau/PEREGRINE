@@ -29,6 +29,7 @@ class configFile(frozenDict):
                 "niterprint": 1,
                 "variableTimeStep": False,
                 "maxCFL": 0.1,
+                "checkNan": False,
             }
         )
 
