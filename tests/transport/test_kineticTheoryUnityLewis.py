@@ -18,7 +18,7 @@ class TestKineticTheoryTrans:
     def teardown_method(self):
         kokkos.finalize()
 
-    def test_kineticTheory(self):
+    def test_kineticTheoryUnityLewis(self):
 
         relpath = str(Path(__file__).parent)
         ct.add_directory(
@@ -40,7 +40,7 @@ class TestKineticTheoryTrans:
         config = pg.files.configFile()
         config["thermochem"]["spdata"] = thfile
         config["thermochem"]["eos"] = "tpg"
-        config["thermochem"]["trans"] = "kineticTheory"
+        config["thermochem"]["trans"] = "kineticTheoryUnityLewis"
         config["RHS"]["diffusion"] = True
 
         mb = pg.multiBlock.generateMultiBlockSolver(1, config)
@@ -60,7 +60,8 @@ class TestKineticTheoryTrans:
         blk.array["q"][:, :, :, 5::] = Y[0:-1]
 
         # Update transport
-        assert mb.trans.__name__ == "kineticTheory"
+        assert mb.trans.__name__ == "kineticTheoryUnityLewis"
+        mb.eos(blk, mb.thtrdat, 0, "prims")
         mb.trans(blk, mb.thtrdat, 0)
 
         # test the properties
@@ -88,7 +89,8 @@ class TestKineticTheoryTrans:
         pd.append(print_diff("mu", gas.viscosity, pgtrns[0]))
         pd.append(print_diff("kappa", gas.thermal_conductivity, pgtrns[1]))
         for i, n in enumerate(gas.species_names[0:-1]):
-            pd.append(print_diff(f"D_{n}", gas.mix_diff_coeffs_mass[i], pgtrns[2 + i]))
+            Dct = gas.thermal_conductivity / (gas.density * gas.cp_mass)
+            pd.append(print_diff(f"D_{n}", Dct, pgtrns[2 + i]))
 
         passfail = np.all(np.array(pd) < 1.0)
         assert passfail
