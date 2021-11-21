@@ -16,11 +16,11 @@ def getNumCells(mb):
 
     comm, rank, size = getCommRankSize()
 
-    myCells = 0
+    nCells = np.array([0], dtype=np.int32)
     for blk in mb:
-        myCells += (blk.ni - 1) * (blk.nj - 1) * (blk.nk - 1)
+        nCells[0] += (blk.ni - 1) * (blk.nj - 1) * (blk.nk - 1)
 
-    nCells = comm.allreduce(myCells, op=MPI.SUM)
+    comm.Allreduce(MPI.IN_PLACE, nCells, op=MPI.SUM)
 
     return nCells
 
