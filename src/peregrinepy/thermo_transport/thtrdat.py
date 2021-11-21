@@ -93,7 +93,7 @@ class thtrdat(thtrdat_):
         ################################
 
         if config["RHS"]["diffusion"]:
-            if config["thermochem"]["trans"] == "kineticTheory":
+            if "kineticTheory" in config["thermochem"]["trans"]:
                 from .kineticTheoryPoly import kineticTheoryPoly
 
                 (

@@ -2,20 +2,20 @@
 #define __compute_H__
 
 #include "Kokkos_Core.hpp"
+#include "array"
 #include "block_.hpp"
 #include "face_.hpp"
 #include "kokkos_types.hpp"
 #include "thtrdat_.hpp"
 #include "vector"
-#include "array"
 #include <string>
 
 ///////////////////////////////////////////////////////////
 ////////////////// Compute Functions //////////////////////
 ///////////////////////////////////////////////////////////
 // ./range_map.cpp
-MDRange3 get_range3(block_ b, const int nface, const int indxI = 0, const int indxJ = 0,
-                    const int indxK = 0);
+MDRange3 get_range3(block_ b, const int nface, const int indxI = 0,
+                    const int indxJ = 0, const int indxK = 0);
 threeDsubview getHaloSlice(fourDview view, const int nface, int slice);
 twoDsubview getHaloSlice(threeDview view, const int nface, int slice);
 void setHaloSlices(int &s0, int &s1, int &s2, int &plus, const int ni,
@@ -32,7 +32,6 @@ void rusanov(block_ b, const thtrdat_ th);
 void ausmPlusUp(block_ b, const thtrdat_ th);
 //    |------> jamesonDissipation
 void jamesonDissipation(block_ b, const thtrdat_ th);
-
 
 // ./boundaryConditions
 //    |------> inlets
@@ -75,21 +74,18 @@ void supersonicExit(
     const std::function<void(block_, thtrdat_, int, std::string)> &eos,
     thtrdat_ th, std::string terms);
 
-
 // ./chemistry
 //    |------> CH4_O2_Stanford_Skeletal
 void chem_CH4_O2_Stanford_Skeletal(block_ b, const thtrdat_ th, const int face,
                                    const int indxI = 0, const int indxJ = 0,
                                    const int indxK = 0);
 //    |------> GRI30
-void chem_GRI30(block_ b, const thtrdat_ th, const int face, const int indxI = 0,
-                const int indxJ = 0, const int indxK = 0);
-
+void chem_GRI30(block_ b, const thtrdat_ th, const int face,
+                const int indxI = 0, const int indxJ = 0, const int indxK = 0);
 
 // ./diffFlux
 //    |------> diffusiveFlux
 void diffusiveFlux(block_ b, const thtrdat_ th);
-
 
 // ./switches
 //    |------> jameson
@@ -99,7 +95,6 @@ void jamesonPressure(block_ b);
 void vanAlbadaEntropy(block_ b);
 void vanAlbadaPressure(block_ b);
 
-
 // ./thermo
 //    |------> cpg
 void cpg(block_ b, const thtrdat_ th, const int face, const std::string given,
@@ -107,7 +102,6 @@ void cpg(block_ b, const thtrdat_ th, const int face, const std::string given,
 //    |------> tpg
 void tpg(block_ b, const thtrdat_ th, const int face, const std::string given,
          const int indxI = 0, const int indxJ = 0, const int indxK = 0);
-
 
 // ./timeIntegration
 //    |------> rk3Stages.cpp
@@ -120,21 +114,25 @@ void rk4s2(block_ b, const double dt);
 void rk4s3(block_ b, const double dt);
 void rk4s4(block_ b, const double dt);
 
-
 // ./transport
 //    |------> kineticThreory
-void kineticTheory(block_ b, const thtrdat_ th, const int face, const int indxI = 0,
-                   const int indxJ = 0, const int indxK = 0);
+void kineticTheory(block_ b, const thtrdat_ th, const int face,
+                   const int indxI = 0, const int indxJ = 0,
+                   const int indxK = 0);
 //    |------> constantProps
-void constantProps(block_ b, const thtrdat_ th, const int face, const int indxI = 0,
-                   const int indxJ = 0, const int indxK = 0);
-
+void constantProps(block_ b, const thtrdat_ th, const int face,
+                   const int indxI = 0, const int indxJ = 0,
+                   const int indxK = 0);
+//    |------> kineticThreoryUnityLewis
+void kineticTheoryUnityLewis(block_ b, const thtrdat_ th, const int face,
+                             const int indxI = 0, const int indxJ = 0,
+                             const int indxK = 0);
 
 // ./utils
 //    |------> applyFluxes
-void applyFlux(block_ b, double []);
+void applyFlux(block_ b, double[]);
 void applyHybridFlux(block_ b, const double primary);
-void applyDissipationFlux(block_ b, double []);
+void applyDissipationFlux(block_ b, double[]);
 //    |------> dQzero
 void dQzero(block_ b);
 //    |------> dq2FD
@@ -145,7 +143,8 @@ void dq4FD(block_ b);
 void AEQB(fourDview A, fourDview B);
 void ApEQxB(fourDview A, const double x, fourDview B);
 void AEQxB(fourDview A, const double x, fourDview B);
-void CEQxApyB(fourDview C, const double x, fourDview A, const double y, fourDview B);
+void CEQxApyB(fourDview C, const double x, fourDview A, const double y,
+              fourDview B);
 std::array<double, 2> CFLmax(std::vector<block_> mb);
 
 #endif
