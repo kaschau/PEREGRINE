@@ -1,4 +1,3 @@
-import kokkos
 import peregrinepy as pg
 import numpy as np
 

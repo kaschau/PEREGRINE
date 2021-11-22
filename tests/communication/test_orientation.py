@@ -1,6 +1,10 @@
 import peregrinepy as pg
 import numpy as np
-from pytest_easyMPI import mpi_parallel
+import mpi4py.rc
+
+mpi4py.rc.finalize = False
+mpi4py.rc.initialize = False
+from mpi4py import MPI
 
 
 class twoblock123:
@@ -31,419 +35,485 @@ class twoblock123:
             blk.array["q"][:] = np.random.random((self.qshape))
 
 
-##############################################
-# Test for all positive i aligned orientations
-##############################################
-@mpi_parallel(1)
-def test_123():
+class TestOrientation:
+    @classmethod
+    def setup_class(cls):
+        MPI.Init()
 
-    tb = twoblock123()
-    blk0 = tb.mb[0]
-    blk1 = tb.mb[1]
-    ng = blk0.ng
+    @classmethod
+    def teardown_class(cls):
+        MPI.Finalize()
 
-    # Reorient and update communication info
-    tb.mb.setBlockCommunication()
-    # Execute communication
-    pg.mpiComm.communicate(tb.mb, ["x", "y", "z", "q"])
+    ##############################################
+    # Test for all positive i aligned orientations
+    ##############################################
+    def test_123(self):
 
-    passfail = []
-    for var, shape, off in zip(
-        ["x", "y", "z", "q"], [tb.xshape, tb.xshape, tb.xshape, tb.qshape], [0, 0, 0, 1]
-    ):
-        check0 = True
-        check1 = True
-        for k in range(shape[2]):
-            for j in range(shape[1]):
-                for i in range(ng):
-                    check0 = np.all(
-                        blk0.array[var][-(2 * ng + 1) + off + i, j, k]
-                        == blk1.array[var][i, j, k]
-                    )
-                    check1 = np.all(
-                        blk0.array[var][-ng + i, j, k]
-                        == blk1.array[var][ng + 1 - off + i, j, k]
-                    )
+        tb = twoblock123()
+        blk0 = tb.mb[0]
+        blk1 = tb.mb[1]
+        ng = blk0.ng
+
+        # Reorient and update communication info
+        tb.mb.setBlockCommunication()
+        # Execute communication
+        pg.mpiComm.communicate(tb.mb, ["x", "y", "z", "q"])
+
+        passfail = []
+        for var, shape, off in zip(
+            ["x", "y", "z", "q"],
+            [tb.xshape, tb.xshape, tb.xshape, tb.qshape],
+            [0, 0, 0, 1],
+        ):
+            check0 = True
+            check1 = True
+            for k in range(shape[2]):
+                for j in range(shape[1]):
+                    for i in range(ng):
+                        check0 = np.all(
+                            blk0.array[var][-(2 * ng + 1) + off + i, j, k]
+                            == blk1.array[var][i, j, k]
+                        )
+                        check1 = np.all(
+                            blk0.array[var][-ng + i, j, k]
+                            == blk1.array[var][ng + 1 - off + i, j, k]
+                        )
+                        if not check0 or not check1:
+                            break
                     if not check0 or not check1:
                         break
                 if not check0 or not check1:
                     break
-            if not check0 or not check1:
-                break
-        passfail.append(check0)
-        passfail.append(check1)
+            passfail.append(check0)
+            passfail.append(check1)
 
-    assert False not in passfail
+        assert False not in passfail
 
+    def test_135(self):
 
-@mpi_parallel(1)
-def test_135():
-    tb = twoblock123()
-    blk0 = tb.mb[0]
-    blk1 = tb.mb[1]
-    ng = blk0.ng
+        tb = twoblock123()
+        blk0 = tb.mb[0]
+        blk1 = tb.mb[1]
+        ng = blk0.ng
 
-    for var in ["x", "y", "z", "q"]:
-        blk1.array[var] = np.moveaxis(
-            np.flip(blk1.array[var], axis=2), (0, 1, 2), (0, 2, 1)
-        )
-    blk1.nj = tb.xshape[2] - 2 * ng
-    blk1.nk = tb.xshape[1] - 2 * ng
+        for var in ["x", "y", "z", "q"]:
+            blk1.array[var] = np.moveaxis(
+                np.flip(blk1.array[var], axis=2), (0, 1, 2), (0, 2, 1)
+            )
+        blk1.nj = tb.xshape[2] - 2 * ng
+        blk1.nk = tb.xshape[1] - 2 * ng
 
-    # Reorient second block and update communication info
-    blk0.getFace(2).orientation = "135"
-    blk1.getFace(1).orientation = "162"
+        # Reorient second block and update communication info
+        blk0.getFace(2).orientation = "135"
+        blk1.getFace(1).orientation = "162"
 
-    tb.mb.setBlockCommunication()
+        tb.mb.setBlockCommunication()
 
-    # Execute communication
-    pg.mpiComm.communicate(tb.mb, ["x", "y", "z", "q"])
+        # Execute communication
+        pg.mpiComm.communicate(tb.mb, ["x", "y", "z", "q"])
 
-    passfail = []
-    for var, shape, off in zip(
-        ["x", "y", "z", "q"], [tb.xshape, tb.xshape, tb.xshape, tb.qshape], [0, 0, 0, 1]
-    ):
-        check0 = True
-        check1 = True
-        for k in range(shape[2]):
-            for j in range(shape[1]):
-                for i in range(ng):
-                    check0 = np.all(
-                        blk0.array[var][-(2 * ng + 1) + off + i, j, k]
-                        == blk1.array[var][i, k, -(j + 1)]
-                    )
-                    check1 = np.all(
-                        blk0.array[var][-ng + i, j, k]
-                        == blk1.array[var][ng + 1 - off + i, k, -(j + 1)]
-                    )
+        passfail = []
+        for var, shape, off in zip(
+            ["x", "y", "z", "q"],
+            [tb.xshape, tb.xshape, tb.xshape, tb.qshape],
+            [0, 0, 0, 1],
+        ):
+            check0 = True
+            check1 = True
+            for k in range(shape[2]):
+                for j in range(shape[1]):
+                    for i in range(ng):
+                        check0 = np.all(
+                            blk0.array[var][-(2 * ng + 1) + off + i, j, k]
+                            == blk1.array[var][i, k, -(j + 1)]
+                        )
+                        check1 = np.all(
+                            blk0.array[var][-ng + i, j, k]
+                            == blk1.array[var][ng + 1 - off + i, k, -(j + 1)]
+                        )
+                        if not check0 or not check1:
+                            break
                     if not check0 or not check1:
                         break
                 if not check0 or not check1:
                     break
-            if not check0 or not check1:
-                break
-        passfail.append(check0)
-        passfail.append(check1)
+            passfail.append(check0)
+            passfail.append(check1)
 
-    assert False not in passfail
+        assert False not in passfail
 
+    def test_162(self):
+        tb = twoblock123()
+        blk0 = tb.mb[0]
+        blk1 = tb.mb[1]
+        ng = blk0.ng
 
-##############################################
-# Test for all positive j aligned orientations
-##############################################
-@mpi_parallel(1)
-def test_231():
-    tb = twoblock123()
+        for var in ["x", "y", "z", "q"]:
+            blk1.array[var] = np.moveaxis(
+                np.flip(blk1.array[var], axis=1), (0, 1, 2), (0, 2, 1)
+            )
+        blk1.nj = tb.xshape[2] - 2 * ng
+        blk1.nk = tb.xshape[1] - 2 * ng
 
-    blk0 = tb.mb[0]
-    blk1 = tb.mb[1]
-    ng = blk0.ng
+        # Reorient second block and update communication info
+        blk0.getFace(2).orientation = "162"
+        blk1.getFace(1).orientation = "135"
 
-    for var in ["x", "y", "z", "q"]:
-        blk1.array[var] = np.moveaxis(blk1.array[var], (0, 1, 2), (1, 2, 0))
-    blk1.ni = tb.xshape[2] - 2 * ng
-    blk1.nj = tb.xshape[0] - 2 * ng
-    blk1.nk = tb.xshape[1] - 2 * ng
+        tb.mb.setBlockCommunication()
 
-    # Reorient second block and update communication info
-    blk0.getFace(2).orientation = "231"
+        print(blk0.getFace(2).orient)
+        print(blk1.getFace(1).orient)
 
-    blk1.getFace(1).neighbor = None
-    blk1.getFace(1).bcType = "adiabaticSlipWall"
-    blk1.getFace(1).orientation = None
-    blk1.getFace(1).commRank = None
+        # Execute communication
+        pg.mpiComm.communicate(tb.mb, ["x", "y", "z", "q"])
 
-    blk1.getFace(3).neighbor = 0
-    blk1.getFace(3).bcType = "b0"
-    blk1.getFace(3).orientation = "312"
-    blk1.getFace(3).commRank = 0
-
-    tb.mb.setBlockCommunication()
-
-    # Execute communication
-    pg.mpiComm.communicate(tb.mb, ["x", "y", "z", "q"])
-
-    passfail = []
-    for var, shape, off in zip(
-        ["x", "y", "z", "q"], [tb.xshape, tb.xshape, tb.xshape, tb.qshape], [0, 0, 0, 1]
-    ):
-        check0 = True
-        check1 = True
-        for k in range(shape[2]):
-            for j in range(shape[1]):
-                for i in range(ng):
-                    check0 = np.all(
-                        blk0.array[var][-(2 * ng + 1) + off + i, j, k]
-                        == blk1.array[var][k, i, j]
-                    )
-                    check1 = np.all(
-                        blk0.array[var][-ng + i, j, k]
-                        == blk1.array[var][k, ng + 1 - off + i, j]
-                    )
+        passfail = []
+        for var, shape, off in zip(
+            ["x", "y", "z", "q"],
+            [tb.xshape, tb.xshape, tb.xshape, tb.qshape],
+            [0, 0, 0, 1],
+        ):
+            check0 = True
+            check1 = True
+            for k in range(shape[2]):
+                for j in range(shape[1]):
+                    for i in range(ng):
+                        check0 = np.all(
+                            blk0.array[var][-(2 * ng + 1) + off + i, j, k]
+                            == blk1.array[var][i, -(k + 1), j]
+                        )
+                        check1 = np.all(
+                            blk0.array[var][-ng + i, j, k]
+                            == blk1.array[var][ng + 1 - off + i, -(k + 1), j]
+                        )
+                        if not check0 or not check1:
+                            break
                     if not check0 or not check1:
                         break
                 if not check0 or not check1:
                     break
-            if not check0 or not check1:
-                break
-        passfail.append(check0)
-        passfail.append(check1)
+            passfail.append(check0)
+            passfail.append(check1)
 
-    assert False not in passfail
+        assert False not in passfail
 
+    ##############################################
+    # Test for all positive j aligned orientations
+    ##############################################
+    def test_231(self):
+        tb = twoblock123()
 
-##############################################
-# Test for all positive k aligned orientations
-##############################################
-@mpi_parallel(1)
-def test_321():
-    tb = twoblock123()
+        blk0 = tb.mb[0]
+        blk1 = tb.mb[1]
+        ng = blk0.ng
 
-    blk0 = tb.mb[0]
-    blk1 = tb.mb[1]
-    ng = blk0.ng
+        for var in ["x", "y", "z", "q"]:
+            blk1.array[var] = np.moveaxis(blk1.array[var], (0, 1, 2), (1, 2, 0))
+        blk1.ni = tb.xshape[2] - 2 * ng
+        blk1.nj = tb.xshape[0] - 2 * ng
+        blk1.nk = tb.xshape[1] - 2 * ng
 
-    for var in ["x", "y", "z", "q"]:
-        blk1.array[var] = np.moveaxis(blk1.array[var], (0, 1, 2), (2, 0, 1))
-    blk1.ni = tb.xshape[1] - 2 * ng
-    blk1.nj = tb.xshape[2] - 2 * ng
-    blk1.nk = tb.xshape[0] - 2 * ng
+        # Reorient second block and update communication info
+        blk0.getFace(2).orientation = "231"
 
-    # Reorient second block and update communication info
-    blk0.getFace(2).orientation = "312"
+        blk1.getFace(1).neighbor = None
+        blk1.getFace(1).bcType = "adiabaticSlipWall"
+        blk1.getFace(1).orientation = None
+        blk1.getFace(1).commRank = None
 
-    blk1.getFace(1).neighbor = None
-    blk1.getFace(1).bcType = "adiabaticSlipWall"
-    blk1.getFace(1).orientation = None
-    blk1.getFace(1).commRank = None
+        blk1.getFace(3).neighbor = 0
+        blk1.getFace(3).bcType = "b0"
+        blk1.getFace(3).orientation = "312"
+        blk1.getFace(3).commRank = 0
 
-    blk1.getFace(5).neighbor = 0
-    blk1.getFace(5).bcType = "b0"
-    blk1.getFace(5).orientation = "231"
-    blk1.getFace(5).commRank = 0
+        tb.mb.setBlockCommunication()
 
-    tb.mb.setBlockCommunication()
+        # Execute communication
+        pg.mpiComm.communicate(tb.mb, ["x", "y", "z", "q"])
 
-    # Execute communication
-    pg.mpiComm.communicate(tb.mb, ["x", "y", "z", "q"])
-
-    passfail = []
-    for var, shape, off in zip(
-        ["x", "y", "z", "q"], [tb.xshape, tb.xshape, tb.xshape, tb.qshape], [0, 0, 0, 1]
-    ):
-        check0 = True
-        check1 = True
-        for k in range(shape[2]):
-            for j in range(shape[1]):
-                for i in range(ng):
-                    check0 = np.all(
-                        blk0.array[var][-(2 * ng + 1) - off + i, j, k]
-                        == blk1.array[var][j, k, i]
-                    )
-                    check1 = np.all(
-                        blk0.array[var][-ng + i, j, k]
-                        == blk1.array[var][j, k, ng + 1 - off + i]
-                    )
+        passfail = []
+        for var, shape, off in zip(
+            ["x", "y", "z", "q"],
+            [tb.xshape, tb.xshape, tb.xshape, tb.qshape],
+            [0, 0, 0, 1],
+        ):
+            check0 = True
+            check1 = True
+            for k in range(shape[2]):
+                for j in range(shape[1]):
+                    for i in range(ng):
+                        check0 = np.all(
+                            blk0.array[var][-(2 * ng + 1) + off + i, j, k]
+                            == blk1.array[var][k, i, j]
+                        )
+                        check1 = np.all(
+                            blk0.array[var][-ng + i, j, k]
+                            == blk1.array[var][k, ng + 1 - off + i, j]
+                        )
+                        if not check0 or not check1:
+                            break
                     if not check0 or not check1:
                         break
                 if not check0 or not check1:
                     break
-            if not check0 or not check1:
-                break
-        passfail.append(check0)
-        passfail.append(check1)
-    passfail = []
+            passfail.append(check0)
+            passfail.append(check1)
 
-    assert False not in passfail
+        assert False not in passfail
 
+    ##############################################
+    # Test for all positive k aligned orientations
+    ##############################################
+    def test_321(self):
+        tb = twoblock123()
 
-##############################################
-# Test for all negative i aligned orientations
-##############################################
-@mpi_parallel(1)
-def test_432():
-    tb = twoblock123()
+        blk0 = tb.mb[0]
+        blk1 = tb.mb[1]
+        ng = blk0.ng
 
-    blk0 = tb.mb[0]
-    blk1 = tb.mb[1]
-    ng = blk0.ng
+        for var in ["x", "y", "z", "q"]:
+            blk1.array[var] = np.moveaxis(blk1.array[var], (0, 1, 2), (2, 0, 1))
+        blk1.ni = tb.xshape[1] - 2 * ng
+        blk1.nj = tb.xshape[2] - 2 * ng
+        blk1.nk = tb.xshape[0] - 2 * ng
 
-    for var in ["x", "y", "z", "q"]:
-        blk1.array[var] = np.moveaxis(blk1.array[var], (0, 1, 2), (0, 2, 1))
-    blk1.ni = tb.xshape[0] - 2 * ng
-    blk1.nj = tb.xshape[2] - 2 * ng
-    blk1.nk = tb.xshape[1] - 2 * ng
+        # Reorient second block and update communication info
+        blk0.getFace(2).orientation = "312"
 
-    # Reorient second block and update communication info
-    blk0.getFace(2).orientation = "432"
+        blk1.getFace(1).neighbor = None
+        blk1.getFace(1).bcType = "adiabaticSlipWall"
+        blk1.getFace(1).orientation = None
+        blk1.getFace(1).commRank = None
 
-    blk1.getFace(1).neighbor = None
-    blk1.getFace(1).bcType = "adiabaticSlipWall"
-    blk1.getFace(1).orientation = None
-    blk1.getFace(1).commRank = None
+        blk1.getFace(5).neighbor = 0
+        blk1.getFace(5).bcType = "b0"
+        blk1.getFace(5).orientation = "231"
+        blk1.getFace(5).commRank = 0
 
-    blk1.getFace(2).neighbor = 0
-    blk1.getFace(2).bcType = "b0"
-    blk1.getFace(2).orientation = "432"
-    blk1.getFace(2).commRank = 0
+        tb.mb.setBlockCommunication()
 
-    tb.mb.setBlockCommunication()
+        # Execute communication
+        pg.mpiComm.communicate(tb.mb, ["x", "y", "z", "q"])
 
-    # Execute communication
-    pg.mpiComm.communicate(tb.mb, ["x", "y", "z", "q"])
-
-    passfail = []
-    for var, shape, off in zip(
-        ["x", "y", "z", "q"], [tb.xshape, tb.xshape, tb.xshape, tb.qshape], [0, 0, 0, 1]
-    ):
-        check0 = True
-        check1 = True
-        for k in range(shape[2]):
-            for j in range(shape[1]):
-                for i in range(ng):
-                    check0 = np.all(
-                        blk0.array[var][-(2 * ng + 1) + off + i, j, k]
-                        == blk1.array[var][-(i + 1), k, j]
-                    )
-                    check1 = np.all(
-                        blk0.array[var][-(i + 1), j, k]
-                        == blk1.array[var][-(2 * ng + 1) + off + i, k, j]
-                    )
+        passfail = []
+        for var, shape, off in zip(
+            ["x", "y", "z", "q"],
+            [tb.xshape, tb.xshape, tb.xshape, tb.qshape],
+            [0, 0, 0, 1],
+        ):
+            check0 = True
+            check1 = True
+            for k in range(shape[2]):
+                for j in range(shape[1]):
+                    for i in range(ng):
+                        check0 = np.all(
+                            blk0.array[var][-(2 * ng + 1) - off + i, j, k]
+                            == blk1.array[var][j, k, i]
+                        )
+                        check1 = np.all(
+                            blk0.array[var][-ng + i, j, k]
+                            == blk1.array[var][j, k, ng + 1 - off + i]
+                        )
+                        if not check0 or not check1:
+                            break
                     if not check0 or not check1:
                         break
                 if not check0 or not check1:
                     break
-            if not check0 or not check1:
-                break
-        passfail.append(check0)
-        passfail.append(check1)
+            passfail.append(check0)
+            passfail.append(check1)
+        passfail = []
 
-    assert False not in passfail
+        assert False not in passfail
 
+    ##############################################
+    # Test for all negative i aligned orientations
+    ##############################################
+    def test_432(self):
+        tb = twoblock123()
 
-##############################################
-# Test for all negative j aligned orientations
-##############################################
-@mpi_parallel(1)
-def test_513():
-    tb = twoblock123()
+        blk0 = tb.mb[0]
+        blk1 = tb.mb[1]
+        ng = blk0.ng
 
-    blk0 = tb.mb[0]
-    blk1 = tb.mb[1]
-    ng = blk0.ng
+        for var in ["x", "y", "z", "q"]:
+            blk1.array[var] = np.moveaxis(blk1.array[var], (0, 1, 2), (0, 2, 1))
+        blk1.ni = tb.xshape[0] - 2 * ng
+        blk1.nj = tb.xshape[2] - 2 * ng
+        blk1.nk = tb.xshape[1] - 2 * ng
 
-    for var in ["x", "y", "z", "q"]:
-        blk1.array[var] = np.moveaxis(blk1.array[var], (0, 1, 2), (1, 0, 2))
-    blk1.ni = tb.xshape[1] - 2 * ng
-    blk1.nj = tb.xshape[0] - 2 * ng
-    blk1.nk = tb.xshape[2] - 2 * ng
+        # Reorient second block and update communication info
+        blk0.getFace(2).orientation = "432"
 
-    # Reorient second block and update communication info
-    blk0.getFace(2).orientation = "513"
+        blk1.getFace(1).neighbor = None
+        blk1.getFace(1).bcType = "adiabaticSlipWall"
+        blk1.getFace(1).orientation = None
+        blk1.getFace(1).commRank = None
 
-    blk1.getFace(1).neighbor = None
-    blk1.getFace(1).bcType = "adiabaticSlipWall"
-    blk1.getFace(1).orientation = None
-    blk1.getFace(1).commRank = None
+        blk1.getFace(2).neighbor = 0
+        blk1.getFace(2).bcType = "b0"
+        blk1.getFace(2).orientation = "432"
+        blk1.getFace(2).commRank = 0
 
-    blk1.getFace(4).neighbor = 0
-    blk1.getFace(4).bcType = "b0"
-    blk1.getFace(4).orientation = "243"
-    blk1.getFace(4).commRank = 0
+        tb.mb.setBlockCommunication()
 
-    tb.mb.setBlockCommunication()
+        # Execute communication
+        pg.mpiComm.communicate(tb.mb, ["x", "y", "z", "q"])
 
-    # Execute communication
-    pg.mpiComm.communicate(tb.mb, ["x", "y", "z", "q"])
-
-    passfail = []
-    for var, shape, off in zip(
-        ["x", "y", "z", "q"], [tb.xshape, tb.xshape, tb.xshape, tb.qshape], [0, 0, 0, 1]
-    ):
-        check0 = True
-        check1 = True
-        for k in range(shape[2]):
-            for j in range(shape[1]):
-                for i in range(ng):
-                    check0 = np.all(
-                        blk0.array[var][-(2 * ng + 1) + off + i, j, k]
-                        == blk1.array[var][j, -(i + 1), k]
-                    )
-                    check1 = np.all(
-                        blk0.array[var][-(i + 1), j, k]
-                        == blk1.array[var][j, -(2 * ng + 1) + off + i, k]
-                    )
+        passfail = []
+        for var, shape, off in zip(
+            ["x", "y", "z", "q"],
+            [tb.xshape, tb.xshape, tb.xshape, tb.qshape],
+            [0, 0, 0, 1],
+        ):
+            check0 = True
+            check1 = True
+            for k in range(shape[2]):
+                for j in range(shape[1]):
+                    for i in range(ng):
+                        check0 = np.all(
+                            blk0.array[var][-(2 * ng + 1) + off + i, j, k]
+                            == blk1.array[var][-(i + 1), k, j]
+                        )
+                        check1 = np.all(
+                            blk0.array[var][-(i + 1), j, k]
+                            == blk1.array[var][-(2 * ng + 1) + off + i, k, j]
+                        )
+                        if not check0 or not check1:
+                            break
                     if not check0 or not check1:
                         break
                 if not check0 or not check1:
                     break
-            if not check0 or not check1:
-                break
-        passfail.append(check0)
-        passfail.append(check1)
+            passfail.append(check0)
+            passfail.append(check1)
 
-    assert False not in passfail
+        assert False not in passfail
 
+    ##############################################
+    # Test for all negative j aligned orientations
+    ##############################################
+    def test_513(self):
+        tb = twoblock123()
 
-##############################################
-# Test for all negative k aligned orientations
-##############################################
-@mpi_parallel(1)
-def test_621():
-    tb = twoblock123()
+        blk0 = tb.mb[0]
+        blk1 = tb.mb[1]
+        ng = blk0.ng
 
-    blk0 = tb.mb[0]
-    blk1 = tb.mb[1]
-    ng = blk0.ng
+        for var in ["x", "y", "z", "q"]:
+            blk1.array[var] = np.moveaxis(blk1.array[var], (0, 1, 2), (1, 0, 2))
+        blk1.ni = tb.xshape[1] - 2 * ng
+        blk1.nj = tb.xshape[0] - 2 * ng
+        blk1.nk = tb.xshape[2] - 2 * ng
 
-    for var in ["x", "y", "z", "q"]:
-        blk1.array[var] = np.moveaxis(blk1.array[var], (0, 1, 2), (2, 1, 0))
-    blk1.ni = tb.xshape[2] - 2 * ng
-    blk1.nj = tb.xshape[1] - 2 * ng
-    blk1.nk = tb.xshape[0] - 2 * ng
+        # Reorient second block and update communication info
+        blk0.getFace(2).orientation = "513"
 
-    # Reorient second block and update communication info
-    blk0.getFace(2).orientation = "621"
+        blk1.getFace(1).neighbor = None
+        blk1.getFace(1).bcType = "adiabaticSlipWall"
+        blk1.getFace(1).orientation = None
+        blk1.getFace(1).commRank = None
 
-    blk1.getFace(1).neighbor = None
-    blk1.getFace(1).bcType = "adiabaticSlipWall"
-    blk1.getFace(1).orientation = None
-    blk1.getFace(1).commRank = None
+        blk1.getFace(4).neighbor = 0
+        blk1.getFace(4).bcType = "b0"
+        blk1.getFace(4).orientation = "243"
+        blk1.getFace(4).commRank = 0
 
-    blk1.getFace(6).neighbor = 0
-    blk1.getFace(6).bcType = "b0"
-    blk1.getFace(6).orientation = "324"
-    blk1.getFace(6).commRank = 0
+        tb.mb.setBlockCommunication()
 
-    tb.mb.setBlockCommunication()
+        # Execute communication
+        pg.mpiComm.communicate(tb.mb, ["x", "y", "z", "q"])
 
-    # Execute communication
-    pg.mpiComm.communicate(tb.mb, ["x", "y", "z", "q"])
-
-    passfail = []
-    for var, shape, off in zip(
-        ["x", "y", "z", "q"], [tb.xshape, tb.xshape, tb.xshape, tb.qshape], [0, 0, 0, 1]
-    ):
-        check0 = True
-        check1 = True
-        for k in range(shape[2]):
-            for j in range(shape[1]):
-                for i in range(ng):
-                    check0 = np.all(
-                        blk0.array[var][-(2 * ng + 1) + off + i, j, k]
-                        == blk1.array[var][k, j, -(i + 1)]
-                    )
-                    check1 = np.all(
-                        blk0.array[var][-(i + 1), j, k]
-                        == blk1.array[var][k, j, -(2 * ng + 1) + off + i]
-                    )
+        passfail = []
+        for var, shape, off in zip(
+            ["x", "y", "z", "q"],
+            [tb.xshape, tb.xshape, tb.xshape, tb.qshape],
+            [0, 0, 0, 1],
+        ):
+            check0 = True
+            check1 = True
+            for k in range(shape[2]):
+                for j in range(shape[1]):
+                    for i in range(ng):
+                        check0 = np.all(
+                            blk0.array[var][-(2 * ng + 1) + off + i, j, k]
+                            == blk1.array[var][j, -(i + 1), k]
+                        )
+                        check1 = np.all(
+                            blk0.array[var][-(i + 1), j, k]
+                            == blk1.array[var][j, -(2 * ng + 1) + off + i, k]
+                        )
+                        if not check0 or not check1:
+                            break
                     if not check0 or not check1:
                         break
                 if not check0 or not check1:
                     break
-            if not check0 or not check1:
-                break
-        passfail.append(check0)
-        passfail.append(check1)
+            passfail.append(check0)
+            passfail.append(check1)
 
-    assert False not in passfail
+        assert False not in passfail
+
+    ##############################################
+    # Test for all negative k aligned orientations
+    ##############################################
+    def test_621(self):
+        tb = twoblock123()
+
+        blk0 = tb.mb[0]
+        blk1 = tb.mb[1]
+        ng = blk0.ng
+
+        for var in ["x", "y", "z", "q"]:
+            blk1.array[var] = np.moveaxis(blk1.array[var], (0, 1, 2), (2, 1, 0))
+        blk1.ni = tb.xshape[2] - 2 * ng
+        blk1.nj = tb.xshape[1] - 2 * ng
+        blk1.nk = tb.xshape[0] - 2 * ng
+
+        # Reorient second block and update communication info
+        blk0.getFace(2).orientation = "621"
+
+        blk1.getFace(1).neighbor = None
+        blk1.getFace(1).bcType = "adiabaticSlipWall"
+        blk1.getFace(1).orientation = None
+        blk1.getFace(1).commRank = None
+
+        blk1.getFace(6).neighbor = 0
+        blk1.getFace(6).bcType = "b0"
+        blk1.getFace(6).orientation = "324"
+        blk1.getFace(6).commRank = 0
+
+        tb.mb.setBlockCommunication()
+
+        # Execute communication
+        pg.mpiComm.communicate(tb.mb, ["x", "y", "z", "q"])
+
+        passfail = []
+        for var, shape, off in zip(
+            ["x", "y", "z", "q"],
+            [tb.xshape, tb.xshape, tb.xshape, tb.qshape],
+            [0, 0, 0, 1],
+        ):
+            check0 = True
+            check1 = True
+            for k in range(shape[2]):
+                for j in range(shape[1]):
+                    for i in range(ng):
+                        check0 = np.all(
+                            blk0.array[var][-(2 * ng + 1) + off + i, j, k]
+                            == blk1.array[var][k, j, -(i + 1)]
+                        )
+                        check1 = np.all(
+                            blk0.array[var][-(i + 1), j, k]
+                            == blk1.array[var][k, j, -(2 * ng + 1) + off + i]
+                        )
+                        if not check0 or not check1:
+                            break
+                    if not check0 or not check1:
+                        break
+                if not check0 or not check1:
+                    break
+            passfail.append(check0)
+            passfail.append(check1)
+
+        assert False not in passfail
