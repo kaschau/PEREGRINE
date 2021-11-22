@@ -70,24 +70,12 @@ def verify(mb):
 
         return x, y, z
 
-    def getNeighborFace(nface, orientation, blk2):
-
-        direction = int(orientation[faceToOrientIndexMapping[nface]])
-
-        if nface in [2, 4, 6]:
-            nface2 = orientToLargeFaceMapping[direction]
-        elif nface in [1, 3, 5]:
-            nface2 = orientToSmallFaceMapping[direction]
-
-        return nface2
-
     warn = False
     for blk in mb:
         for face in blk.faces:
 
             nface = face.nface
             neighbor = face.neighbor
-            orientation = face.orientation
             bc = face.bcType
 
             if neighbor is None:
@@ -100,7 +88,8 @@ def verify(mb):
             (face_x, face_y, face_z) = extractFace(blk, face.nface)
 
             blk2 = mb.getBlock(neighbor)
-            nface2 = getNeighborFace(nface, orientation, blk2)
+            nface2 = face.neighborNface
+            nOrientation = face.neighborOrientation
 
             if int(blk2.getFace(nface2).neighbor) != blk.nblki:
                 raise ValueError(
@@ -111,33 +100,33 @@ def verify(mb):
 
             faceOrientations = [
                 int(i)
-                for j, i in enumerate(orientation)
-                if j != faceToOrientIndexMapping[nface]
+                for j, i in enumerate(nOrientation)
+                if j != faceToOrientIndexMapping[nface2]
             ]
-            normalIndex = [j for j in range(3) if j == faceToOrientIndexMapping[nface]][
-                0
-            ]
-            normalIndex2 = [
+            normalIndex = [
                 j for j in range(3) if j == faceToOrientIndexMapping[nface2]
+            ][0]
+            normalIndex2 = [
+                j for j in range(3) if j == faceToOrientIndexMapping[nface]
             ][0]
 
             bigIndex = largeIndexMapping[normalIndex]
             bigIndex2 = largeIndexMapping[normalIndex2]
 
             if faceOrientations[1] in needToTranspose[bigIndex][bigIndex2]:
-                face2_x = face2_x.T
-                face2_y = face2_y.T
-                face2_z = face2_z.T
+                face_x = face_x.T
+                face_y = face_y.T
+                face_z = face_z.T
 
             if faceOrientations[0] in [4, 5, 6]:
-                face2_x = np.flip(face2_x, 0)
-                face2_y = np.flip(face2_y, 0)
-                face2_z = np.flip(face2_z, 0)
+                face_x = np.flip(face_x, 0)
+                face_y = np.flip(face_y, 0)
+                face_z = np.flip(face_z, 0)
 
             if faceOrientations[1] in [4, 5, 6]:
-                face2_x = np.flip(face2_x, 1)
-                face2_y = np.flip(face2_y, 1)
-                face2_z = np.flip(face2_z, 1)
+                face_x = np.flip(face_x, 1)
+                face_y = np.flip(face_y, 1)
+                face_z = np.flip(face_z, 1)
 
             try:
                 diff_x = np.mean(np.abs(face_x - face2_x))
