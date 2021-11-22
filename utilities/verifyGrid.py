@@ -14,8 +14,7 @@ Output will print any discrepencies to the screen
 
 import os
 import argparse
-from peregrinepy.readers import readGrid, readConnectivity
-from peregrinepy.multiBlock import grid as mbg
+import peregrinepy as pg
 import numpy as np
 
 
@@ -30,29 +29,29 @@ def verify(mb):
         6: {"i": slice(None), "j": slice(None), "k": -1},
     }
 
-    faceToOrientPlaceMapping = {
-        1: "0",
-        2: "0",
-        3: "1",
-        4: "1",
-        5: "2",
-        6: "2",
+    faceToOrientIndexMapping = {
+        1: 0,
+        2: 0,
+        3: 1,
+        4: 1,
+        5: 2,
+        6: 2,
     }
     orientToSmallFaceMapping = {
-        "1": 2,
-        "2": 4,
-        "3": 6,
-        "4": 1,
-        "5": 3,
-        "6": 5,
+        1: 2,
+        2: 4,
+        3: 6,
+        4: 1,
+        5: 3,
+        6: 5,
     }
     orientToLargeFaceMapping = {
-        "1": 1,
-        "2": 3,
-        "3": 5,
-        "4": 2,
-        "5": 4,
-        "6": 6,
+        1: 1,
+        2: 3,
+        3: 5,
+        4: 2,
+        5: 4,
+        6: 6,
     }
 
     largeIndexMapping = {0: "k", 1: "k", 2: "j"}
@@ -73,7 +72,7 @@ def verify(mb):
 
     def getNeighborFace(nface, orientation, blk2):
 
-        direction = orientation[int(faceToOrientPlaceMapping[nface])]
+        direction = int(orientation[faceToOrientIndexMapping[nface]])
 
         if nface in [2, 4, 6]:
             nface2 = orientToLargeFaceMapping[direction]
@@ -111,31 +110,31 @@ def verify(mb):
             (face2_x, face2_y, face2_z) = extractFace(blk2, nface2)
 
             faceOrientations = [
-                i
+                int(i)
                 for j, i in enumerate(orientation)
-                if j != int(faceToOrientPlaceMapping[nface])
+                if j != faceToOrientIndexMapping[nface]
             ]
-            normalIndex = [
-                j for j in range(3) if j == int(faceToOrientPlaceMapping[nface])
-            ][0]
+            normalIndex = [j for j in range(3) if j == faceToOrientIndexMapping[nface]][
+                0
+            ]
             normalIndex2 = [
-                j for j in range(3) if j == int(faceToOrientPlaceMapping[nface2])
+                j for j in range(3) if j == faceToOrientIndexMapping[nface2]
             ][0]
 
             bigIndex = largeIndexMapping[normalIndex]
             bigIndex2 = largeIndexMapping[normalIndex2]
 
-            if int(faceOrientations[1]) in needToTranspose[bigIndex][bigIndex2]:
+            if faceOrientations[1] in needToTranspose[bigIndex][bigIndex2]:
                 face2_x = face2_x.T
                 face2_y = face2_y.T
                 face2_z = face2_z.T
 
-            if faceOrientations[0] in ["4", "5", "6"]:
+            if faceOrientations[0] in [4, 5, 6]:
                 face2_x = np.flip(face2_x, 0)
                 face2_y = np.flip(face2_y, 0)
                 face2_z = np.flip(face2_z, 0)
 
-            if faceOrientations[1] in ["4", "5", "6"]:
+            if faceOrientations[1] in [4, 5, 6]:
                 face2_x = np.flip(face2_x, 1)
                 face2_y = np.flip(face2_y, 1)
                 face2_z = np.flip(face2_z, 1)
@@ -206,10 +205,11 @@ if __name__ == "__main__":
     nblks = len(
         [i for i in os.listdir(gp) if i.startswith("gv.") and i.endswith(".h5")]
     )
-    mb = mbg(nblks)
+    assert nblks > 0
+    mb = pg.multiBlock.grid(nblks)
 
-    readGrid(mb, gp)
-    readConnectivity(mb, cp)
+    pg.readers.readGrid(mb, gp)
+    pg.readers.readConnectivity(mb, cp)
 
     if verify(mb):
         print("Grid is valid!")
