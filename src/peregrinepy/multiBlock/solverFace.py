@@ -219,8 +219,8 @@ class solverFace(topologyFace, face_):
         neighborNface = self.neighborNface
         neighborOrientation = self.neighborOrientation
 
-        # What are the orientations of our face plane? i.e. if we are
-        #  face #1 with orientation "123" then our face in quetions has
+        # What are the orientations of our neighbot face plane? i.e.
+        #  face #1 with orientation "123" then the face in quetions has
         #  the orientation [2,3]
         faceOrientations = [
             int(i)
