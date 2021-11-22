@@ -217,28 +217,28 @@ class solverFace(topologyFace, face_):
             return
 
         neighborNface = self.neighborNface
-        orientation = self.orientation
+        neighborOrientation = self.neighborOrientation
 
         # What are the orientations of our face plane? i.e. if we are
         #  face #1 with orientation "123" then our face in quetions has
         #  the orientation [2,3]
         faceOrientations = [
             int(i)
-            for j, i in enumerate(orientation)
-            if j != faceToOrientIndexMapping[self.nface]
+            for j, i in enumerate(neighborOrientation)
+            if j != faceToOrientIndexMapping[neighborNface]
         ]
-        # What is my face normal index
-        normalIndex = [
-            j for j in range(3) if j == faceToOrientIndexMapping[self.nface]
-        ][0]
         # What is my neighbor's face normal index
-        normalIndex2 = [
+        normalIndex = [
             j for j in range(3) if j == faceToOrientIndexMapping[neighborNface]
         ][0]
+        # What is my face normal index
+        normalIndex2 = [
+            j for j in range(3) if j == faceToOrientIndexMapping[self.nface]
+        ][0]
 
-        # What is the larger index for our face orientation? i < j < k
-        bigIndex = largeIndexMapping[normalIndex]
         # What is the larger index for our neighbor face orientation? i < j < k
+        bigIndex = largeIndexMapping[normalIndex]
+        # What is the larger index for our face orientation? i < j < k
         bigIndex2 = largeIndexMapping[normalIndex2]
 
         # Set the orienting function for this face
