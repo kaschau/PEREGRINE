@@ -30,9 +30,9 @@ class twoblock123:
 
         for blk in self.mb:
             blk.array["x"][:] = np.random.random((self.xshape))
-            blk.array["y"][:] = np.random.random((self.xshape))
-            blk.array["z"][:] = np.random.random((self.xshape))
-            blk.array["q"][:] = np.random.random((self.qshape))
+            blk.array["y"][:] = np.random.random((self.xshape)) + 1
+            blk.array["z"][:] = np.random.random((self.xshape)) + 10
+            blk.array["q"][:] = np.random.random((self.qshape)) + 100
 
 
 class TestOrientation:
@@ -112,24 +112,25 @@ class TestOrientation:
         # Execute communication
         pg.mpiComm.communicate(tb.mb, ["x", "y", "z", "q"])
 
-        passfail = []
-        for var, shape, off in zip(
+        b02b1 = []
+        b12b0 = []
+        for var, off in zip(
             ["x", "y", "z", "q"],
-            [tb.xshape, tb.xshape, tb.xshape, tb.qshape],
             [0, 0, 0, 1],
         ):
             check0 = True
             check1 = True
-            for k in range(shape[2]):
+            shape = blk0.array[var].shape
+            for i in range(ng):
                 for j in range(shape[1]):
-                    for i in range(ng):
+                    for k in range(shape[2]):
                         check0 = np.all(
                             blk0.array[var][-(2 * ng + 1) + off + i, j, k]
-                            == blk1.array[var][i, k, -(j + 1)]
+                            == blk1.array[var][i, -(k + 1), j]
                         )
                         check1 = np.all(
                             blk0.array[var][-ng + i, j, k]
-                            == blk1.array[var][ng + 1 - off + i, k, -(j + 1)]
+                            == blk1.array[var][ng + 1 - off + i, -(k + 1), j]
                         )
                         if not check0 or not check1:
                             break
@@ -137,10 +138,11 @@ class TestOrientation:
                         break
                 if not check0 or not check1:
                     break
-            passfail.append(check0)
-            passfail.append(check1)
+            b02b1.append(check0)
+            b12b0.append(check1)
 
-        assert False not in passfail
+        assert False not in b02b1
+        assert False not in b12b0
 
     def test_162(self):
         tb = twoblock123()
@@ -161,30 +163,28 @@ class TestOrientation:
 
         tb.mb.setBlockCommunication()
 
-        print(blk0.getFace(2).orient)
-        print(blk1.getFace(1).orient)
-
         # Execute communication
         pg.mpiComm.communicate(tb.mb, ["x", "y", "z", "q"])
 
-        passfail = []
-        for var, shape, off in zip(
+        b02b1 = []
+        b12b0 = []
+        for var, off in zip(
             ["x", "y", "z", "q"],
-            [tb.xshape, tb.xshape, tb.xshape, tb.qshape],
             [0, 0, 0, 1],
         ):
             check0 = True
             check1 = True
-            for k in range(shape[2]):
+            shape = blk0.array[var].shape
+            for i in range(ng):
                 for j in range(shape[1]):
-                    for i in range(ng):
+                    for k in range(shape[2]):
                         check0 = np.all(
                             blk0.array[var][-(2 * ng + 1) + off + i, j, k]
-                            == blk1.array[var][i, -(k + 1), j]
+                            == blk1.array[var][i, k, -(j + 1)]
                         )
                         check1 = np.all(
                             blk0.array[var][-ng + i, j, k]
-                            == blk1.array[var][ng + 1 - off + i, -(k + 1), j]
+                            == blk1.array[var][ng + 1 - off + i, k, -(j + 1)]
                         )
                         if not check0 or not check1:
                             break
@@ -192,10 +192,11 @@ class TestOrientation:
                         break
                 if not check0 or not check1:
                     break
-            passfail.append(check0)
-            passfail.append(check1)
+            b02b1.append(check0)
+            b12b0.append(check1)
 
-        assert False not in passfail
+        assert False not in b02b1
+        assert False not in b12b0
 
     ##############################################
     # Test for all positive j aligned orientations
@@ -231,17 +232,18 @@ class TestOrientation:
         # Execute communication
         pg.mpiComm.communicate(tb.mb, ["x", "y", "z", "q"])
 
-        passfail = []
-        for var, shape, off in zip(
+        b02b1 = []
+        b12b0 = []
+        for var, off in zip(
             ["x", "y", "z", "q"],
-            [tb.xshape, tb.xshape, tb.xshape, tb.qshape],
             [0, 0, 0, 1],
         ):
             check0 = True
             check1 = True
-            for k in range(shape[2]):
+            shape = blk0.array[var].shape
+            for i in range(ng):
                 for j in range(shape[1]):
-                    for i in range(ng):
+                    for k in range(shape[2]):
                         check0 = np.all(
                             blk0.array[var][-(2 * ng + 1) + off + i, j, k]
                             == blk1.array[var][k, i, j]
@@ -256,15 +258,16 @@ class TestOrientation:
                         break
                 if not check0 or not check1:
                     break
-            passfail.append(check0)
-            passfail.append(check1)
+            b02b1.append(check0)
+            b12b0.append(check1)
 
-        assert False not in passfail
+        assert False not in b02b1
+        assert False not in b12b0
 
     ##############################################
     # Test for all positive k aligned orientations
     ##############################################
-    def test_321(self):
+    def test_312(self):
         tb = twoblock123()
 
         blk0 = tb.mb[0]
@@ -295,19 +298,20 @@ class TestOrientation:
         # Execute communication
         pg.mpiComm.communicate(tb.mb, ["x", "y", "z", "q"])
 
-        passfail = []
-        for var, shape, off in zip(
+        b02b1 = []
+        b12b0 = []
+        for var, off in zip(
             ["x", "y", "z", "q"],
-            [tb.xshape, tb.xshape, tb.xshape, tb.qshape],
             [0, 0, 0, 1],
         ):
             check0 = True
             check1 = True
-            for k in range(shape[2]):
+            shape = blk0.array[var].shape
+            for i in range(ng):
                 for j in range(shape[1]):
-                    for i in range(ng):
+                    for k in range(shape[2]):
                         check0 = np.all(
-                            blk0.array[var][-(2 * ng + 1) - off + i, j, k]
+                            blk0.array[var][-(2 * ng + 1) + off + i, j, k]
                             == blk1.array[var][j, k, i]
                         )
                         check1 = np.all(
@@ -320,11 +324,11 @@ class TestOrientation:
                         break
                 if not check0 or not check1:
                     break
-            passfail.append(check0)
-            passfail.append(check1)
-        passfail = []
+            b02b1.append(check0)
+            b12b0.append(check1)
 
-        assert False not in passfail
+        assert False not in b02b1
+        assert False not in b12b0
 
     ##############################################
     # Test for all negative i aligned orientations
@@ -360,17 +364,18 @@ class TestOrientation:
         # Execute communication
         pg.mpiComm.communicate(tb.mb, ["x", "y", "z", "q"])
 
-        passfail = []
-        for var, shape, off in zip(
+        b02b1 = []
+        b12b0 = []
+        for var, off in zip(
             ["x", "y", "z", "q"],
-            [tb.xshape, tb.xshape, tb.xshape, tb.qshape],
             [0, 0, 0, 1],
         ):
             check0 = True
             check1 = True
-            for k in range(shape[2]):
+            shape = blk0.array[var].shape
+            for i in range(ng):
                 for j in range(shape[1]):
-                    for i in range(ng):
+                    for k in range(shape[2]):
                         check0 = np.all(
                             blk0.array[var][-(2 * ng + 1) + off + i, j, k]
                             == blk1.array[var][-(i + 1), k, j]
@@ -385,10 +390,11 @@ class TestOrientation:
                         break
                 if not check0 or not check1:
                     break
-            passfail.append(check0)
-            passfail.append(check1)
+            b02b1.append(check0)
+            b12b0.append(check1)
 
-        assert False not in passfail
+        assert False not in b02b1
+        assert False not in b12b0
 
     ##############################################
     # Test for all negative j aligned orientations
@@ -424,17 +430,18 @@ class TestOrientation:
         # Execute communication
         pg.mpiComm.communicate(tb.mb, ["x", "y", "z", "q"])
 
-        passfail = []
-        for var, shape, off in zip(
+        b02b1 = []
+        b12b0 = []
+        for var, off in zip(
             ["x", "y", "z", "q"],
-            [tb.xshape, tb.xshape, tb.xshape, tb.qshape],
             [0, 0, 0, 1],
         ):
             check0 = True
             check1 = True
-            for k in range(shape[2]):
+            shape = blk0.array[var].shape
+            for i in range(ng):
                 for j in range(shape[1]):
-                    for i in range(ng):
+                    for k in range(shape[2]):
                         check0 = np.all(
                             blk0.array[var][-(2 * ng + 1) + off + i, j, k]
                             == blk1.array[var][j, -(i + 1), k]
@@ -449,10 +456,11 @@ class TestOrientation:
                         break
                 if not check0 or not check1:
                     break
-            passfail.append(check0)
-            passfail.append(check1)
+            b02b1.append(check0)
+            b12b0.append(check1)
 
-        assert False not in passfail
+        assert False not in b02b1
+        assert False not in b12b0
 
     ##############################################
     # Test for all negative k aligned orientations
@@ -488,17 +496,18 @@ class TestOrientation:
         # Execute communication
         pg.mpiComm.communicate(tb.mb, ["x", "y", "z", "q"])
 
-        passfail = []
-        for var, shape, off in zip(
+        b02b1 = []
+        b12b0 = []
+        for var, off in zip(
             ["x", "y", "z", "q"],
-            [tb.xshape, tb.xshape, tb.xshape, tb.qshape],
             [0, 0, 0, 1],
         ):
             check0 = True
             check1 = True
-            for k in range(shape[2]):
+            shape = blk0.array[var].shape
+            for i in range(ng):
                 for j in range(shape[1]):
-                    for i in range(ng):
+                    for k in range(shape[2]):
                         check0 = np.all(
                             blk0.array[var][-(2 * ng + 1) + off + i, j, k]
                             == blk1.array[var][k, j, -(i + 1)]
@@ -513,7 +522,8 @@ class TestOrientation:
                         break
                 if not check0 or not check1:
                     break
-            passfail.append(check0)
-            passfail.append(check1)
+            b02b1.append(check0)
+            b12b0.append(check1)
 
-        assert False not in passfail
+        assert False not in b02b1
+        assert False not in b12b0
