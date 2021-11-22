@@ -129,9 +129,30 @@ def verify(mb):
                 face_z = np.flip(face_z, 1)
 
             try:
-                diff_x = np.mean(np.abs(face_x - face2_x))
-                diff_y = np.mean(np.abs(face_y - face2_y))
-                diff_z = np.mean(np.abs(face_z - face2_z))
+                diff_x = (
+                    np.mean(
+                        np.abs(
+                            (face_x - face2_x) / np.clip(np.abs(face_x), 1e-16, None)
+                        )
+                    )
+                    * 100
+                )
+                diff_y = (
+                    np.mean(
+                        np.abs(
+                            (face_y - face2_y) / np.clip(np.abs(face_y), 1e-16, None)
+                        )
+                    )
+                    * 100
+                )
+                diff_z = (
+                    np.mean(
+                        np.abs(
+                            (face_z - face2_z) / np.clip(np.abs(face_z), 1e-16, None)
+                        )
+                    )
+                    * 100
+                )
             except ValueError:
                 raise ValueError(
                     f"Error when comparing block {blk.nblki} and block {blk2.nblki} connection"
