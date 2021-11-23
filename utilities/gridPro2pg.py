@@ -58,7 +58,7 @@ parser.add_argument(
     action="store",
     metavar="<bcFam>",
     dest="bcFam",
-    default="./bcFam.yaml",
+    default="./bcFams.yaml",
     help="""File to translate the labels given to boundary conditions in ICEM
             to PEREGRINE bcType (i.e. constantVelocitySubsonicInlet, adiabaticNoSlipWall, etc.)\n
             \n
