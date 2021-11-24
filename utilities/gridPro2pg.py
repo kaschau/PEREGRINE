@@ -66,12 +66,25 @@ parser.add_argument(
     type=str,
 )
 parser.add_argument(
+    "-units",
+    action="store",
+    metavar="<units>",
+    dest="units",
+    default="m",
+    help="""Grid units, [in,mm,cm], to be converted to meters. Default is meters.""",
+    type=str,
+)
+parser.add_argument(
     "--binary",
     action="store_true",
     dest="isBinary",
     help="Block file in binary format (default is ascii).",
 )
 args = parser.parse_args()
+
+conversion = {"m": 1.0, "in": 0.0254, "mm": 0.001, "cm": 0.01}
+factor = conversion[args.units]
+
 
 print("Reading in {0} GridPro files\n".format("binary" if args.isBinary else "ascii"))
 print("    {}".format(args.gpBlkFileName))
@@ -208,9 +221,9 @@ for blk in mb:
         temp = np.frombuffer(byte, dtype=np.float64).reshape(
             (blk_shape[0] * blk_shape[1] * blk_shape[2], 3)
         )
-        blk.array["x"] = temp[:, 0].reshape(blk_shape)
-        blk.array["y"] = temp[:, 1].reshape(blk_shape)
-        blk.array["z"] = temp[:, 2].reshape(blk_shape)
+        blk.array["x"] = temp[:, 0].reshape(blk_shape) * factor
+        blk.array["y"] = temp[:, 1].reshape(blk_shape) * factor
+        blk.array["z"] = temp[:, 2].reshape(blk_shape) * factor
 
         gpBlkFile.read(1)
     else:
@@ -222,9 +235,9 @@ for blk in mb:
             for j in range(blk_shape[1]):
                 for k in range(blk_shape[2]):
                     line = gpBlkFile.readline().strip().split()
-                    blk.array["x"][i, j, k] = float(line[0])
-                    blk.array["y"][i, j, k] = float(line[1])
-                    blk.array["z"][i, j, k] = float(line[2])
+                    blk.array["x"][i, j, k] = float(line[0]) * factor
+                    blk.array["y"][i, j, k] = float(line[1]) * factor
+                    blk.array["z"][i, j, k] = float(line[2]) * factor
 
     blockStart = gpBlkFile.tell()
 
