@@ -64,12 +64,23 @@ parser.add_argument(
             NOTE: ALL labels from ICEM need an entry in the yaml file. Even walls.""",
     type=str,
 )
+parser.add_argument(
+    "-units",
+    action="store",
+    metavar="<units>",
+    dest="units",
+    default="m",
+    help="""Grid units, [in,mm,cm], to be converted to meters. Default is meters.""",
+    type=str,
+)
 
 args = parser.parse_args()
 
 # ----------------------------------------------------------------- #
 # ------------------------- Coordinates --------------------------- #
 # ----------------------------------------------------------------- #
+conversion = {"m": 1.0, "in": 0.0254, "mm": 0.001, "cm": 0.01}
+factor = conversion[args.units]
 
 ##################
 # TNS3DMB FORMAT #
@@ -90,9 +101,9 @@ if args.fmt == "tns3dmb":
             blk.ni = ni
             blk.nj = nj
             blk.nk = nk
-            blk.array["x"] = temp[:, :, :, 0]
-            blk.array["y"] = temp[:, :, :, 1]
-            blk.array["z"] = temp[:, :, :, 2]
+            blk.array["x"] = temp[:, :, :, 0] * factor
+            blk.array["y"] = temp[:, :, :, 1] * factor
+            blk.array["z"] = temp[:, :, :, 2] * factor
 
 ##########################
 # MULTIBLOCK-INFO FORMAT #
@@ -112,9 +123,9 @@ elif args.fmt == "mbi":
             nk = int(line[3])
         points = np.genfromtxt(fileName, comments="domain.")
 
-        blk.array["x"] = np.reshape(points[:, 0], (ni, nj, nk))
-        blk.array["y"] = np.reshape(points[:, 1], (ni, nj, nk))
-        blk.array["z"] = np.reshape(points[:, 2], (ni, nj, nk))
+        blk.array["x"] = np.reshape(points[:, 0], (ni, nj, nk)) * factor
+        blk.array["y"] = np.reshape(points[:, 1], (ni, nj, nk)) * factor
+        blk.array["z"] = np.reshape(points[:, 2], (ni, nj, nk)) * factor
 
 else:
     raise ValueError("Unknown file format given, see help menu")
