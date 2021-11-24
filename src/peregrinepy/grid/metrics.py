@@ -292,7 +292,7 @@ def metrics(blk, fdOrder):
 
         blk.array["dNdx"][:] = (dydE * dzdX - dydX * dzdE) / -blk.array["J"]
         blk.array["dNdy"][:] = (dxdE * dzdX - dxdX * dzdE) / blk.array["J"]
-        blk.array["dNdz"][:] = (dxdE * dydX - dxdX * dzdE) / -blk.array["J"]
+        blk.array["dNdz"][:] = (dxdE * dydX - dxdX * dydE) / -blk.array["J"]
 
         blk.array["dXdx"][:] = (dydE * dzdN - dydN * dzdE) / blk.array["J"]
         blk.array["dXdy"][:] = (dxdE * dzdN - dxdN * dzdE) / -blk.array["J"]
@@ -376,7 +376,7 @@ def metrics(blk, fdOrder):
         blk.array["dNdy"][2:-2, 2:-2, 2:-2] = (dxdE * dzdX - dxdX * dzdE) / blk.array[
             "J"
         ][2:-2, 2:-2, 2:-2]
-        blk.array["dNdz"][2:-2, 2:-2, 2:-2] = (dxdE * dydX - dxdX * dzdE) / -blk.array[
+        blk.array["dNdz"][2:-2, 2:-2, 2:-2] = (dxdE * dydX - dxdX * dydE) / -blk.array[
             "J"
         ][2:-2, 2:-2, 2:-2]
 

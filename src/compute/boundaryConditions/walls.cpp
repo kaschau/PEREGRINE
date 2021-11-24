@@ -178,20 +178,20 @@ void adiabaticSlipWall(
           "Constant velocity subsonic inlet euler terms", range_face,
           KOKKOS_LAMBDA(const int i, const int j) {
             // neumann velocity gradients
-            dqdx0(i, j, 0) = dqdx1(i, j, 0);
-            dqdx0(i, j, 1) = dqdx1(i, j, 1);
-            dqdx0(i, j, 2) = dqdx1(i, j, 2);
-            dqdx0(i, j, 3) = dqdx1(i, j, 3);
+            dqdx0(i, j, 0) = -dqdx1(i, j, 0);
+            dqdx0(i, j, 1) = -dqdx1(i, j, 1);
+            dqdx0(i, j, 2) = -dqdx1(i, j, 2);
+            dqdx0(i, j, 3) = -dqdx1(i, j, 3);
 
-            dqdy0(i, j, 0) = dqdy1(i, j, 0);
-            dqdy0(i, j, 1) = dqdy1(i, j, 1);
-            dqdy0(i, j, 2) = dqdy1(i, j, 2);
-            dqdy0(i, j, 3) = dqdy1(i, j, 3);
+            dqdy0(i, j, 0) = -dqdy1(i, j, 0);
+            dqdy0(i, j, 1) = -dqdy1(i, j, 1);
+            dqdy0(i, j, 2) = -dqdy1(i, j, 2);
+            dqdy0(i, j, 3) = -dqdy1(i, j, 3);
 
-            dqdz0(i, j, 0) = dqdz1(i, j, 0);
-            dqdz0(i, j, 1) = dqdz1(i, j, 1);
-            dqdz0(i, j, 2) = dqdz1(i, j, 2);
-            dqdz0(i, j, 3) = dqdz1(i, j, 3);
+            dqdz0(i, j, 0) = -dqdz1(i, j, 0);
+            dqdz0(i, j, 1) = -dqdz1(i, j, 1);
+            dqdz0(i, j, 2) = -dqdz1(i, j, 2);
+            dqdz0(i, j, 3) = -dqdz1(i, j, 3);
 
             // negate temp and species gradient (so gradient evaluates to zero
             // on wall)
