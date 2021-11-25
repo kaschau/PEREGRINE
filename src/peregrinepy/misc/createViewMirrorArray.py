@@ -5,6 +5,9 @@ from itertools import product
 
 def createViewMirrorArray(obj, names, shape, space):
 
+    if type(names) != list:
+        names = [names]
+
     if space in ["OpenMP", "Serial", "Default"]:
         kokkosSpace = kokkos.HostSpace
     elif space in ["Cuda"]:
