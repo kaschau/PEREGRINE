@@ -72,17 +72,17 @@ void adiabaticNoSlipWall(
           "Constant velocity subsonic inlet euler terms", range_face,
           KOKKOS_LAMBDA(const int i, const int j) {
             // extrapolate pressure, velocity gradients
-            dqdx0(i, j, 0) = 2.0 * dqdx1(i, j, 0) - dqdx2(i, j, 0);
+            dqdx0(i, j, 0) =  - dqdx1(i, j, 0);
             dqdx0(i, j, 1) = 2.0 * dqdx1(i, j, 1) - dqdx2(i, j, 1);
             dqdx0(i, j, 2) = 2.0 * dqdx1(i, j, 2) - dqdx2(i, j, 2);
             dqdx0(i, j, 3) = 2.0 * dqdx1(i, j, 3) - dqdx2(i, j, 3);
 
-            dqdy0(i, j, 0) = 2.0 * dqdy1(i, j, 0) - dqdy2(i, j, 0);
+            dqdy0(i, j, 0) = - dqdy1(i, j, 0);
             dqdy0(i, j, 1) = 2.0 * dqdy1(i, j, 1) - dqdy2(i, j, 1);
             dqdy0(i, j, 2) = 2.0 * dqdy1(i, j, 2) - dqdy2(i, j, 2);
             dqdy0(i, j, 3) = 2.0 * dqdy1(i, j, 3) - dqdy2(i, j, 3);
 
-            dqdz0(i, j, 0) = 2.0 * dqdz1(i, j, 0) - dqdz2(i, j, 0);
+            dqdz0(i, j, 0) = - dqdz1(i, j, 0);
             dqdz0(i, j, 1) = 2.0 * dqdz1(i, j, 1) - dqdz2(i, j, 1);
             dqdz0(i, j, 2) = 2.0 * dqdz1(i, j, 2) - dqdz2(i, j, 2);
             dqdz0(i, j, 3) = 2.0 * dqdz1(i, j, 3) - dqdz2(i, j, 3);
