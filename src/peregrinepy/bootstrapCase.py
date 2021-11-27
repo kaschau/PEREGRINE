@@ -7,12 +7,7 @@ def bootstrapCase(config):
     ################################################################
     # First we determine what bocks we are responsible for
     ################################################################
-    if rank == 0:
-        blocksForProcs = pg.readers.readBlocksForProcs(config["io"]["inputdir"])
-    else:
-        blocksForProcs = None
-    blocksForProcs = comm.bcast(blocksForProcs, root=0)
-    comm.Barrier()
+    blocksForProcs = pg.readers.readBlocksForProcs(config["io"]["inputdir"])
 
     # Check that we have correct number of processors
     if len(blocksForProcs) != size:
@@ -40,7 +35,7 @@ def bootstrapCase(config):
     ################################################################
     # Read in the connectivity
     ################################################################
-    pg.readers.readConnectivity(mb, config["io"]["inputdir"], parallel=True)
+    pg.readers.readConnectivity(mb, config["io"]["inputdir"])
 
     ################################################################
     # Now we figure out which processor each block's neighbor
