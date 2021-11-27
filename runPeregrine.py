@@ -13,7 +13,7 @@ def simulate(configFilePath):
 
     comm, rank, size = pg.mpiComm.mpiUtils.getCommRankSize()
 
-    config = pg.mpiComm.mpiReadConfig(configFilePath)
+    config = pg.readers.readConfigFile(configFilePath)
 
     mb = pg.bootstrapCase(config)
 
