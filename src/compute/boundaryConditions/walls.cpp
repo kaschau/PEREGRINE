@@ -140,6 +140,7 @@ void adiabaticSlipWall(
 
       threeDsubview q0 = getHaloSlice(b.q, face._nface, s0);
 
+      double dplus = static_cast<double>(plus);
       Kokkos::parallel_for(
           "Constant velocity subsonic inlet euler terms", range_face,
           KOKKOS_LAMBDA(const int i, const int j) {
@@ -149,9 +150,9 @@ void adiabaticSlipWall(
             // flip velo on wall
             double uDotn = q1(i, j, 1) * nx(i, j) + q1(i, j, 2) * ny(i, j) +
                            q1(i, j, 3) * nz(i, j);
-            q0(i, j, 1) = q1(i, j, 1) - 2.0 * uDotn * nx(i, j);
-            q0(i, j, 2) = q1(i, j, 2) - 2.0 * uDotn * ny(i, j);
-            q0(i, j, 3) = q1(i, j, 3) - 2.0 * uDotn * nz(i, j);
+            q0(i, j, 1) = q1(i, j, 1) - dplus * 2.0 * uDotn * nx(i, j);
+            q0(i, j, 2) = q1(i, j, 2) - dplus * 2.0 * uDotn * ny(i, j);
+            q0(i, j, 3) = q1(i, j, 3) - dplus * 2.0 * uDotn * nz(i, j);
 
             // match temperature
             q0(i, j, 4) = q1(i, j, 4);
