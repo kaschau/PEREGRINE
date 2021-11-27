@@ -158,31 +158,53 @@ def verify(mb):
                     f"Error when comparing block {blk.nblki} and block {blk2.nblki} connection"
                 )
 
-            if diff_x > 1e-08 and not periodic:
+            if diff_x > 1e-07 and not periodic:
                 print(
                     f"Warning, the x coordinates of face {nface} on block {blk.nblki} are not matching the x coordinates of face {nface2} of block {blk2.nblki}"
                 )
                 print(f"Off by average of {diff_x}")
                 warn = True
 
-            if diff_y > 1e-08 and not periodic:
+            if diff_y > 1e-07 and not periodic:
                 print(
                     f"Warning, the y coordinates of face {nface} on block {blk.nblki} are not matching the y coordinates of face {nface2} of block {blk2.nblki}"
                 )
                 print(f"Off by average of {diff_y}")
                 warn = True
 
-            if diff_z > 1e-08 and not periodic:
+            if diff_z > 1e-07 and not periodic:
                 print(
                     f"Warning, the z coordinates of face {nface} on block {blk.nblki} are not matching the z coordinates of face {nface2} of block {blk2.nblki}"
                 )
                 print(f"Off by average of {diff_z}")
                 warn = True
 
-    if not warn:
-        return True
-    else:
+        # Now we check that all blocks are right handed
+        pO = np.array(
+            [blk.array["x"][0, 0, 0], blk.array["y"][0, 0, 0], blk.array["z"][0, 0, 0]]
+        )
+        pI = np.array(
+            [blk.array["x"][1, 0, 0], blk.array["y"][1, 0, 0], blk.array["z"][1, 0, 0]]
+        )
+        pJ = np.array(
+            [blk.array["x"][0, 1, 0], blk.array["y"][0, 1, 0], blk.array["z"][0, 1, 0]]
+        )
+        pK = np.array(
+            [blk.array["x"][0, 0, 1], blk.array["y"][0, 0, 1], blk.array["z"][0, 0, 1]]
+        )
+        vI = pI - pO
+        vJ = pJ - pO
+        vK = pK - pO
+
+        cross = np.cross(vI, vJ)
+        if np.dot(vK, cross) < 0.0:
+            print("Warning, block {blk.nbkli} is left handed. This must be fixed.")
+            warn = True
+
+    if warn:
         return False
+    else:
+        return True
 
 
 if __name__ == "__main__":
