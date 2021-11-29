@@ -2,7 +2,6 @@
 
 import numpy as np
 import yaml
-from ..mpiComm import mpiUtils
 from .. import bcs
 
 
@@ -25,7 +24,6 @@ def readBcs(mb, pathToFile):
         Adds the connectivity information to mb
 
     """
-    comm, rank, size = mpiUtils.getCommRankSize()
 
     # only the zeroth block reads in the file
     try:
@@ -35,8 +33,8 @@ def readBcs(mb, pathToFile):
         bcsIn = None
 
     if bcsIn is None:
-        if rank == 0:
-            print("No bcFams.yaml found, using defaults.")
+        if 0 in mb.blockList:
+            print("No bcFams.yaml found, assuming all defaults.")
         return
 
     for blk in mb:
@@ -51,14 +49,20 @@ def readBcs(mb, pathToFile):
                     f'ERROR, block {blk.nblki} face {face.nface} does not match the bcType between input *{bcsIn[bcFam]["bcType"]}* and connectivity *{face.bcType}*.'
                 )
 
-            # Set the boundary condition values
-            face.array["qBcVals"] = np.zeros(blk.array["q"][face.s1_].shape)
-            face.array["QBcVals"] = np.zeros(blk.array["Q"][face.s1_].shape)
-
             # If there are no values to set, continue
             if "bcVals" not in bcsIn[bcFam]:
                 print(f"Warning, no values found for {bcsIn[bcFam]}")
                 continue
+
+            # If we are a solver face, we need to create the kokkos arrays
+            if face.faceType != "solver":
+                continue
+
+            from ..misc import createViewMirrorArray
+
+            # Create "profile" arrays for bc values
+            face.array["qBcVals"] = np.zeros(blk.array["q"][face.s1_].shape)
+            face.array["QBcVals"] = np.zeros(blk.array["Q"][face.s1_].shape)
 
             # Certain boundary conditions need prep work,
             # such as constant mass or profiles, so call them here
@@ -73,12 +77,8 @@ def readBcs(mb, pathToFile):
             else:
                 raise ValueError(f"Could not find the prep_ function for {face.bcType}")
 
-            # If we are a solver face, we need to create the kokkos arrays
-            if face.faceType == "solver":
-                from ..misc import createViewMirrorArray
+            space = mb.config["Kokkos"]["Space"]
 
-                space = mb.config["Kokkos"]["Space"]
-
-                names = ["qBcVals", "QBcVals"]
-                shape = blk.array["q"][face.s1_].shape
-                createViewMirrorArray(face, names, shape, space)
+            names = ["qBcVals", "QBcVals"]
+            shape = blk.array["q"][face.s1_].shape
+            createViewMirrorArray(face, names, shape, space)
