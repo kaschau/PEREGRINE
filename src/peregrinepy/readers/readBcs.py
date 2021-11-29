@@ -28,15 +28,11 @@ def readBcs(mb, pathToFile):
     comm, rank, size = mpiUtils.getCommRankSize()
 
     # only the zeroth block reads in the file
-    if rank == 0:
-        try:
-            with open(f"{pathToFile}/bcFams.yaml", "r") as connFile:
-                bcsIn = yaml.load(connFile, Loader=yaml.FullLoader)
-        except IOError:
-            bcsIn = None
-    else:
+    try:
+        with open(f"{pathToFile}/bcFams.yaml", "r") as connFile:
+            bcsIn = yaml.load(connFile, Loader=yaml.FullLoader)
+    except IOError:
         bcsIn = None
-    bcsIn = comm.bcast(bcsIn, root=0)
 
     if bcsIn is None:
         if rank == 0:
@@ -61,6 +57,7 @@ def readBcs(mb, pathToFile):
 
             # If there are no values to set, continue
             if "bcVals" not in bcsIn[bcFam]:
+                print(f"Warning, no values found for {bcsIn[bcFam]}")
                 continue
 
             # Certain boundary conditions need prep work,
