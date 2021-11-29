@@ -92,12 +92,12 @@ if __name__ == "__main__":
         help="Attampt to minimize the maximum number of blocks in on an individual processor",
     )
     parser.add_argument(
-        "-maxBlksPerProc",
-        "--maxBlocksPerProc",
-        dest="maxBlksPerProc",
-        default=1000000,
+        "-blksPerProcLimit",
+        "--blocksPerProcLimit",
+        dest="blksPerProcLimit",
+        default=float("inf"),
         help="Maximum allowable blocks per processor",
-        type=int,
+        type=float,
     )
 
     args = parser.parse_args()
@@ -105,7 +105,7 @@ if __name__ == "__main__":
     fromDir = args.fromDir
     minProcs = args.minProcs
     minBlksPerProc = args.minBlksPerProc
-    maxBlksPerProc = args.maxBlksPerProc
+    blksPerProcLimit = args.blksPerProcLimit
 
     nblks = len([f for f in os.listdir(f"{fromDir}") if f.endswith(".h5")])
     mb = pg.multiBlock.grid(nblks)
@@ -128,7 +128,7 @@ if __name__ == "__main__":
                 continue
 
             tempSize = currentSize + size
-            if tempSize >= maxSize or len(currentProc) == maxBlksPerProc:
+            if tempSize >= maxSize or len(currentProc) == blksPerProcLimit:
                 procGroups.append(currentProc)
                 procLoad.append(currentSize)
                 currentProc = [nblki]
@@ -152,7 +152,7 @@ if __name__ == "__main__":
                 smallSize = sizes[smallIndex]
                 if (
                     currentSize + smallSize > maxSize
-                    or len(currentProc) == maxBlksPerProc
+                    or len(currentProc) == blksPerProcLimit
                 ):
                     break
                 else:
