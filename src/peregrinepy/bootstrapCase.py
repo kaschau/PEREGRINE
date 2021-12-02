@@ -8,6 +8,8 @@ def bootstrapCase(config):
     # First we determine what bocks we are responsible for
     ################################################################
     blocksForProcs = pg.readers.readBlocksForProcs(config["io"]["inputdir"])
+    if rank == 0:
+        print("Read blocsForProcs.")
 
     # Check that we have correct number of processors
     if len(blocksForProcs) != size:
@@ -31,11 +33,15 @@ def bootstrapCase(config):
 
     myblocks = blocksForProcs[rank]
     mb = pg.multiBlock.generateMultiBlockSolver(len(myblocks), config, myblocks)
+    if rank == 0:
+        print("Generated multiblock.")
 
     ################################################################
     # Read in the connectivity
     ################################################################
     pg.readers.readConnectivity(mb, config["io"]["inputdir"])
+    if rank == 0:
+        print("Read connectivity.")
 
     ################################################################
     # Now we figure out which processor each block's neighbor
@@ -55,6 +61,8 @@ def bootstrapCase(config):
     # Read in the grid
     ################################################################
     pg.readers.readGrid(mb, config["io"]["griddir"])
+    if rank == 0:
+        print("Read grid.")
 
     ################################################################
     # Now set the MPI communication info for each block
@@ -66,6 +74,8 @@ def bootstrapCase(config):
     ################################################################
     mb.unifyGrid()
     mb.computeMetrics(config["RHS"]["diffOrder"])
+    if rank == 0:
+        print("Unified grid.")
 
     ################################################################
     # Read in restart
@@ -76,6 +86,8 @@ def bootstrapCase(config):
         config["simulation"]["restartFrom"],
         config["simulation"]["animate"],
     )
+    if rank == 0:
+        print("Read restart.")
 
     ################################################################
     # Initialize the solver arrays
@@ -100,5 +112,7 @@ def bootstrapCase(config):
 
     # Consistify total flow field
     pg.consistify(mb)
+    if rank == 0:
+        print("Ready to solve.")
 
     return mb
