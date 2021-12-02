@@ -12,8 +12,15 @@ np.seterr(all="raise")
 def simulate(configFilePath):
 
     comm, rank, size = pg.mpiComm.mpiUtils.getCommRankSize()
+    if rank == 0:
+        string = " >>> ******************************** <<<\n"
+        string += "              PEREGRINE CFD\n"
+        string += " >>> ******************************** <<<\n"
+        print(string)
 
     config = pg.readers.readConfigFile(configFilePath)
+    if rank == 0:
+        print("Read config.")
 
     mb = pg.bootstrapCase(config)
 
@@ -21,9 +28,6 @@ def simulate(configFilePath):
     nCells = pg.mpiComm.mpiUtils.getNumCells(mb)
     efficiency, slowestProc = pg.mpiComm.mpiUtils.getLoadEfficiency(mb)
     if rank == 0:
-        string = " >>> ******************************** <<<\n"
-        string += "              PEREGRINE CFD\n"
-        string += " >>> ******************************** <<<\n"
         string += " Simulation Summary:\n"
         string += f"  Total cells: {nCells}"
         print(string)
@@ -65,14 +69,14 @@ def simulate(configFilePath):
 
         if checkNan:
             if mb.nrt % checkNan == 0:
-                abort = pg.mpiComm.mpiUtils.checkNan(mb)
+                abort = pg.mpiComm.mpiUtils.checkForNan(mb)
                 if abort > 0:
                     pg.writers.parallelWriter.parallelWriteRestart(
                         mb, config["io"]["outputdir"]
                     )
                     comm.Barrier()
                     if rank == 0:
-                        print("Aborting.")
+                        print("Nan/inf detected. Aborting.")
                         comm.Abort()
 
     if rank == 0:
