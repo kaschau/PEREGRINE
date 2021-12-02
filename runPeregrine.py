@@ -12,8 +12,15 @@ np.seterr(all="raise")
 def simulate(configFilePath):
 
     comm, rank, size = pg.mpiComm.mpiUtils.getCommRankSize()
+    if rank == 0:
+        string = " >>> ******************************** <<<\n"
+        string += "              PEREGRINE CFD\n"
+        string += " >>> ******************************** <<<\n"
+        print(string)
 
     config = pg.readers.readConfigFile(configFilePath)
+    if rank == 0:
+        print("Read config.")
 
     mb = pg.bootstrapCase(config)
 
@@ -21,9 +28,6 @@ def simulate(configFilePath):
     nCells = pg.mpiComm.mpiUtils.getNumCells(mb)
     efficiency, slowestProc = pg.mpiComm.mpiUtils.getLoadEfficiency(mb)
     if rank == 0:
-        string = " >>> ******************************** <<<\n"
-        string += "              PEREGRINE CFD\n"
-        string += " >>> ******************************** <<<\n"
         string += " Simulation Summary:\n"
         string += f"  Total cells: {nCells}"
         print(string)
