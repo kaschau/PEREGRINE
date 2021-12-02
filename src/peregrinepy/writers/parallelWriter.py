@@ -159,6 +159,9 @@ def parallelWriteRestart(mb, path="./", gridPath="./", precision="double"):
         fdtype = "float32"
 
     for blk in mb:
+        # update the host views
+        blk.updateHostView("q")
+        blk.updateHostView("Q")
 
         extentCC = (blk.ni - 1) * (blk.nj - 1) * (blk.nk - 1)
         ng = blk.ng
