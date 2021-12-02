@@ -65,14 +65,14 @@ def simulate(configFilePath):
 
         if checkNan:
             if mb.nrt % checkNan == 0:
-                abort = pg.mpiComm.mpiUtils.checkNan(mb)
+                abort = pg.mpiComm.mpiUtils.checkForNan(mb)
                 if abort > 0:
                     pg.writers.parallelWriter.parallelWriteRestart(
                         mb, config["io"]["outputdir"]
                     )
                     comm.Barrier()
                     if rank == 0:
-                        print("Aborting.")
+                        print("Nan/inf detected. Aborting.")
                         comm.Abort()
 
     if rank == 0:
