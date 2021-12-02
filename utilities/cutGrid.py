@@ -340,6 +340,7 @@ def cutPath(mb, nblki, cutAxis):
 
 
 def performCutOperations(mb, cutOps):
+    print("Performing cut/s...")
     for nblki, axis, nCuts in cutOps:
         cutBlk = mb.getBlock(nblki)
         ogNx = getattr(cutBlk, f"n{axis}")
@@ -452,6 +453,7 @@ if __name__ == "__main__":
     elif maxBlockSize > 0:
 
         results = analyzeGrid(mb)
+        print(f"  ... max block size {results['maxCells']}")
         maxCells = results["maxCells"]
 
         with open("cutLog.log", "w") as f:
@@ -489,9 +491,11 @@ if __name__ == "__main__":
                 f.write(
                     f"{blockToCut.nblki}, {axes[index]}, {requiredCutsPerAxis[a]}\n"
                 )
-                performCutOperations(mb, cutOperations)
 
+                performCutOperations(mb, cutOperations)
                 results = analyzeGrid(mb)
+                print(f"  ... new max block size {results['maxCells']}")
+
                 maxCells = results["maxCells"]
 
     assert verify(mb)
