@@ -10,11 +10,11 @@ void dQzero(std::vector<block_> mb) {
   //-------------------------------------------------------------------------------------------|
   int nblks = mb.size();
 
-  policy p(0, nblks);
-
+  policy p(nblks, Kokkos::AUTO());
   Kokkos::parallel_for(
-      "test", p, KOKKOS_LAMBDA(const int block) {
-        block_ b = mb[block];
+      "test", p, KOKKOS_LAMBDA(policy::member_type member) {
+        int nblki = member.league_rank();
+        block_ b = mb[nblki];
 
         MDRange4 range_cc(
             {b.ng, b.ng, b.ng, 0},

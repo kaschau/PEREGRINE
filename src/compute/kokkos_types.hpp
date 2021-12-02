@@ -46,6 +46,6 @@ using MDRange3 = Kokkos::MDRangePolicy<exec_space, Kokkos::Rank<3>>;
 using MDRange4 = Kokkos::MDRangePolicy<exec_space, Kokkos::Rank<4>>;
 using MDRange5 = Kokkos::MDRangePolicy<exec_space, Kokkos::Rank<5>>;
 
-using policy = Kokkos::RangePolicy<exec_space>;
+using policy = Kokkos::TeamPolicy<exec_space>;
 
 #endif
