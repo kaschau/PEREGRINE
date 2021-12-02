@@ -134,7 +134,7 @@ void applyFlux(block_ b, double[]);
 void applyHybridFlux(block_ b, const double primary);
 void applyDissipationFlux(block_ b, double[]);
 //    |------> dQzero
-void dQzero(block_ b);
+void dQzero(std::vector<block_> mb);
 //    |------> dq2FD
 void dq2FD(block_ b);
 //    |------> dq4FD

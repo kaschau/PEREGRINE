@@ -19,7 +19,7 @@ void bindUtils(py::module_ &m) {
         py::arg(""));
   //  |----> dQzero.cpp
   utils.def("dQzero", &dQzero, "Zero out dQ array",
-        py::arg("block_ object"));
+        py::arg("std::vecor of blocks"));
   //  |----> dq2FD.cpp
   utils.def("dq2FD", &dq2FD, "Second order approx of spatial derivative of q array via finite difference",
         py::arg("block_ object"));
