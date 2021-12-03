@@ -11,7 +11,7 @@ void dQzero(std::vector<block_> mb) {
   //-------------------------------------------------------------------------------------------|
   int nblks = mb.size();
 
-  Kokkos::View<block_ *, exec_space> mbv("test", nblks);
+  Kokkos::View<block_*, exec_space> mbv("test", nblks);
   for (int b = 0; b < nblks; b++) {
     mbv(b) = mb[b];
   }
@@ -19,23 +19,19 @@ void dQzero(std::vector<block_> mb) {
   policy p(nblks, Kokkos::AUTO());
   Kokkos::parallel_for(
       "test", p, KOKKOS_LAMBDA(policy::member_type member) {
+
         int nblki = member.league_rank();
+        auto& b = mbv(nblki);
 
-        const int ni = mbv(nblki).ni;
-        const int nj = mbv(nblki).nj;
-        const int nk = mbv(nblki).nk;
-        const int nl = mbv(nblki).ne;
-        const int ng = mbv(nblki).ng;
-
-        int nijkl = (ni - 1) * (nj - 1) * (nk - 1) * nl;
+        int nijkl = (b.ni - 1) * (b.nj - 1) * (b.nk - 1) * b.ne;
 
         Kokkos::parallel_for(
             Kokkos::TeamVectorRange(member, 0, nijkl), [=](const int &ijkl) {
-              const int i = ng + ijkl / ((nj - 1) * (nk - 1) * nl);
+              const int i = b.ng + ijkl / ((b.nj - 1) * (b.nk - 1) * b.ne);
               const int j =
-                  ng + (ijkl % ((nj - 1) * (nk - 1) * nl)) / ((nk - 1) * nl);
-              const int k = ng + (ijkl % ((nk - 1) * nl)) / nl;
-              const int l = ijkl % nl;
+                  b.ng + (ijkl % ((b.nj - 1) * (b.nk - 1) * b.ne)) / ((b.nk - 1) * b.ne);
+              const int k = b.ng + (ijkl % ((b.nk - 1) * b.ne)) / b.ne;
+              const int l = ijkl % b.ne;
 
               mbv(nblki).dQ(i, j, k, l) = 0.0;
             });
