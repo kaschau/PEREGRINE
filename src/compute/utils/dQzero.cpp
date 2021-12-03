@@ -11,17 +11,19 @@ void dQzero(std::vector<block_> mb) {
   //-------------------------------------------------------------------------------------------|
   int nblks = mb.size();
 
-  Kokkos::View<block_*, exec_space> mbv("test", nblks);
+  Kokkos::View<block_*, exec_space> mbD("testD", nblks);
+  Kokkos::View<block_*, Kokkos::HostSpace> mbH("testH", nblks);
   for (int b = 0; b < nblks; b++) {
-    mbv(b) = mb[b];
+    mbH(b) = mb[b];
   }
+  Kokkos::deep_copy(mbD, mbH);
 
   policy p(nblks, Kokkos::AUTO());
   Kokkos::parallel_for(
       "test", p, KOKKOS_LAMBDA(policy::member_type member) {
 
         int nblki = member.league_rank();
-        auto& b = mbv(nblki);
+        auto& b = mbD(nblki);
 
         int nijkl = (b.ni - 1) * (b.nj - 1) * (b.nk - 1) * b.ne;
 
@@ -33,7 +35,7 @@ void dQzero(std::vector<block_> mb) {
               const int k = b.ng + (ijkl % ((b.nk - 1) * b.ne)) / b.ne;
               const int l = ijkl % b.ne;
 
-              mbv(nblki).dQ(i, j, k, l) = 0.0;
+              b.dQ(i, j, k, l) = 0.0;
             });
       });
 }
