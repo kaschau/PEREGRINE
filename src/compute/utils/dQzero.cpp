@@ -15,19 +15,26 @@ void dQzero(std::vector<block_> mb) {
   Kokkos::parallel_for(
       "test", p, KOKKOS_LAMBDA(policy::member_type member) {
         int nblki = member.league_rank();
-        block_ b = mb[nblki];
 
-        int nijkl = (b.ni-1)*(b.nj-1)*(b.nk-1)*b.ne;
+        const int ni = mb[nblki].ni;
+        const int nj = mb[nblki].nj;
+        const int nk = mb[nblki].nk;
+        const int nl = mb[nblki].ne;
 
-        Kokkos::parallel_for(Kokkos::TeamVectorRange(member, 0, nijkl), [=](const int& ijkl){
+        int nijkl = (ni - 1) * (nj - 1) * (nk - 1) * nl;
 
-            const int i = b.ng + ijkl/((b.nj-1)*(b.nk-1)*b.ne);
-            const int j = b.ng + (ijkl%((b.nj-1)*(b.nk-1)*b.ne))/((b.nk-1)*b.ne);
-            const int k = b.ng + (ijkl%((b.nk-1)*b.ne))/b.ne;
-            const int l = ijkl%b.ne;
+        Kokkos::parallel_for(
+            Kokkos::TeamVectorRange(member, 0, nijkl), [=](const int &ijkl) {
 
-            b.dQ(i, j, k, l) = 0.0;
+              const int i =
+                  mb[nblki].ng + ijkl / ((nj - 1) * (nk - 1) * nl);
+              const int j =
+                  mb[nblki].ng + (ijkl % ((nj - 1) * (nk - 1) * nl)) /
+                                     ((nk - 1) * nl);
+              const int k = mb[nblki].ng + (ijkl % ((nk - 1) * nl)) / nl;
+              const int l = ijkl % nl;
 
+              mb[nblki].dQ(i, j, k, l) = 0.0;
             });
       });
 }
