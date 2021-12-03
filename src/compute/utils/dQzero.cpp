@@ -19,7 +19,7 @@ void dQzero(std::vector<block_> mb) {
 
         int nijkl = (b.ni-1)*(b.nj-1)*(b.nk-1)*b.ne;
 
-        Kokkos::parallel_for(Kokkos::TeamVectorRange(member, 0, nijkl), KOKKOS_LAMBDA(const int& ijkl){
+        Kokkos::parallel_for(Kokkos::TeamVectorRange(member, 0, nijkl), [=](const int& ijkl){
 
             const int i = b.ng + ijkl/((b.nj-1)*(b.nk-1)*b.ne);
             const int j = b.ng + (ijkl%((b.nj-1)*(b.nk-1)*b.ne))/((b.nk-1)*b.ne);
