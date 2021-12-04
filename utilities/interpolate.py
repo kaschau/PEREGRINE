@@ -131,7 +131,7 @@ if __name__ == "__main__":
 
     total = mbTo.nblks
     for blkTo, bounds in zip(mbTo, boundingBlocks):
-        interpolation.blocks_to_block(bounds, blkTo, function, smooth)
+        interpolation.blocksToBlock(bounds, blkTo, function, smooth)
         progressBar(blkTo.nblki, total, f"Interpolating block {blkTo.nblki}")
 
     if len(speciesNames) > 1:

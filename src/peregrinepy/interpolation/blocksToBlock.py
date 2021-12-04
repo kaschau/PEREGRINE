@@ -87,4 +87,4 @@ def blocksToBlock(blksFrom, blkTo, function="nearest", smooth=0.5):
         qvTo = np.where(qvTo > np.max(qvFrom), np.max(qvFrom), qvTo)
         qvTo = np.where(qvTo < np.min(qvFrom), np.min(qvFrom), qvTo)
 
-        blkTo.qv[:, :, :, i] = qvTo.reshape(blkTo.qv[:, :, :, i].shape)
+        blkTo.array["q"][:, :, :, i] = qvTo.reshape(blkTo.array["q"][:, :, :, i].shape)
