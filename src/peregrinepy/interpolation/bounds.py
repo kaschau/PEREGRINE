@@ -12,6 +12,7 @@ This module contains function related to bounding in an interpolation procedure.
 
 from scipy import spatial
 import numpy as np
+from ..misc import progressBar
 
 
 def ptsInBlkBounds(blk, testPts):
@@ -103,8 +104,8 @@ def ptsInBlkBounds(blk, testPts):
 
         # In case the block is very curvilinear, we will ad the midpoints of the edges of the block to make
         # the test geometry better match the shape of the block.
-        if blk.nx > 4:
-            indx = int(blk.nx / 2)
+        if blk.ni > 4:
+            indx = int(blk.ni / 2)
             cube = np.append(
                 cube,
                 [
@@ -134,8 +135,8 @@ def ptsInBlkBounds(blk, testPts):
 
             # Finally, we will add the centers of each face to the test geometry for a very close representation of the
             # actual block shape
-            if blk.ny > 4:
-                indx2 = int(blk.ny / 2)
+            if blk.nj > 4:
+                indx2 = int(blk.nj / 2)
                 cube = np.append(
                     cube,
                     [
@@ -152,8 +153,8 @@ def ptsInBlkBounds(blk, testPts):
                     ],
                     axis=0,
                 )
-            if blk.nz > 4:
-                indx2 = int(blk.nz / 2)
+            if blk.nk > 4:
+                indx2 = int(blk.nk / 2)
                 cube = np.append(
                     cube,
                     [
@@ -171,8 +172,8 @@ def ptsInBlkBounds(blk, testPts):
                     axis=0,
                 )
 
-        if blk.ny > 4:
-            indx = int(blk.ny / 2)
+        if blk.nj > 4:
+            indx = int(blk.nj / 2)
             cube = np.append(
                 cube,
                 [
@@ -199,26 +200,26 @@ def ptsInBlkBounds(blk, testPts):
                 ],
                 axis=0,
             )
-            if blk.nz > 4:
-                indx2 = int(blk.nz / 2)
+            if blk.nk > 4:
+                indx2 = int(blk.nk / 2)
                 cube = np.append(
                     cube,
                     [
                         [
-                            blk.array["x"][indx, 0, indx2],
-                            blk.array["y"][indx, 0, indx2],
-                            blk.array["z"][indx, 0, indx2],
+                            blk.array["x"][0, indx, indx2],
+                            blk.array["y"][0, indx, indx2],
+                            blk.array["z"][0, indx, indx2],
                         ],
                         [
-                            blk.array["x"][indx, -1, indx2],
-                            blk.array["y"][indx, -1, indx2],
-                            blk.array["z"][indx, -1, indx2],
+                            blk.array["x"][-1, indx, indx2],
+                            blk.array["y"][-1, indx, indx2],
+                            blk.array["z"][-1, indx, indx2],
                         ],
                     ],
                     axis=0,
                 )
-        if blk.nz > 4:
-            indx = int(blk.nz / 2)
+        if blk.nk > 4:
+            indx = int(blk.nk / 2)
             cube = np.append(
                 cube,
                 [
@@ -274,10 +275,11 @@ def findBounds(mbTo, mbFrom, verboseSearch):
        numbers of all the blocks from mbFrom that each block in mbTo reside in, spatially.
     """
 
-    mbFrom.computeMetrics(fdOrder=2)
-    mbTo.computeMetrics(fdOrder=2)
+    mbFrom.computeMetrics(fdOrder=2, xcOnly=True)
+    mbTo.computeMetrics(fdOrder=2, xcOnly=True)
 
     boundingBlocks = []
+    total = mbTo.nblks
     for blkTo in mbTo:
         blkTo_xc = np.column_stack(
             (
@@ -298,5 +300,6 @@ def findBounds(mbTo, mbFrom, verboseSearch):
                     break
 
         boundingBlocks.append(currBlkIn)
+        progressBar(blkTo.nblki, total, f"Finding block {blkTo.nblki} bounds")
 
     return boundingBlocks
