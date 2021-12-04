@@ -129,10 +129,10 @@ if __name__ == "__main__":
     for bounds in boundsList:
         boundingBlocks.append([mbFrom.getBlock(nblki) for nblki in bounds])
 
-    total = mbTo.nblks
+    nblks = mbTo.nblks
     for blkTo, bounds in zip(mbTo, boundingBlocks):
         interpolation.blocksToBlock(bounds, blkTo, function, smooth)
-        progressBar(blkTo.nblki, total, f"Interpolating block {blkTo.nblki}")
+        progressBar(blkTo.nblki + 1, nblks, f"Interpolating block {blkTo.nblki}")
 
     if len(speciesNames) > 1:
         mbTo.checkSpeciesSum(True)

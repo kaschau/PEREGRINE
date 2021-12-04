@@ -279,7 +279,7 @@ def findBounds(mbTo, mbFrom, verboseSearch):
     mbTo.computeMetrics(fdOrder=2, xcOnly=True)
 
     boundingBlocks = []
-    total = mbTo.nblks
+    nblks = mbTo.nblks
     for blkTo in mbTo:
         blkTo_xc = np.column_stack(
             (
@@ -300,6 +300,6 @@ def findBounds(mbTo, mbFrom, verboseSearch):
                     break
 
         boundingBlocks.append(currBlkIn)
-        progressBar(blkTo.nblki, total, f"Finding block {blkTo.nblki} bounds")
+        progressBar(blkTo.nblki + 1, nblks, f"Finding block {blkTo.nblki} bounds")
 
     return boundingBlocks
