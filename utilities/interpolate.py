@@ -24,6 +24,7 @@ from peregrinepy.readers import readGrid, readRestart
 from peregrinepy.writers import writeRestart
 from peregrinepy.multiBlock import restart as mbr
 from peregrinepy import interpolation
+from peregrinepy.misc import progressBar
 import yaml
 import os
 
@@ -59,7 +60,7 @@ if __name__ == "__main__":
         metavar="<spdata>",
         dest="spdata",
         help="spdata yaml file (needed for species names)",
-        type=int,
+        type=str,
     )
     parser.add_argument(
         "-func",
@@ -94,7 +95,7 @@ if __name__ == "__main__":
     fromDir = args.fromDir
     toDir = args.toDir
     with open(args.spdata, "r") as f:
-        speciesNames = yaml.load(f, Loader=yaml.FullLoader).keys()
+        speciesNames = list(yaml.load(f, Loader=yaml.FullLoader).keys())
     function = args.function
     smooth = args.smooth
     verboseSearch = args.verboseSearch
@@ -128,8 +129,10 @@ if __name__ == "__main__":
     for bounds in boundsList:
         boundingBlocks.append([mbFrom.getBlock(nblki) for nblki in bounds])
 
+    total = mbTo.nblks
     for blkTo, bounds in zip(mbTo, boundingBlocks):
         interpolation.blocks_to_block(bounds, blkTo, function, smooth)
+        progressBar(blkTo.nblki, total, f"Interpolating block {blkTo.nblki}")
 
     if len(speciesNames) > 1:
         mbTo.checkSpeciesSum(True)

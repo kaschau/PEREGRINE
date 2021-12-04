@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def metrics(blk, fdOrder):
+def metrics(blk, fdOrder, xcOnly=False):
 
     x = blk.array["x"]
     y = blk.array["y"]
@@ -50,6 +50,9 @@ def metrics(blk, fdOrder):
         for var in ["xc", "yc", "zc"]:
             blk.updateDeviceView(var)
 
+    # A lot of times we only want cell centers.
+    if xcOnly:
+        return
     # ----------------------------------------------------------------------------
     # i face centers, area, normal vectors
     # ----------------------------------------------------------------------------
