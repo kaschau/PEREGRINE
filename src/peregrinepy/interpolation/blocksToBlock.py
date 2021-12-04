@@ -7,7 +7,7 @@ Authors:
 Kyle Schau
 
 This module contains a function that will interpolate a list of
-blocks (blks_from) onto a single block (blk_to)
+blocks :blksFrom: onto a single block :blkTo:.
 
 """
 
