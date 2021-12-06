@@ -106,12 +106,25 @@ def bootstrapCase(config):
         mb, config["io"]["outputdir"], gridPath=f"../{config['io']['griddir']}"
     )
 
+    ################################################################
+    # Prepare interior fields
+    ################################################################
     # Generate conserved variables
     for blk in mb:
         mb.eos(blk, mb.thtrdat, 0, "prims")
 
     # Consistify total flow field
     pg.consistify(mb)
+
+    ################################################################
+    # Initialize coprocessor
+    ################################################################
+    if config["Catalyst"]["coprocess"]:
+
+        mb.coproc = pg.coproc.coprocessor(mb, config)
+    else:
+        mb.coproc = pg.misc.null
+
     if rank == 0:
         print("Ready to solve.")
 
