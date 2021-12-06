@@ -1,5 +1,6 @@
 import numpy as np
 
+from paraview.simple import GetParaViewVersion
 from paraview.modules import vtkPVCatalyst as catalyst
 from paraview.modules import vtkPVPythonCatalyst as pythoncatalyst
 import vtk
@@ -12,7 +13,13 @@ class coprocessor:
         self._coProcessor = catalyst.vtkCPProcessor()
 
         # Add the coproc script
-        pipeline = pythoncatalyst.vtkCPPythonScriptV2Pipeline()
+        if str(GetParaViewVersion()) == "5.9":
+            pipeline = pythoncatalyst.vtkCPPythonScriptV2Pipeline()
+        elif str(GetParaViewVersion()) == "5.8":
+            pipeline = pythoncatalyst.vtkCPPythonScriptPipeline()
+        else:
+            raise ValueError("Not a compatible paraview version")
+
         fileName = config["Catalyst"]["cpFile"]
         pipeline.Initialize(fileName)
         self._coProcessor.AddPipeline(pipeline)
@@ -31,7 +38,7 @@ class coprocessor:
             coords = np.column_stack(
                 tuple(
                     [
-                        blk.array[var][ng:-ng, ng:-ng, ng:-ng].ravel()
+                        blk.array[var][ng:-ng, ng:-ng, ng:-ng].ravel(order="F")
                         for var in ("x", "y", "z")
                     ]
                 )
@@ -42,14 +49,14 @@ class coprocessor:
 
             # density arrays
             rho = numpy_support.numpy_to_vtk(
-                blk.array["Q"][ng:-ng, ng:-ng, ng:-ng, 0].ravel()
+                blk.array["Q"][ng:-ng, ng:-ng, ng:-ng, 0].ravel(order="F")
             )
             rho.SetName("rho")
             grid.GetCellData().AddArray(rho)
 
             # # pressure arrays
             # pressure = numpy_support.numpy_to_vtk(
-            #     blk.array["q"][ng:-ng, ng:-ng, ng:-ng, 0].ravel()
+            #     blk.array["q"][ng:-ng, ng:-ng, ng:-ng, 0].ravel(order="F")
             # )
             # pressure.SetName("p")
             # grid.GetCellData().AddArray(pressure)
@@ -58,7 +65,7 @@ class coprocessor:
             # array = np.column_stack(
             #     tuple(
             #         [
-            #             blk.array["q"][ng:-ng, ng:-ng, ng:-ng, i].ravel()
+            #             blk.array["q"][ng:-ng, ng:-ng, ng:-ng, i].ravel(order="F")
             #             for i in (1, 2, 3)
             #         ]
             #     )
@@ -69,14 +76,14 @@ class coprocessor:
 
             # # temperature arrays
             # temperature = numpy_support.numpy_to_vtk(
-            #     blk.array["q"][ng:-ng, ng:-ng, ng:-ng, 4].ravel()
+            #     blk.array["q"][ng:-ng, ng:-ng, ng:-ng, 4].ravel(order="F")
             # )
             # temperature.SetName("T")
             # grid.GetCellData().AddArray(temperature)
 
             # for i, var in enumerate(blk.speciesNames[0:-1]):
             #     array = numpy_support.numpy_to_vtk(
-            #         blk.array["q"][ng:-ng, ng:-ng, ng:-ng, 5 + i].ravel()
+            #         blk.array["q"][ng:-ng, ng:-ng, ng:-ng, 5 + i].ravel(order="F")
             #     )
             #     array.SetName(var)
             #     grid.GetCellData().AddArray(array)
@@ -84,7 +91,7 @@ class coprocessor:
             # # Add nth species
             # array = numpy_support.numpy_to_vtk(
             #     1.0
-            #     - np.sum(blk.array["q"][ng:-ng, ng:-ng, ng:-ng, 5::], axis=-1).ravel()
+            #     - np.sum(blk.array["q"][ng:-ng, ng:-ng, ng:-ng, 5::], axis=-1).ravel(order="F")
             # )
             # array.SetName(blk.speciesNames[-1])
             # grid.GetCellData().AddArray(array)
@@ -108,19 +115,25 @@ class coprocessor:
 
             # density arrays
             rho = grid.GetCellData().GetArray("rho")
-            rho.SetArray(
-                numpy_support.numpy_to_vtk(
-                    blk.array["Q"][ng:-ng, ng:-ng, ng:-ng, 0].ravel()
-                ),
-                ncls,
-                1,
-            )
+            for i, val in enumerate(
+                blk.array["Q"][ng:-ng, ng:-ng, ng:-ng, 0].ravel(order="F")
+            ):
+                rho.SetValue(i, val)
+
+            # array = numpy_support.numpy_to_vtk(
+            #     blk.array["Q"][ng:-ng, ng:-ng, ng:-ng, 0].ravel(order="F")
+            # )
+            # rho.SetArray(
+            #     array,
+            #     ncls,
+            #     1,
+            # )
 
             # # pressure arrays
             # pressure = grid.GetCellData().GetArray("p")
             # pressure.SetArray(
             #     numpy_support.numpy_to_vtk(
-            #         blk.array["q"][ng:-ng, ng:-ng, ng:-ng, 0].ravel()
+            #         blk.array["q"][ng:-ng, ng:-ng, ng:-ng, 0].ravel(order="F")
             #     ),
             #     ncls,
             #     1,
@@ -130,7 +143,7 @@ class coprocessor:
             # array = np.column_stack(
             #     tuple(
             #         [
-            #             blk.array["q"][ng:-ng, ng:-ng, ng:-ng, i].ravel()
+            #             blk.array["q"][ng:-ng, ng:-ng, ng:-ng, i].ravel(order="F")
             #             for i in (1, 2, 3)
             #         ]
             #     )
@@ -142,7 +155,7 @@ class coprocessor:
             # temperature = grid.GetCellData().GetArray("T")
             # temperature.SetArray(
             #     numpy_support.numpy_to_vtk(
-            #         blk.array["q"][ng:-ng, ng:-ng, ng:-ng, 4].ravel()
+            #         blk.array["q"][ng:-ng, ng:-ng, ng:-ng, 4].ravel(order="F")
             #     ),
             #     ncls,
             #     1,
@@ -152,7 +165,7 @@ class coprocessor:
             #     array = grid.GetCellData().GetArray(var)
             #     array.SetArray(
             #         numpy_support.numpy_to_vtk(
-            #             blk.array["q"][ng:-ng, ng:-ng, ng:-ng, 5 + i].ravel()
+            #             blk.array["q"][ng:-ng, ng:-ng, ng:-ng, 5 + i].ravel(order="F")
             #         ),
             #         ncls,
             #         0,
@@ -165,14 +178,14 @@ class coprocessor:
             #         1.0
             #         - np.sum(
             #             blk.array["q"][ng:-ng, ng:-ng, ng:-ng, 5::], axis=-1
-            #         ).ravel()
+            #         ).ravel(order="F")
             #     ),
             #     ncls,
             #     1,
             # )
 
         # Execute coprocessing
-        # self._coProcessor.CoProcess(self.dataDescription)
+        self._coProcessor.CoProcess(self.dataDescription)
 
     def finalize(self):
         self._coProcessor.Finalize()
