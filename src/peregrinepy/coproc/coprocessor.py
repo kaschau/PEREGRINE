@@ -1,6 +1,5 @@
 import numpy as np
 
-# import paraview.simple
 from paraview.modules import vtkPVCatalyst as catalyst
 from paraview.modules import vtkPVPythonCatalyst as pythoncatalyst
 import vtk
