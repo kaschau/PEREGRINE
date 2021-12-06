@@ -84,6 +84,9 @@ def simulate(configFilePath):
         # CoProcess
         mb.coproc(mb)
 
+    # Finalize coprocessor
+    mb.coproc.finalize()
+
     if rank == 0:
         elapsed = perf_counter() - ts
         hrs, rem = divmod(elapsed, 3600.0)
