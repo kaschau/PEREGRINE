@@ -10,6 +10,7 @@ from . import writers
 from . import multiBlock
 
 from .bootstrapCase import bootstrapCase
+from . import coproc
 from .consistify import consistify
 from .RHS import RHS
 from . import bcs

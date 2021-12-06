@@ -60,6 +60,7 @@ def simulate(configFilePath):
 
         mb.step(dt)
 
+        # Check if we need to output
         if mb.nrt % niterout == 0:
             if rank == 0:
                 print("Saving restart.\n")
@@ -67,6 +68,7 @@ def simulate(configFilePath):
                 mb, config["io"]["outputdir"]
             )
 
+        # Check if we need to check for Nan
         if checkNan:
             if mb.nrt % checkNan == 0:
                 abort = pg.mpiComm.mpiUtils.checkForNan(mb)
@@ -78,6 +80,12 @@ def simulate(configFilePath):
                     if rank == 0:
                         print("Nan/inf detected. Aborting.")
                         comm.Abort()
+
+        # CoProcess
+        mb.coproc(mb)
+
+    # Finalize coprocessor
+    mb.coproc.finalize()
 
     if rank == 0:
         elapsed = perf_counter() - ts
