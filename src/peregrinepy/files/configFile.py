@@ -58,7 +58,7 @@ class configFile(frozenDict):
 
         self["Kokkos"] = frozenDict({"Space": "Default"})
 
-        self["Catalyst"] = frozenDict({"coprocess": "true", "cpfile": "./coproc.py"})
+        self["Catalyst"] = frozenDict({"coprocess": False, "cpFile": "./coproc.py"})
 
         for key in self.keys():
             self[key]._freeze()
