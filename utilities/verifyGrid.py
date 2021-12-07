@@ -158,21 +158,21 @@ def verify(mb):
                     f"Error when comparing block {blk.nblki} and block {blk2.nblki} connection"
                 )
 
-            if diff_x > 1e-07 and not periodic:
+            if diff_x > 1e-06 and not periodic:
                 print(
                     f"Warning, the x coordinates of face {nface} on block {blk.nblki} are not matching the x coordinates of face {nface2} of block {blk2.nblki}"
                 )
                 print(f"Off by average of {diff_x}")
                 warn = True
 
-            if diff_y > 1e-07 and not periodic:
+            if diff_y > 1e-06 and not periodic:
                 print(
                     f"Warning, the y coordinates of face {nface} on block {blk.nblki} are not matching the y coordinates of face {nface2} of block {blk2.nblki}"
                 )
                 print(f"Off by average of {diff_y}")
                 warn = True
 
-            if diff_z > 1e-07 and not periodic:
+            if diff_z > 1e-06 and not periodic:
                 print(
                     f"Warning, the z coordinates of face {nface} on block {blk.nblki} are not matching the z coordinates of face {nface2} of block {blk2.nblki}"
                 )
