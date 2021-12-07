@@ -3,29 +3,50 @@ import numpy as np
 
 class coprocessor:
     def __init__(self, mb, config):
-        from paraview.simple import GetParaViewVersion
-        from paraview.modules import vtkPVCatalyst as catalyst
-        from paraview.modules import vtkPVPythonCatalyst as pythoncatalyst
+        import paraview
+
+        from paraview.modules.vtkPVCatalyst import vtkCPProcessor, vtkCPDataDescription
+        from paraview.modules.vtkPVPythonCatalyst import (
+            vtkCPPythonScriptV2Pipeline,
+            vtkCPPythonScriptPipeline,
+            vtkCPPythonPipeline,
+        )
+        from paraview.modules.vtkRemotingCore import vtkProcessModule
         import vtk
         from paraview.vtk.util import numpy_support
 
+        # Sanity check
+        pm = vtkProcessModule.GetProcessModule()
+        if pm and pm.GetPartitionId() == 0:
+            print(
+                "Warning: ParaView has been initialized before `initialize` is called"
+            )
+
         # Initialize
-        self._coProcessor = catalyst.vtkCPProcessor()
+        paraview.options.batch = True
+        paraview.options.symmetric = True
+        import paraview.servermanager
+
+        self._coProcessor = vtkCPProcessor()
+        if not self._coProcessor.Initialize():
+            raise RuntimeError("Failed to initialize Catalyst")
 
         # Add the coproc script
-        if str(GetParaViewVersion()) == "5.9":
-            pipeline = pythoncatalyst.vtkCPPythonScriptV2Pipeline()
-        elif str(GetParaViewVersion()) == "5.8":
-            pipeline = pythoncatalyst.vtkCPPythonScriptPipeline()
+        fileName = config["Catalyst"]["cpFile"]
+        version = vtkCPPythonPipeline.DetectScriptVersion(fileName)
+        if version == 1:
+            pipeline = vtkCPPythonScriptPipeline()
+        elif version == 2:
+            pipeline = vtkCPPythonScriptV2Pipeline()
         else:
             raise ValueError("Not a compatible paraview version")
 
-        fileName = config["Catalyst"]["cpFile"]
-        pipeline.Initialize(fileName)
+        if not pipeline.Initialize(fileName):
+            raise RuntimeError("pipeline nitialization failed!")
         self._coProcessor.AddPipeline(pipeline)
 
         # Save the data descriptions
-        self.dataDescription = catalyst.vtkCPDataDescription()
+        self.dataDescription = vtkCPDataDescription()
         # Add the input input
         self.dataDescription.AddInput("input")
 
