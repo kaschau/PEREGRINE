@@ -120,7 +120,6 @@ def bootstrapCase(config):
     # Initialize coprocessor
     ################################################################
     if config["Catalyst"]["coprocess"]:
-
         mb.coproc = pg.coproc.coprocessor(mb)
     else:
         mb.coproc = pg.misc.null
