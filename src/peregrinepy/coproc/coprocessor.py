@@ -7,11 +7,17 @@ class coprocessor:
         import paraview
 
         from paraview.modules.vtkPVCatalyst import vtkCPProcessor, vtkCPDataDescription
-        from paraview.modules.vtkPVPythonCatalyst import (
-            vtkCPPythonScriptV2Pipeline,
-            vtkCPPythonScriptPipeline,
-            vtkCPPythonPipeline,
-        )
+
+        # Try and figure out if we are using paraview > or < 5.9
+        try:
+            from paraview.modules.vtkPVPythonCatalyst import (
+                vtkCPPythonScriptV2Pipeline as vtkPipeline,
+            )
+        except ImportError:
+            from paraview.modules.vtkPVPythonCatalyst import (
+                vtkCPPythonScriptPipeline as vtkPipeline,
+            )
+
         from paraview.modules.vtkRemotingCore import vtkProcessModule
         import vtk
 
@@ -25,7 +31,6 @@ class coprocessor:
         # Initialize
         paraview.options.batch = True
         paraview.options.symmetric = True
-        import paraview.servermanager
 
         self._coProcessor = vtkCPProcessor()
         if not self._coProcessor.Initialize():
@@ -33,14 +38,7 @@ class coprocessor:
 
         # Add the coproc script
         fileName = mb.config["Catalyst"]["cpFile"]
-        version = vtkCPPythonPipeline.DetectScriptVersion(fileName)
-        if version == 1:
-            pipeline = vtkCPPythonScriptPipeline()
-        elif version == 2:
-            pipeline = vtkCPPythonScriptV2Pipeline()
-        else:
-            raise ValueError("Not a compatible paraview version")
-
+        pipeline = vtkPipeline()
         if not pipeline.Initialize(fileName):
             raise RuntimeError("pipeline nitialization failed!")
         self._coProcessor.AddPipeline(pipeline)
@@ -50,8 +48,13 @@ class coprocessor:
         # Add the input input
         self.dataDescription.AddInput("input")
 
-        # Create the grid and data arrays
+        # Create the multiblockdataset
         mbds = vtk.vtkMultiBlockDataSet()
+        mbds.SetNumberOfBlocks(mb.totalBlocks)
+        for i in range(mb.totalBlocks):
+            mbds.SetBlock(i, None)
+
+        # Create the grid and data arrays
         for blk in mb:
             ng = blk.ng
             grid = vtk.vtkStructuredGrid()
