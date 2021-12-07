@@ -1,14 +1,14 @@
 import numpy as np
 
-from paraview.simple import GetParaViewVersion
-from paraview.modules import vtkPVCatalyst as catalyst
-from paraview.modules import vtkPVPythonCatalyst as pythoncatalyst
-import vtk
-from paraview.vtk.util import numpy_support
-
 
 class coprocessor:
     def __init__(self, mb, config):
+        from paraview.simple import GetParaViewVersion
+        from paraview.modules import vtkPVCatalyst as catalyst
+        from paraview.modules import vtkPVPythonCatalyst as pythoncatalyst
+        import vtk
+        from paraview.vtk.util import numpy_support
+
         # Initialize
         self._coProcessor = catalyst.vtkCPProcessor()
 
