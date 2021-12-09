@@ -85,7 +85,8 @@ def simulate(configFilePath):
         mb.coproc(mb)
 
     # Finalize coprocessor
-    mb.coproc.finalize()
+    if mb.config["Catalyst"]["coprocess"]:
+        mb.coproc.finalize()
 
     if rank == 0:
         elapsed = perf_counter() - ts
