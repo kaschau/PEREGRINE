@@ -34,9 +34,9 @@ def readGrid(mb, path="./"):
             nj = list(f["dimensions"]["nj"])[0]
             nk = list(f["dimensions"]["nk"])[0]
 
-            blk.ni = ni
-            blk.nj = nj
-            blk.nk = nk
+            blk.ni = int(ni)
+            blk.nj = int(nj)
+            blk.nk = int(nk)
 
             blk.initGridArrays()
 
