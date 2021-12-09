@@ -7,7 +7,7 @@ from copy import deepcopy
 from ..mpiComm.mpiUtils import getCommRankSize
 
 
-def registerParallelXdmf(mb, path="./", gridPath="./"):
+def registerParallelXdmf(mb, path="./", gridPath="./", animate=True):
 
     comm, rank, size = getCommRankSize()
     # the mb with Block0 must get a list of all other block's ni,nj,nj
@@ -112,14 +112,19 @@ def registerParallelXdmf(mb, path="./", gridPath="./"):
             dataResElem.set("Precision", "8")
             dataResElem.set("Format", "HDF")
 
-            text = f"q.{mb.nrt:08d}.{nblki:06d}.h5:/results/{name}"
-            dataResElem.text = text
+            if animate:
+                textPrepend = f"q.{mb.nrt:08d}.{nblki:06d}.h5:/results/"
+            else:
+                textPrepend = f"q.{nblki:06d}.h5:/results/"
 
             for name in names[1::]:
                 blockElem.append(deepcopy(attributeElem))
                 blockElem[-1].set("Name", name)
-                text = f"q.{mb.nrt:08d}.{nblki:06d}.h5:/results/{name}"
+                text = f"{textPrepend}/{name}"
                 blockElem[-1][0].text = text
+
+            text = f"{textPrepend}{name}"
+            dataResElem.text = text
 
             # Velocity Attributes
             attributeElem = etree.SubElement(blockElem, "Attribute")
@@ -138,7 +143,7 @@ def registerParallelXdmf(mb, path="./", gridPath="./"):
                 dataResElem.set("Precision", "8")
                 dataResElem.set("Format", "HDF")
                 dataResElem.set("Name", name)
-                text = f"q.{mb.nrt:08d}.{nblki:06d}.h5:/results/{name}"
+                text = f"{textPrepend}/{name}"
                 dataResElem.text = text
 
             gridElem.append(deepcopy(blockElem))
@@ -149,7 +154,13 @@ def registerParallelXdmf(mb, path="./", gridPath="./"):
         mb.parallelXmf = None
 
 
-def parallelWriteRestart(mb, path="./", gridPath="./", precision="double"):
+def parallelWriteRestart(
+    mb,
+    path="./",
+    gridPath="./",
+    animate=True,
+    precision="double",
+):
 
     comm, rank, size = getCommRankSize()
 
@@ -166,7 +177,10 @@ def parallelWriteRestart(mb, path="./", gridPath="./", precision="double"):
         extentCC = (blk.ni - 1) * (blk.nj - 1) * (blk.nk - 1)
         ng = blk.ng
 
-        fileName = f"{path}/q.{mb.nrt:08d}.{blk.nblki:06d}.h5"
+        if animate:
+            fileName = f"{path}/q.{mb.nrt:08d}.{blk.nblki:06d}.h5"
+        else:
+            fileName = f"{path}/q.{blk.nblki:06d}.h5"
 
         with h5py.File(fileName, "w") as qf:
 
@@ -209,19 +223,27 @@ def parallelWriteRestart(mb, path="./", gridPath="./", precision="double"):
 
         for grid in et.getroot()[0][0]:
             nblki = int(grid.get("Name")[1::])
+            if animate:
+                textPrepend = f"q.{mb.nrt:08d}.{nblki:06d}.h5:/results/"
+            else:
+                textPrepend = f"q.{nblki:06d}.h5:/results/"
+
             time = grid.find("Time")
             time.set("Value", str(mb.tme))
             time = grid.find("Time")
             for var in grid.findall("Attribute"):
                 name = var.get("Name")
                 if name != "Velocity":
-                    text = f"q.{mb.nrt:08d}.{nblki:06d}.h5:/results/{name}"
+                    text = f"{textPrepend}{name}"
                     var[0].text = text
                 else:
                     for v in var.find("DataItem").findall("DataItem"):
                         name = v.get("Name")
-                        text = f"q.{mb.nrt:08d}.{nblki:06d}.h5:/results/{name}"
+                        text = f"{textPrepend}{name}"
                         v.text = text
 
-        saveFile = f"{path}/q.{mb.nrt:08d}.xmf"
+        if animate:
+            saveFile = f"{path}/q.{mb.nrt:08d}.xmf"
+        else:
+            saveFile = f"{path}/q.xmf"
         et.write(saveFile, pretty_print=True, encoding="UTF-8", xml_declaration=True)

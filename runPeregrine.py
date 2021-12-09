@@ -28,7 +28,7 @@ def simulate(configFilePath):
     nCells = pg.mpiComm.mpiUtils.getNumCells(mb)
     efficiency, slowestProc = pg.mpiComm.mpiUtils.getLoadEfficiency(mb)
     if rank == 0:
-        string += " Simulation Summary:\n"
+        string = " Simulation Summary:\n"
         string += f"  Total cells: {nCells}"
         print(string)
         if efficiency == 100.0:
@@ -65,7 +65,9 @@ def simulate(configFilePath):
             if rank == 0:
                 print("Saving restart.\n")
             pg.writers.parallelWriter.parallelWriteRestart(
-                mb, config["io"]["outputdir"]
+                mb,
+                path=config["io"]["outputdir"],
+                animate=config["simulation"]["animate"],
             )
 
         # Check if we need to check for Nan
@@ -74,7 +76,9 @@ def simulate(configFilePath):
                 abort = pg.mpiComm.mpiUtils.checkForNan(mb)
                 if abort > 0:
                     pg.writers.parallelWriter.parallelWriteRestart(
-                        mb, config["io"]["outputdir"]
+                        mb,
+                        path=config["io"]["outputdir"],
+                        animate=config["simulation"]["animate"],
                     )
                     comm.Barrier()
                     if rank == 0:

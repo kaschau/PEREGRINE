@@ -7,7 +7,7 @@ from copy import deepcopy
 from ..misc import progressBar
 
 
-def writeRestart(mb, path="./", gridPath="./", precision="double"):
+def writeRestart(mb, path="./", gridPath="./", animate=False, precision="double"):
     """This function produces an hdf5 file from a peregrinepy.multiBlock.restart for viewing in Paraview.
 
     Parameters
@@ -54,7 +54,10 @@ def writeRestart(mb, path="./", gridPath="./", precision="double"):
             ng = 1
             writeS = np.s_[:, :, :]
 
-        fileName = f"{path}/q.{mb.nrt:08d}.{blk.nblki:06d}.h5"
+        if animate:
+            fileName = f"{path}/q.{mb.nrt:08d}.{blk.nblki:06d}.h5"
+        else:
+            fileName = f"{path}/q.{blk.nblki:06d}.h5"
 
         with h5py.File(fileName, "w") as qf:
 
@@ -174,5 +177,8 @@ def writeRestart(mb, path="./", gridPath="./", precision="double"):
             progressBar(blk.nblki + 1, len(mb), f"Writing out block {blk.nblki}")
 
     et = etree.ElementTree(xdmfElem)
-    saveFile = f"{path}/q.{mb.nrt:08d}.xmf"
+    if animate:
+        saveFile = f"{path}/q.{mb.nrt:08d}.xmf"
+    else:
+        saveFile = f"{path}/q.xmf"
     et.write(saveFile, pretty_print=True, encoding="UTF-8", xml_declaration=True)

@@ -103,7 +103,10 @@ def bootstrapCase(config):
     # Register parallel writer
     ################################################################
     pg.writers.parallelWriter.registerParallelXdmf(
-        mb, config["io"]["outputdir"], gridPath=f"../{config['io']['griddir']}"
+        mb,
+        path=config["io"]["outputdir"],
+        gridPath=f"../{config['io']['griddir']}",
+        animate=config["simulation"]["animate"],
     )
 
     ################################################################
