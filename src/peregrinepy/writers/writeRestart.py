@@ -7,7 +7,7 @@ from copy import deepcopy
 from ..misc import progressBar
 
 
-def writeRestart(mb, path="./", gridPath="./", animate=False, precision="double"):
+def writeRestart(mb, path="./", gridPath="./", animate=True, precision="double"):
     """This function produces an hdf5 file from a peregrinepy.multiBlock.restart for viewing in Paraview.
 
     Parameters
