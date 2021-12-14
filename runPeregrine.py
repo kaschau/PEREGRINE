@@ -75,10 +75,11 @@ def simulate(configFilePath):
             if mb.nrt % checkNan == 0:
                 abort = pg.mpiComm.mpiUtils.checkForNan(mb)
                 if abort > 0:
+                    mb.nrt = 99999999
                     pg.writers.parallelWriter.parallelWriteRestart(
                         mb,
                         path=config["io"]["outputdir"],
-                        animate=config["simulation"]["animate"],
+                        animate=False,
                     )
                     comm.Barrier()
                     if rank == 0:
