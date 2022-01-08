@@ -74,7 +74,7 @@ class strang:
         ###############################################################
         ODE = ode(stiff)
         ODE.set_integrator("vode", method="bdf", with_jacobian=True)
-        for bindx, blk in enumerate(self):
+        for blk in self:
             it = product(
                 range(blk.ng, blk.ni + blk.ng - 1),
                 range(blk.ng, blk.nj + blk.ng - 1),
