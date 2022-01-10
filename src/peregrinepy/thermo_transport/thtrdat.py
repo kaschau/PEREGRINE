@@ -20,6 +20,10 @@ class thtrdat(thtrdat_):
                 "DijPoly": None,
                 "mu0": None,
                 "kappa0": None,
+                "Tcrit": None,
+                "pcrit": None,
+                "Vcrit": None,
+                "acentric": None,
             }
         )
         self.mirror = frozenDict(
@@ -32,6 +36,10 @@ class thtrdat(thtrdat_):
                 "DijPoly": None,
                 "mu0": None,
                 "kappa0": None,
+                "Tcrit": None,
+                "pcrit": None,
+                "Vcrit": None,
+                "acentric": None,
             }
         )
         self.array._freeze()
@@ -55,8 +63,8 @@ class thtrdat(thtrdat_):
 
         ns = len(usersp.keys())
         self.ns = ns
-        Ru = refsp["Ru"]
-        self.Ru = Ru
+        # Ru = refsp["Ru"]
+        # self.Ru = Ru
 
         # Species names string
         speciesNames = list(usersp.keys())
@@ -78,7 +86,7 @@ class thtrdat(thtrdat_):
             shape = [ns]
             createViewMirrorArray(self, ["cp0"], shape, space)
 
-        elif config["thermochem"]["eos"] == "tpg":
+        elif config["thermochem"]["eos"] in ["tpg", "cubic"]:
             self.array["NASA7"] = completeSpecies("NASA7", usersp, refsp)
             shape = [ns, 15]
             createViewMirrorArray(self, ["NASA7"], shape, space)
@@ -86,6 +94,13 @@ class thtrdat(thtrdat_):
             raise KeyError(
                 f'PEREGRINE ERROR: Unknown EOS {config["thermochem"]["eos"]}'
             )
+
+        # Extra properties for cubic eos
+        if config["thermochem"]["eos"] == "cubic":
+            for var in ["Tcrit", "pcrit", "Vcrit", "acentric"]:
+                self.array[var] = completeSpecies(var, usersp, refsp)
+                shape = [ns]
+                createViewMirrorArray(self, [var], shape, space)
 
         ################################
         # Set transport properties

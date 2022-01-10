@@ -26,6 +26,15 @@ void bindThermo(py::module_ &m) {
         py::arg("i")=0,
         py::arg("j")=0,
         py::arg("k")=0);
+  //  |----> cubic.cpp
+  thermo.def("cubic", &cubic, "Update primatives or conservatives with cubic EOS",
+        py::arg("block_ object"),
+        py::arg("thtrdat_ object"),
+        py::arg("nface"),
+        py::arg("given"),
+        py::arg("i")=0,
+        py::arg("j")=0,
+        py::arg("k")=0);
 
 ////////////////////////////////////////////////////////////////////////////////
 ///////////////////  C++ Parent thtrdat_ class /////////////////////////////////
@@ -47,5 +56,9 @@ void bindThermo(py::module_ &m) {
     .def_readwrite("DijPoly", &thtrdat_::DijPoly)
 
     .def_readwrite("mu0", &thtrdat_::mu0)
-    .def_readwrite("kappa0", &thtrdat_::kappa0);
+    .def_readwrite("kappa0", &thtrdat_::kappa0)
+
+    .def_readwrite("Tcrit", &thtrdat_::Tcrit)
+    .def_readwrite("pcrit", &thtrdat_::pcrit)
+    .def_readwrite("Vcrit", &thtrdat_::Vcrit);
 }
