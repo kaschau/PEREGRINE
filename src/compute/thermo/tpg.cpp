@@ -21,7 +21,6 @@ void tpg(block_ b,
   const int ns=th.ns;
   twoDview Y("Y", ns, numIds);
   twoDview hi("hi", ns, numIds);
-  twoDview cps("cps", ns, numIds);
 
   if ( given.compare("prims") == 0 )
   {
@@ -47,7 +46,7 @@ void tpg(block_ b,
   double rho,rhoinv;
   double rhou,rhov,rhow;
   double e,tke,rhoE;
-  double gamma,cp,h,c;
+  double gamma,cp,cps,h,c;
   double Rmix;
 
   // Compute nth species Y
@@ -74,7 +73,7 @@ void tpg(block_ b,
   {
     m = ( T <= th.NASA7(n,0) ) ? 8 : 1;
 
-    cps(n,id) =(th.NASA7(n,m+0)            +
+    cps       =(th.NASA7(n,m+0)            +
                 th.NASA7(n,m+1)*    T      +
                 th.NASA7(n,m+2)*pow(T,2.0) +
                 th.NASA7(n,m+3)*pow(T,3.0) +
@@ -87,8 +86,8 @@ void tpg(block_ b,
                 th.NASA7(n,m+4)*pow(T,4.0) / 5.0 +
                 th.NASA7(n,m+5)/    T            )*T*th.Ru/th.MW(n);
 
-    cp   += cps(n,id)*Y(n,id);
-    h    +=  hi(n,id)*Y(n,id);
+    cp += cps     *Y(n,id);
+    h  += hi(n,id)*Y(n,id);
   }
 
   // Compute mixuture enthalpy
@@ -149,6 +148,8 @@ void tpg(block_ b,
   token.release(id);
   });
   }
+
+
   else if ( given.compare("cons") == 0 )
   {
   twoDview rhoY("rhoY", ns, numIds);
@@ -174,7 +175,7 @@ void tpg(block_ b,
   double p;
   double e,tke;
   double T;
-  double gamma,cp,h,c;
+  double gamma,cp,cps,h,c;
   double Rmix;
 
   // Compute TKE
@@ -217,7 +218,7 @@ void tpg(block_ b,
     {
       int m = ( T <= th.NASA7(n,0) ) ? 8 : 1;
 
-      cps(n,id) =(th.NASA7(n,m+0)            +
+      cps       =(th.NASA7(n,m+0)            +
                   th.NASA7(n,m+1)*    T      +
                   th.NASA7(n,m+2)*pow(T,2.0) +
                   th.NASA7(n,m+3)*pow(T,3.0) +
@@ -230,8 +231,8 @@ void tpg(block_ b,
                   th.NASA7(n,m+4)*pow(T,4.0) / 5.0 +
                   th.NASA7(n,m+5)/    T            )*T*th.Ru/th.MW(n);
 
-      cp   += cps(n,id)*Y(n,id);
-      h    +=  hi(n,id)*Y(n,id);
+      cp += cps     *Y(n,id);
+      h  += hi(n,id)*Y(n,id);
     }
 
     T = T - (e - (h - Rmix*T))/(-cp - Rmix);
