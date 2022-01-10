@@ -12,7 +12,7 @@
 struct thtrdat_ {
 
   int ns;
-  double Ru;
+  static constexpr double Ru=8314.46261815324;
 
   oneDview MW;
 
@@ -34,6 +34,11 @@ struct thtrdat_ {
   oneDview mu0;
   oneDview kappa0;
 
+  // Critical properties;
+  oneDview Tcrit;
+  oneDview pcrit;
+  oneDview Vcrit;
+  oneDview acentric;
 };
 
 #endif
