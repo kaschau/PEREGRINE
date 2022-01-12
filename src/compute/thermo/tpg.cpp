@@ -62,8 +62,9 @@ void tpg(block_ b,
   Rmix = 0.0;
   for (int n=0; n<=ns-1; n++)
   {
-    Rmix += th.Ru  *Y(n,id)/th.MW(n);
+    Rmix += Y(n,id)/th.MW(n);
   }
+  Rmix *= th.Ru;
 
   // Update mixture properties
   h    = 0.0;
@@ -205,8 +206,9 @@ void tpg(block_ b,
   Rmix = 0.0;
   for (int n=0; n<=ns-1; n++)
   {
-    Rmix += th.Ru  *Y(n,id)/th.MW(n);
+    Rmix += Y(n,id)/th.MW(n);
   }
+  Rmix *= th.Ru;
 
   // Newtons method to find T
   T = ( b.q(i,j,k,4) < 1.0 ) ? 300.0 : b.q(i,j,k,4); // Initial guess of T

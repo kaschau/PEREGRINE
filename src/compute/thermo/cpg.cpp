@@ -62,9 +62,11 @@ void cpg(block_ b,
   cp   = 0.0;
   for (int n=0; n<=ns-1; n++)
   {
-    Rmix += Y(n,id)*th.Ru/th.MW(n);
+    Rmix += Y(n,id)/th.MW(n);
     cp   += Y(n,id)*th.cp0(n);
   }
+  Rmix *= th.Ru;
+
   // Compute mixuture enthalpy
   h = cp*T;
   gamma = cp/(cp-Rmix);
@@ -174,9 +176,10 @@ void cpg(block_ b,
   cp   = 0.0;
   for (int n=0; n<=ns-1; n++)
   {
-    Rmix += Y(n,id)*th.Ru/th.MW(n);
+    Rmix += Y(n,id)/th.MW(n);
     cp   += Y(n,id)*th.cp0(n);
   }
+  Rmix *= th.Ru;
 
   // Compute mixuture temperature,pressure
   T = e/(cp-Rmix);
