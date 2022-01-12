@@ -49,7 +49,7 @@ void cubic(block_ b,
   double rhou,rhov,rhow;
   double e,tke,rhoE;
   double gamma,cp,cps,h,c;
-  double Rmix=0.0;
+  double Rmix;
 
   // Compute nth species Y
   Y(ns-1,id) = 1.0;
@@ -77,7 +77,7 @@ void cubic(block_ b,
 
   // Real gas coefficients for cubic EOS
   // PRS
-  constexpr double uRG=2.0, wRG=-1.0, bCoeff=0.09725, aCoeff=0.006679375, fw0=0.37464, fw1=1.54226, fw2=-0.26992;
+  constexpr double uRG=2.0, wRG=-1.0, biConst=0.09725, aiConst=0.006679375, fw0=0.37464, fw1=1.54226, fw2=-0.26992;
 
   double bi,fOmega,Tr;
   double am = 0.0, bm = 0.0;
@@ -88,12 +88,13 @@ void cubic(block_ b,
   {
     // PRS
     Tr = T/th.Tcrit(n);
-    bi = bCoeff*th.Ru*th.Tcrit(n)/th.pcrit(n);
     fOmega = fw0 + fw1*th.acentric(n) + fw2*pow(th.acentric(n),2.0);
-    ai(n,id) = aCoeff*pow(th.Ru,2.0)*pow(th.Tcrit(n),2.5)/(th.pcrit(n)*sqrt(T)) * pow(1.0+fOmega*(1-pow(Tr,0.5)),2.0);
+    ai(n,id) = aiConst*pow(th.Ru,2.0)*pow(th.Tcrit(n),2.5)/(th.pcrit(n)*sqrt(T)) * pow(1.0+fOmega*(1-sqrt(Tr)),2.0);
 
+    bi = biConst*th.Ru*th.Tcrit(n)/th.pcrit(n);
     bm += X(n,id)*bi;
   }
+
   for (int n=0; n<=ns-1; n++)
   {
     for (int n2=0; n2<=ns-1; n2++)
@@ -123,19 +124,17 @@ void cubic(block_ b,
     double S = -R/abs(R) * pow(abs(R)+sqrt(M),(1.0/3.0));
     Z = S + Q/S - z2o3;
   }else{
-    double q1p5 = sqrt(pow(Q,3.0));
+    double q1p5 = pow(Q,1.5);
     double sqQ = sqrt(Q);
     double theta = acos(R/q1p5);
-    double x1 = -(2.0*sqQ*cos(theta/3.0)-z2o3);
-    double x2 = -(2.0*sqQ*cos((theta+2*3.14159265358979323846)/3.0)-z2o3);
-    double x3 = -(2.0*sqQ*cos((theta-2*3.14159265358979323846)/3.0)-z2o3);
+    double x1 = -(2.0*sqQ*cos(theta/3.0))-z2o3;
+    double x2 = -(2.0*sqQ*cos((theta+2*3.14159265358979323846)/3.0))-z2o3;
+    double x3 = -(2.0*sqQ*cos((theta-2*3.14159265358979323846)/3.0))-z2o3;
 
     Z = fmax(x1,fmax(x2,x3));
   }
 
   // Update mixture properties
-  // Compute Rmix
-  Rmix *= Z*th.Ru/wsbar;
 
   // departure functions
   double dam = 0.0;
@@ -151,7 +150,7 @@ void cubic(block_ b,
              fOmegaN *sqrt(ai(n2,id)*th.Tcrit(n )/th.pcrit(n)) );
     }
   }
-  dam *= -0.5*th.Ru*sqrt(aCoeff/T);
+  dam *= -0.5*th.Ru*sqrt(aiConst/T);
   double dAstar = -2.0*(Astar/T)*(1.0-0.5*(T/am)*dam);
   double dBstar = -Bstar/T;
 
@@ -166,10 +165,10 @@ void cubic(block_ b,
   double logZoB = log( (2.0*ZoB+(uRG-sqrt(pow(uRG,2.0)-4.0*wRG))) /
                        (2.0*ZoB+(uRG+sqrt(pow(uRG,2.0)-4.0*wRG))) );
 
-  double cpDep = Cuw*(am/T - dam)*logZoB*0.5*T/am*dam +
+  double cpDep = Cuw*(am/T - dam)*logZoB*0.5*T/am*dam
     + pow((pow(ZoB,2.0)+uRG*ZoB+wRG)-(dam/(bm*th.Ru))*(ZoB-1.e0),2.0)
-    / pow(pow(ZoB,2.0)+uRG*ZoB+wRG,2.0)
-    - (am/(bm*th.Ru*T))*(2.e0*ZoB+uRG)*pow(ZoB-1.e0,2.0) - 1.e0 ;
+    / ( pow(pow(ZoB,2.0)+uRG*ZoB+wRG,2.0)
+        - (am/(bm*th.Ru*T))*(2.e0*ZoB+uRG)*pow(ZoB-1.e0,2.0) ) - 1.e0 ;
 
   double hDep = Cuw*(am/T - dam)*logZoB + (Z-1.e0);
 
@@ -199,6 +198,9 @@ void cubic(block_ b,
     // Add departure to individual hi
     hi(n,id) += th.Ru*T*hDep/th.MW(n);
   }
+
+  // Compute Rmix
+  Rmix = th.Ru/wsbar;
 
   // Compute density
   rho = p/(Z*Rmix*T);
