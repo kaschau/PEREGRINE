@@ -39,7 +39,7 @@ H2:
   dipole: 0.0
   polarize: 7.900000000000001e-31
   zrot: 280.0
-  acentric: 0.0
+  acentric: -0.216
   geometry: linear
   Tcrit: 3.319e+1
   pcrit: 13.15e+5
@@ -72,7 +72,6 @@ H:
   dipole: 0.0
   polarize: 0.0
   zrot: 0.0
-  acentric: 0.0
   geometry: atom
   Tcrit: 182.6
   pcrit: 251.9e+5
@@ -105,7 +104,6 @@ O:
   dipole: 0.0
   polarize: 0.0
   zrot: 0.0
-  acentric: 0.0
   geometry: atom
 
 O2:
@@ -136,7 +134,6 @@ O2:
   dipole: 0.0
   polarize: 1.6e-30
   zrot: 3.8
-  acentric: 0.0
   geometry: linear
   Tcrit: 154.581
   pcrit: 50.4300e+5
@@ -170,7 +167,6 @@ OH:
   dipole: 0.0
   polarize: 0.0
   zrot: 0.0
-  acentric: 0.0
   geometry: linear
   Tcrit: 100.7
   pcrit: 57.60e+5
@@ -204,7 +200,7 @@ H2O:
   dipole: 6.150921915453923e-30
   polarize: 0.0
   zrot: 4.0
-  acentric: 0.0
+  acentric: 0.344
   geometry: nonlinear
   Tcrit: 647.14
   pcrit: 220.64e+5
@@ -238,7 +234,6 @@ HO2:
   dipole: 0.0
   polarize: 0.0
   zrot: 1.0
-  acentric: 0.0
   geometry: nonlinear
 
 H2O2:
@@ -270,7 +265,6 @@ H2O2:
   dipole: 0.0
   polarize: 0.0
   zrot: 3.8
-  acentric: 0.0
   geometry: nonlinear
 
 C:
@@ -301,7 +295,6 @@ C:
   dipole: 0.0
   polarize: 0.0
   zrot: 0.0
-  acentric: 0.0
   geometry: atom
 
 CH:
@@ -333,7 +326,6 @@ CH:
   dipole: 0.0
   polarize: 0.0
   zrot: 0.0
-  acentric: 0.0
   geometry: linear
 
 CH2:
@@ -365,7 +357,6 @@ CH2:
   dipole: 0.0
   polarize: 0.0
   zrot: 0.0
-  acentric: 0.0
   geometry: linear
 
 CH2(S):
@@ -397,7 +388,6 @@ CH2(S):
   dipole: 0.0
   polarize: 0.0
   zrot: 0.0
-  acentric: 0.0
   geometry: linear
 
 CH3:
@@ -429,7 +419,6 @@ CH3:
   dipole: 0.0
   polarize: 0.0
   zrot: 0.0
-  acentric: 0.0
   geometry: linear
 
 CH4:
@@ -461,7 +450,6 @@ CH4:
   dipole: 0.0
   polarize: 2.6000000000000002e-30
   zrot: 13.0
-  acentric: 0.0
   geometry: nonlinear
   Tcrit: 190.56
   pcrit: 45.99E+5
@@ -495,7 +483,6 @@ CO:
   dipole: 0.0
   polarize: 1.95e-30
   zrot: 1.8
-  acentric: 0.0
   geometry: linear
   Tcrit: 132.800
   pcrit: 34.9350e+5
@@ -529,7 +516,7 @@ CO2:
   dipole: 0.0
   polarize: 2.6500000000000002e-30
   zrot: 2.1
-  acentric: 0.0
+  acentric: 0.239
   geometry: linear
   Tcrit: 304.12
   pcrit: 73.74e+5
@@ -564,7 +551,6 @@ HCO:
   dipole: 0.0
   polarize: 0.0
   zrot: 0.0
-  acentric: 0.0
   geometry: nonlinear
 
 CH2O:
@@ -597,7 +583,6 @@ CH2O:
   dipole: 0.0
   polarize: 0.0
   zrot: 2.0
-  acentric: 0.0
   geometry: nonlinear
 
 CH2OH:
@@ -630,7 +615,6 @@ CH2OH:
   dipole: 5.670589618368584e-30
   polarize: 0.0
   zrot: 2.0
-  acentric: 0.0
   geometry: nonlinear
 
 CH3O:
@@ -663,7 +647,6 @@ CH3O:
   dipole: 5.670589618368584e-30
   polarize: 0.0
   zrot: 2.0
-  acentric: 0.0
   geometry: nonlinear
 
 CH3OH:
@@ -696,7 +679,6 @@ CH3OH:
   dipole: 0.0
   polarize: 0.0
   zrot: 1.0
-  acentric: 0.0
   geometry: nonlinear
 
 C2H:
@@ -728,7 +710,6 @@ C2H:
   dipole: 0.0
   polarize: 0.0
   zrot: 2.5
-  acentric: 0.0
   geometry: linear
 
 C2H2:
@@ -760,7 +741,6 @@ C2H2:
   dipole: 0.0
   polarize: 0.0
   zrot: 2.5
-  acentric: 0.0
   geometry: linear
 
 C2H3:
@@ -792,7 +772,6 @@ C2H3:
   dipole: 0.0
   polarize: 0.0
   zrot: 1.0
-  acentric: 0.0
   geometry: nonlinear
 
 C2H4:
@@ -824,7 +803,6 @@ C2H4:
   dipole: 0.0
   polarize: 0.0
   zrot: 1.5
-  acentric: 0.0
   geometry: nonlinear
 
 C2H5:
@@ -856,7 +834,6 @@ C2H5:
   dipole: 0.0
   polarize: 0.0
   zrot: 1.5
-  acentric: 0.0
   geometry: nonlinear
 
 C2H6:
@@ -888,7 +865,6 @@ C2H6:
   dipole: 0.0
   polarize: 0.0
   zrot: 1.5
-  acentric: 0.0
   geometry: nonlinear
 
 HCCO:
@@ -921,7 +897,6 @@ HCCO:
   dipole: 0.0
   polarize: 0.0
   zrot: 1.0
-  acentric: 0.0
   geometry: nonlinear
 
 CH2CO:
@@ -954,7 +929,6 @@ CH2CO:
   dipole: 0.0
   polarize: 0.0
   zrot: 2.0
-  acentric: 0.0
   geometry: nonlinear
 
 HCCOH:
@@ -987,7 +961,6 @@ HCCOH:
   dipole: 0.0
   polarize: 0.0
   zrot: 2.0
-  acentric: 0.0
   geometry: nonlinear
 
 N:
@@ -1018,7 +991,6 @@ N:
   dipole: 0.0
   polarize: 0.0
   zrot: 0.0
-  acentric: 0.0
   geometry: atom
 
 NH:
@@ -1050,7 +1022,6 @@ NH:
   dipole: 0.0
   polarize: 0.0
   zrot: 4.0
-  acentric: 0.0
   geometry: linear
 
 NH2:
@@ -1082,7 +1053,6 @@ NH2:
   dipole: 0.0
   polarize: 2.26e-30
   zrot: 4.0
-  acentric: 0.0
   geometry: nonlinear
 
 NH3:
@@ -1114,7 +1084,6 @@ NH3:
   dipole: 4.9033921994128345e-30
   polarize: 0.0
   zrot: 10.0
-  acentric: 0.0
   geometry: nonlinear
 
 NNH:
@@ -1146,7 +1115,6 @@ NNH:
   dipole: 0.0
   polarize: 0.0
   zrot: 1.0
-  acentric: 0.0
   geometry: nonlinear
 
 'NO':
@@ -1178,7 +1146,7 @@ NNH:
   dipole: 0.0
   polarize: 1.76e-30
   zrot: 4.0
-  acentric: 0.0
+  acentric: 0.588
   geometry: linear
 
 NO2:
@@ -1210,7 +1178,6 @@ NO2:
   dipole: 0.0
   polarize: 0.0
   zrot: 1.0
-  acentric: 0.0
   geometry: nonlinear
 
 N2O:
@@ -1242,7 +1209,6 @@ N2O:
   dipole: 0.0
   polarize: 0.0
   zrot: 1.0
-  acentric: 0.0
   geometry: linear
 
 HNO:
@@ -1275,7 +1241,6 @@ HNO:
   dipole: 0.0
   polarize: 0.0
   zrot: 1.0
-  acentric: 0.0
   geometry: nonlinear
 
 CN:
@@ -1307,7 +1272,6 @@ CN:
   dipole: 0.0
   polarize: 0.0
   zrot: 1.0
-  acentric: 0.0
   geometry: linear
 
 HCN:
@@ -1340,7 +1304,6 @@ HCN:
   dipole: 0.0
   polarize: 0.0
   zrot: 1.0
-  acentric: 0.0
   geometry: linear
 
 H2CN:
@@ -1373,7 +1336,6 @@ H2CN:
   dipole: 0.0
   polarize: 0.0
   zrot: 1.0
-  acentric: 0.0
   geometry: linear
 
 HCNN:
@@ -1406,7 +1368,6 @@ HCNN:
   dipole: 0.0
   polarize: 0.0
   zrot: 1.0
-  acentric: 0.0
   geometry: nonlinear
 
 HCNO:
@@ -1440,7 +1401,6 @@ HCNO:
   dipole: 0.0
   polarize: 0.0
   zrot: 1.0
-  acentric: 0.0
   geometry: nonlinear
 
 HOCN:
@@ -1474,7 +1434,6 @@ HOCN:
   dipole: 0.0
   polarize: 0.0
   zrot: 1.0
-  acentric: 0.0
   geometry: nonlinear
 
 HNCO:
@@ -1508,7 +1467,6 @@ HNCO:
   dipole: 0.0
   polarize: 0.0
   zrot: 1.0
-  acentric: 0.0
   geometry: nonlinear
 
 NCO:
@@ -1541,7 +1499,6 @@ NCO:
   dipole: 0.0
   polarize: 0.0
   zrot: 1.0
-  acentric: 0.0
   geometry: linear
 
 N2:
@@ -1572,7 +1529,6 @@ N2:
   dipole: 0.0
   polarize: 1.76e-30
   zrot: 4.0
-  acentric: 0.0
   geometry: linear
   Tcrit: 126.20
   pcrit: 33.958e+5
@@ -1605,7 +1561,6 @@ AR:
   dipole: 0.0
   polarize: 0.0
   zrot: 0.0
-  acentric: 0.0
   geometry: atom
   Tcrit: 150.86
   pcrit: 48.98e+5
@@ -1639,7 +1594,6 @@ C3H7:
   dipole: 0.0
   polarize: 0.0
   zrot: 1.0
-  acentric: 0.0
   geometry: nonlinear
 
 C3H8:
@@ -1671,7 +1625,6 @@ C3H8:
   dipole: 0.0
   polarize: 0.0
   zrot: 1.0
-  acentric: 0.0
   geometry: nonlinear
 
 CH2CHO:
@@ -1704,7 +1657,6 @@ CH2CHO:
   dipole: 0.0
   polarize: 0.0
   zrot: 2.0
-  acentric: 0.0
   geometry: nonlinear
 
 CH3CHO:
@@ -1737,5 +1689,4 @@ CH3CHO:
   dipole: 0.0
   polarize: 0.0
   zrot: 2.0
-  acentric: 0.0
   geometry: nonlinear
