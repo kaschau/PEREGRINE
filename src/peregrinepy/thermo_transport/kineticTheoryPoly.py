@@ -18,7 +18,7 @@ def kineticTheoryPoly(usersp, refsp, eos):
         def cp_R(cp0, poly, T, MW):
             return cp0 * T / (Ru * MW)
 
-    elif eos == "tpg":
+    elif eos in ["tpg", "cubic"]:
         NASA7 = completeSpecies("NASA7", usersp, refsp)
         cp0 = [None for i in range(ns)]
 
