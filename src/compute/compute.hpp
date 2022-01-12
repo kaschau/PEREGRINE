@@ -102,6 +102,8 @@ void cpg(block_ b, const thtrdat_ th, const int face, const std::string given,
 //    |------> tpg
 void tpg(block_ b, const thtrdat_ th, const int face, const std::string given,
          const int indxI = 0, const int indxJ = 0, const int indxK = 0);
+void cubic(block_ b, const thtrdat_ th, const int face, const std::string given,
+           const int indxI = 0, const int indxJ = 0, const int indxK = 0);
 
 // ./timeIntegration
 //    |------> rk3Stages.cpp

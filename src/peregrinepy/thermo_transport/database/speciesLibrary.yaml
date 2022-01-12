@@ -1,7 +1,7 @@
 ---
 
 avogadro: 6.02214076e+26
-# Ru: 8314.46261815324
+Ru: 8314.46261815324
 kb: 1.380649e-23
 epsilon0: 8.854187812773345e-12
 
@@ -519,7 +519,6 @@ CO2:
   geometry: linear
   Tcrit: 304.12
   pcrit: 73.74e+5
-  Vcrit: 94.07e-3
 
 HCO:
   comp:

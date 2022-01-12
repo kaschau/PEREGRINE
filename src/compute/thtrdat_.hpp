@@ -37,7 +37,6 @@ struct thtrdat_ {
   // Critical properties;
   oneDview Tcrit;
   oneDview pcrit;
-  oneDview Vcrit;
   oneDview acentric;
 };
 

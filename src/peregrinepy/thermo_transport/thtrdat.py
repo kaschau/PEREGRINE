@@ -22,7 +22,6 @@ class thtrdat(thtrdat_):
                 "kappa0": None,
                 "Tcrit": None,
                 "pcrit": None,
-                "Vcrit": None,
                 "acentric": None,
             }
         )
@@ -38,7 +37,6 @@ class thtrdat(thtrdat_):
                 "kappa0": None,
                 "Tcrit": None,
                 "pcrit": None,
-                "Vcrit": None,
                 "acentric": None,
             }
         )
@@ -97,7 +95,7 @@ class thtrdat(thtrdat_):
 
         # Extra properties for cubic eos
         if config["thermochem"]["eos"] == "cubic":
-            for var in ["Tcrit", "pcrit", "Vcrit", "acentric"]:
+            for var in ["Tcrit", "pcrit", "acentric"]:
                 self.array[var] = completeSpecies(var, usersp, refsp)
                 shape = [ns]
                 createViewMirrorArray(self, [var], shape, space)
