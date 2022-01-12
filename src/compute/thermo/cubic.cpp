@@ -77,9 +77,9 @@ void cubic(block_ b,
 
   // Real gas coefficients for cubic EOS
   // PRS
-  constexpr double uRG=2.0, wRG=-1.0, biConst=0.09725, aiConst=0.006679375, fw0=0.37464, fw1=1.54226, fw2=-0.26992;
+  constexpr double uRG=2.0, wRG=-1.0, biConst=0.077796, aiConst=0.457240, fw0=0.37464, fw1=1.54226, fw2=-0.26992;
 
-  double bi,fOmega,Tr;
+  double bi,fOmega,alpha,Tr;
   double am = 0.0, bm = 0.0;
   double Astar, Bstar;
 
@@ -89,12 +89,13 @@ void cubic(block_ b,
     // PRS
     Tr = T/th.Tcrit(n);
     fOmega = fw0 + fw1*th.acentric(n) + fw2*pow(th.acentric(n),2.0);
-    ai(n,id) = aiConst*pow(th.Ru,2.0)*pow(th.Tcrit(n),2.5)/(th.pcrit(n)*sqrt(T)) * pow(1.0+fOmega*(1-sqrt(Tr)),2.0);
+    alpha = pow(1.0+fOmega*(1-sqrt(Tr)),2.0);
+    ai(n,id) = aiConst*( pow(th.Ru*th.Tcrit(n),2.0)*alpha )/th.pcrit(n);
+    bi = biConst*( th.Ru*th.Tcrit(n) )/th.pcrit(n);
 
-    bi = biConst*th.Ru*th.Tcrit(n)/th.pcrit(n);
+
     bm += X(n,id)*bi;
   }
-
   for (int n=0; n<=ns-1; n++)
   {
     for (int n2=0; n2<=ns-1; n2++)
@@ -114,19 +115,19 @@ void cubic(block_ b,
   z1 = Astar + wRG*Bstar2 - uRG*Bstar - uRG*Bstar2;
   z2 = -(1.0 + Bstar - uRG*Bstar);
 
-  double Q,R,M;
+  double Q,RR,M;
   Q = (pow(z2,2.0)-3.0*z1)/9.0;
-  R = (2.0*pow(z2,3.0)-9.0*z2*z1+27.0*z0)/54.0;
-  M = pow(R,2.0) - pow(Q,3.0);
+  RR = (2.0*pow(z2,3.0) - 9.0*z2*z1 + 27.0*z0)/54.0;
+  M = pow(RR,2.0) - pow(Q,3.0);
 
   double z2o3 = z2/3.0;
   if (M > 0.0) {
-    double S = -R/abs(R) * pow(abs(R)+sqrt(M),(1.0/3.0));
+    double S = -RR/abs(RR) * pow(abs(RR)+sqrt(M),(1.0/3.0));
     Z = S + Q/S - z2o3;
   }else{
     double q1p5 = pow(Q,1.5);
     double sqQ = sqrt(Q);
-    double theta = acos(R/q1p5);
+    double theta = acos(RR/q1p5);
     double x1 = -(2.0*sqQ*cos(theta/3.0))-z2o3;
     double x2 = -(2.0*sqQ*cos((theta+2*3.14159265358979323846)/3.0))-z2o3;
     double x3 = -(2.0*sqQ*cos((theta-2*3.14159265358979323846)/3.0))-z2o3;
