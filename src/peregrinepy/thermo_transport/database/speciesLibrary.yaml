@@ -41,6 +41,8 @@ H2:
   zrot: 280.0
   acentric: 0.0
   geometry: linear
+  Tcrit: 3.319e+1
+  pcrit: 13.15e+5
 
 H:
   comp:
@@ -72,6 +74,8 @@ H:
   zrot: 0.0
   acentric: 0.0
   geometry: atom
+  Tcrit: 182.6
+  pcrit: 251.9e+5
 
 O:
   comp:
@@ -134,6 +138,8 @@ O2:
   zrot: 3.8
   acentric: 0.0
   geometry: linear
+  Tcrit: 154.581
+  pcrit: 50.4300e+5
 
 OH:
   comp:
@@ -166,6 +172,8 @@ OH:
   zrot: 0.0
   acentric: 0.0
   geometry: linear
+  Tcrit: 100.7
+  pcrit: 57.60e+5
 
 H2O:
   comp:
@@ -198,6 +206,8 @@ H2O:
   zrot: 4.0
   acentric: 0.0
   geometry: nonlinear
+  Tcrit: 647.14
+  pcrit: 220.64e+5
 
 HO2:
   comp:
@@ -453,6 +463,8 @@ CH4:
   zrot: 13.0
   acentric: 0.0
   geometry: nonlinear
+  Tcrit: 190.56
+  pcrit: 45.99E+5
 
 CO:
   comp:
@@ -485,6 +497,8 @@ CO:
   zrot: 1.8
   acentric: 0.0
   geometry: linear
+  Tcrit: 132.800
+  pcrit: 34.9350e+5
 
 CO2:
   comp:
@@ -1560,6 +1574,8 @@ N2:
   zrot: 4.0
   acentric: 0.0
   geometry: linear
+  Tcrit: 126.20
+  pcrit: 33.958e+5
 
 AR:
   comp:
@@ -1591,6 +1607,8 @@ AR:
   zrot: 0.0
   acentric: 0.0
   geometry: atom
+  Tcrit: 150.86
+  pcrit: 48.98e+5
 
 C3H7:
   comp:
