@@ -23,15 +23,21 @@
 // Thermal and Transport Properties for the Simulation of Direct-Fired sCO 2 Combustor
 //     Manikantachari, Martin, Bobren-Diaz, Vasu
 //     Journal of Engineering for Gas Turbines and Power, 2017
-//     DOI: 10.1115/1.4037579
+//     DOI: 10.1Real Gas Models in Coupled Algorithms Numerical
+//
+
+// Real Gas Models in Coupled Algorithms Numerical Recipes and Thermophysical Relations
+//     Hanimann, Mangani, Casartelli, Vogt, Darwish
+//     Turbomachinery Propulsion and Power, 2020
+//     doi:10.3390/ijtpp5030020
 
 // ----------------------------------------------------------------------//
 //           Solves the cubic EOS of the general form
 //
-//                   RT       \alpha(T)
-//               P = __  _  ____________
+//                    RT         a \alpha(T)
+//               P = ____   _   _______________
 //
-//                  V-b    V(V+b)+c(V-b)
+//                   V-b          V^2+2bV-b^2
 //
 // ----------------------------------------------------------------------//
 
@@ -104,6 +110,8 @@ void cubic(block_ b,
     X(n,id) = (Y(n,id)/th.MW(n))/denom;
     wsbar += th.MW(n)*X(n,id);
   }
+  // Compute Rmix
+  Rmix = th.Ru/wsbar;
 
   // Real gas coefficients for cubic EOS
 
@@ -236,17 +244,11 @@ void cubic(block_ b,
     hi(n,id) += th.Ru*T*hDep/th.MW(n);
   }
 
-  // Compute Rmix
-  Rmix = th.Ru/wsbar;
-
   // Compute density
   rho = p/(Z*Rmix*T);
   rhoinv = 1.0/rho;
 
   // Specific heat ratio (Real Gas Thermodynamics by P. Nederstigt)
-  gamma = 1.0/ (1 - Rmix/cp* (Z+T*dZdT));
-
-  // Mixture speed of sound
   dAstar = Astar/p;
   dBstar = Bstar/p;
 
@@ -256,8 +258,13 @@ void cubic(block_ b,
 
   double dZdp = - ( dz2*pow(Z,2.0) + dz1*Z    + dz0)
                  /(3.0*pow(Z,2.0)+2.0*Z*z2 + z1 );
-  c = sqrt(abs(gamma/((rho/p)*(1.0 - p*dZdp/Z))));
 
+  double drhodp = (rho/p)*(1.e0 - p*dZdp/Z);
+  double drhodt =-(rho/T)*(1.e0 + T*dZdT/Z);
+  gamma = drhodp / (drhodp - (T/cp)*pow(drhodt/rho,2.0));
+
+  // Mixture speed of sound
+  c = sqrt(abs(gamma/drhodp));
 
   // Compute momentum
   rhou = rho*u;
