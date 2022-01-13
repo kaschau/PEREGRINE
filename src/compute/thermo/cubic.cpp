@@ -6,6 +6,20 @@
 #include <math.h>
 #include <stdexcept>
 
+// References
+//
+// Generalizing the Thermodynamics State Relationships in KIVA-3V
+//     Mario F. Trujillo
+//     Peter O’Rourke
+//     David Torres
+//     Los Alamos National Labs, 2002
+//     https://www.osti.gov/servlets/purl/809947
+//
+// Thermodyanamic Properties from Cubic Equations of State
+//     Patrick Chung-Nin Mak
+//     University of British Columbia, 1988
+//     https://open.library.ubc.ca/media/download/pdf/831/1.0058883/2
+
 void cubic(block_ b,
    const thtrdat_ th,
    const int nface,
