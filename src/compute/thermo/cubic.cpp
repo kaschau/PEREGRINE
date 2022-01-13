@@ -19,6 +19,22 @@
 //     Patrick Chung-Nin Mak
 //     University of British Columbia, 1988
 //     https://open.library.ubc.ca/media/download/pdf/831/1.0058883/2
+//
+// Thermal and Transport Properties for the Simulation of Direct-Fired sCO 2 Combustor
+//     Manikantachari, Martin, Bobren-Diaz, Vasu
+//     Journal of Engineering for Gas Turbines and Power, 2017
+//     DOI: 10.1115/1.4037579
+
+// ----------------------------------------------------------------------//
+//           Solves the cubic EOS of the general form
+//
+//                   RT       \alpha(T)
+//               P = __  _  ____________
+//
+//                  V-b    V(V+b)+c(V-b)
+//
+// ----------------------------------------------------------------------//
+
 
 void cubic(block_ b,
    const thtrdat_ th,
@@ -90,8 +106,16 @@ void cubic(block_ b,
   }
 
   // Real gas coefficients for cubic EOS
-  // PRS
-  constexpr double uRG=2.0, wRG=-1.0, biConst=0.077796, aiConst=0.457240, fw0=0.37464, fw1=1.54226, fw2=-0.26992;
+
+  // -------------------------------------------------------------------------------------------------------------//
+  // Peng-Robinson
+  constexpr double uRG=2.0, wRG=-1.0, biConst=0.077796 , aiConst=0.457240 , fw0=0.37464, fw1=1.54226, fw2=-0.26992;
+  // -------------------------------------------------------------------------------------------------------------//
+
+  // -------------------------------------------------------------------------------------------------------------//
+  // Soave-Redlich-Kwong
+  //constexpr double uRG=1.0, wRG= 0.0, biConst=0.0866403, aiConst=0.4274802, fw0=0.480  , fw1=1.574  , fw2=-0.176  ;
+  // -------------------------------------------------------------------------------------------------------------//
 
   double bi,fOmega,alpha,Tr;
   double am = 0.0, bm = 0.0;
@@ -100,13 +124,11 @@ void cubic(block_ b,
   // Compressibility Factor, Z
   for (int n=0; n<=ns-1; n++)
   {
-    // PRS
     Tr = T/th.Tcrit(n);
     fOmega = fw0 + fw1*th.acentric(n) + fw2*pow(th.acentric(n),2.0);
     alpha = pow(1.0+fOmega*(1-sqrt(Tr)),2.0);
     ai(n,id) = aiConst*( pow(th.Ru*th.Tcrit(n),2.0)*alpha )/th.pcrit(n);
     bi = biConst*( th.Ru*th.Tcrit(n) )/th.pcrit(n);
-
 
     bm += X(n,id)*bi;
   }
@@ -181,11 +203,11 @@ void cubic(block_ b,
                        (2.0*ZoB+(uRG+sqrt(pow(uRG,2.0)-4.0*wRG))) );
 
   double cpDep = Cuw*(am/T - dam)*logZoB*0.5*T/am*dam
-    + pow((pow(ZoB,2.0)+uRG*ZoB+wRG)-(dam/(bm*th.Ru))*(ZoB-1.e0),2.0)
+    + pow((pow(ZoB,2.0)+uRG*ZoB+wRG)-(dam/(bm*th.Ru))*(ZoB-1.0),2.0)
     / ( pow(pow(ZoB,2.0)+uRG*ZoB+wRG,2.0)
-        - (am/(bm*th.Ru*T))*(2.e0*ZoB+uRG)*pow(ZoB-1.e0,2.0) ) - 1.e0 ;
+        - (am/(bm*th.Ru*T))*(2.0*ZoB+uRG)*pow(ZoB-1.0,2.0) ) - 1.0 ;
 
-  double hDep = Cuw*(am/T - dam)*logZoB + (Z-1.e0);
+  double hDep = Cuw*(am/T - dam)*logZoB + (Z-1.0);
 
   // Start h and cp as departure values
   h  = th.Ru*T* hDep/wsbar;
@@ -228,13 +250,13 @@ void cubic(block_ b,
   dAstar = Astar/p;
   dBstar = Bstar/p;
 
-  dz0 =-(Bstar*dAstar+(Astar+(2.e0*Bstar+3.e0*pow(Bstar,2.0))*wRG)*dBstar);
-  dz1 = (dAstar+(2.e0*Bstar*(wRG-uRG)-uRG)*dBstar);
-  dz2 =-(1.e0-uRG)*dBstar;
+  dz0 =-(Bstar*dAstar+(Astar+(2.0*Bstar+3.0*pow(Bstar,2.0))*wRG)*dBstar);
+  dz1 = (dAstar+(2.0*Bstar*(wRG-uRG)-uRG)*dBstar);
+  dz2 =-(1.0-uRG)*dBstar;
 
   double dZdp = - ( dz2*pow(Z,2.0) + dz1*Z    + dz0)
-                 /(3.e0*pow(Z,2.0)+2.e0*Z*z2 + z1 );
-  c = sqrt(abs(gamma/((rho/p)*(1.e0 - p*dZdp/Z))));
+                 /(3.0*pow(Z,2.0)+2.0*Z*z2 + z1 );
+  c = sqrt(abs(gamma/((rho/p)*(1.0 - p*dZdp/Z))));
 
 
   // Compute momentum
