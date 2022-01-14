@@ -48,17 +48,22 @@ void bindThermo(py::module_ &m) {
 
     .def_readwrite("MW", &thtrdat_::MW)
 
-    .def_readwrite("cp0", &thtrdat_::cp0)
     .def_readwrite("NASA7", &thtrdat_::NASA7)
 
     .def_readwrite("muPoly", &thtrdat_::muPoly)
     .def_readwrite("kappaPoly", &thtrdat_::kappaPoly)
     .def_readwrite("DijPoly", &thtrdat_::DijPoly)
 
+    .def_readwrite("cp0", &thtrdat_::cp0)
     .def_readwrite("mu0", &thtrdat_::mu0)
     .def_readwrite("kappa0", &thtrdat_::kappa0)
 
     .def_readwrite("Tcrit", &thtrdat_::Tcrit)
     .def_readwrite("pcrit", &thtrdat_::pcrit)
-    .def_readwrite("acentric", &thtrdat_::acentric);
+    .def_readwrite("Vcrit", &thtrdat_::Vcrit)
+    .def_readwrite("acentric", &thtrdat_::acentric)
+
+    .def_readwrite("chungA", &thtrdat_::chungA)
+    .def_readwrite("chungB", &thtrdat_::chungB)
+    .def_readwrite("redDipole", &thtrdat_::redDipole);
 }

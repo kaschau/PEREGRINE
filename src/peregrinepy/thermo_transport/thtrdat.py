@@ -22,7 +22,11 @@ class thtrdat(thtrdat_):
                 "kappa0": None,
                 "Tcrit": None,
                 "pcrit": None,
+                "Vcrit": None,
                 "acentric": None,
+                "chungA": None,
+                "chungB": None,
+                "redDipole": None,
             }
         )
         self.mirror = frozenDict(
@@ -37,7 +41,11 @@ class thtrdat(thtrdat_):
                 "kappa0": None,
                 "Tcrit": None,
                 "pcrit": None,
+                "Vcrit": None,
                 "acentric": None,
+                "chungA": None,
+                "chungB": None,
+                "redDipole": None,
             }
         )
         self.array._freeze()
@@ -95,7 +103,7 @@ class thtrdat(thtrdat_):
 
         # Extra properties for cubic eos
         if config["thermochem"]["eos"] == "cubic":
-            for var in ["Tcrit", "pcrit", "acentric"]:
+            for var in ["Tcrit", "pcrit", "Vcrit", "acentric"]:
                 self.array[var] = completeSpecies(var, usersp, refsp)
                 shape = [ns]
                 createViewMirrorArray(self, [var], shape, space)
@@ -135,6 +143,20 @@ class thtrdat(thtrdat_):
                 self.array["kappa0"] = completeSpecies("kappa0", usersp, refsp)
                 shape = [ns]
                 createViewMirrorArray(self, ["kappa0"], shape, space)
+            elif config["thermochem"]["trans"] == "chungDenseGas":
+
+                from .chungDenseGas import chungDenseGas
+
+                (chungA, chungB, redDipole) = chungDenseGas(usersp, refsp)
+                self.array["chungA"] = chungA
+                shape = [ns, 10]
+                createViewMirrorArray(self, ["chungA"], shape, space)
+                self.array["chungB"] = chungB
+                shape = [ns, 7]
+                createViewMirrorArray(self, ["chungB"], shape, space)
+                self.array["redDipole"] = redDipole
+                shape = [ns]
+                createViewMirrorArray(self, ["redDipole"], shape, space)
             else:
                 raise KeyError(
                     f'PEREGRINE ERROR: Unknown TRANS {config["thermochem"]["trans"]}'

@@ -103,15 +103,15 @@ void cubic(block_ b,
     denom += Y(n,id)/th.MW(n);
   }
 
-  // Compute mole fraction
-  double wsbar = 0.0;
+  // Compute mole fraction, mean nolecular weight
+  double MWmix = 0.0;
   for (int n=0; n<=ns-1; n++)
   {
     X(n,id) = (Y(n,id)/th.MW(n))/denom;
-    wsbar += th.MW(n)*X(n,id);
+    MWmix += th.MW(n)*X(n,id);
   }
   // Compute Rmix
-  Rmix = th.Ru/wsbar;
+  Rmix = th.Ru/MWmix;
 
   // Real gas coefficients for cubic EOS
 
@@ -218,8 +218,8 @@ void cubic(block_ b,
   double hDep = Cuw*(am/T - dam)*logZoB + (Z-1.0);
 
   // Start h and cp as departure values
-  h  = th.Ru*T* hDep/wsbar;
-  cp = th.Ru  *cpDep/wsbar;
+  h  = th.Ru*T* hDep/MWmix;
+  cp = th.Ru  *cpDep/MWmix;
   int m;
   for (int n=0; n<=ns-1; n++)
   {
@@ -248,7 +248,7 @@ void cubic(block_ b,
   rho = p/(Z*Rmix*T);
   rhoinv = 1.0/rho;
 
-  // Specific heat ratio (Real Gas Thermodynamics by P. Nederstigt)
+  // Specific heat ratio
   dAstar = Astar/p;
   dBstar = Bstar/p;
 
