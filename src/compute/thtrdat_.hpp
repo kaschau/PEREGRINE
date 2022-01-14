@@ -13,7 +13,6 @@ struct thtrdat_ {
 
   int ns;
   static constexpr double Ru=8314.46261815324; // J/kmol/K
-  static constexpr double kb=1.38064852e-23; //m2 kg s-2 K-1
 
   // Molecular weight
   oneDview MW;
