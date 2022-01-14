@@ -100,7 +100,7 @@ void chungDenseGas(block_ b,
                       Gcoeff*pow(Tstar,Bcoeff)*sin(Scoeff*pow(Tstar,Wcoeff)-Hcoeff);
 
 
-          Fc = 1 - 0.2756*th.acentric(n) + 0.059035*pow(th.redDipole(n),4.0); // + kij??
+          Fc = 1.0 - 0.2756*th.acentric(n) + 0.059035*pow(th.redDipole(n),4.0); // + kij??
 
           nu0 = 4.0785e-5 * sqrt(th.MW(n)*T)/(pow(th.Vcrit(n),2.0/3.0)*omegaStar) * Fc;
 
