@@ -31,4 +31,12 @@ void bindTransport(py::module_ &m) {
         py::arg("i")=0,
         py::arg("j")=0,
         py::arg("k")=0);
+  //  |----> chungDenseGas.cpp
+  transport.def("chungDenseGas", &chungDenseGas, "Update transport properties from primatives via Chung's correleation for dense fluid.",
+        py::arg("block_"),
+        py::arg("thtrdat_ object"),
+        py::arg("face"),
+        py::arg("i")=0,
+        py::arg("j")=0,
+        py::arg("k")=0);
 }

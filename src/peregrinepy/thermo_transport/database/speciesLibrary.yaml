@@ -520,6 +520,7 @@ CO2:
   geometry: linear
   Tcrit: 304.12
   pcrit: 73.74e+5
+  Vcrit: 94.07e-3
 
 HCO:
   comp:
