@@ -74,7 +74,7 @@ void chungDenseGas(block_ b,
         }
 
         double Omegav, Tstar, Tr, Fc;
-        double Psi, alpha, beta, Z, cv;
+        double Psi, alpha, beta, Z;
         double eta0, lambda0;
 
         double Yy, G1, G2, etaStar, etaStarStar;

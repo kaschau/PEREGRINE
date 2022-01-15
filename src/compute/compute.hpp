@@ -129,8 +129,8 @@ void constantProps(block_ b, const thtrdat_ th, const int face,
 void kineticTheoryUnityLewis(block_ b, const thtrdat_ th, const int face,
                              const int indxI = 0, const int indxJ = 0,
                              const int indxK = 0);
-//    |------> chungDenseGas
-void chungDenseGas(block_ b, const thtrdat_ th, const int face,
+//    |------> chungDenseGasUnityLewis
+void chungDenseGasUnityLewis(block_ b, const thtrdat_ th, const int face,
                    const int indxI = 0, const int indxJ = 0,
                    const int indxK = 0);
 
