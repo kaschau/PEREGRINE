@@ -131,8 +131,8 @@ void kineticTheoryUnityLewis(block_ b, const thtrdat_ th, const int face,
                              const int indxK = 0);
 //    |------> chungDenseGasUnityLewis
 void chungDenseGasUnityLewis(block_ b, const thtrdat_ th, const int face,
-                   const int indxI = 0, const int indxJ = 0,
-                   const int indxK = 0);
+                             const int indxI = 0, const int indxJ = 0,
+                             const int indxK = 0);
 
 // ./utils
 //    |------> applyFluxes
