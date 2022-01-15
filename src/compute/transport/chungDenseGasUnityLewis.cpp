@@ -21,12 +21,12 @@
 //     5th Edition, 2001
 
 
-void chungDenseGas(block_ b,
-                     const thtrdat_ th,
-                     const int nface,
-                     const int indxI/*=0*/,
-                     const int indxJ/*=0*/,
-                     const int indxK/*=0*/) {
+void chungDenseGasUnityLewis(block_ b,
+                             const thtrdat_ th,
+                             const int nface,
+                             const int indxI/*=0*/,
+                             const int indxJ/*=0*/,
+                             const int indxK/*=0*/) {
 
   MDRange3 range = get_range3(b, nface, indxI, indxJ, indxK);
   Kokkos::Experimental::UniqueToken<exec_space> token;

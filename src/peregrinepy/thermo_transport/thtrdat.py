@@ -143,7 +143,7 @@ class thtrdat(thtrdat_):
                 self.array["kappa0"] = completeSpecies("kappa0", usersp, refsp)
                 shape = [ns]
                 createViewMirrorArray(self, ["kappa0"], shape, space)
-            elif config["thermochem"]["trans"] == "chungDenseGas":
+            elif config["thermochem"]["trans"].startswith("chungDenseGas"):
 
                 from .chungDenseGas import chungDenseGas
 
