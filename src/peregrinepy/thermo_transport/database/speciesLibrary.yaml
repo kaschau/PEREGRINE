@@ -134,9 +134,11 @@ O2:
   dipole: 0.0
   polarize: 1.6e-30
   zrot: 3.8
+  acentric: 0.0222
   geometry: linear
   Tcrit: 154.581
   pcrit: 50.4300e+5
+  Vcrit: 0.0022929558097381088
 
 OH:
   comp:
@@ -520,7 +522,7 @@ CO2:
   geometry: linear
   Tcrit: 304.12
   pcrit: 73.74e+5
-  Vcrit: 94.07e-3
+  Vcrit: 0.002137468757100659
 
 HCO:
   comp:
@@ -1085,7 +1087,11 @@ NH3:
   dipole: 4.9033921994128345e-30
   polarize: 0.0
   zrot: 10.0
+  acentric: 0.256
   geometry: nonlinear
+  Tcrit: 405.5
+  pcrit: 112.8e+6
+  Vcrit: 0.004251071575362575
 
 NNH:
   comp:
@@ -1531,8 +1537,10 @@ N2:
   polarize: 1.76e-30
   zrot: 4.0
   geometry: linear
+  acentric: 0.0372
   Tcrit: 126.20
   pcrit: 33.958e+5
+  Vcrit: 0.0031770509827439724
 
 AR:
   comp:

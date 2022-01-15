@@ -6,6 +6,8 @@ import numpy as np
 def chungDenseGas(usersp, refsp):
     ns = len(usersp.keys())
 
+    # MW
+    MW = completeSpecies("MW", usersp, refsp)
     # mu
     dipole = completeSpecies("dipole", usersp, refsp)
     # W_ac
@@ -19,7 +21,11 @@ def chungDenseGas(usersp, refsp):
     chungB = np.zeros((ns, 7))
     redDipole = np.zeros(ns)
     for n in range(ns):
-        redDipole[n] = 131.3 * dipole[n] / np.sqrt(Vcrit[n] * Tcrit[n])
+        # Chung wants reduced dipole moments in units of Debye???
+        dp = dipole[n] / 3.33564e-30
+        # And Vcrit in cm^3/mol
+        Vc = Vcrit[n] * MW[n] * 1e3
+        redDipole[n] = 131.3 * dp / np.sqrt(Vc * Tcrit[n])
         for i in range(10):
             chungA[n, i] = (
                 viscConsts[i, 0]
