@@ -13,6 +13,12 @@
 //     Lee
 //     Starling
 //     Ind. Eng. Chem. Res. 1988, 27,671-679
+//
+// The Properties of Gases and Liquids
+//     Bruce Poling
+//     Prausnitz
+//     O'Connell
+//     5th Edition, 2001
 
 
 void chungDenseGas(block_ b,
@@ -67,12 +73,11 @@ void chungDenseGas(block_ b,
           MWmix += X(n, id) * th.MW(n);
         }
 
-        double omegaStar, Tstar, Tr, Fc;
-        double nu0;
+        double Omegav, Tstar, Tr, Fc;
         double Psi, alpha, beta, Z, cv;
-        double lambda0;
+        double eta0, lambda0;
 
-        double Yy, G1, G2, nuk, nup;
+        double Yy, G1, G2, etaStar, etaStarStar;
         double H2, lambdak, lambdap;
 
         static constexpr double Acoeff = 1.16145;
@@ -81,42 +86,22 @@ void chungDenseGas(block_ b,
         static constexpr double Dcoeff = 0.77320;
         static constexpr double Ecoeff = 2.16178;
         static constexpr double Fcoeff = 2.43787;
-        static constexpr double Gcoeff = -6.435e-4;
-        static constexpr double Hcoeff = 7.27371;
-        static constexpr double Scoeff = 18.0323;
-        static constexpr double Wcoeff = -0.76830;
 
+        double Vc,rhocm;
         for (int n = 0; n <= ns - 1; n++) {
-          // Modified Chapman-Enskog dulite gas
 
           // In the Chung paper, Vcrit is in cm^3/mol, but we store Vcrit in m^3/kg
-          // TODO: Check units
+          Vc = th.Vcrit(n)*th.MW(n)*1.0e3;
 
-          // Dilute gas viscosity
+          // Dense gas viscosity
           Tr = T/th.Tcrit(n);
           Tstar = 1.2593*Tr;
-          omegaStar = Acoeff/pow(Tstar,Bcoeff) + Ccoeff/exp(Dcoeff*Tstar) +
-                      Ecoeff/exp(Fcoeff*Tstar) +
-                      Gcoeff*pow(Tstar,Bcoeff)*sin(Scoeff*pow(Tstar,Wcoeff)-Hcoeff);
-
+          Omegav = Acoeff*pow(Tstar,-Bcoeff) + Ccoeff*exp(-Dcoeff*Tstar) +
+                   Ecoeff*exp(-Fcoeff*Tstar);
 
           Fc = 1.0 - 0.2756*th.acentric(n) + 0.059035*pow(th.redDipole(n),4.0); // + kij??
 
-          nu0 = 4.0785e-5 * sqrt(th.MW(n)*T)/(pow(th.Vcrit(n),2.0/3.0)*omegaStar) * Fc;
-
-          // Dilute gas thermal conductivity
-          cv = b.qh(i,j,k,1)/b.qh(i,j,k,0);
-          alpha = cv/th.Ru - 3.0/2.0;
-          beta = 0.7862-0.7109*th.acentric(n)+1.3168*pow(th.acentric(n),2.0);
-          Z = 2.0 + 10.5*pow(Tr,2.0);
-          Psi = 1.0 + alpha*((0.215 + 0.28288*alpha - 1.061*beta + 0.26665*Z) /
-                             (0.6366 + beta*Z + 1.061*alpha*beta));
-          lambda0 = 7.452*nu0/th.MW(n)*Psi;
-
-
           // Viscosity for dense fluids
-          //TODO: Move the Ai and Bi coefficients into python and do those calculations
-          // before hand.
           double &A1 = th.chungA(n,0);
           double &A2 = th.chungA(n,1);
           double &A3 = th.chungA(n,2);
@@ -128,16 +113,30 @@ void chungDenseGas(block_ b,
           double &A9 = th.chungA(n,8);
           double &A10 = th.chungA(n,9);
 
-          Yy = b.Q(i,j,k,0)*th.Vcrit(n)/6.0;
-          G1 =  (1.0-0.5*Yy)/pow(1-Yy,3.0);
-          G2 = (A1*(1-exp(-A4*Yy)/Yy) +
+          rhocm = b.Q(i,j,k,0)/th.MW(n)*1e-3;
+          Yy = rhocm*Vc/6.0;
+          G1 =  (1.0-0.5*Yy)/pow(1.0-Yy,3.0);
+          G2 = (A1*(1.0-exp(-A4*Yy))/Yy +
                 A2*G1*exp(A5*Yy) +
                 A3*G1) / (A1*A4 + A2 + A3);
-          nuk = nu0*(1/G2 + A6*Yy);
-          nup = (36.344e-6 * sqrt(th.MW(n)*th.Tcrit(n))/pow(th.Vcrit(n),2.0/3.0))*
-                 A7*pow(Yy,2.0)*G2*exp(A8)+A9/Tstar+A10/pow(Tstar,2.0);
 
-          mu_sp(n,id) = nuk + nup;
+          etaStarStar = A7*pow(Yy,2.0)*G2*exp(A8+A9/Tstar+A10*pow(Tstar,-2.0));
+          etaStar = sqrt(Tstar)/Omegav*(Fc/G2 + A6*Yy) + etaStarStar;
+
+          // Compute final viscosity, convert to SI units
+          mu_sp(n,id) = etaStar*36.344*sqrt(th.MW(n)*th.Tcrit(n))/pow(Vc,2.0/3.0) * 1e-7;
+
+          // Dilute gas thermal conductivity
+          // HACK: We dont store the molar Cv anywhere, but it is 1/2,3/2,5/2 for almost everything
+          //       and quick tests show that resusults are not sensitive to this alpha parameter. So
+          //       we are just going to leave alpha at 1/2 for all species.
+          alpha = 0.5;
+          beta = 0.7862-0.7109*th.acentric(n)+1.3168*pow(th.acentric(n),2.0);
+          eta0 = 4.0785e-5 * sqrt(th.MW(n)*T)/(pow(Vc,2.0/3.0)*Omegav) * Fc;
+          Z = 2.0 + 10.5*pow(Tr,2.0);
+          Psi = 1.0 + alpha*((0.215 + 0.28288*alpha - 1.061*beta + 0.26665*Z) /
+                             (0.6366 + beta*Z + 1.061*alpha*beta));
+          lambda0 = 7.452*eta0/th.MW(n)*Psi;
 
           // Dilute thermal conductivity, in cal/(cm.s.K) so need to convert
           double &B1 = th.chungB(n,0);
@@ -153,10 +152,10 @@ void chungDenseGas(block_ b,
                 B3*G1) / (B1*B4+B2+B3);
 
           lambdak = lambda0*(1.0/H2 + B6*Yy);
-          lambdap = (3.039e-4*sqrt(th.Tcrit(n)/th.MW(n))/pow(th.Vcrit(n),2.0/3.0))*B7*pow(Yy,2.0)*H2*sqrt(Tr);
+          lambdap = (3.039e-4*sqrt(th.Tcrit(n)/th.MW(n))/pow(Vc,2.0/3.0))*B7*pow(Yy,2.0)*H2*sqrt(Tr);
 
-          kappa_sp(n,id) =  lambdak + lambdap;
-
+          // Compute final thermal conductivity, convert to SI units
+          kappa_sp(n,id) = (lambdak + lambdap) * 418.68 ;
         }
 
         // Now every species' property is computed, generate mixture values
@@ -187,40 +186,16 @@ void chungDenseGas(block_ b,
         }
         kappa = 0.5 * (sum1 + 1.0 / sum2);
 
-        // // mass diffusion coefficient mixture
-        // double temp;
-        // for (int n = 0; n <= ns - 1; n++) {
-        //   sum1 = 0.0;
-        //   sum2 = 0.0;
-        //   for (int n2 = 0; n2 <= ns - 1; n2++) {
-        //     if (n == n2) {
-        //       continue;
-        //     }
-        //     sum1 += X(n2, id) / Dij(n, n2, id);
-        //     sum2 += X(n2, id) * th.MW(n2) / Dij(n, n2, id);
-        //   }
-        //   // Account for pressure
-        //   sum1 *= p;
-        //   // HACK must be a better way to give zero for sum2 when MWmix ==
-        //   // th.MW(n)*X(n)
-        //   temp = p * X(n, id) / (MWmix - th.MW(n) * X(n, id));
-        //   if (isinf(temp)) {
-        //     Dk(n, id) = 0.0;
-        //   } else {
-        //     sum2 *= temp;
-        //     Dk(n, id) = 1.0 / (sum1 + sum2);
-        //   }
-        // }
-
         // Set values of new properties
         // viscocity
         b.qt(i, j, k, 0) = mu;
         // thermal conductivity
         b.qt(i, j, k, 1) = kappa;
-        // // Diffusion coefficients mass
-        // for (int n = 0; n <= ns - 1; n++) {
-        //   b.qt(i, j, k, 2 + n) = Dk(n, id);
-        // }
+        // NOTE: Unity Lewis number approximation!
+        for (int n=0; n<=ns-1; n++)
+        {
+          b.qt(i,j,k,2+n) = kappa / ( b.Q(i,j,k,0) * b.qh(i,j,k,1) );
+        }
 
         token.release(id);
       });
