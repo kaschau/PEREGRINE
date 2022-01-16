@@ -120,7 +120,7 @@ class thtrdat(thtrdat_):
                     muPoly,
                     kappaPoly,
                     DijPoly,
-                ) = kineticTheoryPoly(usersp, refsp, config["thermochem"]["eos"])
+                ) = kineticTheoryPoly(usersp, refsp)
 
                 self.array["muPoly"] = muPoly
                 shape = [ns, 5]
