@@ -143,8 +143,8 @@ class thtrdat(thtrdat_):
                 self.array["kappa0"] = completeSpecies("kappa0", usersp, refsp)
                 shape = [ns]
                 createViewMirrorArray(self, ["kappa0"], shape, space)
-            elif config["thermochem"]["trans"].startswith("chungDenseGas"):
 
+            elif "chungDenseGas" in config["thermochem"]["trans"]:
                 from .chungDenseGas import chungDenseGas
 
                 (chungA, chungB, redDipole) = chungDenseGas(usersp, refsp)
@@ -157,6 +157,7 @@ class thtrdat(thtrdat_):
                 self.array["redDipole"] = redDipole
                 shape = [ns]
                 createViewMirrorArray(self, ["redDipole"], shape, space)
+
             else:
                 raise KeyError(
                     f'PEREGRINE ERROR: Unknown TRANS {config["thermochem"]["trans"]}'
