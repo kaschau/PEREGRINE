@@ -103,7 +103,7 @@ void cubic(block_ b,
     denom += Y(n,id)/th.MW(n);
   }
 
-  // Compute mole fraction, mean nolecular weight
+  // Compute mole fraction, mean molecular weight
   double MWmix = 0.0;
   for (int n=0; n<=ns-1; n++)
   {
@@ -363,27 +363,148 @@ void cubic(block_ b,
   // Internal energy
   e = (rhoE - tke)*rhoinv;
 
+  // Real gas coefficients for cubic EOS
+
+  // -------------------------------------------------------------------------------------------------------------//
+  // Peng-Robinson
+  constexpr double uRG=2.0, wRG=-1.0, biConst=0.077796 , aiConst=0.457240 , fw0=0.37464, fw1=1.54226, fw2=-0.26992;
+  // -------------------------------------------------------------------------------------------------------------//
+
+  // -------------------------------------------------------------------------------------------------------------//
+  // Soave-Redlich-Kwong
+  //constexpr double uRG=1.0, wRG= 0.0, biConst=0.0866403, aiConst=0.4274802, fw0=0.480  , fw1=1.574  , fw2=-0.176  ;
+  // -------------------------------------------------------------------------------------------------------------//
+
   // Iterate on to find temperature
   int nitr=0, maxitr = 100;
   double tol = 1e-8;
   double error = 1e100;
 
-  // Compute Rmix
-  Rmix = 0.0;
+  // Compute y->x denom
+  double denom= 0.0;
   for (int n=0; n<=ns-1; n++)
   {
-    Rmix += th.Ru  *Y(n,id)/th.MW(n);
+    denom += Y(n,id)/th.MW(n);
   }
 
+  // Compute mole fraction, mean molecular weight
+  double MWmix = 0.0;
+  for (int n=0; n<=ns-1; n++)
+  {
+    X(n,id) = (Y(n,id)/th.MW(n))/denom;
+    MWmix += th.MW(n)*X(n,id);
+  }
+  // Compute Rmix
+  Rmix = th.Ru/MWmix;
+  // molar volume
+  double Vm = MWmix/rho;
+
+  double bi,fOmega,alpha,Tr;
+  double am = 0.0, bm = 0.0;
+  double Astar, Bstar;
+  double drhodp;
   // Newtons method to find T
   T = ( b.q(i,j,k,4) < 1.0 ) ? 300.0 : b.q(i,j,k,4); // Initial guess of T
   while( (abs(error) > tol) && (nitr < maxitr))
   {
-    h = 0.0;
-    cp = 0.0;
+    // With a T, we can compute p
     for (int n=0; n<=ns-1; n++)
     {
-      int m = ( T <= th.NASA7(n,0) ) ? 8 : 1;
+      Tr = T/th.Tcrit(n);
+      fOmega = fw0 + fw1*th.acentric(n) + fw2*pow(th.acentric(n),2.0);
+      alpha = pow(1.0+fOmega*(1-sqrt(Tr)),2.0);
+      ai(n,id) = aiConst*( pow(th.Ru*th.Tcrit(n),2.0)*alpha )/th.pcrit(n);
+      bi = biConst*( th.Ru*th.Tcrit(n) )/th.pcrit(n);
+
+      bm += X(n,id)*bi;
+    }
+    for (int n=0; n<=ns-1; n++)
+    {
+      for (int n2=0; n2<=ns-1; n2++)
+      {
+        am += X(n,id)*X(n2,id)*sqrt(ai(n,id)*ai(n2,id)); // - (1 - kij)  <- For now we ignore binary interaciton coeff, i.e. assume kij=1
+      }
+    }
+    //PR
+    double Cc = bm;
+    //SRK
+    // double c = 0.0;
+    p = th.Ru*T/(Vm-bm) - am/(Vm*(Vm+bm)+Cc*(Vm-bm));
+    printf("p=%f\n",p);
+
+    Astar = am*p/pow(th.Ru*T,2.0);
+    Bstar = bm*p/(th.Ru*T);
+
+    // Solve cubic EOS for Z
+    // https://www.e-education.psu.edu/png520/m11_p6.html
+    double z0,z1,z2, Z;
+    double Bstar2 = pow(Bstar,2.0);
+    z0 = - (Astar*Bstar + wRG*Bstar2 + wRG*Bstar2*Bstar);
+    z1 = Astar + wRG*Bstar2 - uRG*Bstar - uRG*Bstar2;
+    z2 = -(1.0 + Bstar - uRG*Bstar);
+
+    double Q,RR,M;
+    Q = (pow(z2,2.0)-3.0*z1)/9.0;
+    RR = (2.0*pow(z2,3.0) - 9.0*z2*z1 + 27.0*z0)/54.0;
+    M = pow(RR,2.0) - pow(Q,3.0);
+
+    double z2o3 = z2/3.0;
+    if (M > 0.0) {
+      double S = -RR/abs(RR) * pow(abs(RR)+sqrt(M),(1.0/3.0));
+      Z = S + Q/S - z2o3;
+    }else{
+      double q1p5 = pow(Q,1.5);
+      double sqQ = sqrt(Q);
+      double theta = acos(RR/q1p5);
+      double x1 = -(2.0*sqQ*cos(theta/3.0))-z2o3;
+      double x2 = -(2.0*sqQ*cos((theta+2*3.14159265358979323846)/3.0))-z2o3;
+      double x3 = -(2.0*sqQ*cos((theta-2*3.14159265358979323846)/3.0))-z2o3;
+
+      Z = fmax(x1,fmax(x2,x3));
+    }
+    // departure functions
+    double dam = 0.0;
+    double fOmegaN, fOmegaN2;
+    for (int n=0; n<=ns-1; n++)
+    {
+      for (int n2=0; n2<=ns-1; n2++)
+      {
+        fOmegaN  = fw0 + fw1*th.acentric(n)  + fw2*pow(th.acentric(n ),2.0);
+        fOmegaN2 = fw0 + fw1*th.acentric(n2) + fw2*pow(th.acentric(n2),2.0);
+        dam += X(n2,id)*X(n,id)*1.0*(
+               fOmegaN2*sqrt(ai(n,id)* th.Tcrit(n2)/th.pcrit(n2)) +
+               fOmegaN *sqrt(ai(n2,id)*th.Tcrit(n )/th.pcrit(n)) );
+      }
+    }
+    dam *= -0.5*th.Ru*sqrt(aiConst/T);
+    double dAstar = -2.0*(Astar/T)*(1.0-0.5*(T/am)*dam);
+    double dBstar = -Bstar/T;
+
+    double dz0 = -(Bstar*dAstar+(Astar+(2.0*Bstar+3.0*pow(Bstar,2.0))*wRG)*dBstar);
+    double dz1 = (dAstar+(2.0*Bstar*(wRG-uRG)-uRG)*dBstar);
+    double dz2 = -(1.0-uRG)*dBstar;
+
+    double dZdT = - (dz2*pow(Z,2.0) + dz1*Z + dz0) / ( 3.0*pow(Z,2.0) + 2.0*Z*z2 + z1 );
+
+    double Cuw = 1.0/(bm*th.Ru*sqrt(pow(uRG,2.0)-4.0*wRG));
+    double ZoB = Z/Bstar;
+    double logZoB = log( (2.0*ZoB+(uRG-sqrt(pow(uRG,2.0)-4.0*wRG))) /
+                         (2.0*ZoB+(uRG+sqrt(pow(uRG,2.0)-4.0*wRG))) );
+
+    double cpDep = Cuw*(am/T - dam)*logZoB*0.5*T/am*dam
+      + pow((pow(ZoB,2.0)+uRG*ZoB+wRG)-(dam/(bm*th.Ru))*(ZoB-1.0),2.0)
+      / ( pow(pow(ZoB,2.0)+uRG*ZoB+wRG,2.0)
+          - (am/(bm*th.Ru*T))*(2.0*ZoB+uRG)*pow(ZoB-1.0,2.0) ) - 1.0 ;
+
+    double hDep = Cuw*(am/T - dam)*logZoB + (Z-1.0);
+
+    // Start h and cp as departure values
+    h  = th.Ru*T* hDep/MWmix;
+    cp = th.Ru  *cpDep/MWmix;
+    int m;
+    for (int n=0; n<=ns-1; n++)
+    {
+      m = ( T <= th.NASA7(n,0) ) ? 8 : 1;
 
       cps       =(th.NASA7(n,m+0)            +
                   th.NASA7(n,m+1)*    T      +
@@ -400,20 +521,32 @@ void cubic(block_ b,
 
       cp += cps      *Y(n,id);
       h  +=  hi(n,id)*Y(n,id);
+      // Add departure to individual hi
+      hi(n,id) += th.Ru*T*hDep/th.MW(n);
     }
 
-    T = T - (e - (h - Rmix*T))/(-cp - Rmix);
-    error = e - (h - Rmix*T);
+    // Specific heat ratio
+    dAstar = Astar/p;
+    dBstar = Bstar/p;
+
+    dz0 =-(Bstar*dAstar+(Astar+(2.0*Bstar+3.0*pow(Bstar,2.0))*wRG)*dBstar);
+    dz1 = (dAstar+(2.0*Bstar*(wRG-uRG)-uRG)*dBstar);
+    dz2 =-(1.0-uRG)*dBstar;
+
+    double dZdp = - ( dz2*pow(Z,2.0) + dz1*Z    + dz0)
+                   /(3.0*pow(Z,2.0)+2.0*Z*z2 + z1 );
+
+    drhodp = (rho/p)*(1.e0 - p*dZdp/Z);
+    double drhodt =-(rho/T)*(1.e0 + T*dZdT/Z);
+    gamma = drhodp / (drhodp - (T/cp)*pow(drhodt/rho,2.0));
+
+    T = T - (e - (h - Z*Rmix*T))/(cp/gamma);
+    error = e - (h - Z*Rmix*T);
     nitr += 1;
   }
 
-  // Compute mixuture pressure
-  p = rho*Rmix*T;
-  // Compute mixture gamma
-  gamma = cp/(cp-Rmix);
-
   // Mixture speed of sound
-  c = sqrt(gamma*Rmix*T);
+  c = sqrt(abs(gamma/drhodp));
 
   // Set values of new properties
   // Pressure, temperature, Y
