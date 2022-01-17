@@ -81,7 +81,7 @@ void cubic(block_ b,
   double& w = b.q(i,j,k,3);
   double& T = b.q(i,j,k,4);
 
-  double rho,rhoinv;
+  double rho;
   double rhou,rhov,rhow;
   double e,tke,rhoE;
   double gamma,cp,cps,h,c;
@@ -246,7 +246,6 @@ void cubic(block_ b,
 
   // Compute density
   rho = p/(Z*Rmix*T);
-  rhoinv = 1.0/rho;
 
   // Specific heat ratio
   dAstar = Astar/p;
@@ -277,7 +276,7 @@ void cubic(block_ b,
                  rho    ;
 
   // Compute internal, total, energy
-  e = h - p*rhoinv;
+  e = h - p/rho;
   rhoE = rho*e + tke;
 
   // Compute species mass
@@ -333,7 +332,6 @@ void cubic(block_ b,
   // So we store these as well.
 
   double& rho = b.Q(i,j,k,0);
-  double rhoinv = 1.0/rho;
   double& rhou = b.Q(i,j,k,1);
   double& rhov = b.Q(i,j,k,2);
   double& rhow = b.Q(i,j,k,3);
@@ -348,8 +346,8 @@ void cubic(block_ b,
   // Compute TKE
   tke = 0.5*(pow(rhou,2.0) +
              pow(rhov,2.0) +
-             pow(rhow,2.0))*
-                 rhoinv    ;
+             pow(rhow,2.0))/
+                 rho       ;
 
   // Compute species mass fraction
   Y(ns-1,id) = 1.0;
@@ -361,7 +359,7 @@ void cubic(block_ b,
   Y(ns-1,id) = fmax(0.0,Y(ns-1,id));
 
   // Internal energy
-  e = (rhoE - tke)*rhoinv;
+  e = (rhoE - tke)/rho;
 
   // Real gas coefficients for cubic EOS
 
@@ -400,14 +398,18 @@ void cubic(block_ b,
   double Vm = MWmix/rho;
 
   double bi,fOmega,alpha,Tr;
-  double am = 0.0, bm = 0.0;
+  double am, bm;
   double Astar, Bstar;
-  double drhodp;
+  double drhodp, dZdT;
+  double Z,z0,z1,z2;
+  double dz0,dz1,dz2;
   // Newtons method to find T
   T = ( b.q(i,j,k,4) < 1.0 ) ? 300.0 : b.q(i,j,k,4); // Initial guess of T
   while( (abs(error) > tol) && (nitr < maxitr))
   {
     // With a T, we can compute p
+    am = 0.0;
+    bm = 0.0;
     for (int n=0; n<=ns-1; n++)
     {
       Tr = T/th.Tcrit(n);
@@ -428,16 +430,14 @@ void cubic(block_ b,
     //PR
     double Cc = bm;
     //SRK
-    // double c = 0.0;
+    // double Cc = 0.0;
     p = th.Ru*T/(Vm-bm) - am/(Vm*(Vm+bm)+Cc*(Vm-bm));
-    printf("p=%f\n",p);
 
     Astar = am*p/pow(th.Ru*T,2.0);
     Bstar = bm*p/(th.Ru*T);
 
     // Solve cubic EOS for Z
     // https://www.e-education.psu.edu/png520/m11_p6.html
-    double z0,z1,z2, Z;
     double Bstar2 = pow(Bstar,2.0);
     z0 = - (Astar*Bstar + wRG*Bstar2 + wRG*Bstar2*Bstar);
     z1 = Astar + wRG*Bstar2 - uRG*Bstar - uRG*Bstar2;
@@ -477,14 +477,14 @@ void cubic(block_ b,
       }
     }
     dam *= -0.5*th.Ru*sqrt(aiConst/T);
-    double dAstar = -2.0*(Astar/T)*(1.0-0.5*(T/am)*dam);
-    double dBstar = -Bstar/T;
+    double dAstardT = -2.0*(Astar/T)*(1.0-0.5*(T/am)*dam);
+    double dBstardT = -Bstar/T;
 
-    double dz0 = -(Bstar*dAstar+(Astar+(2.0*Bstar+3.0*pow(Bstar,2.0))*wRG)*dBstar);
-    double dz1 = (dAstar+(2.0*Bstar*(wRG-uRG)-uRG)*dBstar);
-    double dz2 = -(1.0-uRG)*dBstar;
+    dz0 = -(Bstar*dAstardT+(Astar+(2.0*Bstar+3.0*pow(Bstar,2.0))*wRG)*dBstardT);
+    dz1 = (dAstardT+(2.0*Bstar*(wRG-uRG)-uRG)*dBstardT);
+    dz2 = -(1.0-uRG)*dBstardT;
 
-    double dZdT = - (dz2*pow(Z,2.0) + dz1*Z + dz0) / ( 3.0*pow(Z,2.0) + 2.0*Z*z2 + z1 );
+    dZdT = - (dz2*pow(Z,2.0) + dz1*Z + dz0) / ( 3.0*pow(Z,2.0) + 2.0*Z*z2 + z1 );
 
     double Cuw = 1.0/(bm*th.Ru*sqrt(pow(uRG,2.0)-4.0*wRG));
     double ZoB = Z/Bstar;
@@ -494,7 +494,7 @@ void cubic(block_ b,
     double cpDep = Cuw*(am/T - dam)*logZoB*0.5*T/am*dam
       + pow((pow(ZoB,2.0)+uRG*ZoB+wRG)-(dam/(bm*th.Ru))*(ZoB-1.0),2.0)
       / ( pow(pow(ZoB,2.0)+uRG*ZoB+wRG,2.0)
-          - (am/(bm*th.Ru*T))*(2.0*ZoB+uRG)*pow(ZoB-1.0,2.0) ) - 1.0 ;
+      - (am/(bm*th.Ru*T))*(2.0*ZoB+uRG)*pow(ZoB-1.0,2.0) ) - 1.0 ;
 
     double hDep = Cuw*(am/T - dam)*logZoB + (Z-1.0);
 
@@ -525,25 +525,25 @@ void cubic(block_ b,
       hi(n,id) += th.Ru*T*hDep/th.MW(n);
     }
 
-    // Specific heat ratio
-    dAstar = Astar/p;
-    dBstar = Bstar/p;
-
-    dz0 =-(Bstar*dAstar+(Astar+(2.0*Bstar+3.0*pow(Bstar,2.0))*wRG)*dBstar);
-    dz1 = (dAstar+(2.0*Bstar*(wRG-uRG)-uRG)*dBstar);
-    dz2 =-(1.0-uRG)*dBstar;
-
-    double dZdp = - ( dz2*pow(Z,2.0) + dz1*Z    + dz0)
-                   /(3.0*pow(Z,2.0)+2.0*Z*z2 + z1 );
-
-    drhodp = (rho/p)*(1.e0 - p*dZdp/Z);
-    double drhodt =-(rho/T)*(1.e0 + T*dZdT/Z);
-    gamma = drhodp / (drhodp - (T/cp)*pow(drhodt/rho,2.0));
-
-    T = T - (e - (h - Z*Rmix*T))/(cp/gamma);
     error = e - (h - Z*Rmix*T);
+    T = T - error/(-cp + Rmix*(Z*dZdT));
     nitr += 1;
   }
+
+  // Specific heat ratio
+  double dAstardp = Astar/p;
+  double dBstardp = Bstar/p;
+
+  dz0 =-(Bstar*dAstardp+(Astar+(2.0*Bstar+3.0*pow(Bstar,2.0))*wRG)*dBstardp);
+  dz1 = (dAstardp+(2.0*Bstar*(wRG-uRG)-uRG)*dBstardp);
+  dz2 =-(1.0-uRG)*dBstardp;
+
+  double dZdp = - ( dz2*pow(Z,2.0) + dz1*Z    + dz0)
+                 /(3.0*pow(Z,2.0)+2.0*Z*z2 + z1 );
+
+  drhodp = (rho/p)*(1.e0 - p*dZdp/Z);
+  double drhodt =-(rho/T)*(1.e0 + T*dZdT/Z);
+  gamma = drhodp / (drhodp - (T/cp)*pow(drhodt/rho,2.0));
 
   // Mixture speed of sound
   c = sqrt(abs(gamma/drhodp));
