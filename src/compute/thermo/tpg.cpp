@@ -237,8 +237,8 @@ void tpg(block_ b,
       h  += hi(n,id)*Y(n,id);
     }
 
-    T = T - (e - (h - Rmix*T))/(-cp - Rmix);
     error = e - (h - Rmix*T);
+    T = T - error/(-cp - Rmix);
     nitr += 1;
   }
 
