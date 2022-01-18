@@ -21,7 +21,6 @@ void tpg(block_ b,
   const int ns=th.ns;
   twoDview Y("Y", ns, numIds);
   twoDview hi("hi", ns, numIds);
-  twoDview cps("cps", ns, numIds);
 
   if ( given.compare("prims") == 0 )
   {
@@ -44,7 +43,7 @@ void tpg(block_ b,
   double& w = b.q(i,j,k,3);
   double& T = b.q(i,j,k,4);
 
-  double rho,rhoinv;
+  double rho;
   double rhou,rhov,rhow;
   double e,tke,rhoE;
   double gamma,cp,h,c;
@@ -63,18 +62,18 @@ void tpg(block_ b,
   Rmix = 0.0;
   for (int n=0; n<=ns-1; n++)
   {
-    Rmix += th.Ru  *Y(n,id)/th.MW(n);
+    Rmix += Y(n,id)/th.MW(n);
   }
+  Rmix *= th.Ru;
 
   // Update mixture properties
   h    = 0.0;
   cp   = 0.0;
-  int m;
   for (int n=0; n<=ns-1; n++)
   {
-    m = ( T <= th.NASA7(n,0) ) ? 8 : 1;
+    int m = ( T <= th.NASA7(n,0) ) ? 8 : 1;
 
-    cps(n,id) =(th.NASA7(n,m+0)            +
+    double cps=(th.NASA7(n,m+0)            +
                 th.NASA7(n,m+1)*    T      +
                 th.NASA7(n,m+2)*pow(T,2.0) +
                 th.NASA7(n,m+3)*pow(T,3.0) +
@@ -87,8 +86,8 @@ void tpg(block_ b,
                 th.NASA7(n,m+4)*pow(T,4.0) / 5.0 +
                 th.NASA7(n,m+5)/    T            )*T*th.Ru/th.MW(n);
 
-    cp   += cps(n,id)*Y(n,id);
-    h    +=  hi(n,id)*Y(n,id);
+    cp += cps     *Y(n,id);
+    h  += hi(n,id)*Y(n,id);
   }
 
   // Compute mixuture enthalpy
@@ -99,7 +98,6 @@ void tpg(block_ b,
 
   // Compute density
   rho = p/(Rmix*T);
-  rhoinv = 1.0/rho;
 
   // Compute momentum
   rhou = rho*u;
@@ -112,7 +110,7 @@ void tpg(block_ b,
                  rho    ;
 
   // Compute internal, total, energy
-  e = h - p*rhoinv;
+  e = h - p/rho;
   rhoE = rho*e + tke;
 
   // Compute species mass
@@ -149,6 +147,8 @@ void tpg(block_ b,
   token.release(id);
   });
   }
+
+
   else if ( given.compare("cons") == 0 )
   {
   twoDview rhoY("rhoY", ns, numIds);
@@ -165,7 +165,6 @@ void tpg(block_ b,
   // So we store these as well.
 
   double& rho = b.Q(i,j,k,0);
-  double rhoinv = 1.0/rho;
   double& rhou = b.Q(i,j,k,1);
   double& rhov = b.Q(i,j,k,2);
   double& rhow = b.Q(i,j,k,3);
@@ -180,8 +179,8 @@ void tpg(block_ b,
   // Compute TKE
   tke = 0.5*(pow(rhou,2.0) +
              pow(rhov,2.0) +
-             pow(rhow,2.0))*
-                 rhoinv    ;
+             pow(rhow,2.0))/
+                 rho       ;
 
   // Compute species mass fraction
   Y(ns-1,id) = 1.0;
@@ -193,7 +192,7 @@ void tpg(block_ b,
   Y(ns-1,id) = fmax(0.0,Y(ns-1,id));
 
   // Internal energy
-  e = (rhoE - tke)*rhoinv;
+  e = (rhoE - tke)/rho;
 
   // Iterate on to find temperature
   int nitr=0, maxitr = 100;
@@ -204,8 +203,9 @@ void tpg(block_ b,
   Rmix = 0.0;
   for (int n=0; n<=ns-1; n++)
   {
-    Rmix += th.Ru  *Y(n,id)/th.MW(n);
+    Rmix += Y(n,id)/th.MW(n);
   }
+  Rmix *= th.Ru;
 
   // Newtons method to find T
   T = ( b.q(i,j,k,4) < 1.0 ) ? 300.0 : b.q(i,j,k,4); // Initial guess of T
@@ -217,7 +217,7 @@ void tpg(block_ b,
     {
       int m = ( T <= th.NASA7(n,0) ) ? 8 : 1;
 
-      cps(n,id) =(th.NASA7(n,m+0)            +
+      double cps=(th.NASA7(n,m+0)            +
                   th.NASA7(n,m+1)*    T      +
                   th.NASA7(n,m+2)*pow(T,2.0) +
                   th.NASA7(n,m+3)*pow(T,3.0) +
@@ -230,12 +230,12 @@ void tpg(block_ b,
                   th.NASA7(n,m+4)*pow(T,4.0) / 5.0 +
                   th.NASA7(n,m+5)/    T            )*T*th.Ru/th.MW(n);
 
-      cp   += cps(n,id)*Y(n,id);
-      h    +=  hi(n,id)*Y(n,id);
+      cp += cps     *Y(n,id);
+      h  += hi(n,id)*Y(n,id);
     }
 
-    T = T - (e - (h - Rmix*T))/(-cp - Rmix);
     error = e - (h - Rmix*T);
+    T = T - error/(-cp - Rmix);
     nitr += 1;
   }
 

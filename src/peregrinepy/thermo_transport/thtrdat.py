@@ -20,6 +20,13 @@ class thtrdat(thtrdat_):
                 "DijPoly": None,
                 "mu0": None,
                 "kappa0": None,
+                "Tcrit": None,
+                "pcrit": None,
+                "Vcrit": None,
+                "acentric": None,
+                "chungA": None,
+                "chungB": None,
+                "redDipole": None,
             }
         )
         self.mirror = frozenDict(
@@ -32,6 +39,13 @@ class thtrdat(thtrdat_):
                 "DijPoly": None,
                 "mu0": None,
                 "kappa0": None,
+                "Tcrit": None,
+                "pcrit": None,
+                "Vcrit": None,
+                "acentric": None,
+                "chungA": None,
+                "chungB": None,
+                "redDipole": None,
             }
         )
         self.array._freeze()
@@ -55,8 +69,8 @@ class thtrdat(thtrdat_):
 
         ns = len(usersp.keys())
         self.ns = ns
-        Ru = refsp["Ru"]
-        self.Ru = Ru
+        # Ru = refsp["Ru"]
+        # self.Ru = Ru
 
         # Species names string
         speciesNames = list(usersp.keys())
@@ -78,7 +92,7 @@ class thtrdat(thtrdat_):
             shape = [ns]
             createViewMirrorArray(self, ["cp0"], shape, space)
 
-        elif config["thermochem"]["eos"] == "tpg":
+        elif config["thermochem"]["eos"] in ["tpg", "cubic"]:
             self.array["NASA7"] = completeSpecies("NASA7", usersp, refsp)
             shape = [ns, 15]
             createViewMirrorArray(self, ["NASA7"], shape, space)
@@ -86,6 +100,13 @@ class thtrdat(thtrdat_):
             raise KeyError(
                 f'PEREGRINE ERROR: Unknown EOS {config["thermochem"]["eos"]}'
             )
+
+        # Extra properties for cubic eos
+        if config["thermochem"]["eos"] == "cubic":
+            for var in ["Tcrit", "pcrit", "Vcrit", "acentric"]:
+                self.array[var] = completeSpecies(var, usersp, refsp)
+                shape = [ns]
+                createViewMirrorArray(self, [var], shape, space)
 
         ################################
         # Set transport properties
@@ -99,7 +120,7 @@ class thtrdat(thtrdat_):
                     muPoly,
                     kappaPoly,
                     DijPoly,
-                ) = kineticTheoryPoly(usersp, refsp, config["thermochem"]["eos"])
+                ) = kineticTheoryPoly(usersp, refsp)
 
                 self.array["muPoly"] = muPoly
                 shape = [ns, 5]
@@ -122,6 +143,21 @@ class thtrdat(thtrdat_):
                 self.array["kappa0"] = completeSpecies("kappa0", usersp, refsp)
                 shape = [ns]
                 createViewMirrorArray(self, ["kappa0"], shape, space)
+
+            elif "chungDenseGas" in config["thermochem"]["trans"]:
+                from .chungDenseGas import chungDenseGas
+
+                (chungA, chungB, redDipole) = chungDenseGas(usersp, refsp)
+                self.array["chungA"] = chungA
+                shape = [ns, 10]
+                createViewMirrorArray(self, ["chungA"], shape, space)
+                self.array["chungB"] = chungB
+                shape = [ns, 7]
+                createViewMirrorArray(self, ["chungB"], shape, space)
+                self.array["redDipole"] = redDipole
+                shape = [ns]
+                createViewMirrorArray(self, ["redDipole"], shape, space)
+
             else:
                 raise KeyError(
                     f'PEREGRINE ERROR: Unknown TRANS {config["thermochem"]["trans"]}'
