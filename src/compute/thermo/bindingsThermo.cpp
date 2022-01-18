@@ -44,7 +44,7 @@ void bindThermo(py::module_ &m) {
     .def(py::init<>())
 
     .def_readwrite("ns", &thtrdat_::ns)
-    .def_property_readonly_static("Ru", [](py::object) { return thtrdat_::Ru; })
+    .def_readonly("Ru", &thtrdat_::Ru)
 
     .def_readwrite("MW", &thtrdat_::MW)
 
