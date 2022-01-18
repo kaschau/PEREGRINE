@@ -80,12 +80,12 @@ void chungDenseGasUnityLewis(block_ b,
         double Yy, G1, G2, etaStar, etaStarStar;
         double H2, lambdak, lambdap;
 
-        static constexpr double Acoeff = 1.16145;
-        static constexpr double Bcoeff = 0.14874;
-        static constexpr double Ccoeff = 0.52487;
-        static constexpr double Dcoeff = 0.77320;
-        static constexpr double Ecoeff = 2.16178;
-        static constexpr double Fcoeff = 2.43787;
+        const double Acoeff = 1.16145;
+        const double Bcoeff = 0.14874;
+        const double Ccoeff = 0.52487;
+        const double Dcoeff = 0.77320;
+        const double Ecoeff = 2.16178;
+        const double Fcoeff = 2.43787;
 
         double Vc,rhocm;
         for (int n = 0; n <= ns - 1; n++) {

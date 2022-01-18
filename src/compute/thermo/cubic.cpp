@@ -43,12 +43,12 @@
 
 
 void cubic(block_ b,
-   const thtrdat_ th,
-   const int nface,
-   const std::string given,
-   const int indxI/*=0*/,
-   const int indxJ/*=0*/,
-   const int indxK/*=0*/) {
+           const thtrdat_ th,
+           const int nface,
+           const std::string given,
+           const int indxI/*=0*/,
+           const int indxJ/*=0*/,
+           const int indxK/*=0*/) {
 
   MDRange3 range = get_range3(b, nface, indxI, indxJ, indxK);
   Kokkos::Experimental::UniqueToken<exec_space> token;
@@ -84,7 +84,7 @@ void cubic(block_ b,
   double rho;
   double rhou,rhov,rhow;
   double e,tke,rhoE;
-  double gamma,cp,cps,h,c;
+  double gamma,cp,h,c;
   double Rmix;
 
   // Compute nth species Y
@@ -114,29 +114,27 @@ void cubic(block_ b,
   Rmix = th.Ru/MWmix;
 
   // Real gas coefficients for cubic EOS
-
   // -------------------------------------------------------------------------------------------------------------//
   // Peng-Robinson
-  constexpr double uRG=2.0, wRG=-1.0, biConst=0.077796 , aiConst=0.457240 , fw0=0.37464, fw1=1.54226, fw2=-0.26992;
+  const double uRG=2.0, wRG=-1.0, biConst=0.077796 , aiConst=0.457240 , fw0=0.37464, fw1=1.54226, fw2=-0.26992;
   // -------------------------------------------------------------------------------------------------------------//
 
   // -------------------------------------------------------------------------------------------------------------//
   // Soave-Redlich-Kwong
-  //constexpr double uRG=1.0, wRG= 0.0, biConst=0.0866403, aiConst=0.4274802, fw0=0.480  , fw1=1.574  , fw2=-0.176  ;
+  //const double uRG=1.0, wRG= 0.0, biConst=0.0866403, aiConst=0.4274802, fw0=0.480  , fw1=1.574  , fw2=-0.176  ;
   // -------------------------------------------------------------------------------------------------------------//
 
-  double bi,fOmega,alpha,Tr;
   double am = 0.0, bm = 0.0;
   double Astar, Bstar;
 
   // Compressibility Factor, Z
   for (int n=0; n<=ns-1; n++)
   {
-    Tr = T/th.Tcrit(n);
-    fOmega = fw0 + fw1*th.acentric(n) + fw2*pow(th.acentric(n),2.0);
-    alpha = pow(1.0+fOmega*(1-sqrt(Tr)),2.0);
+    double Tr = T/th.Tcrit(n);
+    double fOmega = fw0 + fw1*th.acentric(n) + fw2*pow(th.acentric(n),2.0);
+    double alpha = pow(1.0+fOmega*(1-sqrt(Tr)),2.0);
     ai(n,id) = aiConst*( pow(th.Ru*th.Tcrit(n),2.0)*alpha )/th.pcrit(n);
-    bi = biConst*( th.Ru*th.Tcrit(n) )/th.pcrit(n);
+    double bi = biConst*( th.Ru*th.Tcrit(n) )/th.pcrit(n);
 
     bm += X(n,id)*bi;
   }
@@ -183,25 +181,24 @@ void cubic(block_ b,
 
   // departure functions
   double dam = 0.0;
-  double fOmegaN, fOmegaN2;
   for (int n=0; n<=ns-1; n++)
   {
     for (int n2=0; n2<=ns-1; n2++)
     {
-      fOmegaN  = fw0 + fw1*th.acentric(n)  + fw2*pow(th.acentric(n ),2.0);
-      fOmegaN2 = fw0 + fw1*th.acentric(n2) + fw2*pow(th.acentric(n2),2.0);
+      double fOmegaN  = fw0 + fw1*th.acentric(n)  + fw2*pow(th.acentric(n ),2.0);
+      double fOmegaN2 = fw0 + fw1*th.acentric(n2) + fw2*pow(th.acentric(n2),2.0);
       dam += X(n2,id)*X(n,id)*1.0*(
              fOmegaN2*sqrt(ai(n,id)* th.Tcrit(n2)/th.pcrit(n2)) +
              fOmegaN *sqrt(ai(n2,id)*th.Tcrit(n )/th.pcrit(n)) );
     }
   }
   dam *= -0.5*th.Ru*sqrt(aiConst/T);
-  double dAstar = -2.0*(Astar/T)*(1.0-0.5*(T/am)*dam);
-  double dBstar = -Bstar/T;
+  double dAstardT = -2.0*(Astar/T)*(1.0-0.5*(T/am)*dam);
+  double dBstardT = -Bstar/T;
 
-  double dz0 = -(Bstar*dAstar+(Astar+(2.0*Bstar+3.0*pow(Bstar,2.0))*wRG)*dBstar);
-  double dz1 = (dAstar+(2.0*Bstar*(wRG-uRG)-uRG)*dBstar);
-  double dz2 = -(1.0-uRG)*dBstar;
+  double dz0 = -(Bstar*dAstardT+(Astar+(2.0*Bstar+3.0*pow(Bstar,2.0))*wRG)*dBstardT);
+  double dz1 = (dAstardT+(2.0*Bstar*(wRG-uRG)-uRG)*dBstardT);
+  double dz2 = -(1.0-uRG)*dBstardT;
 
   double dZdT = - (dz2*pow(Z,2.0) + dz1*Z + dz0) / ( 3.0*pow(Z,2.0) + 2.0*Z*z2 + z1 );
 
@@ -220,12 +217,11 @@ void cubic(block_ b,
   // Start h and cp as departure values
   h  = th.Ru*T* hDep/MWmix;
   cp = th.Ru  *cpDep/MWmix;
-  int m;
   for (int n=0; n<=ns-1; n++)
   {
-    m = ( T <= th.NASA7(n,0) ) ? 8 : 1;
+    int m = ( T <= th.NASA7(n,0) ) ? 8 : 1;
 
-    cps       =(th.NASA7(n,m+0)            +
+    double cps=(th.NASA7(n,m+0)            +
                 th.NASA7(n,m+1)*    T      +
                 th.NASA7(n,m+2)*pow(T,2.0) +
                 th.NASA7(n,m+3)*pow(T,3.0) +
@@ -248,12 +244,12 @@ void cubic(block_ b,
   rho = p/(Z*Rmix*T);
 
   // Specific heat ratio
-  dAstar = Astar/p;
-  dBstar = Bstar/p;
+  double dAstardp = Astar/p;
+  double dBstardp = Bstar/p;
 
-  dz0 =-(Bstar*dAstar+(Astar+(2.0*Bstar+3.0*pow(Bstar,2.0))*wRG)*dBstar);
-  dz1 = (dAstar+(2.0*Bstar*(wRG-uRG)-uRG)*dBstar);
-  dz2 =-(1.0-uRG)*dBstar;
+  dz0 =-(Bstar*dAstardp+(Astar+(2.0*Bstar+3.0*pow(Bstar,2.0))*wRG)*dBstardp);
+  dz1 = (dAstardp+(2.0*Bstar*(wRG-uRG)-uRG)*dBstardp);
+  dz2 =-(1.0-uRG)*dBstardp;
 
   double dZdp = - ( dz2*pow(Z,2.0) + dz1*Z    + dz0)
                  /(3.0*pow(Z,2.0)+2.0*Z*z2 + z1 );
@@ -340,7 +336,7 @@ void cubic(block_ b,
   double p;
   double e,tke;
   double T;
-  double gamma,cp,cps,h,c;
+  double gamma,cp,h,c;
   double Rmix;
 
   // Compute TKE
@@ -365,12 +361,12 @@ void cubic(block_ b,
 
   // -------------------------------------------------------------------------------------------------------------//
   // Peng-Robinson
-  constexpr double uRG=2.0, wRG=-1.0, biConst=0.077796 , aiConst=0.457240 , fw0=0.37464, fw1=1.54226, fw2=-0.26992;
+  const double uRG=2.0, wRG=-1.0, biConst=0.077796 , aiConst=0.457240 , fw0=0.37464, fw1=1.54226, fw2=-0.26992;
   // -------------------------------------------------------------------------------------------------------------//
 
   // -------------------------------------------------------------------------------------------------------------//
   // Soave-Redlich-Kwong
-  //constexpr double uRG=1.0, wRG= 0.0, biConst=0.0866403, aiConst=0.4274802, fw0=0.480  , fw1=1.574  , fw2=-0.176  ;
+  //const double uRG=1.0, wRG= 0.0, biConst=0.0866403, aiConst=0.4274802, fw0=0.480  , fw1=1.574  , fw2=-0.176  ;
   // -------------------------------------------------------------------------------------------------------------//
 
   // Iterate on to find temperature
@@ -397,8 +393,6 @@ void cubic(block_ b,
   // molar volume
   double Vm = MWmix/rho;
 
-  double bi,fOmega,alpha,Tr;
-  double am, bm;
   double Astar, Bstar;
   double drhodp, dZdT;
   double Z,z0,z1,z2;
@@ -408,13 +402,14 @@ void cubic(block_ b,
   while( (abs(error) > tol) && (nitr < maxitr))
   {
     // With a T, we can compute p
-    am = 0.0;
-    bm = 0.0;
+    double bi;
+    double am = 0.0;
+    double bm = 0.0;
     for (int n=0; n<=ns-1; n++)
     {
-      Tr = T/th.Tcrit(n);
-      fOmega = fw0 + fw1*th.acentric(n) + fw2*pow(th.acentric(n),2.0);
-      alpha = pow(1.0+fOmega*(1-sqrt(Tr)),2.0);
+      double Tr = T/th.Tcrit(n);
+      double fOmega = fw0 + fw1*th.acentric(n) + fw2*pow(th.acentric(n),2.0);
+      double alpha = pow(1.0+fOmega*(1-sqrt(Tr)),2.0);
       ai(n,id) = aiConst*( pow(th.Ru*th.Tcrit(n),2.0)*alpha )/th.pcrit(n);
       bi = biConst*( th.Ru*th.Tcrit(n) )/th.pcrit(n);
 
@@ -464,13 +459,12 @@ void cubic(block_ b,
     }
     // departure functions
     double dam = 0.0;
-    double fOmegaN, fOmegaN2;
     for (int n=0; n<=ns-1; n++)
     {
       for (int n2=0; n2<=ns-1; n2++)
       {
-        fOmegaN  = fw0 + fw1*th.acentric(n)  + fw2*pow(th.acentric(n ),2.0);
-        fOmegaN2 = fw0 + fw1*th.acentric(n2) + fw2*pow(th.acentric(n2),2.0);
+        double fOmegaN  = fw0 + fw1*th.acentric(n)  + fw2*pow(th.acentric(n ),2.0);
+        double fOmegaN2 = fw0 + fw1*th.acentric(n2) + fw2*pow(th.acentric(n2),2.0);
         dam += X(n2,id)*X(n,id)*1.0*(
                fOmegaN2*sqrt(ai(n,id)* th.Tcrit(n2)/th.pcrit(n2)) +
                fOmegaN *sqrt(ai(n2,id)*th.Tcrit(n )/th.pcrit(n)) );
@@ -501,12 +495,11 @@ void cubic(block_ b,
     // Start h and cp as departure values
     h  = th.Ru*T* hDep/MWmix;
     cp = th.Ru  *cpDep/MWmix;
-    int m;
     for (int n=0; n<=ns-1; n++)
     {
-      m = ( T <= th.NASA7(n,0) ) ? 8 : 1;
+      int m = ( T <= th.NASA7(n,0) ) ? 8 : 1;
 
-      cps       =(th.NASA7(n,m+0)            +
+      double cps=(th.NASA7(n,m+0)            +
                   th.NASA7(n,m+1)*    T      +
                   th.NASA7(n,m+2)*pow(T,2.0) +
                   th.NASA7(n,m+3)*pow(T,3.0) +

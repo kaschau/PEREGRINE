@@ -13,7 +13,7 @@ void fourthOrderKEEP(block_ b, const thtrdat_ th) {
   const int order = 4;
   constexpr int q = order/2;
   constexpr int narray = (q*q+q)/2;
-  constexpr double aq[2] = {2.0/3.0, -1.0/12.0};
+  const double aq[2] = {2.0/3.0, -1.0/12.0};
 
   Kokkos::parallel_for("i face conv fluxes", range_i, KOKKOS_LAMBDA(const int i,
                                                                     const int j,
