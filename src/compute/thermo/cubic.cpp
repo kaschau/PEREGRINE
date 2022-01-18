@@ -394,9 +394,8 @@ void cubic(block_ b,
   double Vm = MWmix/rho;
 
   double Astar, Bstar;
-  double drhodp, dZdT;
+  double dZdT;
   double Z,z0,z1,z2;
-  double dz0,dz1,dz2;
   // Newtons method to find T
   T = ( b.q(i,j,k,4) < 1.0 ) ? 300.0 : b.q(i,j,k,4); // Initial guess of T
   while( (abs(error) > tol) && (nitr < maxitr))
@@ -474,9 +473,9 @@ void cubic(block_ b,
     double dAstardT = -2.0*(Astar/T)*(1.0-0.5*(T/am)*dam);
     double dBstardT = -Bstar/T;
 
-    dz0 = -(Bstar*dAstardT+(Astar+(2.0*Bstar+3.0*pow(Bstar,2.0))*wRG)*dBstardT);
-    dz1 = (dAstardT+(2.0*Bstar*(wRG-uRG)-uRG)*dBstardT);
-    dz2 = -(1.0-uRG)*dBstardT;
+    double dz0 = -(Bstar*dAstardT+(Astar+(2.0*Bstar+3.0*pow(Bstar,2.0))*wRG)*dBstardT);
+    double dz1 = (dAstardT+(2.0*Bstar*(wRG-uRG)-uRG)*dBstardT);
+    double dz2 = -(1.0-uRG)*dBstardT;
 
     dZdT = - (dz2*pow(Z,2.0) + dz1*Z + dz0) / ( 3.0*pow(Z,2.0) + 2.0*Z*z2 + z1 );
 
@@ -527,14 +526,14 @@ void cubic(block_ b,
   double dAstardp = Astar/p;
   double dBstardp = Bstar/p;
 
-  dz0 =-(Bstar*dAstardp+(Astar+(2.0*Bstar+3.0*pow(Bstar,2.0))*wRG)*dBstardp);
-  dz1 = (dAstardp+(2.0*Bstar*(wRG-uRG)-uRG)*dBstardp);
-  dz2 =-(1.0-uRG)*dBstardp;
+  double dz0 =-(Bstar*dAstardp+(Astar+(2.0*Bstar+3.0*pow(Bstar,2.0))*wRG)*dBstardp);
+  double dz1 = (dAstardp+(2.0*Bstar*(wRG-uRG)-uRG)*dBstardp);
+  double dz2 =-(1.0-uRG)*dBstardp;
 
   double dZdp = - ( dz2*pow(Z,2.0) + dz1*Z    + dz0)
                  /(3.0*pow(Z,2.0)+2.0*Z*z2 + z1 );
 
-  drhodp = (rho/p)*(1.e0 - p*dZdp/Z);
+  double drhodp = (rho/p)*(1.e0 - p*dZdp/Z);
   double drhodt =-(rho/T)*(1.e0 + T*dZdT/Z);
   gamma = drhodp / (drhodp - (T/cp)*pow(drhodt/rho,2.0));
 
