@@ -12,15 +12,15 @@
 struct thtrdat_ {
 
   int ns;
-  double Ru;
+  const double Ru=8314.46261815324; // J/kmol/K
 
+  // Molecular weight
   oneDview MW;
 
-  // Constant cp values (reference cp)
-  oneDview cp0;
   // NASA7 polynomial coefficients
   twoDview NASA7;
 
+  // Kinetic theory
   // Generated temperature dependent viscosity poly'l coeff
   twoDview muPoly;
   // Generated temperature dependent thermal conductivity poly'l coeff
@@ -31,9 +31,20 @@ struct thtrdat_ {
   twoDview DijPoly;
 
   // Constant properties
+  oneDview cp0;
   oneDview mu0;
   oneDview kappa0;
 
+  // Critical properties;
+  oneDview Tcrit;
+  oneDview pcrit;
+  oneDview Vcrit;
+  oneDview acentric;
+
+  // Chung dense gas
+  twoDview chungA;
+  twoDview chungB;
+  oneDview redDipole;
 };
 
 #endif

@@ -42,7 +42,7 @@ void cpg(block_ b,
   double& w = b.q(i,j,k,3);
   double& T = b.q(i,j,k,4);
 
-  double rho,rhoinv;
+  double rho;
   double rhou,rhov,rhow;
   double e,tke,rhoE;
   double gamma,cp,h,c;
@@ -62,9 +62,11 @@ void cpg(block_ b,
   cp   = 0.0;
   for (int n=0; n<=ns-1; n++)
   {
-    Rmix += Y(n,id)*th.Ru/th.MW(n);
+    Rmix += Y(n,id)/th.MW(n);
     cp   += Y(n,id)*th.cp0(n);
   }
+  Rmix *= th.Ru;
+
   // Compute mixuture enthalpy
   h = cp*T;
   gamma = cp/(cp-Rmix);
@@ -74,7 +76,6 @@ void cpg(block_ b,
 
   // Compute density
   rho = p/(Rmix*T);
-  rhoinv = 1.0/rho;
 
   // Compute momentum
   rhou = rho*u;
@@ -87,7 +88,7 @@ void cpg(block_ b,
                  rho    ;
 
   // Compute internal, total, energy
-  e = h - p*rhoinv;
+  e = h - p/rho;
   rhoE = rho*e + tke;
 
   // Compute species mass
@@ -139,7 +140,6 @@ void cpg(block_ b,
   // So we store these as well.
 
   double& rho = b.Q(i,j,k,0);
-  double rhoinv = 1.0/rho;
   double& rhou = b.Q(i,j,k,1);
   double& rhov = b.Q(i,j,k,2);
   double& rhow = b.Q(i,j,k,3);
@@ -154,8 +154,8 @@ void cpg(block_ b,
   // Compute TKE
   tke = 0.5*(pow(rhou,2.0) +
              pow(rhov,2.0) +
-             pow(rhow,2.0))*
-                 rhoinv    ;
+             pow(rhow,2.0))/
+                 rho       ;
 
   // Compute species mass fraction
   Y(ns-1,id) = 1.0;
@@ -167,23 +167,24 @@ void cpg(block_ b,
   Y(ns-1,id) = fmax(0.0,Y(ns-1,id));
 
   // Internal energy
-  e = (rhoE - tke)*rhoinv;
+  e = (rhoE - tke)/rho;
 
   // Compute mixuture cp
   Rmix = 0.0;
   cp   = 0.0;
   for (int n=0; n<=ns-1; n++)
   {
-    Rmix += Y(n,id)*th.Ru/th.MW(n);
+    Rmix += Y(n,id)/th.MW(n);
     cp   += Y(n,id)*th.cp0(n);
   }
+  Rmix *= th.Ru;
 
   // Compute mixuture temperature,pressure
   T = e/(cp-Rmix);
   p = rho*Rmix*T;
 
   // Compute mixture enthalpy
-  h = e + p*rhoinv;
+  h = e + p/rho;
   gamma = cp/(cp-Rmix);
 
   // Mixture speed of soung
