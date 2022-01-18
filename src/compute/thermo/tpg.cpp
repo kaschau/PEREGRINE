@@ -46,7 +46,7 @@ void tpg(block_ b,
   double rho;
   double rhou,rhov,rhow;
   double e,tke,rhoE;
-  double gamma,cp,cps,h,c;
+  double gamma,cp,h,c;
   double Rmix;
 
   // Compute nth species Y
@@ -69,12 +69,11 @@ void tpg(block_ b,
   // Update mixture properties
   h    = 0.0;
   cp   = 0.0;
-  int m;
   for (int n=0; n<=ns-1; n++)
   {
-    m = ( T <= th.NASA7(n,0) ) ? 8 : 1;
+    int m = ( T <= th.NASA7(n,0) ) ? 8 : 1;
 
-    cps       =(th.NASA7(n,m+0)            +
+    double cps=(th.NASA7(n,m+0)            +
                 th.NASA7(n,m+1)*    T      +
                 th.NASA7(n,m+2)*pow(T,2.0) +
                 th.NASA7(n,m+3)*pow(T,3.0) +
@@ -174,7 +173,7 @@ void tpg(block_ b,
   double p;
   double e,tke;
   double T;
-  double gamma,cp,cps,h,c;
+  double gamma,cp,h,c;
   double Rmix;
 
   // Compute TKE
@@ -218,7 +217,7 @@ void tpg(block_ b,
     {
       int m = ( T <= th.NASA7(n,0) ) ? 8 : 1;
 
-      cps       =(th.NASA7(n,m+0)            +
+      double cps=(th.NASA7(n,m+0)            +
                   th.NASA7(n,m+1)*    T      +
                   th.NASA7(n,m+2)*pow(T,2.0) +
                   th.NASA7(n,m+3)*pow(T,3.0) +
