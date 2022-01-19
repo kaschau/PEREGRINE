@@ -51,9 +51,6 @@ class thtrdat(thtrdat_):
         self.array._freeze()
         self.mirror._freeze()
 
-        # Determine what kokkos space we are living in
-        space = config["Kokkos"]["Space"]
-
         # Get user species data, the spData from the config file is just a list of strings,
         # then we assume we just want to grab those species, otherwise we use the thtr.yaml file.
         if type(config["thermochem"]["spdata"]) == list:
@@ -79,7 +76,7 @@ class thtrdat(thtrdat_):
         # Species MW
         self.array["MW"] = completeSpecies("MW", usersp, refsp)
         shape = [ns]
-        createViewMirrorArray(self, ["MW"], shape, space)
+        createViewMirrorArray(self, ["MW"], shape)
 
         ########################################
         # Set thermodynamic properties
@@ -90,12 +87,12 @@ class thtrdat(thtrdat_):
             # J/(kg.K)
             self.array["cp0"] = completeSpecies("cp0", usersp, refsp)
             shape = [ns]
-            createViewMirrorArray(self, ["cp0"], shape, space)
+            createViewMirrorArray(self, ["cp0"], shape)
 
         elif config["thermochem"]["eos"] in ["tpg", "cubic"]:
             self.array["NASA7"] = completeSpecies("NASA7", usersp, refsp)
             shape = [ns, 15]
-            createViewMirrorArray(self, ["NASA7"], shape, space)
+            createViewMirrorArray(self, ["NASA7"], shape)
         else:
             raise KeyError(
                 f'PEREGRINE ERROR: Unknown EOS {config["thermochem"]["eos"]}'
@@ -106,7 +103,7 @@ class thtrdat(thtrdat_):
             for var in ["Tcrit", "pcrit", "Vcrit", "acentric"]:
                 self.array[var] = completeSpecies(var, usersp, refsp)
                 shape = [ns]
-                createViewMirrorArray(self, [var], shape, space)
+                createViewMirrorArray(self, [var], shape)
 
         ################################
         # Set transport properties
@@ -124,25 +121,25 @@ class thtrdat(thtrdat_):
 
                 self.array["muPoly"] = muPoly
                 shape = [ns, 5]
-                createViewMirrorArray(self, ["muPoly"], shape, space)
+                createViewMirrorArray(self, ["muPoly"], shape)
 
                 self.array["kappaPoly"] = kappaPoly
                 shape = [ns, 5]
-                createViewMirrorArray(self, ["kappaPoly"], shape, space)
+                createViewMirrorArray(self, ["kappaPoly"], shape)
 
                 self.array["DijPoly"] = DijPoly
                 shape = [int(ns * (ns + 1) / 2), 5]
-                createViewMirrorArray(self, ["DijPoly"], shape, space)
+                createViewMirrorArray(self, ["DijPoly"], shape)
 
             elif config["thermochem"]["trans"] == "constantProps":
 
                 self.array["mu0"] = completeSpecies("mu0", usersp, refsp)
                 shape = [ns]
-                createViewMirrorArray(self, ["mu0"], shape, space)
+                createViewMirrorArray(self, ["mu0"], shape)
 
                 self.array["kappa0"] = completeSpecies("kappa0", usersp, refsp)
                 shape = [ns]
-                createViewMirrorArray(self, ["kappa0"], shape, space)
+                createViewMirrorArray(self, ["kappa0"], shape)
 
             elif "chungDenseGas" in config["thermochem"]["trans"]:
                 from .chungDenseGas import chungDenseGas
@@ -150,13 +147,13 @@ class thtrdat(thtrdat_):
                 (chungA, chungB, redDipole) = chungDenseGas(usersp, refsp)
                 self.array["chungA"] = chungA
                 shape = [ns, 10]
-                createViewMirrorArray(self, ["chungA"], shape, space)
+                createViewMirrorArray(self, ["chungA"], shape)
                 self.array["chungB"] = chungB
                 shape = [ns, 7]
-                createViewMirrorArray(self, ["chungB"], shape, space)
+                createViewMirrorArray(self, ["chungB"], shape)
                 self.array["redDipole"] = redDipole
                 shape = [ns]
-                createViewMirrorArray(self, ["redDipole"], shape, space)
+                createViewMirrorArray(self, ["redDipole"], shape)
 
             else:
                 raise KeyError(

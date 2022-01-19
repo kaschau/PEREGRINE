@@ -88,8 +88,6 @@ class solverBlock(restartBlock, block_):
         """
         self._isInitialized = True
 
-        space = config["Kokkos"]["Space"]
-
         ng = self.ng
         ccshape = [self.ni + 2 * ng - 1, self.nj + 2 * ng - 1, self.nk + 2 * ng - 1]
         ifshape = [self.ni + 2 * ng, self.nj + 2 * ng - 1, self.nk + 2 * ng - 1]
@@ -128,43 +126,42 @@ class solverBlock(restartBlock, block_):
         #       Primary grid coordinates
         # ------------------------------------------------------------------- #
         shape = [self.ni + 2 * ng, self.nj + 2 * ng, self.nk + 2 * ng]
-        createViewMirrorArray(self, ["x", "y", "z"], shape, space)
+        createViewMirrorArray(self, ["x", "y", "z"], shape)
 
         # ------------------------------------------------------------------- #
         #       Cell center
         # ------------------------------------------------------------------- #
         shape = ccshape
-        createViewMirrorArray(self, ["xc", "yc", "zc", "J"], shape, space)
+        createViewMirrorArray(self, ["xc", "yc", "zc", "J"], shape)
         # Cell center metrics
         createViewMirrorArray(
             self,
             ["dEdx", "dEdy", "dEdz", "dNdx", "dNdy", "dNdz", "dXdx", "dXdy", "dXdz"],
             shape,
-            space,
         )
 
         # ------------------------------------------------------------------- #
         #       i face vector components and areas
         # ------------------------------------------------------------------- #
-        createViewMirrorArray(self, ["ixc", "iyc", "izc"], ifshape, space)
+        createViewMirrorArray(self, ["ixc", "iyc", "izc"], ifshape)
         createViewMirrorArray(
-            self, ["isx", "isy", "isz", "iS", "inx", "iny", "inz"], ifshape, space
+            self, ["isx", "isy", "isz", "iS", "inx", "iny", "inz"], ifshape
         )
 
         # ------------------------------------------------------------------- #
         #       j face vector components and areas
         # ------------------------------------------------------------------- #
-        createViewMirrorArray(self, ["jxc", "jyc", "jzc"], jfshape, space)
+        createViewMirrorArray(self, ["jxc", "jyc", "jzc"], jfshape)
         createViewMirrorArray(
-            self, ["jsx", "jsy", "jsz", "jS", "jnx", "jny", "jnz"], jfshape, space
+            self, ["jsx", "jsy", "jsz", "jS", "jnx", "jny", "jnz"], jfshape
         )
 
         # ------------------------------------------------------------------- #
         #       k face vector components and areas
         # ------------------------------------------------------------------- #
-        createViewMirrorArray(self, ["kxc", "kyc", "kzc"], kfshape, space)
+        createViewMirrorArray(self, ["kxc", "kyc", "kzc"], kfshape)
         createViewMirrorArray(
-            self, ["ksx", "ksy", "ksz", "kS", "knx", "kny", "knz"], kfshape, space
+            self, ["ksx", "ksy", "ksz", "kS", "knx", "kny", "knz"], kfshape
         )
 
         #######################################################################
@@ -173,12 +170,12 @@ class solverBlock(restartBlock, block_):
         # ------------------------------------------------------------------- #
         #       Conservative, Primative, dQ
         # ------------------------------------------------------------------- #
-        createViewMirrorArray(self, ["Q", "q", "dQ"], cQshape, space)
+        createViewMirrorArray(self, ["Q", "q", "dQ"], cQshape)
 
         # ------------------------------------------------------------------- #
         #       Spatial derivative of primative array
         # ------------------------------------------------------------------- #
-        createViewMirrorArray(self, ["dqdx", "dqdy", "dqdz"], cQshape, space)
+        createViewMirrorArray(self, ["dqdx", "dqdy", "dqdz"], cQshape)
 
         # ------------------------------------------------------------------- #
         #       Thermo
@@ -189,7 +186,7 @@ class solverBlock(restartBlock, block_):
             self.nk + 2 * ng - 1,
             5 + self.ns,
         ]
-        createViewMirrorArray(self, ["qh"], shape, space)
+        createViewMirrorArray(self, ["qh"], shape)
 
         # ------------------------------------------------------------------- #
         #       Transport
@@ -200,7 +197,7 @@ class solverBlock(restartBlock, block_):
             self.nk + 2 * ng - 1,
             2 + self.ns,
         ]
-        createViewMirrorArray(self, ["qt"], shape, space)
+        createViewMirrorArray(self, ["qt"], shape)
 
         # ------------------------------------------------------------------- #
         #       Chemistry
@@ -212,7 +209,7 @@ class solverBlock(restartBlock, block_):
                 self.nk + 2 * ng - 1,
                 1 + self.ns,
             ]
-            createViewMirrorArray(self, ["omega"], shape, space)
+            createViewMirrorArray(self, ["omega"], shape)
 
         # ------------------------------------------------------------------- #
         #       RK Stages
@@ -221,7 +218,7 @@ class solverBlock(restartBlock, block_):
         names = [
             f"rhs{i}" for i in range(nstorage[config["solver"]["timeIntegration"]])
         ]
-        createViewMirrorArray(self, names, cQshape, space)
+        createViewMirrorArray(self, names, cQshape)
 
         # ------------------------------------------------------------------- #
         #       Fluxes
@@ -231,12 +228,12 @@ class solverBlock(restartBlock, block_):
             (jfQshape, ["jF"]),
             (kfQshape, ["kF"]),
         ):
-            createViewMirrorArray(self, names, shape, space)
+            createViewMirrorArray(self, names, shape)
 
         # ------------------------------------------------------------------- #
         #       Switches
         # ------------------------------------------------------------------- #
-        createViewMirrorArray(self, ["phi"], cQshape, space)
+        createViewMirrorArray(self, ["phi"], cQshape)
 
     def setBlockCommunication(self):
 
