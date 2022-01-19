@@ -17,7 +17,11 @@ def communicate(mb, varis):
                 if face.neighbor is None:
                     continue
 
-                recv = face.recvBuffer4 if ndim == 4 else face.recvBuffer3
+                recv = (
+                    face.array["recvBuffer4"]
+                    if ndim == 4
+                    else face.array["recvBuffer3"]
+                )
                 ssize = recv.size
                 reqs.append(
                     comm.Irecv(
@@ -35,10 +39,11 @@ def communicate(mb, varis):
                 if face.neighbor is None:
                     continue
 
+                # call a function to populate and reorient the send buffer.
                 send, sliceS = (
-                    (face.sendBuffer4, face.sliceS4)
+                    (face.array["sendBuffer4"], face.sliceS4)
                     if ndim == 4
-                    else (face.sendBuffer3, face.sliceS3)
+                    else (face.array["sendBuffer3"], face.sliceS3)
                 )
                 for i, sS in enumerate(sliceS):
                     send[i] = face.orient(blk.array[var][sS])
@@ -54,9 +59,9 @@ def communicate(mb, varis):
                     continue
                 Request.Wait(reqs.__next__())
                 recv, sliceR = (
-                    (face.recvBuffer4, face.sliceR4)
+                    (face.array["recvBuffer4"], face.sliceR4)
                     if ndim == 4
-                    else (face.recvBuffer3, face.sliceR3)
+                    else (face.array["recvBuffer3"], face.sliceR3)
                 )
                 for i, sR in enumerate(sliceR):
                     blk.array[var][sR] = recv[i]

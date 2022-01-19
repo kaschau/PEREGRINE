@@ -1,10 +1,11 @@
-import peregrinepy as pg
-import numpy as np
 import mpi4py.rc
 
 mpi4py.rc.finalize = False
 mpi4py.rc.initialize = False
 from mpi4py import MPI
+import peregrinepy as pg
+import kokkos
+import numpy as np
 
 
 class twoblock123:
@@ -39,10 +40,12 @@ class TestOrientation:
     @classmethod
     def setup_class(cls):
         MPI.Init()
+        kokkos.initialize()
 
     @classmethod
     def teardown_class(cls):
         MPI.Finalize()
+        kokkos.finalize()
 
     ##############################################
     # Test for all positive i aligned orientations

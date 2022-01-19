@@ -1,7 +1,7 @@
 import kokkos
 import numpy as np
 from itertools import product
-from peregriepy.compute import KokkosLocation
+from ..compute import KokkosLocation
 
 
 def createViewMirrorArray(obj, names, shape):

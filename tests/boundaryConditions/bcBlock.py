@@ -104,7 +104,7 @@ def create(bc):
                 pass
 
         pg.misc.createViewMirrorArray(
-            face, ["qBcVals", "QBcVals"], face.array["qBcVals"].shape, "Default"
+            face, ["qBcVals", "QBcVals"], face.array["qBcVals"].shape
         )
 
     return mb

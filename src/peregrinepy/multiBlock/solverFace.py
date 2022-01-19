@@ -1,6 +1,6 @@
 import numpy as np
 from .topologyFace import topologyFace
-from ..misc import null, frozenDict
+from ..misc import null, frozenDict, createViewMirrorArray
 from ..compute import face_, bcs
 
 s_ = np.s_
@@ -10,13 +10,12 @@ class solverFace(topologyFace, face_):
 
     faceType = "solver"
 
-    def __init__(self, nface, ng=None):
+    def __init__(self, nface, ng):
         face_.__init__(self)
         topologyFace.__init__(self, nface)
         assert 1 <= nface <= 6, "nface must be between (1,6)"
-        assert ng is not None, "ng must be specified to create a solverFace"
 
-        self.ng = ng
+        self._ng = ng
 
         # Face slices
         smallS0 = range(ng - 1, -1, -1)
@@ -49,8 +48,26 @@ class solverFace(topologyFace, face_):
             self.s2_ = [s_[:, :, i] for i in largeS2]
 
         # Boundary condition values
-        self.array = frozenDict({"qBcVals": None, "QBcVals": None})
-        self.mirror = frozenDict({"qBcVals": None, "QBcVals": None})
+        self.array = frozenDict(
+            {
+                "sendBuffer3": None,
+                "sendBuffer4": None,
+                "recvBuffer3": None,
+                "recvBuffer4": None,
+                "qBcVals": None,
+                "QBcVals": None,
+            }
+        )
+        self.mirror = frozenDict(
+            {
+                "sendBuffer3": None,
+                "sendBuffer4": None,
+                "recvBuffer3": None,
+                "recvBuffer4": None,
+                "qBcVals": None,
+                "QBcVals": None,
+            }
+        )
         # Boundary function
         self.bcFunc = bcs.walls.adiabaticSlipWall
 
@@ -64,11 +81,7 @@ class solverFace(topologyFace, face_):
         self.sliceR4 = None
 
         self.tagS = None
-        self.sendBuffer3 = None
-        self.sendBuffer4 = None
         self.tagR = None
-        self.recvBuffer3 = None
-        self.recvBuffer4 = None
 
     @topologyFace.bcType.setter
     def bcType(self, value):
@@ -105,6 +118,8 @@ class solverFace(topologyFace, face_):
         #  of slices. I.e. recv[0] is the first slice recieved, recv[1] is the next
         #  slice recieved. This way, we can still treat each slice as a 2d object for
         #  reorientation purposes.
+        #
+        #        index -------------------------->
         #  o----------o----------o|x----------x----------x
         #  |          |           |           |          |
         #  | recv[0]  |  recv[1]  |  send[0]  |  send[1] |
@@ -181,15 +196,28 @@ class solverFace(topologyFace, face_):
         # We send the data in the correct shape already
         # Face and point shape
         temp = self.orient(np.empty(commfpshape[1::]))
-        self.sendBuffer3 = np.ascontiguousarray(np.empty(tuple([ng]) + temp.shape))
-        # We revieve the data in the correct shape already
-        self.recvBuffer3 = np.ascontiguousarray(np.empty(commfpshape))
+        self.array["sendBuffer3"] = np.ascontiguousarray(
+            np.empty(tuple([ng]) + temp.shape)
+        )
+        shape = self.array["sendBuffer3"].shape
+        createViewMirrorArray(self, "sendBuffer3", shape)
+
+        # We recieve the data in the correct shape already
+        self.array["recvBuffer3"] = np.ascontiguousarray(np.empty(commfpshape))
+        shape = self.array["recvBuffer3"].shape
+        createViewMirrorArray(self, "recvBuffer3", shape)
 
         # Cell
         temp = self.orient(np.empty(commcshape[1::]))
-        self.sendBuffer4 = np.ascontiguousarray(np.empty(tuple([ng]) + temp.shape))
+        self.array["sendBuffer4"] = np.ascontiguousarray(
+            np.empty(tuple([ng]) + temp.shape)
+        )
+        shape = self.array["sendBuffer4"].shape
+        createViewMirrorArray(self, "sendBuffer4", shape)
         # We revieve the data in the correct shape already
-        self.recvBuffer4 = np.ascontiguousarray(np.empty(commcshape))
+        self.array["recvBuffer4"] = np.ascontiguousarray(np.empty(commcshape))
+        shape = self.array["recvBuffer4"].shape
+        createViewMirrorArray(self, "recvBuffer4", shape)
 
         # Unique tags.
         self.tagR = int(nblki * 6 + self.nface)
@@ -259,6 +287,10 @@ class solverFace(topologyFace, face_):
         function += "Null" if function == "orient" else ""
 
         self.orient = getattr(self, function)
+
+    @property
+    def ng(self):
+        return self._ng
 
     ##########################################################
     # Define the possible reorientation routines
