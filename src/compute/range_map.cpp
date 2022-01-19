@@ -68,7 +68,7 @@ threeDsubview getHaloSlice(fourDview view, const int nface, int slice) {
   switch (nface) {
   case 1:
   case 2:
-    // face 1 halo
+    // face 1,2 halo
     subview =
         Kokkos::subview(view, slice, Kokkos::ALL, Kokkos::ALL, Kokkos::ALL);
     break;
