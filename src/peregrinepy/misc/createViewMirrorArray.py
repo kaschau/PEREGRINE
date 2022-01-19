@@ -1,16 +1,17 @@
 import kokkos
 import numpy as np
 from itertools import product
+from peregriepy.compute import KokkosLocation
 
 
-def createViewMirrorArray(obj, names, shape, space):
+def createViewMirrorArray(obj, names, shape):
 
     if type(names) != list:
         names = [names]
 
-    if space in ["OpenMP", "Serial", "Default"]:
+    if KokkosLocation in ["OpenMP", "Serial", "Default"]:
         kokkosSpace = kokkos.HostSpace
-    elif space in ["Cuda"]:
+    elif KokkosLocation in ["Cuda"]:
         kokkosSpace = kokkos.CudaSpace
     else:
         raise ValueError("What space?")
