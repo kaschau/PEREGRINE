@@ -152,6 +152,6 @@ void setHaloSlices(int &s0, int &s1, int &s2, int &plus, const int ni,
     plus = -1;
     break;
   default:
-    throw std::invalid_argument("Unknown argument getSlice");
+    throw std::invalid_argument("Unknown argument setHaloSlice");
   }
 }

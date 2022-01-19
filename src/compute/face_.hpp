@@ -8,10 +8,15 @@
 // python wrapper
 struct face_ {
 
+  int _ng;
   // face number
   int _nface;
   // Boundary condition value arrays
   threeDview qBcVals, QBcVals;
+
+  // MPI send and recv buffers
+  threeDview sendBuffer3, recvBuffer3;
+  fourDview sendBuffer4, recvBuffer4;
 
 };
 
