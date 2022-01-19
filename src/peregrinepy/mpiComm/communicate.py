@@ -32,8 +32,7 @@ def communicate(mb, varis):
         # Post non-blocking sends
         for blk in mb:
             # Need to update host data
-            if blk._isInitialized:
-                blk.updateHostView(var)
+            blk.updateHostView(var)
             ndim = blk.array[var].ndim
             for face in blk.faces:
                 if face.neighbor is None:
@@ -66,7 +65,6 @@ def communicate(mb, varis):
                 for i, sR in enumerate(sliceR):
                     blk.array[var][sR] = recv[i]
             # Push back up the device
-            if blk._isInitialized:
-                blk.updateDeviceView(var)
+            blk.updateDeviceView(var)
 
         comm.Barrier()

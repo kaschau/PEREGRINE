@@ -18,8 +18,7 @@ def unifySolverGrid(mb):
     for var in ["x", "y", "z"]:
         for blk in mb:
             # Need to update host data
-            if blk._isInitialized:
-                blk.updateHostView(var)
+            blk.updateHostView(var)
         for _ in range(3):
             reqs = []
             # Post non-blocking recieves
@@ -76,5 +75,4 @@ def unifySolverGrid(mb):
 
         for blk in mb:
             # Push back up the device
-            if blk._isInitialized:
-                blk.updateDeviceView(var)
+            blk.updateDeviceView(var)

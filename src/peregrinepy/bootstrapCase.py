@@ -65,19 +65,6 @@ def bootstrapCase(config):
         print("Read grid.")
 
     ################################################################
-    # Now set the MPI communication info for each block
-    ################################################################
-    mb.setBlockCommunication()
-
-    ################################################################
-    # Unify the grid via halo construction, compute metrics
-    ################################################################
-    mb.unifyGrid()
-    mb.computeMetrics(config["RHS"]["diffOrder"])
-    if rank == 0:
-        print("Unified grid.")
-
-    ################################################################
     # Read in restart
     ################################################################
     pg.readers.readRestart(
@@ -90,9 +77,22 @@ def bootstrapCase(config):
         print("Read restart.")
 
     ################################################################
+    # Now set the MPI communication info for each block
+    ################################################################
+    mb.setBlockCommunication()
+
+    ################################################################
     # Initialize the solver arrays
     ################################################################
     mb.initSolverArrays(config)
+
+    ################################################################
+    # Unify the grid via halo construction, compute metrics
+    ################################################################
+    mb.unifyGrid()
+    mb.computeMetrics(config["RHS"]["diffOrder"])
+    if rank == 0:
+        print("Unified grid.")
 
     ################################################################
     # Read in boundary conditions
