@@ -20,6 +20,10 @@ threeDsubview getHaloSlice(fourDview view, const int nface, int slice);
 twoDsubview getHaloSlice(threeDview view, const int nface, int slice);
 void setHaloSlices(int &s0, int &s1, int &s2, int &plus, const int ni,
                    const int nj, const int nk, const int ng, const int nface);
+void extract_sendBuffer3(threeDview view, face_ face, std::vector<int> slices);
+void extract_sendBuffer4(fourDview view, face_ face, std::vector<int> slices);
+void place_recvBuffer3(threeDview view, face_ face, std::vector<int> slices);
+void place_recvBuffer4(fourDview view, face_ face, std::vector<int> slices);
 
 // ./advFlux
 //    |------> secondOrderKEEP

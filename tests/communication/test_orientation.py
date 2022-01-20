@@ -3,8 +3,8 @@ import mpi4py.rc
 mpi4py.rc.finalize = False
 mpi4py.rc.initialize = False
 from mpi4py import MPI
-import peregrinepy as pg
 import kokkos
+import peregrinepy as pg
 import numpy as np
 
 
@@ -59,6 +59,7 @@ class TestOrientation:
 
         # Reorient and update communication info
         tb.mb.setBlockCommunication()
+        tb.mb.initSolverArrays(tb.config)
         # Execute communication
         pg.mpiComm.communicate(tb.mb, ["x", "y", "z", "q"])
 
@@ -103,6 +104,16 @@ class TestOrientation:
             blk1.array[var] = np.moveaxis(
                 np.flip(blk1.array[var], axis=2), (0, 1, 2), (0, 2, 1)
             )
+
+        # HACK: It seems like previous test data still exists
+        # We need to clear out residual arrays from previous tests
+        for v in blk0.array.keys():
+            if v not in ["x", "y", "z", "q"]:
+                blk0.array[v] = None
+                blk0.mirror[v] = None
+                blk1.array[v] = None
+                blk1.mirror[v] = None
+
         blk1.nj = tb.xshape[2] - 2 * ng
         blk1.nk = tb.xshape[1] - 2 * ng
 
@@ -111,7 +122,7 @@ class TestOrientation:
         blk1.getFace(1).orientation = "162"
 
         tb.mb.setBlockCommunication()
-
+        tb.mb.initSolverArrays(tb.config)
         # Execute communication
         pg.mpiComm.communicate(tb.mb, ["x", "y", "z", "q"])
 
@@ -157,6 +168,16 @@ class TestOrientation:
             blk1.array[var] = np.moveaxis(
                 np.flip(blk1.array[var], axis=1), (0, 1, 2), (0, 2, 1)
             )
+
+        # HACK: It seems like previous test data still exists
+        # We need to clear out residual arrays from previous tests
+        for v in blk0.array.keys():
+            if v not in ["x", "y", "z", "q"]:
+                blk0.array[v] = None
+                blk0.mirror[v] = None
+                blk1.array[v] = None
+                blk1.mirror[v] = None
+
         blk1.nj = tb.xshape[2] - 2 * ng
         blk1.nk = tb.xshape[1] - 2 * ng
 
@@ -165,7 +186,7 @@ class TestOrientation:
         blk1.getFace(1).orientation = "135"
 
         tb.mb.setBlockCommunication()
-
+        tb.mb.initSolverArrays(tb.config)
         # Execute communication
         pg.mpiComm.communicate(tb.mb, ["x", "y", "z", "q"])
 
@@ -213,6 +234,16 @@ class TestOrientation:
 
         for var in ["x", "y", "z", "q"]:
             blk1.array[var] = np.moveaxis(blk1.array[var], (0, 1, 2), (1, 2, 0))
+
+        # HACK: It seems like previous test data still exists
+        # We need to clear out residual arrays from previous tests
+        for v in blk0.array.keys():
+            if v not in ["x", "y", "z", "q"]:
+                blk0.array[v] = None
+                blk0.mirror[v] = None
+                blk1.array[v] = None
+                blk1.mirror[v] = None
+
         blk1.ni = tb.xshape[2] - 2 * ng
         blk1.nj = tb.xshape[0] - 2 * ng
         blk1.nk = tb.xshape[1] - 2 * ng
@@ -231,7 +262,7 @@ class TestOrientation:
         blk1.getFace(3).commRank = 0
 
         tb.mb.setBlockCommunication()
-
+        tb.mb.initSolverArrays(tb.config)
         # Execute communication
         pg.mpiComm.communicate(tb.mb, ["x", "y", "z", "q"])
 
@@ -279,6 +310,16 @@ class TestOrientation:
 
         for var in ["x", "y", "z", "q"]:
             blk1.array[var] = np.moveaxis(blk1.array[var], (0, 1, 2), (2, 0, 1))
+
+        # HACK: It seems like previous test data still exists
+        # We need to clear out residual arrays from previous tests
+        for v in blk0.array.keys():
+            if v not in ["x", "y", "z", "q"]:
+                blk0.array[v] = None
+                blk0.mirror[v] = None
+                blk1.array[v] = None
+                blk1.mirror[v] = None
+
         blk1.ni = tb.xshape[1] - 2 * ng
         blk1.nj = tb.xshape[2] - 2 * ng
         blk1.nk = tb.xshape[0] - 2 * ng
@@ -297,7 +338,7 @@ class TestOrientation:
         blk1.getFace(5).commRank = 0
 
         tb.mb.setBlockCommunication()
-
+        tb.mb.initSolverArrays(tb.config)
         # Execute communication
         pg.mpiComm.communicate(tb.mb, ["x", "y", "z", "q"])
 
@@ -345,6 +386,16 @@ class TestOrientation:
 
         for var in ["x", "y", "z", "q"]:
             blk1.array[var] = np.moveaxis(blk1.array[var], (0, 1, 2), (0, 2, 1))
+
+        # HACK: It seems like previous test data still exists
+        # We need to clear out residual arrays from previous tests
+        for v in blk0.array.keys():
+            if v not in ["x", "y", "z", "q"]:
+                blk0.array[v] = None
+                blk0.mirror[v] = None
+                blk1.array[v] = None
+                blk1.mirror[v] = None
+
         blk1.ni = tb.xshape[0] - 2 * ng
         blk1.nj = tb.xshape[2] - 2 * ng
         blk1.nk = tb.xshape[1] - 2 * ng
@@ -363,7 +414,7 @@ class TestOrientation:
         blk1.getFace(2).commRank = 0
 
         tb.mb.setBlockCommunication()
-
+        tb.mb.initSolverArrays(tb.config)
         # Execute communication
         pg.mpiComm.communicate(tb.mb, ["x", "y", "z", "q"])
 
@@ -411,6 +462,16 @@ class TestOrientation:
 
         for var in ["x", "y", "z", "q"]:
             blk1.array[var] = np.moveaxis(blk1.array[var], (0, 1, 2), (1, 0, 2))
+
+        # HACK: It seems like previous test data still exists
+        # We need to clear out residual arrays from previous tests
+        for v in blk0.array.keys():
+            if v not in ["x", "y", "z", "q"]:
+                blk0.array[v] = None
+                blk0.mirror[v] = None
+                blk1.array[v] = None
+                blk1.mirror[v] = None
+
         blk1.ni = tb.xshape[1] - 2 * ng
         blk1.nj = tb.xshape[0] - 2 * ng
         blk1.nk = tb.xshape[2] - 2 * ng
@@ -429,7 +490,7 @@ class TestOrientation:
         blk1.getFace(4).commRank = 0
 
         tb.mb.setBlockCommunication()
-
+        tb.mb.initSolverArrays(tb.config)
         # Execute communication
         pg.mpiComm.communicate(tb.mb, ["x", "y", "z", "q"])
 
@@ -477,6 +538,16 @@ class TestOrientation:
 
         for var in ["x", "y", "z", "q"]:
             blk1.array[var] = np.moveaxis(blk1.array[var], (0, 1, 2), (2, 1, 0))
+
+        # HACK: It seems like previous test data still exists
+        # We need to clear out residual arrays from previous tests
+        for v in blk0.array.keys():
+            if v not in ["x", "y", "z", "q"]:
+                blk0.array[v] = None
+                blk0.mirror[v] = None
+                blk1.array[v] = None
+                blk1.mirror[v] = None
+
         blk1.ni = tb.xshape[2] - 2 * ng
         blk1.nj = tb.xshape[1] - 2 * ng
         blk1.nk = tb.xshape[0] - 2 * ng
@@ -495,7 +566,7 @@ class TestOrientation:
         blk1.getFace(6).commRank = 0
 
         tb.mb.setBlockCommunication()
-
+        tb.mb.initSolverArrays(tb.config)
         # Execute communication
         pg.mpiComm.communicate(tb.mb, ["x", "y", "z", "q"])
 

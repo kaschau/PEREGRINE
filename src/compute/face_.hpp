@@ -15,8 +15,8 @@ struct face_ {
   threeDview qBcVals, QBcVals;
 
   // MPI send and recv buffers
-  threeDview sendBuffer3, recvBuffer3;
-  fourDview sendBuffer4, recvBuffer4;
+  threeDview sendBuffer3, recvBuffer3, tempRecvBuffer3;
+  fourDview sendBuffer4, recvBuffer4, tempRecvBuffer4;
 
 };
 

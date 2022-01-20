@@ -35,7 +35,7 @@ def createViewMirrorArray(obj, names, shape):
             extents = obj.array[name].shape
             assert all(
                 [i == j for i, j in zip(shape, extents)]
-            ), "Requested shape does not equal existing numpy array shape."
+            ), f"Requested shape for {name} does not equal existing numpy array shape."
             it = product(*[range(nx) for nx in extents])
             for ijk in it:
                 obj.mirror[name][ijk] = obj.array[name][ijk]
