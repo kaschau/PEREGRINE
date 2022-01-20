@@ -31,7 +31,7 @@ def unifySolverGrid(mb):
                     commRank = face.commRank
                     tag = int(f"1{neighbor}2{blk.nblki}1{face.nface}")
 
-                    ssize = face.recvBuffer3.size
+                    ssize = face.array["recvBuffer3"].size
                     reqs.append(
                         comm.Irecv(
                             [face.recvBuffer3[:], ssize, MPIDOUBLE],
@@ -53,7 +53,7 @@ def unifySolverGrid(mb):
                         face.sendBuffer3[i] = face.orient(
                             blk.array[var][sS] - blk.array[var][face.s1_]
                         )
-                    ssize = face.sendBuffer3.size
+                    ssize = face.array["sendBuffer3"].size
                     comm.Send(
                         [face.sendBuffer3, ssize, MPIDOUBLE], dest=commRank, tag=tag
                     )
@@ -68,7 +68,7 @@ def unifySolverGrid(mb):
                     Request.Wait(reqs.__next__())
                     for i, sR in enumerate(face.sliceR3):
                         blk.array[var][sR] = (
-                            blk.array[var][face.s1_] + face.recvBuffer3[i]
+                            blk.array[var][face.s1_] + face.array["recvBuffer3"][i]
                         )
 
             comm.Barrier()
