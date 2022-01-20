@@ -37,7 +37,6 @@ def communicate(mb, varis):
 
         # Post non-blocking sends
         for blk in mb:
-            # Need to update host data
             ndim = blk.array[var].ndim
             for face in blk.faces:
                 if face.neighbor is None:
@@ -55,10 +54,10 @@ def communicate(mb, varis):
                     extract = extract_sendBuffer3
                 # Get the indices of the send slices from the numpy slice object
                 sliceIndxs = [s for f in sliceS for s in f if type(s) is int]
-                # populate the recv array with the unoriented send data, since its
-                # the correct size and not need right now
+                # populate the temp recv array with the unoriented send data, since its
+                # the correct size and shape
                 extract(getattr(blk, var), face, sliceIndxs)
-                # update the device recv buffer
+                # update the device temp recv buffer
                 face.updateHostView(recv)
                 # Now, orient each send slice and place in send buffer
                 for i in range(face.ng):
