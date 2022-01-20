@@ -34,7 +34,7 @@ def unifySolverGrid(mb):
                     ssize = face.array["recvBuffer3"].size
                     reqs.append(
                         comm.Irecv(
-                            [face.recvBuffer3[:], ssize, MPIDOUBLE],
+                            [face.array["recvBuffer3"][:], ssize, MPIDOUBLE],
                             source=commRank,
                             tag=tag,
                         )
@@ -55,7 +55,9 @@ def unifySolverGrid(mb):
                         )
                     ssize = face.array["sendBuffer3"].size
                     comm.Send(
-                        [face.sendBuffer3, ssize, MPIDOUBLE], dest=commRank, tag=tag
+                        [face.array["sendBuffer3"], ssize, MPIDOUBLE],
+                        dest=commRank,
+                        tag=tag,
                     )
 
             # wait and assign
