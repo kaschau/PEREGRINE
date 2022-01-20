@@ -157,11 +157,13 @@ PYBIND11_MODULE(compute, m) {
     .def_readwrite("_nface", &face_::_nface)
 
     .def_readwrite("qBcVals", &face_::qBcVals)
-    .def_readwrite("QBcVals", &face_::QBcVals);
-    .def_readwrite("sendBuffer3", &face_::sendBuffer3);
-    .def_readwrite("recvBuffer3", &face_::recvBuffer3);
-    .def_readwrite("sendBuffer4", &face_::sendBuffer4);
-    .def_readwrite("recvBuffer4", &face_::recvBuffer4);
+    .def_readwrite("QBcVals", &face_::QBcVals)
+    .def_readwrite("sendBuffer3", &face_::sendBuffer3)
+    .def_readwrite("sendBuffer4", &face_::sendBuffer4)
+    .def_readwrite("recvBuffer3", &face_::recvBuffer3)
+    .def_readwrite("recvBuffer4", &face_::recvBuffer4)
+    .def_readwrite("tempRecvBuffer3", &face_::tempRecvBuffer3)
+    .def_readwrite("tempRecvBuffer4", &face_::tempRecvBuffer4);
 
   static auto _atexit = []() {
     if (Kokkos::is_initialized()) Kokkos::finalize();

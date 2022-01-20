@@ -1,3 +1,4 @@
+from kokkos import deep_copy
 import numpy as np
 from .topologyFace import topologyFace
 from ..misc import null, frozenDict, createViewMirrorArray
@@ -54,6 +55,8 @@ class solverFace(topologyFace, face_):
                 "sendBuffer4": None,
                 "recvBuffer3": None,
                 "recvBuffer4": None,
+                "tempRecvBuffer3": None,
+                "tempRecvBuffer4": None,
                 "qBcVals": None,
                 "QBcVals": None,
             }
@@ -64,6 +67,8 @@ class solverFace(topologyFace, face_):
                 "sendBuffer4": None,
                 "recvBuffer3": None,
                 "recvBuffer4": None,
+                "tempRecvBuffer3": None,
+                "tempRecvBuffer4": None,
                 "qBcVals": None,
                 "QBcVals": None,
             }
@@ -145,12 +150,12 @@ class solverFace(topologyFace, face_):
             self.sliceR3 = [s_[i, :, :] for i in smallRfp]
             self.sliceR4 = [s_[i, :, :, :] for i in smallRc]
         elif self.nface == 2:
-            self.sliceS3 = [s_[i, :, :] for i in largeSfp]
-            self.sliceS4 = [s_[i, :, :, :] for i in largeSc]
+            self.sliceS3 = [s_[ni + 2 * ng + i, :, :] for i in largeSfp]
+            self.sliceS4 = [s_[ni + 2 * ng + i - 1, :, :, :] for i in largeSc]
             commfpshape = (ng, nj + 2 * ng, nk + 2 * ng)
             commcshape = (ng, nj + 2 * ng - 1, nk + 2 * ng - 1, ne)
-            self.sliceR3 = [s_[i, :, :] for i in largeRfp]
-            self.sliceR4 = [s_[i, :, :, :] for i in largeRc]
+            self.sliceR3 = [s_[ni + 2 * ng + i, :, :] for i in largeRfp]
+            self.sliceR4 = [s_[ni + 2 * ng + i - 1, :, :, :] for i in largeRc]
         elif self.nface == 3:
             self.sliceS3 = [s_[:, i, :] for i in smallSfp]
             self.sliceS4 = [s_[:, i, :, :] for i in smallSc]
@@ -159,12 +164,12 @@ class solverFace(topologyFace, face_):
             self.sliceR3 = [s_[:, i, :] for i in smallRfp]
             self.sliceR4 = [s_[:, i, :, :] for i in smallRc]
         elif self.nface == 4:
-            self.sliceS3 = [s_[:, i, :] for i in largeSfp]
-            self.sliceS4 = [s_[:, i, :, :] for i in largeSc]
+            self.sliceS3 = [s_[:, nj + 2 * ng + i, :] for i in largeSfp]
+            self.sliceS4 = [s_[:, nj + 2 * ng + i - 1, :, :] for i in largeSc]
             commfpshape = (ng, ni + 2 * ng, nk + 2 * ng)
             commcshape = (ng, ni + 2 * ng - 1, nk + 2 * ng - 1, ne)
-            self.sliceR3 = [s_[:, i, :] for i in largeRfp]
-            self.sliceR4 = [s_[:, i, :, :] for i in largeRc]
+            self.sliceR3 = [s_[:, nj + 2 * ng + i, :] for i in largeRfp]
+            self.sliceR4 = [s_[:, nj + 2 * ng + i - 1, :, :] for i in largeRc]
         elif self.nface == 5:
             self.sliceS3 = [s_[:, :, i] for i in smallSfp]
             self.sliceS4 = [s_[:, :, i, :] for i in smallSc]
@@ -173,12 +178,12 @@ class solverFace(topologyFace, face_):
             self.sliceR3 = [s_[:, :, i] for i in smallRfp]
             self.sliceR4 = [s_[:, :, i, :] for i in smallRc]
         elif self.nface == 6:
-            self.sliceS3 = [s_[:, :, i] for i in largeSfp]
-            self.sliceS4 = [s_[:, :, i, :] for i in largeSc]
+            self.sliceS3 = [s_[:, :, nk + 2 * ng + i] for i in largeSfp]
+            self.sliceS4 = [s_[:, :, nk + 2 * ng + i - 1, :] for i in largeSc]
             commfpshape = (ng, ni + 2 * ng, nj + 2 * ng)
             commcshape = (ng, ni + 2 * ng - 1, nj + 2 * ng - 1, ne)
-            self.sliceR3 = [s_[:, :, i] for i in largeRfp]
-            self.sliceR4 = [s_[:, :, i, :] for i in largeRc]
+            self.sliceR3 = [s_[:, :, nk + 2 * ng + i] for i in largeRfp]
+            self.sliceR4 = [s_[:, :, nk + 2 * ng + i - 1, :] for i in largeRc]
 
         # We reverse the order of the send slices if the face's neighbor
         # and this face axis is counter aligned. That way the recv buffer
@@ -206,6 +211,10 @@ class solverFace(topologyFace, face_):
         self.array["recvBuffer3"] = np.ascontiguousarray(np.empty(commfpshape))
         shape = self.array["recvBuffer3"].shape
         createViewMirrorArray(self, "recvBuffer3", shape)
+        # We use temporary buffers for some storage
+        self.array["tempRecvBuffer3"] = np.ascontiguousarray(np.empty(commfpshape))
+        shape = self.array["tempRecvBuffer3"].shape
+        createViewMirrorArray(self, "tempRecvBuffer3", shape)
 
         # Cell
         temp = self.orient(np.empty(commcshape[1::]))
@@ -218,6 +227,10 @@ class solverFace(topologyFace, face_):
         self.array["recvBuffer4"] = np.ascontiguousarray(np.empty(commcshape))
         shape = self.array["recvBuffer4"].shape
         createViewMirrorArray(self, "recvBuffer4", shape)
+        # We use temporary buffers for some storage
+        self.array["tempRecvBuffer4"] = np.ascontiguousarray(np.empty(commcshape))
+        shape = self.array["tempRecvBuffer4"].shape
+        createViewMirrorArray(self, "tempRecvBuffer4", shape)
 
         # Unique tags.
         self.tagR = int(nblki * 6 + self.nface)
@@ -291,6 +304,12 @@ class solverFace(topologyFace, face_):
     @property
     def ng(self):
         return self._ng
+
+    def updateDeviceView(self, var):
+        deep_copy(getattr(self, var), self.mirror[var])
+
+    def updateHostView(self, var):
+        deep_copy(self.mirror[var], getattr(self, var))
 
     ##########################################################
     # Define the possible reorientation routines
