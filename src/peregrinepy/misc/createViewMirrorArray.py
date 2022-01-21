@@ -36,9 +36,8 @@ def createViewMirrorArray(obj, names, shape):
             assert all(
                 [i == j for i, j in zip(shape, extents)]
             ), f"Requested shape for {name} does not equal existing numpy array shape."
-            it = product(*[range(nx) for nx in extents])
-            for ijk in it:
-                obj.mirror[name][ijk] = obj.array[name][ijk]
+            temp = np.copy(obj.array[name])
             obj.array[name] = None
             obj.array[name] = np.array(obj.mirror[name], copy=False)
+            obj.array[name][:] = temp[:]
             kokkos.deep_copy(getattr(obj, name), obj.mirror[name])
