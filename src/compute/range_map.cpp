@@ -2,7 +2,7 @@
 #include "kokkos_types.hpp"
 #include <stdexcept>
 
-MDRange3 get_range3(block_ b, const int nface, const int indxI /*=0*/,
+MDRange3 get_range3(const block_ b, const int nface, const int indxI /*=0*/,
                     const int indxJ /*=0*/, const int indxK /*=0*/) {
 
   MDRange3 range;
@@ -62,13 +62,13 @@ MDRange3 get_range3(block_ b, const int nface, const int indxI /*=0*/,
   return range;
 }
 
-threeDsubview getHaloSlice(fourDview view, const int nface, int slice) {
+threeDsubview getHaloSlice(const fourDview view, const int nface, const int slice) {
 
   threeDsubview subview;
   switch (nface) {
   case 1:
   case 2:
-    // face 1 halo
+    // face 1,2 halo
     subview =
         Kokkos::subview(view, slice, Kokkos::ALL, Kokkos::ALL, Kokkos::ALL);
     break;
@@ -85,20 +85,19 @@ threeDsubview getHaloSlice(fourDview view, const int nface, int slice) {
         Kokkos::subview(view, Kokkos::ALL, Kokkos::ALL, slice, Kokkos::ALL);
     break;
   default:
-    std::cout << nface;
     throw std::invalid_argument(" <-- Unknown argument to getHaloSlice");
   }
 
   return subview;
 }
 
-twoDsubview getHaloSlice(threeDview view, const int nface, int slice) {
+twoDsubview getHaloSlice(const threeDview view, const int nface, const int slice) {
 
   twoDsubview subview;
   switch (nface) {
   case 1:
   case 2:
-    // face 1 halo
+    // face 1,2 halo
     subview =
         Kokkos::subview(view, slice, Kokkos::ALL, Kokkos::ALL);
     break;
@@ -115,7 +114,6 @@ twoDsubview getHaloSlice(threeDview view, const int nface, int slice) {
         Kokkos::subview(view, Kokkos::ALL, Kokkos::ALL, slice);
     break;
   default:
-    std::cout << nface;
     throw std::invalid_argument(" <-- Unknown argument to getHaloSlice");
   }
 
@@ -152,6 +150,6 @@ void setHaloSlices(int &s0, int &s1, int &s2, int &plus, const int ni,
     plus = -1;
     break;
   default:
-    throw std::invalid_argument("Unknown argument getSlice");
+    throw std::invalid_argument("Unknown argument setHaloSlice");
   }
 }

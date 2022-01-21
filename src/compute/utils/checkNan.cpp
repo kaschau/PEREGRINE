@@ -9,21 +9,21 @@ int checkNan(std::vector<block_> mb) {
   //-------------------------------------------------------------------------------------------|
   // Check for nans and infs in the solution array.
   //-------------------------------------------------------------------------------------------|
-  int foundNan;
-  int nanDetected = 0;
+  int foundFinite;
+  int allFinite = 1;
 
   for (const block_ b : mb) {
     MDRange4 range_cc({b.ng, b.ng, b.ng, 0}, {b.ni + b.ng - 1, b.nj + b.ng - 1,
                                               b.nk + b.ng - 1, b.ne});
     Kokkos::parallel_reduce(
         "check nan", range_cc,
-        KOKKOS_LAMBDA(const int i, const int j, const int k, const int l, int &isNan) {
-          isNan = fmax(isnan(b.Q(i, j, k, l)), isNan);
+        KOKKOS_LAMBDA(const int i, const int j, const int k, const int l, int &finite) {
+          finite = fmin(isfinite(b.Q(i, j, k, l)), finite);
         },
-        Kokkos::Max<int>(foundNan));
+        Kokkos::Min<int>(foundFinite));
   }
 
-  nanDetected = std::max(nanDetected, foundNan);
+  allFinite = 1 - std::min(allFinite, foundFinite);
 
-  return nanDetected;
+  return allFinite;
 }

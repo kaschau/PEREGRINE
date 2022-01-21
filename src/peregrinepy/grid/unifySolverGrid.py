@@ -18,8 +18,7 @@ def unifySolverGrid(mb):
     for var in ["x", "y", "z"]:
         for blk in mb:
             # Need to update host data
-            if blk._isInitialized:
-                blk.updateHostView(var)
+            blk.updateHostView(var)
         for _ in range(3):
             reqs = []
             # Post non-blocking recieves
@@ -32,10 +31,10 @@ def unifySolverGrid(mb):
                     commRank = face.commRank
                     tag = int(f"1{neighbor}2{blk.nblki}1{face.nface}")
 
-                    ssize = face.recvBuffer3.size
+                    ssize = face.array["recvBuffer3"].size
                     reqs.append(
                         comm.Irecv(
-                            [face.recvBuffer3[:], ssize, MPIDOUBLE],
+                            [face.array["recvBuffer3"][:], ssize, MPIDOUBLE],
                             source=commRank,
                             tag=tag,
                         )
@@ -51,12 +50,14 @@ def unifySolverGrid(mb):
                     commRank = face.commRank
                     tag = int(f"1{blk.nblki}2{neighbor}1{face.neighborNface}")
                     for i, sS in enumerate(face.sliceS3):
-                        face.sendBuffer3[i] = face.orient(
+                        face.array["sendBuffer3"][i] = face.orient(
                             blk.array[var][sS] - blk.array[var][face.s1_]
                         )
-                    ssize = face.sendBuffer3.size
+                    ssize = face.array["sendBuffer3"].size
                     comm.Send(
-                        [face.sendBuffer3, ssize, MPIDOUBLE], dest=commRank, tag=tag
+                        [face.array["sendBuffer3"], ssize, MPIDOUBLE],
+                        dest=commRank,
+                        tag=tag,
                     )
 
             # wait and assign
@@ -69,12 +70,11 @@ def unifySolverGrid(mb):
                     Request.Wait(reqs.__next__())
                     for i, sR in enumerate(face.sliceR3):
                         blk.array[var][sR] = (
-                            blk.array[var][face.s1_] + face.recvBuffer3[i]
+                            blk.array[var][face.s1_] + face.array["recvBuffer3"][i]
                         )
 
             comm.Barrier()
 
         for blk in mb:
             # Push back up the device
-            if blk._isInitialized:
-                blk.updateDeviceView(var)
+            blk.updateDeviceView(var)

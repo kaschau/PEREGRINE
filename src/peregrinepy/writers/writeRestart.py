@@ -142,13 +142,18 @@ def writeRestart(mb, path="./", gridPath="./", animate=True, precision="double")
         dataResElem.set("Precision", "8")
         dataResElem.set("Format", "HDF")
 
-        text = f"q.{mb.nrt:08d}.{blk.nblki:06d}.h5:/results/{name}"
+        if animate:
+            textPrepend = f"q.{mb.nrt:08d}.{blk.nblki:06d}.h5:/results/"
+        else:
+            textPrepend = f"q.{blk.nblki:06d}.h5:/results/"
+
+        text = f"{textPrepend}{name}"
         dataResElem.text = text
 
         for name in names[1::]:
             blockElem.append(deepcopy(attributeElem))
             blockElem[-1].set("Name", name)
-            text = f"q.{mb.nrt:08d}.{blk.nblki:06d}.h5:/results/{name}"
+            text = f"{textPrepend}/{name}"
             blockElem[-1][0].text = text
 
         # Velocity Attributes
@@ -168,7 +173,7 @@ def writeRestart(mb, path="./", gridPath="./", animate=True, precision="double")
             dataResElem.set("Precision", "8")
             dataResElem.set("Format", "HDF")
             dataResElem.set("Name", name)
-            text = f"q.{mb.nrt:08d}.{blk.nblki:06d}.h5:/results/{name}"
+            text = f"{textPrepend}/{name}"
             dataResElem.text = text
 
         gridElem.append(deepcopy(blockElem))

@@ -50,4 +50,21 @@ void bindUtils(py::module_ &m) {
   //    |------> checkNan
   utils.def("checkNan", &checkNan, "Check for any nans/infs in the Q array",
         py::arg("std::vector<block_ object>"));
+  //    |------> sendRecvBuffer
+  utils.def("extract_sendBuffer3", &extract_sendBuffer3, "Extract the send buffer of a view",
+        py::arg("kokkos view"),
+        py::arg("face object"),
+        py::arg("lists of slices"));
+  utils.def("extract_sendBuffer4", &extract_sendBuffer4, "Extract the send buffer of a view",
+        py::arg("kokkos view"),
+        py::arg("face object"),
+        py::arg("lists of slices"));
+  utils.def("place_recvBuffer3", &place_recvBuffer3, "Place the recv buffer of a view",
+        py::arg("kokkos view"),
+        py::arg("face object"),
+        py::arg("lists of slices"));
+  utils.def("place_recvBuffer4", &place_recvBuffer4, "Place the recv buffer of a view",
+        py::arg("kokkos view"),
+        py::arg("face object"),
+        py::arg("lists of slices"));
 }

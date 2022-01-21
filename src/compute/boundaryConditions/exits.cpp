@@ -5,10 +5,10 @@
 #include "kokkos_types.hpp"
 #include "thtrdat_.hpp"
 
-void constantPressureSubsonicExit(
-    block_ b, const face_ face,
-    const std::function<void(block_, thtrdat_, int, std::string)> &eos,
-    thtrdat_ th, std::string terms) {
+void constantPressureSubsonicExit(block_ b,
+                                  const face_ face,
+                                  const std::function<void(block_, thtrdat_, int, std::string)> &eos,
+                                  thtrdat_ th, std::string terms) {
   //-------------------------------------------------------------------------------------------|
   // Apply BC to face, slice by slice.
   //-------------------------------------------------------------------------------------------|

@@ -77,8 +77,6 @@ def readBcs(mb, pathToFile):
             else:
                 raise ValueError(f"Could not find the prep_ function for {face.bcType}")
 
-            space = mb.config["Kokkos"]["Space"]
-
             names = ["qBcVals", "QBcVals"]
             shape = blk.array["q"][face.s1_].shape
-            createViewMirrorArray(face, names, shape, space)
+            createViewMirrorArray(face, names, shape)
