@@ -1,16 +1,17 @@
 import kokkos
 import numpy as np
 from itertools import product
+from ..compute import KokkosLocation
 
 
-def createViewMirrorArray(obj, names, shape, space):
+def createViewMirrorArray(obj, names, shape):
 
     if type(names) != list:
         names = [names]
 
-    if space in ["OpenMP", "Serial", "Default"]:
+    if KokkosLocation in ["OpenMP", "Serial", "Default"]:
         kokkosSpace = kokkos.HostSpace
-    elif space in ["Cuda"]:
+    elif KokkosLocation in ["Cuda"]:
         kokkosSpace = kokkos.CudaSpace
     else:
         raise ValueError("What space?")
@@ -34,10 +35,9 @@ def createViewMirrorArray(obj, names, shape, space):
             extents = obj.array[name].shape
             assert all(
                 [i == j for i, j in zip(shape, extents)]
-            ), "Requested shape does not equal existing numpy array shape."
-            it = product(*[range(nx) for nx in extents])
-            for ijk in it:
-                obj.mirror[name][ijk] = obj.array[name][ijk]
+            ), f"Requested shape for {name} does not equal existing numpy array shape."
+            temp = np.copy(obj.array[name])
             obj.array[name] = None
             obj.array[name] = np.array(obj.mirror[name], copy=False)
+            obj.array[name][:] = temp[:]
             kokkos.deep_copy(getattr(obj, name), obj.mirror[name])

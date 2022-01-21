@@ -84,7 +84,8 @@ def simulate(configFilePath):
                     comm.Barrier()
                     if rank == 0:
                         print("Nan/inf detected. Aborting.")
-                        comm.Abort()
+
+                    pg.misc.abort(mb)
 
         # CoProcess
         mb.coproc(mb)

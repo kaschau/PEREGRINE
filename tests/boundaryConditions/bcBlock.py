@@ -22,10 +22,10 @@ def create(bc):
         lengths=[1, 1, 1],
     )
 
+    mb.initSolverArrays(config)
+
     mb.generateHalo()
     mb.computeMetrics(config["RHS"]["diffOrder"])
-
-    mb.initSolverArrays(config)
 
     blk = mb[0]
     for face in blk.faces:
@@ -104,7 +104,7 @@ def create(bc):
                 pass
 
         pg.misc.createViewMirrorArray(
-            face, ["qBcVals", "QBcVals"], face.array["qBcVals"].shape, "Default"
+            face, ["qBcVals", "QBcVals"], face.array["qBcVals"].shape
         )
 
     return mb

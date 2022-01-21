@@ -117,14 +117,14 @@ def registerParallelXdmf(mb, path="./", gridPath="./", animate=True):
             else:
                 textPrepend = f"q.{nblki:06d}.h5:/results/"
 
+            text = f"{textPrepend}{name}"
+            dataResElem.text = text
+
             for name in names[1::]:
                 blockElem.append(deepcopy(attributeElem))
                 blockElem[-1].set("Name", name)
                 text = f"{textPrepend}/{name}"
                 blockElem[-1][0].text = text
-
-            text = f"{textPrepend}{name}"
-            dataResElem.text = text
 
             # Velocity Attributes
             attributeElem = etree.SubElement(blockElem, "Attribute")
