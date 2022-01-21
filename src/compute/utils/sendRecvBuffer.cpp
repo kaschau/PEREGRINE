@@ -11,7 +11,7 @@ void extract_sendBuffer3(threeDview view, face_ face, std::vector<int> slices){
 
     threeDview& buffer = face.tempRecvBuffer3;
 
-    MDRange2 range_face = MDRange2({0, 0}, {buffer.extent(0), buffer.extent(1)});
+    // MDRange2 range_face = MDRange2({0, 0}, {buffer.extent(0), buffer.extent(1)});
 
     for (int g = 0; g < ng; g++) {
       int s = slices[g];
@@ -37,7 +37,7 @@ void extract_sendBuffer4(fourDview view, face_ face, std::vector<int> slices){
 
     fourDview& buffer = face.tempRecvBuffer4;
 
-    MDRange3 range_face = MDRange3({0, 0, 0}, {buffer.extent(0), buffer.extent(1), buffer.extent(1)});
+    // MDRange3 range_face = MDRange3({0, 0, 0}, {buffer.extent(0), buffer.extent(1), buffer.extent(1)});
 
     for (int g = 0; g < ng; g++) {
       int s = slices[g];
@@ -63,7 +63,7 @@ void place_recvBuffer3(threeDview view, face_ face, std::vector<int> slices){
 
     threeDview& buffer = face.recvBuffer3;
 
-    MDRange2 range_face = MDRange2({0, 0}, {buffer.extent(0), buffer.extent(1)});
+    // MDRange2 range_face = MDRange2({0, 0}, {buffer.extent(0), buffer.extent(1)});
 
     for (int g = 0; g < ng; g++) {
       int s = slices[g];
@@ -89,7 +89,7 @@ void place_recvBuffer4(fourDview view, face_ face, std::vector<int> slices){
 
     fourDview& buffer = face.recvBuffer4;
 
-    MDRange3 range_face = MDRange3({0, 0, 0}, {buffer.extent(0), buffer.extent(1), buffer.extent(1)});
+    // MDRange3 range_face = MDRange3({0, 0, 0}, {buffer.extent(0), buffer.extent(1), buffer.extent(1)});
 
     for (int g = 0; g < ng; g++) {
       int s = slices[g];
