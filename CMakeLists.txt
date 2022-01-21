@@ -1,6 +1,6 @@
 ###########################################################################
 ###########################################################################
-###############   CMake Configuration for libperegrine  ###################
+##############   CMake Configuration for compute library  #################
 ###########################################################################
 ###########################################################################
 
@@ -14,17 +14,32 @@ enable_language( C CXX )
 ###########################################################################
 #                             BUILD TYPES                                 #
 ###########################################################################
-include( ./cmake/BUILD_TYPES.cmake )
+# Set a default build type if none was specified
+set(default_build_type "RelWithDebInfo")
+if(EXISTS "${CMAKE_SOURCE_DIR}/.git")
+  set(default_build_type "Debug")
+endif()
+
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+  message(STATUS "Setting build type to '${default_build_type}' as none was specified.")
+  set(CMAKE_BUILD_TYPE "${default_build_type}" CACHE
+      STRING "Choose the type of build." FORCE)
+  # Set the possible values of build type for cmake-gui
+  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS
+    "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
+endif()
 
 ###########################################################################
 #                            COMPILER OPTIONS                             #
 ###########################################################################
-include( ./cmake/COMPILER_OPTIONS.cmake )
-
-###########################################################################
-#                      RAPTOR COMPILE TIME OPTIONS                        #
-###########################################################################
-include( ./cmake/PEREGRINE_OPTIONS.cmake )
+## INTEL SPECIFIC
+if( ${CMAKE_CXX_COMPILER_ID} STREQUAL "Intel" )
+  set( CMAKE_CXX_FLAGS "-diag-disable=15009 " CACHE STRING "" FORCE )
+endif()
+## GCC SPECIFIC
+# if( ${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU" )
+#
+# endif()
 
 ###########################################################################
 #              BUILD PEREGRINE COMPUTE LIBRARY                            #
