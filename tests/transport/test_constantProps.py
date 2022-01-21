@@ -1,7 +1,6 @@
 import kokkos
 import peregrinepy as pg
 import numpy as np
-from pathlib import Path
 
 # np.random.seed(111)
 
@@ -19,9 +18,8 @@ class TestConstantPropsTrans:
 
     def test_constantProps(self):
 
-        relpath = str(Path(__file__).parent)
         config = pg.files.configFile()
-        config["thermochem"]["spdata"] = relpath + "/AIR.yaml"
+        config["thermochem"]["spdata"] = ["Air"]
         config["thermochem"]["eos"] = "cpg"
         config["thermochem"]["trans"] = "constantProps"
         config["RHS"]["diffusion"] = True
