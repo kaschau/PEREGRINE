@@ -29,7 +29,7 @@ void kineticTheoryUnityLewis(block_ b,
   // poly'l degree
   const int deg = 4;
 
-  Kokkos::parallel_for("Compute transport properties mu,kappa, from poly'l. Dij from unity Lewist assumption.",
+  Kokkos::parallel_for("Kinetic theory unity lewis",
                        range,
                        KOKKOS_LAMBDA(const int i,
                                      const int j,

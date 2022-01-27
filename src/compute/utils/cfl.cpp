@@ -18,7 +18,7 @@ std::array<double, 2> CFLmax(std::vector<block_> mb) {
     MDRange3 range_cc({b.ng, b.ng, b.ng},
                       {b.ni + b.ng - 1, b.nj + b.ng - 1, b.nk + b.ng - 1});
     Kokkos::parallel_reduce(
-        "CFL", range_cc,
+        "CFLmax", range_cc,
         KOKKOS_LAMBDA(const int i, const int j, const int k, double &CFLA,
                       double &CFLC) {
           // Cell lengths

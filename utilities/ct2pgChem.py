@@ -114,7 +114,6 @@ def ct2pg_chem(ctyaml, cpp):
             A_f.append(r.rate.pre_exponential_factor)
         else:
             raise UnknownReactionType(r.reaction_type, i, r.equation)
-    nl_tbc = len(l_tbc)
 
     pg_mech = open(cpp, "w")
 

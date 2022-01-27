@@ -11,7 +11,7 @@ void rusanov(block_ b, const thtrdat_ th) {
   MDRange3 range_i({b.ng, b.ng, b.ng},
                    {b.ni + b.ng, b.nj + b.ng - 1, b.nk + b.ng - 1});
   Kokkos::parallel_for(
-      "i face conv fluxes", range_i,
+      "rusanov i face conv fluxes", range_i,
       KOKKOS_LAMBDA(const int i, const int j, const int k) {
         double UR;
         double UL;
@@ -86,7 +86,7 @@ void rusanov(block_ b, const thtrdat_ th) {
   MDRange3 range_j({b.ng, b.ng, b.ng},
                    {b.ni + b.ng - 1, b.nj + b.ng, b.nk + b.ng - 1});
   Kokkos::parallel_for(
-      "j face conv fluxes", range_j,
+      "rusanov j face conv fluxes", range_j,
       KOKKOS_LAMBDA(const int i, const int j, const int k) {
         double VR;
         double VL;
@@ -162,7 +162,7 @@ void rusanov(block_ b, const thtrdat_ th) {
   MDRange3 range_k({b.ng, b.ng, b.ng},
                    {b.ni + b.ng - 1, b.nj + b.ng - 1, b.nk + b.ng});
   Kokkos::parallel_for(
-      "k face conv fluxes", range_k,
+      "rusanov k face conv fluxes", range_k,
       KOKKOS_LAMBDA(const int i, const int j, const int k) {
         double WR;
         double WL;

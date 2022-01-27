@@ -68,7 +68,7 @@ void constantVelocitySubsonicInlet(
       threeDsubview dqdz0 = getHaloSlice(b.dqdz, face._nface, s0);
 
       Kokkos::parallel_for(
-          "Constant velocity subsonic inlet euler terms", range_face,
+          "Constant velocity subsonic inlet viscous terms", range_face,
           KOKKOS_LAMBDA(const int i, const int j, const int l) {
             // neumann all gradients
             dqdx0(i, j, l) = dqdx1(i, j, l);
@@ -104,7 +104,7 @@ void supersonicInlet(
       threeDsubview q2 = getHaloSlice(b.q, face._nface, s2);
 
       Kokkos::parallel_for(
-          "Constant velocity subsonic inlet euler terms", range_face,
+          "Supersonic inlet euler terms", range_face,
           KOKKOS_LAMBDA(const int i, const int j) {
             // apply pressure on face
             q0(i, j, 0) = 2.0 * face.qBcVals(i,j,0) - q1(i, j, 0);
@@ -143,7 +143,7 @@ void supersonicInlet(
       threeDsubview dqdz0 = getHaloSlice(b.dqdz, face._nface, s0);
 
       Kokkos::parallel_for(
-          "Constant velocity subsonic inlet euler terms", range_face,
+          "Supersonic inlet viscous terms", range_face,
           KOKKOS_LAMBDA(const int i, const int j, const int l) {
             // neumann all gradients
             dqdx0(i, j, l) = dqdx1(i, j, l);
@@ -178,7 +178,7 @@ void constantMassFluxSubsonicInlet(
       threeDsubview q2 = getHaloSlice(b.q, face._nface, s2);
 
       Kokkos::parallel_for(
-          "Constant velocity subsonic inlet euler terms", range_face,
+          "Constant mass flux subsonic inlet euler terms", range_face,
           KOKKOS_LAMBDA(const int i, const int j) {
             // extrapolate pressure
             q0(i, j, 0) = 2.0 * q1(i, j, 0) - q2(i, j, 0);
@@ -222,7 +222,7 @@ void constantMassFluxSubsonicInlet(
       threeDsubview Q2 = getHaloSlice(b.Q, face._nface, s2);
 
       Kokkos::parallel_for(
-          "Constant velocity subsonic inlet euler terms", range_face,
+          "Constant mass flux subsonic inlet euler terms", range_face,
           KOKKOS_LAMBDA(const int i, const int j) {
             // Target rhoU
             double &rhou = face.QBcVals(i,j,1);
@@ -270,7 +270,7 @@ void constantMassFluxSubsonicInlet(
       threeDsubview dqdz0 = getHaloSlice(b.dqdz, face._nface, s0);
 
       Kokkos::parallel_for(
-          "Constant velocity subsonic inlet euler terms", range_face,
+          "Constant mass flux subsonic inlet viscous terms", range_face,
           KOKKOS_LAMBDA(const int i, const int j, const int l) {
             // neumann all gradients
             dqdx0(i, j, l) = dqdx1(i, j, l);

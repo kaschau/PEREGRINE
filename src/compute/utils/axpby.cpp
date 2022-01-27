@@ -12,7 +12,7 @@ void AEQB(fourDview A, fourDview B) {
   int indxL = A.extent(3);
   MDRange4 range({0, 0, 0, 0}, {indxI, indxJ, indxK, indxL});
   Kokkos::parallel_for(
-      "Apply current fluxes to RHS", range,
+      "AEQB", range,
       KOKKOS_LAMBDA(const int i, const int j, const int k, const int l) {
         A(i, j, k, l) = B(i, j, k, l);
       });
@@ -29,7 +29,7 @@ void ApEQxB(fourDview A, const double x, fourDview B) {
   int indxL = A.extent(3);
   MDRange4 range({0, 0, 0, 0}, {indxI, indxJ, indxK, indxL});
   Kokkos::parallel_for(
-      "Apply current fluxes to RHS", range,
+      "ApEQxB", range,
       KOKKOS_LAMBDA(const int i, const int j, const int k, const int l) {
         A(i, j, k, l) += x * B(i, j, k, l);
       });
@@ -46,7 +46,7 @@ void AEQxB(fourDview A, const double x, fourDview B) {
   int indxL = A.extent(3);
   MDRange4 range({0, 0, 0, 0}, {indxI, indxJ, indxK, indxL});
   Kokkos::parallel_for(
-      "Apply current fluxes to RHS", range,
+      "AEQxb", range,
       KOKKOS_LAMBDA(const int i, const int j, const int k, const int l) {
         A(i, j, k, l) = x * B(i, j, k, l);
       });
@@ -64,7 +64,7 @@ void CEQxApyB(fourDview C, const double x, fourDview A, const double y,
   int indxL = A.extent(3);
   MDRange4 range({0, 0, 0, 0}, {indxI, indxJ, indxK, indxL});
   Kokkos::parallel_for(
-      "Apply current fluxes to RHS", range,
+      "CEQxApyB", range,
       KOKKOS_LAMBDA(const int i, const int j, const int k, const int l) {
         C(i, j, k, l) = x * A(i, j, k, l) + y * B(i, j, k, l);
       });

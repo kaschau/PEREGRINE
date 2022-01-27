@@ -20,7 +20,7 @@ void constantProps(block_ b,
   twoDview Y("Y", ns, numIds);
   twoDview X("X", ns, numIds);
 
-  Kokkos::parallel_for("Compute transport properties mu,kappa,Dij from poly'l",
+  Kokkos::parallel_for("Const Props Transport",
                        range,
                        KOKKOS_LAMBDA(const int i,
                                      const int j,

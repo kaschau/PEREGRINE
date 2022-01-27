@@ -12,7 +12,7 @@ void dq4FD(block_ b) {
                                           b.nj+b.ng-1,
                                           b.nk+b.ng-1,
                                           b.ne});
-  Kokkos::parallel_for("Compute fourth order spatial derivatives.",
+  Kokkos::parallel_for("4th order spatial deriv",
                        range_cc,
                        KOKKOS_LAMBDA(const int i,
                                      const int j,

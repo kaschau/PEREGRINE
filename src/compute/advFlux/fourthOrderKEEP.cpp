@@ -15,7 +15,7 @@ void fourthOrderKEEP(block_ b, const thtrdat_ th) {
   constexpr int narray = (q*q+q)/2;
   const double aq[2] = {2.0/3.0, -1.0/12.0};
 
-  Kokkos::parallel_for("i face conv fluxes", range_i, KOKKOS_LAMBDA(const int i,
+  Kokkos::parallel_for("4th Order KEEP i face conv fluxes", range_i, KOKKOS_LAMBDA(const int i,
                                                                     const int j,
                                                                     const int k) {
 
@@ -180,7 +180,7 @@ void fourthOrderKEEP(block_ b, const thtrdat_ th) {
 // j flux face range
 //-------------------------------------------------------------------------------------------|
   MDRange3 range_j({b.ng,b.ng,b.ng},{b.ni+b.ng-1, b.nj+b.ng, b.nk+b.ng-1});
-  Kokkos::parallel_for("j face conv fluxes", range_j, KOKKOS_LAMBDA(const int i,
+  Kokkos::parallel_for("4th Order KEEP j face conv fluxes", range_j, KOKKOS_LAMBDA(const int i,
                                                                     const int j,
                                                                     const int k) {
 
@@ -345,7 +345,7 @@ void fourthOrderKEEP(block_ b, const thtrdat_ th) {
 // k flux face range
 //-------------------------------------------------------------------------------------------|
   MDRange3 range_k({b.ng,b.ng,b.ng},{b.ni+b.ng-1, b.nj+b.ng-1, b.nk+b.ng});
-  Kokkos::parallel_for("k face conv fluxes", range_k, KOKKOS_LAMBDA(const int i,
+  Kokkos::parallel_for("4th Order KEEP k face conv fluxes", range_k, KOKKOS_LAMBDA(const int i,
                                                                     const int j,
                                                                     const int k) {
 
