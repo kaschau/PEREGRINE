@@ -44,8 +44,7 @@ void chungDenseGasUnityLewis(block_ b,
   twoDview Dk("Dk", ns, numIds);
 
   Kokkos::parallel_for(
-      "Compute transport properties mu,kappa,Dij Chung dense fluid "
-      "correlation.",
+      "Chung trans props unity Lewis",
       range, KOKKOS_LAMBDA(const int i, const int j, const int k) {
         int id = token.acquire();
 

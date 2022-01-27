@@ -29,7 +29,7 @@ void adiabaticNoSlipWall(
       threeDsubview q2 = getHaloSlice(b.q, face._nface, s2);
 
       Kokkos::parallel_for(
-          "Constant velocity subsonic inlet euler terms", range_face,
+          "Adia no slip wall euler terms", range_face,
           KOKKOS_LAMBDA(const int i, const int j) {
             // match pressure
             q0(i, j, 0) = q1(i, j, 0);
@@ -69,7 +69,7 @@ void adiabaticNoSlipWall(
       threeDsubview dqdz2 = getHaloSlice(b.dqdz, face._nface, s2);
 
       Kokkos::parallel_for(
-          "Constant velocity subsonic inlet euler terms", range_face,
+          "Adia no slip visc terms", range_face,
           KOKKOS_LAMBDA(const int i, const int j) {
             // extrapolate pressure, velocity gradients
             dqdx0(i, j, 0) = -dqdx1(i, j, 0);
@@ -142,7 +142,7 @@ void adiabaticSlipWall(
 
       double dplus = static_cast<double>(plus);
       Kokkos::parallel_for(
-          "Constant velocity subsonic inlet euler terms", range_face,
+          "Adia slip wall euler terms", range_face,
           KOKKOS_LAMBDA(const int i, const int j) {
             // match pressure
             q0(i, j, 0) = q1(i, j, 0);
@@ -178,7 +178,7 @@ void adiabaticSlipWall(
       threeDsubview dqdz0 = getHaloSlice(b.dqdz, face._nface, s0);
 
       Kokkos::parallel_for(
-          "Constant velocity subsonic inlet euler terms", range_face,
+          "Adia slip visc terms", range_face,
           KOKKOS_LAMBDA(const int i, const int j) {
             // neumann velocity gradients
             dqdx0(i, j, 0) = -dqdx1(i, j, 0);
@@ -235,7 +235,7 @@ void adiabaticMovingWall(
       threeDsubview q0 = getHaloSlice(b.q, face._nface, s0);
 
       Kokkos::parallel_for(
-          "Constant velocity subsonic inlet euler terms", range_face,
+          "Adia moving wall euler terms", range_face,
           KOKKOS_LAMBDA(const int i, const int j) {
             // match pressure
             q0(i, j, 0) = q1(i, j, 0);
@@ -275,7 +275,7 @@ void adiabaticMovingWall(
       threeDsubview dqdz2 = getHaloSlice(b.dqdz, face._nface, s2);
 
       Kokkos::parallel_for(
-          "Constant velocity subsonic inlet euler terms", range_face,
+          "Adia moving wall visc terms", range_face,
           KOKKOS_LAMBDA(const int i, const int j) {
             // extrapolate velocity gradients
             dqdx0(i, j, 0) = 2.0 * dqdx1(i, j, 0) - dqdx2(i, j, 0);
@@ -331,7 +331,7 @@ void isoTMovingWall(
       threeDsubview q0 = getHaloSlice(b.q, face._nface, s0);
 
       Kokkos::parallel_for(
-          "Constant velocity subsonic inlet euler terms", range_face,
+          "Iso T moving wall euler terms", range_face,
           KOKKOS_LAMBDA(const int i, const int j) {
             // match pressure
             q0(i, j, 0) = q1(i, j, 0);
@@ -371,7 +371,7 @@ void isoTMovingWall(
       threeDsubview dqdz2 = getHaloSlice(b.dqdz, face._nface, s2);
 
       Kokkos::parallel_for(
-          "Constant velocity subsonic inlet euler terms", range_face,
+          "Iso T moving wall viscous terms", range_face,
           KOKKOS_LAMBDA(const int i, const int j) {
             // extrapolate velocity gradients
             // extrapolate temp gradient

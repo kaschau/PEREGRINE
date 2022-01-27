@@ -11,7 +11,7 @@ void dQzero(block_ b) {
                                           b.nj+b.ng-1,
                                           b.nk+b.ng-1,
                                           b.ne});
-  Kokkos::parallel_for("Apply current fluxes to RHS",
+  Kokkos::parallel_for("Zero out dQ",
                        range_cc,
                        KOKKOS_LAMBDA(const int i,
                                      const int j,

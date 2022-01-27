@@ -38,14 +38,14 @@ class twoblock123:
 
 class TestOrientation:
     @classmethod
-    def setup_class(cls):
+    def setup_class(self):
         MPI.Init()
         kokkos.initialize()
 
     @classmethod
-    def teardown_class(cls):
-        MPI.Finalize()
+    def teardown_class(self):
         kokkos.finalize()
+        MPI.Finalize()
 
     ##############################################
     # Test for all positive i aligned orientations

@@ -30,7 +30,7 @@ void kineticTheory(block_ b,
   // poly'l degree
   const int deg = 4;
 
-  Kokkos::parallel_for("Compute transport properties mu,kappa,Dij from poly'l",
+  Kokkos::parallel_for("Kinetic Theory trans props",
                        range,
                        KOKKOS_LAMBDA(const int i,
                                      const int j,

@@ -29,7 +29,7 @@ void constantPressureSubsonicExit(block_ b,
       threeDsubview q2 = getHaloSlice(b.q, face._nface, s2);
 
       Kokkos::parallel_for(
-          "Constant velocity subsonic inlet euler terms", range_face,
+          "Constant pressure subsonic exit euler terms", range_face,
           KOKKOS_LAMBDA(const int i, const int j) {
             // set pressure
             q0(i, j, 0) = 2.0 * face.qBcVals(i,j,0) - q1(i, j, 0);
@@ -58,7 +58,7 @@ void constantPressureSubsonicExit(block_ b,
       threeDsubview dqdz0 = getHaloSlice(b.dqdz, face._nface, s0);
 
       Kokkos::parallel_for(
-          "Constant velocity subsonic inlet euler terms", range_face,
+          "Constant pressure subsonic exit euler terms", range_face,
           KOKKOS_LAMBDA(const int i, const int j, const int l) {
             // neumann all gradients
             dqdx0(i, j, l) = dqdx1(i, j, l);
@@ -95,7 +95,7 @@ void supersonicExit(
       threeDsubview q2 = getHaloSlice(b.q, face._nface, s2);
 
       Kokkos::parallel_for(
-          "Constant velocity subsonic inlet euler terms", range_face,
+          "Supersonic exit euler terms", range_face,
           KOKKOS_LAMBDA(const int i, const int j, const int l) {
             // extrapolate everything
             q0(i, j, l) = 2.0 * q1(i, j, l) - q2(i, j, l);
@@ -119,7 +119,7 @@ void supersonicExit(
       threeDsubview dqdz0 = getHaloSlice(b.dqdz, face._nface, s0);
 
       Kokkos::parallel_for(
-          "Constant velocity subsonic inlet euler terms", range_face,
+          "Supersonic exit viscous terms", range_face,
           KOKKOS_LAMBDA(const int i, const int j, const int l) {
             // neumann all gradients
             dqdx0(i, j, l) = dqdx1(i, j, l);

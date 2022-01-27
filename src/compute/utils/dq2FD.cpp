@@ -12,7 +12,7 @@ void dq2FD(block_ b) {
                                           b.nj+b.ng-1,
                                           b.nk+b.ng-1,
                                           b.ne});
-  Kokkos::parallel_for("Apply current fluxes to RHS",
+  Kokkos::parallel_for("2nd order spatial deriv",
                        range_cc,
                        KOKKOS_LAMBDA(const int i,
                                      const int j,

@@ -1,10 +1,12 @@
 #!/usr/bin/env -S python -m mpi4py
 import sys
 from mpi4py import MPI
-import kokkos
-import peregrinepy as pg
-import numpy as np
 from time import perf_counter
+
+import kokkos
+import numpy as np
+
+import peregrinepy as pg
 
 np.seterr(all="raise")
 
@@ -16,6 +18,8 @@ def simulate(configFilePath):
         string = " >>> ******************************** <<<\n"
         string += "              PEREGRINE CFD\n"
         string += " >>> ******************************** <<<\n"
+        string += "  Copyright (c) 2021-2022 Kyle A. Schau\n"
+        string += "           All rights reserved.\n"
         print(string)
 
     config = pg.readers.readConfigFile(configFilePath)
