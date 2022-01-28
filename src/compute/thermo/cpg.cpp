@@ -17,9 +17,7 @@ void cpg(block_ b,
 // For performance purposes, we want to compile with ns known whenever possible
 // however, for testing, developement, etc. we want the flexibility to
 // have it at run time as well. So we define some macros here to allow that.
-#ifdef NSCOMPILE
-  const int ns=NS;
-#else
+#ifndef NSCOMPILE
   Kokkos::Experimental::UniqueToken<exec_space> token;
   int numIds = token.size();
   const int ns=th.ns;
