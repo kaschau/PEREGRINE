@@ -165,3 +165,10 @@ class TestTPG:
 
         passfail = np.all(np.array(pd) < 0.0001)
         assert passfail
+
+
+if __name__ == "__main__":
+    test = TestTPG()
+    test.setup_method()
+    test.test_tpg()
+    test.teardown_method()

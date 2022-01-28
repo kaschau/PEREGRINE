@@ -50,25 +50,40 @@ void cubic(block_ b,
            const int indxJ/*=0*/,
            const int indxK/*=0*/) {
 
-  MDRange3 range = get_range3(b, nface, indxI, indxJ, indxK);
+#ifndef NSCOMPILE
   Kokkos::Experimental::UniqueToken<exec_space> token;
-  const int numIds = token.size();
-
+  int numIds = token.size();
   const int ns=th.ns;
   twoDview Y("Y", ns, numIds);
+  twoDview hi("hi", ns, numIds);
   twoDview X("X", ns, numIds);
   twoDview ai("ai", ns, numIds);
-  twoDview hi("hi", ns, numIds);
+#endif
 
+#ifdef NSCOMPILE
+  #define Y(INDEX) Y[INDEX]
+  #define hi(INDEX) hi[INDEX]
+  #define X(INDEX) X[INDEX]
+  #define ai(INDEX) ai[INDEX]
+  #define ns NS
+#else
+  #define Y(INDEX) Y(INDEX,id)
+  #define hi(INDEX) hi(INDEX,id)
+  #define X(INDEX) X(INDEX,id)
+  #define ai(INDEX) ai(INDEX,id)
+#endif
+
+  MDRange3 range = get_range3(b, nface, indxI, indxJ, indxK);
   if ( given.compare("prims") == 0 )
   {
-  twoDview rhoY("rhoY", ns, numIds);
   Kokkos::parallel_for("Compute all conserved quantities from primatives via real gas",
                        range,
                        KOKKOS_LAMBDA(const int i,
                                      const int j,
                                      const int k) {
+#ifndef NSCOMPILE
   int id = token.acquire();
+#endif
 
   // Updates all conserved quantities from primatives
   // Along the way, we need to compute mixture properties
@@ -80,35 +95,42 @@ void cubic(block_ b,
   double& v = b.q(i,j,k,2);
   double& w = b.q(i,j,k,3);
   double& T = b.q(i,j,k,4);
+#ifdef NSCOMPILE
+  double Y(ns);
+  double X(ns);
+#endif
 
   double rho;
   double rhou,rhov,rhow;
   double e,tke,rhoE;
   double gamma,cp,h,c;
+#ifdef NSCOMPILE
+  double hi(ns);
+#endif
   double Rmix;
 
   // Compute nth species Y
-  Y(ns-1,id) = 1.0;
+  Y(ns-1) = 1.0;
   for (int n=0; n<ns-1; n++)
   {
-    Y(n,id) = b.q(i,j,k,5+n);
-    Y(ns-1,id) -= Y(n,id);
+    Y(n) = b.q(i,j,k,5+n);
+    Y(ns-1) -= Y(n);
   }
-  Y(ns-1,id) = fmax(0.0,Y(ns-1,id));
+  Y(ns-1) = fmax(0.0,Y(ns-1));
 
   // Compute y->x denom
   double denom= 0.0;
   for (int n=0; n<=ns-1; n++)
   {
-    denom += Y(n,id)/th.MW(n);
+    denom += Y(n)/th.MW(n);
   }
 
   // Compute mole fraction, mean molecular weight
   double MWmix = 0.0;
   for (int n=0; n<=ns-1; n++)
   {
-    X(n,id) = (Y(n,id)/th.MW(n))/denom;
-    MWmix += th.MW(n)*X(n,id);
+    X(n) = (Y(n)/th.MW(n))/denom;
+    MWmix += th.MW(n)*X(n);
   }
   // Compute Rmix
   Rmix = th.Ru/MWmix;
@@ -125,6 +147,9 @@ void cubic(block_ b,
   // -------------------------------------------------------------------------------------------------------------//
 
   double am = 0.0, bm = 0.0;
+#ifdef NSCOMPILE
+  double ai(ns);
+#endif
   double Astar, Bstar;
 
   // Compressibility Factor, Z
@@ -133,16 +158,16 @@ void cubic(block_ b,
     double Tr = T/th.Tcrit(n);
     double fOmega = fw0 + fw1*th.acentric(n) + fw2*pow(th.acentric(n),2.0);
     double alpha = pow(1.0+fOmega*(1-sqrt(Tr)),2.0);
-    ai(n,id) = aiConst*( pow(th.Ru*th.Tcrit(n),2.0)*alpha )/th.pcrit(n);
+    ai(n) = aiConst*( pow(th.Ru*th.Tcrit(n),2.0)*alpha )/th.pcrit(n);
     double bi = biConst*( th.Ru*th.Tcrit(n) )/th.pcrit(n);
 
-    bm += X(n,id)*bi;
+    bm += X(n)*bi;
   }
   for (int n=0; n<=ns-1; n++)
   {
     for (int n2=0; n2<=ns-1; n2++)
     {
-      am += X(n,id)*X(n2,id)*sqrt(ai(n,id)*ai(n2,id)); // - (1 - kij)  <- For now we ignore binary interaciton coeff, i.e. assume kij=1
+      am += X(n)*X(n2)*sqrt(ai(n)*ai(n2)); // - (1 - kij)  <- For now we ignore binary interaciton coeff, i.e. assume kij=1
     }
   }
 
@@ -187,9 +212,9 @@ void cubic(block_ b,
     {
       double fOmegaN  = fw0 + fw1*th.acentric(n)  + fw2*pow(th.acentric(n ),2.0);
       double fOmegaN2 = fw0 + fw1*th.acentric(n2) + fw2*pow(th.acentric(n2),2.0);
-      dam += X(n2,id)*X(n,id)*1.0*(
-             fOmegaN2*sqrt(ai(n,id)* th.Tcrit(n2)/th.pcrit(n2)) +
-             fOmegaN *sqrt(ai(n2,id)*th.Tcrit(n )/th.pcrit(n)) );
+      dam += X(n2)*X(n)*1.0*(
+             fOmegaN2*sqrt(ai(n)* th.Tcrit(n2)/th.pcrit(n2)) +
+             fOmegaN *sqrt(ai(n2)*th.Tcrit(n )/th.pcrit(n)) );
     }
   }
   dam *= -0.5*th.Ru*sqrt(aiConst/T);
@@ -227,17 +252,17 @@ void cubic(block_ b,
                 th.NASA7(n,m+3)*pow(T,3.0) +
                 th.NASA7(n,m+4)*pow(T,4.0) )*th.Ru/th.MW(n);
 
-    hi(n,id)  =(th.NASA7(n,m+0)                  +
-                th.NASA7(n,m+1)*    T      / 2.0 +
-                th.NASA7(n,m+2)*pow(T,2.0) / 3.0 +
-                th.NASA7(n,m+3)*pow(T,3.0) / 4.0 +
-                th.NASA7(n,m+4)*pow(T,4.0) / 5.0 +
-                th.NASA7(n,m+5)/    T            )*T*th.Ru/th.MW(n);
+    hi(n)  =(th.NASA7(n,m+0)                  +
+             th.NASA7(n,m+1)*    T      / 2.0 +
+             th.NASA7(n,m+2)*pow(T,2.0) / 3.0 +
+             th.NASA7(n,m+3)*pow(T,3.0) / 4.0 +
+             th.NASA7(n,m+4)*pow(T,4.0) / 5.0 +
+             th.NASA7(n,m+5)/    T            )*T*th.Ru/th.MW(n);
 
-    cp += cps      *Y(n,id);
-    h  +=  hi(n,id)*Y(n,id);
+    cp += cps   *Y(n);
+    h  +=  hi(n)*Y(n);
     // Add departure to individual hi
-    hi(n,id) += th.Ru*T*hDep/th.MW(n);
+    hi(n) += th.Ru*T*hDep/th.MW(n);
   }
 
   // Compute density
@@ -275,12 +300,6 @@ void cubic(block_ b,
   e = h - p/rho;
   rhoE = rho*e + tke;
 
-  // Compute species mass
-  for (int n=0; n<=ns-1; n++)
-  {
-    rhoY(n,id) = Y(n,id)*rho;
-  }
-
   // Set values of new properties
   // Density
   b.Q(i,j,k,0) = rho;
@@ -293,7 +312,7 @@ void cubic(block_ b,
   // Species mass
   for (int n=0; n<ns-1; n++)
   {
-    b.Q(i,j,k,5+n) = rhoY(n,id);
+    b.Q(i,j,k,5+n) = Y(n)*rho;
   }
   // gamma,cp,h,c,e,hi
   b.qh(i,j,k,0) = gamma;
@@ -303,10 +322,12 @@ void cubic(block_ b,
   b.qh(i,j,k,4) = rho*e;
   for (int n=0; n<=ns-1; n++)
   {
-    b.qh(i,j,k,5+n) = hi(n,id);
+    b.qh(i,j,k,5+n) = hi(n);
   }
 
+#ifndef NSCOMPILE
   token.release(id);
+#endif
   });
   }
 
@@ -314,13 +335,15 @@ void cubic(block_ b,
 
   else if ( given.compare("cons") == 0 )
   {
-  twoDview rhoY("rhoY", ns, numIds);
   Kokkos::parallel_for("Compute primatives from conserved quantities via real gas",
                        range,
                        KOKKOS_LAMBDA(const int i,
                                      const int j,
                                      const int k) {
+
+#ifndef NSCOMPILE
   int id = token.acquire();
+#endif
 
   // Updates all primatives from conserved quantities
   // Along the way, we need to compute mixture properties
@@ -336,7 +359,14 @@ void cubic(block_ b,
   double p;
   double e,tke;
   double T;
+#ifdef NSCOMPILE
+  double Y(ns);
+  double X(ns);
+#endif
   double gamma,cp,h,c;
+#ifdef NSCOMPILE
+  double hi(ns);
+#endif
   double Rmix;
 
   // Compute TKE
@@ -346,13 +376,13 @@ void cubic(block_ b,
                  rho       ;
 
   // Compute species mass fraction
-  Y(ns-1,id) = 1.0;
+  Y(ns-1) = 1.0;
   for (int n=0; n<ns-1; n++)
   {
-    Y(n,id) = b.Q(i,j,k,5+n)/b.Q(i,j,k,0);
-    Y(ns-1,id) -= Y(n,id);
+    Y(n) = b.Q(i,j,k,5+n)/b.Q(i,j,k,0);
+    Y(ns-1) -= Y(n);
   }
-  Y(ns-1,id) = fmax(0.0,Y(ns-1,id));
+  Y(ns-1) = fmax(0.0,Y(ns-1));
 
   // Internal energy
   e = (rhoE - tke)/rho;
@@ -378,15 +408,15 @@ void cubic(block_ b,
   double denom= 0.0;
   for (int n=0; n<=ns-1; n++)
   {
-    denom += Y(n,id)/th.MW(n);
+    denom += Y(n)/th.MW(n);
   }
 
   // Compute mole fraction, mean molecular weight
   double MWmix = 0.0;
   for (int n=0; n<=ns-1; n++)
   {
-    X(n,id) = (Y(n,id)/th.MW(n))/denom;
-    MWmix += th.MW(n)*X(n,id);
+    X(n) = (Y(n)/th.MW(n))/denom;
+    MWmix += th.MW(n)*X(n);
   }
   // Compute Rmix
   Rmix = th.Ru/MWmix;
@@ -404,21 +434,24 @@ void cubic(block_ b,
     double bi;
     double am = 0.0;
     double bm = 0.0;
+#ifdef NSCOMPILE
+    double ai(ns);
+#endif
     for (int n=0; n<=ns-1; n++)
     {
       double Tr = T/th.Tcrit(n);
       double fOmega = fw0 + fw1*th.acentric(n) + fw2*pow(th.acentric(n),2.0);
       double alpha = pow(1.0+fOmega*(1-sqrt(Tr)),2.0);
-      ai(n,id) = aiConst*( pow(th.Ru*th.Tcrit(n),2.0)*alpha )/th.pcrit(n);
+      ai(n) = aiConst*( pow(th.Ru*th.Tcrit(n),2.0)*alpha )/th.pcrit(n);
       bi = biConst*( th.Ru*th.Tcrit(n) )/th.pcrit(n);
 
-      bm += X(n,id)*bi;
+      bm += X(n)*bi;
     }
     for (int n=0; n<=ns-1; n++)
     {
       for (int n2=0; n2<=ns-1; n2++)
       {
-        am += X(n,id)*X(n2,id)*sqrt(ai(n,id)*ai(n2,id)); // - (1 - kij)  <- For now we ignore binary interaciton coeff, i.e. assume kij=1
+        am += X(n)*X(n2)*sqrt(ai(n)*ai(n2)); // - (1 - kij)  <- For now we ignore binary interaciton coeff, i.e. assume kij=1
       }
     }
     //PR
@@ -464,9 +497,9 @@ void cubic(block_ b,
       {
         double fOmegaN  = fw0 + fw1*th.acentric(n)  + fw2*pow(th.acentric(n ),2.0);
         double fOmegaN2 = fw0 + fw1*th.acentric(n2) + fw2*pow(th.acentric(n2),2.0);
-        dam += X(n2,id)*X(n,id)*1.0*(
-               fOmegaN2*sqrt(ai(n,id)* th.Tcrit(n2)/th.pcrit(n2)) +
-               fOmegaN *sqrt(ai(n2,id)*th.Tcrit(n )/th.pcrit(n)) );
+        dam += X(n2)*X(n)*1.0*(
+               fOmegaN2*sqrt(ai(n)* th.Tcrit(n2)/th.pcrit(n2)) +
+               fOmegaN *sqrt(ai(n2)*th.Tcrit(n )/th.pcrit(n)) );
       }
     }
     dam *= -0.5*th.Ru*sqrt(aiConst/T);
@@ -504,17 +537,17 @@ void cubic(block_ b,
                   th.NASA7(n,m+3)*pow(T,3.0) +
                   th.NASA7(n,m+4)*pow(T,4.0) )*th.Ru/th.MW(n);
 
-      hi(n,id)  =(th.NASA7(n,m+0)                  +
+      hi(n)  =(th.NASA7(n,m+0)                  +
                   th.NASA7(n,m+1)*    T      / 2.0 +
                   th.NASA7(n,m+2)*pow(T,2.0) / 3.0 +
                   th.NASA7(n,m+3)*pow(T,3.0) / 4.0 +
                   th.NASA7(n,m+4)*pow(T,4.0) / 5.0 +
                   th.NASA7(n,m+5)/    T            )*T*th.Ru/th.MW(n);
 
-      cp += cps      *Y(n,id);
-      h  +=  hi(n,id)*Y(n,id);
+      cp += cps      *Y(n);
+      h  +=  hi(n)*Y(n);
       // Add departure to individual hi
-      hi(n,id) += th.Ru*T*hDep/th.MW(n);
+      hi(n) += th.Ru*T*hDep/th.MW(n);
     }
 
     error = e - (h - Z*Rmix*T);
@@ -549,7 +582,7 @@ void cubic(block_ b,
   b.q(i,j,k,4) = T;
   for (int n=0; n<ns-1; n++)
   {
-    b.q(i,j,k,5+n) = Y(n,id);
+    b.q(i,j,k,5+n) = Y(n);
   }
   // gamma,cp,h,c,e,hi
   b.qh(i,j,k,0) = gamma;
@@ -559,10 +592,12 @@ void cubic(block_ b,
   b.qh(i,j,k,4) = rho*e;
   for (int n=0; n<=ns-1; n++)
   {
-    b.qh(i,j,k,5+n) = hi(n,id);
+    b.qh(i,j,k,5+n) = hi(n);
   }
 
+#ifndef NSCOMPILE
   token.release(id);
+#endif
   });
   }
   else

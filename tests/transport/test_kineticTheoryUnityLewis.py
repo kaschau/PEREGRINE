@@ -30,6 +30,8 @@ class TestKineticTheoryTrans:
         else:
             ctfile = "GRI30.yaml"
             thfile = "thtr_GRI30.yaml"
+        ctfile = "CH4_O2_Stanford_Skeletal.yaml"
+        thfile = "thtr_CH4_O2_Stanford_Skeletal.yaml"
 
         gas = ct.Solution(ctfile)
         p = np.random.uniform(low=10000, high=1000000)
