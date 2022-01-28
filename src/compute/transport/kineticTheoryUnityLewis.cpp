@@ -54,7 +54,6 @@ void kineticTheoryUnityLewis(block_ b,
   double X(ns);
   double mu_sp(ns);
   double kappa_sp(ns);
-  double D(ns);
 #endif
 
 
