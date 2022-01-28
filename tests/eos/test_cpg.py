@@ -158,3 +158,10 @@ class TestCPG:
 
         passfail = np.all(np.array(pd) < 0.0001)
         assert passfail
+
+
+if __name__ == "__main__":
+    test = TestCPG()
+    test.setup_method()
+    test.test_cpg()
+    test.teardown_method()
