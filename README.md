@@ -65,6 +65,9 @@ At runtime, ensure the environment variable
 is set. Finally, run the simulation with nsys enabling cuda,nvtx trace options.
 ```jsrun -p 1 -g 1 nsys profile -o twelveSpecies30Cubed --trace cuda,nvtx  -f true --stats=false python -m mpi4py threeDTaylorProf.py```
 
+# Performance
+PEREGRINE is pretty fast by default. However, when running a simulation, it is recommended to turn on ```PEREGRINE_NSCOMPILE``` in cmake, and then specify the value of ```numSpecies```. This will hard code ```ns``` at compile time, and gives roughly a 10x improvement in speed.
+
 ## License
 
 PEREGRINE is released under the New BSD License (see the LICENSE file for details).
