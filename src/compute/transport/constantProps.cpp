@@ -12,9 +12,7 @@ void constantProps(block_ b,
              const int indxJ/*=0*/,
              const int indxK/*=0*/) {
 
-#ifdef NSCOMPILE
-  const int ns=NS;
-#else
+#ifndef NSCOMPILE
   Kokkos::Experimental::UniqueToken<exec_space> token;
   int numIds = token.size();
   const int ns=th.ns;

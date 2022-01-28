@@ -12,9 +12,7 @@ void kineticTheoryUnityLewis(block_ b,
              const int indxJ/*=0*/,
              const int indxK/*=0*/) {
 
-#ifdef NSCOMPILE
-  const int ns=NS;
-#else
+#ifndef NSCOMPILE
   Kokkos::Experimental::UniqueToken<exec_space> token;
   int numIds = token.size();
   const int ns=th.ns;
@@ -22,7 +20,6 @@ void kineticTheoryUnityLewis(block_ b,
   twoDview X("X", ns, numIds);
   twoDview mu_sp("mu_sp", ns, numIds);
   twoDview kappa_sp("kappa_sp", ns, numIds);
-  twoDview D("D", ns, numIds);
 #endif
 
 #ifdef NSCOMPILE
@@ -30,14 +27,12 @@ void kineticTheoryUnityLewis(block_ b,
   #define X(INDEX) X[INDEX]
   #define mu_sp(INDEX) mu_sp[INDEX]
   #define kappa_sp(INDEX) kappa_sp[INDEX]
-  #define D(INDEX) D[INDEX]
   #define ns NS
 #else
   #define Y(INDEX) Y(INDEX,id)
   #define X(INDEX) X(INDEX,id)
   #define mu_sp(INDEX) mu_sp(INDEX,id)
   #define kappa_sp(INDEX) kappa_sp(INDEX,id)
-  #define D(INDEX) D(INDEX,id)
 #endif
 
   // poly'l degree
