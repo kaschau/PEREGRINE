@@ -56,6 +56,15 @@ Gives access to the primative variables.
 |           | dTdt             | 0       | K/s          |
 |           | d(rhoYi)dt       | 1..ns   | kg/s         |
 
+
+# Profiling GPU via NVTX
+Download and install the libraries found at
+``` https://github.com/kokkos/kokkos-tools ```
+At runtime, ensure the environment variable
+``` export KOKKOS_PROFILE_LIBRARY=$HOME/software/sources/kokkos-tools/kp_nvprof_connector.so```
+is set. Finally, run the simulation with nsys enabling cuda,nvtx trace options.
+```jsrun -p 1 -g 1 nsys profile -o twelveSpecies30Cubed --trace cuda,nvtx  -f true --stats=false python -m mpi4py threeDTaylorProf.py```
+
 ## License
 
 PEREGRINE is released under the New BSD License (see the LICENSE file for details).
