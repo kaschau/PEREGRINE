@@ -14,22 +14,36 @@ void cpg(block_ b,
    const int indxJ/*=0*/,
    const int indxK/*=0*/) {
 
-  MDRange3 range = get_range3(b, nface, indxI, indxJ, indxK);
+// For performance purposes, we want to compile with ns known whenever possible
+// however, for testing, developement, etc. we want the flexibility to
+// have it at run time as well. So we define some macros here to allow that.
+#ifdef NSCOMPILE
+  const int ns=NS;
+#else
   Kokkos::Experimental::UniqueToken<exec_space> token;
-  const int numIds = token.size();
-
+  int numIds = token.size();
   const int ns=th.ns;
   twoDview Y("Y", ns, numIds);
+#endif
 
+#ifdef NSCOMPILE
+  #define Y(INDEX) Y[INDEX]
+  #define ns NS
+#else
+  #define Y(INDEX) Y(INDEX,id)
+#endif
+
+  MDRange3 range = get_range3(b, nface, indxI, indxJ, indxK);
   if ( given.compare("prims") == 0 )
   {
-  twoDview rhoY("rhoY", th.ns, numIds);
   Kokkos::parallel_for("Compute all conserved quantities from primatives via cpg",
                        range,
                        KOKKOS_LAMBDA(const int i,
                                      const int j,
                                      const int k) {
+#ifndef NSCOMPILE
   int id = token.acquire();
+#endif
 
   // Updates all conserved quantities from primatives
   // Along the way, we need to compute mixture properties
@@ -41,6 +55,9 @@ void cpg(block_ b,
   double& v = b.q(i,j,k,2);
   double& w = b.q(i,j,k,3);
   double& T = b.q(i,j,k,4);
+#ifdef NSCOMPILE
+  double Y(ns);
+#endif
 
   double rho;
   double rhou,rhov,rhow;
@@ -49,21 +66,21 @@ void cpg(block_ b,
   double Rmix;
 
   // Compute nth species Y
-  Y(ns-1,id) = 1.0;
+  Y(ns-1) = 1.0;
   for (int n=0; n<ns-1; n++)
   {
-    Y(n,id) = b.q(i,j,k,5+n);
-    Y(ns-1,id) -= Y(n,id);
+    Y(n) = b.q(i,j,k,5+n);
+    Y(ns-1) -= Y(n);
   }
-  Y(ns-1,id) = fmax(0.0,Y(ns-1,id));
+  Y(ns-1) = fmax(0.0,Y(ns-1));
 
   // Update mixture properties
   Rmix = 0.0;
   cp   = 0.0;
   for (int n=0; n<=ns-1; n++)
   {
-    Rmix += Y(n,id)/th.MW(n);
-    cp   += Y(n,id)*th.cp0(n);
+    Rmix += Y(n)/th.MW(n);
+    cp   += Y(n)*th.cp0(n);
   }
   Rmix *= th.Ru;
 
@@ -91,12 +108,6 @@ void cpg(block_ b,
   e = h - p/rho;
   rhoE = rho*e + tke;
 
-  // Compute species mass
-  for (int n=0; n<=ns-1; n++)
-  {
-    rhoY(n,id) = Y(n,id)*rho;
-  }
-
   // Set values of new properties
   // Density
   b.Q(i,j,k,0) = rho;
@@ -109,7 +120,7 @@ void cpg(block_ b,
   // Species mass
   for (int n=0; n<ns-1; n++)
   {
-    b.Q(i,j,k,5+n) = rhoY(n,id);
+    b.Q(i,j,k,5+n) = Y(n)*rho;
   }
   // gamma,cp,h,c,e,hi
   b.qh(i,j,k,0) = gamma;
@@ -122,7 +133,9 @@ void cpg(block_ b,
     b.qh(i,j,k,5+n) = T*th.cp0(n);
   }
 
+#ifndef NSCOMPILE
   token.release(id);
+#endif
   });
   }
   else if ( given.compare("cons") == 0 )
@@ -132,7 +145,9 @@ void cpg(block_ b,
                        KOKKOS_LAMBDA(const int i,
                                      const int j,
                                      const int k) {
+#ifndef NSCOMPILE
   int id = token.acquire();
+#endif
 
   // Updates all primatives from conserved quantities
   // Along the way, we need to compute mixture properties
@@ -146,8 +161,11 @@ void cpg(block_ b,
   double& rhoE = b.Q(i,j,k,4);
 
   double p;
-  double e,tke;
   double T;
+  double e,tke;
+#ifdef NSCOMPILE
+  double Y[ns];
+#endif
   double gamma,cp,h,c;
   double Rmix;
 
@@ -158,13 +176,13 @@ void cpg(block_ b,
                  rho       ;
 
   // Compute species mass fraction
-  Y(ns-1,id) = 1.0;
+  Y(ns-1) = 1.0;
   for (int n=0; n<ns-1; n++)
   {
-    Y(n,id) = b.Q(i,j,k,5+n)/b.Q(i,j,k,0);
-    Y(ns-1,id) -= Y(n,id);
+    Y(n) = b.Q(i,j,k,5+n)/b.Q(i,j,k,0);
+    Y(ns-1) -= Y(n);
   }
-  Y(ns-1,id) = fmax(0.0,Y(ns-1,id));
+  Y(ns-1) = fmax(0.0,Y(ns-1));
 
   // Internal energy
   e = (rhoE - tke)/rho;
@@ -174,8 +192,8 @@ void cpg(block_ b,
   cp   = 0.0;
   for (int n=0; n<=ns-1; n++)
   {
-    Rmix += Y(n,id)/th.MW(n);
-    cp   += Y(n,id)*th.cp0(n);
+    Rmix += Y(n)/th.MW(n);
+    cp   += Y(n)*th.cp0(n);
   }
   Rmix *= th.Ru;
 
@@ -199,7 +217,7 @@ void cpg(block_ b,
   b.q(i,j,k,4) = T;
   for (int n=0; n<ns-1; n++)
   {
-    b.q(i,j,k,5+n) = Y(n,id);
+    b.q(i,j,k,5+n) = Y(n);
   }
   // gamma,cp,h,c,e,hi
   b.qh(i,j,k,0) = gamma;
@@ -212,7 +230,9 @@ void cpg(block_ b,
     b.qh(i,j,k,5+n) = T*th.cp0(n);
   }
 
+#ifndef NSCOMPILE
   token.release(id);
+#endif
   });
   }
   else

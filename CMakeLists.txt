@@ -29,6 +29,12 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
 endif()
 
+option( NSCOMPILE "Compile compute with ns known" OFF )
+if( NSCOMPILE )
+   add_compile_definitions( NSCOMPILE )
+   set( numSpecies "x" CACHE STRING "Number of species")
+   add_compile_definitions(NS=${numSpecies})
+endif()
 ###########################################################################
 #                            COMPILER OPTIONS                             #
 ###########################################################################

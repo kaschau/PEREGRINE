@@ -32,6 +32,7 @@ static const std::string KokkosLocation = "Serial";
 
 // define some shorthand for the Kokkos views and Range Policies
 using oneDview   = Kokkos::View<double*,     Kokkos::LayoutRight, view_space>;
+using oneDsubview = Kokkos::View<double*,    Kokkos::LayoutStride, view_space>;
 using twoDview   = Kokkos::View<double**,    Kokkos::LayoutRight, view_space>;
 using twoDsubview = Kokkos::View<double**,   Kokkos::LayoutStride, view_space>;
 using threeDview = Kokkos::View<double***,   Kokkos::LayoutRight, view_space>;
