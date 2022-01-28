@@ -14,23 +14,37 @@ void tpg(block_ b,
    const int indxJ/*=0*/,
    const int indxK/*=0*/) {
 
-  MDRange3 range = get_range3(b, nface, indxI, indxJ, indxK);
+// For performance purposes, we want to compile with ns known whenever possible
+// however, for testing, developement, etc. we want the flexibility to
+// have it at run time as well. So we define some macros here to allow that.
+#ifndef NSCOMPILE
   Kokkos::Experimental::UniqueToken<exec_space> token;
-  const int numIds = token.size();
-
+  int numIds = token.size();
   const int ns=th.ns;
   twoDview Y("Y", ns, numIds);
   twoDview hi("hi", ns, numIds);
+#endif
 
+#ifdef NSCOMPILE
+  #define Y(INDEX) Y[INDEX]
+  #define hi(INDEX) hi[INDEX]
+  #define ns NS
+#else
+  #define Y(INDEX) Y(INDEX,id)
+  #define hi(INDEX) hi(INDEX,id)
+#endif
+
+  MDRange3 range = get_range3(b, nface, indxI, indxJ, indxK);
   if ( given.compare("prims") == 0 )
   {
-  twoDview rhoY("rhoY", ns, numIds);
   Kokkos::parallel_for("Compute all conserved quantities from primatives via tgp",
                        range,
                        KOKKOS_LAMBDA(const int i,
                                      const int j,
                                      const int k) {
+#ifndef NSCOMPILE
   int id = token.acquire();
+#endif
 
   // Updates all conserved quantities from primatives
   // Along the way, we need to compute mixture properties
@@ -42,27 +56,33 @@ void tpg(block_ b,
   double& v = b.q(i,j,k,2);
   double& w = b.q(i,j,k,3);
   double& T = b.q(i,j,k,4);
+#ifdef NSCOMPILE
+  double Y(ns);
+#endif
 
   double rho;
   double rhou,rhov,rhow;
   double e,tke,rhoE;
   double gamma,cp,h,c;
+#ifdef NSCOMPILE
+  double hi(ns);
+#endif
   double Rmix;
 
   // Compute nth species Y
-  Y(ns-1,id) = 1.0;
+  Y(ns-1) = 1.0;
   for (int n=0; n<ns-1; n++)
   {
-    Y(n,id) = b.q(i,j,k,5+n);
-    Y(ns-1,id) -= Y(n,id);
+    Y(n) = b.q(i,j,k,5+n);
+    Y(ns-1) -= Y(n);
   }
-  Y(ns-1,id) = fmax(0.0,Y(ns-1,id));
+  Y(ns-1) = fmax(0.0,Y(ns-1));
 
   // Compute Rmix
   Rmix = 0.0;
   for (int n=0; n<=ns-1; n++)
   {
-    Rmix += Y(n,id)/th.MW(n);
+    Rmix += Y(n)/th.MW(n);
   }
   Rmix *= th.Ru;
 
@@ -79,15 +99,15 @@ void tpg(block_ b,
                 th.NASA7(n,m+3)*pow(T,3.0) +
                 th.NASA7(n,m+4)*pow(T,4.0) )*th.Ru/th.MW(n);
 
-    hi(n,id)  =(th.NASA7(n,m+0)                  +
-                th.NASA7(n,m+1)*    T      / 2.0 +
-                th.NASA7(n,m+2)*pow(T,2.0) / 3.0 +
-                th.NASA7(n,m+3)*pow(T,3.0) / 4.0 +
-                th.NASA7(n,m+4)*pow(T,4.0) / 5.0 +
-                th.NASA7(n,m+5)/    T            )*T*th.Ru/th.MW(n);
+    hi(n)  =(th.NASA7(n,m+0)                  +
+             th.NASA7(n,m+1)*    T      / 2.0 +
+             th.NASA7(n,m+2)*pow(T,2.0) / 3.0 +
+             th.NASA7(n,m+3)*pow(T,3.0) / 4.0 +
+             th.NASA7(n,m+4)*pow(T,4.0) / 5.0 +
+             th.NASA7(n,m+5)/    T            )*T*th.Ru/th.MW(n);
 
-    cp += cps     *Y(n,id);
-    h  += hi(n,id)*Y(n,id);
+    cp += cps  *Y(n);
+    h  += hi(n)*Y(n);
   }
 
   // Compute mixuture enthalpy
@@ -113,12 +133,6 @@ void tpg(block_ b,
   e = h - p/rho;
   rhoE = rho*e + tke;
 
-  // Compute species mass
-  for (int n=0; n<=ns-1; n++)
-  {
-    rhoY(n,id) = Y(n,id)*rho;
-  }
-
   // Set values of new properties
   // Density
   b.Q(i,j,k,0) = rho;
@@ -131,7 +145,7 @@ void tpg(block_ b,
   // Species mass
   for (int n=0; n<ns-1; n++)
   {
-    b.Q(i,j,k,5+n) = rhoY(n,id);
+    b.Q(i,j,k,5+n) = Y(n)*rho;
   }
   // gamma,cp,h,c,e,hi
   b.qh(i,j,k,0) = gamma;
@@ -141,23 +155,26 @@ void tpg(block_ b,
   b.qh(i,j,k,4) = rho*e;
   for (int n=0; n<=ns-1; n++)
   {
-    b.qh(i,j,k,5+n) = hi(n,id);
+    b.qh(i,j,k,5+n) = hi(n);
   }
 
+#ifndef NSCOMPILE
   token.release(id);
+#endif
   });
   }
 
 
   else if ( given.compare("cons") == 0 )
   {
-  twoDview rhoY("rhoY", ns, numIds);
   Kokkos::parallel_for("Compute primatives from conserved quantities via tpg",
                        range,
                        KOKKOS_LAMBDA(const int i,
                                      const int j,
                                      const int k) {
+#ifndef NSCOMPILE
   int id = token.acquire();
+#endif
 
   // Updates all primatives from conserved quantities
   // Along the way, we need to compute mixture properties
@@ -173,7 +190,13 @@ void tpg(block_ b,
   double p;
   double e,tke;
   double T;
+#ifdef NSCOMPILE
+  double Y[ns];
+#endif
   double gamma,cp,h,c;
+#ifdef NSCOMPILE
+  double hi[ns];
+#endif
   double Rmix;
 
   // Compute TKE
@@ -183,13 +206,13 @@ void tpg(block_ b,
                  rho       ;
 
   // Compute species mass fraction
-  Y(ns-1,id) = 1.0;
+  Y(ns-1) = 1.0;
   for (int n=0; n<ns-1; n++)
   {
-    Y(n,id) = b.Q(i,j,k,5+n)/b.Q(i,j,k,0);
-    Y(ns-1,id) -= Y(n,id);
+    Y(n) = b.Q(i,j,k,5+n)/b.Q(i,j,k,0);
+    Y(ns-1) -= Y(n);
   }
-  Y(ns-1,id) = fmax(0.0,Y(ns-1,id));
+  Y(ns-1) = fmax(0.0,Y(ns-1));
 
   // Internal energy
   e = (rhoE - tke)/rho;
@@ -203,7 +226,7 @@ void tpg(block_ b,
   Rmix = 0.0;
   for (int n=0; n<=ns-1; n++)
   {
-    Rmix += Y(n,id)/th.MW(n);
+    Rmix += Y(n)/th.MW(n);
   }
   Rmix *= th.Ru;
 
@@ -223,15 +246,15 @@ void tpg(block_ b,
                   th.NASA7(n,m+3)*pow(T,3.0) +
                   th.NASA7(n,m+4)*pow(T,4.0) )*th.Ru/th.MW(n);
 
-      hi(n,id)  =(th.NASA7(n,m+0)                  +
-                  th.NASA7(n,m+1)*    T      / 2.0 +
-                  th.NASA7(n,m+2)*pow(T,2.0) / 3.0 +
-                  th.NASA7(n,m+3)*pow(T,3.0) / 4.0 +
-                  th.NASA7(n,m+4)*pow(T,4.0) / 5.0 +
-                  th.NASA7(n,m+5)/    T            )*T*th.Ru/th.MW(n);
+      hi(n)  =(th.NASA7(n,m+0)                  +
+               th.NASA7(n,m+1)*    T      / 2.0 +
+               th.NASA7(n,m+2)*pow(T,2.0) / 3.0 +
+               th.NASA7(n,m+3)*pow(T,3.0) / 4.0 +
+               th.NASA7(n,m+4)*pow(T,4.0) / 5.0 +
+               th.NASA7(n,m+5)/    T            )*T*th.Ru/th.MW(n);
 
-      cp += cps     *Y(n,id);
-      h  += hi(n,id)*Y(n,id);
+      cp += cps  *Y(n);
+      h  += hi(n)*Y(n);
     }
 
     error = e - (h - Rmix*T);
@@ -256,7 +279,7 @@ void tpg(block_ b,
   b.q(i,j,k,4) = T;
   for (int n=0; n<ns-1; n++)
   {
-    b.q(i,j,k,5+n) = Y(n,id);
+    b.q(i,j,k,5+n) = Y(n);
   }
   // gamma,cp,h,c,e,hi
   b.qh(i,j,k,0) = gamma;
@@ -266,10 +289,12 @@ void tpg(block_ b,
   b.qh(i,j,k,4) = rho*e;
   for (int n=0; n<=ns-1; n++)
   {
-    b.qh(i,j,k,5+n) = hi(n,id);
+    b.qh(i,j,k,5+n) = hi(n);
   }
 
+#ifndef NSCOMPILE
   token.release(id);
+#endif
   });
   }
   else
