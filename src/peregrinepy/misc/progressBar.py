@@ -4,7 +4,7 @@ import sys
 
 
 def progressBar(current, total, note=""):
-    length = 41
+    length = 31
     completed = int(round(length * current / float(total)))
 
     dude = "¯\\_(ツ)_/¯"
