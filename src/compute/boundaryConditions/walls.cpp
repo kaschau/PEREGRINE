@@ -134,13 +134,12 @@ void adiabaticSlipWall(
     }
 
     MDRange2 range_face = MDRange2({0, 0}, {q1.extent(0), q1.extent(1)});
-
+    double dplus = plus;
     for (int g = 0; g < b.ng; g++) {
       s0 -= plus * g;
 
       threeDsubview q0 = getHaloSlice(b.q, face._nface, s0);
 
-      double dplus = static_cast<double>(plus);
       Kokkos::parallel_for(
           "Adia slip wall euler terms", range_face,
           KOKKOS_LAMBDA(const int i, const int j) {
@@ -148,11 +147,12 @@ void adiabaticSlipWall(
             q0(i, j, 0) = q1(i, j, 0);
 
             // flip velo on wall
-            double uDotn = q1(i, j, 1) * nx(i, j) + q1(i, j, 2) * ny(i, j) +
-                           q1(i, j, 3) * nz(i, j);
-            q0(i, j, 1) = q1(i, j, 1) - dplus * 2.0 * uDotn * nx(i, j);
-            q0(i, j, 2) = q1(i, j, 2) - dplus * 2.0 * uDotn * ny(i, j);
-            q0(i, j, 3) = q1(i, j, 3) - dplus * 2.0 * uDotn * nz(i, j);
+            double uDotn = q1(i, j, 1) * nx(i, j) * dplus +
+                           q1(i, j, 2) * ny(i, j) * dplus +
+                           q1(i, j, 3) * nz(i, j) * dplus ;
+            q0(i, j, 1) = q1(i, j, 1) - 2.0 * uDotn * nx(i, j) * dplus;
+            q0(i, j, 2) = q1(i, j, 2) - 2.0 * uDotn * ny(i, j) * dplus;
+            q0(i, j, 3) = q1(i, j, 3) - 2.0 * uDotn * nz(i, j) * dplus;
 
             // match temperature
             q0(i, j, 4) = q1(i, j, 4);
