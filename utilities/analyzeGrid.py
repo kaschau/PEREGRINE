@@ -6,7 +6,6 @@ of the grid.
 
 """
 
-from mpi4py import MPI
 import os
 import argparse
 from peregrinepy.readers import readGrid
