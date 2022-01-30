@@ -157,7 +157,6 @@ def registerParallelXdmf(mb, path="./", gridPath="./", animate=True):
 def parallelWriteRestart(
     mb,
     path="./",
-    gridPath="./",
     animate=True,
     precision="double",
 ):
