@@ -83,7 +83,7 @@ def simulate(configFilePath):
                     pg.writers.parallelWriter.parallelWriteRestart(
                         mb,
                         path=config["io"]["outputdir"],
-                        animate=False,
+                        animate=True,
                     )
                     comm.Barrier()
                     if rank == 0:
