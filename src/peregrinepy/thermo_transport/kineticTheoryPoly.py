@@ -4,21 +4,29 @@ import numpy as np
 from scipy import interpolate as intrp
 
 
-def kineticTheoryPoly(usersp, refsp):
+def kineticTheoryPoly(usersp, refsp, eos):
     kb = refsp["kb"]
     eps0 = refsp["epsilon0"]
     avogadro = refsp["avogadro"]
     Ru = refsp["Ru"]
     ns = len(usersp.keys())
 
-    NASA7 = completeSpecies("NASA7", usersp, refsp)
-    cp0 = [None for i in range(ns)]
+    if eos == "cpg":
+        cp0 = completeSpecies("cp0", usersp, refsp)
+        NASA7 = [None for i in range(ns)]
 
-    def cp_R(cp0, poly, T, MW):
-        if T <= poly[0]:
-            return sum([poly[i + 1 + 7] * T ** (i) for i in range(5)])
-        else:
-            return sum([poly[i + 1] * T ** (i) for i in range(5)])
+        def cp_R(cp0, poly, T, MW):
+            return cp0 * T / (Ru * MW)
+
+    elif eos in ["tpg", "cubic"]:
+        NASA7 = completeSpecies("NASA7", usersp, refsp)
+        cp0 = [None for i in range(ns)]
+
+        def cp_R(cp0, poly, T, MW):
+            if T <= poly[0]:
+                return sum([poly[i + 1 + 7] * T ** (i) for i in range(5)])
+            else:
+                return sum([poly[i + 1] * T ** (i) for i in range(5)])
 
     deg = 4
     # Maximum and minumum temperatures to generate poly'l
