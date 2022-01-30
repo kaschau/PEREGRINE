@@ -60,11 +60,8 @@ def setConsistify(cls, config):
             raise pgConfigError("switchAdvFlux", switch)
 
         # Just as a check, we will make sure we didnt accidentially
-        #  set a switch (that is a non negating switch) without
-        #  setting a secondary flux
-        if config["RHS"]["secondaryAdvFlux"] is None and not config["RHS"][
-            "switchAdvFlux"
-        ].startswith("no"):
+        #  set a switch without setting a secondary flux
+        if config["RHS"]["secondaryAdvFlux"] is None:
             raise pgConfigError(
                 switch,
                 "You set a advective flux switching option without a secondary flux.",
