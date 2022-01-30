@@ -75,17 +75,17 @@ class TestWalls:
         for face in blk.faces:
             nface = face.nface
             if nface in [1, 2]:
-                nx = blk.array["inx"]
-                ny = blk.array["iny"]
-                nz = blk.array["inz"]
+                nx = blk.array["inx"][face.s1_]
+                ny = blk.array["iny"][face.s1_]
+                nz = blk.array["inz"][face.s1_]
             elif nface in [3, 4]:
-                nx = blk.array["jnx"]
-                ny = blk.array["jny"]
-                nz = blk.array["jnz"]
+                nx = blk.array["jnx"][face.s1_]
+                ny = blk.array["jny"][face.s1_]
+                nz = blk.array["jnz"][face.s1_]
             elif nface in [5, 6]:
-                nx = blk.array["knx"]
-                ny = blk.array["kny"]
-                nz = blk.array["knz"]
+                nx = blk.array["knx"][face.s1_]
+                ny = blk.array["kny"][face.s1_]
+                nz = blk.array["knz"][face.s1_]
 
             if nface in [1, 3, 5]:
                 plus = 1.0
@@ -96,15 +96,15 @@ class TestWalls:
             for s0_ in face.s0_:
                 assert np.allclose(p[s0_], p[face.s1_])
 
-                assert np.allclose(
-                    u[s0_], u[face.s1_] - 2.0 * u[face.s1_] * plus * nx[face.s1_]
+                uDotn = (
+                    u[face.s1_] * nx * plus
+                    + v[face.s1_] * ny * plus
+                    + w[face.s1_] * nz * plus
                 )
-                assert np.allclose(
-                    v[s0_], v[face.s1_] - 2.0 * v[face.s1_] * plus * ny[face.s1_]
-                )
-                assert np.allclose(
-                    w[s0_], w[face.s1_] - 2.0 * w[face.s1_] * plus * nz[face.s1_]
-                )
+
+                assert np.allclose(u[s0_], u[face.s1_] - 2.0 * uDotn * plus * nx)
+                assert np.allclose(v[s0_], v[face.s1_] - 2.0 * uDotn * plus * ny)
+                assert np.allclose(w[s0_], w[face.s1_] - 2.0 * uDotn * plus * nz)
 
                 assert np.allclose(TN[s0_], TN[face.s1_])
 
