@@ -10,6 +10,15 @@ def bootstrapCase(config):
     blocksForProcs = pg.readers.readBlocksForProcs(config["io"]["inputdir"])
     if rank == 0:
         print("Read blocsForProcs.")
+    # If blocksForProcs.inp is not found, blocksForProcs will be
+    # None, so we assume one block per proc
+    if blocksForProcs is None:
+        blocksForProcs = [[i] for i in range(size)]
+        if rank == 0:
+            print(
+                "No blocksForProcs.inp found.\n",
+                f"assuming {size} blocks with one block per proc.",
+            )
 
     # Check that we have correct number of processors
     if len(blocksForProcs) != size:
@@ -18,6 +27,7 @@ def bootstrapCase(config):
                 "ERROR!! Number of requested processors in blocksForProcs does not equal number of processors!"
             )
         comm.Abort()
+
     # Check we have correct number of blks
     summ = 0
     maxx = 0
@@ -42,6 +52,15 @@ def bootstrapCase(config):
     pg.readers.readConnectivity(mb, config["io"]["inputdir"])
     if rank == 0:
         print("Read connectivity.")
+        # Check we have the correct number of blocks.
+        totalCheck = 0
+        for proc in blocksForProcs:
+            totalCheck += len(proc)
+        if mb.totalBlocks != totalCheck:
+            print(
+                "ERROR!! Number of blocks in conn.yaml does not equal number of total blocks"
+            )
+            comm.Abort()
 
     ################################################################
     # Now we figure out which processor each block's neighbor
