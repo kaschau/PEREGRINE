@@ -29,7 +29,18 @@ class restartBlock(gridBlock):
         self.tme = 0.0
 
         self.speciesNames = speciesNames
-        self.ns = len(speciesNames)
+        # If we are a solver block, and we have hard coded ns at compile
+        # time, it is already set at this point. So we will check if it is,
+        # and make sure it is the same as the number of species we want.
+        if hasattr(self, "ns"):
+            # Then it is alreay set and hard coded
+            if self.ns != len(speciesNames):
+                raise ValueError(
+                    f"ERROR!! You are trying to use {len(speciesNames)} species, but pg.compute\n"
+                    f"    was precompiled for {self.ns} species."
+                )
+        else:
+            self.ns = len(speciesNames)
         if self.ns < 1:
             raise ValueError("Number of species must be >=1")
 

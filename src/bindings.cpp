@@ -53,6 +53,9 @@ PYBIND11_MODULE(compute, m) {
     .def_readwrite("ng", &block_::ng)
 
     .def_readwrite("ne", &block_::ne)
+# ifdef NSCOMPILE
+    .def_readonly("ns", &block_::ns)
+# endif
 
 //----------------------------------------------------------------------------//
 //  Primary grid node coordinates

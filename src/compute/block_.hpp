@@ -11,6 +11,9 @@ struct block_ {
   int ni,nj,nk;
   int ng;
   int ne;
+# ifdef NSCOMPILE
+  const int ns = NS;
+# endif
 
   // Grid Arrays
   threeDview x,y,z;
