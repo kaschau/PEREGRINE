@@ -92,7 +92,7 @@ class coprocessor:
                     ]
                 )
             )
-            self.addArray(grid, "velocity", array)
+            self.addArray(grid, "Velocity", array)
 
             # temperature arrays
             self.addArray(
@@ -165,7 +165,7 @@ class coprocessor:
                     ]
                 )
             )
-            self.addArray(grid, "velocity", array)
+            self.addArray(grid, "Velocity", array)
 
             # temperature array
             self.swapArray(

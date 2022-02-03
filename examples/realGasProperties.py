@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 
-Auto ignition flame calculation.
+Real gas properties.
 
 """
 

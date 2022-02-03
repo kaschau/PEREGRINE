@@ -14,3 +14,8 @@ from .consistify import consistify
 from .RHS import RHS
 from . import bcs
 from . import thermo_transport
+
+try:
+    from . import coproc
+except ImportError:
+    coproc = "Cannot Import coproc module"
