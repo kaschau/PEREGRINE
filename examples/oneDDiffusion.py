@@ -1,13 +1,7 @@
 #!/usr/bin/env -S python -m mpi4py
 """
 
-Test case from
-
-Preventing spurious pressure oscillations in split convective form discretization for compressible flows
-https://doi.org/10.1016/j.jcp.2020.110060
-
-Should reproduce results in Fig. 1 for the KEEP scheme (blue line)
-
+Binary diffusion between two species of equal total mass inside box
 
 """
 
