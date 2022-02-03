@@ -1,25 +1,25 @@
-import numpy as np
+import paraview
+from paraview.modules.vtkPVCatalyst import vtkCPProcessor, vtkCPDataDescription
 from paraview.vtk.util import numpy_support
+
+try:
+    from paraview.modules.vtkPVPythonCatalyst import (
+        vtkCPPythonScriptV2Pipeline as vtkPipeline,
+    )
+except ImportError:
+    from paraview.modules.vtkPVPythonCatalyst import (
+        vtkCPPythonScriptPipeline as vtkPipeline,
+    )
+
+from paraview.modules.vtkRemotingCore import vtkProcessModule
+import vtk
+import numpy as np
 
 
 class coprocessor:
     def __init__(self, mb):
-        import paraview
-
-        from paraview.modules.vtkPVCatalyst import vtkCPProcessor, vtkCPDataDescription
 
         # Try and figure out if we are using paraview > or < 5.9
-        try:
-            from paraview.modules.vtkPVPythonCatalyst import (
-                vtkCPPythonScriptV2Pipeline as vtkPipeline,
-            )
-        except ImportError:
-            from paraview.modules.vtkPVPythonCatalyst import (
-                vtkCPPythonScriptPipeline as vtkPipeline,
-            )
-
-        from paraview.modules.vtkRemotingCore import vtkProcessModule
-        import vtk
 
         # Sanity check
         pm = vtkProcessModule.GetProcessModule()
