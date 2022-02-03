@@ -18,4 +18,4 @@ from . import thermo_transport
 try:
     from . import coproc
 except ImportError:
-    coproc = "Cannot Import coproc module"
+    coproc = "Can not import coproc module"
