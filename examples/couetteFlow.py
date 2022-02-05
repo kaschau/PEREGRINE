@@ -71,9 +71,7 @@ def simulate():
 
     valueDict = {"u": wallSpeed, "v": 0.0, "w": 0.0}
     face4 = blk.getFace(4)
-    pg.misc.createViewMirrorArray(
-        face4, "qBcVals", blk.array["q"][face4.s1_].shape, "Default"
-    )
+    pg.misc.createViewMirrorArray(face4, "qBcVals", blk.array["q"][face4.s1_].shape)
     pg.bcs.prepWalls.prep_adiabaticMovingWall(blk, face4, valueDict)
 
     mb.setBlockCommunication()
