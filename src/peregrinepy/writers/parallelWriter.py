@@ -24,24 +24,20 @@ def registerParallelXdmf(mb, path="./", gridPath="./", animate=True):
     for sendrank in range(1, size):
         # Send block list
         if rank == sendrank:
-            tag = int(f"1{rank}201")
-            comm.send(myBlockList, dest=0, tag=tag)
+            comm.send(myBlockList, dest=0, tag=rank)
         # recv block list
         elif rank == 0:
-            tag = int(f"1{sendrank}201")
-            recvBlockList = comm.recv(source=sendrank, tag=tag)
+            recvBlockList = comm.recv(source=sendrank, tag=sendrank)
             totalBlockList.append(recvBlockList)
         else:
             pass
 
         # send ni list
         if rank == sendrank:
-            tag = int(f"1{rank}201")
-            comm.send(myNiList, dest=0, tag=tag)
+            comm.send(myNiList, dest=0, tag=rank)
         # recv ni list
         elif rank == 0:
-            tag = int(f"1{sendrank}201")
-            recvNiList = comm.recv(source=sendrank, tag=tag)
+            recvNiList = comm.recv(source=sendrank, tag=sendrank)
             totalNiList.append(recvNiList)
         else:
             pass
