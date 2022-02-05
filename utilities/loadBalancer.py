@@ -74,7 +74,7 @@ if __name__ == "__main__":
         metavar="<fromDir>",
         dest="fromDir",
         default="./",
-        help="Directory containing the gv.* and conn.yaml files. Default is ./",
+        help="Directory containing the gv.* files. Default is ./",
         type=str,
     )
     parser.add_argument(
@@ -82,6 +82,7 @@ if __name__ == "__main__":
         "--minimizeProcessors",
         action="store_true",
         dest="minProcs",
+        default=True,
         help="Attempt to minimize the number or required processors",
     )
     parser.add_argument(
@@ -110,7 +111,6 @@ if __name__ == "__main__":
     nblks = len([f for f in os.listdir(f"{fromDir}") if f.endswith(".h5")])
     mb = pg.multiBlock.grid(nblks)
     pg.readers.readGrid(mb, fromDir)
-    pg.readers.readConnectivity(mb, fromDir)
 
     sizes, nblkis = getSortedBlockSizes(mb)
 
