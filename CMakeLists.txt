@@ -66,6 +66,7 @@ file( GLOB compute_src ${PROJECT_SOURCE_DIR}/src/compute/*.cpp
                        ${PROJECT_SOURCE_DIR}/src/compute/boundaryConditions/*.cpp
                        ${PROJECT_SOURCE_DIR}/src/compute/diffFlux/*.cpp
                        ${PROJECT_SOURCE_DIR}/src/compute/thermo/*.cpp
+                       ${PROJECT_SOURCE_DIR}/src/compute/subgrid/*.cpp
                        ${PROJECT_SOURCE_DIR}/src/compute/switches/*.cpp
                        ${PROJECT_SOURCE_DIR}/src/compute/transport/*.cpp
                        ${PROJECT_SOURCE_DIR}/src/compute/chemistry/*.cpp

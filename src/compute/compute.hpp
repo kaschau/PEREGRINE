@@ -91,6 +91,10 @@ void chem_GRI30(block_ b, const thtrdat_ th, const int face,
 //    |------> diffusiveFlux
 void diffusiveFlux(block_ b, const thtrdat_ th);
 
+// ./subgrid
+//    |------> mixedScaleModel
+void mixedScaleModel(block_ b);
+
 // ./switches
 //    |------> jameson
 void jamesonEntropy(block_ b);

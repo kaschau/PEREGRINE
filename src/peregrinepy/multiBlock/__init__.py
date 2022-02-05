@@ -46,6 +46,16 @@ def setConsistify(cls, config):
         cls.trans = null
         cls.dqdxyz = null
 
+    # Subgrid models
+    if config["RHS"]["subgrid"] is not None:
+        sgs = config["RHS"]["subgrid"]
+        try:
+            cls.sgs = getattr(compute.subgrid, sgs)
+        except AttributeError:
+            raise pgConfigError("sgs", sgs)
+    else:
+        cls.sgs = null
+
     # Switching function between primary and secondary advective fluxes
     #  If we aren't using a secondary flux function, we rely on the
     #  initialization of the switch array "phi" = 0.0 and then
