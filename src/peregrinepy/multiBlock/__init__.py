@@ -42,25 +42,18 @@ def setConsistify(cls, config):
         except AttributeError:
             raise pgConfigError("diffOrder", f"dq{dqO}FD")
         cls.commList += ["dqdx", "dqdy", "dqdz"]
+        # Subgrid models
+        if config["RHS"]["subgrid"] is not None:
+            sgs = config["RHS"]["subgrid"]
+            try:
+                cls.sgs = getattr(compute.subgrid, sgs)
+            except AttributeError:
+                raise pgConfigError("sgs", sgs)
+        else:
+            cls.sgs = null
     else:
         cls.trans = null
         cls.dqdxyz = null
-
-    # Subgrid models
-    if config["RHS"]["subgrid"] is not None:
-        sgs = config["RHS"]["subgrid"]
-        try:
-            cls.sgs = getattr(compute.subgrid, sgs)
-        except AttributeError:
-            raise pgConfigError("sgs", sgs)
-        if not hasattr(cls, "dqdxyz"):
-            dqO = config["RHS"]["diffOrder"]
-            try:
-                cls.dqdxyz = getattr(compute.utils, f"dq{dqO}FD")
-            except AttributeError:
-                raise pgConfigError("diffOrder", f"dq{dqO}FD")
-            cls.commList += ["dqdx", "dqdy", "dqdz"]
-    else:
         cls.sgs = null
 
     # Switching function between primary and secondary advective fluxes
