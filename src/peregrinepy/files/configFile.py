@@ -48,7 +48,7 @@ class configFile(frozenDict):
 
         self["thermochem"] = frozenDict(
             {
-                "spdata": "pure-debug.yaml",
+                "spdata": ["Air"],
                 "eos": "cpg",
                 "trans": "kineticTheory",
                 "chemistry": False,

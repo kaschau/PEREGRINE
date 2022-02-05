@@ -98,18 +98,18 @@ class solver(restart):
         string = f"  Total blocks: {self.totalBlocks}\n"
         string += f"  Species: {self.thtrdat.speciesNames}\n"
         string += f"  Time integrator: {self.step.name}\n"
-        string += f"  Shock Handling: {self.config['RHS']['shockHandling']}.\n"
-        string += f"  Primary Advective Flux: {self.primaryAdvFlux.__name__}.\n"
-        string += f"  Switching function: {self.switch.__name__}.\n"
-        string += f"  Secondary Advective Flux: {self.secondaryAdvFlux.__name__}.\n"
+        string += f"  Shock Handling: {self.config['RHS']['shockHandling']}\n"
+        string += f"  Primary Advective Flux: {self.primaryAdvFlux.__name__}\n"
+        string += f"  Switching function: {self.switch.__name__}\n"
+        string += f"  Secondary Advective Flux: {self.secondaryAdvFlux.__name__}\n"
         string += f"  Equation of state: {self.eos.__name__}\n"
         if self.config["RHS"]["diffusion"]:
             string += f"  Transport equation: {self.trans.__name__}\n"
-            string += f"  Spatial derivatives estimated with {self.config['RHS']['diffOrder']} order.\n"
+            string += f"  Spatial derivatives estimated with {self.config['RHS']['diffOrder']} order\n"
         else:
-            string += "  Diffusion terms not solved for.\n"
+            string += "  Diffusion terms not solved for\n"
         if self.config["thermochem"]["chemistry"]:
-            string += f"  Explicit chemistry mechanism used: {self.expChem.__name__}.\n"
-            string += f"  Implicit chemistry mechanism used: {self.impChem.__name__}.\n"
+            string += f"  Explicit chemistry mechanism used: {self.expChem.__name__}\n"
+            string += f"  Implicit chemistry mechanism used: {self.impChem.__name__}\n"
 
         return string
