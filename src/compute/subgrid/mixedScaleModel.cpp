@@ -46,19 +46,19 @@ void mixedScaleModel(block_ b) {
 
   double invSij, usg, vsg, wsg;
 
-  invSij = A11*A22 + A22*A33 +A11*A33 - pow(A12,2.0) - pow(A13,2.0) - pow(A23,2.0);
+  invSij = A11*A22 + A22*A33 + A11*A33 - pow(A12,2.0) - pow(A13,2.0) - pow(A23,2.0);
 
   usg = 1.0/3.0 * ( ( 0.25*b.q(i-1,j,k,1) + 0.5*u + 0.25*b.q(i+1,j,k,1) ) +
                     ( 0.25*b.q(i,j-1,k,1) + 0.5*u + 0.25*b.q(i,j+1,k,1) ) +
                     ( 0.25*b.q(i,j,k-1,1) + 0.5*u + 0.25*b.q(i,j,k+1,1) ) );
 
-  vsg = 1.0/3.0 * ( ( 0.25*b.q(i-1,j,k,2) + 0.5*u + 0.25*b.q(i+1,j,k,2) ) +
-                    ( 0.25*b.q(i,j-1,k,2) + 0.5*u + 0.25*b.q(i,j+1,k,2) ) +
-                    ( 0.25*b.q(i,j,k-1,2) + 0.5*u + 0.25*b.q(i,j,k+1,2) ) );
+  vsg = 1.0/3.0 * ( ( 0.25*b.q(i-1,j,k,2) + 0.5*v + 0.25*b.q(i+1,j,k,2) ) +
+                    ( 0.25*b.q(i,j-1,k,2) + 0.5*v + 0.25*b.q(i,j+1,k,2) ) +
+                    ( 0.25*b.q(i,j,k-1,2) + 0.5*v + 0.25*b.q(i,j,k+1,2) ) );
 
-  wsg = 1.0/3.0 * ( ( 0.25*b.q(i-1,j,k,3) + 0.5*u + 0.25*b.q(i+1,j,k,3) ) +
-                    ( 0.25*b.q(i,j-1,k,3) + 0.5*u + 0.25*b.q(i,j+1,k,3) ) +
-                    ( 0.25*b.q(i,j,k-1,3) + 0.5*u + 0.25*b.q(i,j,k+1,3) ) );
+  wsg = 1.0/3.0 * ( ( 0.25*b.q(i-1,j,k,3) + 0.5*w + 0.25*b.q(i+1,j,k,3) ) +
+                    ( 0.25*b.q(i,j-1,k,3) + 0.5*w + 0.25*b.q(i,j+1,k,3) ) +
+                    ( 0.25*b.q(i,j,k-1,3) + 0.5*w + 0.25*b.q(i,j,k+1,3) ) );
 
   double qc2 = 0.5*(pow(u-usg,2.0) + pow(v-vsg,2.0) + pow(w-wsg,2.0));
 
@@ -72,7 +72,7 @@ void mixedScaleModel(block_ b) {
   // viscocity
   b.qt(i,j,k,0) += musgs;
   // thermal conductivity
-  double kappasgs = musgs / Prt;
+  double kappasgs = musgs * b.qh(i,j,k,1) / Prt;
   b.qt(i,j,k,1) += kappasgs;
 
   });
