@@ -31,7 +31,6 @@ def simulate():
 
     config = pg.files.configFile()
     config["simulation"]["dt"] = 10 * 2.0e-5 / ny
-    config["simulation"]["niter"] = 50000
     config["RHS"]["diffusion"] = True
     config["thermochem"]["trans"] = "constantProps"
     config["thermochem"]["spdata"] = ["Air"]
