@@ -11,12 +11,20 @@ import peregrinepy as pg
 import numpy as np
 import matplotlib.pyplot as plt
 
-np.seterr(all="raise")
+wallSpeed = 5.0
+n = np.array([i for i in range(50)][1::])
+
+
+def analytical(y, h, t, nu):
+    return wallSpeed * y / h - 2 * wallSpeed / np.pi * np.sum(
+        1.0
+        / n
+        * np.exp(-(n ** 2) * np.pi ** 2 * nu * t / h ** 2)
+        * np.sin(n * np.pi * (1 - y / h))
+    )
 
 
 def simulate():
-
-    wallSpeed = 5.0
 
     config = pg.files.configFile()
     config["simulation"]["dt"] = 2.0e-5
@@ -92,6 +100,7 @@ def simulate():
     nu = mu / rho
 
     outputTimes = [0.0005, 0.005, 0.05]
+
     doneOutput = [False, False, False]
     outputU = []
     simTme = max(outputTimes) * h ** 2 / nu
@@ -107,6 +116,16 @@ def simulate():
                 outputU.append(blk.array["q"][ng, ng:-ng, ng, 1].copy())
                 doneOutput[i] = True
 
+    # Analytical solution
+    yplot = np.linspace(0, h, 100)
+    anSol = []
+    for oT in outputTimes:
+        sol = []
+        for yy in yplot:
+            t = oT * h ** 2 / nu
+            sol.append(analytical(yy, h, t, nu))
+        anSol.append(np.array(sol))
+
     fig, ax1 = plt.subplots()
     ax1.grid(True, linestyle="--")
     ax1.set_title("Couette Results")
@@ -115,8 +134,9 @@ def simulate():
     y = blk.array["yc"][ng, ng:-ng, ng] / h
     y = np.append(y, [1.0])
     legends = [str(i) for i in outputTimes]
-    for oU, legend in zip(outputU, legends):
+    for oU, oA, legend in zip(outputU, anSol, legends):
         ax1.plot(np.append(oU, [wallSpeed]) / wallSpeed, y, label=legend, linewidth=0.5)
+        ax1.plot(oA / wallSpeed, yplot / h, linewidth=0.5, color="k")
     ax1.scatter(
         np.linspace(0, 1, y.shape[0]),
         y,
