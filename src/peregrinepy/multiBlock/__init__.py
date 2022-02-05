@@ -53,6 +53,13 @@ def setConsistify(cls, config):
             cls.sgs = getattr(compute.subgrid, sgs)
         except AttributeError:
             raise pgConfigError("sgs", sgs)
+        if not hasattr(cls, "dqdxyz"):
+            dqO = config["RHS"]["diffOrder"]
+            try:
+                cls.dqdxyz = getattr(compute.utils, f"dq{dqO}FD")
+            except AttributeError:
+                raise pgConfigError("diffOrder", f"dq{dqO}FD")
+            cls.commList += ["dqdx", "dqdy", "dqdz"]
     else:
         cls.sgs = null
 
