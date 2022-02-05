@@ -12,6 +12,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 wallSpeed = 5.0
+ny = 10
+h = 0.025
+
 n = np.array([i for i in range(50)][1::])
 
 
@@ -27,14 +30,12 @@ def analytical(y, h, t, nu):
 def simulate():
 
     config = pg.files.configFile()
-    config["simulation"]["dt"] = 2.0e-5
+    config["simulation"]["dt"] = 10 * 2.0e-5 / ny
     config["simulation"]["niter"] = 50000
     config["RHS"]["diffusion"] = True
     config["thermochem"]["trans"] = "constantProps"
     config["thermochem"]["spdata"] = ["Air"]
 
-    ny = 10
-    h = 0.025
     mb = pg.multiBlock.generateMultiBlockSolver(1, config)
     pg.grid.create.multiBlockCube(
         mb,
@@ -135,7 +136,7 @@ def simulate():
     y = np.append(y, [1.0])
     legends = [str(i) for i in outputTimes]
     for oU, oA, legend in zip(outputU, anSol, legends):
-        ax1.plot(np.append(oU, [wallSpeed]) / wallSpeed, y, label=legend, linewidth=0.5)
+        ax1.scatter(np.append(oU, [wallSpeed]) / wallSpeed, y, label=legend, s=15.0)
         ax1.plot(oA / wallSpeed, yplot / h, linewidth=0.5, color="k")
     ax1.scatter(
         np.linspace(0, 1, y.shape[0]),
