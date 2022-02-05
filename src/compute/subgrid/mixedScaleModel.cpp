@@ -46,7 +46,7 @@ void mixedScaleModel(block_ b) {
 
   double invSij, usg, vsg, wsg;
 
-  invSij = A11*A22 + A22*A33 + A11*A33 - pow(A12,2.0) - pow(A13,2.0) - pow(A23,2.0);
+  invSij = abs(A11*A22 + A22*A33 + A11*A33 - pow(A12,2.0) - pow(A13,2.0) - pow(A23,2.0));
 
   usg = 1.0/3.0 * ( ( 0.25*b.q(i-1,j,k,1) + 0.5*u + 0.25*b.q(i+1,j,k,1) ) +
                     ( 0.25*b.q(i,j-1,k,1) + 0.5*u + 0.25*b.q(i,j+1,k,1) ) +
