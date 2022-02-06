@@ -15,7 +15,7 @@ void mixedScaleModel(block_ b) {
 
   MDRange3 range_cc({b.ng,b.ng,b.ng},{b.ni+b.ng-1,b.nj+b.ng-1,b.nk+b.ng-1});
 
-  Kokkos::parallel_for("Compute switch from entropy",
+  Kokkos::parallel_for("Mixed Scale subgrid",
                        range_cc,
                        KOKKOS_LAMBDA(const int i,
                                      const int j,
