@@ -4,7 +4,7 @@
 #include <math.h>
 #include <numeric>
 
-void mixedScaleModel(block_ b) {
+void smagorinsky(block_ b) {
 
   MDRange3 range_cc({b.ng,b.ng,b.ng},{b.ni+b.ng-1,b.nj+b.ng-1,b.nk+b.ng-1});
 
@@ -14,8 +14,7 @@ void mixedScaleModel(block_ b) {
                                      const int j,
                                      const int k) {
 
-  const double Cm = 0.06;
-  const double alpha = 0.5;
+  const double Cs = 0.18;
   const double Prt = 0.9;
 
   double& u = b.q(i,j,k,1);
@@ -58,29 +57,16 @@ void mixedScaleModel(block_ b) {
   }
   invSij = sqrt(0.5*fmax(invSij, 0.0));
 
-  usg = 1.0/3.0 * ( 0.25*b.q(i-1,j,k,1) + 0.5*u + 0.25*b.q(i+1,j,k,1) +
-                    0.25*b.q(i,j-1,k,1) + 0.5*u + 0.25*b.q(i,j+1,k,1) +
-                    0.25*b.q(i,j,k-1,1) + 0.5*u + 0.25*b.q(i,j,k+1,1) );
-
-  vsg = 1.0/3.0 * ( 0.25*b.q(i-1,j,k,2) + 0.5*v + 0.25*b.q(i+1,j,k,2) +
-                    0.25*b.q(i,j-1,k,2) + 0.5*v + 0.25*b.q(i,j+1,k,2) +
-                    0.25*b.q(i,j,k-1,2) + 0.5*v + 0.25*b.q(i,j,k+1,2) );
-
-  wsg = 1.0/3.0 * ( 0.25*b.q(i-1,j,k,3) + 0.5*w + 0.25*b.q(i+1,j,k,3) +
-                    0.25*b.q(i,j-1,k,3) + 0.5*w + 0.25*b.q(i,j+1,k,3) +
-                    0.25*b.q(i,j,k-1,3) + 0.5*w + 0.25*b.q(i,j,k+1,3) );
-
-  double qc2 = 0.5*(pow(u-usg,2.0) + pow(v-vsg,2.0) + pow(w-wsg,2.0));
-
   double delta = pow(b.J(i,j,k),1.0/3.0);
 
-  double nusgs = Cm*pow(invSij,alpha)*pow(qc2,(1.0-alpha)/2.0)*pow(delta,1.0+alpha);
+  double nusgs = pow(Cs*delta,2.0)*invSij;
 
   double musgs = nusgs * b.Q(i,j,k,0);
 
   // Add sgs values to properties
   // viscocity
   b.qt(i,j,k,0) += musgs;
+  std::cout << musgs << std::endl;
   // thermal conductivity
   double kappasgs = musgs * b.qh(i,j,k,1) / Prt;
   b.qt(i,j,k,1) += kappasgs;

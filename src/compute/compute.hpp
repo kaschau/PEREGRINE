@@ -94,6 +94,8 @@ void diffusiveFlux(block_ b, const thtrdat_ th);
 // ./subgrid
 //    |------> mixedScaleModel
 void mixedScaleModel(block_ b);
+//    |------> smagorinsky
+void smagorinsky(block_ b);
 
 // ./switches
 //    |------> jameson
