@@ -73,7 +73,6 @@ void smagorinsky(block_ b) {
   // Add sgs values to properties
   // viscocity
   b.qt(i,j,k,0) += musgs;
-  std::cout << musgs << std::endl;
   // thermal conductivity
   double kappasgs = musgs * b.qh(i,j,k,1) / Prt;
   b.qt(i,j,k,1) += kappasgs;
