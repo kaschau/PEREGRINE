@@ -1,6 +1,7 @@
 #include "Kokkos_Core.hpp"
 #include "kokkos_types.hpp"
 #include "block_.hpp"
+#include "thtrdat_.hpp"
 #include <math.h>
 #include <numeric>
 
@@ -11,7 +12,7 @@
 // INTERNATIONAL JOURNAL FOR NUMERICAL METHODS IN FLUIDSInt.J.Numer.Meth.Fluids2000;32: 369 – 406
 // E. Lenormand,  P. Sagautb,  and  L. Ta Phuoc
 
-void mixedScaleModel(block_ b) {
+void mixedScaleModel(block_ b, thtrdat_ th) {
 
   MDRange3 range_cc({b.ng,b.ng,b.ng},{b.ni+b.ng-1,b.nj+b.ng-1,b.nk+b.ng-1});
 
@@ -21,9 +22,11 @@ void mixedScaleModel(block_ b) {
                                      const int j,
                                      const int k) {
 
+  const int ns = th.ns;
   const double Cm = 0.06;
   const double alpha = 0.5;
-  const double Prt = 0.9;
+  const double Prt = 0.4;
+  const double Sct = 1.0;
 
   double& u = b.q(i,j,k,1);
   double& v = b.q(i,j,k,2);
@@ -91,6 +94,11 @@ void mixedScaleModel(block_ b) {
   // thermal conductivity
   double kappasgs = musgs * b.qh(i,j,k,1) / Prt;
   b.qt(i,j,k,1) += kappasgs;
+  // Diffusion coefficients mass
+  for (int n=0; n<=ns-1; n++)
+  {
+    b.qt(i,j,k,2+n) += nusgs/Sct;
+  }
 
   });
 }
