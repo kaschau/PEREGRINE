@@ -103,10 +103,10 @@ void adiabaticNoSlipWall(
   }
 }
 
-void adiabaticSlipWall(
-    block_ b, const face_ face,
-    const std::function<void(block_, thtrdat_, int, std::string)> &eos,
-    thtrdat_ th, std::string terms) {
+void adiabaticSlipWall(block_ b,
+                       const face_ face,
+                       const std::function<void(block_, thtrdat_, int, std::string)> &eos,
+                       thtrdat_ th, std::string terms) {
   //-------------------------------------------------------------------------------------------|
   // Apply BC to face, slice by slice.
   //-------------------------------------------------------------------------------------------|
@@ -147,9 +147,9 @@ void adiabaticSlipWall(
             q0(i, j, 0) = q1(i, j, 0);
 
             // flip velo on wall
-            double uDotn = q1(i, j, 1) * nx(i, j) * dplus +
-                           q1(i, j, 2) * ny(i, j) * dplus +
-                           q1(i, j, 3) * nz(i, j) * dplus ;
+            double uDotn = ( q1(i, j, 1) * nx(i, j) +
+                             q1(i, j, 2) * ny(i, j) +
+                             q1(i, j, 3) * nz(i, j) ) * dplus ;
             q0(i, j, 1) = q1(i, j, 1) - 2.0 * uDotn * nx(i, j) * dplus;
             q0(i, j, 2) = q1(i, j, 2) - 2.0 * uDotn * ny(i, j) * dplus;
             q0(i, j, 3) = q1(i, j, 3) - 2.0 * uDotn * nz(i, j) * dplus;
