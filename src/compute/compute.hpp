@@ -93,9 +93,9 @@ void diffusiveFlux(block_ b, const thtrdat_ th);
 
 // ./subgrid
 //    |------> mixedScaleModel
-void mixedScaleModel(block_ b);
+void mixedScaleModel(block_ b, thtrdat_ th);
 //    |------> smagorinsky
-void smagorinsky(block_ b);
+void smagorinsky(block_ b, thtrdat_ th);
 
 // ./switches
 //    |------> jameson
@@ -153,6 +153,7 @@ void applyDissipationFlux(block_ b, double[]);
 void dQzero(block_ b);
 //    |------> dq2FD
 void dq2FD(block_ b);
+void dq2FDoneSided(block_ b, int nface);
 //    |------> dq4FD
 void dq4FD(block_ b);
 //    |------> axpby
