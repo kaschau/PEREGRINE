@@ -213,10 +213,10 @@ void adiabaticSlipWall(block_ b,
   }
 }
 
-void adiabaticMovingWall(
-    block_ b, const face_ face,
-    const std::function<void(block_, thtrdat_, int, std::string)> &eos,
-    thtrdat_ th, std::string terms) {
+void adiabaticMovingWall(block_ b,
+                         const face_ face,
+                         const std::function<void(block_, thtrdat_, int, std::string)> &eos,
+                         thtrdat_ th, std::string terms) {
   //-------------------------------------------------------------------------------------------|
   // Apply BC to face, slice by slice.
   //-------------------------------------------------------------------------------------------|
@@ -258,7 +258,6 @@ void adiabaticMovingWall(
 
   } else if (terms.compare("viscous") == 0) {
 
-    dq2FDoneSided(b, face._nface);
     threeDsubview dqdx1 = getHaloSlice(b.dqdx, face._nface, s1);
     threeDsubview dqdy1 = getHaloSlice(b.dqdy, face._nface, s1);
     threeDsubview dqdz1 = getHaloSlice(b.dqdz, face._nface, s1);
@@ -355,7 +354,6 @@ void isoTMovingWall(
 
   } else if (terms.compare("viscous") == 0) {
 
-    dq2FDoneSided(b, face._nface);
     threeDsubview dqdx1 = getHaloSlice(b.dqdx, face._nface, s1);
     threeDsubview dqdy1 = getHaloSlice(b.dqdy, face._nface, s1);
     threeDsubview dqdz1 = getHaloSlice(b.dqdz, face._nface, s1);

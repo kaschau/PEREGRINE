@@ -109,6 +109,8 @@ def simulate():
 
         if mb.nrt % 200 == 0:
             pg.misc.progressBar(mb.tme, simTme)
+            if np.any(np.isnan(blk.array["Q"])):
+                raise ValueError("Nan detected")
 
         for i, oT in enumerate(outputTimes):
             t = oT * h ** 2 / nu
@@ -141,7 +143,7 @@ def simulate():
         np.linspace(0, 1, y.shape[0]),
         y,
         marker="o",
-        facecolor="w",
+        facecolor="None",
         edgecolor="b",
         label="Steady State",
         linewidth=0.5,
