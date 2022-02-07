@@ -3,7 +3,12 @@ import numpy as np
 
 def prep_constantVelocitySubsonicInlet(blk, face, valueDict):
     ng = blk.ng
-    if "profile" in valueDict and valueDict["profile"]:
+    try:
+        profile = valueDict["profile"]
+    except KeyError:
+        profile = False
+
+    if profile:
         with open(
             f"./Input/profiles/{face.bcFam}_{blk.nblki}_{face.nface}.npy", "rb"
         ) as f:
@@ -31,7 +36,11 @@ def prep_constantVelocitySubsonicInlet(blk, face, valueDict):
 
 def prep_supersonicInlet(blk, face, valueDict):
     ng = blk.ng
-    if "profile" in valueDict and valueDict["profile"]:
+    try:
+        profile = valueDict["profile"]
+    except KeyError:
+        profile = False
+    if profile:
         with open(
             f"./Input/profiles/{face.bcFam}_{blk.nblki}_{face.nface}.npy", "rb"
         ) as f:
@@ -60,7 +69,11 @@ def prep_supersonicInlet(blk, face, valueDict):
 
 def prep_constantMassFluxSubsonicInlet(blk, face, valueDict):
     ng = blk.ng
-    if "profile" in valueDict and valueDict["profile"]:
+    try:
+        profile = valueDict["profile"]
+    except KeyError:
+        profile = False
+    if profile:
         with open(
             f"./Input/profiles/{face.bcFam}_{blk.nblki}_{face.nface}.npy", "rb"
         ) as f:
