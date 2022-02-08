@@ -44,30 +44,27 @@ void mixedScaleModel(block_ b, thtrdat_ th) {
   double& dwdy = b.dqdy(i,j,k,3);
   double& dwdz = b.dqdz(i,j,k,3);
 
-  double dukdxk = dudx + dvdy + dwdz;
-
   double S[3][3];
-  S[1][1] = 2.0*dudx - 2.0/3.0*dukdxk;
-  S[2][2] = 2.0*dvdy - 2.0/3.0*dukdxk;
-  S[3][3] = 2.0*dwdz - 2.0/3.0*dukdxk;
+  S[1][1] = dudx;
+  S[2][2] = dvdy;
+  S[3][3] = dwdz;
 
-  S[1][2] = dudy + dvdx;
+  S[1][2] = 0.5(dudy + dvdx);
   S[2][1] = S[1][2];
-  S[1][3] = dudz + dwdx;
+  S[1][3] = 0.5*(dudz + dwdx);
   S[3][1] = S[3][1];
-  S[2][3] = dvdz + dwdy;
+  S[2][3] = 0.5*(dvdz + dwdy);
   S[3][2] = S[2][3];
 
-  double invSij=0.0;
-  double usg, vsg, wsg;
-
+  double magSij=0.0;
   for (int l; l < 3; l++) {
     for (int m; m < 3; m++) {
-      invSij += S[l][m];
+      magSij += S[l][m]*S[l][m];
     }
   }
-  invSij = sqrt(0.5*fmax(invSij, 0.0));
+  magSij = sqrt(magSij);
 
+  double usg, vsg, wsg;
   usg = 1.0/3.0 * ( 0.25*b.q(i-1,j,k,1) + 0.5*u + 0.25*b.q(i+1,j,k,1) +
                     0.25*b.q(i,j-1,k,1) + 0.5*u + 0.25*b.q(i,j+1,k,1) +
                     0.25*b.q(i,j,k-1,1) + 0.5*u + 0.25*b.q(i,j,k+1,1) );
@@ -84,7 +81,7 @@ void mixedScaleModel(block_ b, thtrdat_ th) {
 
   double delta = pow(b.J(i,j,k),1.0/3.0);
 
-  double nusgs = Cm*pow(invSij,alpha)*pow(qc2,(1.0-alpha)/2.0)*pow(delta,1.0+alpha);
+  double nusgs = Cm*pow(magSij,alpha)*pow(qc2,(1.0-alpha)/2.0)*pow(delta,1.0+alpha);
 
   double musgs = nusgs * b.Q(i,j,k,0);
 
