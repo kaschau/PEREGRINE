@@ -57,8 +57,8 @@ void mixedScaleModel(block_ b, thtrdat_ th) {
   S[3][2] = S[2][3];
 
   double magSij=0.0;
-  for (int l; l < 3; l++) {
-    for (int m; m < 3; m++) {
+  for (int l=0; l < 3; l++) {
+    for (int m=0; m < 3; m++) {
       magSij += S[l][m]*S[l][m];
     }
   }
