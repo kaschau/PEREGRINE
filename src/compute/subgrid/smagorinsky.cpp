@@ -62,7 +62,7 @@ void smagorinsky(block_ b, thtrdat_ th) {
       magSij += S[l][m]*S[l][m];
     }
   }
-  magSij = sqrt(magSij);
+  magSij = sqrt(2*magSij);
 
   double delta = pow(b.J(i,j,k),1.0/3.0);
 
