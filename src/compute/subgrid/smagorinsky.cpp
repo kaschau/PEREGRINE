@@ -49,7 +49,7 @@ void smagorinsky(block_ b, thtrdat_ th) {
   S[2][2] = dvdy;
   S[3][3] = dwdz;
 
-  S[1][2] = 0.5(dudy + dvdx);
+  S[1][2] = 0.5*(dudy + dvdx);
   S[2][1] = S[1][2];
   S[1][3] = 0.5*(dudz + dwdx);
   S[3][1] = S[3][1];
