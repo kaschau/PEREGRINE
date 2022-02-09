@@ -18,6 +18,7 @@ void bindAdvFlux(py::module_ &);
 void bindBoundaryConditions(py::module_ &);
 void bindChemistry(py::module_ &);
 void bindDiffFlux(py::module_ &);
+void bindSubgrid(py::module_ &);
 void bindSwitches(py::module_ &);
 void bindThermo(py::module_ &);
 void bindTransport(py::module_ &);
@@ -32,6 +33,7 @@ PYBIND11_MODULE(compute, m) {
   bindBoundaryConditions(m);
   bindChemistry(m);
   bindDiffFlux(m);
+  bindSubgrid(m);
   bindSwitches(m);
   bindThermo(m);
   bindTransport(m);

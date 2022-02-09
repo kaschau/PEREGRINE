@@ -19,8 +19,24 @@ void constantPressureSubsonicExit(block_ b,
   if (terms.compare("euler") == 0) {
 
     threeDsubview q1 = getHaloSlice(b.q, face._nface, s1);
-    MDRange2 range_face = MDRange2({0, 0}, {q1.extent(0), q1.extent(1)});
+    twoDsubview nx, ny, nz;
 
+    if (face._nface == 1 || face._nface == 2) {
+      nx = getHaloSlice(b.inx, face._nface, s1);
+      ny = getHaloSlice(b.iny, face._nface, s1);
+      nz = getHaloSlice(b.inz, face._nface, s1);
+    } else if (face._nface == 3 || face._nface == 4) {
+      nx = getHaloSlice(b.jnx, face._nface, s1);
+      ny = getHaloSlice(b.jny, face._nface, s1);
+      nz = getHaloSlice(b.jnz, face._nface, s1);
+    } else if (face._nface == 5 || face._nface == 6) {
+      nx = getHaloSlice(b.knx, face._nface, s1);
+      ny = getHaloSlice(b.kny, face._nface, s1);
+      nz = getHaloSlice(b.knz, face._nface, s1);
+    }
+
+    MDRange2 range_face = MDRange2({0, 0}, {q1.extent(0), q1.extent(1)});
+    double dplus = -plus; // need outward normal
     for (int g = 0; g < b.ng; g++) {
       s0 -= plus * g;
       s2 += plus * g;
@@ -34,8 +50,23 @@ void constantPressureSubsonicExit(block_ b,
             // set pressure
             q0(i, j, 0) = 2.0 * face.qBcVals(i,j,0) - q1(i, j, 0);
 
+            // extrapolate velocity, unless reverse flow detected
+            double uDotn = ( q1(i, j, 1) * nx(i, j) +
+                             q1(i, j, 2) * ny(i, j) +
+                             q1(i, j, 3) * nz(i, j) ) * dplus;
+            if (uDotn > 0.0) {
+              for (int l = 1; l <= 3; l++) {
+                q0(i, j, l) = 2.0 * q1(i, j, l) - q2(i, j, l);
+              }
+            }else{
+              // flip velo on wall
+              q0(i, j, 1) = q1(i, j, 1) - 2.0 * uDotn * nx(i, j) * dplus;
+              q0(i, j, 2) = q1(i, j, 2) - 2.0 * uDotn * ny(i, j) * dplus;
+              q0(i, j, 3) = q1(i, j, 3) - 2.0 * uDotn * nz(i, j) * dplus;
+            }
+
             // extrapolate everything else
-            for (int l = 1; l < b.ne; l++) {
+            for (int l = 4; l < b.ne; l++) {
               q0(i, j, l) = 2.0 * q1(i, j, l) - q2(i, j, l);
             }
           });

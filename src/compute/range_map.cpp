@@ -122,6 +122,8 @@ twoDsubview getHaloSlice(const threeDview view, const int nface, const int slice
 
 void setHaloSlices(int &s0, int &s1, int &s2, int &plus, const int ni,
                    const int nj, const int nk, const int ng, const int nface) {
+  // For low faces (1,3,5) plus = 1, i.e. inward normal for the face. For high
+  // faces (2,4,6) plus = -1, i.e. inward normal for the face.
   switch (nface) {
   case 1:
   case 3:
