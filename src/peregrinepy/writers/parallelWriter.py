@@ -5,47 +5,57 @@ import numpy as np
 from lxml import etree
 from copy import deepcopy
 from ..mpiComm.mpiUtils import getCommRankSize
+from mpi4py.MPI import INT as MPIINT
 
 
-def registerParallelXdmf(mb, path="./", gridPath="./", animate=True):
+def registerParallelXdmf(mb, blocksForProcs, path="./", gridPath="./", animate=True):
 
     comm, rank, size = getCommRankSize()
-    # the mb with Block0 must get a list of all other block's ni,nj,nj
-    myBlockList = mb.blockList
+    # the mb with Block0 must get a list of all other block's ni,nj,nk
     myNiList = [[blk.ni, blk.nj, blk.nk] for blk in mb]
 
+    blockIndex = 0
     if rank == 0:
-        totalBlockList = [[i for i in myBlockList]]
-        totalNiList = [[i for i in myNiList]]
+        totalNiList = np.zeros((mb.totalBlocks, 3), dtype=np.int32)
+        for blk in mb:
+            totalNiList[blockIndex, 0] = blk.ni
+            totalNiList[blockIndex, 1] = blk.nj
+            totalNiList[blockIndex, 2] = blk.nk
+            blockIndex += 1
     else:
-        totalBlockList = None
         totalNiList = None
 
-    for sendrank in range(1, size):
-        # Send block list
-        if rank == sendrank:
-            comm.send(myBlockList, dest=0, tag=rank)
-        # recv block list
-        elif rank == 0:
-            recvBlockList = comm.recv(source=sendrank, tag=sendrank)
-            totalBlockList.append(recvBlockList)
-        else:
-            pass
-
+    for i, sendrank in enumerate(range(1, size)):
         # send ni list
         if rank == sendrank:
-            comm.send(myNiList, dest=0, tag=rank)
+            myNiList = np.zeros(3 * mb.nblks, dtype=np.int32)
+            mult = 0
+            for blk in mb:
+                myNiList[3 * mult + 0] = blk.ni
+                myNiList[3 * mult + 1] = blk.nj
+                myNiList[3 * mult + 2] = blk.nk
+                mult += 1
+            sendSend = mb.nblks * 3
+            comm.Send([myNiList, sendSend, MPIINT], dest=0, tag=rank)
         # recv ni list
         elif rank == 0:
-            recvNiList = comm.recv(source=sendrank, tag=sendrank)
-            totalNiList.append(recvNiList)
+            recvSize = 3 * len(blocksForProcs[i])
+            recvBuff = np.zeros(recvSize, dtype=np.int32)
+            comm.Recv([recvBuff, recvSize, MPIINT], source=sendrank, tag=sendrank)
+
+            recvBuff = recvBuff.reshape(len(blocksForProcs[i]), 3)
+            mult = 0
+            for blk in recvBuff:
+                totalNiList[blockIndex, 0] = blk[0]
+                totalNiList[blockIndex, 1] = blk[1]
+                totalNiList[blockIndex, 2] = blk[2]
+                blockIndex += 1
         else:
             pass
 
     # Flatten the list, then sort in block order
     if rank == 0:
-        totalBlockList = [nblki for b in totalBlockList for nblki in b]
-        totalNiList = [ni for n in totalNiList for ni in n]
+        totalBlockList = [nblki for b in blocksForProcs for nblki in b]
         totalBlockList, totalNiList = (
             list(t) for t in zip(*sorted(zip(totalBlockList, totalNiList)))
         )

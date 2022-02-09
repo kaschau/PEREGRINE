@@ -469,11 +469,11 @@ def simulate(testnum):
     nx = 201
     config = pg.files.configFile()
     config["thermochem"]["spdata"] = ["DB"]
-    # config["RHS"]["shockHandling"] = "hybrid"
-    # config["RHS"]["primaryAdvFlux"] = "secondOrderKEEP"
-    config["RHS"]["primaryAdvFlux"] = "rusanov"
-    # config["RHS"]["secondaryAdvFlux"] = "rusanov"
-    # config["RHS"]["switchAdvFlux"] = "vanAlbadaPressure"
+    config["RHS"]["shockHandling"] = "hybrid"
+    config["RHS"]["primaryAdvFlux"] = "secondOrderKEEP"
+    config["RHS"]["secondaryAdvFlux"] = "rusanov"
+    config["RHS"]["switchAdvFlux"] = "jamesonPressure"
+    # config["RHS"]["primaryAdvFlux"] = "rusanov"
     config["solver"]["timeIntegration"] = "rk4"
     mb = pg.multiBlock.generateMultiBlockSolver(1, config)
     print(mb)
@@ -594,7 +594,7 @@ def simulate(testnum):
 if __name__ == "__main__":
     try:
         kokkos.initialize()
-        testnum = 3
+        testnum = 0
         simulate(testnum)
         kokkos.finalize()
 

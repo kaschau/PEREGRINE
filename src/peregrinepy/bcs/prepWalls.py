@@ -11,7 +11,12 @@ def prep_adiabaticSlipWall(blk, face, valueDict):
 
 def prep_adiabaticMovingWall(blk, face, valueDict):
     ng = blk.ng
-    if "profile" in valueDict and valueDict["profile"]:
+    try:
+        profile = valueDict["profile"]
+    except KeyError:
+        profile = False
+
+    if profile:
         with open(
             f"./Input/profiles/{face.bcFam}_{blk.nblki}_{face.nface}.npy", "rb"
         ) as f:
@@ -33,7 +38,12 @@ def prep_adiabaticMovingWall(blk, face, valueDict):
 
 def prep_isoTMovingWall(blk, face, valueDict):
     ng = blk.ng
-    if "profile" in valueDict and valueDict["profile"]:
+    try:
+        profile = valueDict["profile"]
+    except KeyError:
+        profile = False
+
+    if profile:
         with open(
             f"./Input/profiles/{face.bcFam}_{blk.nblki}_{face.nface}.npy", "rb"
         ) as f:

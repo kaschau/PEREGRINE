@@ -43,6 +43,7 @@ class configFile(frozenDict):
                 "switchAdvFlux": None,
                 "diffusion": False,
                 "diffOrder": 2,
+                "subgrid": None,
             }
         )
 

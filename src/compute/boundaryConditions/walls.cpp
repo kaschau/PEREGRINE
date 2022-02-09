@@ -5,10 +5,10 @@
 #include "kokkos_types.hpp"
 #include "thtrdat_.hpp"
 
-void adiabaticNoSlipWall(
-    block_ b, const face_ face,
-    const std::function<void(block_, thtrdat_, int, std::string)> &eos,
-    thtrdat_ th, std::string terms) {
+void adiabaticNoSlipWall(block_ b,
+                         const face_ face,
+                         const std::function<void(block_, thtrdat_, int, std::string)> &eos,
+                         thtrdat_ th, std::string terms) {
   //-------------------------------------------------------------------------------------------|
   // Apply BC to face, slice by slice.
   //-------------------------------------------------------------------------------------------|
@@ -51,6 +51,7 @@ void adiabaticNoSlipWall(
 
   } else if (terms.compare("viscous") == 0) {
 
+    dq2FDoneSided(b, face._nface);
     threeDsubview dqdx1 = getHaloSlice(b.dqdx, face._nface, s1);
     threeDsubview dqdy1 = getHaloSlice(b.dqdy, face._nface, s1);
     threeDsubview dqdz1 = getHaloSlice(b.dqdz, face._nface, s1);
@@ -71,7 +72,7 @@ void adiabaticNoSlipWall(
       Kokkos::parallel_for(
           "Adia no slip visc terms", range_face,
           KOKKOS_LAMBDA(const int i, const int j) {
-            // extrapolate pressure, velocity gradients
+            // negate pressure,  extrapolate velocity gradients
             dqdx0(i, j, 0) = -dqdx1(i, j, 0);
             dqdx0(i, j, 1) = 2.0 * dqdx1(i, j, 1) - dqdx2(i, j, 1);
             dqdx0(i, j, 2) = 2.0 * dqdx1(i, j, 2) - dqdx2(i, j, 2);
@@ -103,10 +104,10 @@ void adiabaticNoSlipWall(
   }
 }
 
-void adiabaticSlipWall(
-    block_ b, const face_ face,
-    const std::function<void(block_, thtrdat_, int, std::string)> &eos,
-    thtrdat_ th, std::string terms) {
+void adiabaticSlipWall(block_ b,
+                       const face_ face,
+                       const std::function<void(block_, thtrdat_, int, std::string)> &eos,
+                       thtrdat_ th, std::string terms) {
   //-------------------------------------------------------------------------------------------|
   // Apply BC to face, slice by slice.
   //-------------------------------------------------------------------------------------------|
@@ -147,9 +148,9 @@ void adiabaticSlipWall(
             q0(i, j, 0) = q1(i, j, 0);
 
             // flip velo on wall
-            double uDotn = q1(i, j, 1) * nx(i, j) * dplus +
-                           q1(i, j, 2) * ny(i, j) * dplus +
-                           q1(i, j, 3) * nz(i, j) * dplus ;
+            double uDotn = ( q1(i, j, 1) * nx(i, j) +
+                             q1(i, j, 2) * ny(i, j) +
+                             q1(i, j, 3) * nz(i, j) ) * dplus ;
             q0(i, j, 1) = q1(i, j, 1) - 2.0 * uDotn * nx(i, j) * dplus;
             q0(i, j, 2) = q1(i, j, 2) - 2.0 * uDotn * ny(i, j) * dplus;
             q0(i, j, 3) = q1(i, j, 3) - 2.0 * uDotn * nz(i, j) * dplus;
@@ -180,7 +181,7 @@ void adiabaticSlipWall(
       Kokkos::parallel_for(
           "Adia slip visc terms", range_face,
           KOKKOS_LAMBDA(const int i, const int j) {
-            // neumann velocity gradients
+            // negate velocity gradients
             dqdx0(i, j, 0) = -dqdx1(i, j, 0);
             dqdx0(i, j, 1) = -dqdx1(i, j, 1);
             dqdx0(i, j, 2) = -dqdx1(i, j, 2);
@@ -212,10 +213,10 @@ void adiabaticSlipWall(
   }
 }
 
-void adiabaticMovingWall(
-    block_ b, const face_ face,
-    const std::function<void(block_, thtrdat_, int, std::string)> &eos,
-    thtrdat_ th, std::string terms) {
+void adiabaticMovingWall(block_ b,
+                         const face_ face,
+                         const std::function<void(block_, thtrdat_, int, std::string)> &eos,
+                         thtrdat_ th, std::string terms) {
   //-------------------------------------------------------------------------------------------|
   // Apply BC to face, slice by slice.
   //-------------------------------------------------------------------------------------------|
