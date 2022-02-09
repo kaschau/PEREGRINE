@@ -25,9 +25,9 @@ There are two means of manipulating data, on the python side as numpy arrays, an
 side via Kokkos arrays. Python side arrays are accessed by a dictionary attribute
 of the block class called "array", i.e.
 
-    blk.array['q']
+    blk.array["q"]
 
-Gives access to the primative variables.
+Gives access to the primitive variables.
 
 | Name      | Variables        | Index   | Units        |
 |:---------:|------------------|:-------:|--------------|
