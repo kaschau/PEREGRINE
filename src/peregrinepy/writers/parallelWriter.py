@@ -36,7 +36,6 @@ def registerParallelXdmf(mb, blocksForProcs, path="./", gridPath="./", animate=T
                 myNiList[3 * mult + 2] = blk.nk
                 mult += 1
             sendSend = mb.nblks * 3
-            print("sendBuff ", myNiList)
             comm.Send([myNiList, sendSend, MPIINT], dest=0, tag=rank)
         # recv ni list
         elif rank == 0:
@@ -45,14 +44,12 @@ def registerParallelXdmf(mb, blocksForProcs, path="./", gridPath="./", animate=T
             comm.Recv([recvBuff, recvSize, MPIINT], source=sendrank, tag=sendrank)
 
             recvBuff = recvBuff.reshape(len(blocksForProcs[i]), 3)
-            print("recvBuff ", recvBuff)
             mult = 0
             for blk in recvBuff:
                 totalNiList[blockIndex, 0] = blk[0]
                 totalNiList[blockIndex, 1] = blk[1]
                 totalNiList[blockIndex, 2] = blk[2]
                 blockIndex += 1
-            print("totalNiList ", totalNiList)
         else:
             pass
 
