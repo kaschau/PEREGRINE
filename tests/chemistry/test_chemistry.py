@@ -1,15 +1,30 @@
-import kokkos
-import peregrinepy as pg
-import numpy as np
-import cantera as ct
-
 from pathlib import Path
 
-# np.random.seed(111)
+import cantera as ct
+import kokkos
+import numpy as np
+import peregrinepy as pg
+import pytest
 
 ##############################################
 # Test for all positive i aligned orientations
 ##############################################
+
+pytestmark = pytest.mark.parametrize(
+    "ctfile,thfile,chmfile",
+    [
+        (
+            "CH4_O2_Stanford_Skeletal.yaml",
+            "thtr_CH4_O2_Stanford_Skeletal.yaml",
+            "chem_CH4_O2_Stanford_Skeletal",
+        ),
+        (
+            "GRI30.yaml",
+            "thtr_GRI30.yaml",
+            "chem_GRI30",
+        ),
+    ],
+)
 
 
 class TestChemistry:
@@ -19,7 +34,7 @@ class TestChemistry:
     def teardown_method(self):
         kokkos.finalize()
 
-    def test_chemistry(self):
+    def test_chemistry(self, thfile, ctfile, chmfile):
 
         config = pg.files.configFile()
 
@@ -27,14 +42,6 @@ class TestChemistry:
         ct.add_directory(
             relpath + "/../../src/peregrinepy/thermo_transport/database/source"
         )
-        if np.random.random() > 0.5:
-            ctfile = "CH4_O2_Stanford_Skeletal.yaml"
-            thfile = "thtr_CH4_O2_Stanford_Skeletal.yaml"
-            config["thermochem"]["mechanism"] = "chem_CH4_O2_Stanford_Skeletal"
-        else:
-            ctfile = "GRI30.yaml"
-            thfile = "thtr_GRI30.yaml"
-            config["thermochem"]["mechanism"] = "chem_GRI30"
 
         gas = ct.Solution(ctfile)
         p = np.random.uniform(low=10000, high=100000)
@@ -44,9 +51,10 @@ class TestChemistry:
 
         gas.TPY = T, p, Y
 
-        config["thermochem"]["spdata"] = thfile
         config["thermochem"]["eos"] = "tpg"
+        config["thermochem"]["spdata"] = thfile
         config["thermochem"]["chemistry"] = True
+        config["thermochem"]["mechanism"] = chmfile
         config["RHS"]["diffusion"] = False
 
         mb = pg.multiBlock.generateMultiBlockSolver(1, config)

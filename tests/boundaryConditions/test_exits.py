@@ -1,11 +1,24 @@
+import itertools
+
 import kokkos
 import numpy as np
-from .bcBlock import create
+import pytest
 
+from .bcBlock import create
 
 ##############################################
 # Test all exit boundary conditions
 ##############################################
+
+pytestmark = pytest.mark.parametrize(
+    "adv,spdata",
+    list(
+        itertools.product(
+            ("secondOrderKEEP", "fourthOrderKEEP"),
+            (["Air"], "thtr_CH4_O2_Stanford_Skeletal.yaml"),
+        )
+    ),
+)
 
 
 class TestExits:
@@ -15,9 +28,9 @@ class TestExits:
     def teardown_method(self):
         kokkos.finalize()
 
-    def test_constantPressureSubsonicInlet(self):
+    def test_constantPressureSubsonicExit(self, adv, spdata):
 
-        mb = create("constantPressureSubsonicExit")
+        mb = create("constantPressureSubsonicExit", adv, spdata)
         blk = mb[0]
 
         p = blk.array["q"][:, :, :, 0]
@@ -55,10 +68,9 @@ class TestExits:
             revFlow = (uDotn < 0.0,)[0]
             for s0_, s2_ in zip(face.s0_, face.s2_):
                 # apply pressure
-                assert np.allclose(
-                    p[s0_], 2.0 * face.array["qBcVals"][:, :, 0] - p[face.s1_]
-                )
+                assert np.allclose(p[s0_], face.array["qBcVals"][:, :, 0])
 
+                # extrapolate everything else
                 assert np.allclose(
                     u[s0_][outFlow], 2.0 * u[face.s1_][outFlow] - u[s2_][outFlow]
                 )
@@ -91,9 +103,9 @@ class TestExits:
                 assert np.allclose(blk.array["dqdy"][s0_], blk.array["dqdy"][face.s1_])
                 assert np.allclose(blk.array["dqdz"][s0_], blk.array["dqdz"][face.s1_])
 
-    def test_supersonicExit(self):
+    def test_supersonicExit(self, adv, spdata):
 
-        mb = create("supersonicExit")
+        mb = create("supersonicExit", adv, spdata)
         blk = mb[0]
 
         q = blk.array["q"][:, :, :, :]

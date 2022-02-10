@@ -35,18 +35,18 @@ void constantVelocitySubsonicInlet(
             q0(i, j, 0) = 2.0 * q1(i, j, 0) - q2(i, j, 0);
 
             // apply velo on face
-            q0(i, j, 1) = 2.0 * face.qBcVals(i,j,1) - q1(i, j, 1);
-            q0(i, j, 2) = 2.0 * face.qBcVals(i,j,2) - q1(i, j, 2);
-            q0(i, j, 3) = 2.0 * face.qBcVals(i,j,3) - q1(i, j, 3);
+            q0(i, j, 1) = face.qBcVals(i,j,1);
+            q0(i, j, 2) = face.qBcVals(i,j,2);
+            q0(i, j, 3) = face.qBcVals(i,j,3);
 
             // apply temperature on face
-            q0(i, j, 4) = 2.0 * face.qBcVals(i,j,4) - q1(i, j, 4);
+            q0(i, j, 4) = face.qBcVals(i,j,4);
 
             // apply species on face
             // TODO: This is an unprotected extrapolation.
             // Is this a good thing to be doing?
             for (int n = 5; n < b.ne; n++) {
-              q0(i, j, n) = 2.0 * face.qBcVals(i,j,n) - q1(i, j, n);
+              q0(i, j, n) = face.qBcVals(i,j,n);
             }
           });
     }
@@ -107,21 +107,21 @@ void supersonicInlet(
           "Supersonic inlet euler terms", range_face,
           KOKKOS_LAMBDA(const int i, const int j) {
             // apply pressure on face
-            q0(i, j, 0) = 2.0 * face.qBcVals(i,j,0) - q1(i, j, 0);
+            q0(i, j, 0) = face.qBcVals(i,j,0);
 
             // apply velo on face
-            q0(i, j, 1) = 2.0 * face.qBcVals(i,j,1) - q1(i, j, 1);
-            q0(i, j, 2) = 2.0 * face.qBcVals(i,j,2) - q1(i, j, 2);
-            q0(i, j, 3) = 2.0 * face.qBcVals(i,j,3) - q1(i, j, 3);
+            q0(i, j, 1) = face.qBcVals(i,j,1);
+            q0(i, j, 2) = face.qBcVals(i,j,2);
+            q0(i, j, 3) = face.qBcVals(i,j,3);
 
             // apply temperature on face
-            q0(i, j, 4) = 2.0 * face.qBcVals(i,j,4) - q1(i, j, 4);
+            q0(i, j, 4) = face.qBcVals(i,j,4);
 
             // apply species on face
             // TODO: This is an unprotected extrapolation.
             // Is this a good thing to be doing?
             for (int n = 5; n < b.ne; n++) {
-              q0(i, j, n) = 2.0 * face.qBcVals(i,j,n) - q1(i, j, n);
+              q0(i, j, n) = face.qBcVals(i,j,n);
             }
           });
     }
@@ -189,13 +189,13 @@ void constantMassFluxSubsonicInlet(
             q0(i, j, 3) = 0.0;
 
             // apply temperature on face
-            q0(i, j, 4) = 2.0 * face.qBcVals(i,j,4) - q1(i, j, 4);
+            q0(i, j, 4) = face.qBcVals(i,j,4);
 
             // apply species on face
             // TODO: This is an unprotected extrapolation.
             // Is this a good thing to be doing?
             for (int n = 5; n < b.ne; n++) {
-              q0(i, j, n) = 2.0 * face.qBcVals(i,j,n) - q1(i, j, n);
+              q0(i, j, n) = face.qBcVals(i,j,n);
             }
           });
     }
