@@ -56,6 +56,8 @@ class topologyFace:
             "adiabaticNoSlipWall",
             "adiabaticSlipWall",
             "adiabaticMovingWall",
+            "isoTNoSlipWall",
+            "isoTSlipWall",
             "isoTMovingWall",
         )
         assert (

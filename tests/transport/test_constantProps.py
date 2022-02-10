@@ -2,10 +2,9 @@ import kokkos
 import peregrinepy as pg
 import numpy as np
 
-# np.random.seed(111)
 
 ##############################################
-# Test for all positive i aligned orientations
+# Test constant properties transport
 ##############################################
 
 

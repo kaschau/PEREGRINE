@@ -3,35 +3,41 @@ import peregrinepy as pg
 import numpy as np
 import cantera as ct
 from pathlib import Path
+import pytest
 
-# np.random.seed(111)
 
 ##############################################
-# Test for all positive i aligned orientations
+# Test kinetic theory
 ##############################################
 
+pytestmark = pytest.mark.parametrize(
+    "ctfile,thfile",
+    [
+        (
+            "CH4_O2_Stanford_Skeletal.yaml",
+            "thtr_CH4_O2_Stanford_Skeletal.yaml",
+        ),
+        (
+            "GRI30.yaml",
+            "thtr_GRI30.yaml",
+        ),
+    ],
+)
 
-class TestKineticTheoryUnityLewisTrans:
+
+class TestKineticTheoryTrans:
     def setup_method(self):
         kokkos.initialize()
 
     def teardown_method(self):
         kokkos.finalize()
 
-    def test_kineticTheory(self):
+    def test_kineticTheory(self, ctfile, thfile):
 
         relpath = str(Path(__file__).parent)
         ct.add_directory(
             relpath + "/../../src/peregrinepy/thermo_transport/database/source"
         )
-        if np.random.random() > 0.5:
-            ctfile = "CH4_O2_Stanford_Skeletal.yaml"
-            thfile = "thtr_CH4_O2_Stanford_Skeletal.yaml"
-        else:
-            ctfile = "GRI30.yaml"
-            thfile = "thtr_GRI30.yaml"
-        ctfile = "CH4_O2_Stanford_Skeletal.yaml"
-        thfile = "thtr_CH4_O2_Stanford_Skeletal.yaml"
 
         gas = ct.Solution(ctfile)
         p = np.random.uniform(low=10000, high=1000000)

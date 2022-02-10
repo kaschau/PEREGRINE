@@ -1,12 +1,28 @@
-import kokkos
-import peregrinepy as pg
-import numpy as np
-import cantera as ct
 from pathlib import Path
 
+import cantera as ct
+import kokkos
+import numpy as np
+import peregrinepy as pg
+import pytest
+
 ###############################################################################
-# Test for all positive i aligned orientations
+# Test all tpg
 ###############################################################################
+
+pytestmark = pytest.mark.parametrize(
+    "ctfile,thfile",
+    [
+        (
+            "CH4_O2_Stanford_Skeletal.yaml",
+            "thtr_CH4_O2_Stanford_Skeletal.yaml",
+        ),
+        (
+            "GRI30.yaml",
+            "thtr_GRI30.yaml",
+        ),
+    ],
+)
 
 
 class TestTPG:
@@ -16,18 +32,12 @@ class TestTPG:
     def teardown_method(self):
         kokkos.finalize()
 
-    def test_tpg(self):
+    def test_tpg(self, ctfile, thfile):
 
         relpath = str(Path(__file__).parent)
         ct.add_directory(
             relpath + "/../../src/peregrinepy/thermo_transport/database/source"
         )
-        if np.random.random() > 0.5:
-            ctfile = "CH4_O2_Stanford_Skeletal.yaml"
-            thfile = "thtr_CH4_O2_Stanford_Skeletal.yaml"
-        else:
-            ctfile = "GRI30.yaml"
-            thfile = "thtr_GRI30.yaml"
         gas = ct.Solution(ctfile)
         p = np.random.uniform(low=10000, high=100000)
         T = np.random.uniform(low=100, high=1000)

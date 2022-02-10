@@ -2,16 +2,10 @@ import peregrinepy as pg
 import numpy as np
 
 
-def create(bc):
+def create(bc, adv, spdata):
     config = pg.files.configFile()
-    if np.random.random() > 0.5:
-        config["RHS"]["primaryAdvFlux"] = "secondOrderKEEP"
-    else:
-        config["RHS"]["primaryAdvFlux"] = "fourthOrderKEEP"
-    if np.random.random() > 0.5:
-        config["thermochem"]["spdata"] = ["Air"]
-    else:
-        config["thermochem"]["spdata"] = "thtr_CH4_O2_Stanford_Skeletal.yaml"
+    config["RHS"]["primaryAdvFlux"] = adv
+    config["thermochem"]["spdata"] = spdata
 
     mb = pg.multiBlock.generateMultiBlockSolver(1, config)
 
