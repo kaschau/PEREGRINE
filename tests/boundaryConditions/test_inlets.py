@@ -1,11 +1,24 @@
+import itertools
+
 import kokkos
 import numpy as np
-from .bcBlock import create
+import pytest
 
+from .bcBlock import create
 
 ##############################################
 # Test all inlet boundary conditions
 ##############################################
+
+pytestmark = pytest.mark.parametrize(
+    "adv,spdata",
+    list(
+        itertools.product(
+            ("secondOrderKEEP", "fourthOrderKEEP"),
+            (["Air"], "thtr_CH4_O2_Stanford_Skeletal.yaml"),
+        )
+    ),
+)
 
 
 class TestInlets:
@@ -15,9 +28,9 @@ class TestInlets:
     def teardown_method(self):
         kokkos.finalize()
 
-    def test_constantVelocitySubsonicInlet(self):
+    def test_constantVelocitySubsonicInlet(self, adv, spdata):
 
-        mb = create("constantVelocitySubsonicInlet")
+        mb = create("constantVelocitySubsonicInlet", adv, spdata)
         blk = mb[0]
 
         p = blk.array["q"][:, :, :, 0]
@@ -33,27 +46,19 @@ class TestInlets:
                 assert np.allclose(p[s0_], 2.0 * p[face.s1_] - p[s2_])
 
                 # apply velo on face
-                assert np.allclose(
-                    u[s0_], 2.0 * face.array["qBcVals"][:, :, 1] - u[face.s1_]
-                )
-                assert np.allclose(
-                    v[s0_], 2.0 * face.array["qBcVals"][:, :, 2] - v[face.s1_]
-                )
-                assert np.allclose(
-                    w[s0_], 2.0 * face.array["qBcVals"][:, :, 3] - w[face.s1_]
-                )
+                assert np.allclose(u[s0_], face.array["qBcVals"][:, :, 1])
+                assert np.allclose(v[s0_], face.array["qBcVals"][:, :, 2])
+                assert np.allclose(w[s0_], face.array["qBcVals"][:, :, 3])
 
                 # apply T and Ns in face
-                assert np.allclose(
-                    T[s0_], 2.0 * face.array["qBcVals"][:, :, 4] - T[face.s1_]
-                )
+                assert np.allclose(T[s0_], face.array["qBcVals"][:, :, 4])
 
                 if blk.ns > 1:
                     for n in range(blk.ns - 1):
                         N = blk.array["q"][:, :, :, 5 + n]
                         assert np.allclose(
                             N[s0_],
-                            2.0 * face.array["qBcVals"][:, :, 5 + n] - N[face.s1_],
+                            face.array["qBcVals"][:, :, 5 + n],
                         )
 
             face.bcFunc(blk, face, mb.eos, mb.thtrdat, "viscous")
@@ -63,9 +68,9 @@ class TestInlets:
                 assert np.allclose(blk.array["dqdy"][s0_], blk.array["dqdy"][face.s1_])
                 assert np.allclose(blk.array["dqdz"][s0_], blk.array["dqdz"][face.s1_])
 
-    def test_supersonicInlet(self):
+    def test_supersonicInlet(self, adv, spdata):
 
-        mb = create("supersonicInlet")
+        mb = create("supersonicInlet", adv, spdata)
         blk = mb[0]
 
         p = blk.array["q"][:, :, :, 0]
@@ -78,32 +83,22 @@ class TestInlets:
 
             for s0_, s2_ in zip(face.s0_, face.s2_):
                 # extrapolate pressure
-                assert np.allclose(
-                    p[s0_], 2.0 * face.array["qBcVals"][:, :, 0] - p[face.s1_]
-                )
+                assert np.allclose(p[s0_], face.array["qBcVals"][:, :, 0])
 
                 # apply velo on face
-                assert np.allclose(
-                    u[s0_], 2.0 * face.array["qBcVals"][:, :, 1] - u[face.s1_]
-                )
-                assert np.allclose(
-                    v[s0_], 2.0 * face.array["qBcVals"][:, :, 2] - v[face.s1_]
-                )
-                assert np.allclose(
-                    w[s0_], 2.0 * face.array["qBcVals"][:, :, 3] - w[face.s1_]
-                )
+                assert np.allclose(u[s0_], face.array["qBcVals"][:, :, 1])
+                assert np.allclose(v[s0_], face.array["qBcVals"][:, :, 2])
+                assert np.allclose(w[s0_], face.array["qBcVals"][:, :, 3])
 
                 # apply T and Ns in face
-                assert np.allclose(
-                    T[s0_], 2.0 * face.array["qBcVals"][:, :, 4] - T[face.s1_]
-                )
+                assert np.allclose(T[s0_], face.array["qBcVals"][:, :, 4])
 
                 if blk.ns > 1:
                     for n in range(blk.ns - 1):
                         N = blk.array["q"][:, :, :, 5 + n]
                         assert np.allclose(
                             N[s0_],
-                            2.0 * face.array["qBcVals"][:, :, 5 + n] - N[face.s1_],
+                            face.array["qBcVals"][:, :, 5 + n],
                         )
 
             face.bcFunc(blk, face, mb.eos, mb.thtrdat, "viscous")
@@ -113,9 +108,9 @@ class TestInlets:
                 assert np.allclose(blk.array["dqdy"][s0_], blk.array["dqdy"][face.s1_])
                 assert np.allclose(blk.array["dqdz"][s0_], blk.array["dqdz"][face.s1_])
 
-    def test_constantMassFluxSubsonicInlet(self):
+    def test_constantMassFluxSubsonicInlet(self, adv, spdata):
 
-        mb = create("constantMassFluxSubsonicInlet")
+        mb = create("constantMassFluxSubsonicInlet", adv, spdata)
         blk = mb[0]
         ng = blk.ng
 
@@ -144,16 +139,14 @@ class TestInlets:
                 assert np.allclose(p[s0_], 2.0 * p[face.s1_] - p[s2_])
 
                 # apply T and Ns in face
-                assert np.allclose(
-                    T[s0_], 2.0 * face.array["qBcVals"][:, :, 4] - T[face.s1_]
-                )
+                assert np.allclose(T[s0_], face.array["qBcVals"][:, :, 4])
 
                 if blk.ns > 1:
                     for n in range(blk.ns - 1):
                         N = blk.array["q"][:, :, :, 5 + n]
                         assert np.allclose(
                             N[s0_],
-                            2.0 * face.array["qBcVals"][:, :, 5 + n] - N[face.s1_],
+                            face.array["qBcVals"][:, :, 5 + n],
                         )
 
             # mass flux on face
@@ -180,11 +173,11 @@ class TestInlets:
                 assert np.allclose(blk.array["dqdz"][s0_], blk.array["dqdz"][face.s1_])
 
 
-# if __name__ == "__main__":
-#
-#     kokkos.initialize()
-#
-#     A = TestInlets()
-#     A.test_constantMassFluxSubsonicInlet()
-#
-#     kokkos.finalize()
+if __name__ == "__main__":
+
+    kokkos.initialize()
+
+    A = TestInlets()
+    A.test_constantVelocitySubsonicInlet()
+
+    kokkos.finalize()

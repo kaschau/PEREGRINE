@@ -48,7 +48,7 @@ void constantPressureSubsonicExit(block_ b,
           "Constant pressure subsonic exit euler terms", range_face,
           KOKKOS_LAMBDA(const int i, const int j) {
             // set pressure
-            q0(i, j, 0) = 2.0 * face.qBcVals(i,j,0) - q1(i, j, 0);
+            q0(i, j, 0) = face.qBcVals(i,j,0);
 
             // extrapolate velocity, unless reverse flow detected
             double uDotn = ( q1(i, j, 1) * nx(i, j) +
