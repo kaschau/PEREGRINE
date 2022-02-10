@@ -64,6 +64,14 @@ void adiabaticMovingWall(
     block_ b, const face_ face,
     const std::function<void(block_, thtrdat_, int, std::string)> &eos,
     thtrdat_ th, std::string terms);
+void isoTNoSlipWall(
+    block_ b, const face_ face,
+    const std::function<void(block_, thtrdat_, int, std::string)> &eos,
+    thtrdat_ th, std::string terms);
+void isoTSlipWall(
+    block_ b, const face_ face,
+    const std::function<void(block_, thtrdat_, int, std::string)> &eos,
+    thtrdat_ th, std::string terms);
 void isoTMovingWall(
     block_ b, const face_ face,
     const std::function<void(block_, thtrdat_, int, std::string)> &eos,
