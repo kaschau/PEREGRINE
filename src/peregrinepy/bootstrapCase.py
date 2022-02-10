@@ -7,7 +7,9 @@ def bootstrapCase(config):
     ################################################################
     # First we determine what bocks we are responsible for
     ################################################################
-    blocksForProcs = pg.readers.readBlocksForProcs(config["io"]["inputdir"])
+    blocksForProcs = pg.readers.readBlocksForProcs(
+        config["io"]["inputdir"], parallel=True
+    )
     if rank == 0:
         print("Read blocsForProcs.")
     # If blocksForProcs.inp is not found, blocksForProcs will be

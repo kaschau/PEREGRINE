@@ -22,7 +22,7 @@ def simulate(configFilePath):
         string += "           All rights reserved.\n"
         print(string)
 
-    config = pg.readers.readConfigFile(configFilePath)
+    config = pg.readers.readConfigFile(configFilePath, parallel=True)
     if rank == 0:
         print("Read config.")
 

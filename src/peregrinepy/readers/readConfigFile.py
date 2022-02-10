@@ -2,11 +2,25 @@ import yaml
 from ..files import configFile
 
 
-def readConfigFile(file_path="./"):
+def readConfigFile(filePath="./peregrine.yaml", parallel=False):
 
-    # only the zeroth block reads in the file
-    with open(f"{file_path}", "r") as connFile:
-        connIn = yaml.load(connFile, Loader=yaml.FullLoader)
+    if not parallel:
+        with open(filePath, "r") as connFile:
+            connIn = yaml.load(connFile, Loader=yaml.FullLoader)
+    else:
+        from mpi4py import MPI
+        from ..mpiComm.mpiUtils import getCommRankSize
+
+        comm, rank, size = getCommRankSize()
+        connFile = MPI.File.Open(comm, filePath, amode=MPI.MODE_RDONLY)
+        ba = bytearray(connFile.Get_size())
+        # read the contents into a byte array
+        req = connFile.Iread(ba)
+        MPI.Request.Wait(req)
+        # close the file
+        connFile.Close()
+        dataString = ba.decode("utf-8")
+        connIn = yaml.safe_load(dataString)
 
     config = configFile()
 
