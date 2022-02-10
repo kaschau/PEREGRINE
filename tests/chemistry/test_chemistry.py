@@ -7,7 +7,7 @@ import peregrinepy as pg
 import pytest
 
 ##############################################
-# Test for all positive i aligned orientations
+# Test chemistry
 ##############################################
 
 pytestmark = pytest.mark.parametrize(
