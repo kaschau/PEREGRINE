@@ -48,13 +48,13 @@ class TestWalls:
         dTNdz = blk.array["dqdz"][:, :, :, 4::]
 
         for face in blk.faces:
-            face.bcFunc(blk, face, mb.eos, mb.thtrdat, "euler")
+            face.bcFunc(blk, face, mb.eos, mb.thtrdat, "euler", mb.tme)
             for s0_ in face.s0_:
                 assert np.allclose(p[s0_], p[face.s1_])
                 assert np.allclose(u[s0_], -u[face.s1_])
                 assert np.allclose(TN[s0_], TN[face.s1_])
 
-            face.bcFunc(blk, face, mb.eos, mb.thtrdat, "viscous")
+            face.bcFunc(blk, face, mb.eos, mb.thtrdat, "viscous", mb.tme)
             for s0_, s2_ in zip(face.s0_, face.s2_):
                 # negate pressure gradients
                 assert np.allclose(dpdx[s0_], -dpdx[face.s1_])
@@ -107,7 +107,7 @@ class TestWalls:
             else:
                 plus = -1.0
 
-            face.bcFunc(blk, face, mb.eos, mb.thtrdat, "euler")
+            face.bcFunc(blk, face, mb.eos, mb.thtrdat, "euler", mb.tme)
             for s0_ in face.s0_:
                 assert np.allclose(p[s0_], p[face.s1_])
 
@@ -123,7 +123,7 @@ class TestWalls:
 
                 assert np.allclose(TN[s0_], TN[face.s1_])
 
-            face.bcFunc(blk, face, mb.eos, mb.thtrdat, "viscous")
+            face.bcFunc(blk, face, mb.eos, mb.thtrdat, "viscous", mb.tme)
             for s0_ in face.s0_:
                 # slip wall so we neumann the velocity gradients
                 assert np.allclose(dvelodx[s0_], -dvelodx[face.s1_])
@@ -155,7 +155,7 @@ class TestWalls:
         dTNdz = blk.array["dqdz"][:, :, :, 4::]
 
         for face in blk.faces:
-            face.bcFunc(blk, face, mb.eos, mb.thtrdat, "euler")
+            face.bcFunc(blk, face, mb.eos, mb.thtrdat, "euler", mb.tme)
             for s0_ in face.s0_:
                 assert np.allclose(p[s0_], p[face.s1_])
 
@@ -171,7 +171,7 @@ class TestWalls:
 
                 assert np.allclose(TN[s0_], TN[face.s1_])
 
-            face.bcFunc(blk, face, mb.eos, mb.thtrdat, "viscous")
+            face.bcFunc(blk, face, mb.eos, mb.thtrdat, "viscous", mb.tme)
             for s0_, s2_ in zip(face.s0_, face.s2_):
                 # extrapolate velocity gradient
                 assert np.allclose(dvelodx[s0_], 2.0 * dvelodx[face.s1_] - dvelodx[s2_])
@@ -209,7 +209,7 @@ class TestWalls:
             dYdz = blk.array["dqdz"][:, :, :, 5::]
 
         for face in blk.faces:
-            face.bcFunc(blk, face, mb.eos, mb.thtrdat, "euler")
+            face.bcFunc(blk, face, mb.eos, mb.thtrdat, "euler", mb.tme)
             for s0_ in face.s0_:
                 assert np.allclose(p[s0_], p[face.s1_])
                 assert np.allclose(u[s0_], -u[face.s1_])
@@ -217,7 +217,7 @@ class TestWalls:
                 if blk.ns > 1:
                     assert np.allclose(Y[s0_], Y[face.s1_])
 
-            face.bcFunc(blk, face, mb.eos, mb.thtrdat, "viscous")
+            face.bcFunc(blk, face, mb.eos, mb.thtrdat, "viscous", mb.tme)
             for s0_, s2_ in zip(face.s0_, face.s2_):
                 # negate pressure gradients
                 assert np.allclose(dpdx[s0_], -dpdx[face.s1_])
@@ -281,7 +281,7 @@ class TestWalls:
             else:
                 plus = -1.0
 
-            face.bcFunc(blk, face, mb.eos, mb.thtrdat, "euler")
+            face.bcFunc(blk, face, mb.eos, mb.thtrdat, "euler", mb.tme)
             for s0_ in face.s0_:
                 assert np.allclose(p[s0_], p[face.s1_])
 
@@ -299,7 +299,7 @@ class TestWalls:
                 if blk.ns > 1:
                     assert np.allclose(Y[s0_], Y[face.s1_])
 
-            face.bcFunc(blk, face, mb.eos, mb.thtrdat, "viscous")
+            face.bcFunc(blk, face, mb.eos, mb.thtrdat, "viscous", mb.tme)
             for s0_, s2_ in zip(face.s0_, face.s2_):
                 # slip wall so we neumann the velocity gradients
                 assert np.allclose(dvelodx[s0_], -dvelodx[face.s1_])
@@ -343,7 +343,7 @@ class TestWalls:
             dYdz = blk.array["dqdz"][:, :, :, 5::]
 
         for face in blk.faces:
-            face.bcFunc(blk, face, mb.eos, mb.thtrdat, "euler")
+            face.bcFunc(blk, face, mb.eos, mb.thtrdat, "euler", mb.tme)
             for s0_ in face.s0_:
                 assert np.allclose(p[s0_], p[face.s1_])
 
@@ -361,7 +361,7 @@ class TestWalls:
                 if blk.ns > 1:
                     assert np.allclose(Y[s0_], Y[face.s1_])
 
-            face.bcFunc(blk, face, mb.eos, mb.thtrdat, "viscous")
+            face.bcFunc(blk, face, mb.eos, mb.thtrdat, "viscous", mb.tme)
             for s0_, s2_ in zip(face.s0_, face.s2_):
                 # extrapolate velocity gradient, temp
                 assert np.allclose(dvelodx[s0_], 2.0 * dvelodx[face.s1_] - dvelodx[s2_])

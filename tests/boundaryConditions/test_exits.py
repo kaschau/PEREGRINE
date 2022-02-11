@@ -59,8 +59,8 @@ class TestExits:
             else:
                 plus = 1.0
 
-            face.bcFunc(blk, face, mb.eos, mb.thtrdat, "euler")
-            face.bcFunc(blk, face, mb.eos, mb.thtrdat, "viscous")
+            face.bcFunc(blk, face, mb.eos, mb.thtrdat, "euler", mb.tme)
+            face.bcFunc(blk, face, mb.eos, mb.thtrdat, "viscous", mb.tme)
 
             uDotn = (u[face.s1_] * nx + v[face.s1_] * ny + w[face.s1_] * nz) * plus
             # Test for reverse flow
@@ -96,7 +96,7 @@ class TestExits:
                 # extrapolate everything
                 assert np.allclose(TN[s0_], 2.0 * TN[face.s1_] - TN[s2_])
 
-            face.bcFunc(blk, face, mb.eos, mb.thtrdat, "viscous")
+            face.bcFunc(blk, face, mb.eos, mb.thtrdat, "viscous", mb.tme)
             for s0_ in face.s0_:
                 # neumann all gradients
                 assert np.allclose(blk.array["dqdx"][s0_], blk.array["dqdx"][face.s1_])
@@ -110,13 +110,13 @@ class TestExits:
 
         q = blk.array["q"][:, :, :, :]
         for face in blk.faces:
-            face.bcFunc(blk, face, mb.eos, mb.thtrdat, "euler")
+            face.bcFunc(blk, face, mb.eos, mb.thtrdat, "euler", mb.tme)
 
             for s0_, s2_ in zip(face.s0_, face.s2_):
                 # extrapolate everything
                 assert np.allclose(q[s0_], 2.0 * q[face.s1_] - q[s2_])
 
-            face.bcFunc(blk, face, mb.eos, mb.thtrdat, "viscous")
+            face.bcFunc(blk, face, mb.eos, mb.thtrdat, "viscous", mb.tme)
             for s0_ in face.s0_:
                 # neumann all gradients
                 assert np.allclose(blk.array["dqdx"][s0_], blk.array["dqdx"][face.s1_])

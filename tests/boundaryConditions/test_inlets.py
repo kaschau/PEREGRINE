@@ -39,7 +39,7 @@ class TestInlets:
         w = blk.array["q"][:, :, :, 3]
         T = blk.array["q"][:, :, :, 4]
         for face in blk.faces:
-            face.bcFunc(blk, face, mb.eos, mb.thtrdat, "euler")
+            face.bcFunc(blk, face, mb.eos, mb.thtrdat, "euler", mb.tme)
 
             for s0_, s2_ in zip(face.s0_, face.s2_):
                 # extrapolate pressure
@@ -61,7 +61,7 @@ class TestInlets:
                             face.array["qBcVals"][:, :, 5 + n],
                         )
 
-            face.bcFunc(blk, face, mb.eos, mb.thtrdat, "viscous")
+            face.bcFunc(blk, face, mb.eos, mb.thtrdat, "viscous", mb.tme)
             for s0_ in face.s0_:
                 # neumann all gradients
                 assert np.allclose(blk.array["dqdx"][s0_], blk.array["dqdx"][face.s1_])
@@ -79,7 +79,7 @@ class TestInlets:
         w = blk.array["q"][:, :, :, 3]
         T = blk.array["q"][:, :, :, 4]
         for face in blk.faces:
-            face.bcFunc(blk, face, mb.eos, mb.thtrdat, "euler")
+            face.bcFunc(blk, face, mb.eos, mb.thtrdat, "euler", mb.tme)
 
             for s0_, s2_ in zip(face.s0_, face.s2_):
                 # extrapolate pressure
@@ -101,7 +101,7 @@ class TestInlets:
                             face.array["qBcVals"][:, :, 5 + n],
                         )
 
-            face.bcFunc(blk, face, mb.eos, mb.thtrdat, "viscous")
+            face.bcFunc(blk, face, mb.eos, mb.thtrdat, "viscous", mb.tme)
             for s0_ in face.s0_:
                 # neumann all gradients
                 assert np.allclose(blk.array["dqdx"][s0_], blk.array["dqdx"][face.s1_])
@@ -119,7 +119,7 @@ class TestInlets:
 
         for face in blk.faces:
 
-            face.bcFunc(blk, face, mb.eos, mb.thtrdat, "euler")
+            face.bcFunc(blk, face, mb.eos, mb.thtrdat, "euler", mb.tme)
 
             mb.primaryAdvFlux(blk, mb.thtrdat)
 
@@ -165,7 +165,7 @@ class TestInlets:
                 abs(targetMassFlux - computedMassFlux) / targetMassFlux * 100.0 < 1e-3
             )
 
-            face.bcFunc(blk, face, mb.eos, mb.thtrdat, "viscous")
+            face.bcFunc(blk, face, mb.eos, mb.thtrdat, "viscous", mb.tme)
             for s0_ in face.s0_:
                 # neumann all gradients
                 assert np.allclose(blk.array["dqdx"][s0_], blk.array["dqdx"][face.s1_])

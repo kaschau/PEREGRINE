@@ -16,19 +16,22 @@ void bindBoundaryConditions(py::module_ &m) {
              py::arg("face_ object"),
              py::arg("eos pointer"),
              py::arg("thtrdat_ object"),
-             py::arg("terms"));
+             py::arg("terms"),
+             py::arg("tme"));
   inlets.def("supersonicInlet", &supersonicInlet, "Supersonic inlet",
              py::arg("block_ object"),
              py::arg("face_ object"),
              py::arg("eos pointer"),
              py::arg("thtrdat_ object"),
-             py::arg("terms"));
+             py::arg("terms"),
+             py::arg("tme"));
   inlets.def("constantMassFluxSubsonicInlet", &constantMassFluxSubsonicInlet, "Const mass flux subsonic inlet",
              py::arg("block_ object"),
              py::arg("face_ object"),
              py::arg("eos pointer"),
              py::arg("thtrdat_ object"),
-             py::arg("terms"));
+             py::arg("terms"),
+             py::arg("tme"));
 
   //  |----> walls.cpp
   py::module walls = bcs.def_submodule("walls", "walls boundary conditions module");
@@ -37,37 +40,43 @@ void bindBoundaryConditions(py::module_ &m) {
             py::arg("face_ object"),
             py::arg("eos pointer"),
             py::arg("thtrdat_ object"),
-            py::arg("terms"));
+            py::arg("terms"),
+            py::arg("tme"));
   walls.def("adiabaticSlipWall", &adiabaticSlipWall, "Adiabatic slip wall",
             py::arg("block_ object"),
             py::arg("face_ object"),
             py::arg("eos pointer"),
             py::arg("thtrdat_ object"),
-            py::arg("terms"));
+            py::arg("terms"),
+            py::arg("tme"));
   walls.def("adiabaticMovingWall", &adiabaticMovingWall, "Adiabatic moving wall",
             py::arg("block_ object"),
             py::arg("face_ object"),
             py::arg("eos pointer"),
             py::arg("thtrdat_ object"),
-            py::arg("terms"));
+            py::arg("terms"),
+            py::arg("tme"));
   walls.def("isoTNoSlipWall", &isoTNoSlipWall, "IsoT no slip wall",
             py::arg("block_ object"),
             py::arg("face_ object"),
             py::arg("eos pointer"),
             py::arg("thtrdat_ object"),
-            py::arg("terms"));
+            py::arg("terms"),
+            py::arg("tme"));
   walls.def("isoTSlipWall", &isoTSlipWall, "IsoT slip wall",
             py::arg("block_ object"),
             py::arg("face_ object"),
             py::arg("eos pointer"),
             py::arg("thtrdat_ object"),
-            py::arg("terms"));
+            py::arg("terms"),
+            py::arg("tme"));
   walls.def("isoTMovingWall", &isoTMovingWall, "Iso thermal moving wall",
             py::arg("block_ object"),
             py::arg("face_ object"),
             py::arg("eos pointer"),
             py::arg("thtrdat_ object"),
-            py::arg("terms"));
+            py::arg("terms"),
+            py::arg("tme"));
 
   //  |----> exits.cpp
   py::module exits = bcs.def_submodule("exits", "exit boundary conditions module");
@@ -76,11 +85,13 @@ void bindBoundaryConditions(py::module_ &m) {
             py::arg("face_ object"),
             py::arg("eos pointer"),
             py::arg("thtrdat_ object"),
-            py::arg("terms"));
+            py::arg("terms"),
+            py::arg("tme"));
   exits.def("supersonicExit", &supersonicExit, "Supersonic exit",
             py::arg("block_ object"),
             py::arg("face_ object"),
             py::arg("eos pointer"),
             py::arg("thtrdat_ object"),
-            py::arg("terms"));
+            py::arg("terms"),
+            py::arg("tme"));
 }
