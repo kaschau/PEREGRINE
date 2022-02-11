@@ -18,6 +18,13 @@ struct face_ {
   threeDview sendBuffer3, recvBuffer3, tempRecvBuffer3;
   fourDview sendBuffer4, recvBuffer4, tempRecvBuffer4;
 
+
+  // For cubic spline inlets
+  fiveDviewHost cubicSplineAlphas;
+  fourDview intervalAlphas;
+  double intervalDt;
+  int currentInterval = 0;
+
 };
 
 #endif
