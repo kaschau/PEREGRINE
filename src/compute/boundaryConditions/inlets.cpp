@@ -100,17 +100,20 @@ void cubicSplineSubsonicInlet(block_ b,
       face.currentInterval = currentInterval;
       // Now we update the interval alphas
       fourDviewHostsubview subview = Kokkos::subview(face.cubicSplineAlphas, Kokkos::ALL,
-                                                                              face.currentInterval,
-                                                                              Kokkos::ALL,
-                                                                              Kokkos::ALL,
-                                                                              Kokkos::ALL);
+                                                                             face.currentInterval,
+                                                                             Kokkos::ALL,
+                                                                             Kokkos::ALL,
+                                                                             Kokkos::ALL);
       Kokkos::deep_copy(face.intervalAlphas, subview);
     }
     // Now we comute the target values
 
-    MDRange2 range_face = MDRange2({b.ng, b.ng}, {face.intervalAlphas.extent(1) + b.ng - 1,
-                                                  face.intervalAlphas.extent(2) + b.ng - 1});
-    double intervalTime = face.intervalDt*static_cast<double>(face.currentInterval);
+    MDRange2 range_face = MDRange2({0, 0}, {face.intervalAlphas.extent(1)-1,
+                                            face.intervalAlphas.extent(2)-1});
+    double interpTime = tme - static_cast<double>(
+                              static_cast<int>(tme/face.intervalDt/totalIntervals) *
+                                                                   totalIntervals) * face.intervalDt;
+    double intervalTime = interpTime - face.intervalDt*static_cast<double>(face.currentInterval);
     // Form of the cubic spline for the interval "i" is
 
     // u(t) = alpha_0*(t-t[i-1])**3 + alpha_1*(t-t[i-1])**2 + alpha_2*(t-t[i-1]) + alpha_3
