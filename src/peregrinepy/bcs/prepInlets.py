@@ -34,6 +34,65 @@ def prep_constantVelocitySubsonicInlet(blk, face, valueDict):
             pass
 
 
+def prep_cubicSplineSubsonicInlet(blk, face, valueDict):
+    import kokkos
+    from ..compute import KokkosLocation
+
+    # set the temperature and species values
+    face.array["qBcVals"][:, :, 4] = valueDict["T"]
+    face.intervalDt = valueDict["intervalDt"]
+    for i, spn in enumerate(blk.speciesNames[0:-1]):
+        try:
+            face.array["qBcVals"][:, :, 5 + i] = valueDict[spn]
+        except KeyError:
+            pass
+    # read in the alpha file
+    with open(
+        f"./Input/{face.bcFam}Alphas/alphas_{blk.nblki}_{face.nface}.npy", "rb"
+    ) as f:
+        au = np.load(f)
+        av = np.load(f)
+        aw = np.load(f)
+
+    if KokkosLocation in ["OpenMP", "Serial", "Default"]:
+        kokkosSpace = kokkos.HostSpace
+    elif KokkosLocation in ["Cuda"]:
+        kokkosSpace = kokkos.CudaSpace
+    else:
+        raise ValueError("What space?")
+
+    # ALWAYS ON THE HOST
+    shape = (
+        tuple([4])
+        + tuple([au.shape[1]])
+        + face.array["qBcVals"].shape[0:2]
+        + tuple([3])
+    )
+    face.cubicSplineAlphas = kokkos.array(
+        "cubicSplineAlphas",
+        shape=shape,
+        dtype=kokkos.double,
+        space=kokkos.HostSpace,
+        dynamic=False,
+    )
+
+    shape = tuple([4]) + face.array["qBcVals"].shape[0:2] + tuple([3])
+    face.intervalAlphas = kokkos.array(
+        "intervalAlphas",
+        shape=shape,
+        dtype=kokkos.double,
+        space=kokkosSpace,
+        dynamic=False,
+    )
+
+    alphas = np.array(face.cubicSplineAlphas, copy=False)
+
+    ng = blk.ng
+    alphas[:, :, ng:-ng, ng:-ng, 0] = au[:]
+    alphas[:, :, ng:-ng, ng:-ng, 1] = av[:]
+    alphas[:, :, ng:-ng, ng:-ng, 2] = aw[:]
+
+
 def prep_supersonicInlet(blk, face, valueDict):
     ng = blk.ng
     try:

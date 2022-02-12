@@ -168,7 +168,11 @@ PYBIND11_MODULE(compute, m) {
     .def_readwrite("recvBuffer3", &face_::recvBuffer3)
     .def_readwrite("recvBuffer4", &face_::recvBuffer4)
     .def_readwrite("tempRecvBuffer3", &face_::tempRecvBuffer3)
-    .def_readwrite("tempRecvBuffer4", &face_::tempRecvBuffer4);
+    .def_readwrite("tempRecvBuffer4", &face_::tempRecvBuffer4)
+
+    .def_readwrite("intervalDt", &face_::intervalDt)
+    .def_readwrite("cubicSplineAlphas", &face_::cubicSplineAlphas)
+    .def_readwrite("intervalAlphas", &face_::intervalAlphas);
 
   static auto _atexit = []() {
     if (Kokkos::is_initialized()) Kokkos::finalize();
