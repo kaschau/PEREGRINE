@@ -116,14 +116,14 @@ void cubicSplineSubsonicInlet(block_ b,
     double intervalTime = interpTime - face.intervalDt*static_cast<double>(face.currentInterval);
     // Form of the cubic spline for the interval "i" is
 
-    // u(t) = alpha_0*(t-t[i-1])**3 + alpha_1*(t-t[i-1])**2 + alpha_2*(t-t[i-1]) + alpha_3
+    // u(t) = alpha[0]*(t-t[i-1])**3 + alpha[1]*(t-t[i-1])**2 + alpha[2]*(t-t[i-1]) + alpha[3]
 
     // where t[i-1] is the value of time at the beginning of the current interval,
     // i.e. if we are in interval [3] then t[3-1] is the value of time for frame 3.
     //
     //| frame 0 |              | frame 1 |              | frame 2 |              | frame 3 |
     //|   t[0]  | -----------> |   t[1]  | -----------> |   t[2]  | -----------> |   t[3]  |
-    //|         | <interval 1> |         | <interval 2> |         | <interval 3> |         |
+    //|         | <interval 0> |         | <interval 1> |         | <interval 2> |         |
     Kokkos::parallel_for(
         "Cubic spline subsonic", range_face,
         KOKKOS_LAMBDA(const int i, const int j) {
