@@ -23,7 +23,7 @@ struct face_ {
   fiveDviewHost cubicSplineAlphas;
   fourDview intervalAlphas;
   double intervalDt;
-  int currentInterval = 0;
+  int currentInterval = -1;
 
 };
 

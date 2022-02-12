@@ -34,21 +34,22 @@ def prep_constantVelocitySubsonicInlet(blk, face, valueDict):
             pass
 
 
-def prep_syntheticTurbulenceSubsonicInlet(blk, face, valueDict):
+def prep_cubicSplineSubsonicInlet(blk, face, valueDict):
     import kokkos
     from ..compute import KokkosLocation
 
-    ng = blk.ng
-
     # set the temperature and species values
     face.array["qBcVals"][:, :, 4] = valueDict["T"]
+    face.intervalDt = valueDict["intervalDt"]
     for i, spn in enumerate(blk.speciesNames[0:-1]):
         try:
             face.array["qBcVals"][:, :, 5 + i] = valueDict[spn]
         except KeyError:
             pass
     # read in the alpha file
-    with open(f"./Input/{face.bcFam}Alphas/alphas_{blk.nblki}_{face.nface}.npy") as f:
+    with open(
+        f"./Input/{face.bcFam}Alphas/alphas_{blk.nblki}_{face.nface}.npy", "rb"
+    ) as f:
         au = np.load(f)
         av = np.load(f)
         aw = np.load(f)
@@ -70,8 +71,8 @@ def prep_syntheticTurbulenceSubsonicInlet(blk, face, valueDict):
         dynamic=False,
     )
 
-    shape = tuple([4]) + au.shape[1::] + tuple([3])
-    face.nineIntervalAlphas = kokkos.array(
+    shape = tuple([4]) + au.shape[2::] + tuple([3])
+    face.intervalAlphas = kokkos.array(
         "intervalAlphas",
         shape=shape,
         dtype=kokkos.double,
@@ -81,9 +82,9 @@ def prep_syntheticTurbulenceSubsonicInlet(blk, face, valueDict):
 
     alphas = np.array(face.cubicSplineAlphas, copy=False)
 
-    alphas[:, :, :, 0] = au[:]
-    alphas[:, :, :, 1] = av[:]
-    alphas[:, :, :, 2] = aw[:]
+    alphas[:, :, :, :, 0] = au[:]
+    alphas[:, :, :, :, 1] = av[:]
+    alphas[:, :, :, :, 2] = aw[:]
 
 
 def prep_supersonicInlet(blk, face, valueDict):

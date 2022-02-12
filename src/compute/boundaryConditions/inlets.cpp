@@ -83,7 +83,7 @@ void constantVelocitySubsonicInlet(block_ b,
 }
 
 void cubicSplineSubsonicInlet(block_ b,
-                              face_ face,
+                              face_ *face,
                               const std::function<void(block_, thtrdat_, int, std::string)> &eos,
                               const thtrdat_ th,
                               const std::string terms,
@@ -92,32 +92,25 @@ void cubicSplineSubsonicInlet(block_ b,
   // Update target values with cubic spline, moving intervals if needed
   //-------------------------------------------------------------------------------------------|
   if (terms.compare("euler") == 0) {
-    int totalIntervals = face.cubicSplineAlphas.extent(0);
+    int totalIntervals = face->cubicSplineAlphas.extent(1);
+    int currentInterval = static_cast<int>(std::floor(tme/face->intervalDt))%totalIntervals;
 
-    double interpTime = tme - static_cast<double>(
-                              static_cast<int>(tme/face.intervalDt/totalIntervals) *
-                                                                   totalIntervals) * face.intervalDt;
     // Check if the interval time puts us into the next interval
-    if (interpTime > face.currentInterval*face.intervalDt) {
-      // Check if we need to cycle back to zero
-      if (face.currentInterval == totalIntervals){
-        interpTime = interpTime - static_cast<double>(totalIntervals)*face.intervalDt;
-      }else{
-        face.currentInterval += 1;
-      }
+    if (currentInterval != face->currentInterval){
+      face->currentInterval = currentInterval;
       // Now we update the interval alphas
-      fourDviewHost subview = Kokkos::subview(face.cubicSplineAlphas, Kokkos::ALL,
-                                                                      face.currentInterval,
-                                                                      Kokkos::ALL,
-                                                                      Kokkos::ALL,
-                                                                      Kokkos::ALL);
-      Kokkos::deep_copy(face.intervalAlphas, subview);
+      fourDviewHostsubview subview = Kokkos::subview(face->cubicSplineAlphas, Kokkos::ALL,
+                                                                              face->currentInterval,
+                                                                              Kokkos::ALL,
+                                                                              Kokkos::ALL,
+                                                                              Kokkos::ALL);
+      Kokkos::deep_copy(face->intervalAlphas, subview);
     }
     // Now we comute the target values
 
-    MDRange2 range_face = MDRange2({b.ng, b.ng}, {face.intervalAlphas.extent(1) + b.ng - 1,
-                                                  face.intervalAlphas.extent(2) + b.ng - 1});
-    double intervalTime = face.intervalDt*static_cast<double>(face.currentInterval);
+    MDRange2 range_face = MDRange2({b.ng, b.ng}, {face->intervalAlphas.extent(1) + b.ng - 1,
+                                                  face->intervalAlphas.extent(2) + b.ng - 1});
+    double intervalTime = face->intervalDt*static_cast<double>(face->currentInterval);
     // Form of the cubic spline for the interval "i" is
 
     // u(t) = alpha_0*(t-t[i-1])**3 + alpha_1*(t-t[i-1])**2 + alpha_2*(t-t[i-1]) + alpha_3
@@ -131,19 +124,19 @@ void cubicSplineSubsonicInlet(block_ b,
     Kokkos::parallel_for(
         "Cubic spline subsonic", range_face,
         KOKKOS_LAMBDA(const int i, const int j) {
-          face.qBcVals(i,j,1) = 0.0;
-          face.qBcVals(i,j,2) = 0.0;
-          face.qBcVals(i,j,3) = 0.0;
+          face->qBcVals(i,j,1) = 0.0;
+          face->qBcVals(i,j,2) = 0.0;
+          face->qBcVals(i,j,3) = 0.0;
           for (int k=0; k < 4; k++) {
-            face.qBcVals(i,j,1) += face.intervalAlphas(k,i,j,0)*pow(intervalTime,static_cast<double>(3-k));
-            face.qBcVals(i,j,2) += face.intervalAlphas(k,i,j,1)*pow(intervalTime,static_cast<double>(3-k));
-            face.qBcVals(i,j,3) += face.intervalAlphas(k,i,j,2)*pow(intervalTime,static_cast<double>(3-k));
+            face->qBcVals(i,j,1) += face->intervalAlphas(k,i,j,0)*pow(intervalTime,static_cast<double>(3-k));
+            face->qBcVals(i,j,2) += face->intervalAlphas(k,i,j,1)*pow(intervalTime,static_cast<double>(3-k));
+            face->qBcVals(i,j,3) += face->intervalAlphas(k,i,j,2)*pow(intervalTime,static_cast<double>(3-k));
           }
         });
       // Now we call constant velo subsonic bc as usual
-      constantVelocitySubsonicInlet(b, face, eos, th, terms, tme);
+      constantVelocitySubsonicInlet(b, *face, eos, th, terms, tme);
       }else{
-      constantVelocitySubsonicInlet(b, face, eos, th, terms, tme);
+      constantVelocitySubsonicInlet(b, *face, eos, th, terms, tme);
   }
 };
 
