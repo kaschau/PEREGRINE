@@ -62,7 +62,12 @@ def prep_cubicSplineSubsonicInlet(blk, face, valueDict):
         raise ValueError("What space?")
 
     # ALWAYS ON THE HOST
-    shape = au.shape + tuple([3])
+    shape = (
+        tuple([4])
+        + tuple([au.shape[1]])
+        + face.array["qBcVals"].shape[0:2]
+        + tuple([3])
+    )
     face.cubicSplineAlphas = kokkos.array(
         "cubicSplineAlphas",
         shape=shape,
@@ -71,7 +76,7 @@ def prep_cubicSplineSubsonicInlet(blk, face, valueDict):
         dynamic=False,
     )
 
-    shape = tuple([4]) + au.shape[2::] + tuple([3])
+    shape = tuple([4]) + face.array["qBcVals"].shape[0:2] + tuple([3])
     face.intervalAlphas = kokkos.array(
         "intervalAlphas",
         shape=shape,
@@ -82,9 +87,10 @@ def prep_cubicSplineSubsonicInlet(blk, face, valueDict):
 
     alphas = np.array(face.cubicSplineAlphas, copy=False)
 
-    alphas[:, :, :, :, 0] = au[:]
-    alphas[:, :, :, :, 1] = av[:]
-    alphas[:, :, :, :, 2] = aw[:]
+    ng = blk.ng
+    alphas[:, :, ng:-ng, ng:-ng, 0] = au[:]
+    alphas[:, :, ng:-ng, ng:-ng, 1] = av[:]
+    alphas[:, :, ng:-ng, ng:-ng, 2] = aw[:]
 
 
 def prep_supersonicInlet(blk, face, valueDict):
