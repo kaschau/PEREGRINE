@@ -18,6 +18,13 @@ void bindBoundaryConditions(py::module_ &m) {
              py::arg("thtrdat_ object"),
              py::arg("terms"),
              py::arg("tme"));
+  inlets.def("cubicSplineSubsonicInlet", &cubicSplineSubsonicInlet, "Cubic spline subsonic inlet",
+             py::arg("block_ object"),
+             py::arg("face_ object"),
+             py::arg("eos pointer"),
+             py::arg("thtrdat_ object"),
+             py::arg("terms"),
+             py::arg("tme"));
   inlets.def("supersonicInlet", &supersonicInlet, "Supersonic inlet",
              py::arg("block_ object"),
              py::arg("face_ object"),

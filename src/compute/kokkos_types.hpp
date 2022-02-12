@@ -48,6 +48,6 @@ using MDRange5   = Kokkos::MDRangePolicy<exec_space,Kokkos::Rank<5>>;
 
 // Always host stuff
 using host_space = Kokkos::HostSpace;
-using fourDviewHost  = Kokkos::View<double****, Kokkos::LayoutRight, host_space>;
+using fourDviewHostsubview  = Kokkos::View<double****, Kokkos::LayoutStride, host_space>;
 using fiveDviewHost  = Kokkos::View<double*****, Kokkos::LayoutRight, host_space>;
 #endif
