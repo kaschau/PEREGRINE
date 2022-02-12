@@ -40,51 +40,55 @@ void jamesonDissipation(block_ b, const thtrdat_ th);
 // ./boundaryConditions
 //    |------> inlets
 void constantVelocitySubsonicInlet(
-    block_ b, const face_ face,
+    block_ b, face_ face,
     const std::function<void(block_, thtrdat_, int, std::string)> &eos,
-    thtrdat_ th, std::string terms);
+    const thtrdat_ th, const std::string terms, const double tme);
+void cubicSplineSubsonicInlet(
+    block_ b, face_& face,
+    const std::function<void(block_, thtrdat_, int, std::string)> &eos,
+    const thtrdat_ th, const std::string terms, const double tme);
 void supersonicInlet(
-    block_ b, const face_ face,
+    block_ b, face_ face,
     const std::function<void(block_, thtrdat_, int, std::string)> &eos,
-    thtrdat_ th, std::string terms);
+    const thtrdat_ th, const std::string terms, const double tme);
 void constantMassFluxSubsonicInlet(
-    block_ b, const face_ face,
+    block_ b, face_ face,
     const std::function<void(block_, thtrdat_, int, std::string)> &eos,
-    thtrdat_ th, std::string terms);
+    const thtrdat_ th, const std::string terms, const double tme);
 //    |------> walls
 void adiabaticNoSlipWall(
-    block_ b, const face_ face,
+    block_ b, face_ face,
     const std::function<void(block_, thtrdat_, int, std::string)> &eos,
-    thtrdat_ th, std::string terms);
+    const thtrdat_ th, const std::string terms, const double tme);
 void adiabaticSlipWall(
-    block_ b, const face_ face,
+    block_ b, face_ face,
     const std::function<void(block_, thtrdat_, int, std::string)> &eos,
-    thtrdat_ th, std::string terms);
+    const thtrdat_ th, const std::string terms, const double tme);
 void adiabaticMovingWall(
-    block_ b, const face_ face,
+    block_ b, face_ face,
     const std::function<void(block_, thtrdat_, int, std::string)> &eos,
-    thtrdat_ th, std::string terms);
+    const thtrdat_ th, const std::string terms, const double tme);
 void isoTNoSlipWall(
-    block_ b, const face_ face,
+    block_ b, face_ face,
     const std::function<void(block_, thtrdat_, int, std::string)> &eos,
-    thtrdat_ th, std::string terms);
+    const thtrdat_ th, const std::string terms, const double tme);
 void isoTSlipWall(
-    block_ b, const face_ face,
+    block_ b, face_ face,
     const std::function<void(block_, thtrdat_, int, std::string)> &eos,
-    thtrdat_ th, std::string terms);
+    const thtrdat_ th, const std::string terms, const double tme);
 void isoTMovingWall(
-    block_ b, const face_ face,
+    block_ b, face_ face,
     const std::function<void(block_, thtrdat_, int, std::string)> &eos,
-    thtrdat_ th, std::string terms);
+    const thtrdat_ th, const std::string terms, const double tme);
 //    |------> exits
 void constantPressureSubsonicExit(
-    block_ b, const face_ face,
+    block_ b, face_ face,
     const std::function<void(block_, thtrdat_, int, std::string)> &eos,
-    thtrdat_ th, std::string terms);
+    const thtrdat_ th, const std::string terms, const double tme);
 void supersonicExit(
-    block_ b, const face_ face,
+    block_ b, face_ face,
     const std::function<void(block_, thtrdat_, int, std::string)> &eos,
-    thtrdat_ th, std::string terms);
+    const thtrdat_ th, const std::string terms, const double tme);
 
 // ./chemistry
 //    |------> CH4_O2_Stanford_Skeletal

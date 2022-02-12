@@ -6,9 +6,11 @@
 #include "thtrdat_.hpp"
 
 void adiabaticNoSlipWall(block_ b,
-                         const face_ face,
+                         face_ face,
                          const std::function<void(block_, thtrdat_, int, std::string)> &eos,
-                         thtrdat_ th, std::string terms) {
+                         const thtrdat_ th,
+                         const std::string terms,
+                         const double tme) {
   //-------------------------------------------------------------------------------------------|
   // Apply BC to face, slice by slice.
   //-------------------------------------------------------------------------------------------|
@@ -105,9 +107,11 @@ void adiabaticNoSlipWall(block_ b,
 }
 
 void adiabaticSlipWall(block_ b,
-                       const face_ face,
+                       face_ face,
                        const std::function<void(block_, thtrdat_, int, std::string)> &eos,
-                       thtrdat_ th, std::string terms) {
+                       const thtrdat_ th,
+                       const std::string terms,
+                       const double tme) {
   //-------------------------------------------------------------------------------------------|
   // Apply BC to face, slice by slice.
   //-------------------------------------------------------------------------------------------|
@@ -214,9 +218,11 @@ void adiabaticSlipWall(block_ b,
 }
 
 void adiabaticMovingWall(block_ b,
-                         const face_ face,
+                         face_ face,
                          const std::function<void(block_, thtrdat_, int, std::string)> &eos,
-                         thtrdat_ th, std::string terms) {
+                         const thtrdat_ th,
+                         const std::string terms,
+                         const double tme) {
   //-------------------------------------------------------------------------------------------|
   // Apply BC to face, slice by slice.
   //-------------------------------------------------------------------------------------------|
@@ -311,9 +317,11 @@ void adiabaticMovingWall(block_ b,
 }
 
 void isoTNoSlipWall(block_ b,
-                    const face_ face,
+                    face_ face,
                     const std::function<void(block_, thtrdat_, int, std::string)> &eos,
-                    thtrdat_ th, std::string terms) {
+                    const thtrdat_ th,
+                    const std::string terms,
+                    const double tme) {
   //-------------------------------------------------------------------------------------------|
   // Apply BC to face, slice by slice.
   //-------------------------------------------------------------------------------------------|
@@ -411,9 +419,11 @@ void isoTNoSlipWall(block_ b,
 }
 
 void isoTSlipWall(block_ b,
-                       const face_ face,
-                       const std::function<void(block_, thtrdat_, int, std::string)> &eos,
-                       thtrdat_ th, std::string terms) {
+                  face_ face,
+                  const std::function<void(block_, thtrdat_, int, std::string)> &eos,
+                  const thtrdat_ th,
+                  const std::string terms,
+                  const double tme) {
   //-------------------------------------------------------------------------------------------|
   // Apply BC to face, slice by slice.
   //-------------------------------------------------------------------------------------------|
@@ -525,10 +535,12 @@ void isoTSlipWall(block_ b,
     }
   }
 }
-void isoTMovingWall(
-    block_ b, const face_ face,
-    const std::function<void(block_, thtrdat_, int, std::string)> &eos,
-    thtrdat_ th, std::string terms) {
+void isoTMovingWall(block_ b,
+                    face_ face,
+                    const std::function<void(block_, thtrdat_, int, std::string)> &eos,
+                    const thtrdat_ th,
+                    const std::string terms,
+                    const double tme) {
   //-------------------------------------------------------------------------------------------|
   // Apply BC to face, slice by slice.
   //-------------------------------------------------------------------------------------------|
