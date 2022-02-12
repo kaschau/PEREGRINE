@@ -88,6 +88,7 @@ install_requires = [
     "numpy >= 1.20",
     "scipy >= 1.5",
     "lxml >= 4.6",
+    "pyyaml >= 6.0",
 ]
 
 long_description = """
