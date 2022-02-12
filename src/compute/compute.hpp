@@ -44,7 +44,7 @@ void constantVelocitySubsonicInlet(
     const std::function<void(block_, thtrdat_, int, std::string)> &eos,
     const thtrdat_ th, const std::string terms, const double tme);
 void cubicSplineSubsonicInlet(
-    block_ b, face_ *face,
+    block_ b, face_& face,
     const std::function<void(block_, thtrdat_, int, std::string)> &eos,
     const thtrdat_ th, const std::string terms, const double tme);
 void supersonicInlet(
