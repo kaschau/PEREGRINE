@@ -157,3 +157,20 @@ class TestInlets:
             assert np.allclose(targetU, pgU)
             assert np.allclose(targetV, pgV)
             assert np.allclose(targetW, pgW)
+
+        # now test that the signal looping logic works
+        for tme in np.random.random(10):
+            mb.tme = tme + seminp["totalTime"]
+            face.bcFunc(blk, face, mb.eos, mb.thtrdat, "euler", mb.tme)
+
+            targetU = fu(tme)
+            targetV = fv(tme)
+            targetW = fw(tme)
+
+            pgU = q[:, :, 1]
+            pgV = q[:, :, 2]
+            pgW = q[:, :, 3]
+
+            assert np.allclose(targetU, pgU)
+            assert np.allclose(targetV, pgV)
+            assert np.allclose(targetW, pgW)
