@@ -29,33 +29,34 @@ of the block class called "array", i.e.
 
 Gives access to the primitive variables.
 
-| Name      | Variables        | Index   | Units        |
-|:---------:|------------------|:-------:|--------------|
-| **q**     | **Primatives**   |         |              |
-|           | pressure         | 0       | Pa           |
-|           | u,v,w            | 1,2,3   | m/s          |
-|           | temperature      | 4       | K            |
-|           | mass fraction    | 5..ne   | []           |
-| **Q**     | **Conserved**    |         |              |
-|           | density          | 0       | kg/m^3       |
-|           | momentum         | 1,2,3   | kg m / s.m^3 |
-|           | total energy     | 4       | J/m^3        |
-|           | species mass     | 5..ne   | kg/m^3       |
-| **qh**    | **Thermo**       |         |              |
-|           | gamma            | 0       | []           |
-|           | cp               | 1       | J/kg.K       |
-|           | enthalpy         | 2       | J/m^3        |
-|           | c                | 3       | m/s          |
-|           | internal energy  | 4       | J/m^3        |
-|           | species enthalpy | 5..5+ns | J/kg         |
-| **qt**    | **Transport**    |         |              |
-|           | mu               | 0       | Pa.s         |
-|           | kappa            | 1       | W/m/K        |
-|           | D[n]             | 2+ns    | m^2/s        |
-| **omega** | **Chemistry**    |         |              |
-|           | dTdt             | 0       | K/s          |
-|           | d(rhoYi)dt       | 1..ns   | kg/s         |
+| Name      | Variables          | Index   | Units        |
+|:---------:|--------------------|:-------:|--------------|
+| **q**     | **Primatives**     |         |              |
+|           | pressure           | 0       | Pa           |
+|           | u,v,w              | 1,2,3   | m/s          |
+|           | temperature        | 4       | K            |
+|           | mass fraction      | 5..ne   | []           |
+| **Q**     | **Conserved**      |         |              |
+|           | density            | 0       | kg/m^3       |
+|           | momentum           | 1,2,3   | kg m / s.m^3 |
+|           | total energy       | 4       | J/m^3        |
+|           | species mass       | 5..ne   | kg/m^3       |
+| **qh**    | **Thermo**         |         |              |
+|           | gamma              | 0       | []           |
+|           | cp                 | 1       | J/kg.K       |
+|           | enthalpy           | 2       | J/m^3        |
+|           | c                  | 3       | m/s          |
+|           | internal energy    | 4       | J/m^3        |
+|           | species enthalpy\* | 5..5+ns | J/kg         |
+| **qt**    | **Transport**      |         |              |
+|           | mu                 | 0       | Pa.s         |
+|           | kappa              | 1       | W/m/K        |
+|           | D[n]               | 2+ns-1  | m^2/s        |
+| **omega** | **Chemistry**      |         |              |
+|           | dTdt               | 0       | K/s          |
+|           | d(rhoYi)dt         | 1..ns   | kg/s         |
 
+\*We store all species enthalpies
 
 # Profiling GPU via NVTX
 Download and install the libraries found at

@@ -45,16 +45,16 @@ void smagorinsky(block_ b, thtrdat_ th) {
 
 
   double S[3][3];
-  S[1][1] = dudx;
-  S[2][2] = dvdy;
-  S[3][3] = dwdz;
+  S[0][0] = dudx;
+  S[1][1] = dvdy;
+  S[2][2] = dwdz;
 
-  S[1][2] = 0.5*(dudy + dvdx);
+  S[0][1] = 0.5*(dudy + dvdx);
+  S[1][0] = S[0][1];
+  S[0][2] = 0.5*(dudz + dwdx);
+  S[2][0] = S[0][2];
+  S[1][2] = 0.5*(dvdz + dwdy);
   S[2][1] = S[1][2];
-  S[1][3] = 0.5*(dudz + dwdx);
-  S[3][1] = S[3][1];
-  S[2][3] = 0.5*(dvdz + dwdy);
-  S[3][2] = S[2][3];
 
   double magSij=0.0;
   for (int l=0; l < 3; l++) {
@@ -77,7 +77,7 @@ void smagorinsky(block_ b, thtrdat_ th) {
   double kappasgs = musgs * b.qh(i,j,k,1) / Prt;
   b.qt(i,j,k,1) += kappasgs;
   // Diffusion coefficients mass
-  for (int n=0; n<=ns-1; n++)
+  for (int n=0; n<ns-1; n++)
   {
     b.qt(i,j,k,2+n) += nusgs/Sct;
   }
