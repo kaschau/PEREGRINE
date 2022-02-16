@@ -8,7 +8,7 @@
 #                         CMake BOILER PLATE                              #
 ###########################################################################
 
-cmake_minimum_required(VERSION 3.11 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
 enable_language( C CXX )
 
 ###########################################################################
