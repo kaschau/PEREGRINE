@@ -38,8 +38,8 @@ if __name__ == "__main__":
         action="store",
         metavar="<fromDir>",
         dest="fromDir",
-        default="./From",
-        help="Directory containing the gv.*.h5 and q.*.h5 files to interpolate from. Default is ./From",
+        default="./from",
+        help="Directory containing the gv.*.h5 and q.*.h5 files to interpolate from. Default is ./from",
         type=str,
     )
     parser.add_argument(
@@ -48,8 +48,8 @@ if __name__ == "__main__":
         action="store",
         metavar="<toDir>",
         dest="toDir",
-        default="./To",
-        help="Directory containing the gv.*.h5 files to interpolate to. Default is ./To",
+        default="./to",
+        help="Directory containing the gv.*.h5 files to interpolate to. Default is ./to",
         type=str,
     )
     parser.add_argument(
