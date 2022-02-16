@@ -138,5 +138,6 @@ if __name__ == "__main__":
         mbTo.checkSpeciesSum(True)
 
     mbTo.tme = mbFrom.tme
+    mbTo.nrt = mbFrom.nrt
 
     writeRestart(mbTo, toDir)
