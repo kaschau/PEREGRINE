@@ -43,13 +43,14 @@ endif()
 ###########################################################################
 ## INTEL SPECIFIC
 if( ${CMAKE_CXX_COMPILER_ID} STREQUAL "Intel" )
-  set( CMAKE_CXX_FLAGS "-diag-disable=15009 -fp-model precise" CACHE STRING "" FORCE )
+  set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -diag-disable=15009 -fp-model precise" CACHE STRING "" FORCE )
 endif()
 ## GCC SPECIFIC
 # if( ${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU" )
 #
 # endif()
-
+## Add warnings
+set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall" CACHE STRING "" FORCE )
 ###########################################################################
 #              BUILD PEREGRINE COMPUTE LIBRARY                            #
 ###########################################################################
