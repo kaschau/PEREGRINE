@@ -73,6 +73,7 @@ def simulate():
     )
     blk.array["q"][:, :, :, 4] = blk.array["q"][:, :, :, 0] / (R * rho0)
 
+    blk.updateDeviceView("q")
     mb.eos(blk, mb.thtrdat, 0, "prims")
     pg.consistify(mb)
 
@@ -86,6 +87,8 @@ def simulate():
 
         if mb.nrt % 50 == 0:
             pg.misc.progressBar(mb.tme, tEnd)
+            blk.updateHostView("q")
+            blk.updateHostView("Q")
 
             rke = np.sum(
                 0.5

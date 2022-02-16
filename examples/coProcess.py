@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """
 
+run with 2 mpi processes
 
 """
 
@@ -153,6 +154,7 @@ def simulate():
     blk.array["q"][:, :, :, 1] = 10.0
     blk.array["q"][:, :, :, 4] = 300.0
 
+    blk.updateDeviceView("q")
     mb.eos(blk, mb.thtrdat, 0, "prims")
     pg.consistify(mb)
     mb.coproc = pg.coproc.coprocessor(mb)
