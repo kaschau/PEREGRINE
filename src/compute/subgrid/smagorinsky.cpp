@@ -27,10 +27,6 @@ void smagorinsky(block_ b, thtrdat_ th) {
   const double Prt = 0.4;
   const double Sct = 1.0;
 
-  double& u = b.q(i,j,k,1);
-  double& v = b.q(i,j,k,2);
-  double& w = b.q(i,j,k,3);
-
   double& dudx = b.dqdx(i,j,k,1);
   double& dudy = b.dqdy(i,j,k,1);
   double& dudz = b.dqdz(i,j,k,1);

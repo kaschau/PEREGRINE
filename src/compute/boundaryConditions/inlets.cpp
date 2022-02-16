@@ -141,7 +141,7 @@ void cubicSplineSubsonicInlet(block_ b,
       }else{
       constantVelocitySubsonicInlet(b, face, eos, th, terms, tme);
   }
-};
+}
 
 void supersonicInlet(block_ b,
                      face_ face,
