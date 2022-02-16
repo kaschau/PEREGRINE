@@ -40,7 +40,18 @@ def readBcs(mb, pathToFile):
     for blk in mb:
         for face in blk.faces:
             bcFam = face.bcFam
+            bcType = face.bcType
             if bcFam is None:
+                if bcType not in (
+                    "b0",
+                    "b1",
+                    "supersonicExit",
+                    "adiabaticNoSlipWall",
+                    "adiabaticSlipWall",
+                ):
+                    raise ValueError(
+                        f"bcType {bcType} in block {blk.nblki}, face {face.nface} requires a bcFam."
+                    )
                 continue
 
             # Make sure the type in the input file matches the type in the connectivity
