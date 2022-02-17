@@ -144,10 +144,7 @@ void chungDenseGasUnityLewis(block_ b,
     mu_sp(n) = etaStar*36.344*sqrt(th.MW(n)*th.Tcrit(n))/pow(Vc,2.0/3.0) * 1e-7;
 
     // Dilute gas thermal conductivity
-    // HACK: We dont store the molar Cv anywhere, but it is 1/2,3/2,5/2 for almost everything
-    //       and quick tests show that resusults are not sensitive to this alpha parameter. So
-    //       we are just going to leave alpha at 1/2 for all species.
-    alpha = 0.5;
+    alpha = b.qh(i,j,k,1)*0.001*th.MW(n)/b.qh(i,j,k,0) / (th.Ru/1000.0) - 1.5;
     beta = 0.7862-0.7109*th.acentric(n)+1.3168*pow(th.acentric(n),2.0);
     eta0 = 4.0785e-5 * sqrt(th.MW(n)*T)/(pow(Vc,2.0/3.0)*Omegav) * Fc;
     Z = 2.0 + 10.5*pow(Tr,2.0);
