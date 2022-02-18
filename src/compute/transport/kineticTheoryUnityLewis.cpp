@@ -141,7 +141,7 @@ void kineticTheoryUnityLewis(block_ b,
   // thermal conductivity
   b.qt(i,j,k,1) = kappa;
   // NOTE: Unity Lewis number approximation!
-  for (int n=0; n<ns-1; n++)
+  for (int n=0; n<=ns-1; n++)
   {
     b.qt(i,j,k,2+n) = kappa / ( b.Q(i,j,k,0) * b.qh(i,j,k,1) );
   }

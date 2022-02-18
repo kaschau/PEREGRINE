@@ -95,7 +95,7 @@ class TestKineticTheoryTrans:
         print("Mixture Properties")
         pd.append(print_diff("mu", gas.viscosity, pgtrns[0]))
         pd.append(print_diff("kappa", gas.thermal_conductivity, pgtrns[1]))
-        for i, n in enumerate(gas.species_names[0:-1]):
+        for i, n in enumerate(gas.species_names):
             pd.append(print_diff(f"D_{n}", gas.mix_diff_coeffs_mass[i], pgtrns[2 + i]))
 
         passfail = np.all(np.array(pd) < 1.0)
