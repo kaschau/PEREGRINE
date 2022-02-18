@@ -92,7 +92,7 @@ void mixedScaleModel(block_ b, thtrdat_ th) {
   double kappasgs = musgs * b.qh(i,j,k,1) / Prt;
   b.qt(i,j,k,1) += kappasgs;
   // Diffusion coefficients mass
-  for (int n=0; n<ns-1; n++)
+  for (int n=0; n<=ns-1; n++)
   {
     b.qt(i,j,k,2+n) += nusgs/Sct;
   }

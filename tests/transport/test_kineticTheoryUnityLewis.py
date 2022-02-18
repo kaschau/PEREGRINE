@@ -96,7 +96,7 @@ class TestKineticTheoryUnityLewisTrans:
         print("Mixture Properties")
         pd.append(print_diff("mu", gas.viscosity, pgtrns[0]))
         pd.append(print_diff("kappa", gas.thermal_conductivity, pgtrns[1]))
-        for i, n in enumerate(gas.species_names[0:-1]):
+        for i, n in enumerate(gas.species_names):
             Dct = gas.thermal_conductivity / (gas.density * gas.cp_mass)
             pd.append(print_diff(f"D_{n}", Dct, pgtrns[2 + i]))
 

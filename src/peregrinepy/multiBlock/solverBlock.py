@@ -195,7 +195,7 @@ class solverBlock(restartBlock, block_):
             self.ni + 2 * ng - 1,
             self.nj + 2 * ng - 1,
             self.nk + 2 * ng - 1,
-            2 + self.ns - 1,
+            2 + self.ns,
         ]
         createViewMirrorArray(self, ["qt"], shape)
 
