@@ -53,7 +53,6 @@ void adiabaticNoSlipWall(block_ b,
 
   } else if (terms.compare("viscous") == 0) {
 
-    dq2FDoneSided(b, face._nface);
     threeDsubview dqdx1 = getHaloSlice(b.dqdx, face._nface, s1);
     threeDsubview dqdy1 = getHaloSlice(b.dqdy, face._nface, s1);
     threeDsubview dqdz1 = getHaloSlice(b.dqdz, face._nface, s1);
@@ -364,7 +363,6 @@ void isoTNoSlipWall(block_ b,
 
   } else if (terms.compare("viscous") == 0) {
 
-    dq2FDoneSided(b, face._nface);
     threeDsubview dqdx1 = getHaloSlice(b.dqdx, face._nface, s1);
     threeDsubview dqdy1 = getHaloSlice(b.dqdy, face._nface, s1);
     threeDsubview dqdz1 = getHaloSlice(b.dqdz, face._nface, s1);
