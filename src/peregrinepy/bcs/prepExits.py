@@ -12,9 +12,9 @@ def prep_constantPressureSubsonicExit(blk, face, valueDict):
         # We will fill out the whole face just for kicks
         for array in [face.array["qBcVals"], face.array["QBcVals"]]:
             array[0:ng, :, :] = array[[ng], :, :]
-            array[-ng::, :, :] = array[[-ng], :, :]
+            array[-ng::, :, :] = array[[-ng - 1], :, :]
             array[:, 0:ng, :] = array[:, [ng], :]
-            array[:, -ng::, :] = array[:, [-ng], :]
+            array[:, -ng::, :] = array[:, [-ng - 1], :]
         return
 
     # Otherwise set the constant value inputs

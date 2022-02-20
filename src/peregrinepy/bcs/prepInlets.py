@@ -17,9 +17,9 @@ def prep_constantVelocitySubsonicInlet(blk, face, valueDict):
         # We will fill out the whole face just for kicks
         for array in [face.array["qBcVals"], face.array["QBcVals"]]:
             array[0:ng, :, :] = array[[ng], :, :]
-            array[-ng::, :, :] = array[[-ng], :, :]
+            array[-ng::, :, :] = array[[-ng - 1], :, :]
             array[:, 0:ng, :] = array[:, [ng], :]
-            array[:, -ng::, :] = array[:, [-ng], :]
+            array[:, -ng::, :] = array[:, [-ng - 1], :]
         return
 
     # Otherwise set the constant value inputs
@@ -91,6 +91,11 @@ def prep_cubicSplineSubsonicInlet(blk, face, valueDict):
     alphas[:, :, ng:-ng, ng:-ng, 0] = au[:]
     alphas[:, :, ng:-ng, ng:-ng, 1] = av[:]
     alphas[:, :, ng:-ng, ng:-ng, 2] = aw[:]
+    for m in range(3):
+        alphas[:, :, 0:ng, :, m] = alphas[:, :, [ng], :, m]
+        alphas[:, :, -ng::, :, m] = alphas[:, :, [-ng - 1], :, m]
+        alphas[:, :, :, 0:ng, m] = alphas[:, :, :, [ng], m]
+        alphas[:, :, :, -ng::, m] = alphas[:, :, :, [-ng - 1], m]
 
 
 def prep_supersonicInlet(blk, face, valueDict):
@@ -108,9 +113,9 @@ def prep_supersonicInlet(blk, face, valueDict):
         # We will fill out the whole face just for kicks
         for array in [face.array["qBcVals"], face.array["QBcVals"]]:
             array[0:ng, :, :] = array[[ng], :, :]
-            array[-ng::, :, :] = array[[-ng], :, :]
+            array[-ng::, :, :] = array[[-ng - 1], :, :]
             array[:, 0:ng, :] = array[:, [ng], :]
-            array[:, -ng::, :] = array[:, [-ng], :]
+            array[:, -ng::, :] = array[:, [-ng - 1], :]
         return
 
     # Otherwise set the constant value inputs
@@ -141,9 +146,9 @@ def prep_constantMassFluxSubsonicInlet(blk, face, valueDict):
         # We will fill out the whole face just for kicks
         for array in [face.array["qBcVals"], face.array["QBcVals"]]:
             array[0:ng, :, :] = array[[ng], :, :]
-            array[-ng::, :, :] = array[[-ng], :, :]
+            array[-ng::, :, :] = array[[-ng - 1], :, :]
             array[:, 0:ng, :] = array[:, [ng], :]
-            array[:, -ng::, :] = array[:, [-ng], :]
+            array[:, -ng::, :] = array[:, [-ng - 1], :]
         return
 
     # Otherwise set the constant value inputs

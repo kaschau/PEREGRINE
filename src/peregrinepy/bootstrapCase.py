@@ -141,6 +141,8 @@ def bootstrapCase(config):
     # Consistify total flow field
     pg.consistify(mb)
 
+    pg.writers.writeGrid(mb, path="./temp", withHalo=True)
+    pg.writers.writeRestart(mb, path="./temp", withHalo=True)
     ################################################################
     # Initialize coprocessor
     ################################################################
