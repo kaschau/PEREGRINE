@@ -1,6 +1,5 @@
 import kokkos
 import numpy as np
-from itertools import product
 from ..compute import KokkosLocation
 
 
