@@ -56,8 +56,10 @@ def prep_cubicSplineSubsonicInlet(blk, face, valueDict):
 
     if KokkosLocation in ["OpenMP", "Serial", "Default"]:
         kokkosSpace = kokkos.HostSpace
+        kokkosLayout = kokkos.LayoutRight
     elif KokkosLocation in ["Cuda"]:
         kokkosSpace = kokkos.CudaSpace
+        kokkosLayout = kokkos.LayoutLeft
     else:
         raise ValueError("What space?")
 
@@ -71,6 +73,7 @@ def prep_cubicSplineSubsonicInlet(blk, face, valueDict):
     face.cubicSplineAlphas = kokkos.array(
         "cubicSplineAlphas",
         shape=shape,
+        layout=kokkos.LayoutRight,
         dtype=kokkos.double,
         space=kokkos.HostSpace,
         dynamic=False,
@@ -80,6 +83,7 @@ def prep_cubicSplineSubsonicInlet(blk, face, valueDict):
     face.intervalAlphas = kokkos.array(
         "intervalAlphas",
         shape=shape,
+        layout=kokkosLayout,
         dtype=kokkos.double,
         space=kokkosSpace,
         dynamic=False,
