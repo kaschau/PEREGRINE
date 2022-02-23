@@ -176,8 +176,7 @@ def parallelWriteRestart(
 
     for blk in mb:
         # update the host views
-        blk.updateHostView("q")
-        blk.updateHostView("Q")
+        blk.updateHostView(["q", "Q"])
 
         extentCC = (blk.ni - 1) * (blk.nj - 1) * (blk.nk - 1)
         ng = blk.ng

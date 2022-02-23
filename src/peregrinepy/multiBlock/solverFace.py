@@ -305,11 +305,17 @@ class solverFace(topologyFace, face_):
     def ng(self):
         return self._ng
 
-    def updateDeviceView(self, var):
-        deep_copy(getattr(self, var), self.mirror[var])
+    def updateDeviceView(self, vars):
+        if type(vars) == str:
+            vars = [vars]
+        for var in vars:
+            deep_copy(getattr(self, var), self.mirror[var])
 
-    def updateHostView(self, var):
-        deep_copy(self.mirror[var], getattr(self, var))
+    def updateHostView(self, vars):
+        if type(vars) == str:
+            vars = [vars]
+        for var in vars:
+            deep_copy(self.mirror[var], getattr(self, var))
 
     ##########################################################
     # Define the possible reorientation routines

@@ -14,6 +14,10 @@ class TestInlets:
 
     def teardown_method(self):
         kokkos.finalize()
+        try:
+            shutil.rmtree("./Input")
+        except FileNotFoundError:
+            pass
 
     def test_synthTurbInlet(self):
 

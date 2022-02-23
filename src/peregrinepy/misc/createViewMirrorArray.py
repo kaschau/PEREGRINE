@@ -10,8 +10,10 @@ def createViewMirrorArray(obj, names, shape):
 
     if KokkosLocation in ["OpenMP", "Serial", "Default"]:
         kokkosSpace = kokkos.HostSpace
+        kokkosLayout = kokkos.LayoutRight
     elif KokkosLocation in ["Cuda"]:
         kokkosSpace = kokkos.CudaSpace
+        kokkosLayout = kokkos.LayoutLeft
     else:
         raise ValueError("What space?")
 
@@ -22,6 +24,7 @@ def createViewMirrorArray(obj, names, shape):
             kokkos.array(
                 name,
                 shape=shape,
+                layout=kokkosLayout,
                 dtype=kokkos.double,
                 space=kokkosSpace,
                 dynamic=False,

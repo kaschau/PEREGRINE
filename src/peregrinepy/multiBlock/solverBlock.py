@@ -243,8 +243,14 @@ class solverBlock(restartBlock, block_):
             face.setOrientFunc(self.ni, self.nj, self.nk, self.ne)
             face.setCommBuffers(self.ni, self.nj, self.nk, self.ne, self.nblki)
 
-    def updateDeviceView(self, var):
-        kokkos.deep_copy(getattr(self, var), self.mirror[var])
+    def updateDeviceView(self, vars):
+        if type(vars) == str:
+            vars = [vars]
+        for var in vars:
+            kokkos.deep_copy(getattr(self, var), self.mirror[var])
 
-    def updateHostView(self, var):
-        kokkos.deep_copy(self.mirror[var], getattr(self, var))
+    def updateHostView(self, vars):
+        if type(vars) == str:
+            vars = [vars]
+        for var in vars:
+            kokkos.deep_copy(self.mirror[var], getattr(self, var))
