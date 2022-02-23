@@ -143,8 +143,7 @@ class coprocessor:
 
         mbds = self.dataDescription.GetInputDescriptionByName("input").GetGrid()
         for blk in mb:
-            blk.updateHostView("q")
-            blk.updateHostView("Q")
+            blk.updateHostView(["q", "Q"])
             ng = blk.ng
             grid = mbds.GetBlock(blk.nblki)
 
