@@ -95,11 +95,12 @@ def prep_cubicSplineSubsonicInlet(blk, face, valueDict):
     alphas[:, :, ng:-ng, ng:-ng, 0] = au[:]
     alphas[:, :, ng:-ng, ng:-ng, 1] = av[:]
     alphas[:, :, ng:-ng, ng:-ng, 2] = aw[:]
-    for m in range(3):
-        alphas[:, :, 0:ng, :, m] = alphas[:, :, [ng], :, m]
-        alphas[:, :, -ng::, :, m] = alphas[:, :, [-ng - 1], :, m]
-        alphas[:, :, :, 0:ng, m] = alphas[:, :, :, [ng], m]
-        alphas[:, :, :, -ng::, m] = alphas[:, :, :, [-ng - 1], m]
+    for g in range(ng):
+        for m in range(3):
+            alphas[:, :, g, :, m] = alphas[:, :, ng, :, m]
+            alphas[:, :, -g - 1, :, m] = alphas[:, :, -ng - 1, :, m]
+            alphas[:, :, :, g, m] = alphas[:, :, :, ng, m]
+            alphas[:, :, :, -g - 1, m] = alphas[:, :, :, -ng - 1, m]
 
 
 def prep_supersonicInlet(blk, face, valueDict):
