@@ -51,13 +51,12 @@ Gives access to the primitive variables.
 | **qt**    | **Transport**      |         |              |
 |           | mu                 | 0       | Pa.s         |
 |           | kappa              | 1       | W/m/K        |
-|           | D[n]               | 2+ns    | m^2/s        |
+|           | D[n]\*             | 2..2+ns | m^2/s        |
 | **omega** | **Chemistry**      |         |              |
 |           | dTdt               | 0       | K/s          |
 |           | d(rhoYi)dt         | 1..ns   | kg/s         |
 
-\*We store all species enthalpies
-\*We store all species transport properties
+\*We store all species' enthalpies and diffusion coeff
 
 # Profiling GPU via NVTX
 Download and install the libraries found at
