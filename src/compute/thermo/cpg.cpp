@@ -21,14 +21,14 @@ void cpg(block_ b,
   Kokkos::Experimental::UniqueToken<exec_space> token;
   int numIds = token.size();
   const int ns=th.ns;
-  twoDview Y("Y", ns, numIds);
+  twoDview Y("Y", numIds, ns);
 #endif
 
 #ifdef NSCOMPILE
   #define Y(INDEX) Y[INDEX]
   #define ns NS
 #else
-  #define Y(INDEX) Y(INDEX,id)
+  #define Y(INDEX) Y(id,INDEX)
 #endif
 
   MDRange3 range = get_range3(b, nface, indxI, indxJ, indxK);

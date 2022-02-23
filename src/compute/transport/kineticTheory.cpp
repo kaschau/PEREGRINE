@@ -16,12 +16,12 @@ void kineticTheory(block_ b,
   Kokkos::Experimental::UniqueToken<exec_space> token;
   int numIds = token.size();
   const int ns=th.ns;
-  twoDview Y("Y", ns, numIds);
-  twoDview X("X", ns, numIds);
-  twoDview mu_sp("mu_sp", ns, numIds);
-  twoDview kappa_sp("kappa_sp", ns, numIds);
-  threeDview Dij("Dij", ns, ns, numIds);
-  twoDview D("D", ns, numIds);
+  twoDview Y("Y", numIds, ns);
+  twoDview X("X", numIds, ns);
+  twoDview mu_sp("mu_sp", numIds, ns);
+  twoDview kappa_sp("kappa_sp", numIds, ns);
+  threeDview Dij("Dij", numIds, ns, ns);
+  twoDview D("D", numIds, ns);
 #endif
 
 #ifdef NSCOMPILE
@@ -33,12 +33,12 @@ void kineticTheory(block_ b,
   #define D(INDEX) D[INDEX]
   #define ns NS
 #else
-  #define Y(INDEX) Y(INDEX,id)
-  #define X(INDEX) X(INDEX,id)
-  #define mu_sp(INDEX) mu_sp(INDEX,id)
-  #define kappa_sp(INDEX) kappa_sp(INDEX,id)
-  #define Dij(INDEX,INDEX1) Dij(INDEX,INDEX1,id)
-  #define D(INDEX) D(INDEX,id)
+  #define Y(INDEX) Y(id,INDEX)
+  #define X(INDEX) X(id,INDEX)
+  #define mu_sp(INDEX) mu_sp(id,INDEX)
+  #define kappa_sp(INDEX) kappa_sp(id,INDEX)
+  #define Dij(INDEX,INDEX1) Dij(id,INDEX,INDEX1)
+  #define D(INDEX) D(id,INDEX)
 #endif
   // poly'l degree
   const int deg = 4;
