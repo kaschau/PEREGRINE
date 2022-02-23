@@ -54,10 +54,10 @@ void cubic(block_ b,
   Kokkos::Experimental::UniqueToken<exec_space> token;
   int numIds = token.size();
   const int ns=th.ns;
-  twoDview Y("Y", ns, numIds);
-  twoDview hi("hi", ns, numIds);
-  twoDview X("X", ns, numIds);
-  twoDview ai("ai", ns, numIds);
+  twoDview Y("Y", numIds, ns);
+  twoDview hi("hi", numIds, ns);
+  twoDview X("X", numIds, ns);
+  twoDview ai("ai", numIds, ns);
 #endif
 
 #ifdef NSCOMPILE
@@ -67,10 +67,10 @@ void cubic(block_ b,
   #define ai(INDEX) ai[INDEX]
   #define ns NS
 #else
-  #define Y(INDEX) Y(INDEX,id)
-  #define hi(INDEX) hi(INDEX,id)
-  #define X(INDEX) X(INDEX,id)
-  #define ai(INDEX) ai(INDEX,id)
+  #define Y(INDEX) Y(id,INDEX)
+  #define hi(INDEX) hi(id,INDEX)
+  #define X(INDEX) X(id,INDEX)
+  #define ai(INDEX) ai(id,INDEX)
 #endif
 
   MDRange3 range = get_range3(b, nface, indxI, indxJ, indxK);

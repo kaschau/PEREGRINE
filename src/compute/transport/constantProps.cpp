@@ -16,8 +16,8 @@ void constantProps(block_ b,
   Kokkos::Experimental::UniqueToken<exec_space> token;
   int numIds = token.size();
   const int ns=th.ns;
-  twoDview Y("Y", ns, numIds);
-  twoDview X("X", ns, numIds);
+  twoDview Y("Y", numIds, ns);
+  twoDview X("X", numIds, ns);
 #endif
 
 #ifdef NSCOMPILE
@@ -25,8 +25,8 @@ void constantProps(block_ b,
   #define X(INDEX) X[INDEX]
   #define ns NS
 #else
-  #define Y(INDEX) Y(INDEX,id)
-  #define X(INDEX) X(INDEX,id)
+  #define Y(INDEX) Y(id,INDEX)
+  #define X(INDEX) X(id,INDEX)
 #endif
 
   MDRange3 range = get_range3(b, nface, indxI, indxJ, indxK);
