@@ -21,8 +21,8 @@ void tpg(block_ b,
   Kokkos::Experimental::UniqueToken<exec_space> token;
   int numIds = token.size();
   const int ns=th.ns;
-  twoDview Y("Y", ns, numIds);
-  twoDview hi("hi", ns, numIds);
+  twoDview Y("Y", numIds, ns);
+  twoDview hi("hi", numIds, ns);
 #endif
 
 #ifdef NSCOMPILE
@@ -30,8 +30,8 @@ void tpg(block_ b,
   #define hi(INDEX) hi[INDEX]
   #define ns NS
 #else
-  #define Y(INDEX) Y(INDEX,id)
-  #define hi(INDEX) hi(INDEX,id)
+  #define Y(INDEX) Y(id,INDEX)
+  #define hi(INDEX) hi(id,INDEX)
 #endif
 
   MDRange3 range = get_range3(b, nface, indxI, indxJ, indxK);
