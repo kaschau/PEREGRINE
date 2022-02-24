@@ -1,18 +1,20 @@
 import mpi4py.rc
+import itertools
+import peregrinepy as pg
+import numpy as np
+import pytest
 
 mpi4py.rc.finalize = False
 mpi4py.rc.initialize = False
 from mpi4py import MPI
-import kokkos
-import peregrinepy as pg
-import numpy as np
 
 
 class twoblock123:
-    def __init__(self):
+    def __init__(self, adv, spdata):
         self.config = pg.files.configFile()
-        ng = 1 + int(np.random.random() / 0.5)
-        self.mb = pg.multiBlock.solver(2, ["Air"], ng=ng)
+        self.config["RHS"]["primaryAdvFlux"] = adv
+        self.config["thermochem"]["spdata"] = spdata
+        self.mb = pg.multiBlock.generateMultiBlockSolver(2, self.config)
 
         pg.grid.create.multiBlockCube(
             self.mb,
@@ -20,6 +22,10 @@ class twoblock123:
             dimsPerBlock=[6, 3, 2],
             lengths=[2, 1, 1],
         )
+
+        self.mb.initSolverArrays(self.config)
+        self.mb.generateHalo()
+        self.mb.computeMetrics(self.config["RHS"]["diffOrder"])
 
         blk0 = self.mb[0]
         blk1 = self.mb[1]
@@ -34,25 +40,35 @@ class twoblock123:
             blk.array["y"][:] = np.random.random((self.xshape)) + 1
             blk.array["z"][:] = np.random.random((self.xshape)) + 10
             blk.array["q"][:] = np.random.random((self.qshape)) + 100
+            blk.updateDeviceView(["x", "y", "z", "q"])
+
+
+pytestmark = pytest.mark.parametrize(
+    "adv,spdata",
+    list(
+        itertools.product(
+            ("secondOrderKEEP", "fourthOrderKEEP"),
+            (["Air"], "thtr_CH4_O2_Stanford_Skeletal.yaml"),
+        )
+    ),
+)
 
 
 class TestOrientation:
     @classmethod
     def setup_class(self):
         MPI.Init()
-        kokkos.initialize()
 
     @classmethod
     def teardown_class(self):
-        kokkos.finalize()
         MPI.Finalize()
 
     ##############################################
     # Test for all positive i aligned orientations
     ##############################################
-    def test_123(self):
+    def test_123(self, my_setup, adv, spdata):
 
-        tb = twoblock123()
+        tb = twoblock123(adv, spdata)
         blk0 = tb.mb[0]
         blk1 = tb.mb[1]
         ng = blk0.ng
@@ -62,6 +78,8 @@ class TestOrientation:
         tb.mb.initSolverArrays(tb.config)
         # Execute communication
         pg.mpiComm.communicate(tb.mb, ["x", "y", "z", "q"])
+        for blk in tb.mb:
+            blk.updateHostView(["x", "y", "z", "q"])
 
         passfail = []
         for var, shape, off in zip(
@@ -93,9 +111,9 @@ class TestOrientation:
 
         assert False not in passfail
 
-    def test_135(self):
+    def test_135(self, my_setup, adv, spdata):
 
-        tb = twoblock123()
+        tb = twoblock123(adv, spdata)
         blk0 = tb.mb[0]
         blk1 = tb.mb[1]
         ng = blk0.ng
@@ -124,7 +142,11 @@ class TestOrientation:
         tb.mb.setBlockCommunication()
         tb.mb.initSolverArrays(tb.config)
         # Execute communication
+        for blk in tb.mb:
+            blk.updateDeviceView(["x", "y", "z", "q"])
         pg.mpiComm.communicate(tb.mb, ["x", "y", "z", "q"])
+        for blk in tb.mb:
+            blk.updateHostView(["x", "y", "z", "q"])
 
         b02b1 = []
         b12b0 = []
@@ -158,8 +180,8 @@ class TestOrientation:
         assert False not in b02b1
         assert False not in b12b0
 
-    def test_162(self):
-        tb = twoblock123()
+    def test_162(self, my_setup, adv, spdata):
+        tb = twoblock123(adv, spdata)
         blk0 = tb.mb[0]
         blk1 = tb.mb[1]
         ng = blk0.ng
@@ -188,7 +210,11 @@ class TestOrientation:
         tb.mb.setBlockCommunication()
         tb.mb.initSolverArrays(tb.config)
         # Execute communication
+        for blk in tb.mb:
+            blk.updateDeviceView(["x", "y", "z", "q"])
         pg.mpiComm.communicate(tb.mb, ["x", "y", "z", "q"])
+        for blk in tb.mb:
+            blk.updateHostView(["x", "y", "z", "q"])
 
         b02b1 = []
         b12b0 = []
@@ -225,8 +251,8 @@ class TestOrientation:
     ##############################################
     # Test for all positive j aligned orientations
     ##############################################
-    def test_231(self):
-        tb = twoblock123()
+    def test_231(self, my_setup, adv, spdata):
+        tb = twoblock123(adv, spdata)
 
         blk0 = tb.mb[0]
         blk1 = tb.mb[1]
@@ -264,7 +290,11 @@ class TestOrientation:
         tb.mb.setBlockCommunication()
         tb.mb.initSolverArrays(tb.config)
         # Execute communication
+        for blk in tb.mb:
+            blk.updateDeviceView(["x", "y", "z", "q"])
         pg.mpiComm.communicate(tb.mb, ["x", "y", "z", "q"])
+        for blk in tb.mb:
+            blk.updateHostView(["x", "y", "z", "q"])
 
         b02b1 = []
         b12b0 = []
@@ -301,8 +331,8 @@ class TestOrientation:
     ##############################################
     # Test for all positive k aligned orientations
     ##############################################
-    def test_312(self):
-        tb = twoblock123()
+    def test_312(self, my_setup, adv, spdata):
+        tb = twoblock123(adv, spdata)
 
         blk0 = tb.mb[0]
         blk1 = tb.mb[1]
@@ -340,7 +370,11 @@ class TestOrientation:
         tb.mb.setBlockCommunication()
         tb.mb.initSolverArrays(tb.config)
         # Execute communication
+        for blk in tb.mb:
+            blk.updateDeviceView(["x", "y", "z", "q"])
         pg.mpiComm.communicate(tb.mb, ["x", "y", "z", "q"])
+        for blk in tb.mb:
+            blk.updateHostView(["x", "y", "z", "q"])
 
         b02b1 = []
         b12b0 = []
@@ -377,8 +411,8 @@ class TestOrientation:
     ##############################################
     # Test for all negative i aligned orientations
     ##############################################
-    def test_432(self):
-        tb = twoblock123()
+    def test_432(self, my_setup, adv, spdata):
+        tb = twoblock123(adv, spdata)
 
         blk0 = tb.mb[0]
         blk1 = tb.mb[1]
@@ -416,7 +450,11 @@ class TestOrientation:
         tb.mb.setBlockCommunication()
         tb.mb.initSolverArrays(tb.config)
         # Execute communication
+        for blk in tb.mb:
+            blk.updateDeviceView(["x", "y", "z", "q"])
         pg.mpiComm.communicate(tb.mb, ["x", "y", "z", "q"])
+        for blk in tb.mb:
+            blk.updateHostView(["x", "y", "z", "q"])
 
         b02b1 = []
         b12b0 = []
@@ -453,8 +491,8 @@ class TestOrientation:
     ##############################################
     # Test for all negative j aligned orientations
     ##############################################
-    def test_513(self):
-        tb = twoblock123()
+    def test_513(self, my_setup, adv, spdata):
+        tb = twoblock123(adv, spdata)
 
         blk0 = tb.mb[0]
         blk1 = tb.mb[1]
@@ -492,7 +530,11 @@ class TestOrientation:
         tb.mb.setBlockCommunication()
         tb.mb.initSolverArrays(tb.config)
         # Execute communication
+        for blk in tb.mb:
+            blk.updateDeviceView(["x", "y", "z", "q"])
         pg.mpiComm.communicate(tb.mb, ["x", "y", "z", "q"])
+        for blk in tb.mb:
+            blk.updateHostView(["x", "y", "z", "q"])
 
         b02b1 = []
         b12b0 = []
@@ -529,8 +571,8 @@ class TestOrientation:
     ##############################################
     # Test for all negative k aligned orientations
     ##############################################
-    def test_621(self):
-        tb = twoblock123()
+    def test_621(self, my_setup, adv, spdata):
+        tb = twoblock123(adv, spdata)
 
         blk0 = tb.mb[0]
         blk1 = tb.mb[1]
@@ -568,7 +610,11 @@ class TestOrientation:
         tb.mb.setBlockCommunication()
         tb.mb.initSolverArrays(tb.config)
         # Execute communication
+        for blk in tb.mb:
+            blk.updateDeviceView(["x", "y", "z", "q"])
         pg.mpiComm.communicate(tb.mb, ["x", "y", "z", "q"])
+        for blk in tb.mb:
+            blk.updateHostView(["x", "y", "z", "q"])
 
         b02b1 = []
         b12b0 = []

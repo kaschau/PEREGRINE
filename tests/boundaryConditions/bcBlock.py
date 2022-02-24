@@ -49,6 +49,7 @@ def create(bc, adv, spdata):
     blk.array["q"][:, :, :, 4] = T
     if blk.ns > 1:
         blk.array["q"][:, :, :, 5::] = Y
+    blk.updateDeviceView("q")
 
     mb.eos(blk, mb.thtrdat, 0, "prims")
 
@@ -56,6 +57,7 @@ def create(bc, adv, spdata):
     blk.array["dqdx"][:] = np.random.random((dqdxshape))
     blk.array["dqdy"][:] = np.random.random((dqdxshape))
     blk.array["dqdz"][:] = np.random.random((dqdxshape))
+    blk.updateDeviceView(["dqdx", "dqdy", "dqdz"])
 
     if blk.ns > 1:
         Ybc = np.random.uniform(low=0.0, high=1.0, size=blk.ns)

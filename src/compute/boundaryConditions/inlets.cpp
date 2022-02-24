@@ -99,12 +99,17 @@ void cubicSplineSubsonicInlet(block_ b,
     if (currentInterval != face.currentInterval){
       face.currentInterval = currentInterval;
       // Now we update the interval alphas
-      fourDviewHostsubview subview = Kokkos::subview(face.cubicSplineAlphas, Kokkos::ALL,
-                                                                             face.currentInterval,
-                                                                             Kokkos::ALL,
-                                                                             Kokkos::ALL,
-                                                                             Kokkos::ALL);
-      Kokkos::deep_copy(face.intervalAlphas, subview);
+      auto subview = Kokkos::subview(face.cubicSplineAlphas,
+                                     Kokkos::ALL,
+                                     face.currentInterval,
+                                     Kokkos::ALL,
+                                     Kokkos::ALL,
+                                     Kokkos::ALL);
+
+      auto intervalAlphasMirror = Kokkos::create_mirror_view(face.intervalAlphas);
+      Kokkos::deep_copy(intervalAlphasMirror,subview);
+      Kokkos::deep_copy(face.intervalAlphas, intervalAlphasMirror);
+
     }
     // Now we comute the target values
 
