@@ -1,7 +1,6 @@
 from pathlib import Path
 
 import cantera as ct
-import kokkos
 import numpy as np
 import peregrinepy as pg
 import pytest
@@ -27,90 +26,83 @@ pytestmark = pytest.mark.parametrize(
 )
 
 
-class TestChemistry:
-    def setup_method(self):
-        kokkos.initialize()
+def test_chemistry(my_setup, thfile, ctfile, chmfile):
 
-    def teardown_method(self):
-        kokkos.finalize()
+    config = pg.files.configFile()
 
-    def test_chemistry(self, thfile, ctfile, chmfile):
+    relpath = str(Path(__file__).parent)
+    ct.add_directory(
+        relpath + "/../../src/peregrinepy/thermo_transport/database/source"
+    )
 
-        config = pg.files.configFile()
+    gas = ct.Solution(ctfile)
+    p = np.random.uniform(low=10000, high=100000)
+    T = np.random.uniform(low=1000, high=2000)
+    Y = np.random.uniform(low=0.0, high=1.0, size=gas.n_species)
+    Y = Y / np.sum(Y)
 
-        relpath = str(Path(__file__).parent)
-        ct.add_directory(
-            relpath + "/../../src/peregrinepy/thermo_transport/database/source"
-        )
+    gas.TPY = T, p, Y
 
-        gas = ct.Solution(ctfile)
-        p = np.random.uniform(low=10000, high=100000)
-        T = np.random.uniform(low=1000, high=2000)
-        Y = np.random.uniform(low=0.0, high=1.0, size=gas.n_species)
-        Y = Y / np.sum(Y)
+    config["thermochem"]["eos"] = "tpg"
+    config["thermochem"]["spdata"] = thfile
+    config["thermochem"]["chemistry"] = True
+    config["thermochem"]["mechanism"] = chmfile
+    config["RHS"]["diffusion"] = False
 
-        gas.TPY = T, p, Y
+    mb = pg.multiBlock.generateMultiBlockSolver(1, config)
+    pg.grid.create.multiBlockCube(
+        mb, mbDims=[1, 1, 1], dimsPerBlock=[2, 2, 2], lengths=[1, 1, 1]
+    )
+    mb.initSolverArrays(config)
 
-        config["thermochem"]["eos"] = "tpg"
-        config["thermochem"]["spdata"] = thfile
-        config["thermochem"]["chemistry"] = True
-        config["thermochem"]["mechanism"] = chmfile
-        config["RHS"]["diffusion"] = False
+    blk = mb[0]
 
-        mb = pg.multiBlock.generateMultiBlockSolver(1, config)
-        pg.grid.create.multiBlockCube(
-            mb, mbDims=[1, 1, 1], dimsPerBlock=[2, 2, 2], lengths=[1, 1, 1]
-        )
-        mb.initSolverArrays(config)
+    mb.generateHalo()
+    mb.computeMetrics(config["RHS"]["diffOrder"])
 
-        blk = mb[0]
+    blk.array["q"][:, :, :, 0] = p
+    blk.array["q"][:, :, :, 4] = T
+    blk.array["q"][:, :, :, 5::] = Y[0:-1]
+    blk.updateDeviceView(["q"])
 
-        mb.generateHalo()
-        mb.computeMetrics(config["RHS"]["diffOrder"])
+    # Update cons
+    pg.compute.thermo.tpg(blk, mb.thtrdat, 0, "prims")
+    # zero out dQ
+    pg.compute.utils.dQzero(blk)
+    mb.expChem(blk, mb.thtrdat)
 
-        blk.array["q"][:, :, :, 0] = p
-        blk.array["q"][:, :, :, 4] = T
-        blk.array["q"][:, :, :, 5::] = Y[0:-1]
+    blk.updateHostView(["q", "dQ"])
+    # test the properties
+    pgprim = blk.array["q"][1, 1, 1]
+    pgchem = blk.array["dQ"][1, 1, 1]
 
-        # Update cons
-        pg.compute.thermo.tpg(blk, mb.thtrdat, 0, "prims")
-        # zero out dQ
-        pg.compute.utils.dQzero(blk)
-        mb.expChem(blk, mb.thtrdat)
+    def print_diff(name, c, p):
+        if np.abs(c - p) == 0.0:
+            diff = 0.0
+        else:
+            diff = np.abs(c - p) / p * 100
+        print(f"{name:<6s}: {c:16.8e} | {p:16.8e} | {diff:16.15e}")
 
-        # test the properties
-        pgprim = blk.array["q"][1, 1, 1]
-        pgchem = blk.array["dQ"][1, 1, 1]
+        return diff
 
-        def print_diff(name, c, p):
-            if np.abs(c - p) == 0.0:
-                diff = 0.0
-            else:
-                diff = np.abs(c - p) / p * 100
-            print(f"{name:<6s}: {c:16.8e} | {p:16.8e} | {diff:16.15e}")
-
-            return diff
-
-        pd = []
-        print("******** Primatives to Conservatives ***************")
-        print(f'       {"Cantera":<16}  | {"PEREGRINE":<16} | {"%Error":<6}')
-        print("Primatives")
-        pd.append(print_diff("p", gas.P, pgprim[0]))
-        pd.append(print_diff("T", gas.T, pgprim[4]))
-        for i, n in enumerate(gas.species_names[0:-1]):
-            pd.append(print_diff(n, gas.Y[i], pgprim[5 + i]))
+    pd = []
+    print("******** Primatives to Conservatives ***************")
+    print(f'       {"Cantera":<16}  | {"PEREGRINE":<16} | {"%Error":<6}')
+    print("Primatives")
+    pd.append(print_diff("p", gas.P, pgprim[0]))
+    pd.append(print_diff("T", gas.T, pgprim[4]))
+    for i, n in enumerate(gas.species_names[0:-1]):
+        pd.append(print_diff(n, gas.Y[i], pgprim[5 + i]))
+    pd.append(print_diff(gas.species_names[-1], gas.Y[-1], 1.0 - np.sum(pgprim[5::])))
+    print("Chemical Source Terms")
+    for i, n in enumerate(gas.species_names[0:-1]):
         pd.append(
-            print_diff(gas.species_names[-1], gas.Y[-1], 1.0 - np.sum(pgprim[5::]))
-        )
-        print("Chemical Source Terms")
-        for i, n in enumerate(gas.species_names[0:-1]):
-            pd.append(
-                print_diff(
-                    f"omega_{n:<4}",
-                    gas.net_production_rates[i] * gas.molecular_weights[i],
-                    pgchem[5 + i],
-                )
+            print_diff(
+                f"omega_{n:<4}",
+                gas.net_production_rates[i] * gas.molecular_weights[i],
+                pgchem[5 + i],
             )
+        )
 
-        passfail = np.all(np.array(pd) < 1e-10)
-        assert passfail
+    passfail = np.all(np.array(pd) < 1e-10)
+    assert passfail
