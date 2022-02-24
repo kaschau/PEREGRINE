@@ -45,7 +45,8 @@ def simulate():
         face.neighbor = 0
         face.orientation = "123"
         face.commRank = 0
-
+    pg.writers.writeGrid(mb)
+    pg.writers.writeConnectivity(mb)
     mb.generateHalo()
 
     mb.setBlockCommunication()
