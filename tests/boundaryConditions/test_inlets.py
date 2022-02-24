@@ -30,7 +30,6 @@ def test_constantVelocitySubsonicInlet(my_setup, adv, spdata):
     v = blk.array["q"][:, :, :, 2]
     w = blk.array["q"][:, :, :, 3]
     T = blk.array["q"][:, :, :, 4]
-    blk.updateDeviceView("q")
     for face in blk.faces:
         face.bcFunc(blk, face, mb.eos, mb.thtrdat, "euler", mb.tme)
         blk.updateHostView(["q"])
@@ -74,7 +73,6 @@ def test_supersonicInlet(my_setup, adv, spdata):
     v = blk.array["q"][:, :, :, 2]
     w = blk.array["q"][:, :, :, 3]
     T = blk.array["q"][:, :, :, 4]
-    blk.updateDeviceView("q")
     for face in blk.faces:
         face.bcFunc(blk, face, mb.eos, mb.thtrdat, "euler", mb.tme)
         blk.updateHostView(["q"])
@@ -116,7 +114,6 @@ def test_constantMassFluxSubsonicInlet(my_setup, adv, spdata):
 
     p = blk.array["q"][:, :, :, 0]
     T = blk.array["q"][:, :, :, 4]
-    blk.updateDeviceView(["q", "Q"])
     for face in blk.faces:
 
         face.bcFunc(blk, face, mb.eos, mb.thtrdat, "euler", mb.tme)
