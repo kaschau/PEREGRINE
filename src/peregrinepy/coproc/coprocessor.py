@@ -40,7 +40,7 @@ class coprocessor:
         fileName = mb.config["Catalyst"]["cpFile"]
         pipeline = vtkPipeline()
         if not pipeline.Initialize(fileName):
-            raise RuntimeError("pipeline nitialization failed!")
+            raise RuntimeError("pipeline initialization failed!")
         self._coProcessor.AddPipeline(pipeline)
 
         # Save the data descriptions
