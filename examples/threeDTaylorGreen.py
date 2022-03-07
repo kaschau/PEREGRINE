@@ -74,7 +74,7 @@ def simulate():
     )
     blk.array["q"][:, :, :, 4] = blk.array["q"][:, :, :, 0] / (R * rho0)
 
-    blk.updateDeviceView("q")
+    blk.updateDeviceView(["q"])
     mb.eos(blk, mb.thtrdat, 0, "prims")
     pg.consistify(mb)
 

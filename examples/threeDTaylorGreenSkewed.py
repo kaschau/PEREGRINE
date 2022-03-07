@@ -127,8 +127,7 @@ def simulate():
 
         if mb.nrt % 50 == 0:
             pg.misc.progressBar(mb.tme, tEnd)
-            blk.updateHostView("q")
-            blk.updateHostView("Q")
+            blk.updateHostView(["q", "Q"])
 
             rke = np.sum(
                 0.5
