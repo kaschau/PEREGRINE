@@ -60,6 +60,7 @@ def simulate():
     blk.array["q"][:, :, :, 4] = initial_T
 
     # Update cons
+    blk.updateDeviceView(["q", "Q"])
     mb.eos(blk, mb.thtrdat, 0, "prims")
     pg.consistify(mb)
 
@@ -72,6 +73,7 @@ def simulate():
 
         mb.step(dt)
 
+    blk.updateHostView(["q", "Q"])
     fig, ax1 = plt.subplots()
     ax1.set_title("1D Advection Results")
     ax1.set_xlabel(r"x")
