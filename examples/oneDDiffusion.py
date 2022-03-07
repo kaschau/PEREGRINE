@@ -47,6 +47,7 @@ def simulate():
     blk.array["q"][:, :, :, 5] = np.where(blk.array["xc"] < 0.5, 1.0, 0.0)
 
     # Update cons
+    blk.updateDeviceView(["q"])
     mb.eos(blk, mb.thtrdat, 0, "prims")
     pg.consistify(mb)
 
@@ -57,6 +58,7 @@ def simulate():
         if mb.nrt % 100 == 0:
             pg.misc.progressBar(mb.nrt, nrt)
 
+    blk.updateHostView(["q", "Q"])
     fig, ax1 = plt.subplots()
     ax1.set_title("1D Diffusion Results")
     ax1.set_xlabel(r"x")

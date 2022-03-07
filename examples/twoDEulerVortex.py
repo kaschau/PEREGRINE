@@ -34,8 +34,6 @@ def simulate():
         lengths=[1, 1, 0.01],
     )
 
-    mb.initSolverArrays(config)
-
     blk = mb[0]
     ng = blk.ng
 
@@ -75,6 +73,7 @@ def simulate():
         face.orientation = "000"
         face.commRank = None
 
+    mb.initSolverArrays(config)
     mb.setBlockCommunication()
 
     mb.unifyGrid()
@@ -112,14 +111,12 @@ def simulate():
     # T
     blk.array["q"][:, :, :, 4] = blk.array["q"][:, :, :, 0] / (R * rhoInf)
 
+    blk.updateDeviceView(["q"])
     mb.eos(blk, mb.thtrdat, 0, "prims")
     pg.consistify(mb)
 
     refX = xc[ng:-ng, int(NN / 2.0), ng] / Rc
     refV = np.copy(blk.array["q"][ng:-ng, int(NN / 2.0), ng, 2] / uInf)
-
-    # pg.writers.writeGrid(mb, config["io"]["griddir"])
-    # pg.writers.writeRestart(mb, config["io"]["outputdir"], gridPath="../Grid")
 
     dt = 0.1 * (Lx / NE) / aInf
     tEnd = Lx / uInf
@@ -131,6 +128,7 @@ def simulate():
         mb.step(dt)
     print(f"Time integration took {perf_counter()-ts} seconds.")
 
+    blk.updateHostView(["q"])
     # plot v/Uinf
     plt.plot(
         refX, blk.array["q"][ng:-ng, int(NN / 2.0), ng, 2] / uInf, label=f"{NE = }"
