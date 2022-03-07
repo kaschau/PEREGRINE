@@ -79,8 +79,9 @@ def simulate():
 
     valueDict = {"u": wallSpeed, "v": 0.0, "w": 0.0}
     face4 = blk.getFace(4)
-    pg.misc.createViewMirrorArray(face4, "qBcVals", blk.array["q"][face4.s1_].shape)
+    face4.array["qBcVals"] = np.zeros(blk.array["q"][face4.s1_].shape)
     pg.bcs.prepWalls.prep_adiabaticMovingWall(blk, face4, valueDict)
+    pg.misc.createViewMirrorArray(face4, "qBcVals", blk.array["q"][face4.s1_].shape)
 
     mb.setBlockCommunication()
 
@@ -92,10 +93,12 @@ def simulate():
     blk.array["q"][:, :, :, 1:4] = 0.0
     blk.array["q"][ng:-ng, ng:-ng, ng, 4] = 300.0
 
+    blk.updateDeviceView(["q"])
     mb.eos(blk, mb.thtrdat, 0, "prims")
     pg.consistify(mb)
 
     mu = np.unique(mb.thtrdat.array["mu0"])[0]
+    blk.updateHostView(["Q"])
     rho = np.unique(blk.array["Q"][:, :, :, 0])[0]
     nu = mu / rho
 
@@ -109,12 +112,14 @@ def simulate():
 
         if mb.nrt % 200 == 0:
             pg.misc.progressBar(mb.tme, simTme)
+            blk.updateHostView(["Q"])
             if np.any(np.isnan(blk.array["Q"])):
                 raise ValueError("Nan detected")
 
         for i, oT in enumerate(outputTimes):
             t = oT * h ** 2 / nu
             if mb.tme >= t and not doneOutput[i]:
+                blk.updateHostView(["q"])
                 outputU.append(blk.array["q"][ng, ng:-ng, ng, 1].copy())
                 doneOutput[i] = True
 
