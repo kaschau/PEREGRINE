@@ -380,7 +380,7 @@ if __name__ == "__main__":
         metavar="<fromDir>",
         dest="fromDir",
         default="./from",
-        help="Directory containing the gv.* and conn.yaml files to cut. Default is ./from",
+        help="Directory containing the g.* and conn.yaml files to cut. Default is ./from",
         type=str,
     )
     parser.add_argument(

@@ -39,7 +39,7 @@ if __name__ == "__main__":
         metavar="<fromDir>",
         dest="fromDir",
         default="./from",
-        help="Directory containing the gv.*.h5 and q.*.h5 files to interpolate from. Default is ./from",
+        help="Directory containing the g.*.h5 and q.*.h5 files to interpolate from. Default is ./from",
         type=str,
     )
     parser.add_argument(
@@ -49,7 +49,7 @@ if __name__ == "__main__":
         metavar="<toDir>",
         dest="toDir",
         default="./to",
-        help="Directory containing the gv.*.h5 files to interpolate to. Default is ./to",
+        help="Directory containing the g.*.h5 files to interpolate to. Default is ./to",
         type=str,
     )
     parser.add_argument(
@@ -102,7 +102,7 @@ if __name__ == "__main__":
 
     # Read in from data
     nblkFrom = len(
-        [i for i in os.listdir(fromDir) if i.startswith("gv.") and i.endswith(".h5")]
+        [i for i in os.listdir(fromDir) if i.startswith("g.") and i.endswith(".h5")]
     )
     mbFrom = mbr(nblkFrom, speciesNames)
     fromNrst = int(
@@ -113,7 +113,7 @@ if __name__ == "__main__":
 
     # Read in to data
     nblkTo = len(
-        [i for i in os.listdir(toDir) if i.startswith("gv.") and i.endswith(".h5")]
+        [i for i in os.listdir(toDir) if i.startswith("g.") and i.endswith(".h5")]
     )
     mbTo = mbr(nblkTo, speciesNames)
     readGrid(mbTo, toDir)
