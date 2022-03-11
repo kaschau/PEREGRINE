@@ -234,9 +234,7 @@ if __name__ == "__main__":
 
     gp = args.gridPath
     cp = args.connPath
-    nblks = len(
-        [i for i in os.listdir(gp) if i.startswith("gv.") and i.endswith(".h5")]
-    )
+    nblks = len([i for i in os.listdir(gp) if i.startswith("g.") and i.endswith(".h5")])
     assert nblks > 0
     mb = pg.multiBlock.grid(nblks)
 

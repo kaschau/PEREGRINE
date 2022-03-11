@@ -21,7 +21,7 @@ def readGrid(mb, path="./"):
     """
 
     for blk in mb:
-        fileName = f"{path}/gv.{blk.nblki:06d}.h5"
+        fileName = f"{path}/g.{blk.nblki:06d}.h5"
         if blk.blockType == "solver":
             ng = blk.ng
             readS = np.s_[ng:-ng, ng:-ng, ng:-ng]
