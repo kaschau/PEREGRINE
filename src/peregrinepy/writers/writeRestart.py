@@ -118,13 +118,13 @@ def writeRestart(mb, path="./", gridPath="./", animate=True, precision="double")
         dataXElem.set("Dimensions", f"{blk.nk} {blk.nj} {blk.ni}")
         dataXElem.set("Precision", "8")
         dataXElem.set("Format", "HDF")
-        dataXElem.text = f"{gridPath}/gv.{blk.nblki:06d}.h5:/coordinates/x"
+        dataXElem.text = f"{gridPath}/g.{blk.nblki:06d}.h5:/coordinates/x"
 
         geometryElem.append(deepcopy(dataXElem))
-        geometryElem[-1].text = f"{gridPath}/gv.{blk.nblki:06d}.h5:/coordinates/y"
+        geometryElem[-1].text = f"{gridPath}/g.{blk.nblki:06d}.h5:/coordinates/y"
 
         geometryElem.append(deepcopy(dataXElem))
-        geometryElem[-1].text = f"{gridPath}/gv.{blk.nblki:06d}.h5:/coordinates/z"
+        geometryElem[-1].text = f"{gridPath}/g.{blk.nblki:06d}.h5:/coordinates/z"
 
         if blk.blockType == "solver":
             names = ["rho", "p", "T"] + blk.speciesNames

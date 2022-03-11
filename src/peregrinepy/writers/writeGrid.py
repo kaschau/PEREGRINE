@@ -50,7 +50,7 @@ def writeGrid(mb, path="./", precision="double", withHalo=False):
         else:
             writeS = np.s_[:, :, :]
 
-        with h5py.File(f"{path}/gv.{blk.nblki:06d}.h5", "w") as f:
+        with h5py.File(f"{path}/g.{blk.nblki:06d}.h5", "w") as f:
             f.create_group("coordinates")
             f.create_group("dimensions")
 
@@ -94,13 +94,13 @@ def writeGrid(mb, path="./", precision="double", withHalo=False):
         dataX1Elem.set("Dimensions", f"{blk.nk+2*ng} {blk.nj+2*ng} {blk.ni+2*ng}")
         dataX1Elem.set("Precision", "8")
         dataX1Elem.set("Format", "HDF")
-        dataX1Elem.text = f"gv.{blk.nblki:06d}.h5:/coordinates/x"
+        dataX1Elem.text = f"g.{blk.nblki:06d}.h5:/coordinates/x"
 
         geometryElem.append(deepcopy(dataX1Elem))
-        geometryElem[-1].text = f"gv.{blk.nblki:06d}.h5:/coordinates/y"
+        geometryElem[-1].text = f"g.{blk.nblki:06d}.h5:/coordinates/y"
 
         geometryElem.append(deepcopy(dataX1Elem))
-        geometryElem[-1].text = f"gv.{blk.nblki:06d}.h5:/coordinates/z"
+        geometryElem[-1].text = f"g.{blk.nblki:06d}.h5:/coordinates/z"
 
         gridElem.append(deepcopy(blockElem))
 
@@ -108,5 +108,5 @@ def writeGrid(mb, path="./", precision="double", withHalo=False):
             progressBar(blk.nblki + 1, len(mb), f"Writing out block {blk.nblki}")
 
     et = etree.ElementTree(xdmfElem)
-    save_file = f"{path}/gv.xmf"
+    save_file = f"{path}/g.xmf"
     et.write(save_file, pretty_print=True, encoding="UTF-8", xml_declaration=True)

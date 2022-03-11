@@ -74,7 +74,7 @@ if __name__ == "__main__":
         metavar="<fromDir>",
         dest="fromDir",
         default="./",
-        help="Directory containing the gv.* files. Default is ./",
+        help="Directory containing the g.* files. Default is ./",
         type=str,
     )
     parser.add_argument(

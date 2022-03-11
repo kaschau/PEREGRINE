@@ -95,13 +95,13 @@ def registerParallelXdmf(mb, blocksForProcs, path="./", gridPath="./", animate=T
             dataXElem.set("Dimensions", f"{nk} {nj} {ni}")
             dataXElem.set("Precision", "8")
             dataXElem.set("Format", "HDF")
-            dataXElem.text = f"{gridPath}/gv.{nblki:06d}.h5:/coordinates/x"
+            dataXElem.text = f"{gridPath}/g.{nblki:06d}.h5:/coordinates/x"
 
             geometryElem.append(deepcopy(dataXElem))
-            geometryElem[-1].text = f"{gridPath}/gv.{nblki:06d}.h5:/coordinates/y"
+            geometryElem[-1].text = f"{gridPath}/g.{nblki:06d}.h5:/coordinates/y"
 
             geometryElem.append(deepcopy(dataXElem))
-            geometryElem[-1].text = f"{gridPath}/gv.{nblki:06d}.h5:/coordinates/z"
+            geometryElem[-1].text = f"{gridPath}/g.{nblki:06d}.h5:/coordinates/z"
 
             # Only solvers will call this
             names = ["rho", "p", "T"] + mb[0].speciesNames
