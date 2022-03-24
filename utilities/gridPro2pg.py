@@ -12,7 +12,7 @@ Example
 
 Default vaules to read in are the GridPro generic names of blk.tmp, blk.tmp.conn, and blk.tmp.pty
 
-Output will be a PEREGRINE compatible connectivity file 'conn.inp' as well as fortran binary grid files.
+Output will be a PEREGRINE compatible grid and connectivity file 'conn.inp'.
 
 """
 
@@ -59,10 +59,10 @@ parser.add_argument(
     metavar="<bcFam>",
     dest="bcFam",
     default="./bcFams.yaml",
-    help="""File to translate the labels given to boundary conditions in ICEM
+    help="""File to translate the labels given to boundary conditions in GridPro
             to PEREGRINE bcType (i.e. constantVelocitySubsonicInlet, adiabaticNoSlipWall, etc.)\n
             \n
-            NOTE: ALL labels from ICEM need an entry in the yaml file. Even walls.""",
+            NOTE: ALL labels from GridPro need an entry in the yaml file. Even walls.""",
     type=str,
 )
 parser.add_argument(
@@ -84,7 +84,6 @@ args = parser.parse_args()
 
 conversion = {"m": 1.0, "in": 0.0254, "mm": 0.001, "cm": 0.01}
 factor = conversion[args.units]
-
 
 print("Reading in {0} GridPro files\n".format("binary" if args.isBinary else "ascii"))
 print("    {}".format(args.gpBlkFileName))
