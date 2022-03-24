@@ -1,21 +1,25 @@
 #!/usr/bin/env python3
 
-"""This utility goes through a grid face by face, verifying that all the block's connectivities agree,
+"""
+This utility goes through a grid face by face,
+verifying that all the block's connectivities agree,
 and that the coordinates of matching faces are identical.
 
 Inputs are the path to the grid files, and path to the conn.inp file.
 
-It can handle b 1 periodicity in the conn.inp, however it will not compare the x,y,z coordinate locations
+It can handle b1 periodicity in the conn.yaml,
+however it will not compare the x,y,z coordinate locations
 of the faces.
 
 Output will print any discrepencies to the screen
 
 """
 
-import os
 import argparse
-import peregrinepy as pg
+import os
+
 import numpy as np
+import peregrinepy as pg
 
 
 def verify(mb):
@@ -36,22 +40,6 @@ def verify(mb):
         4: 1,
         5: 2,
         6: 2,
-    }
-    orientToSmallFaceMapping = {
-        1: 2,
-        2: 4,
-        3: 6,
-        4: 1,
-        5: 3,
-        6: 5,
-    }
-    orientToLargeFaceMapping = {
-        1: 1,
-        2: 3,
-        3: 5,
-        4: 2,
-        5: 4,
-        6: 6,
     }
 
     largeIndexMapping = {0: "k", 1: "k", 2: "j"}
