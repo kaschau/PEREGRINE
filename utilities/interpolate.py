@@ -3,7 +3,7 @@
 
 """This utility interpolates a PEREGRINE restart from one grid to another.
 
-Requires a path to folder that contains g.* and dtms.* grid and restart files respectively.
+Requires a path to folder that contains g.*.h5 and q.*.h5 grid and output files respectively.
 Also must know the number of species in the case.
 
 The utility will output the interpolated restart file in the "to" folder.
