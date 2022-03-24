@@ -120,7 +120,7 @@ if __name__ == "__main__":
                 "x"
             ] * np.sin(angle)
 
-            # copy connectivity
+            # transfer connectivity
             for toFace, fromFace in zip(rotBlk.faces, fromBlk.faces):
 
                 # treat boundary faces
@@ -141,7 +141,7 @@ if __name__ == "__main__":
                         toFace.neighbor = fromFace.neighbor + nblks * i
                     # front side faces
                     elif fromBlk.nblki in frontside:
-                        if i == nseg - 1:
+                        if i == nseg - 2:
                             toFace.bcType = "b1"
                             toFace.neighbor = fromFace.neighbor
                         else:
