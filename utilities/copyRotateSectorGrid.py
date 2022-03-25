@@ -13,7 +13,6 @@ import argparse
 import peregrinepy as pg
 import numpy as np
 import os
-from match_periodic_faces import *
 
 if __name__ == "__main__":
 
