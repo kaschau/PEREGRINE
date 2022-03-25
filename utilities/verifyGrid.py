@@ -186,7 +186,7 @@ def verify(mb):
 
         cross = np.cross(vI, vJ)
         if np.dot(vK, cross) < 0.0:
-            print("Warning, block {blk.nbkli} is left handed. This must be fixed.")
+            print(f"Warning, block {blk.nbkli} is left handed. This must be fixed.")
             warn = True
 
     if warn:
