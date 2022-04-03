@@ -41,10 +41,10 @@ def readBcs(mb, pathToFile):
         for face in blk.faces:
             bcFam = face.bcFam
             bcType = face.bcType
+            # Not all bc types need inputs from bcFam, so we check here
             if bcFam is None:
                 if bcType not in (
                     "b0",
-                    "b1",
                     "supersonicExit",
                     "adiabaticNoSlipWall",
                     "adiabaticSlipWall",
@@ -63,6 +63,12 @@ def readBcs(mb, pathToFile):
             # If there are no values to set, continue
             if "bcVals" not in bcsIn[bcFam]:
                 print(f"Warning, no values found for {bcsIn[bcFam]}")
+                continue
+
+            # Add the information from any periodic faces
+            if bcType in ["periodicTrans", "periodicRot"]:
+                face.periodicAxis = bcsIn[bcFam]["periodicAxis"]
+                face.periodicSpan = bcsIn[bcFam]["periodicSpan"]
                 continue
 
             # If we are a solver face, we need to create the kokkos arrays

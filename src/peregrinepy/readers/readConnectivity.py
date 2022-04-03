@@ -49,4 +49,10 @@ def readConnectivity(mb, pathToFile, parallel=False):
             face.neighbor = fdict["neighbor"]
             face.orientation = fdict["orientation"]
 
+            try:
+                face.isPeriodicLow = fdict["isPeriodicLow"]
+                assert type(face.isPeriodicLow) is bool
+            except KeyError:
+                pass
+
     mb.totalBlocks = conn["Total_Blocks"]
