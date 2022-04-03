@@ -11,6 +11,10 @@ class topologyFace:
         self._neighbor = None
         self._orientation = None
 
+        self.periodicAxis = None
+        self.periodicSpan = None
+        self.isPeriodicLow = None
+
     @property
     def nface(self):
         return self._nface
@@ -44,7 +48,8 @@ class topologyFace:
         validBcTypes = (
             # Interior, periodic
             "b0",
-            "b1",
+            "periodicTrans",
+            "periodicRot",
             # Inlets
             "constantVelocitySubsonicInlet",
             "supersonicInlet",
