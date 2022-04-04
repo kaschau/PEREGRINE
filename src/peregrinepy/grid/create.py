@@ -391,7 +391,15 @@ def annulus(blk, p1, p2, p3, sweep, thickness, dimensions):
 
 
 def multiBlockAnnulus(
-    mb, p1, p2, p3, sweep, thickness, mbDims, dimsPerBlock, periodic=False
+    mb,
+    p1=[0, 0, 0],
+    p2=[0, 1, 0],
+    p3=[0, 0, 1],
+    sweep=45,
+    thickness=0.1,
+    mbDims=[1, 1, 1],
+    dimsPerBlock=[10, 10, 10],
+    periodic=False,
 ):
 
     """
