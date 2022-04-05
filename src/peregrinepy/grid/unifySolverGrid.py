@@ -1,5 +1,3 @@
-from mpi4py.MPI import DOUBLE as MPIDOUBLE
-from mpi4py.MPI import Request
 from .. import mpiComm
 
 
@@ -13,62 +11,65 @@ def unifySolverGrid(mb):
     for _ in range(3):
         mpiComm.communicate(mb, ["x", "y", "z"])
 
-    comm, rank, size = mpiComm.mpiUtils.getCommRankSize()
+    for blk in mb:
+        for face in blk.faces:
+            bc = face.bcType
+            if not bc.startswith("periodic"):
+                continue
+            for i, sR in enumerate(face.sliceR3):
+                x = blk.array["x"][sR]
+                y = blk.array["y"][sR]
+                z = blk.array["z"][sR]
 
-    for var in ["x", "y", "z"]:
-        for blk in mb:
-            # Need to update host data
-            blk.updateHostView(var)
-        for _ in range(3):
-            reqs = []
-            # Post non-blocking recieves
-            for blk in mb:
-                for face in blk.faces:
-                    bc = face.bcType
-                    if bc != "b1":
-                        continue
-
-                    ssize = face.array["recvBuffer3"].size
-                    reqs.append(
-                        comm.Irecv(
-                            [face.array["recvBuffer3"][:], ssize, MPIDOUBLE],
-                            source=face.commRank,
-                            tag=face.tagR,
-                        )
+                # Translate periodics
+                if face.bcType == "periodicTransLow":
+                    x[:] -= face.periodicAxis[0] * face.periodicSpan
+                    y[:] -= face.periodicAxis[1] * face.periodicSpan
+                    z[:] -= face.periodicAxis[2] * face.periodicSpan
+                elif face.bcType == "periodicTransHigh":
+                    x[:] += face.periodicAxis[0] * face.periodicSpan
+                    y[:] += face.periodicAxis[1] * face.periodicSpan
+                    z[:] += face.periodicAxis[2] * face.periodicSpan
+                elif face.bcType == "periodicRotLow":
+                    print(face.nface, face.periodicRotMatrixDown)
+                    tempx = (
+                        face.periodicRotMatrixDown[0, 0] * x[:]
+                        + face.periodicRotMatrixDown[0, 1] * y[:]
+                        + face.periodicRotMatrixDown[0, 2] * z[:]
                     )
-
-            # Post non-blocking sends
-            for blk in mb:
-                for face in blk.faces:
-                    bc = face.bcType
-                    if bc != "b1":
-                        continue
-                    for i, sS in enumerate(face.sliceS3):
-                        face.array["sendBuffer3"][i] = face.orient(
-                            blk.array[var][sS] - blk.array[var][face.s1_]
-                        )
-                    ssize = face.array["sendBuffer3"].size
-                    comm.Send(
-                        [face.array["sendBuffer3"], ssize, MPIDOUBLE],
-                        dest=face.commRank,
-                        tag=face.tagS,
+                    tempy = (
+                        face.periodicRotMatrixDown[1, 0] * x[:]
+                        + face.periodicRotMatrixDown[1, 1] * y[:]
+                        + face.periodicRotMatrixDown[1, 2] * z[:]
                     )
+                    tempz = (
+                        face.periodicRotMatrixDown[2, 0] * x[:]
+                        + face.periodicRotMatrixDown[2, 1] * y[:]
+                        + face.periodicRotMatrixDown[2, 2] * z[:]
+                    )
+                    x[:] = tempx[:]
+                    y[:] = tempy[:]
+                    z[:] = tempz[:]
+                elif face.bcType == "periodicRotHigh":
+                    tempx = (
+                        face.periodicRotMatrixUp[0, 0] * x[:]
+                        + face.periodicRotMatrixUp[0, 1] * y[:]
+                        + face.periodicRotMatrixUp[0, 2] * z[:]
+                    )
+                    tempy = (
+                        face.periodicRotMatrixUp[1, 0] * x[:]
+                        + face.periodicRotMatrixUp[1, 1] * y[:]
+                        + face.periodicRotMatrixUp[1, 2] * z[:]
+                    )
+                    tempz = (
+                        face.periodicRotMatrixUp[2, 0] * x[:]
+                        + face.periodicRotMatrixUp[2, 1] * y[:]
+                        + face.periodicRotMatrixUp[2, 2] * z[:]
+                    )
+                    x[:] = tempx[:]
+                    y[:] = tempy[:]
+                    z[:] = tempz[:]
 
-            # wait and assign
-            reqs = iter(reqs)
-            for blk in mb:
-                for face in blk.faces:
-                    bc = face.bcType
-                    if bc != "b1":
-                        continue
-                    Request.Wait(reqs.__next__())
-                    for i, sR in enumerate(face.sliceR3):
-                        blk.array[var][sR] = (
-                            blk.array[var][face.s1_] + face.array["recvBuffer3"][i]
-                        )
-
-            comm.Barrier()
-
-        for blk in mb:
-            # Push back up the device
-            blk.updateDeviceView(var)
+    for blk in mb:
+        # Push back up the device
+        blk.updateDeviceView(["x", "y", "z"])

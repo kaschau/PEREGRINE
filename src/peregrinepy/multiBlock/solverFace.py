@@ -96,7 +96,7 @@ class solverFace(topologyFace, face_):
     def setBcFunc(self):
 
         bcType = self.bcType
-        if bcType in ["b0", "b1"]:
+        if bcType == "b0" or bcType.startswith("periodic"):
             self.bcFunc = null
         else:
             for bcmodule in [bcs.inlets, bcs.exits, bcs.walls]:
