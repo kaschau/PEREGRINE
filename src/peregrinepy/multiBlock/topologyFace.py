@@ -112,7 +112,7 @@ class topologyFace:
         elif self.periodicSpan is None:
             raise AttributeError("Please set periodicSpan before setting periodicAxis")
 
-        # Compute rotation matrix
+        # Compute rotation matrix for positive and negative rotatoin
         rot = np.zeros((3, 3))
         th = self.periodicSpan * np.pi / 180.0
         ct = np.cos(th)
@@ -130,7 +130,25 @@ class topologyFace:
         rot[2, 1] = uz * uy * (1 - ct) + ux * st
         rot[2, 2] = ct + uz ** 2 * (1 - ct)
 
-        self.periodicRotMatrix = rot
+        self.periodicRotMatrixUp = rot
+
+        rot = np.zeros((3, 3))
+        ct = np.cos(-th)
+        st = np.sin(-th)
+        ux, uy, uz = tuple(axis)
+        rot[0, 0] = ct + ux ** 2 * (1 - ct)
+        rot[0, 1] = ux * uy * (1 - ct) * uz * st
+        rot[0, 2] = ux * uz * (1 - ct) + uy * st
+
+        rot[1, 0] = uy * ux * (1 - ct) + uz * st
+        rot[1, 1] = ct + uy ** 2 * (1 - ct)
+        rot[1, 2] = uy * uz * (1 - ct) - ux * st
+
+        rot[2, 0] = uz * ux * (1 - ct) - uy * st
+        rot[2, 1] = uz * uy * (1 - ct) + ux * st
+        rot[2, 2] = ct + uz ** 2 * (1 - ct)
+
+        self.periodicRotMatrixDown = rot
 
     @property
     def neighborNface(self):
