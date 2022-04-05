@@ -55,10 +55,17 @@ def readBcs(mb, pathToFile):
                 continue
 
             # Make sure the type in the input file matches the type in the connectivity
+            # Because periodics have a high/low designation they wont match exactly
             if bcsIn[bcFam]["bcType"] != face.bcType:
-                raise KeyError(
-                    f'ERROR, block {blk.nblki} face {face.nface} does not match the bcType between input *{bcsIn[bcFam]["bcType"]}* and connectivity *{face.bcType}*.'
-                )
+                if bcsIn[bcFam]["bcType"].startswith("periodic"):
+                    if not face.bcType.startswith(bcsIn[bcFam]["bcType"]):
+                        raise KeyError(
+                            f'ERROR, block {blk.nblki} face {face.nface} does not match the bcType between input *{bcsIn[bcFam]["bcType"]}* and connectivity *{face.bcType}*.'
+                        )
+                else:
+                    raise KeyError(
+                        f'ERROR, block {blk.nblki} face {face.nface} does not match the bcType between input *{bcsIn[bcFam]["bcType"]}* and connectivity *{face.bcType}*.'
+                    )
 
             # If there are no values to set, continue
             if "bcVals" not in bcsIn[bcFam]:
@@ -66,9 +73,9 @@ def readBcs(mb, pathToFile):
                 continue
 
             # Add the information from any periodic faces
-            if bcType in ["periodicTrans", "periodicRot"]:
-                face.periodicAxis = bcsIn[bcFam]["periodicAxis"]
+            if bcType.startswith("periodic"):
                 face.periodicSpan = bcsIn[bcFam]["periodicSpan"]
+                face.periodicAxis = bcsIn[bcFam]["periodicAxis"]
                 continue
 
             # If we are a solver face, we need to create the kokkos arrays

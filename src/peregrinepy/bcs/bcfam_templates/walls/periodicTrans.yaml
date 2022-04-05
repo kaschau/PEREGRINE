@@ -1,0 +1,7 @@
+---
+
+periodic:
+  bcType: periodicTrans
+  bcVals:
+    periodicSpan: 0.1
+    periodicAxis: [1, 0, 0]
