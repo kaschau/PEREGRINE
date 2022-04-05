@@ -33,8 +33,6 @@ def writeConnectivity(mb, path="./"):
             fdict["bcFam"] = face.bcFam
             fdict["neighbor"] = face.neighbor
             fdict["orientation"] = face.orientation
-            if face.isPeriodicLow is not None:
-                fdict["isPeriodicLow"] = face.isPeriodicLow
 
     with open(f"{path}/conn.yaml", "w") as f:
         yaml.dump(conn, f, sort_keys=False)

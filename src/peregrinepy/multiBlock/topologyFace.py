@@ -11,9 +11,9 @@ class topologyFace:
         self._neighbor = None
         self._orientation = None
 
-        self.periodicAxis = None
+        self.periodicOrigin = [0, 0, 0]
         self.periodicSpan = None
-        self.isPeriodicLow = None
+        self._periodicAxis = None
 
     @property
     def nface(self):
@@ -48,8 +48,10 @@ class topologyFace:
         validBcTypes = (
             # Interior, periodic
             "b0",
-            "periodicTrans",
-            "periodicRot",
+            "periodicTransLow",
+            "periodicTransHigh",
+            "periodicRotLow",
+            "periodicRotHigh",
             # Inlets
             "constantVelocitySubsonicInlet",
             "supersonicInlet",
@@ -92,6 +94,43 @@ class topologyFace:
         if tV not in (type(None), str):
             raise TypeError(f"orientation must be a str not {type(value)}.")
         self._orientation = value
+
+    # Periodic stuff
+    @property
+    def periodicAxis(self):
+        return self._periodicAxis
+
+    @periodicAxis.setter
+    def periodicAxis(self, axis):
+        import numpy as np
+
+        axis = axis / np.linalg.norm(np.array(axis))
+        self._periodicAxis = axis
+
+        if not self.bcType.startswith("periodicRot"):
+            return
+        elif self.periodicSpan is None:
+            raise AttributeError("Please set periodicSpan before setting periodicAxis")
+
+        # Compute rotation matrix
+        rot = np.zeros((3, 3))
+        th = self.periodicSpan * np.pi / 180.0
+        ct = np.cos(th)
+        st = np.sin(th)
+        ux, uy, uz = tuple(axis)
+        rot[0, 0] = ct + ux ** 2 * (1 - ct)
+        rot[0, 1] = ux * uy * (1 - ct) * uz * st
+        rot[0, 2] = ux * uz * (1 - ct) + uy * st
+
+        rot[1, 0] = uy * ux * (1 - ct) + uz * st
+        rot[1, 1] = ct + uy ** 2 * (1 - ct)
+        rot[1, 2] = uy * uz * (1 - ct) - ux * st
+
+        rot[2, 0] = uz * ux * (1 - ct) - uy * st
+        rot[2, 1] = uz * uy * (1 - ct) + ux * st
+        rot[2, 2] = ct + uz ** 2 * (1 - ct)
+
+        self.periodicRotMatrix = rot
 
     @property
     def neighborNface(self):

@@ -20,10 +20,9 @@ def cubicConnectivity(
     face = blk.getFace(1)
     if i == 0:
         if periodicI:
-            face.bcType = "periodicTrans"
+            face.bcType = "periodicTransLow"
             face.neighbor = blkNum + (mbDims[0] - 1)
             face.orientation = "123"
-            face.isPeriodicLow = True
         else:
             face.bcType = "adiabaticNoSlipWall"
             face.neighbor = None
@@ -37,10 +36,9 @@ def cubicConnectivity(
     face = blk.getFace(2)
     if i == mbDims[0] - 1:
         if periodicI:
-            face.bcType = "periodicTrans"
+            face.bcType = "periodicTransHigh"
             face.neighbor = blkNum - (mbDims[0] - 1)
             face.orientation = "123"
-            face.isPeriodicLow = False
         else:
             face.bcType = "adiabaticNoSlipWall"
             face.neighbor = None
@@ -55,10 +53,9 @@ def cubicConnectivity(
     face = blk.getFace(3)
     if j == 0:
         if periodicJ:
-            face.bcType = "periodicTrans"
+            face.bcType = "periodicTransLow"
             face.neighbor = blkNum + mbDims[0] * (mbDims[1] - 1)
             face.orientation = "123"
-            face.isPeriodicLow = True
         else:
             face.bcType = "adiabaticNoSlipWall"
             face.neighbor = None
@@ -72,10 +69,9 @@ def cubicConnectivity(
     face = blk.getFace(4)
     if j == mbDims[1] - 1:
         if periodicJ:
-            face.bcType = "periodicTrans"
+            face.bcType = "periodicTransHigh"
             face.neighbor = blkNum - mbDims[0] * (mbDims[1] - 1)
             face.orientation = "123"
-            face.isPeriodicLow = False
         else:
             face.bcType = "adiabaticNoSlipWall"
             face.neighbor = None
@@ -90,10 +86,9 @@ def cubicConnectivity(
     face = blk.getFace(5)
     if k == 0:
         if periodicK:
-            face.bcType = "periodicTrans"
+            face.bcType = "periodicTransLow"
             face.neighbor = blkNum + mbDims[0] * mbDims[1] * (mbDims[2] - 1)
             face.orientation = "123"
-            face.isPeriodicLow = True
         else:
             face.bcType = "adiabaticNoSlipWall"
             face.neighbor = None
@@ -107,10 +102,9 @@ def cubicConnectivity(
     face = blk.getFace(6)
     if k == mbDims[2] - 1:
         if periodicK:
-            face.bcType = "periodicTrans"
+            face.bcType = "periodicTransHigh"
             face.neighbor = blkNum - mbDims[0] * mbDims[1] * (mbDims[2] - 1)
             face.orientation = "123"
-            face.isPeriodicLow = False
         else:
             face.bcType = "b0"
             face.neighbor = blkNum + mbDims[0] * mbDims[1]
@@ -252,15 +246,21 @@ def multiBlockCube(
 
                 # Set the peiodic info
                 for face in blk.faces:
-                    if face.bcType == "periodicTrans" and face.nface in [1, 2]:
-                        face.periodicAxis = np.array([1.0, 0.0, 0.0])
+                    if face.bcType.startswith("periodicTrans") and face.nface in [1, 2]:
                         face.periodicSpan = lengths[0]
-                    elif face.bcType == "periodicTrans" and face.nface in [3, 4]:
-                        face.periodicAxis = np.array([0.0, 1.0, 0.0])
+                        face.periodicAxis = np.array([1.0, 0.0, 0.0])
+                    elif face.bcType.startswith("periodicTrans") and face.nface in [
+                        3,
+                        4,
+                    ]:
                         face.periodicSpan = lengths[1]
-                    elif face.bcType == "periodicTrans" and face.nface in [5, 6]:
-                        face.periodicAxis = np.array([0.0, 0.0, 1.0])
+                        face.periodicAxis = np.array([0.0, 1.0, 0.0])
+                    elif face.bcType.startswith("periodicTrans") and face.nface in [
+                        5,
+                        6,
+                    ]:
                         face.periodicSpan = lengths[2]
+                        face.periodicAxis = np.array([0.0, 0.0, 1.0])
 
     for blk in mb:
         if blk.blockType == "solver" and blk._isInitialized:
@@ -393,8 +393,8 @@ def annulus(blk, p1, p2, p3, sweep, thickness, dimensions):
 def multiBlockAnnulus(
     mb,
     p1=[0, 0, 0],
-    p2=[0, 1, 0],
-    p3=[0, 0, 1],
+    p2=[1, 0, 0],
+    p3=[0, 1, 0],
     sweep=45,
     thickness=0.1,
     mbDims=[1, 1, 1],
@@ -531,15 +531,17 @@ def multiBlockAnnulus(
                         if float(sweep) == 360.0:
                             face.bcType = "b0"
                         else:
-                            face.bcType = "periodicRot"
+                            face.bcType = "periodicRotLow"
+                            face.periodicSpan = sweep
+                            face.periodicAxis = n12
                     elif k == mbDims[2] - 1:
                         face = blk.getFace(6)
                         if float(sweep) == 360.0:
                             face.bcType = "b0"
                         else:
-                            face.bcType = "periodicRot"
-                            face.periodicAxis = n12
+                            face.bcType = "periodicRotHigh"
                             face.periodicSpan = sweep
+                            face.periodicAxis = n12
 
     for blk in mb:
         if blk.blockType == "solver" and blk._isInitialized:
