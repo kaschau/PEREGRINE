@@ -74,8 +74,8 @@ def readBcs(mb, pathToFile):
 
             # Add the information from any periodic faces
             if bcType.startswith("periodic"):
-                face.periodicSpan = bcsIn[bcFam]["periodicSpan"]
-                face.periodicAxis = bcsIn[bcFam]["periodicAxis"]
+                face.periodicSpan = bcsIn[bcFam]["bcVals"]["periodicSpan"]
+                face.periodicAxis = bcsIn[bcFam]["bcVals"]["periodicAxis"]
                 continue
 
             # If we are a solver face, we need to create the kokkos arrays
