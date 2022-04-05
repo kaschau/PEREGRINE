@@ -534,7 +534,7 @@ def multiBlockAnnulus(
                             face.bcType = "periodicRotLow"
                             face.periodicSpan = sweep
                             face.periodicAxis = n12
-                    elif k == mbDims[2] - 1:
+                    if k == mbDims[2] - 1:
                         face = blk.getFace(6)
                         if float(sweep) == 360.0:
                             face.bcType = "b0"
