@@ -86,13 +86,10 @@ if __name__ == "__main__":
         toGrid[i] = fromBlk
 
         for face in fromBlk.faces:
-            if face.bcType == "b1":
-                if np.mean(fromBlk.array["z"]) > 0.0:
-                    backside.append(fromBlk.nblki)
-                elif np.mean(fromBlk.array["z"] < 0.0):
-                    frontside.append(fromBlk.nblki)
-                else:
-                    print("HELP")
+            if face.bcType == "periodicRotLow":
+                backside.append(fromBlk.nblki)
+            elif face.bcType == "periodicRotHigh":
+                frontside.append(fromBlk.nblki)
 
     # Now copy/rotate sector by sector
     # We will update the front and back side
@@ -131,21 +128,24 @@ if __name__ == "__main__":
                     continue
 
                 # treat the rotated faces
-                if fromFace.bcType == "b1":
-                    toFace.bcFam = None
+                if fromFace.bcType.startswith("periodic"):
+                    toFace.bcFam = fromFace.bcFam
                     toFace.orientation = fromFace.orientation
                     # back side faces
                     if fromBlk.nblki in backside:
                         toFace.bcType = "b0"
                         toFace.neighbor = fromFace.neighbor + nblks * i
+                        toFace.bcFam = None
                     # front side faces
                     elif fromBlk.nblki in frontside:
                         if i == nseg - 2:
-                            toFace.bcType = "b1"
+                            toFace.bcType = "periodicRotHigh"
                             toFace.neighbor = fromFace.neighbor
+                            toFace.bcFam = fromFace.bcFam
                         else:
                             toFace.bcType = "b0"
                             toFace.neighbor = fromFace.neighbor + nblks * (i + 2)
+                            toFace.bcFam = None
                 # treat the internal faces
                 elif fromFace.bcType == "b0":
                     toFace.bcType = "b0"
@@ -165,25 +165,27 @@ if __name__ == "__main__":
         if fromBlk.nblki in backside:
             rotBlk = toGrid[i]
             for toFace, fromFace in zip(rotBlk.faces, fromBlk.faces):
-                if fromFace.bcType == "b1":
+                if fromFace.bcType == "periodicRotLow":
                     toFace.neighbor = fromFace.neighbor + nblks * (nseg - 1)
                 if is360:
                     toFace.bcType = "b0"
+                    toFace.bcFam = None
 
         # original and far frontside
         elif fromBlk.nblki in frontside:
             # original
             rotBlk = toGrid[i]
             for toFace, fromFace in zip(rotBlk.faces, fromBlk.faces):
-                if fromFace.bcType == "b1":
+                if fromFace.bcType == "periodicRotHigh":
                     toFace.bcType = "b0"
                     toFace.neighbor = fromFace.neighbor + nblks
+                    toFace.bcFam = None
             # far frontside
             rotBlk = toGrid[i + nblks * (nseg - 1)]
             for toFace, fromFace in zip(rotBlk.faces, fromBlk.faces):
                 if is360:
                     toFace.bcType = "b0"
+                    toFace.bcFam = None
 
     pg.writers.writeGrid(toGrid, toDir)
     pg.writers.writeConnectivity(toGrid, toDir)
-    # match_faces(toGrid)
