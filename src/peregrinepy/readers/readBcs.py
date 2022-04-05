@@ -37,6 +37,7 @@ def readBcs(mb, pathToFile):
             print("No bcFams.yaml found, assuming all defaults.")
         return
 
+    warn = []
     for blk in mb:
         for face in blk.faces:
             bcFam = face.bcFam
@@ -69,7 +70,9 @@ def readBcs(mb, pathToFile):
 
             # If there are no values to set, continue
             if "bcVals" not in bcsIn[bcFam]:
-                print(f"Warning, no values found for {bcsIn[bcFam]}")
+                if bcsIn[bcFam] not in warn:
+                    print(f"Warning, no values found for {bcsIn[bcFam]}")
+                    warn.append(bcsIn[bcFam])
                 continue
 
             # Add the information from any periodic faces
