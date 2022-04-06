@@ -58,7 +58,7 @@ void periodicRotHigh(block_ b,
       threeDsubview dqdz0 = getHaloSlice(b.dqdz, face._nface, s0);
 
       Kokkos::parallel_for(
-          "Constant pressure subsonic exit euler terms", range_face,
+          "Periodic viscous terms", range_face,
           KOKKOS_LAMBDA(const int i, const int j, const int l) {
             // rotate gradients vector up to high face
             double tempdx, tempdy, tempdz;
@@ -131,7 +131,7 @@ void periodicRotLow(block_ b,
       threeDsubview dqdz0 = getHaloSlice(b.dqdz, face._nface, s0);
 
       Kokkos::parallel_for(
-          "Constant pressure subsonic exit euler terms", range_face,
+          "Periodic viscous terms", range_face,
           KOKKOS_LAMBDA(const int i, const int j, const int l) {
             // rotate gradients vector up to high face
             double tempdx, tempdy, tempdz;
