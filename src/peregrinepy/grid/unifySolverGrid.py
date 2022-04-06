@@ -30,42 +30,14 @@ def unifySolverGrid(mb):
                     x[:] += face.periodicAxis[0] * face.periodicSpan
                     y[:] += face.periodicAxis[1] * face.periodicSpan
                     z[:] += face.periodicAxis[2] * face.periodicSpan
-                elif face.bcType == "periodicRotLow":
-                    print(face.nface, face.periodicRotMatrixDown)
-                    tempx = (
-                        face.periodicRotMatrixDown[0, 0] * x[:]
-                        + face.periodicRotMatrixDown[0, 1] * y[:]
-                        + face.periodicRotMatrixDown[0, 2] * z[:]
-                    )
-                    tempy = (
-                        face.periodicRotMatrixDown[1, 0] * x[:]
-                        + face.periodicRotMatrixDown[1, 1] * y[:]
-                        + face.periodicRotMatrixDown[1, 2] * z[:]
-                    )
-                    tempz = (
-                        face.periodicRotMatrixDown[2, 0] * x[:]
-                        + face.periodicRotMatrixDown[2, 1] * y[:]
-                        + face.periodicRotMatrixDown[2, 2] * z[:]
-                    )
-                    x[:] = tempx[:]
-                    y[:] = tempy[:]
-                    z[:] = tempz[:]
-                elif face.bcType == "periodicRotHigh":
-                    tempx = (
-                        face.periodicRotMatrixUp[0, 0] * x[:]
-                        + face.periodicRotMatrixUp[0, 1] * y[:]
-                        + face.periodicRotMatrixUp[0, 2] * z[:]
-                    )
-                    tempy = (
-                        face.periodicRotMatrixUp[1, 0] * x[:]
-                        + face.periodicRotMatrixUp[1, 1] * y[:]
-                        + face.periodicRotMatrixUp[1, 2] * z[:]
-                    )
-                    tempz = (
-                        face.periodicRotMatrixUp[2, 0] * x[:]
-                        + face.periodicRotMatrixUp[2, 1] * y[:]
-                        + face.periodicRotMatrixUp[2, 2] * z[:]
-                    )
+                elif face.bcType.startswith("periodicRot"):
+                    if face.bcType == "periodicRotLow":
+                        rotM = face.array["periodicRotMatrixDown"]
+                    elif face.bcType == "periodicRotHigh":
+                        rotM = face.array["periodicRotMatrixUp"]
+                    tempx = rotM[0, 0] * x[:] + rotM[0, 1] * y[:] + rotM[0, 2] * z[:]
+                    tempy = rotM[1, 0] * x[:] + rotM[1, 1] * y[:] + rotM[1, 2] * z[:]
+                    tempz = rotM[2, 0] * x[:] + rotM[2, 1] * y[:] + rotM[2, 2] * z[:]
                     x[:] = tempx[:]
                     y[:] = tempy[:]
                     z[:] = tempz[:]
