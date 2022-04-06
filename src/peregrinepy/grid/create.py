@@ -314,7 +314,7 @@ def annulus(blk, p1, p2, p3, sweep, thickness, dimensions):
 
     """
 
-    p1 = np.array(p1)
+    p1 = np.array([0.0, 0.0, 0.0])  # All periodic axes go through origin!!!
     p2 = np.array(p2)
     p3 = np.array(p3)
 
@@ -392,7 +392,6 @@ def annulus(blk, p1, p2, p3, sweep, thickness, dimensions):
 
 def multiBlockAnnulus(
     mb,
-    p1=[0, 0, 0],
     p2=[1, 0, 0],
     p3=[0, 1, 0],
     sweep=45,
@@ -412,10 +411,6 @@ def multiBlockAnnulus(
     ----------
 
     mb : peregrinepy.multiBlock.grid (or one of its descendants)
-
-    p1 : list, tuple
-       List/tuple of length 3 containing the location of the origin of the annulus to be created, i.e.
-       the center of the beginning of the whole annulus.
 
     p2 : list, tuple
        List/tuple of length 3 containing the location of the end of the annulus to be created, i.e.
@@ -455,7 +450,7 @@ def multiBlockAnnulus(
         Updates elements in mb
 
     """
-    p1 = np.array(p1)
+    p1 = np.array([0.0, 0.0, 0.0])  # All periodic axes go through origin!!!
     p2 = np.array(p2)
     p3 = np.array(p3)
 
