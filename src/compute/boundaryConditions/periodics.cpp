@@ -26,6 +26,7 @@ void periodicRotHigh(block_ b,
       s0 -= plus * g;
 
       threeDsubview q0 = getHaloSlice(b.q, face._nface, s0);
+      threeDsubview Q0 = getHaloSlice(b.Q, face._nface, s0);
 
       Kokkos::parallel_for(
           "Rotate periodic euler terms", range_face,
@@ -39,9 +40,15 @@ void periodicRotHigh(block_ b,
             tempV = face.periodicRotMatrixUp(1,0)*u + face.periodicRotMatrixUp(1,1)*v + face.periodicRotMatrixUp(1,2)*w;
             tempW = face.periodicRotMatrixUp(2,0)*u + face.periodicRotMatrixUp(2,1)*v + face.periodicRotMatrixUp(2,2)*w;
 
+            // Update velocity
             q0(i, j, 1) = tempU;
             q0(i, j, 2) = tempV;
             q0(i, j, 3) = tempW;
+
+            // Update momentum
+            Q0(i, j, 1) = tempU*Q0(i,j,0);
+            Q0(i, j, 2) = tempV*Q0(i,j,0);
+            Q0(i, j, 3) = tempW*Q0(i,j,0);
           });
     }
 
@@ -99,6 +106,7 @@ void periodicRotLow(block_ b,
       s0 -= plus * g;
 
       threeDsubview q0 = getHaloSlice(b.q, face._nface, s0);
+      threeDsubview Q0 = getHaloSlice(b.Q, face._nface, s0);
 
       Kokkos::parallel_for(
           "Rotate periodic euler terms", range_face,
@@ -112,9 +120,15 @@ void periodicRotLow(block_ b,
             tempV = face.periodicRotMatrixDown(1,0)*u + face.periodicRotMatrixDown(1,1)*v + face.periodicRotMatrixDown(1,2)*w;
             tempW = face.periodicRotMatrixDown(2,0)*u + face.periodicRotMatrixDown(2,1)*v + face.periodicRotMatrixDown(2,2)*w;
 
+            // Update velocity
             q0(i, j, 1) = tempU;
             q0(i, j, 2) = tempV;
             q0(i, j, 3) = tempW;
+
+            // Update momentum
+            Q0(i, j, 1) = tempU*Q0(i,j,0);
+            Q0(i, j, 2) = tempV*Q0(i,j,0);
+            Q0(i, j, 3) = tempW*Q0(i,j,0);
           });
     }
 
