@@ -106,9 +106,9 @@ def cubicConnectivity(
             face.neighbor = blkNum - mbDims[0] * mbDims[1] * (mbDims[2] - 1)
             face.orientation = "123"
         else:
-            face.bcType = "b0"
-            face.neighbor = blkNum + mbDims[0] * mbDims[1]
-            face.orientation = "123"
+            face.bcType = "adiabaticNoSlipWall"
+            face.neighbor = None
+            face.orientation = None
     else:
         face.bcType = "b0"
         face.neighbor = blkNum + mbDims[0] * mbDims[1]
