@@ -62,9 +62,9 @@ void periodicRotHigh(block_ b,
           KOKKOS_LAMBDA(const int i, const int j, const int l) {
             // rotate gradients vector up to high face
             double tempdx, tempdy, tempdz;
-            double dx = dqdz0(i, j, 1);
-            double dy = dqdy0(i, j, 2);
-            double dz = dqdz0(i, j, 3);
+            double dx = dqdx0(i, j, l);
+            double dy = dqdy0(i, j, l);
+            double dz = dqdz0(i, j, l);
             tempdx = face.periodicRotMatrixUp(0,0)*dx + face.periodicRotMatrixUp(0,1)*dx + face.periodicRotMatrixUp(0,2)*dx;
             tempdy = face.periodicRotMatrixUp(1,0)*dy + face.periodicRotMatrixUp(1,1)*dy + face.periodicRotMatrixUp(1,2)*dy;
             tempdz = face.periodicRotMatrixUp(2,0)*dz + face.periodicRotMatrixUp(2,1)*dz + face.periodicRotMatrixUp(2,2)*dz;
@@ -135,9 +135,9 @@ void periodicRotLow(block_ b,
           KOKKOS_LAMBDA(const int i, const int j, const int l) {
             // rotate gradients vector up to high face
             double tempdx, tempdy, tempdz;
-            double dx = dqdz0(i, j, 1);
-            double dy = dqdy0(i, j, 2);
-            double dz = dqdz0(i, j, 3);
+            double dx = dqdx0(i, j, l);
+            double dy = dqdy0(i, j, l);
+            double dz = dqdz0(i, j, l);
             tempdx = face.periodicRotMatrixDown(0,0)*dx + face.periodicRotMatrixDown(0,1)*dx + face.periodicRotMatrixDown(0,2)*dx;
             tempdy = face.periodicRotMatrixDown(1,0)*dy + face.periodicRotMatrixDown(1,1)*dy + face.periodicRotMatrixDown(1,2)*dy;
             tempdz = face.periodicRotMatrixDown(2,0)*dz + face.periodicRotMatrixDown(2,1)*dz + face.periodicRotMatrixDown(2,2)*dz;
