@@ -100,7 +100,7 @@ class solverFace(topologyFace, face_):
     def setBcFunc(self):
 
         bcType = self.bcType
-        if bcType == "b0" or bcType.startswith("peiodicTrans"):
+        if bcType == "b0" or bcType.startswith("periodicTrans"):
             self.bcFunc = null
         else:
             for bcmodule in [bcs.inlets, bcs.exits, bcs.walls, bcs.periodics]:
