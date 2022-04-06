@@ -11,7 +11,6 @@ class topologyFace:
         self._neighbor = None
         self._orientation = None
 
-        self.periodicOrigin = [0, 0, 0]
         self.periodicSpan = None
         self._periodicAxis = None
 
@@ -113,42 +112,47 @@ class topologyFace:
             raise AttributeError("Please set periodicSpan before setting periodicAxis")
 
         # Compute rotation matrix for positive and negative rotatoin
-        rot = np.zeros((3, 3))
+        rotUp = np.zeros((3, 3))
         th = self.periodicSpan * np.pi / 180.0
         ct = np.cos(th)
         st = np.sin(th)
         ux, uy, uz = tuple(axis)
-        rot[0, 0] = ct + ux ** 2 * (1 - ct)
-        rot[0, 1] = ux * uy * (1 - ct) * uz * st
-        rot[0, 2] = ux * uz * (1 - ct) + uy * st
+        rotUp[0, 0] = ct + ux ** 2 * (1 - ct)
+        rotUp[0, 1] = ux * uy * (1 - ct) * uz * st
+        rotUp[0, 2] = ux * uz * (1 - ct) + uy * st
 
-        rot[1, 0] = uy * ux * (1 - ct) + uz * st
-        rot[1, 1] = ct + uy ** 2 * (1 - ct)
-        rot[1, 2] = uy * uz * (1 - ct) - ux * st
+        rotUp[1, 0] = uy * ux * (1 - ct) + uz * st
+        rotUp[1, 1] = ct + uy ** 2 * (1 - ct)
+        rotUp[1, 2] = uy * uz * (1 - ct) - ux * st
 
-        rot[2, 0] = uz * ux * (1 - ct) - uy * st
-        rot[2, 1] = uz * uy * (1 - ct) + ux * st
-        rot[2, 2] = ct + uz ** 2 * (1 - ct)
+        rotUp[2, 0] = uz * ux * (1 - ct) - uy * st
+        rotUp[2, 1] = uz * uy * (1 - ct) + ux * st
+        rotUp[2, 2] = ct + uz ** 2 * (1 - ct)
 
-        self.periodicRotMatrixUp = rot
-
-        rot = np.zeros((3, 3))
+        rotDown = np.zeros((3, 3))
         ct = np.cos(-th)
         st = np.sin(-th)
         ux, uy, uz = tuple(axis)
-        rot[0, 0] = ct + ux ** 2 * (1 - ct)
-        rot[0, 1] = ux * uy * (1 - ct) * uz * st
-        rot[0, 2] = ux * uz * (1 - ct) + uy * st
+        rotDown[0, 0] = ct + ux ** 2 * (1 - ct)
+        rotDown[0, 1] = ux * uy * (1 - ct) * uz * st
+        rotDown[0, 2] = ux * uz * (1 - ct) + uy * st
 
-        rot[1, 0] = uy * ux * (1 - ct) + uz * st
-        rot[1, 1] = ct + uy ** 2 * (1 - ct)
-        rot[1, 2] = uy * uz * (1 - ct) - ux * st
+        rotDown[1, 0] = uy * ux * (1 - ct) + uz * st
+        rotDown[1, 1] = ct + uy ** 2 * (1 - ct)
+        rotDown[1, 2] = uy * uz * (1 - ct) - ux * st
 
-        rot[2, 0] = uz * ux * (1 - ct) - uy * st
-        rot[2, 1] = uz * uy * (1 - ct) + ux * st
-        rot[2, 2] = ct + uz ** 2 * (1 - ct)
+        rotDown[2, 0] = uz * ux * (1 - ct) - uy * st
+        rotDown[2, 1] = uz * uy * (1 - ct) + ux * st
+        rotDown[2, 2] = ct + uz ** 2 * (1 - ct)
 
-        self.periodicRotMatrixDown = rot
+        if self.faceType == "topology":
+            self.periodicRotMatrixUp = rotUp
+            self.periodicRotMatrixDown = rotDown
+        elif self.faceType == "solver":
+            from ..misc import createViewMirrorArray
+
+            createViewMirrorArray(self, "periodicRotMatrixUp", (3, 3))
+            createViewMirrorArray(self, "periodicRotMatrixDown", (3, 3))
 
     @property
     def neighborNface(self):

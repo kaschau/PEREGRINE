@@ -25,6 +25,9 @@ struct face_ {
   double intervalDt;
   int currentInterval = -1;
 
+  // Periodic rotation matricies
+  twoDview periodicRotMatrixUp, periodicRotMatrixDown;
+
 };
 
 #endif
