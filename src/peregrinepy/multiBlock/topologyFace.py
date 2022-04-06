@@ -151,6 +151,9 @@ class topologyFace:
         elif self.faceType == "solver":
             from ..misc import createViewMirrorArray
 
+            self.array["periodicRotMatrixUp"] = rotUp
+            self.array["periodicRotMatrixDown"] = rotDown
+
             createViewMirrorArray(self, "periodicRotMatrixUp", (3, 3))
             createViewMirrorArray(self, "periodicRotMatrixDown", (3, 3))
 
