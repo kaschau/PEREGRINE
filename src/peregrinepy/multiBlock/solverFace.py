@@ -59,6 +59,8 @@ class solverFace(topologyFace, face_):
                 "tempRecvBuffer4": None,
                 "qBcVals": None,
                 "QBcVals": None,
+                "periodicRotMatrixUp": None,
+                "periodicRotMatrixDown": None,
             }
         )
         self.mirror = frozenDict(
@@ -71,6 +73,8 @@ class solverFace(topologyFace, face_):
                 "tempRecvBuffer4": None,
                 "qBcVals": None,
                 "QBcVals": None,
+                "periodicRotMatrixUp": None,
+                "periodicRotMatrixDown": None,
             }
         )
         # Boundary function
@@ -96,10 +100,10 @@ class solverFace(topologyFace, face_):
     def setBcFunc(self):
 
         bcType = self.bcType
-        if bcType == "b0" or bcType.startswith("periodic"):
+        if bcType == "b0" or bcType.startswith("peiodicTrans"):
             self.bcFunc = null
         else:
-            for bcmodule in [bcs.inlets, bcs.exits, bcs.walls]:
+            for bcmodule in [bcs.inlets, bcs.exits, bcs.walls, bcs.periodics]:
                 try:
                     self.bcFunc = getattr(bcmodule, bcType)
                     break

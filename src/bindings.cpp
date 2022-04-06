@@ -169,6 +169,8 @@ PYBIND11_MODULE(compute, m) {
     .def_readwrite("recvBuffer4", &face_::recvBuffer4)
     .def_readwrite("tempRecvBuffer3", &face_::tempRecvBuffer3)
     .def_readwrite("tempRecvBuffer4", &face_::tempRecvBuffer4)
+    .def_readwrite("periodicRotMatrixUp", &face_::periodicRotMatrixUp)
+    .def_readwrite("periodicRotMatrixDown", &face_::periodicRotMatrixDown)
 
     .def_readwrite("intervalDt", &face_::intervalDt)
     .def_readwrite("cubicSplineAlphas", &face_::cubicSplineAlphas)
