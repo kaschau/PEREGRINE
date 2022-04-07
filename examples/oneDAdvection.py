@@ -28,21 +28,15 @@ def simulate():
         mbDims=[1, 1, 1],
         dimsPerBlock=[41, 2, 2],
         lengths=[1, 0.01, 0.01],
+        periodic=[True, False, False],
     )
     mb.initSolverArrays(config)
 
     blk = mb[0]
-    for face in blk.faces:
+    for face in blk.faces[2::]:
         face.bcType = "adiabaticSlipWall"
 
-    blk.getFace(1).bcType = "b1"
-    blk.getFace(1).neighbor = 0
-    blk.getFace(1).orientation = "123"
     blk.getFace(1).commRank = 0
-
-    blk.getFace(2).bcType = "b1"
-    blk.getFace(2).neighbor = 0
-    blk.getFace(2).orientation = "123"
     blk.getFace(2).commRank = 0
 
     mb.setBlockCommunication()

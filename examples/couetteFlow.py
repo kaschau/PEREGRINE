@@ -41,6 +41,7 @@ def simulate():
         mbDims=[1, 1, 1],
         dimsPerBlock=[2, ny, 2],
         lengths=[0.01, h, 0.01],
+        periodic=[True, False, False],
     )
 
     mb.initSolverArrays(config)
@@ -48,34 +49,16 @@ def simulate():
     blk = mb[0]
 
     # face 1
-    blk.getFace(1).bcFam = None
-    blk.getFace(1).bcType = "b1"
-    blk.getFace(1).neighbor = 0
-    blk.getFace(1).orientation = "123"
     blk.getFace(1).commRank = 0
     # face 2
-    blk.getFace(2).bcFam = None
-    blk.getFace(2).bcType = "b1"
-    blk.getFace(2).neighbor = 0
-    blk.getFace(2).orientation = "123"
     blk.getFace(2).commRank = 0
     # face 3
-    blk.getFace(3).bcFam = None
     blk.getFace(3).bcType = "adiabaticNoSlipWall"
-    blk.getFace(3).neighbor = None
-    blk.getFace(3).orientation = None
-    blk.getFace(3).commRank = 0
     # face 4 isoT moving wall
-    blk.getFace(4).bcFam = "whoosh"
     blk.getFace(4).bcType = "adiabaticMovingWall"
-    blk.getFace(4).neighbor = None
-    blk.getFace(4).orientation = None
-    blk.getFace(4).commRank = 0
 
     for face in [5, 6]:
-        blk.getFace(face).bcFam = None
         blk.getFace(face).bcType = "adiabaticSlipWall"
-        blk.getFace(face).commRank = 0
 
     valueDict = {"u": wallSpeed, "v": 0.0, "w": 0.0}
     face4 = blk.getFace(4)
