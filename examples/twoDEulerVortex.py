@@ -31,7 +31,8 @@ def simulate():
         mb,
         mbDims=[1, 1, 1],
         dimsPerBlock=[NE, NN, 2],
-        lengths=[1, 1, 0.01],
+        lengths=[12, 12, 0.01],
+        periodic=[True, True, False],
     )
 
     blk = mb[0]
@@ -59,19 +60,11 @@ def simulate():
                 + Ay * np.sin(2 * np.pi * kappa) * np.sin(lamY * np.pi * E * delX / Lx)
             )
 
-    for face in blk.faces:
-        face.bcType = "b1"
-        face.bcFam = None
-        face.neighbor = 0
-        face.orientation = "123"
+    for face in blk.faces[0:4]:
         face.commRank = 0
     for f in [5, 6]:
         face = blk.getFace(f)
         face.bcType = "adiabaticSlipWall"
-        face.bcFam = None
-        face.neighbor = None
-        face.orientation = "000"
-        face.commRank = None
 
     mb.initSolverArrays(config)
     mb.setBlockCommunication()

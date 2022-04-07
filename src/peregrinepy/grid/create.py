@@ -11,106 +11,105 @@ This module holds functions for creating grids of various forms.
 import numpy as np
 
 
-def cubicConnectivity(blk, mbDims, blkNum, i, j, k):
+def cubicConnectivity(
+    blk, mbDims, blkNum, i, j, k, periodicI=False, periodicJ=False, periodicK=False
+):
 
     # i faces
-    if i == 0 and mbDims[0] != 1:
-        face = blk.getFace(1)
-        face.bcType = "adiabaticNoSlipWall"
-        face.neighbor = None
-        face.orientation = None
-
-        face = blk.getFace(2)
-        face.bcType = "b0"
-        face.neighbor = blkNum + 1
-        face.orientation = "123"
-
-    elif i == mbDims[0] - 1 and mbDims[0] != 1:
-        face = blk.getFace(1)
-        face.bcType = "b0"
-        face.neighbor = blkNum - 1
-        face.orientation = "123"
-
-        face = blk.getFace(2)
-        face.bcType = "adiabaticNoSlipWall"
-        face.neighbor = None
-        face.orientation = None
-
-    elif mbDims[0] != 1:
-        face = blk.getFace(1)
+    # face 1
+    face = blk.getFace(1)
+    if i == 0:
+        if periodicI:
+            face.bcType = "periodicTransLow"
+            face.neighbor = blkNum + (mbDims[0] - 1)
+            face.orientation = "123"
+        else:
+            face.bcType = "adiabaticNoSlipWall"
+            face.neighbor = None
+            face.orientation = None
+    else:
         face.bcType = "b0"
         face.neighbor = blkNum - 1
         face.orientation = "123"
 
-        face = blk.getFace(2)
+    # face 2
+    face = blk.getFace(2)
+    if i == mbDims[0] - 1:
+        if periodicI:
+            face.bcType = "periodicTransHigh"
+            face.neighbor = blkNum - (mbDims[0] - 1)
+            face.orientation = "123"
+        else:
+            face.bcType = "adiabaticNoSlipWall"
+            face.neighbor = None
+            face.orientation = None
+    else:
         face.bcType = "b0"
         face.neighbor = blkNum + 1
         face.orientation = "123"
 
     # j faces
-    if j == 0 and mbDims[1] != 1:
-        face = blk.getFace(3)
-        face.bcType = "adiabaticNoSlipWall"
-        face.neighbor = None
-        face.orientation = None
-
-        face = blk.getFace(4)
-        face.bcType = "b0"
-        face.neighbor = blkNum + mbDims[0]
-        face.orientation = "123"
-
-    elif j == mbDims[1] - 1 and mbDims[1] != 1:
-        face = blk.getFace(3)
-        face.bcType = "b0"
-        face.neighbor = blkNum - mbDims[0]
-        face.orientation = "123"
-
-        face = blk.getFace(4)
-        face.bcType = "adiabaticNoSlipWall"
-        face.neighbor = None
-        face.orientation = None
-
-    elif mbDims[1] != 1:
-        face = blk.getFace(3)
+    # face 3
+    face = blk.getFace(3)
+    if j == 0:
+        if periodicJ:
+            face.bcType = "periodicTransLow"
+            face.neighbor = blkNum + mbDims[0] * (mbDims[1] - 1)
+            face.orientation = "123"
+        else:
+            face.bcType = "adiabaticNoSlipWall"
+            face.neighbor = None
+            face.orientation = None
+    else:
         face.bcType = "b0"
         face.neighbor = blkNum - mbDims[0]
         face.orientation = "123"
 
-        face = blk.getFace(4)
+    # face 4
+    face = blk.getFace(4)
+    if j == mbDims[1] - 1:
+        if periodicJ:
+            face.bcType = "periodicTransHigh"
+            face.neighbor = blkNum - mbDims[0] * (mbDims[1] - 1)
+            face.orientation = "123"
+        else:
+            face.bcType = "adiabaticNoSlipWall"
+            face.neighbor = None
+            face.orientation = None
+    else:
         face.bcType = "b0"
         face.neighbor = blkNum + mbDims[0]
         face.orientation = "123"
 
     # k faces
-    if k == 0 and mbDims[2] != 1:
-        face = blk.getFace(5)
-        face.bcType = "adiabaticNoSlipWall"
-        face.neighbor = None
-        face.orientation = None
-
-        face = blk.getFace(6)
-        face.bcType = "b0"
-        face.neighbor = blkNum + mbDims[0] * mbDims[1]
-        face.orientation = "123"
-
-    elif k == mbDims[2] - 1 and mbDims[2] != 1:
-        face = blk.getFace(5)
-        face.bcType = "b0"
-        face.neighbor = blkNum - mbDims[0] * mbDims[1]
-        face.orientation = "123"
-
-        face = blk.getFace(6)
-        face.bcType = "adiabaticNoSlipWall"
-        face.neighbor = None
-        face.orientation = None
-
-    elif mbDims[2] != 1:
-        face = blk.getFace(5)
+    # face 5
+    face = blk.getFace(5)
+    if k == 0:
+        if periodicK:
+            face.bcType = "periodicTransLow"
+            face.neighbor = blkNum + mbDims[0] * mbDims[1] * (mbDims[2] - 1)
+            face.orientation = "123"
+        else:
+            face.bcType = "adiabaticNoSlipWall"
+            face.neighbor = None
+            face.orientation = None
+    else:
         face.bcType = "b0"
         face.neighbor = blkNum - mbDims[0] * mbDims[1]
         face.orientation = "123"
 
-        face = blk.getFace(6)
+    # face 6
+    face = blk.getFace(6)
+    if k == mbDims[2] - 1:
+        if periodicK:
+            face.bcType = "periodicTransHigh"
+            face.neighbor = blkNum - mbDims[0] * mbDims[1] * (mbDims[2] - 1)
+            face.orientation = "123"
+        else:
+            face.bcType = "adiabaticNoSlipWall"
+            face.neighbor = None
+            face.orientation = None
+    else:
         face.bcType = "b0"
         face.neighbor = blkNum + mbDims[0] * mbDims[1]
         face.orientation = "123"
@@ -174,6 +173,7 @@ def multiBlockCube(
     lengths=[1, 1, 1],
     mbDims=[1, 1, 1],
     dimsPerBlock=[10, 10, 10],
+    periodic=[False, False, False],
 ):
 
     """Function to populate the coordinate arrays of a peregrinepy.multiBlock.grid (or one of its descendants) in the shape of a cube
@@ -197,6 +197,9 @@ def multiBlockCube(
 
     dimsPerBlock : list, tuple
        List/tuple of length 3 containing discretization (nx,nj,nk) in each dimension of each block to be created.
+
+    periodic: list[bool]
+       Whether any of the axes are periodic [I,J,K]
 
     Returns
     -------
@@ -237,7 +240,27 @@ def multiBlockCube(
                 cube(blk, origin, lengths, dimensions)
 
                 # Update connectivity
-                cubicConnectivity(blk, mbDims, blkNum, i, j, k)
+                cubicConnectivity(
+                    blk, mbDims, blkNum, i, j, k, periodic[0], periodic[1], periodic[2]
+                )
+
+                # Set the peiodic info
+                for face in blk.faces:
+                    if face.bcType.startswith("periodicTrans") and face.nface in [1, 2]:
+                        face.periodicSpan = lengths[0]
+                        face.periodicAxis = np.array([1.0, 0.0, 0.0])
+                    elif face.bcType.startswith("periodicTrans") and face.nface in [
+                        3,
+                        4,
+                    ]:
+                        face.periodicSpan = lengths[1]
+                        face.periodicAxis = np.array([0.0, 1.0, 0.0])
+                    elif face.bcType.startswith("periodicTrans") and face.nface in [
+                        5,
+                        6,
+                    ]:
+                        face.periodicSpan = lengths[2]
+                        face.periodicAxis = np.array([0.0, 0.0, 1.0])
 
     for blk in mb:
         if blk.blockType == "solver" and blk._isInitialized:
@@ -246,8 +269,6 @@ def multiBlockCube(
 
 
 def annulus(blk, p1, p2, p3, sweep, thickness, dimensions):
-
-    raise ValueError("The annulus is jacked, needs to be updated.")
 
     """Function to populate the coordinate arrays of a provided peregrinepy.grid.grid_block in the shape of an annulus with prescribed location, extents, and discretization.
     If the input multiBlock object is a restart block the shape and size of the flow data arrays are also updated.
@@ -293,11 +314,11 @@ def annulus(blk, p1, p2, p3, sweep, thickness, dimensions):
 
     """
 
-    p1 = np.array(p1)
+    p1 = np.array([0.0, 0.0, 0.0])  # All periodic axes go through origin!!!
     p2 = np.array(p2)
     p3 = np.array(p3)
 
-    if np.dot(p2 - p1, p3 - p1) != 0.0:
+    if np.abs(np.dot(p2 - p1, p3 - p1)) > 1e-7:
         raise ValueError("Error: The line (p1,p2) is not orthogonal to (p1,p3)")
 
     if abs(sweep) < -360 or abs(sweep) > 360.0:
@@ -306,10 +327,20 @@ def annulus(blk, p1, p2, p3, sweep, thickness, dimensions):
     n12 = (p2 - p1) / np.linalg.norm(p2 - p1)
     n13 = (p3 - p1) / np.linalg.norm(p3 - p1)
 
-    shape = (blk.ni + 2, blk.nj + 2, blk.nk + 2)
-    blk.array["x"] = np.zeros(shape)
-    blk.array["y"] = np.zeros(shape)
-    blk.array["z"] = np.zeros(shape)
+    blk.ni = dimensions[0]
+    blk.nj = dimensions[1]
+    blk.nk = dimensions[2]
+    if blk.blockType == "solver":
+        ng = blk.ng
+    else:
+        ng = 0
+
+    blk.initGridArrays()
+
+    if blk.blockType == "solver":
+        s_i = np.s_[ng:-ng, ng:-ng, ng:-ng]
+    else:
+        s_i = np.s_[:, :, :]
 
     dx = np.linalg.norm(p2 - p1) / (blk.ni - 1)
     dr = thickness / (blk.nj - 1)
@@ -319,17 +350,17 @@ def annulus(blk, p1, p2, p3, sweep, thickness, dimensions):
         for i in range(blk.ni):
             p_ij = np.append(p3 + dx * i * n12 + dr * j * n13, 1)
 
-            blk.array["x"][i, j, 0] = p_ij[0]
-            blk.array["y"][i, j, 0] = p_ij[1]
-            blk.array["z"][i, j, 0] = p_ij[2]
+            blk.array["x"][s_i][i, j, 0] = p_ij[0]
+            blk.array["y"][s_i][i, j, 0] = p_ij[1]
+            blk.array["z"][s_i][i, j, 0] = p_ij[2]
 
-    xflat = np.reshape(blk.array["x"][:, :, 0], (blk.ni * blk.nj, 1))
-    yflat = np.reshape(blk.array["y"][:, :, 0], (blk.ni * blk.nj, 1))
-    zflat = np.reshape(blk.array["z"][:, :, 0], (blk.ni * blk.nj, 1))
+    xflat = np.reshape(blk.array["x"][s_i][:, :, 0], (blk.ni * blk.nj, 1))
+    yflat = np.reshape(blk.array["y"][s_i][:, :, 0], (blk.ni * blk.nj, 1))
+    zflat = np.reshape(blk.array["z"][s_i][:, :, 0], (blk.ni * blk.nj, 1))
 
     pts = np.hstack((xflat, yflat, zflat))
     p = pts - p1
-    shape = blk.array["x"][:, :, 0].shape
+    shape = blk.array["x"][s_i][:, :, 0].shape
     for k in range(1, blk.nk):
 
         # See http://paulbourke.net/geometry/rotate/
@@ -354,16 +385,24 @@ def annulus(blk, p1, p2, p3, sweep, thickness, dimensions):
         q[:, 1] += p1[1]
         q[:, 2] += p1[2]
 
-        blk.array["x"][:, :, k] = np.reshape(q[:, 0], shape)
-        blk.array["y"][:, :, k] = np.reshape(q[:, 1], shape)
-        blk.array["z"][:, :, k] = np.reshape(q[:, 2], shape)
+        blk.array["x"][s_i][:, :, k] = np.reshape(q[:, 0], shape)
+        blk.array["y"][s_i][:, :, k] = np.reshape(q[:, 1], shape)
+        blk.array["z"][s_i][:, :, k] = np.reshape(q[:, 2], shape)
 
 
 def multiBlockAnnulus(
-    mb, p1, p2, p3, sweep, thickness, mbDims, dimsPerBlock, periodic=False
+    mb,
+    p2=[1, 0, 0],
+    p3=[0, 1, 0],
+    sweep=45,
+    thickness=0.1,
+    mbDims=[1, 1, 1],
+    dimsPerBlock=[10, 10, 10],
+    periodic=False,
 ):
 
-    """Function to populate the coordinate arrays of a peregrinepy.multiBlock.grid (or one of its descendants) in the shape
+    """
+    Function to populate the coordinate arrays of a peregrinepy.multiBlock.grid (or one of its descendants) in the shape
        of an annulus with prescribed location, extents, and discretization split into as manj blocks as mb.nblks.
        Will also update connectivity of interblock faces. If the input multiBlock object is a restart block the shape
        and size of the flow data arrays are also updated.
@@ -373,13 +412,9 @@ def multiBlockAnnulus(
 
     mb : peregrinepy.multiBlock.grid (or one of its descendants)
 
-    p1 : list, tuple
-       List/tuple of length 3 containing the location of the origin of the annulus to be created, i.e.
-       the center of the beginning of the whole annulus.
-
     p2 : list, tuple
        List/tuple of length 3 containing the location of the end of the annulus to be created, i.e.
-       the center of the end of the the whole.
+       the axial center of the end of the the annulus.
 
     p3 : list, tuple
        List/tuple of length 3 containing the location of a point orthogonal to the line (p1,p2) marking
@@ -401,10 +436,13 @@ def multiBlockAnnulus(
        List/tuple of length 3 containing number of blocks in axial direction, radial direction, and theta direction.
        NOTE: product of mbDims must equal mb.nblks!
 
-    dimensions : list, tuple
+    dimsPerBlock : list, tuple
        List/tuple of length 3 containing discretization (ni,nj,nk) in each dimension of every block (all will be uniform). Where the "x,i,xi"
        direction is along the annulus axis, the "y,j,eta" direction is along the radial direction, and the "z,k,zeta" direction
        is along the theta direction.
+
+    periodic : bool
+       Whether domain is periodic about the rotational axis.
 
     Returns
     -------
@@ -412,7 +450,7 @@ def multiBlockAnnulus(
         Updates elements in mb
 
     """
-    p1 = np.array(p1)
+    p1 = np.array([0.0, 0.0, 0.0])  # All periodic axes go through origin!!!
     p2 = np.array(p2)
     p3 = np.array(p3)
 
@@ -421,7 +459,7 @@ def multiBlockAnnulus(
             "Error: multiBlock dimensions does not equal number of blocks!"
         )
 
-    if np.dot(p2 - p1, p3 - p1) != 0.0:
+    if np.abs(np.dot(p2 - p1, p3 - p1)) > 1e-7:
         raise ValueError("Error: The line (p1,p2) is not orthogonal to (p1,p3)")
 
     if sweep < 0.0 or sweep > 360.0:
@@ -470,10 +508,6 @@ def multiBlockAnnulus(
 
                 blkNum = k * mbDims[1] * mbDims[0] + j * mbDims[0] + i
                 blk = mb[blkNum]
-                blk.nblki = blkNum
-                blk.ni = dimsPerBlock[0]
-                blk.nj = dimsPerBlock[1]
-                blk.nk = dimsPerBlock[2]
 
                 newp1 = p1 + dx * i * n12
                 newp2 = p1 + dx * (i + 1) * n12
@@ -482,30 +516,27 @@ def multiBlockAnnulus(
                 annulus(blk, newp1, newp2, newp3, dtheta, dr, dimsPerBlock)
 
                 # Update connectivity
-                conn = blk.connectivity
-                cubicConnectivity(blk, mbDims, blkNum, i, j, k)
+                cubicConnectivity(blk, mbDims, blkNum, i, j, k, periodicK=connect)
 
-                # k faces
+                # Update the k faces if necessary
                 if connect:
-                    if k == 0:
-                        if float(sweep) == 360.0:
-                            conn["5"]["bc"] = "b0"
-                        else:
-                            conn["5"]["bc"] = "b1"
-                        conn["5"]["neighbor"] = blkNum + mbDims[0] * mbDims[1] * (
-                            mbDims[2] - 1
-                        )
-                        conn["5"]["orientation"] = "123"
 
-                    elif k == mbDims[2] - 1:
+                    if k == 0:
+                        face = blk.getFace(5)
                         if float(sweep) == 360.0:
-                            conn["6"]["bc"] = "b0"
+                            face.bcType = "b0"
                         else:
-                            conn["6"]["bc"] = "b1"
-                        conn["6"]["neighbor"] = blkNum - mbDims[0] * mbDims[1] * (
-                            mbDims[2] - 1
-                        )
-                        conn["6"]["orientation"] = "123"
+                            face.bcType = "periodicRotLow"
+                            face.periodicSpan = sweep
+                            face.periodicAxis = n12
+                    if k == mbDims[2] - 1:
+                        face = blk.getFace(6)
+                        if float(sweep) == 360.0:
+                            face.bcType = "b0"
+                        else:
+                            face.bcType = "periodicRotHigh"
+                            face.periodicSpan = sweep
+                            face.periodicAxis = n12
 
     for blk in mb:
         if blk.blockType == "solver" and blk._isInitialized:

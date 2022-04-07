@@ -1,5 +1,3 @@
-from mpi4py.MPI import DOUBLE as MPIDOUBLE
-from mpi4py.MPI import Request
 from .. import mpiComm
 
 
@@ -13,62 +11,41 @@ def unifySolverGrid(mb):
     for _ in range(3):
         mpiComm.communicate(mb, ["x", "y", "z"])
 
-    comm, rank, size = mpiComm.mpiUtils.getCommRankSize()
+    # Device is up to date after communicate, so pull back down
+    for blk in mb:
+        blk.updateHostView(["x", "y", "z"])
 
-    for var in ["x", "y", "z"]:
-        for blk in mb:
-            # Need to update host data
-            blk.updateHostView(var)
-        for _ in range(3):
-            reqs = []
-            # Post non-blocking recieves
-            for blk in mb:
-                for face in blk.faces:
-                    bc = face.bcType
-                    if bc != "b1":
-                        continue
+    for blk in mb:
+        for face in blk.faces:
+            bc = face.bcType
+            if not bc.startswith("periodic"):
+                continue
+            for i, s0 in enumerate(face.s0_):
+                x = blk.array["x"][s0]
+                y = blk.array["y"][s0]
+                z = blk.array["z"][s0]
 
-                    ssize = face.array["recvBuffer3"].size
-                    reqs.append(
-                        comm.Irecv(
-                            [face.array["recvBuffer3"][:], ssize, MPIDOUBLE],
-                            source=face.commRank,
-                            tag=face.tagR,
-                        )
-                    )
+                # Translate periodics
+                if face.bcType == "periodicTransLow":
+                    x[:] -= face.periodicAxis[0] * face.periodicSpan
+                    y[:] -= face.periodicAxis[1] * face.periodicSpan
+                    z[:] -= face.periodicAxis[2] * face.periodicSpan
+                elif face.bcType == "periodicTransHigh":
+                    x[:] += face.periodicAxis[0] * face.periodicSpan
+                    y[:] += face.periodicAxis[1] * face.periodicSpan
+                    z[:] += face.periodicAxis[2] * face.periodicSpan
+                elif face.bcType.startswith("periodicRot"):
+                    if face.bcType == "periodicRotLow":
+                        rotM = face.array["periodicRotMatrixDown"]
+                    elif face.bcType == "periodicRotHigh":
+                        rotM = face.array["periodicRotMatrixUp"]
+                    tempx = rotM[0, 0] * x[:] + rotM[0, 1] * y[:] + rotM[0, 2] * z[:]
+                    tempy = rotM[1, 0] * x[:] + rotM[1, 1] * y[:] + rotM[1, 2] * z[:]
+                    tempz = rotM[2, 0] * x[:] + rotM[2, 1] * y[:] + rotM[2, 2] * z[:]
+                    x[:] = tempx[:]
+                    y[:] = tempy[:]
+                    z[:] = tempz[:]
 
-            # Post non-blocking sends
-            for blk in mb:
-                for face in blk.faces:
-                    bc = face.bcType
-                    if bc != "b1":
-                        continue
-                    for i, sS in enumerate(face.sliceS3):
-                        face.array["sendBuffer3"][i] = face.orient(
-                            blk.array[var][sS] - blk.array[var][face.s1_]
-                        )
-                    ssize = face.array["sendBuffer3"].size
-                    comm.Send(
-                        [face.array["sendBuffer3"], ssize, MPIDOUBLE],
-                        dest=face.commRank,
-                        tag=face.tagS,
-                    )
-
-            # wait and assign
-            reqs = iter(reqs)
-            for blk in mb:
-                for face in blk.faces:
-                    bc = face.bcType
-                    if bc != "b1":
-                        continue
-                    Request.Wait(reqs.__next__())
-                    for i, sR in enumerate(face.sliceR3):
-                        blk.array[var][sR] = (
-                            blk.array[var][face.s1_] + face.array["recvBuffer3"][i]
-                        )
-
-            comm.Barrier()
-
-        for blk in mb:
-            # Push back up the device
-            blk.updateDeviceView(var)
+    # Push back up the device
+    for blk in mb:
+        blk.updateDeviceView(["x", "y", "z"])

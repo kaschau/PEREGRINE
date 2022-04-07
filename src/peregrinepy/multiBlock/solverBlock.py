@@ -240,8 +240,8 @@ class solverBlock(restartBlock, block_):
         for face in self.faces:
             if face.neighbor is None:
                 continue
-            face.setOrientFunc(self.ni, self.nj, self.nk, self.ne)
-            face.setCommBuffers(self.ni, self.nj, self.nk, self.ne, self.nblki)
+            face._setOrientFunc(self.ni, self.nj, self.nk, self.ne)
+            face._setCommBuffers(self.ni, self.nj, self.nk, self.ne, self.nblki)
 
     def updateDeviceView(self, vars):
         if type(vars) == str:

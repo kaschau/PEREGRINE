@@ -102,9 +102,9 @@ else:
 # Read in bcFam.yaml file so we know what the bcType is for each label.
 with open(args.bcFam, "r") as f:
     bcFamDict = yaml.load(f, Loader=yaml.FullLoader)
+
 gpSurfaceToPgBcType = {
     "pdc:INTERBLK": "b0",
-    "pdc:PERIODIC": "b1",
     "pdc:WALL": "adiabaticNoSlipWall",
     "pdc:user8": "adiabaticSlipWall",
 }
@@ -182,12 +182,24 @@ for i in range(nblks):
     pgConns.append(line[2:-1])
 
 mb = mbg(nblks)
+gridIsPeriodic = False
 for temp, blk in zip(pgConns, mb):
     for face in blk.faces:
         faceData = temp[(int(face.nface) - 1) * 4 : (int(face.nface) - 1) * 4 + 4]
+        # Set the named BCs in the bcFam.yaml
         if faceData[0] in bcFamDict:
             face.bcFam = f"{faceData[0]}"
             face.bcType = bcFamDict[faceData[0]]["bcType"]
+        # Need to treat periodics
+        elif faceData[0] == "PERIODIC":
+            gridIsPeriodic = True
+            # get the periodic from bcFam
+            key = [key for key in bcFamDict.keys() if key.startswith("periodic")][0]
+            face.bcFam = key
+            # We will set High/Low bcType after we have all the point data
+            face.bcType = bcFamDict[key]["bcType"] + "Low"
+            face.periodicSpan = bcFamDict[key]["bcVals"]["periodicSpan"]
+            face.periodicAxis = bcFamDict[key]["bcVals"]["periodicAxis"]
         else:
             face.bcType = f"{faceData[0]}"
             face.bcFam = None
@@ -243,6 +255,40 @@ for blk in mb:
 gpConnFile.close()
 gpPtyFile.close()
 gpBlkFile.close()
+
+# Now we go through the grid to set periodic High/Low
+if gridIsPeriodic:
+    from verifyGrid import extractFace
+
+    for blk in mb:
+        for face in blk.faces:
+            if face.bcType.startswith("periodic"):
+                myX, myY, myZ = extractFace(blk, face.nface)
+                myFaceCenter = np.array([np.mean(i) for i in (myX, myY, myZ)])
+                nBlk = mb.getBlock(face.neighbor)
+                nX, nY, nZ = extractFace(nBlk, face.neighborNface)
+                nFaceCenter = np.array([np.mean(i) for i in (nX, nY, nZ)])
+            else:
+                continue
+
+            if face.bcType == "periodicTransLow":
+                faceUp = myFaceCenter + face.periodicAxis * face.periodicSpan
+                faceDown = myFaceCenter - face.periodicAxis * face.periodicSpan
+            elif face.bcType == "periodicRotLow":
+                faceUp = np.matmul(face.periodicRotMatrixUp, myFaceCenter)
+                faceDown = np.matmul(face.periodicRotMatrixDown, myFaceCenter)
+            else:
+                raise ValueError("Didnt find either periodic Trans or Rot")
+
+            if np.allclose(faceUp, nFaceCenter):
+                # Keep the face low
+                pass
+            elif np.allclose(faceDown, nFaceCenter):
+                face.bcType = face.bcType.replace("Low", "High")
+            else:
+                raise ValueError(
+                    f"Not a periodic match between block {blk.nblki} face {face.nface} and block {nBlk.nblki} face {face.neighborNface}."
+                )
 
 if verify(mb):
     pass

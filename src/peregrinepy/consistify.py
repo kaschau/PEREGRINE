@@ -27,7 +27,6 @@ def consistify(mb):
         # Update spatial derivatives
         mb.dqdxyz(blk)
 
-        # TODO: can we get rid of this if check?
         if mb.config["RHS"]["diffusion"]:
             # Apply viscous boundary conditions
             for face in blk.faces:

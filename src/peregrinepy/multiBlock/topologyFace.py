@@ -11,6 +11,9 @@ class topologyFace:
         self._neighbor = None
         self._orientation = None
 
+        self.periodicSpan = None
+        self._periodicAxis = None
+
     @property
     def nface(self):
         return self._nface
@@ -44,7 +47,10 @@ class topologyFace:
         validBcTypes = (
             # Interior, periodic
             "b0",
-            "b1",
+            "periodicTransLow",
+            "periodicTransHigh",
+            "periodicRotLow",
+            "periodicRotHigh",
             # Inlets
             "constantVelocitySubsonicInlet",
             "supersonicInlet",
@@ -87,6 +93,69 @@ class topologyFace:
         if tV not in (type(None), str):
             raise TypeError(f"orientation must be a str not {type(value)}.")
         self._orientation = value
+
+    # Periodic stuff
+    @property
+    def periodicAxis(self):
+        return self._periodicAxis
+
+    @periodicAxis.setter
+    def periodicAxis(self, axis):
+        import numpy as np
+
+        axis = np.array(axis)
+        axis = axis / np.linalg.norm(np.array(axis))
+        self._periodicAxis = axis
+
+        if not self.bcType.startswith("periodicRot"):
+            return
+        elif self.periodicSpan is None:
+            raise AttributeError("Must set periodicSpan before setting periodicAxis")
+
+        # Compute rotation matrix for positive and negative rotatoin
+        rotUp = np.zeros((3, 3))
+        th = self.periodicSpan * np.pi / 180.0
+        ct = np.cos(th)
+        st = np.sin(th)
+        ux, uy, uz = tuple(axis)
+        rotUp[0, 0] = ct + ux ** 2 * (1 - ct)
+        rotUp[0, 1] = ux * uy * (1 - ct) - uz * st
+        rotUp[0, 2] = ux * uz * (1 - ct) + uy * st
+
+        rotUp[1, 0] = uy * ux * (1 - ct) + uz * st
+        rotUp[1, 1] = ct + uy ** 2 * (1 - ct)
+        rotUp[1, 2] = uy * uz * (1 - ct) - ux * st
+
+        rotUp[2, 0] = uz * ux * (1 - ct) - uy * st
+        rotUp[2, 1] = uz * uy * (1 - ct) + ux * st
+        rotUp[2, 2] = ct + uz ** 2 * (1 - ct)
+
+        rotDown = np.zeros((3, 3))
+        ct = np.cos(-th)
+        st = np.sin(-th)
+        rotDown[0, 0] = ct + ux ** 2 * (1 - ct)
+        rotDown[0, 1] = ux * uy * (1 - ct) - uz * st
+        rotDown[0, 2] = ux * uz * (1 - ct) + uy * st
+
+        rotDown[1, 0] = uy * ux * (1 - ct) + uz * st
+        rotDown[1, 1] = ct + uy ** 2 * (1 - ct)
+        rotDown[1, 2] = uy * uz * (1 - ct) - ux * st
+
+        rotDown[2, 0] = uz * ux * (1 - ct) - uy * st
+        rotDown[2, 1] = uz * uy * (1 - ct) + ux * st
+        rotDown[2, 2] = ct + uz ** 2 * (1 - ct)
+
+        if self.faceType == "topology":
+            self.periodicRotMatrixUp = rotUp
+            self.periodicRotMatrixDown = rotDown
+        elif self.faceType == "solver":
+            from ..misc import createViewMirrorArray
+
+            self.array["periodicRotMatrixUp"] = rotUp
+            self.array["periodicRotMatrixDown"] = rotDown
+
+            createViewMirrorArray(self, "periodicRotMatrixUp", (3, 3))
+            createViewMirrorArray(self, "periodicRotMatrixDown", (3, 3))
 
     @property
     def neighborNface(self):

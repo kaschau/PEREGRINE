@@ -91,7 +91,7 @@ void constantPressureSubsonicExit(block_ b,
       threeDsubview dqdz0 = getHaloSlice(b.dqdz, face._nface, s0);
 
       Kokkos::parallel_for(
-          "Constant pressure subsonic exit euler terms", range_face,
+          "Constant pressure subsonic exit viscous terms", range_face,
           KOKKOS_LAMBDA(const int i, const int j, const int l) {
             // neumann all gradients
             dqdx0(i, j, l) = dqdx1(i, j, l);

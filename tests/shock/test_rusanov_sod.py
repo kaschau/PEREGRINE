@@ -1,10 +1,8 @@
 import peregrinepy as pg
 import numpy as np
 from pathlib import Path
-from pytest_easyMPI import mpi_parallel
 
 
-@mpi_parallel(1)
 def test_rusanov_sod(my_setup):
 
     # Left State

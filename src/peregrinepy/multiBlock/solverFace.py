@@ -59,6 +59,8 @@ class solverFace(topologyFace, face_):
                 "tempRecvBuffer4": None,
                 "qBcVals": None,
                 "QBcVals": None,
+                "periodicRotMatrixUp": None,
+                "periodicRotMatrixDown": None,
             }
         )
         self.mirror = frozenDict(
@@ -71,6 +73,8 @@ class solverFace(topologyFace, face_):
                 "tempRecvBuffer4": None,
                 "qBcVals": None,
                 "QBcVals": None,
+                "periodicRotMatrixUp": None,
+                "periodicRotMatrixDown": None,
             }
         )
         # Boundary function
@@ -91,15 +95,15 @@ class solverFace(topologyFace, face_):
     @topologyFace.bcType.setter
     def bcType(self, value):
         super(solverFace, type(self)).bcType.fset(self, value)
-        self.setBcFunc()
+        self._setBcFunc()
 
-    def setBcFunc(self):
+    def _setBcFunc(self):
 
         bcType = self.bcType
-        if bcType in ["b0", "b1"]:
+        if bcType == "b0" or bcType.startswith("periodicTrans"):
             self.bcFunc = null
         else:
-            for bcmodule in [bcs.inlets, bcs.exits, bcs.walls]:
+            for bcmodule in [bcs.inlets, bcs.exits, bcs.walls, bcs.periodics]:
                 try:
                     self.bcFunc = getattr(bcmodule, bcType)
                     break
@@ -108,7 +112,7 @@ class solverFace(topologyFace, face_):
             else:
                 raise KeyError(f"{bcType} is not a valid bcType")
 
-    def setCommBuffers(self, ni, nj, nk, ne, nblki):
+    def _setCommBuffers(self, ni, nj, nk, ne, nblki):
         assert (
             self.orient is not None
         ), "Must set orientFunc before commBuffers, or perhaps you are trying to set buffers for a non communication face."
@@ -236,7 +240,7 @@ class solverFace(topologyFace, face_):
         self.tagR = int(nblki * 6 + self.nface)
         self.tagS = int(self.neighbor * 6 + self.neighborNface)
 
-    def setOrientFunc(self, ni, nj, nk, ne):
+    def _setOrientFunc(self, ni, nj, nk, ne):
         assert 0 not in [
             ni,
             nj,
