@@ -5,6 +5,7 @@ MPI ranks.
 
 """
 
+import matplotlib.pyplot as plt
 import numpy as np
 import peregrinepy as pg
 
@@ -17,7 +18,7 @@ def getSortedBlockSizes(mb):
         nblkis[i] = blk.nblki
 
     perm = sizes.argsort()
-    return sizes[perm], nblkis[perm]
+    return list(sizes[perm]), list(nblkis[perm])
 
 
 def analyzeLoad(procSizes, procGroups):
@@ -59,9 +60,8 @@ def allBlocksAssigned(mb, procGroups):
 
 
 if __name__ == "__main__":
-    import os
-
     import argparse
+    import os
 
     parser = argparse.ArgumentParser(
         description="Create blocksForProcs.txt file",
@@ -82,7 +82,7 @@ if __name__ == "__main__":
         "--minimizeProcessors",
         action="store_true",
         dest="minProcs",
-        default=True,
+        default=False,
         help="Attempt to minimize the number or required processors",
     )
     parser.add_argument(
@@ -90,6 +90,7 @@ if __name__ == "__main__":
         "--minimizeBlocksPerProc",
         action="store_true",
         dest="minBlksPerProc",
+        default=False,
         help="Attampt to minimize the maximum number of blocks in on an individual processor",
     )
     parser.add_argument(
@@ -100,6 +101,14 @@ if __name__ == "__main__":
         help="Maximum allowable blocks per processor",
         type=float,
     )
+    parser.add_argument(
+        "-numProcs",
+        "--numberOfProcs",
+        dest="numProcs",
+        help="Number of processors (groups) used",
+        default=0,
+        type=int,
+    )
 
     args = parser.parse_args()
 
@@ -107,21 +116,24 @@ if __name__ == "__main__":
     minProcs = args.minProcs
     minBlksPerProc = args.minBlksPerProc
     blksPerProcLimit = args.blksPerProcLimit
+    numProcs = args.numProcs
 
     nblks = len([f for f in os.listdir(f"{fromDir}") if f.endswith(".h5")])
     mb = pg.multiBlock.grid(nblks)
     pg.readers.readGrid(mb, fromDir)
 
-    sizes, nblkis = getSortedBlockSizes(mb)
+    sizesS_L, nblkisS_L = getSortedBlockSizes(mb)
+    sizesL_S = sizesS_L[::-1]
+    nblkisL_S = nblkisS_L[::-1]
 
-    maxSize = np.max(sizes)
+    maxSize = np.max(sizesS_L)
     procGroups = []
     procLoad = []
 
     if minProcs:
         currentProc = []
         currentSize = 0
-        for size, nblki in zip(sizes, nblkis):
+        for size, nblki in zip(sizesS_L, nblkisS_L):
             if currentProc == []:
                 currentProc.append(nblki)
                 currentSize += size
@@ -143,25 +155,50 @@ if __name__ == "__main__":
         remainingIndex = [i for i in range(nblks)]
         while len(remainingIndex) > 0:
             largeIndex = remainingIndex[-1]
-            currentSize = sizes[largeIndex]
-            currentProc = [nblkis[largeIndex]]
+            currentSize = sizesS_L[largeIndex]
+            currentProc = [nblkisS_L[largeIndex]]
             remainingIndex.pop()
 
             while currentSize <= maxSize and len(remainingIndex) > 1:
                 smallIndex = remainingIndex[0]
-                smallSize = sizes[smallIndex]
+                smallSize = sizesS_L[smallIndex]
                 if (
                     currentSize + smallSize > maxSize
                     or len(currentProc) == blksPerProcLimit
                 ):
                     break
                 else:
-                    currentProc.append(nblkis[smallIndex])
+                    currentProc.append(nblkisS_L[smallIndex])
                     currentSize += smallSize
                     remainingIndex.pop(0)
 
             procGroups.append(currentProc)
             procLoad.append(currentSize)
+    elif numProcs > 0:
+        procGroups = [[i] for i in nblkisL_S[0:numProcs]]
+        procLoad = [i for i in sizesL_S[0:numProcs]]
+        tbaProcs = nblkisL_S[numProcs::]
+        tbaLoads = sizesL_S[numProcs::]
+
+        traverse = 1
+        while len(tbaProcs) > 0:
+            assignProc = tbaProcs[0]
+            assignSize = tbaLoads[0]
+
+            for i, group in enumerate(procGroups[1::]):
+                if procLoad[i + 1] + assignSize < procLoad[0]:
+                    group.append(assignProc)
+                    procLoad[i + 1] += assignSize
+                    break
+                else:
+                    pass
+            else:
+                print(procLoad[0], assignSize, procLoad[-1])
+                procGroups[0].append(assignProc)
+                procLoad[0] += assignSize
+
+            tbaProcs.pop(0)
+            tbaLoads.pop(0)
 
     assert allBlocksAssigned(mb, procGroups)
     efficiency, maxBlksForProcs = analyzeLoad(procLoad, procGroups)
@@ -180,3 +217,9 @@ if __name__ == "__main__":
         f"Maximum blocks on processor = {maxBlksForProcs}\n",
         f"Eficiency = {efficiency}\n",
     )
+
+    plt.plot(procLoad)
+    plt.ylim([0, max(procLoad) * 1.1])
+    plt.xlabel("Processor")
+    plt.ylabel("Load (ncells)")
+    plt.show()
