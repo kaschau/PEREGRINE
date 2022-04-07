@@ -23,12 +23,10 @@ pytestmark = pytest.mark.parametrize(
 class TestPeriodics:
     @classmethod
     def setup_class(self):
-        # MPI.Init()
         pass
 
     @classmethod
     def teardown_class(self):
-        # MPI.Finalize()
         pass
 
     def test_rotationalPeriodics(self, my_setup, adv, spdata):
@@ -91,6 +89,8 @@ class TestPeriodics:
         mb.eos(blk, mb.thtrdat, 0, "prims")
         pg.consistify(mb)
 
+        blk.updateHostView(["q", "dqdx", "dqdy", "dqdz"])
+
         u = blk.array["q"][:, :, :, 1]
         v = blk.array["q"][:, :, :, 2]
         w = blk.array["q"][:, :, :, 3]
@@ -119,8 +119,6 @@ class TestPeriodics:
             )
             velo6 = np.column_stack((u[s6c].ravel(), v[s6c].ravel(), w[s6c].ravel()))
 
-            # dot the velocities with the face normals kills two birds with one stone
-            # check that velo and gradients are rotated correctly and also halo
             assert np.allclose(
                 np.sum(normals5 * velo5, axis=1), np.sum(normals6 * velo6, axis=1)
             )
@@ -144,4 +142,43 @@ class TestPeriodics:
                 )
                 assert np.allclose(
                     np.sum(normals5 * dqdx5, axis=1), np.sum(normals6 * dqdx6, axis=1)
+                )
+
+            # Now check the other way
+            # face6 halo compares to interior on side 5
+            s6 = np.s_[:, :, -(g + 1)]
+            s5c = np.s_[:, :, 2 * ng - g - 1]
+            s5f = np.s_[:, :, 2 * ng - g]
+
+            normals6 = np.column_stack((nx[s6].ravel(), ny[s6].ravel(), nz[s6].ravel()))
+            velo6 = np.column_stack((u[s6].ravel(), v[s6].ravel(), w[s6].ravel()))
+
+            normals5 = np.column_stack(
+                (nx[s5f].ravel(), ny[s5f].ravel(), nz[s5f].ravel())
+            )
+            velo5 = np.column_stack((u[s5c].ravel(), v[s5c].ravel(), w[s5c].ravel()))
+
+            assert np.allclose(
+                np.sum(normals6 * velo6, axis=1), np.sum(normals5 * velo5, axis=1)
+            )
+
+            # check the gradients
+            for i in range(blk.ne):
+                dqdx6 = np.column_stack(
+                    (
+                        dqdx[s6][:, :, i].ravel(),
+                        dqdy[s6][:, :, i].ravel(),
+                        dqdz[s6][:, :, i].ravel(),
+                    )
+                )
+
+                dqdx5 = np.column_stack(
+                    (
+                        dqdx[s5c][:, :, i].ravel(),
+                        dqdy[s5c][:, :, i].ravel(),
+                        dqdz[s5c][:, :, i].ravel(),
+                    )
+                )
+                assert np.allclose(
+                    np.sum(normals6 * dqdx6, axis=1), np.sum(normals5 * dqdx5, axis=1)
                 )

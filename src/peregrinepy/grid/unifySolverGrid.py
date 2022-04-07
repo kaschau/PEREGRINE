@@ -11,6 +11,10 @@ def unifySolverGrid(mb):
     for _ in range(3):
         mpiComm.communicate(mb, ["x", "y", "z"])
 
+    # Device is up to date after communicate, so pull back down
+    for blk in mb:
+        blk.updateHostView(["x", "y", "z"])
+
     for blk in mb:
         for face in blk.faces:
             bc = face.bcType
@@ -42,6 +46,6 @@ def unifySolverGrid(mb):
                     y[:] = tempy[:]
                     z[:] = tempz[:]
 
+    # Push back up the device
     for blk in mb:
-        # Push back up the device
         blk.updateDeviceView(["x", "y", "z"])
