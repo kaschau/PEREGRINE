@@ -9,8 +9,8 @@ from mpi4py import MPI
 
 @pytest.fixture(scope="session")
 def my_setup(request):
-    kokkos.initialize()
     MPI.Init()
+    kokkos.initialize()
 
     def fin():
         kokkos.finalize()
