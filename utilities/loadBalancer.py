@@ -218,8 +218,9 @@ if __name__ == "__main__":
         f"Eficiency = {efficiency}\n",
     )
 
-    plt.plot(procLoad)
-    plt.ylim([0, max(procLoad) * 1.1])
-    plt.xlabel("Processor")
-    plt.ylabel("Load (ncells)")
-    plt.show()
+    if os.name == "posix" and "DISPLAY" in os.environ:
+        plt.plot(procLoad)
+        plt.ylim([0, max(procLoad) * 1.1])
+        plt.xlabel("Processor")
+        plt.ylabel("Load (ncells)")
+        plt.show()
