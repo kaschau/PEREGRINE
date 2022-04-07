@@ -57,11 +57,11 @@ pytestmark = pytest.mark.parametrize(
 class TestOrientation:
     @classmethod
     def setup_class(self):
-        MPI.Init()
+        pass
 
     @classmethod
     def teardown_class(self):
-        MPI.Finalize()
+        pass
 
     ##############################################
     # Test for all positive i aligned orientations
