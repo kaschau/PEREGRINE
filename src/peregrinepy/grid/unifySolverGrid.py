@@ -16,10 +16,10 @@ def unifySolverGrid(mb):
             bc = face.bcType
             if not bc.startswith("periodic"):
                 continue
-            for i, sR in enumerate(face.sliceR3):
-                x = blk.array["x"][sR]
-                y = blk.array["y"][sR]
-                z = blk.array["z"][sR]
+            for i, s0 in enumerate(face.s0_):
+                x = blk.array["x"][s0]
+                y = blk.array["y"][s0]
+                z = blk.array["z"][s0]
 
                 # Translate periodics
                 if face.bcType == "periodicTransLow":
