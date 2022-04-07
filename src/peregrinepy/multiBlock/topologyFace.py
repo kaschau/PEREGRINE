@@ -103,13 +103,14 @@ class topologyFace:
     def periodicAxis(self, axis):
         import numpy as np
 
+        axis = np.array(axis)
         axis = axis / np.linalg.norm(np.array(axis))
         self._periodicAxis = axis
 
         if not self.bcType.startswith("periodicRot"):
             return
         elif self.periodicSpan is None:
-            raise AttributeError("Please set periodicSpan before setting periodicAxis")
+            raise AttributeError("Must set periodicSpan before setting periodicAxis")
 
         # Compute rotation matrix for positive and negative rotatoin
         rotUp = np.zeros((3, 3))
@@ -118,7 +119,7 @@ class topologyFace:
         st = np.sin(th)
         ux, uy, uz = tuple(axis)
         rotUp[0, 0] = ct + ux ** 2 * (1 - ct)
-        rotUp[0, 1] = ux * uy * (1 - ct) * uz * st
+        rotUp[0, 1] = ux * uy * (1 - ct) - uz * st
         rotUp[0, 2] = ux * uz * (1 - ct) + uy * st
 
         rotUp[1, 0] = uy * ux * (1 - ct) + uz * st
@@ -132,9 +133,8 @@ class topologyFace:
         rotDown = np.zeros((3, 3))
         ct = np.cos(-th)
         st = np.sin(-th)
-        ux, uy, uz = tuple(axis)
         rotDown[0, 0] = ct + ux ** 2 * (1 - ct)
-        rotDown[0, 1] = ux * uy * (1 - ct) * uz * st
+        rotDown[0, 1] = ux * uy * (1 - ct) - uz * st
         rotDown[0, 2] = ux * uz * (1 - ct) + uy * st
 
         rotDown[1, 0] = uy * ux * (1 - ct) + uz * st
