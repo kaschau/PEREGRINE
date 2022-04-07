@@ -33,6 +33,7 @@ def simulate():
         mbDims=[1, 1, 1],
         dimsPerBlock=[NE, NN, NX],
         lengths=[2 * np.pi for _ in range(3)],
+        periodic=[True, True, True],
     )
 
     mb.initSolverArrays(config)
@@ -41,13 +42,7 @@ def simulate():
     ng = blk.ng
 
     for face in blk.faces:
-        face.bcType = "b1"
-        face.neighbor = 0
-        face.orientation = "123"
         face.commRank = 0
-    pg.writers.writeGrid(mb)
-    pg.writers.writeConnectivity(mb)
-    mb.generateHalo()
 
     mb.setBlockCommunication()
 

@@ -1,24 +1,43 @@
 #!/usr/bin/env python3
 
-"""This utility goes through a grid face by face, verifying that all the block's connectivities agree,
+"""
+This utility goes through a grid face by face,
+verifying that all the block's connectivities agree,
 and that the coordinates of matching faces are identical.
 
 Inputs are the path to the grid files, and path to the conn.inp file.
 
-It can handle b 1 periodicity in the conn.inp, however it will not compare the x,y,z coordinate locations
-of the faces.
+If you have periodicity in the grid, you must have the periodic
+information populated in the grid, i.e. periodicSpan and periodicAxis
 
 Output will print any discrepencies to the screen
 
 """
 
-import os
 import argparse
-import peregrinepy as pg
+import os
+
 import numpy as np
+import peregrinepy as pg
 
 
-def verify(mb):
+faceToOrientIndexMapping = {
+    1: 0,
+    2: 0,
+    3: 1,
+    4: 1,
+    5: 2,
+    6: 2,
+}
+
+largeIndexMapping = {0: "k", 1: "k", 2: "j"}
+needToTranspose = {
+    "k": {"k": [1, 2, 4, 5], "j": [1, 4]},
+    "j": {"k": [1, 2, 4, 5], "j": [1, 4]},
+}
+
+
+def extractFace(blk, nface):
 
     faceSliceMapping = {
         1: {"i": 0, "j": slice(None), "k": slice(None)},
@@ -29,46 +48,16 @@ def verify(mb):
         6: {"i": slice(None), "j": slice(None), "k": -1},
     }
 
-    faceToOrientIndexMapping = {
-        1: 0,
-        2: 0,
-        3: 1,
-        4: 1,
-        5: 2,
-        6: 2,
-    }
-    orientToSmallFaceMapping = {
-        1: 2,
-        2: 4,
-        3: 6,
-        4: 1,
-        5: 3,
-        6: 5,
-    }
-    orientToLargeFaceMapping = {
-        1: 1,
-        2: 3,
-        3: 5,
-        4: 2,
-        5: 4,
-        6: 6,
-    }
+    face_i = faceSliceMapping[nface]
 
-    largeIndexMapping = {0: "k", 1: "k", 2: "j"}
-    needToTranspose = {
-        "k": {"k": [1, 2, 4, 5], "j": [1, 4]},
-        "j": {"k": [1, 2, 4, 5], "j": [1, 4]},
-    }
+    x = blk.array["x"][face_i["i"], face_i["j"], face_i["k"]]
+    y = blk.array["y"][face_i["i"], face_i["j"], face_i["k"]]
+    z = blk.array["z"][face_i["i"], face_i["j"], face_i["k"]]
 
-    def extractFace(blk, nface):
+    return x, y, z
 
-        face_i = faceSliceMapping[nface]
 
-        x = blk.array["x"][face_i["i"], face_i["j"], face_i["k"]]
-        y = blk.array["y"][face_i["i"], face_i["j"], face_i["k"]]
-        z = blk.array["z"][face_i["i"], face_i["j"], face_i["k"]]
-
-        return x, y, z
+def verify(mb):
 
     warn = False
     for blk in mb:
@@ -80,10 +69,6 @@ def verify(mb):
 
             if neighbor is None:
                 continue
-            if bc == "b1":
-                periodic = True
-            else:
-                periodic = False
 
             (face_x, face_y, face_z) = extractFace(blk, face.nface)
 
@@ -128,6 +113,35 @@ def verify(mb):
                 face_y = np.flip(face_y, 1)
                 face_z = np.flip(face_z, 1)
 
+            # Here we translate the coordinates to periodic face
+            if bc == "periodicTransLow":
+                face_x += face.periodicAxis[0] * face.periodicSpan
+                face_y += face.periodicAxis[1] * face.periodicSpan
+                face_z += face.periodicAxis[2] * face.periodicSpan
+            elif bc == "periodicTransHigh":
+                face_x -= face.periodicAxis[0] * face.periodicSpan
+                face_y -= face.periodicAxis[1] * face.periodicSpan
+                face_z -= face.periodicAxis[2] * face.periodicSpan
+            elif bc == "periodicRotLow":
+                shape = face_x.shape
+                points = np.column_stack(
+                    (face_x.ravel(), face_y.ravel(), face_z.ravel())
+                )
+                points = np.matmul(face.periodicRotMatrixUp, points.T).T
+                face_x = points[:, 0].reshape(shape)
+                face_y = points[:, 1].reshape(shape)
+                face_z = points[:, 2].reshape(shape)
+            elif bc == "periodicRotHigh":
+                shape = face_x.shape
+                points = np.column_stack(
+                    (face_x.ravel(), face_y.ravel(), face_z.ravel())
+                )
+                points = np.matmul(face.periodicRotMatrixDown, points.T).T
+                face_x = points[:, 0].reshape(shape)
+                face_y = points[:, 1].reshape(shape)
+                face_z = points[:, 2].reshape(shape)
+
+            # Compare the face points to the neighbor face
             try:
                 diff_x = (
                     np.mean(
@@ -158,21 +172,21 @@ def verify(mb):
                     f"Error when comparing block {blk.nblki} and block {blk2.nblki} connection"
                 )
 
-            if diff_x > 1e-06 and not periodic:
+            if diff_x > 1e-06:
                 print(
                     f"Warning, the x coordinates of face {nface} on block {blk.nblki} are not matching the x coordinates of face {nface2} of block {blk2.nblki}"
                 )
                 print(f"Off by average of {diff_x}")
                 warn = True
 
-            if diff_y > 1e-06 and not periodic:
+            if diff_y > 1e-06:
                 print(
                     f"Warning, the y coordinates of face {nface} on block {blk.nblki} are not matching the y coordinates of face {nface2} of block {blk2.nblki}"
                 )
                 print(f"Off by average of {diff_y}")
                 warn = True
 
-            if diff_z > 1e-06 and not periodic:
+            if diff_z > 1e-06:
                 print(
                     f"Warning, the z coordinates of face {nface} on block {blk.nblki} are not matching the z coordinates of face {nface2} of block {blk2.nblki}"
                 )
@@ -198,7 +212,7 @@ def verify(mb):
 
         cross = np.cross(vI, vJ)
         if np.dot(vK, cross) < 0.0:
-            print("Warning, block {blk.nbkli} is left handed. This must be fixed.")
+            print(f"Warning, block {blk.nblki} is left handed. This must be fixed.")
             warn = True
 
     if warn:
@@ -229,17 +243,31 @@ if __name__ == "__main__":
         help="Path to conn.yaml",
         type=str,
     )
+    parser.add_argument(
+        "-bcFamPath",
+        action="store",
+        metavar="<bcFamPath>",
+        dest="bcFamPath",
+        default="./",
+        help="""If your grid has periodics, we need to the periodic data from bcFams.""",
+        type=str,
+    )
 
     args = parser.parse_args()
 
     gp = args.gridPath
     cp = args.connPath
+    bcFamPath = args.bcFamPath
     nblks = len([i for i in os.listdir(gp) if i.startswith("g.") and i.endswith(".h5")])
     assert nblks > 0
     mb = pg.multiBlock.grid(nblks)
 
     pg.readers.readGrid(mb, gp)
     pg.readers.readConnectivity(mb, cp)
+    try:
+        pg.readers.readBcs(mb, bcFamPath)
+    except FileNotFoundError:
+        print("No bcFam.yaml file provided, assuming no periodics.")
 
     if verify(mb):
         print("Grid is valid!")

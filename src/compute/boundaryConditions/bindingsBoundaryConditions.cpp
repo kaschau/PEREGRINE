@@ -101,4 +101,21 @@ void bindBoundaryConditions(py::module_ &m) {
             py::arg("thtrdat_ object"),
             py::arg("terms"),
             py::arg("tme"));
+
+  //  |----> periodics.cpp
+  py::module periodics = bcs.def_submodule("periodics", "periodics boundary conditions module");
+  periodics.def("periodicRotHigh", &periodicRotHigh, "High rotational periodic face",
+            py::arg("block_ object"),
+            py::arg("face_ object"),
+            py::arg("eos pointer"),
+            py::arg("thtrdat_ object"),
+            py::arg("terms"),
+            py::arg("tme"));
+  periodics.def("periodicRotLow", &periodicRotLow, "Low rotational periodic face",
+            py::arg("block_ object"),
+            py::arg("face_ object"),
+            py::arg("eos pointer"),
+            py::arg("thtrdat_ object"),
+            py::arg("terms"),
+            py::arg("tme"));
 }

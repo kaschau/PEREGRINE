@@ -37,14 +37,15 @@ def readBcs(mb, pathToFile):
             print("No bcFams.yaml found, assuming all defaults.")
         return
 
+    warn = []
     for blk in mb:
         for face in blk.faces:
             bcFam = face.bcFam
             bcType = face.bcType
+            # Not all bc types need inputs from bcFam, so we check here
             if bcFam is None:
                 if bcType not in (
                     "b0",
-                    "b1",
                     "supersonicExit",
                     "adiabaticNoSlipWall",
                     "adiabaticSlipWall",
@@ -55,14 +56,29 @@ def readBcs(mb, pathToFile):
                 continue
 
             # Make sure the type in the input file matches the type in the connectivity
+            # Because periodics have a high/low designation they wont match exactly
             if bcsIn[bcFam]["bcType"] != face.bcType:
-                raise KeyError(
-                    f'ERROR, block {blk.nblki} face {face.nface} does not match the bcType between input *{bcsIn[bcFam]["bcType"]}* and connectivity *{face.bcType}*.'
-                )
+                if bcsIn[bcFam]["bcType"].startswith("periodic"):
+                    if not face.bcType.startswith(bcsIn[bcFam]["bcType"]):
+                        raise KeyError(
+                            f'ERROR, block {blk.nblki} face {face.nface} does not match the bcType between input *{bcsIn[bcFam]["bcType"]}* and connectivity *{face.bcType}*.'
+                        )
+                else:
+                    raise KeyError(
+                        f'ERROR, block {blk.nblki} face {face.nface} does not match the bcType between input *{bcsIn[bcFam]["bcType"]}* and connectivity *{face.bcType}*.'
+                    )
 
             # If there are no values to set, continue
             if "bcVals" not in bcsIn[bcFam]:
-                print(f"Warning, no values found for {bcsIn[bcFam]}")
+                if bcsIn[bcFam] not in warn:
+                    print(f"Warning, no values found for {bcsIn[bcFam]}")
+                    warn.append(bcsIn[bcFam])
+                continue
+
+            # Add the information from any periodic faces
+            if bcType.startswith("periodic"):
+                face.periodicSpan = bcsIn[bcFam]["bcVals"]["periodicSpan"]
+                face.periodicAxis = bcsIn[bcFam]["bcVals"]["periodicAxis"]
                 continue
 
             # If we are a solver face, we need to create the kokkos arrays

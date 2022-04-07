@@ -1,0 +1,7 @@
+---
+
+periodic:
+  bcType: periodicRot
+  bcVals:
+    periodicSpan: 45  # degrees
+    periodicAxis: [1, 0, 0]

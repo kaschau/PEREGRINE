@@ -82,13 +82,35 @@ def findInteriorNeighbor(mb, incompleteBlocks, foundFaces):
 
         # Now we go block by block, face by face and look for matching faces
         for face in blk.faces:
-            if face.bcType != "b0":
+            if face.bcType != "b0" and not face.bcType.startswith("periodic"):
                 continue
             if foundFaces[index][face.nface - 1]:
                 continue
             meanX = np.mean([i for i in corners["x"][index][face.nface - 1]])
             meanY = np.mean([i for i in corners["y"][index][face.nface - 1]])
             meanZ = np.mean([i for i in corners["z"][index][face.nface - 1]])
+            # Translate periodics
+            if face.bcType == "periodicTransLow":
+                meanX += face.periodicAxis[0] * face.periodicSpan
+                meanY += face.periodicAxis[1] * face.periodicSpan
+                meanZ += face.periodicAxis[2] * face.periodicSpan
+            elif face.bcType == "periodicTransHigh":
+                meanX -= face.periodicAxis[0] * face.periodicSpan
+                meanY -= face.periodicAxis[1] * face.periodicSpan
+                meanZ -= face.periodicAxis[2] * face.periodicSpan
+            elif face.bcType == "periodicRotLow":
+                mean = np.array([meanX, meanY, meanZ])
+                points = np.matmul(face.periodicRotMatrixUp, mean)
+                meanX = points[0]
+                meanY = points[1]
+                meanZ = points[2]
+            elif face.bcType == "periodicRotHigh":
+                mean = np.array([meanX, meanY, meanZ])
+                points = np.matmul(face.periodicRotMatrixDown, mean)
+                meanX = points[0]
+                meanY = points[1]
+                meanZ = points[2]
+
             for testIndex, nblki in enumerate(incompleteBlocks):
                 testBlk = mb.getBlock(nblki)
                 for testFace in testBlk.faces:
@@ -111,84 +133,6 @@ def findInteriorNeighbor(mb, incompleteBlocks, foundFaces):
                         + (meanZ - testMeanZ) ** 2
                     )
                     if dist < 1e-9:
-                        face.neighbor = testBlk.nblki
-                        testFace.neighbor = blk.nblki
-                        foundFaces[index][face.nface - 1] = True
-                        foundFaces[testIndex][testFace.nface - 1] = True
-
-    # Filter out all complete blocks
-    completeIndex = []
-    for index, found in enumerate(foundFaces):
-        if all(found):
-            completeIndex.append(index)
-    for index in sorted(completeIndex, reverse=True):
-        incompleteBlocks.pop(index)
-        foundFaces.pop(index)
-        for var in corners:
-            corners[var].pop(index)
-
-
-def findPeriodicNeighbor(mb, incompleteBlocks, foundFaces):
-    if len(incompleteBlocks) == []:
-        return
-
-    corners = extractCorners(mb, incompleteBlocks, foundFaces)
-    assert all(
-        [
-            len(corners[var]) == len(incompleteBlocks) == len(foundFaces)
-            for var in corners
-        ]
-    )
-
-    for index, nblki in enumerate(incompleteBlocks):
-        blk = mb.getBlock(nblki)
-
-        # Is this block complete?
-        if all(foundFaces[index]):
-            continue
-
-        # Now we go block by block, face by face and look for matching faces
-        for face in blk.faces:
-            if foundFaces[index][face.nface - 1]:
-                continue
-            assert face.bcType.startswith("b") and face.bcType != "b0"
-            Xs = corners["x"][index][face.nface - 1]
-            Ys = corners["y"][index][face.nface - 1]
-            Zs = corners["z"][index][face.nface - 1]
-            faceCenterX = np.mean(Xs)
-            faceCenterY = np.mean(Ys)
-            faceCenterZ = np.mean(Zs)
-
-            p0 = np.array([Xs[0], Ys[0], Zs[0]])
-            p1 = np.array([Xs[1], Ys[1], Zs[1]])
-            p2 = np.array([Xs[3], Ys[3], Zs[3]])
-            pFace = np.array([faceCenterX, faceCenterY, faceCenterZ])
-            cross = np.cross(p1 - p0, p2 - p0)
-            cross = cross / np.linalg.norm(cross)
-
-            for testIndex, nblki in enumerate(incompleteBlocks):
-                testBlk = mb.getBlock(nblki)
-                for testFace in testBlk.faces:
-                    if foundFaces[testIndex][testFace.nface - 1]:
-                        continue
-                    assert testFace.bcType.startswith("b") and testFace.bcType != "b0"
-                    if blk.nblki == testBlk.nblki and face.nface == testFace.nface:
-                        continue
-                    testXs = corners["x"][testIndex][testFace.nface - 1]
-                    testYs = corners["y"][testIndex][testFace.nface - 1]
-                    testZs = corners["z"][testIndex][testFace.nface - 1]
-                    testFaceCenterX = np.mean(testXs)
-                    testFaceCenterY = np.mean(testYs)
-                    testFaceCenterZ = np.mean(testZs)
-
-                    # See if test face is in place with face so we dont accidentially pick it up
-                    pTest = np.array(
-                        [testFaceCenterX, testFaceCenterY, testFaceCenterZ]
-                    )
-                    testVector = pTest - pFace
-                    testVector = testVector / np.linalg.norm(testVector)
-                    dot = np.abs(np.dot(cross, testVector))
-                    if dot == 1.0:
                         face.neighbor = testBlk.nblki
                         testFace.neighbor = blk.nblki
                         foundFaces[index][face.nface - 1] = True
@@ -273,6 +217,10 @@ def cutBlock(mb, nblki, cutAxis, cutIndex, incompleteBlocks, foundFaces):
         newSplitFace.orientation = oldSplitFace.orientation
         newSplitFace.bcFam = oldSplitFace.bcFam
         newSplitFace.bcType = oldSplitFace.bcType
+        # if the split face is a periodic, they need the perodic info
+        if oldSplitFace.bcType.startswith("periodic"):
+            newSplitFace.periodicSpan = oldSplitFace.periodicSpan
+            newSplitFace.periodicAxis = oldSplitFace.periodicAxis
         # If this face is a boundary, then we can add it to the found faces
         if oldSplitFace.neighbor is None:
             newSplitFace.neighbor = None
@@ -360,7 +308,6 @@ def performCutOperations(mb, cutOps):
                 cutBlock(mb, cutNblki, cutAxis, index, incompleteBlocks, foundFaces)
 
             findInteriorNeighbor(mb, incompleteBlocks, foundFaces)
-            findPeriodicNeighbor(mb, incompleteBlocks, foundFaces)
             assert incompleteBlocks == []
             assert foundFaces == []
 
@@ -417,6 +364,15 @@ if __name__ == "__main__":
         help="If this option is specified, the utility will automatically cut down the grid such that the max block size (ni*nj*nk) < targetBlockSize",
         type=int,
     )
+    parser.add_argument(
+        "-bcFamPath",
+        action="store",
+        metavar="<bcFamPath>",
+        dest="bcFamPath",
+        default="./",
+        help="""If your grid has periodics, we need to the periodic data from bcFams.""",
+        type=str,
+    )
 
     args = parser.parse_args()
 
@@ -425,6 +381,7 @@ if __name__ == "__main__":
 
     cutOps = args.cutOps
     maxBlockSize = args.maxBlockSize
+    bcFamPath = args.bcFamPath
 
     if cutOps and maxBlockSize > 0:
         raise ValueError("Cannot specify both cutOps and maxBlockSize")
@@ -433,6 +390,10 @@ if __name__ == "__main__":
     mb = pg.multiBlock.grid(nblks)
     pg.readers.readGrid(mb, fromDir)
     pg.readers.readConnectivity(mb, fromDir)
+    try:
+        pg.readers.readBcs(mb, bcFamPath)
+    except FileNotFoundError:
+        print("No bcFam.yaml file provided, assuming no periodics.")
 
     if cutOps:
         cutOperations = []
