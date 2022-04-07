@@ -318,7 +318,7 @@ def annulus(blk, p1, p2, p3, sweep, thickness, dimensions):
     p2 = np.array(p2)
     p3 = np.array(p3)
 
-    if np.dot(p2 - p1, p3 - p1) != 0.0:
+    if np.abs(np.dot(p2 - p1, p3 - p1)) > 1e-7:
         raise ValueError("Error: The line (p1,p2) is not orthogonal to (p1,p3)")
 
     if abs(sweep) < -360 or abs(sweep) > 360.0:
@@ -459,7 +459,7 @@ def multiBlockAnnulus(
             "Error: multiBlock dimensions does not equal number of blocks!"
         )
 
-    if np.dot(p2 - p1, p3 - p1) != 0.0:
+    if np.abs(np.dot(p2 - p1, p3 - p1)) > 1e-7:
         raise ValueError("Error: The line (p1,p2) is not orthogonal to (p1,p3)")
 
     if sweep < 0.0 or sweep > 360.0:
