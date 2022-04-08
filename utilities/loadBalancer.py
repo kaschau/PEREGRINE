@@ -39,11 +39,9 @@ def analyzeLoad(procSizes, procGroups):
 
 def allBlocksAssigned(mb, procGroups):
 
-    sum = 0
     for nblki in mb.blockList:
         found = False
         for group in procGroups:
-            sum += len(group)
             if nblki in group:
                 found = True
                 break
@@ -52,7 +50,11 @@ def allBlocksAssigned(mb, procGroups):
         if not found:
             print(f"Block {nblki} not found in any processor groups.")
             break
-    if sum == mb.nblks:
+
+    summ = 0
+    for group in procGroups:
+        summ += len(group)
+    if summ != mb.nblks:
         print("Number of blocks in groups does not equal number of total blocks")
         found = False
 
@@ -193,7 +195,6 @@ if __name__ == "__main__":
                 else:
                     pass
             else:
-                print(procLoad[0], assignSize, procLoad[-1])
                 procGroups[0].append(assignProc)
                 procLoad[0] += assignSize
 
