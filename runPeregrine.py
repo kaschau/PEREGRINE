@@ -45,7 +45,6 @@ def simulate(configFilePath):
         ts = perf_counter()
 
     # Time integration
-    dt = config["simulation"]["dt"]
     niter = config["simulation"]["niter"]
     niterout = config["simulation"]["niterout"]
     niterprint = config["simulation"]["niterprint"]
