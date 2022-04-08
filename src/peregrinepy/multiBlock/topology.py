@@ -63,3 +63,7 @@ class topology(UserList):
         string = "Topology multiBlock object:\n"
         string += f"{self.nblks} block(s)\n"
         return string
+
+    # Apparently UserList borks with slices. So have to redefine here.
+    def __getitem__(self, i):
+        return self.data[i]
