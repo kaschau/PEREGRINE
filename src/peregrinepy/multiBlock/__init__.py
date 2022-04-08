@@ -138,7 +138,7 @@ def setRHS(cls, config):
         # If we are using an implicit chemistry integration
         #  we need to set it here and set the explicit
         #  module to null so it is not called in RHS
-        elif config["solver"]["timeIntegration"] in ["strang"]:
+        elif config["solver"]["timeIntegration"] in ["strang", "chemSubStep"]:
             try:
                 cls.expChem = null
                 cls.impChem = getattr(compute.chemistry, mech)

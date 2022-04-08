@@ -214,7 +214,7 @@ class solverBlock(restartBlock, block_):
         # ------------------------------------------------------------------- #
         #       RK Stages
         # ------------------------------------------------------------------- #
-        nstorage = {"rk1": 0, "rk3": 2, "rk4": 4, "strang": 2}
+        nstorage = {"rk1": 0, "rk3": 2, "rk4": 4, "strang": 2, "chemSubStep": 2}
         names = [
             f"rhs{i}" for i in range(nstorage[config["solver"]["timeIntegration"]])
         ]
