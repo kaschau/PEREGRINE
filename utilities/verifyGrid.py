@@ -50,9 +50,9 @@ def extractFace(blk, nface):
 
     face_i = faceSliceMapping[nface]
 
-    x = blk.array["x"][face_i["i"], face_i["j"], face_i["k"]]
-    y = blk.array["y"][face_i["i"], face_i["j"], face_i["k"]]
-    z = blk.array["z"][face_i["i"], face_i["j"], face_i["k"]]
+    x = np.copy(blk.array["x"][face_i["i"], face_i["j"], face_i["k"]])
+    y = np.copy(blk.array["y"][face_i["i"], face_i["j"], face_i["k"]])
+    z = np.copy(blk.array["z"][face_i["i"], face_i["j"], face_i["k"]])
 
     return x, y, z
 
