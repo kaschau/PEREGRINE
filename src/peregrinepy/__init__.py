@@ -6,6 +6,7 @@ mpi4py.rc.initialize = False
 from ._version import __version__
 from . import grid
 from . import writers
+from . import readers
 
 from . import multiBlock
 

@@ -56,12 +56,22 @@ if __name__ == "__main__":
         help="Angle of sector in degrees.",
         type=float,
     )
+    parser.add_argument(
+        "-axis",
+        "--rotationAxis",
+        action="store",
+        metavar="<axis>",
+        dest="axis",
+        help="List of sector axis components, delimited with comma",
+        type=str,
+    )
 
     args = parser.parse_args()
     fromDir = args.fromDir
     toDir = args.toDir
     nseg = args.nseg
     sectorAngle = args.sectorAngle
+    axis = [float(item) for item in args.axis.split(",")]
 
     if nseg <= 1:
         raise ValueError(
@@ -97,6 +107,23 @@ if __name__ == "__main__":
     # pass
     for i in range(nseg - 1):
         angle = sectorAngle * (i + 1) * np.pi / 180.0
+        # Compute rotation matrix for positive and negative rotatoin
+        rotM = np.zeros((3, 3))
+        ct = np.cos(angle)
+        st = np.sin(angle)
+        ux, uy, uz = tuple(axis)
+        rotM[0, 0] = ct + ux ** 2 * (1 - ct)
+        rotM[0, 1] = ux * uy * (1 - ct) - uz * st
+        rotM[0, 2] = ux * uz * (1 - ct) + uy * st
+
+        rotM[1, 0] = uy * ux * (1 - ct) + uz * st
+        rotM[1, 1] = ct + uy ** 2 * (1 - ct)
+        rotM[1, 2] = uy * uz * (1 - ct) - ux * st
+
+        rotM[2, 0] = uz * ux * (1 - ct) - uy * st
+        rotM[2, 1] = uz * uy * (1 - ct) + ux * st
+        rotM[2, 2] = ct + uz ** 2 * (1 - ct)
+
         for j in range(nblks):
             fromBlk = fromGrid[j]
 
@@ -108,13 +135,18 @@ if __name__ == "__main__":
             rotBlk.nj = fromBlk.nj
             rotBlk.nk = fromBlk.nk
 
-            rotBlk.array["x"] = fromBlk.array["z"] * np.sin(angle) + fromBlk.array[
-                "x"
-            ] * np.cos(angle)
-            rotBlk.array["y"] = fromBlk.array["y"]
-            rotBlk.array["z"] = fromBlk.array["z"] * np.cos(angle) - fromBlk.array[
-                "x"
-            ] * np.sin(angle)
+            shape = fromBlk.array["x"].shape
+            points = np.column_stack(
+                (
+                    fromBlk.array["x"].ravel(),
+                    fromBlk.array["y"].ravel(),
+                    fromBlk.array["z"].ravel(),
+                )
+            )
+            points = np.matmul(rotM, points.T).T
+            rotBlk.array["x"] = points[:, 0].reshape(shape)
+            rotBlk.array["y"] = points[:, 1].reshape(shape)
+            rotBlk.array["z"] = points[:, 2].reshape(shape)
 
             # transfer connectivity
             for toFace, fromFace in zip(rotBlk.faces, fromBlk.faces):
@@ -128,7 +160,7 @@ if __name__ == "__main__":
                     continue
 
                 # treat the rotated faces
-                if fromFace.bcType.startswith("periodic"):
+                elif fromFace.bcType.startswith("periodic"):
                     toFace.bcFam = fromFace.bcFam
                     toFace.orientation = fromFace.orientation
                     # back side faces
@@ -152,6 +184,8 @@ if __name__ == "__main__":
                     toFace.bcFam = None
                     toFace.orientation = fromFace.orientation
                     toFace.neighbor = fromFace.neighbor + nblks * (i + 1)
+                else:
+                    raise ValueError("What is this face?")
 
     # At this point, the original sector front and back side faces are out of
     # date, as is the last sector's front side
