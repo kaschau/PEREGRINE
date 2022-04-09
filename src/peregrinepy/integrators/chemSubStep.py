@@ -92,7 +92,7 @@ class chemSubStep:
 
                 rk3s3(blk, dt / float(n))
 
-            consistify(self)
+        consistify(self)
 
         ###############################################################
         # Take final half step in time for non-stiff operator
