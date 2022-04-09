@@ -90,7 +90,7 @@ class strang:
 
                 blk.array["Q"][i, j, k, 5::] = ODE.y[1::] * blk.array["Q"][i, j, k, 0]
 
-            consistify(self)
+        consistify(self)
 
         ###############################################################
         # Take final half step in time for non-stiff operator
