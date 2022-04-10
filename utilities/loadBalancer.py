@@ -121,7 +121,7 @@ if __name__ == "__main__":
 
     nblks = len([f for f in os.listdir(f"{fromDir}") if f.endswith(".h5")])
     mb = pg.multiBlock.grid(nblks)
-    pg.readers.readGrid(mb, fromDir)
+    pg.readers.readGrid(mb, fromDir, justNi=True)
 
     sizesS_L, nblkisS_L = getSortedBlockSizes(mb)
     sizesL_S = sizesS_L[::-1]
