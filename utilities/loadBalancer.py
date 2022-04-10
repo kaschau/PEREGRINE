@@ -5,7 +5,6 @@ MPI ranks.
 
 """
 
-import matplotlib.pyplot as plt
 import numpy as np
 import peregrinepy as pg
 
@@ -182,21 +181,22 @@ if __name__ == "__main__":
         tbaProcs = nblkisL_S[numProcs::]
         tbaLoads = sizesL_S[numProcs::]
 
-        traverse = 1
         while len(tbaProcs) > 0:
             assignProc = tbaProcs[0]
             assignSize = tbaLoads[0]
 
-            for i, group in enumerate(procGroups[1::]):
-                if procLoad[i + 1] + assignSize < procLoad[0]:
-                    group.append(assignProc)
-                    procLoad[i + 1] += assignSize
-                    break
-                else:
-                    pass
-            else:
-                procGroups[0].append(assignProc)
-                procLoad[0] += assignSize
+            ncellWeight = 0.5
+            nBlocksWeight = 1.0 - ncellWeight
+            normLoad = np.array(procLoad) / max(procLoad)
+            normBlockLoad = np.array([len(i) for i in procGroups]) / max(
+                [len(i) for i in procGroups]
+            )
+
+            loadScore = ncellWeight * normLoad + nBlocksWeight * normBlockLoad
+
+            lightProc = np.argmin(loadScore)
+            procGroups[lightProc].append(assignProc)
+            procLoad[lightProc] += assignSize
 
             tbaProcs.pop(0)
             tbaLoads.pop(0)
@@ -216,12 +216,26 @@ if __name__ == "__main__":
         f"Total Number of cells  = {np.sum(procLoad)}\n\n",
         f"Required numer of processors = {len(procGroups)}\n",
         f"Maximum blocks on processor = {maxBlksForProcs}\n",
+        f"Maximum load on processor = {max(procLoad)}\n",
         f"Eficiency = {efficiency}\n",
     )
 
     if os.name == "posix" and "DISPLAY" in os.environ:
-        plt.plot(procLoad)
-        plt.ylim([0, max(procLoad) * 1.1])
-        plt.xlabel("Processor")
-        plt.ylabel("Load (ncells)")
+        import matplotlib.pyplot as plt
+
+        fig, ax = plt.subplots()
+        ax.set_xlabel("Processor")
+        ax.set_ylabel("Number of Cells")
+        ax.plot(procLoad, label="ncells", color="k")
+        ax.set_ylim(bottom=0, top=None)
+
+        ax1 = ax.twinx()
+        ax1.set_ylabel("Number of Blocks")
+        ax1.plot(np.array([len(i) for i in procGroups]), label="nBlocks", color="r")
+        ax1.set_ylim(bottom=0, top=None)
+
+        h1, la1 = ax.get_legend_handles_labels()
+        h2, la2 = ax1.get_legend_handles_labels()
+
+        ax.legend(h1 + h2, la1 + la2)
         plt.show()
