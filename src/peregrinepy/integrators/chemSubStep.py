@@ -92,6 +92,8 @@ class chemSubStep:
 
                 rk3s3(blk, dt / float(n))
 
+                self.eos(blk, self.thtrdat, 0, "cons")
+
         consistify(self)
 
         ###############################################################
