@@ -50,14 +50,15 @@ def simulate(configFilePath):
     niterprint = config["simulation"]["niterprint"]
     checkNan = config["simulation"]["checkNan"]
     for niter in range(niter):
-        dt, CFLmaxA, CFLmaxC = pg.mpiComm.mpiUtils.getDtMaxCFL(mb)
+        dt, CFLmaxA, CFLmaxC, CFLmax = pg.mpiComm.mpiUtils.getDtMaxCFL(mb)
         if mb.nrt % niterprint == 0 and rank == 0:
             print(
                 f" >>> --------- nrt: {mb.nrt:<6} ---------- <<<\n",
                 f"    tme: {mb.tme:.6E} s\n"
                 f"     dt : {dt:.6E} s\n"
-                f"     MAX Acoustic   CFL: {CFLmaxA*dt:.3f}\n"
-                f"     MAX Convective CFL: {CFLmaxC*dt:.3f}\n"
+                f"     MAX CFL       : {CFLmax*dt:.3f}\n"
+                f"         Acoustic  : {CFLmaxA*dt:.3f}\n"
+                f"         Convective: {CFLmaxC*dt:.3f}\n"
                 " >>> -------------------------------- <<<\n",
             )
 

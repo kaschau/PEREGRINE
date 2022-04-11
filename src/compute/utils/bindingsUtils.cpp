@@ -45,7 +45,7 @@ void bindUtils(py::module_ &m) {
         py::arg("y double"),
         py::arg("B view"));
   //    |------> cfl
-  utils.def("CFLmax", &CFLmax, "Find max acoustic and convective CFL factors c/dx",
+  utils.def("CFLmax", &CFLmax, "Find max acoustic, convective, spectral radius CFL factors c/dx",
         py::arg("block_ object"));
   //    |------> checkNan
   utils.def("checkNan", &checkNan, "Check for any nans/infs in the Q array",
