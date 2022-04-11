@@ -30,7 +30,7 @@ def simulate():
     config["RHS"]["diffusion"] = False
     config["RHS"]["shockHandling"] = None
     config["RHS"]["primaryAdvFlux"] = "rusanov"
-    config["solver"]["timeIntegration"] = "chemSubStep"
+    config["solver"]["timeIntegration"] = "strang"
     config["thermochem"]["chemistry"] = True
     config["thermochem"]["mechanism"] = "chem_CH4_O2_Stanford_Skeletal"
     config["thermochem"]["eos"] = "tpg"
