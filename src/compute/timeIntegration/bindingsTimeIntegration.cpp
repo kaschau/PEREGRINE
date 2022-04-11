@@ -7,6 +7,13 @@ namespace py = pybind11;
 void bindTimeIntegration(py::module_ &m) {
   // ./timeIntegration
   py::module timeIntegration = m.def_submodule("timeIntegration", "Time integration module");
+  //  |----> rk2Stages.cpp
+  timeIntegration.def("rk2s1", &rk2s1, "rk2 stage 1",
+        py::arg("block_"),
+        py::arg("dt"));
+  timeIntegration.def("rk2s2", &rk2s2, "rk2 stage 2",
+        py::arg("block_"),
+        py::arg("dt"));
   //  |----> rk3Stages.cpp
   timeIntegration.def("rk3s1", &rk3s1, "rk3 stage 1",
         py::arg("block_"),
