@@ -23,6 +23,7 @@ def simulate():
     config = pg.files.configFile()
     config["RHS"]["diffusion"] = False
     mb = pg.multiBlock.generateMultiBlockSolver(1, config)
+    print(mb)
     pg.grid.create.multiBlockCube(
         mb,
         mbDims=[1, 1, 1],
