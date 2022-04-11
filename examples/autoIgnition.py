@@ -17,6 +17,18 @@ def simulate():
 
     relpath = str(Path(__file__).parent)
     ct.add_directory(relpath + "/../src/peregrinepy/thermo_transport/database/source")
+
+    # Cantera stuff
+    T, p = 1100.0, 101325
+    gas = ct.Solution("CH4_O2_Stanford_Skeletal.yaml")
+    # set the gas state
+    gas.TP = T, p
+    phi = 1.0
+    gas.set_equivalence_ratio(phi, "CH4", "O2")
+    r1 = ct.IdealGasReactor(gas)
+    sim = ct.ReactorNet([r1])
+
+    # PEREGRINE stuff
     config = pg.files.configFile()
     config["RHS"]["diffusion"] = False
     config["solver"]["timeIntegration"] = "strang"
@@ -43,15 +55,6 @@ def simulate():
     mb.unifyGrid()
 
     mb.computeMetrics(config["RHS"]["diffOrder"])
-
-    T, p = 1100.0, 101325
-    gas = ct.Solution("CH4_O2_Stanford_Skeletal.yaml")
-    # set the gas state
-    gas.TP = T, p
-    phi = 1.0
-    gas.set_equivalence_ratio(phi, "CH4", "O2")
-    r1 = ct.Reactor(gas)
-    sim = ct.ReactorNet([r1])
 
     blk.array["q"][:, :, :, 0] = gas.P
     blk.array["q"][:, :, :, 4] = gas.T
