@@ -213,6 +213,8 @@ def multiBlockCube(
             "Warning, multiBlock dimensions does not equal number of blocks!"
         )
 
+    mb.totalBlocks = np.product(mbDims)
+
     blk_origins_x = np.linspace(origin[0], origin[0] + lengths[0], mbDims[0] + 1)
     blk_origins_y = np.linspace(origin[1], origin[1] + lengths[1], mbDims[1] + 1)
     blk_origins_z = np.linspace(origin[2], origin[2] + lengths[2], mbDims[2] + 1)
@@ -450,14 +452,16 @@ def multiBlockAnnulus(
         Updates elements in mb
 
     """
-    p1 = np.array([0.0, 0.0, 0.0])  # All periodic axes go through origin!!!
-    p2 = np.array(p2)
-    p3 = np.array(p3)
 
     if np.product(mbDims) != mb.nblks:
         raise ValueError(
             "Error: multiBlock dimensions does not equal number of blocks!"
         )
+    mb.totalBlocks = np.product(mbDims)
+
+    p1 = np.array([0.0, 0.0, 0.0])  # All periodic axes go through origin!!!
+    p2 = np.array(p2)
+    p3 = np.array(p3)
 
     if np.abs(np.dot(p2 - p1, p3 - p1)) > 1e-7:
         raise ValueError("Error: The line (p1,p2) is not orthogonal to (p1,p3)")
