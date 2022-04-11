@@ -7,6 +7,10 @@ namespace py = pybind11;
 void bindTimeIntegration(py::module_ &m) {
   // ./timeIntegration
   py::module timeIntegration = m.def_submodule("timeIntegration", "Time integration module");
+  //  |----> maccormack.cpp
+  timeIntegration.def("corrector", &corrector, "maccormack corrector",
+        py::arg("block_"),
+        py::arg("dt"));
   //  |----> rk2Stages.cpp
   timeIntegration.def("rk2s1", &rk2s1, "rk2 stage 1",
         py::arg("block_"),

@@ -217,6 +217,7 @@ class solverBlock(restartBlock, block_):
         nstorage = {
             "rk1": 0,
             "rk2": 2,
+            "maccormack": 1,
             "rk3": 2,
             "rk4": 4,
             "strang": 2,
