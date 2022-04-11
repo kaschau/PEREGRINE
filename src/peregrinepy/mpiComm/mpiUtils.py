@@ -58,11 +58,11 @@ def getDtMaxCFL(mb):
 
     if mb.config["simulation"]["variableTimeStep"]:
         cflMAX = mb.config["simulation"]["maxCFL"]
-        dt = min(cflMAX / cfl[0], cflMAX / cfl[1])
+        dt = cflMAX / cfl[2]
     else:
         dt = mb.config["simulation"]["dt"]
 
-    return dt, cfl[0], cfl[1]
+    return dt, cfl[0], cfl[1], cfl[2]
 
 
 def checkForNan(mb):

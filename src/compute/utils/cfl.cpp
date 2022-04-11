@@ -5,14 +5,15 @@
 #include "math.h"
 #include "vector"
 
-std::array<double, 2> CFLmax(std::vector<block_> mb) {
+std::array<double, 3> CFLmax(std::vector<block_> mb) {
 
   //-------------------------------------------------------------------------------------------|
   // Compute the max acoustic and convective CFL factor speed/dx
   //-------------------------------------------------------------------------------------------|
-  double CFLmaxA, CFLmaxC;
+  double CFLmaxA, CFLmaxC, CFLmaxR;
   double returnMaxA = 0.0;
   double returnMaxC = 0.0;
+  double returnMaxR = 0.0;
 
   for (const block_ b : mb) {
     MDRange3 range_cc({b.ng, b.ng, b.ng},
@@ -20,7 +21,7 @@ std::array<double, 2> CFLmax(std::vector<block_> mb) {
     Kokkos::parallel_reduce(
         "CFLmax", range_cc,
         KOKKOS_LAMBDA(const int i, const int j, const int k, double &CFLA,
-                      double &CFLC) {
+                      double &CFLC, double &CFLR) {
           // Cell lengths
           double dI = sqrt(pow(b.ixc(i + 1, j, k) - b.ixc(i, j, k), 2.0) +
                            pow(b.iyc(i + 1, j, k) - b.iyc(i, j, k), 2.0) +
@@ -55,21 +56,25 @@ std::array<double, 2> CFLmax(std::vector<block_> mb) {
           if (b.ni > 2) {
             CFLA = fmax(CFLA, c / dI);
             CFLC = fmax(CFLC, uI / dI);
+            CFLR = fmax(CFLR, (uI + c) / dI);
           }
           if (b.nj > 2) {
             CFLA = fmax(CFLA, c / dJ);
             CFLC = fmax(CFLC, uJ / dJ);
+            CFLR = fmax(CFLR, (uK + c) / dJ);
           }
           if (b.nk > 2) {
             CFLA = fmax(CFLA, c / dK);
             CFLC = fmax(CFLC, uK / dK);
+            CFLR = fmax(CFLR, (uK + c) / dK);
           }
         },
-        Kokkos::Max<double>(CFLmaxA), Kokkos::Max<double>(CFLmaxC));
+        Kokkos::Max<double>(CFLmaxA), Kokkos::Max<double>(CFLmaxC), Kokkos::Max<double>(CFLmaxR));
   }
 
   returnMaxA = fmax(CFLmaxA, returnMaxA);
   returnMaxC = fmax(fmax(CFLmaxC, returnMaxC), 1e-16);
+  returnMaxR = fmax(CFLmaxR, returnMaxR);
 
-  return {returnMaxA, returnMaxC};
+  return {returnMaxA, returnMaxC, returnMaxR};
 }
