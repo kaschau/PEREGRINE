@@ -19,9 +19,9 @@ class rk1:
             # Q = dt * dQ
             ApEQxB(blk.Q, dt, blk.dQ)
 
+        consistify(self)
+
         self.nrt += 1
         self.tme += dt
-
-        consistify(self)
 
     step.name = "rk1"

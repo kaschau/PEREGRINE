@@ -137,6 +137,9 @@ void cubic(block_ b, const thtrdat_ th, const int face, const std::string given,
            const int indxI = 0, const int indxJ = 0, const int indxK = 0);
 
 // ./timeIntegration
+//    |------> rk2Stages.cpp
+void rk2s1(block_ b, const double dt);
+void rk2s2(block_ b, const double dt);
 //    |------> rk3Stages.cpp
 void rk3s1(block_ b, const double dt);
 void rk3s2(block_ b, const double dt);
