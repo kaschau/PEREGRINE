@@ -177,29 +177,24 @@ if __name__ == "__main__":
             procLoad.append(currentSize)
     elif numProcs > 0:
         procGroups = [[i] for i in nblkisL_S[0:numProcs]]
-        procLoad = [i for i in sizesL_S[0:numProcs]]
+        procLoad = np.array([i for i in sizesL_S[0:numProcs]])
+        procNblocks = np.ones(numProcs)
         tbaProcs = nblkisL_S[numProcs::]
         tbaLoads = sizesL_S[numProcs::]
 
-        while len(tbaProcs) > 0:
-            assignProc = tbaProcs[0]
-            assignSize = tbaLoads[0]
+        for assignProc, assignSize in zip(tbaProcs, tbaLoads):
 
-            ncellWeight = 0.5
+            ncellWeight = 0.9
             nBlocksWeight = 1.0 - ncellWeight
-            normLoad = np.array(procLoad) / max(procLoad)
-            normBlockLoad = np.array([len(i) for i in procGroups]) / max(
-                [len(i) for i in procGroups]
-            )
+            normLoad = procLoad / np.max(procLoad)
+            normBlockLoad = procNblocks / np.max(procNblocks)
 
             loadScore = ncellWeight * normLoad + nBlocksWeight * normBlockLoad
 
             lightProc = np.argmin(loadScore)
             procGroups[lightProc].append(assignProc)
             procLoad[lightProc] += assignSize
-
-            tbaProcs.pop(0)
-            tbaLoads.pop(0)
+            procNblocks[lightProc] += 1
 
     assert allBlocksAssigned(mb, procGroups)
     efficiency, maxBlksForProcs = analyzeLoad(procLoad, procGroups)
