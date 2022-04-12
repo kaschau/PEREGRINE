@@ -25,3 +25,4 @@ class rk1:
         self.tme += dt
 
     step.name = "rk1"
+    step.stepType = "explicit"

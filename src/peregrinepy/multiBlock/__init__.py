@@ -131,7 +131,7 @@ def setRHS(cls, config):
     # Chemical source terms
     if config["thermochem"]["chemistry"]:
         mech = config["thermochem"]["mechanism"]
-        if config["solver"]["timeIntegration"] in ["rk1", "rk3", "rk4"]:
+        if cls.step.stepType == "explicit":
             try:
                 cls.expChem = getattr(compute.chemistry, mech)
                 cls.impChem = null
@@ -140,7 +140,7 @@ def setRHS(cls, config):
         # If we are using an implicit chemistry integration
         #  we need to set it here and set the explicit
         #  module to null so it is not called in RHS
-        elif config["solver"]["timeIntegration"] in ["strang", "chemSubStep"]:
+        elif cls.step.stepType == "split":
             try:
                 cls.expChem = null
                 cls.impChem = getattr(compute.chemistry, mech)
