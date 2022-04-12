@@ -37,3 +37,4 @@ class maccormack:
         self.tme += dt
 
     step.name = "maccormack"
+    step.stepType = "explicit"

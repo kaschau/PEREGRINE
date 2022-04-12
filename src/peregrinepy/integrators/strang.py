@@ -107,3 +107,4 @@ class strang:
         self.tme += dt
 
     step.name = "strang"
+    step.stepType = "split"

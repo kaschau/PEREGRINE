@@ -111,3 +111,4 @@ class chemSubStep:
         self.tme += dt
 
     step.name = "chemSubStep"
+    step.stepType = "split"
