@@ -60,10 +60,12 @@ def setConsistify(cls, config):
     #  If we aren't using a secondary flux function, we rely on the
     #  initialization of the switch array "phi" = 0.0 and then
     #  just never change it.
-    if config["RHS"]["switchAdvFlux"] is None:
+    switch = config["RHS"]["switchAdvFlux"]
+    if switch is None:
+        if config["RHS"]["secondaryAdvFlux"] is not None:
+            raise KeyError("You set a secondaryAdvFlux without setting switchAdvFlux.")
         cls.switch = null
     else:
-        switch = config["RHS"]["switchAdvFlux"]
         try:
             cls.switch = getattr(compute.switches, switch)
         except AttributeError:
