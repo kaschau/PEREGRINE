@@ -30,7 +30,7 @@ def simulate():
     config["RHS"]["diffusion"] = False
     config["RHS"]["shockHandling"] = None
     config["RHS"]["primaryAdvFlux"] = "rusanov"
-    config["solver"]["timeIntegration"] = "strang"
+    config["solver"]["timeIntegration"] = "rk4"
     config["thermochem"]["chemistry"] = True
     config["thermochem"]["mechanism"] = "chem_CH4_O2_Stanford_Skeletal"
     config["thermochem"]["eos"] = "tpg"
@@ -39,7 +39,7 @@ def simulate():
     pg.grid.create.multiBlockCube(
         mb,
         mbDims=[1, 1, 1],
-        dimsPerBlock=[200, 2, 2],
+        dimsPerBlock=[500, 2, 2],
         lengths=[0.05, 0.01, 0.01],
         periodic=[False, False, False],
     )
@@ -56,27 +56,38 @@ def simulate():
     ng = blk.ng
 
     q = blk.array["q"]
-    q[:, :, :, 0] = gas.P
-    q[:, :, :, 4] = gas.T
-    q[:, :, :, 5::] = gas.Y[0:-1]
+    q[ng:-ng, ng:-ng, ng:-ng, 0] = gas.P
+    q[ng:-ng, ng:-ng, ng:-ng, 4] = gas.T
+    q[ng:-ng, ng:-ng, ng:-ng, 5::] = gas.Y[0:-1]
+
+    xc = blk.array["xc"][ng:-ng, ng:-ng, ng:-ng]
 
     shockX = 0.001
-    q[:, :, :, 0] = np.where(blk.array["xc"] < shockX, 60.0e6, q[:, :, :, 0])
-    q[:, :, :, 1] = np.where(blk.array["xc"] < shockX, 500, q[:, :, :, 1])
-    q[:, :, :, 4] = np.where(blk.array["xc"] < shockX, 5000.0, q[:, :, :, 4])
+    q[ng:-ng, ng:-ng, ng:-ng, 0] = np.where(
+        xc < shockX, 30.0e6, q[ng:-ng, ng:-ng, ng:-ng, 0]
+    )
+    q[ng:-ng, ng:-ng, ng:-ng, 1] = np.where(
+        xc < shockX, 750.0, q[ng:-ng, ng:-ng, ng:-ng, 1]
+    )
+    q[ng:-ng, ng:-ng, ng:-ng, 4] = np.where(
+        xc < shockX, 3000.0, q[ng:-ng, ng:-ng, ng:-ng, 4]
+    )
     for i in range(11):
-        q[:, :, :, 5 + i] = np.where(blk.array["xc"] < shockX, 0.0, q[:, :, :, 5 + i])
-
-    pg.writers.writeGrid(mb)
-    pg.writers.writeRestart(mb)
+        q[ng:-ng, ng:-ng, ng:-ng, 5 + i] = np.where(
+            xc < shockX, 0.0, q[ng:-ng, ng:-ng, ng:-ng, 5 + i]
+        )
 
     # Update cons
     blk.updateDeviceView(["q"])
     mb.eos(blk, mb.thtrdat, 0, "prims")
+    # Apply euler boundary conditions
+    for face in blk.faces:
+        face.bcFunc(blk, face, mb.eos, mb.thtrdat, "euler", mb.tme)
+        face.bcFunc(blk, face, mb.eos, mb.thtrdat, "viscous", mb.tme)
     pg.consistify(mb)
 
-    dt = 4.0e-9
-    nrtEnd = 3000
+    dt = 1.0e-9
+    nrtEnd = 5000
     print(mb)
     while mb.nrt < nrtEnd:
 
