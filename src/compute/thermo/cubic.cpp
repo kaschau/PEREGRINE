@@ -111,12 +111,21 @@ void cubic(block_ b,
 
   // Compute nth species Y
   Y(ns-1) = 1.0;
+  double testSum = 0.0;
   for (int n=0; n<ns-1; n++)
   {
+    b.q(i,j,k,5+n) = fmax(fmin(b.q(i,j,k,5+n),1.0),0.0);
     Y(n) = b.q(i,j,k,5+n);
     Y(ns-1) -= Y(n);
+    testSum += Y(n);
   }
-  Y(ns-1) = fmax(0.0,Y(ns-1));
+  if (testSum > 1.0){
+    Y(ns-1) = 0.0;
+    for (int n=0; n<ns-1; n++)
+    {
+      Y(n) /= testSum;
+    }
+  }
 
   // Compute y->x denom
   double denom= 0.0;
@@ -377,12 +386,22 @@ void cubic(block_ b,
 
   // Compute species mass fraction
   Y(ns-1) = 1.0;
+  double testSum = 0.0;
   for (int n=0; n<ns-1; n++)
   {
+    b.Q(i,j,k,5+n) = fmax(fmin(b.Q(i,j,k,5+n),b.Q(i,j,k,0)),0.0);
     Y(n) = b.Q(i,j,k,5+n)/b.Q(i,j,k,0);
     Y(ns-1) -= Y(n);
+    testSum += Y(n);
   }
-  Y(ns-1) = fmax(0.0,Y(ns-1));
+  if (testSum > 1.0){
+    Y(ns-1) = 0.0;
+    for (int n=0; n<ns-1; n++)
+    {
+      Y(n) /= testSum;
+      b.Q(i,j,k,5+n) = Y(n)*b.Q(i,j,k,0);
+    }
+  }
 
   // Internal energy
   e = (rhoE - tke)/rho;
