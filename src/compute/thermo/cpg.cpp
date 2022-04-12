@@ -197,7 +197,7 @@ void cpg(block_ b,
     for (int n=0; n<ns-1; n++)
     {
       Y(n) /= testSum;
-      b.Q(i,j,k,5+n) /= testSum*b.Q(i,j,k,0);
+      b.Q(i,j,k,5+n) = Y(n)*b.Q(i,j,k,0);
     }
   }
 
