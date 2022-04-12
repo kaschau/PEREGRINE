@@ -7,9 +7,11 @@
 
 // References
 //
-// Large eddy simulation of subsonic and supersonicchannel flow at moderate Reynolds number
+// Large eddy simulation of subsonic and supersonic
+// channel flow at moderate Reynolds number
 //
-// INTERNATIONAL JOURNAL FOR NUMERICAL METHODS IN FLUIDSInt.J.Numer.Meth.Fluids2000;32: 369 – 406
+// INTERNATIONAL JOURNAL FOR NUMERICAL METHODS IN FLUIDS
+// 2000;32: 369 – 406
 // E. Lenormand,  P. Sagautb,  and  L. Ta Phuoc
 
 void mixedScaleModel(block_ b, thtrdat_ th) {
