@@ -28,19 +28,25 @@ def simulate():
 
     config = pg.files.configFile()
     config["RHS"]["diffusion"] = False
-    config["RHS"]["shockHandling"] = None
-    config["RHS"]["primaryAdvFlux"] = "rusanov"
+    config["RHS"]["shockHandling"] = "hybrid"
+    config["RHS"]["primaryAdvFlux"] = "secondOrderKEEP"
+    config["RHS"]["secondaryAdvFlux"] = "rusanov"
+    config["RHS"]["switchAdvFlux"] = "vanAlbadaPressure"
     config["solver"]["timeIntegration"] = "rk4"
     config["thermochem"]["chemistry"] = True
     config["thermochem"]["mechanism"] = "chem_CH4_O2_Stanford_Skeletal"
     config["thermochem"]["eos"] = "tpg"
     config["thermochem"]["spdata"] = "thtr_CH4_O2_Stanford_Skeletal.yaml"
     mb = pg.multiBlock.generateMultiBlockSolver(1, config)
+
+    nx = 500
+    dx = 0.005 / 50.0  # Aproximate rde resolution
+    lx = nx * dx
     pg.grid.create.multiBlockCube(
         mb,
         mbDims=[1, 1, 1],
-        dimsPerBlock=[500, 2, 2],
-        lengths=[0.05, 0.01, 0.01],
+        dimsPerBlock=[nx, 2, 2],
+        lengths=[lx, 0.01, 0.01],
         periodic=[False, False, False],
     )
     mb.initSolverArrays(config)
@@ -62,7 +68,7 @@ def simulate():
 
     xc = blk.array["xc"][ng:-ng, ng:-ng, ng:-ng]
 
-    shockX = 0.001
+    shockX = lx * 0.05
     q[ng:-ng, ng:-ng, ng:-ng, 0] = np.where(
         xc < shockX, 30.0e6, q[ng:-ng, ng:-ng, ng:-ng, 0]
     )
@@ -86,13 +92,14 @@ def simulate():
         face.bcFunc(blk, face, mb.eos, mb.thtrdat, "viscous", mb.tme)
     pg.consistify(mb)
 
-    dt = 1.0e-9
-    nrtEnd = 5000
+    dt = 1.5e-9
+    testIndex = int(nx / 2)
     print(mb)
-    while mb.nrt < nrtEnd:
+    while blk.array["q"][testIndex, ng, ng, 4] < 350.0:
+        if mb.nrt % 10 == 0:
+            detLoc = np.where((blk.array["q"][:, ng, ng, 4] > 350.0))[0][-1]
+            pg.misc.progressBar(detLoc, testIndex)
 
-        if mb.nrt % 5 == 0:
-            pg.misc.progressBar(mb.nrt, nrtEnd)
         abort = pg.mpiComm.mpiUtils.checkForNan(mb)
         if abort > 0:
             print("Nan")
