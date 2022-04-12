@@ -32,7 +32,7 @@ def simulate():
     config["RHS"]["primaryAdvFlux"] = "secondOrderKEEP"
     config["RHS"]["secondaryAdvFlux"] = "rusanov"
     config["RHS"]["switchAdvFlux"] = "vanAlbadaPressure"
-    config["solver"]["timeIntegration"] = "rk4"
+    config["solver"]["timeIntegration"] = "strang"
     config["thermochem"]["chemistry"] = True
     config["thermochem"]["mechanism"] = "chem_CH4_O2_Stanford_Skeletal"
     config["thermochem"]["eos"] = "tpg"
@@ -92,7 +92,7 @@ def simulate():
         face.bcFunc(blk, face, mb.eos, mb.thtrdat, "viscous", mb.tme)
     pg.consistify(mb)
 
-    dt = 1.5e-9
+    dt = 5.0e-9
     testIndex = int(nx / 2)
     print(mb)
     while blk.array["q"][testIndex, ng, ng, 4] < 350.0:
@@ -110,16 +110,21 @@ def simulate():
     blk.updateHostView(["q"])
     fig, ax1 = plt.subplots()
     ax1.set_title("1D Detonation Profile")
+    ax1.set_ylabel("Pressure [MPa]")
     ax1.set_xlabel(r"x")
     x = blk.array["xc"][ng:-ng, ng, ng]
-    p = blk.array["q"][ng:-ng, ng, ng, 0] / 1e4
+    p = blk.array["q"][ng:-ng, ng, ng, 0] / 1e6
+    ax1.plot(x, p, color="r", label="p", linewidth=0.5)
+    ax2 = ax1.twinx()
+    ax2.set_ylabel("Temperatur[K] / Velocity [m/s]")
     u = blk.array["q"][ng:-ng, ng, ng, 1]
     T = blk.array["q"][ng:-ng, ng, ng, 4]
-    ax1.plot(x, p, color="r", label="p", linewidth=0.5)
-    ax1.plot(x, T, color="k", label="T", linewidth=0.5)
-    ax1.plot(x, u, color="g", label="u", linewidth=0.5)
+    ax2.plot(x, T, color="k", label="T", linewidth=0.5)
+    ax2.plot(x, u, color="g", label="u", linewidth=0.5)
 
-    ax1.legend()
+    h1, l1 = ax1.get_legend_handles_labels()
+    h2, l2 = ax2.get_legend_handles_labels()
+    ax1.legend(h1 + h2, l1 + l2)
     plt.show()
     plt.close()
 

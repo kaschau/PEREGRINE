@@ -64,7 +64,7 @@ class chemSubStep:
         # Take a full step in time for stiff operator
         ###############################################################
 
-        n = 50
+        n = 10
         for blk in self:
             for _ in range(n):
                 # store zeroth stage solution
