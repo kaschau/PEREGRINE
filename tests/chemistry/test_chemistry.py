@@ -36,8 +36,8 @@ def test_chemistry(my_setup, thfile, ctfile, chmfile):
     )
 
     gas = ct.Solution(ctfile)
-    p = np.random.uniform(low=10000, high=100000)
-    T = np.random.uniform(low=1000, high=2000)
+    p = np.random.uniform(low=1e6, high=30e6)
+    T = np.random.uniform(low=300, high=3000)
     Y = np.random.uniform(low=0.0, high=1.0, size=gas.n_species)
     Y = Y / np.sum(Y)
 
