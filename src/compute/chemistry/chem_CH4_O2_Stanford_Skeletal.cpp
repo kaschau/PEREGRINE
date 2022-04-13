@@ -487,16 +487,15 @@ void chem_CH4_O2_Stanford_Skeletal(block_ b, thtrdat_ th, int face/*=0*/, int in
   b.omega(i,j,k,9) = th.MW(8) * ( -q[21] -q[22] -q[23] +q[24] +q[27] +q[31]);
   b.omega(i,j,k,10) = th.MW(9) * ( -q[16] -q[17] -q[18] -q[19] -q[20] +q[26] +q[31] +q[32] +q[33] +q[34] +q[35] +q[36] +q[37]);
   b.omega(i,j,k,11) = th.MW(10) * ( q[25] +q[28] +q[29] +q[30] -q[31] -q[32] -q[33] -q[34] -q[35] -q[36] -q[37]);
-  b.omega(i,j,k,12) = th.MW(11) * ( q[16] +q[17] +q[18] +q[19] +q[20]);
 
   // Add source terms to RHS
   for (int n=0; n<11; n++)
   {
     b.dQ(i,j,k,5+n) += b.omega(i,j,k,n+1);
   }
-  // Compute constant pressure dTdt dYdt (for implicit chem integration)
+  // Compute dTdt and  dYdt (for implicit chem integration)
   double dTdt = 0.0;
-  for (int n=0; n<=11; n++)
+  for (int n=0; n<11; n++)
   {
     dTdt -= b.qh(i,j,k,5+n) * b.omega(i,j,k,n+1);
     b.omega(i,j,k,n+1) /= b.Q(i,j,k,0);

@@ -3234,16 +3234,15 @@ void chem_GRI30(block_ b, thtrdat_ th, int face/*=0*/, int indxI/*=0*/, int indx
   b.omega(i,j,k,50) = th.MW(49) * ( q[312] +q[313] +q[314] -q[315] +q[316] +q[317] -q[318] -q[319] -q[320] -q[321] -q[322] -q[323] -q[324]);
   b.omega(i,j,k,51) = th.MW(50) * ( q[311] -q[312] -q[313] -q[314] +q[315] -q[316] +q[319] +q[322]);
   b.omega(i,j,k,52) = th.MW(51) * ( q[284] +q[293] +q[295] +q[298] +q[303] -q[304] -q[305] -q[306] -q[307] -q[308] -q[309] -q[310]);
-  b.omega(i,j,k,53) = th.MW(52) * ( q[285] -q[295] -q[296] -q[297] -q[298] -q[299] -q[300] -q[301] -q[302]);
 
   // Add source terms to RHS
   for (int n=0; n<52; n++)
   {
     b.dQ(i,j,k,5+n) += b.omega(i,j,k,n+1);
   }
-  // Compute constant pressure dTdt dYdt (for implicit chem integration)
+  // Compute dTdt and  dYdt (for implicit chem integration)
   double dTdt = 0.0;
-  for (int n=0; n<=52; n++)
+  for (int n=0; n<52; n++)
   {
     dTdt -= b.qh(i,j,k,5+n) * b.omega(i,j,k,n+1);
     b.omega(i,j,k,n+1) /= b.Q(i,j,k,0);

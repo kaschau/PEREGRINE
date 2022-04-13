@@ -11,7 +11,7 @@ def stiff(t, y, blk, thtrdat, impChem, i, j, k):
     blk.array["q"][i, j, k, 4::] = y
     impChem(blk, thtrdat, 10, i, j, k)
 
-    return blk.array["omega"][i, j, k, 0:-1]
+    return blk.array["omega"][i, j, k, :]
 
 
 class strang:
