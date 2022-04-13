@@ -69,7 +69,7 @@ def ct2pg_chem(ctyaml, cpp):
     gas = ct.Solution(ctyaml)
     ns = gas.n_species
     nr = gas.n_reactions
-    l_tbc = []  # list of all three body reactions
+    rTBC = []  # list of all three body reactions
 
     Ea_f = []
     m_f = []
@@ -89,7 +89,7 @@ def ct2pg_chem(ctyaml, cpp):
             "three-body",
             "falloff",
         ]:  # ThreeBodyReaction or FallOffReactions
-            l_tbc.append(i)
+            rTBC.append(i)
             efficiencies = []
             for j in range(ns):
                 efficiencies.append(r.efficiency(gas.species_names[j]))
@@ -116,6 +116,7 @@ def ct2pg_chem(ctyaml, cpp):
         else:
             raise UnknownReactionType(r.reaction_type, i, r.equation)
 
+    nTBC = len(rTBC)  # number of third body collision reaction
     pg_mech = open(cpp, "w")
 
     # --------------------------------
@@ -187,26 +188,22 @@ def ct2pg_chem(ctyaml, cpp):
         "  // Chaperon efficiencies. ------------------------------------ >\n"
         "  // ----------------------------------------------------------- >\n"
         "\n"
-        f"  double S_tbc[{nr}];\n"
-        f"  for (int n = 0; n < {nr}; n++)\n"
-        "  {\n"
-        "     S_tbc[n] = 1.0;\n"
-        "  }\n\n"
+        f"  double cTBC[{nTBC}];\n\n"
     )
     pg_mech.write(out_string)
 
     # ThreeBodyReaction and FallOffReactions
-    for tbc, i in enumerate(l_tbc):
+    for i in range(nTBC):
         out_string = []
         for j in range(ns):
-            eff = aij[tbc][j]
+            eff = aij[i][j]
             if eff > 0.0:
                 if eff != 1.0:
                     out_string.append(f" + {eff}*cs[{j}]")
                 else:
                     out_string.append(f" + cs[{j}]")
         out_string[0] = out_string[0].replace(" + ", "")
-        pg_mech.write(f"  S_tbc[{i}] = ")
+        pg_mech.write(f"  cTBC[{i}] = ")
         for item in out_string:
             pg_mech.write(item)
         pg_mech.write(";\n\n")
@@ -307,22 +304,24 @@ def ct2pg_chem(ctyaml, cpp):
         # FallOff Modifications
         # -----------------------------------------------------------------------------
         r = gas.reactions()[i]
-        if i in l_tbc:
-            j = l_tbc.index(i)
+        if i in rTBC:
+            j = rTBC.index(i)
         if r.reaction_type == "three-body":  # ThreeBodyReaction
             pg_mech.write(f"  //  Three Body Reaction #{i}\n")
+            out_string = f"  k_f *= cTBC[{j}];\n"
+            pg_mech.write(out_string)
         elif r.reaction_type == "falloff":  # FallOff Reactions
             rate = r.rate
-            if rate.type in ["Simple", "Lindemann"]:
+            if rate.type == "Lindemann":
                 pg_mech.write(f"  //  Lindeman Reaction #{i}\n")
                 pg_mech.write("  Fcent = 1.0;\n")
                 pg_mech.write(
                     "  k0 = " + rate_const_string(A_o[j], m_o[j], Ea_o[j]) + ";\n"
                 )
                 out_string = (
-                    f"  Pr = S_tbc[{i}]*k0/k_f;\n"
+                    f"  Pr = cTBC[{j}]*k0/k_f;\n"
                     f"  pmod = Pr/(1.0 + Pr);\n"
-                    f"  k_f = k_f*pmod;\n"
+                    f"  k_f *= pmod;\n"
                 )
                 pg_mech.write(out_string)
 
@@ -349,12 +348,12 @@ def ct2pg_chem(ctyaml, cpp):
                     "  k0 = " + rate_const_string(A_o[j], m_o[j], Ea_o[j]) + ";\n"
                 )
                 out_string = (
-                    f"  Pr = S_tbc[{i}]*k0/k_f;\n"
+                    f"  Pr = cTBC[{j}]*k0/k_f;\n"
                     "  A = log10(Pr) + C;\n"
                     "  f1 = A/(N - 0.14*A);\n"
                     "  F_pdr = pow(10.0,log10(Fcent)/(1.0+f1*f1));\n"
                     "  pmod = Pr/(1.0 + Pr) * F_pdr;\n"
-                    "  k_f = k_f*pmod;\n"
+                    "  k_f *= pmod;\n"
                 )
 
                 pg_mech.write(out_string)
@@ -374,11 +373,8 @@ def ct2pg_chem(ctyaml, cpp):
                 out_string.append(f" * cs[{j}]")
             elif s > 0.0:
                 out_string.append(f" * pow(cs[{j}],{float(s)})")
-        # S_tbc has already been applied to falloffs above!!!
-        if r.reaction_type == "falloff":
-            pg_mech.write("  q_f =   k_f")
-        else:
-            pg_mech.write(f"  q_f =   S_tbc[{i}] * k_f")
+        # cTBC has already been applied to falloffs above!!!
+        pg_mech.write("  q_f =  k_f")
         for item in out_string:
             pg_mech.write(item)
         pg_mech.write(";\n")
@@ -389,18 +385,15 @@ def ct2pg_chem(ctyaml, cpp):
                 out_string.append(f" * cs[{j}]")
             elif s > 0.0:
                 out_string.append(f" * pow(cs[{j}],{float(s)})")
-        # S_tbc has already been applied to falloffs above!!!
-        if r.reaction_type == "falloff":
-            pg_mech.write("  q_b = - k_f/K_c")
-        else:
-            pg_mech.write(f"  q_b = - S_tbc[{i}] * k_f/K_c")
+        # cTBC has already been applied to falloffs above!!!
+        pg_mech.write("  q_b = -k_f/K_c")
         for item in out_string:
             pg_mech.write(item)
         pg_mech.write(";\n")
         if r.reversible:
-            pg_mech.write(f"  q[{i}] =   q_f + q_b;\n\n")
+            pg_mech.write(f"  q[{i}] = q_f + q_b;\n\n")
         else:
-            pg_mech.write(f"  q[{i}] =   q_f;\n\n")
+            pg_mech.write(f"  q[{i}] = q_f;\n\n")
 
     # -------------------------------------------------------------------
     # SOURCE TERMS
