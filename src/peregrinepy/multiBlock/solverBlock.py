@@ -207,7 +207,7 @@ class solverBlock(restartBlock, block_):
                 self.ni + 2 * ng - 1,
                 self.nj + 2 * ng - 1,
                 self.nk + 2 * ng - 1,
-                1 + self.ns,
+                1 + self.ns - 1,
             ]
             createViewMirrorArray(self, ["omega"], shape)
 

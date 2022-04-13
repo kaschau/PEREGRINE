@@ -84,6 +84,7 @@ def ct2pg_chem(ctyaml, cpp):
     Ru = ct.gas_constant  # J/kmol.K
 
     for i, r in enumerate(gas.reactions()):
+        rate = r.rate
         if r.reaction_type in [
             "three-body",
             "falloff",
@@ -95,23 +96,23 @@ def ct2pg_chem(ctyaml, cpp):
             aij.append(efficiencies)
 
             if r.reaction_type == "falloff":
-                Ea_f.append(r.high_rate.activation_energy / Ru)
-                m_f.append(r.high_rate.temperature_exponent)
-                A_f.append(r.high_rate.pre_exponential_factor)
-                Ea_o.append(r.low_rate.activation_energy / Ru)
-                m_o.append(r.low_rate.temperature_exponent)
-                A_o.append(r.low_rate.pre_exponential_factor)
+                Ea_f.append(rate.high_rate.activation_energy / Ru)
+                m_f.append(rate.high_rate.temperature_exponent)
+                A_f.append(rate.high_rate.pre_exponential_factor)
+                Ea_o.append(rate.low_rate.activation_energy / Ru)
+                m_o.append(rate.low_rate.temperature_exponent)
+                A_o.append(rate.low_rate.pre_exponential_factor)
             else:  # three-body
-                Ea_f.append(r.rate.activation_energy / Ru)
-                m_f.append(r.rate.temperature_exponent)
-                A_f.append(r.rate.pre_exponential_factor)
+                Ea_f.append(rate.activation_energy / Ru)
+                m_f.append(rate.temperature_exponent)
+                A_f.append(rate.pre_exponential_factor)
                 Ea_o.append(0.0)
                 m_o.append(0.0)
                 A_o.append(0.0)
-        elif r.reaction_type == "elementary":  # elementry
-            Ea_f.append(r.rate.activation_energy / Ru)
-            m_f.append(int_or_float(r.rate.temperature_exponent))
-            A_f.append(r.rate.pre_exponential_factor)
+        elif r.reaction_type == "reaction":
+            Ea_f.append(rate.activation_energy / Ru)
+            m_f.append(int_or_float(rate.temperature_exponent))
+            A_f.append(rate.pre_exponential_factor)
         else:
             raise UnknownReactionType(r.reaction_type, i, r.equation)
 
@@ -311,7 +312,8 @@ def ct2pg_chem(ctyaml, cpp):
         if r.reaction_type == "three-body":  # ThreeBodyReaction
             pg_mech.write(f"  //  Three Body Reaction #{i}\n")
         elif r.reaction_type == "falloff":  # FallOff Reactions
-            if r.falloff.type in ["Simple", "Lindemann"]:
+            rate = r.rate
+            if rate.type in ["Simple", "Lindemann"]:
                 pg_mech.write(f"  //  Lindeman Reaction #{i}\n")
                 pg_mech.write("  Fcent = 1.0;\n")
                 pg_mech.write(
@@ -324,17 +326,17 @@ def ct2pg_chem(ctyaml, cpp):
                 )
                 pg_mech.write(out_string)
 
-            elif r.falloff.type == "Troe":
-                alpha = r.falloff.parameters[0]
-                Tsss = r.falloff.parameters[1]
-                Ts = r.falloff.parameters[2]
+            elif rate.type == "Troe":
+                alpha = rate.falloff_coeffs[0]
+                Tsss = rate.falloff_coeffs[1]
+                Ts = rate.falloff_coeffs[2]
                 pg_mech.write(f"  //  Troe Reaction #{i}\n")
-                tp = r.falloff.parameters
+                tp = rate.falloff_coeffs
                 if tp[-1] == 0:  # Three Parameter Troe form
                     out_string = f"  Fcent = (1.0 - ({alpha}))*exp(-T/({Tsss})) + ({alpha}) *exp(-T/({Ts}));\n"
                     pg_mech.write(out_string)
                 elif tp[-1] != 0:  # Four Parameter Troe form
-                    Tss = r.falloff.parameters[3]
+                    Tss = rate.falloff_coeffs[3]
                     out_string = f"  Fcent = (1.0 - ({alpha}))*exp(-T/({Tsss})) + ({alpha}) *exp(-T/({Ts})) + exp(-({Tss})/T);\n"
                     pg_mech.write(out_string)
 
@@ -356,12 +358,12 @@ def ct2pg_chem(ctyaml, cpp):
                 )
 
                 pg_mech.write(out_string)
-            elif r.falloff.type == "SRI":  # SRI Form
+            elif rate.type == "SRI":  # SRI Form
                 raise NotImplementedError(
                     " Warning, this utility cant handle SRI type reactions yet... so add it now"
                 )
             else:
-                raise UnknownFalloffType(r.falloff.type, i, r.equation)
+                raise UnknownFalloffType(rate.type, i, r.equation)
 
         # -----------------------------------------------------------------------------
         # Rates of progress
@@ -411,7 +413,7 @@ def ct2pg_chem(ctyaml, cpp):
     )
     pg_mech.write(out_string)
 
-    for i in range(gas.n_species):
+    for i in range(gas.n_species - 1):
         out_string = []
         nu_sum = nu_b[i, :] - nu_f[i, :]
         for j, s in enumerate(nu_sum):
@@ -438,9 +440,9 @@ def ct2pg_chem(ctyaml, cpp):
         "  {\n"
         "    b.dQ(i,j,k,5+n) += b.omega(i,j,k,n+1);\n"
         "  }\n"
-        "  // Compute constant pressure dTdt dYdt (for implicit chem integration)\n"
+        "  // Compute dTdt and  dYdt (for implicit chem integration)\n"
         "  double dTdt = 0.0;\n"
-        f"  for (int n=0; n<={ns-1}; n++)\n"
+        f"  for (int n=0; n<{ns-1}; n++)\n"
         "  {\n"
         "    dTdt -= b.qh(i,j,k,5+n) * b.omega(i,j,k,n+1);\n"
         "    b.omega(i,j,k,n+1) /= b.Q(i,j,k,0);\n"
@@ -460,6 +462,9 @@ def ct2pg_chem(ctyaml, cpp):
 if __name__ == "__main__":
 
     import argparse
+
+    if float(ct.__version__[0:3]) < 2.6:
+        raise ImportError("Cantera version > 2.6 required.")
 
     parser = argparse.ArgumentParser(
         description="""Convert a cantera .yaml file to hard coded finite rate
