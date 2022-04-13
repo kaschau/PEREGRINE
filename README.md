@@ -54,9 +54,10 @@ Gives access to the primitive variables.
 |           | D[n]\*             | 2..2+ns | m^2/s        |
 | **omega** | **Chemistry**      |         |              |
 |           | dTdt               | 0       | K/s          |
-|           | d(rhoYi)dt         | 1..ns   | kg/s         |
+|           | d(Yi)dt\*\*        | 1..ns   | kg/s         |
 
 \*We store all species' enthalpies and diffusion coeff
+\*\* While d(Yi)/dt is stored at the end of chemistry, d(rhoYi)/dt is applied to dQ/dt
 
 # Profiling GPU via NVTX
 Download and install the libraries found at
