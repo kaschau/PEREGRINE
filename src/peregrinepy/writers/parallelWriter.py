@@ -8,7 +8,7 @@ from ..mpiComm.mpiUtils import getCommRankSize
 from mpi4py.MPI import INT as MPIINT
 
 
-def registerParallelXdmf(mb, blocksForProcs, path="./", gridPath="./", animate=True):
+def registerParallelXdmf(mb, blocksForProcs, gridPath="./", animate=True):
 
     comm, rank, size = getCommRankSize()
     # the mb with Block0 must get a list of all other block's ni,nj,nk

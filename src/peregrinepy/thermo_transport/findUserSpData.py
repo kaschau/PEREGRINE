@@ -18,7 +18,7 @@ def findUserSpData(config):
         pass
 
     spdataLocs = [
-        f'{config["io"]["inputdir"]}/{spdata}',
+        f'{config["io"]["inputDir"]}/{spdata}',
         f"./{spdata}",
         f"{relpath}/database/{spdata}",
         spdata,
