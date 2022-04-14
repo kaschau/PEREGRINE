@@ -64,7 +64,14 @@ class configFile(frozenDict):
             }
         )
 
-        self["Catalyst"] = frozenDict({"coprocess": False, "cpFile": "./coproc.py"})
+        self["coprocess"] = frozenDict(
+            {
+                "catalyst": False,
+                "catalystFile": "./Input/coproc.py",
+                "trace": False,
+                "niterTrace": 1,
+            },
+        )
 
         for key in self.keys():
             self[key]._freeze()
