@@ -4,8 +4,7 @@ import kokkos
 
 def abort(mb):
 
-    if mb.config["Catalyst"]["coprocess"]:
-        mb.coproc.finalize()
+    mb.coproc.finalize()
 
     kokkos.finalize()
     comm = MPI.COMM_WORLD
