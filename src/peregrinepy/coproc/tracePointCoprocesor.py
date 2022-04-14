@@ -74,10 +74,13 @@ class tracePointsCoprocessor:
 
     def __call__(self, mb):
 
+        # TODO: this may be a redundant copy
+        for nblki in list(set([trc.nblki for trc in self.traces])):
+            blk = mb.getBlock(nblki)
+            blk.updateHostView(["q"])
+
         for trc in self.traces:
             blk = mb.getBlock(trc.nblki)
-            # TODO: this may be a redundant copy
-            blk.updateHostView(["q"])
             i = trc.i
             j = trc.j
             k = trc.k
