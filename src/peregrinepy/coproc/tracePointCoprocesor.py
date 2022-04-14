@@ -23,6 +23,7 @@ class tracePointsCoprocessor:
                 from os import mkdir
 
                 mkdir(path)
+        comm.Barrier()
 
         # For now, we provide a numpy array of ints, where each row is
         #   nblki,  i, j, k
