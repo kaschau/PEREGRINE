@@ -143,13 +143,8 @@ def bootstrapCase(config):
     ################################################################
     # Initialize coprocessor
     ################################################################
-    if config["Catalyst"]["coprocess"]:
-        try:
-            mb.coproc = pg.coproc.coprocessor(mb)
-        except AttributeError:
-            raise ImportError("Could not import the coprocessing module.")
-    else:
-        mb.coproc = pg.misc.null
+
+    mb.coproc = pg.coproc.coprocessor(mb)
 
     if rank == 0:
         print("Ready to solve.")

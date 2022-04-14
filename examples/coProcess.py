@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 
-run with 2 mpi processes
+run with 2 mpi processes!!!!!!
 
 """
 
@@ -13,7 +13,7 @@ import os
 
 fname = """
 # script-version: 2.0
-# Catalyst state generated using paraview version 5.9.1
+# Catalyst state generated using paraview version 5.10.0
 
 #### import the simple module from the paraview
 from paraview.simple import *
@@ -26,12 +26,15 @@ paraview.simple._DisableFirstRenderCameraReset()
 # ----------------------------------------------------------------
 
 # create a new 'XDMF Reader'
-q00000000xmf = TrivialProducer(registrationName="input")
+# qxmf = XDMFReader(registrationName="input")
+qxmf = TrivialProducer(registrationName="input")
+qxmf.CellArrayStatus = ["Air", "T", "Velocity", "p", "rho"]
 
 # create a new 'Slice'
-slice1 = Slice(registrationName="Slice1", Input=q00000000xmf)
+slice1 = Slice(registrationName="Slice1", Input=qxmf)
 slice1.SliceType = "Plane"
 slice1.HyperTreeGridSlicer = "Plane"
+slice1.Triangulatetheslice = 0
 slice1.SliceOffsetValues = [0.0]
 
 # init the 'Plane' selected for 'SliceType'
@@ -48,9 +51,13 @@ slice1.HyperTreeGridSlicer.Origin = [0.1, 0.01, 0.0005]
 # create extractor
 vTM1 = CreateExtractor("VTM", slice1, registrationName="VTM1")
 # trace defaults for the extractor.
+vTM1.Trigger = "TimeStep"
+
+# init the 'TimeStep' selected for 'Trigger'
+vTM1.Trigger.Frequency = 10
+
 # init the 'VTM' selected for 'Writer'
-vTM1.Writer.FileName = "Slice1_%.6ts.vtm"
-vTM1.Trigger.Frequency = 20
+vTM1.Writer.FileName = "Slice1_{timestep:06d}.vtm"
 
 # ----------------------------------------------------------------
 # restore active source
@@ -62,10 +69,13 @@ SetActiveSource(vTM1)
 from paraview import catalyst
 
 options = catalyst.Options()
-options.ExtractsOutputDirectory = "CoProc"
+options.ExtractsOutputDirectory = "./"
 options.GlobalTrigger = "TimeStep"
-options.GlobalTrigger.Frequency = 10
 options.CatalystLiveTrigger = "TimeStep"
+
+# init the 'TimeStep' selected for 'GlobalTrigger'
+options.GlobalTrigger.Frequency = 10
+
 # ------------------------------------------------------------------------------
 if __name__ == "__main__":
     from paraview.simple import SaveExtractsUsingCatalystOptions
@@ -82,20 +92,20 @@ def simulate():
     config["RHS"]["diffusion"] = True
     config["thermochem"]["spdata"] = ["Air"]
     config["thermochem"]["trans"] = "constantProps"
-    config["Catalyst"]["coprocess"] = True
-    config["Catalyst"]["cpFile"] = "tempcoproc.py"
+    config["coprocess"]["catalyst"] = True
+    config["coprocess"]["catalystFile"] = "tempcoproc.py"
 
     comm, rank, size = pg.mpiComm.mpiUtils.getCommRankSize()
     if rank == 0:
         with open("tempcoproc.py", "w") as f:
             f.write(fname)
     mb = pg.multiBlock.generateMultiBlockSolver(1, config)
-    mb.totalBlocks = 2
     blk = mb[0]
     if rank == 0:
         pg.grid.create.multiBlockCube(
             mb, mbDims=[1, 1, 1], dimsPerBlock=[100, 40, 2], lengths=[0.1, 0.02, 0.001]
         )
+        mb.totalBlocks = 2
         face = blk.getFace(1)
         face.bcType = "constantVelocitySubsonicInlet"
         inputBcValues = {}
@@ -124,6 +134,7 @@ def simulate():
             dimsPerBlock=[100, 40, 2],
             lengths=[0.1, 0.02, 0.001],
         )
+        mb.totalBlocks = 2
         blk.nblki = 1
         face = blk.getFace(2)
         face.bcType = "constantPressureSubsonicExit"
@@ -162,12 +173,12 @@ def simulate():
     if rank == 0:
         print(mb)
     dt = 1.44e-6
-    mb.coproc(mb)
+    mb.coproc(mb, mb.nrt)
     while mb.nrt < 100:
 
         pg.misc.progressBar(mb.nrt, 100)
         mb.step(dt)
-        mb.coproc(mb)
+        mb.coproc(mb, mb.nrt)
 
     mb.coproc.finalize()
     if rank == 0:

@@ -1,1 +1,1 @@
-from .coprocessor import coprocessor
+from .pgCoprocessor import coprocessor
