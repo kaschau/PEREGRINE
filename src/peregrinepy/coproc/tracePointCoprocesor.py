@@ -27,7 +27,8 @@ class tracePointsCoprocessor:
         # For now, we provide a numpy array of ints, where each row is
         #   nblki,  i, j, k
         #
-        # To specify the points
+        # To specify the points and a second numpy array of strings to specify the
+        # tags
         with open(f"{mb.config['io']['inputDir']}/tracePoints.npy", "rb") as f:
 
             points = np.load(f)
