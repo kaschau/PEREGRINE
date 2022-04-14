@@ -64,8 +64,10 @@ class tracePointsCoprocessor:
                     ]
                 )
                 if len(blk.speciesNames) > 1:
+                    strings += ", "
                     strings += "".join(
-                        [f"{s}, " for s in blk.speciesNames[0:-1]] + ["\n"]
+                        [f"{s}, " for s in blk.speciesNames[0:-2]]
+                        + [f"{s}\n" for s in [blk.speciesNames[-2]]]
                     )
                 else:
                     strings += "\n"
