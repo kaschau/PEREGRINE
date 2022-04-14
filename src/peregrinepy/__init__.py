@@ -17,3 +17,5 @@ from . import bcs
 from . import thermo_transport
 
 from . import coproc
+
+from . import interpolation
