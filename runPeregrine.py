@@ -46,12 +46,13 @@ def simulate(configFilePath):
 
     # Time integration
     niter = config["simulation"]["niter"]
-    niterout = config["simulation"]["niterout"]
-    niterprint = config["simulation"]["niterprint"]
+    niterRestart = config["simulation"]["niterRestart"]
+    niterArchive = config["simulation"]["niterArchive"]
+    niterPrint = config["simulation"]["niterPrint"]
     checkNan = config["simulation"]["checkNan"]
     for niter in range(niter):
         dt, CFLmaxA, CFLmaxC, CFLmax = pg.mpiComm.mpiUtils.getDtMaxCFL(mb)
-        if mb.nrt % niterprint == 0 and rank == 0:
+        if mb.nrt % niterPrint == 0 and rank == 0:
             print(
                 f" >>> --------- nrt: {mb.nrt:<6} ---------- <<<\n",
                 f"    tme: {mb.tme:.6E} s\n"
@@ -64,14 +65,25 @@ def simulate(configFilePath):
 
         mb.step(dt)
 
-        # Check if we need to output
-        if mb.nrt % niterout == 0:
+        # Check if we need to write a restart
+        if mb.nrt % niterRestart == 0:
             if rank == 0:
                 print("Saving restart.\n")
             pg.writers.parallelWriter.parallelWriteRestart(
                 mb,
-                path=config["io"]["outputdir"],
-                animate=config["simulation"]["animate"],
+                path=config["io"]["restartDir"],
+                animate=config["simulation"]["animateRestart"],
+                precision="double",
+            )
+        # Check if we need to write archive
+        if mb.nrt % niterArchive == 0:
+            if rank == 0:
+                print("Saving archive.\n")
+            pg.writers.parallelWriter.parallelWriteRestart(
+                mb,
+                path=config["io"]["archiveDir"],
+                animate=config["simulation"]["animateArchive"],
+                precision="single",
             )
 
         # Check if we need to check for Nan
@@ -82,7 +94,7 @@ def simulate(configFilePath):
                     mb.nrt = 99999999
                     pg.writers.parallelWriter.parallelWriteRestart(
                         mb,
-                        path=config["io"]["outputdir"],
+                        path=config["io"]["restartDir"],
                         animate=True,
                     )
                     comm.Barrier()
@@ -92,11 +104,10 @@ def simulate(configFilePath):
                     pg.misc.abort(mb)
 
         # CoProcess
-        mb.coproc(mb)
+        mb.coproc(mb, mb.nrt)
 
     # Finalize coprocessor
-    if mb.config["Catalyst"]["coprocess"]:
-        mb.coproc.finalize()
+    mb.coproc.finalize()
 
     if rank == 0:
         elapsed = perf_counter() - ts

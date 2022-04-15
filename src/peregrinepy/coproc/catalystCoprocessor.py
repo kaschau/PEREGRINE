@@ -1,50 +1,22 @@
-import paraview
-from paraview.modules.vtkPVCatalyst import vtkCPProcessor, vtkCPDataDescription
+import numpy as np
+from paraview.catalyst import bridge
+from paraview import vtk
+from paraview.modules import vtkPVCatalyst as catalyst
 from paraview.vtk.util import numpy_support
 
-try:
-    from paraview.modules.vtkPVPythonCatalyst import (
-        vtkCPPythonScriptV2Pipeline as vtkPipeline,
-    )
-except ImportError:
-    from paraview.modules.vtkPVPythonCatalyst import (
-        vtkCPPythonScriptPipeline as vtkPipeline,
-    )
 
-from paraview.modules.vtkRemotingCore import vtkProcessModule
-import vtk
-import numpy as np
-
-
-class coprocessor:
+class catalystCoprocessor:
     def __init__(self, mb):
 
-        # Try and figure out if we are using paraview > or < 5.9
-
-        # Sanity check
-        pm = vtkProcessModule.GetProcessModule()
-        if pm and pm.GetPartitionId() == 0:
-            print(
-                "Warning: ParaView has been initialized before `initialize` is called"
-            )
-
-        # Initialize
-        paraview.options.batch = True
-        paraview.options.symmetric = True
-
-        self._coProcessor = vtkCPProcessor()
-        if not self._coProcessor.Initialize():
-            raise RuntimeError("Failed to initialize Catalyst")
-
+        bridge.initialize()
         # Add the coproc script
-        fileName = mb.config["Catalyst"]["cpFile"]
-        pipeline = vtkPipeline()
-        if not pipeline.Initialize(fileName):
-            raise RuntimeError("pipeline initialization failed!")
-        self._coProcessor.AddPipeline(pipeline)
+        fileName = mb.config["coprocess"]["catalystFile"]
+        bridge.add_pipeline(fileName)
+
+        self._coProcessor = bridge.coprocessor
 
         # Save the data descriptions
-        self.dataDescription = vtkCPDataDescription()
+        self.dataDescription = catalyst.vtkCPDataDescription()
         # Add the input input
         self.dataDescription.AddInput("input")
 
@@ -191,4 +163,4 @@ class coprocessor:
         self._coProcessor.CoProcess(self.dataDescription)
 
     def finalize(self):
-        self._coProcessor.Finalize()
+        bridge.finalize()

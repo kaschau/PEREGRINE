@@ -8,10 +8,10 @@ def bootstrapCase(config):
     # First we determine what bocks we are responsible for
     ################################################################
     blocksForProcs = pg.readers.readBlocksForProcs(
-        config["io"]["inputdir"], parallel=True
+        config["io"]["inputDir"], parallel=True
     )
     if rank == 0:
-        print("Read blocsForProcs.")
+        print("Read blocksForProcs.")
     # If blocksForProcs.inp is not found, blocksForProcs will be
     # None, so we assume one block per proc
     if blocksForProcs is None:
@@ -51,7 +51,7 @@ def bootstrapCase(config):
     ################################################################
     # Read in the connectivity
     ################################################################
-    pg.readers.readConnectivity(mb, config["io"]["inputdir"])
+    pg.readers.readConnectivity(mb, config["io"]["inputDir"])
     if rank == 0:
         print("Read connectivity.")
         # Check we have the correct number of blocks.
@@ -81,7 +81,7 @@ def bootstrapCase(config):
     ################################################################
     # Read in the grid
     ################################################################
-    pg.readers.readGrid(mb, config["io"]["griddir"])
+    pg.readers.readGrid(mb, config["io"]["gridDir"])
     if rank == 0:
         print("Read grid.")
 
@@ -90,9 +90,9 @@ def bootstrapCase(config):
     ################################################################
     pg.readers.readRestart(
         mb,
-        config["io"]["outputdir"],
+        config["io"]["restartDir"],
         config["simulation"]["restartFrom"],
-        config["simulation"]["animate"],
+        config["simulation"]["animateRestart"],
     )
     if rank == 0:
         print("Read restart.")
@@ -110,7 +110,7 @@ def bootstrapCase(config):
     ################################################################
     # Read in boundary conditions
     ################################################################
-    pg.readers.readBcs(mb, config["io"]["inputdir"])
+    pg.readers.readBcs(mb, config["io"]["inputDir"])
 
     ################################################################
     # Unify the grid via halo construction, compute metrics
@@ -126,9 +126,8 @@ def bootstrapCase(config):
     pg.writers.parallelWriter.registerParallelXdmf(
         mb,
         blocksForProcs,
-        path=config["io"]["outputdir"],
-        gridPath=f"../{config['io']['griddir']}",
-        animate=config["simulation"]["animate"],
+        gridPath=f"../{config['io']['gridDir']}",
+        animate=config["simulation"]["animateRestart"],
     )
 
     ################################################################
@@ -144,13 +143,8 @@ def bootstrapCase(config):
     ################################################################
     # Initialize coprocessor
     ################################################################
-    if config["Catalyst"]["coprocess"]:
-        try:
-            mb.coproc = pg.coproc.coprocessor(mb)
-        except AttributeError:
-            raise ImportError("Could not import the coprocessing module.")
-    else:
-        mb.coproc = pg.misc.null
+
+    mb.coproc = pg.coproc.coprocessor(mb)
 
     if rank == 0:
         print("Ready to solve.")

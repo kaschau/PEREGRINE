@@ -41,7 +41,7 @@ def readRestart(mb, path="./", nrt=0, animate=True):
         with h5py.File(fileName, "r") as f:
 
             blk.nrt = int(list(f["iter"]["nrt"])[0])
-            blk.tme = int(list(f["iter"]["tme"])[0])
+            blk.tme = float(list(f["iter"]["tme"])[0])
 
             for i, var in enumerate(variables):
                 try:

@@ -17,16 +17,23 @@ from ..misc import frozenDict
 class configFile(frozenDict):
     def __init__(self):
         self["io"] = frozenDict(
-            {"griddir": "./Grid", "inputdir": "./Input", "outputdir": "./Output"}
+            {
+                "gridDir": "./Grid",
+                "inputDir": "./Input",
+                "restartDir": "./Restart",
+                "archiveDir": "./Archive",
+            }
         )
         self["simulation"] = frozenDict(
             {
                 "niter": 1,
                 "dt": 1e-3,
                 "restartFrom": 0,
-                "animate": True,
-                "niterout": 10,
-                "niterprint": 1,
+                "animateArchive": True,
+                "animateRestart": False,
+                "niterArchive": 1e10,
+                "niterRestart": 10,
+                "niterPrint": 1,
                 "variableTimeStep": False,
                 "maxCFL": 0.1,
                 "checkNan": False,
@@ -57,7 +64,14 @@ class configFile(frozenDict):
             }
         )
 
-        self["Catalyst"] = frozenDict({"coprocess": False, "cpFile": "./coproc.py"})
+        self["coprocess"] = frozenDict(
+            {
+                "catalyst": False,
+                "catalystFile": "./Input/coproc.py",
+                "trace": False,
+                "niterTrace": 1,
+            },
+        )
 
         for key in self.keys():
             self[key]._freeze()

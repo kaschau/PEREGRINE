@@ -16,7 +16,6 @@ from .RHS import RHS
 from . import bcs
 from . import thermo_transport
 
-try:
-    from . import coproc
-except ImportError:
-    coproc = "Can not import coproc module"
+from . import coproc
+
+from . import interpolation
