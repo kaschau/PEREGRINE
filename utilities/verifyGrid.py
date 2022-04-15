@@ -5,7 +5,7 @@ This utility goes through a grid face by face,
 verifying that all the block's connectivities agree,
 and that the coordinates of matching faces are identical.
 
-Inputs are the path to the grid files, and path to the conn.inp file.
+Inputs are the path to the grid files, and path to the conn.yaml file.
 
 If you have periodicity in the grid, you must have the periodic
 information populated in the grid, i.e. periodicSpan and periodicAxis
@@ -249,7 +249,7 @@ if __name__ == "__main__":
         metavar="<bcFamPath>",
         dest="bcFamPath",
         default="./",
-        help="""If your grid has periodics, we need to the periodic data from bcFams.""",
+        help="""If your grid has periodics, we need the periodic data from bcFams.""",
         type=str,
     )
 
