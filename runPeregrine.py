@@ -96,6 +96,7 @@ def simulate(configFilePath):
                         mb,
                         path=config["io"]["restartDir"],
                         animate=True,
+                        precision="single",
                     )
                     comm.Barrier()
                     if rank == 0:
