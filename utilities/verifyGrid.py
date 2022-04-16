@@ -66,6 +66,8 @@ def verify(mb):
             nface = face.nface
             neighbor = face.neighbor
             bc = face.bcType
+            orientation = face.orientation
+            bcFam = face.bcFam
 
             if neighbor is None:
                 assert bc in (
@@ -84,7 +86,7 @@ def verify(mb):
                     "isoTNoSlipWall",
                     "isoTSlipWall",
                     "isoTMovingWall",
-                )
+                ), f"Block #{blk.nblki} face {nface} has no neighbor, but has bcType {bc}"
                 assert bc not in (
                     # Interior, periodic
                     "b0",
@@ -92,7 +94,14 @@ def verify(mb):
                     "periodicTransHigh",
                     "periodicRotLow",
                     "periodicRotHigh",
-                )
+                ), f"Block #{blk.nblki} face {nface} has no neighbor, but has bcType {bc}"
+                assert (
+                    orientation is None
+                ), f"Block #{blk.nblki} face {nface} has no neighbor, but has orientation {orientation}"
+                assert (
+                    bcFam is None
+                ), f"Block #{blk.nblki} face {nface} has no neighbor, but has bcFam {bcFam}"
+
                 continue
 
             (face_x, face_y, face_z) = extractFace(blk, face.nface)
