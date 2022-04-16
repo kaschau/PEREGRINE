@@ -178,8 +178,8 @@ def writeRestart(mb, path="./", gridPath="./", animate=True, precision="double")
 
         gridElem.append(deepcopy(blockElem))
 
-        if mb.mbType in ["grid", "restart"]:
-            progressBar(blk.nblki + 1, len(mb), f"Writing out block {blk.nblki}")
+        if mb.mbType == "restart":
+            progressBar(blk.nblki + 1, len(mb), f"Writing out restartBlock {blk.nblki}")
 
     et = etree.ElementTree(xdmfElem)
     if animate:
