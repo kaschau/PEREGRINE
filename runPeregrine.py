@@ -123,10 +123,11 @@ def simulate(configFilePath):
 if __name__ == "__main__":
     configFilePath = sys.argv[1]
     try:
-        # Manually initialise MPI
         kokkos.initialize()
         simulate(configFilePath)
         kokkos.finalize()
+        # Manually finalize MPI
+        MPI.Finalize()
 
     except Exception as e:
         import sys
