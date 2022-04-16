@@ -100,6 +100,8 @@ if __name__ == "__main__":
         toBlk.nj = fromBlk.nj
         toBlk.nk = fromBlk.nk
 
+        # Copy connectivity (must be explicitely copied, not just pointed to
+        # like coordinates can)
         for toFace, fromFace in zip(toBlk.faces, fromBlk.faces):
             toFace.bcFam = fromFace.bcFam
             toFace.bcType = fromFace.bcType
