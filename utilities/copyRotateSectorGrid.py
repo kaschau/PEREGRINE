@@ -96,6 +96,9 @@ if __name__ == "__main__":
         toBlk = toGrid[i]
         # Copy coordinates
         toBlk.array = fromBlk.array
+        toBlk.ni = fromBlk.ni
+        toBlk.nj = fromBlk.nj
+        toBlk.nk = fromBlk.nk
 
         for toFace, fromFace in zip(toBlk.faces, fromBlk.faces):
             toFace.bcFam = fromFace.bcFam
