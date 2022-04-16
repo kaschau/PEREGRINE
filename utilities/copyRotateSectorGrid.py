@@ -93,12 +93,19 @@ if __name__ == "__main__":
     lowside = []
     highside = []
     for i, fromBlk in enumerate(fromGrid):
-        toGrid[i] = fromBlk
+        toBlk = toGrid[i]
+        # Copy coordinates
+        toBlk.array = fromBlk.array
 
-        for face in fromBlk.faces:
-            if face.bcType == "periodicRotLow":
+        for toFace, fromFace in zip(toBlk.faces, fromBlk.faces):
+            toFace.bcFam = fromFace.bcFam
+            toFace.bcType = fromFace.bcType
+            toFace.orientation = fromFace.orientation
+            toFace.neighbor = fromFace.neighbor
+
+            if fromFace.bcType == "periodicRotLow":
                 lowside.append(fromBlk.nblki)
-            elif face.bcType == "periodicRotHigh":
+            elif fromFace.bcType == "periodicRotHigh":
                 highside.append(fromBlk.nblki)
 
     # Now copy/rotate sector by sector
@@ -208,6 +215,7 @@ if __name__ == "__main__":
         # original and far highside
         elif fromBlk.nblki in highside:
             # original
+            rotBlk = toGrid[i]
             for toFace, fromFace in zip(rotBlk.faces, fromBlk.faces):
                 if fromFace.bcType == "periodicRotHigh":
                     toFace.bcType = "b0"
