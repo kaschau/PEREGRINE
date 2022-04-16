@@ -105,7 +105,7 @@ def writeGrid(mb, path="./", precision="double", withHalo=False):
         gridElem.append(deepcopy(blockElem))
 
         if mb.mbType in ["grid", "restart"]:
-            progressBar(blk.nblki + 1, len(mb), f"Writing out block {blk.nblki}")
+            progressBar(blk.nblki + 1, len(mb), f"Writing out gridBlock {blk.nblki}")
 
     et = etree.ElementTree(xdmfElem)
     save_file = f"{path}/g.xmf"
