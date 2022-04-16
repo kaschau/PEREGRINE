@@ -212,6 +212,7 @@ if __name__ == "__main__":
             rotBlk = toGrid[i]
             for toFace, fromFace in zip(rotBlk.faces, fromBlk.faces):
                 if fromFace.bcType == "periodicRotLow":
+                    # set neighbor to new high side
                     toFace.neighbor = fromFace.neighbor + nblks * (nseg - 1)
                     if is360:
                         toFace.bcType = "b0"
@@ -222,6 +223,7 @@ if __name__ == "__main__":
             # original
             rotBlk = toGrid[i]
             for toFace, fromFace in zip(rotBlk.faces, fromBlk.faces):
+                # set to internal with new neighbor
                 if fromFace.bcType == "periodicRotHigh":
                     toFace.bcType = "b0"
                     toFace.neighbor = fromFace.neighbor + nblks
@@ -229,6 +231,7 @@ if __name__ == "__main__":
             # new far high side
             rotBlk = toGrid[i + nblks * (nseg - 1)]
             for toFace, fromFace in zip(rotBlk.faces, fromBlk.faces):
+                # if360, the new high side is an internal face
                 if fromFace.bcType == "periodicRotHigh":
                     if is360:
                         toFace.bcType = "b0"
