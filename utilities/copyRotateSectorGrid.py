@@ -75,7 +75,7 @@ if __name__ == "__main__":
 
     if nseg <= 1:
         raise ValueError(
-            "nseg must be >= 1 (it corresponds to the total number of output segments)"
+            "nseg must be > 1 (it corresponds to the total number of output segments)"
         )
 
     nblks = len(
@@ -89,20 +89,20 @@ if __name__ == "__main__":
     toGrid = pg.multiBlock.grid(nblks * nseg)
 
     # Copy the original grid to new grid's first sector
-    # Also collect "front" and "back" faces.
-    backside = []
-    frontside = []
+    # Also collect "high" and "low" faces.
+    lowside = []
+    highside = []
     for i, fromBlk in enumerate(fromGrid):
         toGrid[i] = fromBlk
 
         for face in fromBlk.faces:
             if face.bcType == "periodicRotLow":
-                backside.append(fromBlk.nblki)
+                lowside.append(fromBlk.nblki)
             elif face.bcType == "periodicRotHigh":
-                frontside.append(fromBlk.nblki)
+                highside.append(fromBlk.nblki)
 
     # Now copy/rotate sector by sector
-    # We will update the front and back side
+    # We will update the high and low side
     # faces and the new sector faces on this
     # pass
     for i in range(nseg - 1):
@@ -163,13 +163,13 @@ if __name__ == "__main__":
                 elif fromFace.bcType.startswith("periodic"):
                     toFace.bcFam = fromFace.bcFam
                     toFace.orientation = fromFace.orientation
-                    # back side faces
-                    if fromBlk.nblki in backside:
+                    # low side faces
+                    if fromBlk.nblki in lowside:
                         toFace.bcType = "b0"
                         toFace.neighbor = fromFace.neighbor + nblks * i
                         toFace.bcFam = None
-                    # front side faces
-                    elif fromBlk.nblki in frontside:
+                    # high side faces
+                    elif fromBlk.nblki in highside:
                         if i == nseg - 2:
                             toFace.bcType = "periodicRotHigh"
                             toFace.neighbor = fromFace.neighbor
@@ -187,39 +187,39 @@ if __name__ == "__main__":
                 else:
                     raise ValueError("What is this face?")
 
-    # At this point, the original sector front and back side faces are out of
-    # date, as is the last sector's front side
+    # At this point, the original sector high and low side faces are out of
+    # date, as is the last sector's high side
     if abs(nseg * sectorAngle - 360.0) < 1e-10:
         is360 = True
     else:
         is360 = False
 
     for i, fromBlk in enumerate(fromGrid):
-        # backside
-        if fromBlk.nblki in backside:
+        # lowside
+        if fromBlk.nblki in lowside:
             rotBlk = toGrid[i]
             for toFace, fromFace in zip(rotBlk.faces, fromBlk.faces):
                 if fromFace.bcType == "periodicRotLow":
                     toFace.neighbor = fromFace.neighbor + nblks * (nseg - 1)
-                if is360:
-                    toFace.bcType = "b0"
-                    toFace.bcFam = None
+                    if is360:
+                        toFace.bcType = "b0"
+                        toFace.bcFam = None
 
-        # original and far frontside
-        elif fromBlk.nblki in frontside:
+        # original and far highside
+        elif fromBlk.nblki in highside:
             # original
-            rotBlk = toGrid[i]
             for toFace, fromFace in zip(rotBlk.faces, fromBlk.faces):
                 if fromFace.bcType == "periodicRotHigh":
                     toFace.bcType = "b0"
                     toFace.neighbor = fromFace.neighbor + nblks
                     toFace.bcFam = None
-            # far frontside
+            # new far high side
             rotBlk = toGrid[i + nblks * (nseg - 1)]
             for toFace, fromFace in zip(rotBlk.faces, fromBlk.faces):
-                if is360:
-                    toFace.bcType = "b0"
-                    toFace.bcFam = None
+                if fromFace.bcType == "periodicRotHigh":
+                    if is360:
+                        toFace.bcType = "b0"
+                        toFace.bcFam = None
 
     pg.writers.writeGrid(toGrid, toDir)
     pg.writers.writeConnectivity(toGrid, toDir)

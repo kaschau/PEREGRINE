@@ -68,6 +68,31 @@ def verify(mb):
             bc = face.bcType
 
             if neighbor is None:
+                assert bc in (
+                    # Inlets
+                    "constantVelocitySubsonicInlet",
+                    "supersonicInlet",
+                    "constantMassFluxSubsonicInlet",
+                    "cubicSplineSubsonicInlet",
+                    # Exits
+                    "constantPressureSubsonicExit",
+                    "supersonicExit",
+                    # Walls
+                    "adiabaticNoSlipWall",
+                    "adiabaticSlipWall",
+                    "adiabaticMovingWall",
+                    "isoTNoSlipWall",
+                    "isoTSlipWall",
+                    "isoTMovingWall",
+                )
+                assert bc not in (
+                    # Interior, periodic
+                    "b0",
+                    "periodicTransLow",
+                    "periodicTransHigh",
+                    "periodicRotLow",
+                    "periodicRotHigh",
+                )
                 continue
 
             (face_x, face_y, face_z) = extractFace(blk, face.nface)
