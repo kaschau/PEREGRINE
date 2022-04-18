@@ -87,6 +87,7 @@ def verify(mb):
                     "isoTSlipWall",
                     "isoTMovingWall",
                 ), f"Block #{blk.nblki} face {nface} has no neighbor, but has bcType {bc}"
+
                 assert bc not in (
                     # Interior, periodic
                     "b0",
@@ -95,12 +96,19 @@ def verify(mb):
                     "periodicRotLow",
                     "periodicRotHigh",
                 ), f"Block #{blk.nblki} face {nface} has no neighbor, but has bcType {bc}"
+
                 assert (
                     orientation is None
                 ), f"Block #{blk.nblki} face {nface} has no neighbor, but has orientation {orientation}"
-                assert (
-                    bcFam is None
-                ), f"Block #{blk.nblki} face {nface} has no neighbor, but has bcFam {bcFam}"
+
+                if bc not in (
+                    "supersonicExit",
+                    "adiabaticNoSlipWall",
+                    "adiabaticSlipWall",
+                ):
+                    assert (
+                        bcFam is not None
+                    ), f"Block #{blk.nblki} face {nface} is {bc}, but has no bcFam"
 
                 continue
 
