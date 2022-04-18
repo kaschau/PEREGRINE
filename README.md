@@ -54,7 +54,7 @@ Gives access to the primitive variables.
 |           | D[n]\*             | 2..2+ns | m^2/s        |
 | **omega** | **Chemistry**      |         |              |
 |           | dTdt               | 0       | K/s          |
-|           | d(Yi)dt\*\*        | 1..ns   | kg/s         |
+|           | d(Yi)dt\*\*        | 1..ns   | []/s         |
 
 \*We store all species' enthalpies and diffusion coeff
 
