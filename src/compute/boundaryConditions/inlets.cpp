@@ -37,17 +37,15 @@ void constantVelocitySubsonicInlet(block_ b,
             // extrapolate pressure
             q0(i, j, 0) = 2.0 * q1(i, j, 0) - q2(i, j, 0);
 
-            // apply velo on face
+            // apply velo in halo
             q0(i, j, 1) = face.qBcVals(i,j,1);
             q0(i, j, 2) = face.qBcVals(i,j,2);
             q0(i, j, 3) = face.qBcVals(i,j,3);
 
-            // apply temperature on face
+            // apply temperature in halo
             q0(i, j, 4) = face.qBcVals(i,j,4);
 
-            // apply species on face
-            // TODO: This is an unprotected extrapolation.
-            // Is this a good thing to be doing?
+            // apply species in halo
             for (int n = 5; n < b.ne; n++) {
               q0(i, j, n) = face.qBcVals(i,j,n);
             }
