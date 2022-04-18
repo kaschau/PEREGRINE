@@ -19,7 +19,7 @@ import peregrinepy as pg
 ##################################################
 
 # Set upstream values here
-M1 = 5.0
+M1 = 2.0
 p1 = 101325.0
 T1 = 300.0
 
@@ -37,8 +37,8 @@ def simulate():
     mb = pg.multiBlock.generateMultiBlockSolver(1, config)
 
     nx = 300
-    dx = 0.005 / 50.0  # Approximate rde resolution
-    lx = nx * dx
+    lx = 1.0
+    dx = lx / nx
     pg.grid.create.multiBlockCube(
         mb,
         mbDims=[1, 1, 1],
@@ -117,7 +117,8 @@ def simulate():
     pg.writers.writeGrid(mb)
     pg.writers.writeRestart(mb, animate=False)
 
-    dt = 1.0e-7
+    # Set dt based on cfg estimate
+    dt = 0.25 * dx / (c2 + u2)
     testIndex = int(nx / 2)
     print(mb)
     while blk.array["q"][testIndex, ng, ng, 4] < 301.0:
