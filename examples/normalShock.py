@@ -7,7 +7,6 @@ Generate 1D normal shock
 """
 
 from mpi4py import MPI
-from pathlib import Path
 
 import kokkos
 import matplotlib.pyplot as plt
@@ -29,16 +28,12 @@ def simulate():
 
     config = pg.files.configFile()
     config["RHS"]["diffusion"] = False
-    # config["RHS"]["shockHandling"] = "hybrid"
-    # config["RHS"]["primaryAdvFlux"] = "secondOrderKEEP"
-    # config["RHS"]["secondaryAdvFlux"] = "rusanov"
-    # config["RHS"]["switchAdvFlux"] = "vanAlbadaPressure"
 
     config["RHS"]["primaryAdvFlux"] = "rusanov"
 
     config["solver"]["timeIntegration"] = "rk4"
-    config["thermochem"]["eos"] = "tpg"
-    config["thermochem"]["spdata"] = "thtr_CH4_O2_Stanford_Skeletal.yaml"
+    config["thermochem"]["eos"] = "cpg"
+    config["thermochem"]["spdata"] = ["Air"]
     mb = pg.multiBlock.generateMultiBlockSolver(1, config)
 
     nx = 300
@@ -63,7 +58,6 @@ def simulate():
     q = blk.array["q"]
     q[ng:-ng, ng:-ng, ng:-ng, 0] = p1
     q[ng:-ng, ng:-ng, ng:-ng, 4] = T1
-    q[ng:-ng, ng:-ng, ng:-ng, 7] = 1.0
     mb.eos(blk, mb.thtrdat, 0, "prims")
 
     gamma = blk.array["qh"][ng, ng, ng, 0]
@@ -85,7 +79,7 @@ def simulate():
 
     u2 = -M2 * c2 + M1 * c1  # In lab reference frame
     # Inlet
-    valueDict = {"u": u2, "v": 0.0, "w": 0.0, "T": T2, "O2": 1.0}
+    valueDict = {"u": u2, "v": 0.0, "w": 0.0, "T": T2}
     face1 = blk.getFace(1)
     face1.array["qBcVals"] = np.zeros(blk.array["q"][face1.s1_].shape)
     pg.bcs.prepInlets.prep_constantVelocitySubsonicInlet(blk, face1, valueDict)
@@ -124,7 +118,7 @@ def simulate():
     pg.writers.writeRestart(mb, animate=False)
 
     dt = 1.0e-7
-    testIndex = int(nx / 5)
+    testIndex = int(nx / 2)
     print(mb)
     while blk.array["q"][testIndex, ng, ng, 4] < 301.0:
         if mb.nrt % 10 == 0:
@@ -147,6 +141,7 @@ def simulate():
     ax1.plot(x, p, color="r", label="p2/p1", linewidth=0.5)
     ax2 = ax1.twinx()
     ax2.set_ylabel("T, M , rho")
+    # convert back to shock reference frame
     u = (
         -(blk.array["q"][ng:-ng, ng, ng, 1] - M1 * c1)
         / blk.array["qh"][ng:-ng, ng, ng, 3]
