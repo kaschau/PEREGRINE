@@ -13,7 +13,7 @@ def RHS(mb):
 
         # Secondary advective fluxes
         mb.secondaryAdvFlux(blk, mb.thtrdat)
-        mb.applySecondaryAdvFlux(blk, 0.0)  # <-- 1.0 is for secondary flux
+        mb.applySecondaryAdvFlux(blk, 0.0)  # <-- 0.0 is for secondary flux
 
         # Diffusive fluxes
         mb.diffFlux(blk, mb.thtrdat)
