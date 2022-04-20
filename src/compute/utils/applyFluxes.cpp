@@ -56,6 +56,8 @@ void applyHybridFlux(block_ b, const double primary) {
 
     // Add fluxes to RHS
     // format is F_primary*(1-switch) + F_secondary*(switch)
+    // so when switch == 0, we dont switch from primary
+    //    when switch == 1 we completely switch
     b.dQ(i,j,k,l) += ( b.iF(i,j,k,l) * (primary -  iFphi * dPrimary) +
                        b.jF(i,j,k,l) * (primary -  jFphi * dPrimary) +
                        b.kF(i,j,k,l) * (primary -  kFphi * dPrimary) ) / b.J(i,j,k) ;
