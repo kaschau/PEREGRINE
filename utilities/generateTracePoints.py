@@ -1,3 +1,8 @@
+#!/usr/bin/env python3
+"""
+A utility to generate trace point file for use in peregrine simulation.
+"""
+
 import peregrinepy as pg
 import numpy as np
 
