@@ -108,23 +108,33 @@ def simulate():
         mb.step(dt)
 
     blk.updateHostView(["q"])
-    fig, ax1 = plt.subplots()
+    fig, (ax1, ax2) = plt.subplots(2)
     ax1.set_title("1D Detonation Profile")
     ax1.set_ylabel("Pressure [MPa]")
     ax1.set_xlabel(r"x")
     x = blk.array["xc"][ng:-ng, ng, ng]
     p = blk.array["q"][ng:-ng, ng, ng, 0] / 1e6
     ax1.plot(x, p, color="r", label="p", linewidth=0.5)
-    ax2 = ax1.twinx()
-    ax2.set_ylabel("Temperatur[K] / Velocity [m/s]")
+    ax12 = ax1.twinx()
+    ax12.set_ylabel("Temperatur[K] / Velocity [m/s]")
     u = blk.array["q"][ng:-ng, ng, ng, 1]
     T = blk.array["q"][ng:-ng, ng, ng, 4]
-    ax2.plot(x, T, color="k", label="T", linewidth=0.5)
-    ax2.plot(x, u, color="g", label="u", linewidth=0.5)
+    ax12.plot(x, T, color="k", label="T", linewidth=0.5)
+    ax12.plot(x, u, color="g", label="u", linewidth=0.5)
 
     h1, l1 = ax1.get_legend_handles_labels()
-    h2, l2 = ax2.get_legend_handles_labels()
+    h2, l2 = ax12.get_legend_handles_labels()
     ax1.legend(h1 + h2, l1 + l2)
+
+    O2 = blk.array["q"][ng:-ng, ng, ng, 5 + 2]
+    H2O = blk.array["q"][ng:-ng, ng, ng, 5 + 6]
+    CO2 = 1.0 - np.sum(blk.array["q"][ng:-ng, ng, ng, 5::], axis=1)
+    CH4 = blk.array["q"][ng:-ng, ng, ng, 5 + 8]
+    ax2.plot(x, O2, color="b", label="O2", linewidth=0.5)
+    ax2.plot(x, CH4, color="r", label="CH4", linewidth=0.5)
+    ax2.plot(x, H2O, color="k", label="H2O", linewidth=0.5)
+    ax2.plot(x, CO2, color="g", label="CO2", linewidth=0.5)
+    ax2.legend()
     plt.show()
     plt.close()
 
