@@ -236,11 +236,6 @@ void tpg(block_ b,
   // Internal energy
   e = (rhoE - tke)/rho;
 
-  // Iterate on to find temperature
-  int nitr=0, maxitr = 100;
-  double tol = 1e-8;
-  double error = 1e100;
-
   // Compute Rmix
   Rmix = 0.0;
   for (int n=0; n<=ns-1; n++)
@@ -249,6 +244,10 @@ void tpg(block_ b,
   }
   Rmix *= th.Ru;
 
+  // Iterate on to find temperature
+  int nitr=0, maxitr = 100;
+  double tol = 1e-8;
+  double error = 1e100;
   // Newtons method to find T
   T = ( b.q(i,j,k,4) < 1.0 ) ? 300.0 : b.q(i,j,k,4); // Initial guess of T
   while( (abs(error) > tol) && (nitr < maxitr))
