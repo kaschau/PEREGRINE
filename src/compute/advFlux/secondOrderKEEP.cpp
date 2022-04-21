@@ -16,6 +16,7 @@ void secondOrderKEEP(block_ b, const thtrdat_ th) {
     double uf;
     double vf;
     double wf;
+    double pf;
 
     // Compute face normal volume flux vector
     uf = 0.5*(b.q(i,j,k,1)+b.q(i-1,j,k,1));
@@ -26,6 +27,8 @@ void secondOrderKEEP(block_ b, const thtrdat_ th) {
         b.isy(i,j,k)*vf +
         b.isz(i,j,k)*wf ;
 
+    pf = 0.5*(b.q(i,j,k,0)+b.q(i-1,j,k,0));
+
     //Compute fluxes
     double rho;
     rho = 0.5*(b.Q(i,j,k,0)+b.Q(i-1,j,k,0));
@@ -34,16 +37,16 @@ void secondOrderKEEP(block_ b, const thtrdat_ th) {
     b.iF(i,j,k,0) = rho * U;
 
     // x momentum rho*u*Ui+ p*Ax
-    b.iF(i,j,k,1) = rho * 0.5*(b.q(i,j,k,1)+b.q(i-1,j,k,1)) * U
-                        + 0.5*(b.q(i,j,k,0)+b.q(i-1,j,k,0)) * b.isx(i,j,k) ;
+    b.iF(i,j,k,1) = rho * uf * U
+                        + pf * b.isx(i,j,k) ;
 
     // y momentum rho*v*Ui+ p*Ay
-    b.iF(i,j,k,2) = rho * 0.5*(b.q(i,j,k,2)+b.q(i-1,j,k,2)) * U
-                        + 0.5*(b.q(i,j,k,0)+b.q(i-1,j,k,0)) * b.isy(i,j,k) ;
+    b.iF(i,j,k,2) = rho * vf * U
+                        + pf * b.isy(i,j,k) ;
 
     // w momentum rho*w*Ui+ p*Az
-    b.iF(i,j,k,3) = rho * 0.5*(b.q(i,j,k,3)+b.q(i-1,j,k,3)) * U
-                        + 0.5*(b.q(i,j,k,0)+b.q(i-1,j,k,0)) * b.isz(i,j,k) ;
+    b.iF(i,j,k,3) = rho * wf * U
+                        + pf * b.isz(i,j,k) ;
 
     // Total energy (rhoE+ p)*Ui)
     double e;
@@ -84,6 +87,7 @@ void secondOrderKEEP(block_ b, const thtrdat_ th) {
     double uf;
     double vf;
     double wf;
+    double pf;
 
     // Compute face normal volume flux vector
     uf = 0.5*(b.q(i,j,k,1)+b.q(i,j-1,k,1));
@@ -94,6 +98,8 @@ void secondOrderKEEP(block_ b, const thtrdat_ th) {
         b.jsy(i,j,k)*vf +
         b.jsz(i,j,k)*wf ;
 
+    pf = 0.5*(b.q(i,j,k,0)+b.q(i,j-1,k,0));
+
     //Compute fluxes
     double rho;
     rho = 0.5*(b.Q(i,j,k,0)+b.Q(i,j-1,k,0));
@@ -102,16 +108,16 @@ void secondOrderKEEP(block_ b, const thtrdat_ th) {
     b.jF(i,j,k,0) = rho * V;
 
     // x momentum rho*u*Vj+ pAx
-    b.jF(i,j,k,1) = rho * 0.5*(b.q(i,j,k,1)+b.q(i,j-1,k,1)) * V
-                        + 0.5*(b.q(i,j,k,0)+b.q(i,j-1,k,0)) * b.jsx(i,j,k) ;
+    b.jF(i,j,k,1) = rho * uf * V
+                        + pf * b.jsx(i,j,k) ;
 
     // y momentum rho*v*Vj+ pAy
-    b.jF(i,j,k,2) = rho * 0.5*(b.q(i,j,k,2)+b.q(i,j-1,k,2)) * V
-                        + 0.5*(b.q(i,j,k,0)+b.q(i,j-1,k,0)) * b.jsy(i,j,k) ;
+    b.jF(i,j,k,2) = rho * vf * V
+                        + pf * b.jsy(i,j,k) ;
 
     // w momentum rho*w*Vj+ pAz
-    b.jF(i,j,k,3) = rho * 0.5*(b.q(i,j,k,3)+b.q(i,j-1,k,3)) * V
-                        + 0.5*(b.q(i,j,k,0)+b.q(i,j-1,k,0)) * b.jsz(i,j,k) ;
+    b.jF(i,j,k,3) = rho * wf * V
+                        + pf * b.jsz(i,j,k) ;
 
     // Total energy (rhoE+P)*Vj)
     double e;
@@ -152,6 +158,7 @@ void secondOrderKEEP(block_ b, const thtrdat_ th) {
     double uf;
     double vf;
     double wf;
+    double pf;
 
     // Compute face normal volume flux vector
     uf = 0.5*(b.q(i,j,k,1)+b.q(i,j,k-1,1));
@@ -162,6 +169,8 @@ void secondOrderKEEP(block_ b, const thtrdat_ th) {
         b.ksy(i,j,k)*vf +
         b.ksz(i,j,k)*wf ;
 
+    pf = 0.5*(b.q(i,j,k,0)+b.q(i,j,k-1,0));
+
     //Compute fluxes
     double rho;
     rho = 0.5*(b.Q(i,j,k,0)+b.Q(i,j,k-1,0));
@@ -169,16 +178,16 @@ void secondOrderKEEP(block_ b, const thtrdat_ th) {
     b.kF(i,j,k,0) = rho * W;
 
     // x momentum rho*u*Wk+ pAx
-    b.kF(i,j,k,1) = rho * 0.5*(b.q(i,j,k,1)+b.q(i,j,k-1,1)) * W
-                        + 0.5*(b.q(i,j,k,0)+b.q(i,j,k-1,0)) * b.ksx(i,j,k) ;
+    b.kF(i,j,k,1) = rho * uf * W
+                        + pf * b.ksx(i,j,k) ;
 
     // y momentum rho*v*Wk+ pAy
-    b.kF(i,j,k,2) = rho * 0.5*(b.q(i,j,k,2)+b.q(i,j,k-1,2)) * W
-                        + 0.5*(b.q(i,j,k,0)+b.q(i,j,k-1,0)) * b.ksy(i,j,k) ;
+    b.kF(i,j,k,2) = rho * vf * W
+                        + pf * b.ksy(i,j,k) ;
 
     // w momentum rho*w*Wk+ pAz
-    b.kF(i,j,k,3) = rho * 0.5*(b.q(i,j,k,3)+b.q(i,j,k-1,3)) * W
-                        + 0.5*(b.q(i,j,k,0)+b.q(i,j,k-1,0)) * b.ksz(i,j,k) ;
+    b.kF(i,j,k,3) = rho * wf * W
+                        + pf * b.ksz(i,j,k) ;
 
     // Total energy (rhoE+P)*Wk)
     double e;
