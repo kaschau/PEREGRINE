@@ -61,7 +61,7 @@ void constantPressureSubsonicExit(block_ b,
                 q0(i, j, l) = 2.0 * q1(i, j, l) - q2(i, j, l);
               }
             }else{
-              // flip velo on wall
+              // flip velocity on face (like slip wall)
               q0(i, j, 1) = q1(i, j, 1) - 2.0 * uDotn * nx(i, j) * dplus;
               q0(i, j, 2) = q1(i, j, 2) - 2.0 * uDotn * ny(i, j) * dplus;
               q0(i, j, 3) = q1(i, j, 3) - 2.0 * uDotn * nz(i, j) * dplus;
