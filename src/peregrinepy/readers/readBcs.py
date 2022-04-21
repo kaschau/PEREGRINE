@@ -5,18 +5,24 @@ import yaml
 from .. import bcs
 
 
-def readBcs(mb, pathToFile):
+def readBcs(mb, pathToFile, justPeriodic=False):
     """
-    This function parses a RAPTOR connectivity file given by
-    file_path and adds the connectivity information to the
-    supplied peregrinepy.multiBlock object
+    This function parses a PEREGRINE bcFam.yaml file given by
+    pathToFile and adds the relevant conditions to the boundary
+    conditions of the block faces.
 
     Parameters
     ----------
-    mb_data : peregrinepy.multiBlock.dataset (or a descendant)
+    mb : peregrinepy.multiBlock.topology (or a descendant)
 
-    file_path : str
-        Path to the conn.inp file to be read in
+    pathToFile : str
+        Path to the bcFam.yaml file to be read in
+
+    justPeriodic : bool
+        For runnning cases, we need periodic boundary info
+        BEFORE we unify the grid, but we need grid metrics
+        for some of the boundary condition types. So we want
+        to be able to read in just periodic info sometimes.
 
     Returns
     -------
@@ -79,6 +85,8 @@ def readBcs(mb, pathToFile):
             if bcType.startswith("periodic"):
                 face.periodicSpan = bcsIn[bcFam]["bcVals"]["periodicSpan"]
                 face.periodicAxis = bcsIn[bcFam]["bcVals"]["periodicAxis"]
+                continue
+            if justPeriodic:
                 continue
 
             # If we are a solver face, we need to create the kokkos arrays
