@@ -87,7 +87,7 @@ def create(bc, adv, spdata):
         # Conservative like bcs
         face.array["QBcVals"] = np.zeros((blk.array["Q"][face.s1_].shape))
         inputBcValues["mDotPerUnitArea"] = mDotPerAbc
-        # Just so we can check we set the target mdot to the zeroth (unuzed)
+        # Just so we can check we set the target mdot to the zeroth (unused)
         # index of the QBcVals
         face.array["QBcVals"][:, :, 0] = mDotPerAbc
 

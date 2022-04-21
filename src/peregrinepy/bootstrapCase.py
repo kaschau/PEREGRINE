@@ -108,9 +108,9 @@ def bootstrapCase(config):
     mb.initSolverArrays(config)
 
     ################################################################
-    # Read in boundary conditions
+    # Read in periodic boundary condition info
     ################################################################
-    pg.readers.readBcs(mb, config["io"]["inputDir"])
+    pg.readers.readBcs(mb, config["io"]["inputDir"], justPeriodic=True)
 
     ################################################################
     # Unify the grid via halo construction, compute metrics
@@ -119,6 +119,13 @@ def bootstrapCase(config):
     mb.computeMetrics(config["RHS"]["diffOrder"])
     if rank == 0:
         print("Unified grid.")
+
+    ################################################################
+    # Read in boundary conditions
+    ################################################################
+    pg.readers.readBcs(mb, config["io"]["inputDir"], justPeriodic=False)
+    if rank == 0:
+        print("Set boundary conditions.")
 
     ################################################################
     # Register parallel writer
