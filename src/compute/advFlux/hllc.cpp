@@ -75,7 +75,7 @@ void hllc(block_ b, const thtrdat_ th) {
           b.iF(i, j, k, 1) = FUL   + SL*(UstarL*ufL - rhouL) * b.iS(i, j, k);
           b.iF(i, j, k, 2) = FVL   + SL*(UstarL*vfL - rhovL) * b.iS(i, j, k);
           b.iF(i, j, k, 3) = FWL   + SL*(UstarL*wfL - rhowL) * b.iS(i, j, k);
-          b.iF(i, j, k, 4) = FEL   + SL*(UstarL* EL/rhoL + (Sstar - UL)*(Sstar + pL/(rhoL*(SL-UL))) - EL) * b.iS(i, j, k);
+          b.iF(i, j, k, 4) = FEL   + SL*(UstarL*(EL/rhoL + (Sstar - UL)*(Sstar + pL/(rhoL*(SL-UL)))) - EL) * b.iS(i, j, k);
           for (int n = 0; n < th.ns - 1; n++) {
             double FYiL, YiL, rhoYiL;
             FYiL = b.Q(i - 1, j, k, 5 + n) * UL * b.iS(i, j, k);
@@ -96,7 +96,7 @@ void hllc(block_ b, const thtrdat_ th) {
           b.iF(i, j, k, 1) = FUR   + SR*(UstarR*ufR - rhouR) * b.iS(i, j, k);
           b.iF(i, j, k, 2) = FVR   + SR*(UstarR*vfR - rhovR) * b.iS(i, j, k);
           b.iF(i, j, k, 3) = FWR   + SR*(UstarR*wfR - rhowR) * b.iS(i, j, k);
-          b.iF(i, j, k, 4) = FER   + SR*(UstarR* ER/rhoR + (Sstar - UR)*(Sstar + pR/(rhoR*(SR-UR))) - ER) * b.iS(i, j, k);
+          b.iF(i, j, k, 4) = FER   + SR*(UstarR*(ER/rhoR + (Sstar - UR)*(Sstar + pR/(rhoR*(SR-UR)))) - ER) * b.iS(i, j, k);
           for (int n = 0; n < th.ns - 1; n++) {
             double FYiR, YiR, rhoYiR;
             FYiR = b.Q(i, j, k, 5 + n) * UR * b.iS(i, j, k);
