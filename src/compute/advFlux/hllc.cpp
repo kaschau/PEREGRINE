@@ -11,7 +11,7 @@ void hllc(block_ b, const thtrdat_ th) {
   MDRange3 range_i({b.ng, b.ng, b.ng},
                    {b.ni + b.ng, b.nj + b.ng - 1, b.nk + b.ng - 1});
   Kokkos::parallel_for(
-      "rusanov i face conv fluxes", range_i,
+      "hllc i face conv fluxes", range_i,
       KOKKOS_LAMBDA(const int i, const int j, const int k) {
         double &ufR = b.q(i, j, k, 1);
         double &vfR = b.q(i, j, k, 2);
@@ -149,7 +149,7 @@ void hllc(block_ b, const thtrdat_ th) {
   MDRange3 range_j({b.ng, b.ng, b.ng},
                    {b.ni + b.ng - 1, b.nj + b.ng, b.nk + b.ng - 1});
   Kokkos::parallel_for(
-      "rusanov j face conv fluxes", range_j,
+      "hllc j face conv fluxes", range_j,
       KOKKOS_LAMBDA(const int i, const int j, const int k) {
         double &ufR = b.q(i, j, k, 1);
         double &vfR = b.q(i, j, k, 2);
@@ -286,7 +286,7 @@ void hllc(block_ b, const thtrdat_ th) {
   MDRange3 range_k({b.ng, b.ng, b.ng},
                    {b.ni + b.ng - 1, b.nj + b.ng - 1, b.nk + b.ng});
   Kokkos::parallel_for(
-      "rusanov k face conv fluxes", range_k,
+      "hllc k face conv fluxes", range_k,
       KOKKOS_LAMBDA(const int i, const int j, const int k) {
         double &ufR = b.q(i, j, k, 1);
         double &vfR = b.q(i, j, k, 2);
