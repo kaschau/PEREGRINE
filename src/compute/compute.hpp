@@ -30,12 +30,14 @@ void place_recvBuffer4(fourDview view, face_ face, std::vector<int> slices);
 void secondOrderKEEP(block_ b, const thtrdat_ th);
 //    |------> fourthOrderKEEP
 void fourthOrderKEEP(block_ b, const thtrdat_ th);
+//    |------> jamesonDissipation
+void jamesonDissipation(block_ b, const thtrdat_ th);
 //    |------> rusanov
 void rusanov(block_ b, const thtrdat_ th);
 //    |------> ausmPlusUp
 void ausmPlusUp(block_ b, const thtrdat_ th);
-//    |------> jamesonDissipation
-void jamesonDissipation(block_ b, const thtrdat_ th);
+//    |------> hllc
+void hllc(block_ b, const thtrdat_ th);
 
 // ./boundaryConditions
 //    |------> inlets

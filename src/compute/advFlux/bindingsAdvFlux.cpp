@@ -27,4 +27,8 @@ void bindAdvFlux(py::module_ &m) {
   advFlux.def("ausmPlusUp", &ausmPlusUp, "Compute inviscid fluxes via AUSM+UP",
         py::arg("block_ object"),
         py::arg("thtrdat_ object"));
+  //  |----> hllc.cpp
+  advFlux.def("hllc", &hllc, "Compute first order euler fluxes via hllc",
+        py::arg("block_ object"),
+        py::arg("thtrdat_ object"));
 }
