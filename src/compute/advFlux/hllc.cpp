@@ -135,7 +135,7 @@ void hllc(block_ b, const thtrdat_ th) {
           b.iF(i, j, k, 1) = UR * rhouR * b.iS(i, j, k) + pR * b.isx(i, j, k);
           b.iF(i, j, k, 2) = UR * rhovR * b.iS(i, j, k) + pR * b.isy(i, j, k);
           b.iF(i, j, k, 3) = UR * rhowR * b.iS(i, j, k) + pR * b.isz(i, j, k);
-          b.iF(i, j, k, 4) = UR * (ER + pR);
+          b.iF(i, j, k, 4) = UR * (ER + pR) * b.iS(i, j, k);
           for (int n = 0; n < th.ns - 1; n++) {
             double rhoYiR = b.Q(i, j, k, 5 + n);
             b.iF(i, j, k, 5 + n) = UR * rhoYiR * b.iS(i, j, k);
@@ -273,7 +273,7 @@ void hllc(block_ b, const thtrdat_ th) {
           b.jF(i, j, k, 1) = UR * rhouR * b.jS(i, j, k) + pR * b.jsx(i, j, k);
           b.jF(i, j, k, 2) = UR * rhovR * b.jS(i, j, k) + pR * b.jsy(i, j, k);
           b.jF(i, j, k, 3) = UR * rhowR * b.jS(i, j, k) + pR * b.jsz(i, j, k);
-          b.jF(i, j, k, 4) = UR * (ER + pR);
+          b.jF(i, j, k, 4) = UR * (ER + pR) * b.jS(i, j, k);
           for (int n = 0; n < th.ns - 1; n++) {
             double rhoYiR = b.Q(i, j, k, 5 + n);
             b.jF(i, j, k, 5 + n) = UR * rhoYiR * b.jS(i, j, k);
@@ -410,7 +410,7 @@ void hllc(block_ b, const thtrdat_ th) {
           b.kF(i, j, k, 1) = UR * rhouR * b.kS(i, j, k) + pR * b.ksx(i, j, k);
           b.kF(i, j, k, 2) = UR * rhovR * b.kS(i, j, k) + pR * b.ksy(i, j, k);
           b.kF(i, j, k, 3) = UR * rhowR * b.kS(i, j, k) + pR * b.ksz(i, j, k);
-          b.kF(i, j, k, 4) = UR * (ER + pR);
+          b.kF(i, j, k, 4) = UR * (ER + pR) * b.kS(i, j, k);
           for (int n = 0; n < th.ns - 1; n++) {
             double rhoYiR = b.Q(i, j, k, 5 + n);
             b.kF(i, j, k, 5 + n) = UR * rhoYiR * b.kS(i, j, k);
