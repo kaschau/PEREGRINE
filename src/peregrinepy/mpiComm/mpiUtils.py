@@ -59,6 +59,7 @@ def getDtMaxCFL(mb):
     if mb.config["simulation"]["variableTimeStep"]:
         cflMAX = mb.config["simulation"]["maxCFL"]
         dt = cflMAX / cfl[2]
+        mb.config["simulation"]["dt"] = dt
     else:
         dt = mb.config["simulation"]["dt"]
 

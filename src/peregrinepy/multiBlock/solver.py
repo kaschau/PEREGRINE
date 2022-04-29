@@ -111,6 +111,9 @@ class solver(restart):
         string += f"  Subgrid Model: {self.sgs.__name__}\n"
         if self.config["thermochem"]["chemistry"]:
             string += f"  Explicit chemistry mechanism used: {self.expChem.__name__}\n"
+            if self.config["thermochem"]["nChemSubSteps"] > 1:
+                nSub = self.config["thermochem"]["nChemSubSteps"]
+                string += f"    Number chemical sub steps: {nSub}\n"
             string += f"  Implicit chemistry mechanism used: {self.impChem.__name__}\n"
 
         return string
