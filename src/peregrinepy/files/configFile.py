@@ -61,6 +61,7 @@ class configFile(frozenDict):
                 "trans": "kineticTheory",
                 "chemistry": False,
                 "mechanism": None,
+                "nChemSubSteps": 1,
             }
         )
 

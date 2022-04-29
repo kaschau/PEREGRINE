@@ -20,4 +20,9 @@ def RHS(mb):
         mb.applyDiffFlux(blk, -1.0)  # <-- -1.0 is arbitrary, see applyFlux.cpp
 
         # Chemical source terms
-        mb.expChem(blk, mb.thtrdat)
+        mb.expChem(
+            blk,
+            mb.thtrdat,
+            nChemSubSteps=mb.config["thermochem"]["nChemSubSteps"],
+            dt=mb.config["simulation"]["dt"],
+        )
