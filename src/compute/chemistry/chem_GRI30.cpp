@@ -79,7 +79,7 @@ void chem_GRI30(block_ b, thtrdat_ th, int face/*=0*/, int indxI/*=0*/, int indx
   double T = b.q(i,j,k,4);
   double& rho = b.Q(i,j,k,0);
   double Y[53];
-  double dYdt[52];
+  double dYdt[53];
   double dTdt=0.0;
   const double logT = log(T);
   const double prefRuT = 101325.0/(th.Ru*T);
@@ -3277,9 +3277,10 @@ void chem_GRI30(block_ b, thtrdat_ th, int face/*=0*/, int indxI/*=0*/, int indx
   dYdt[49] = th.MW(49) * ( q[312] +q[313] +q[314] -q[315] +q[316] +q[317] -q[318] -q[319] -q[320] -q[321] -q[322] -q[323] -q[324]);
   dYdt[50] = th.MW(50) * ( q[311] -q[312] -q[313] -q[314] +q[315] -q[316] +q[319] +q[322]);
   dYdt[51] = th.MW(51) * ( q[284] +q[293] +q[295] +q[298] +q[303] -q[304] -q[305] -q[306] -q[307] -q[308] -q[309] -q[310]);
+  dYdt[52] = th.MW(52) * ( q[285] -q[295] -q[296] -q[297] -q[298] -q[299] -q[300] -q[301] -q[302]);
 
   dTdt = 0.0;
-  for (int n=0; n<52; n++)
+  for (int n=0; n<53; n++)
   {
     dTdt -= hi[n] * dYdt[n];
     Y[n] += dYdt[n]/rho*(dt/nChemSubSteps);
