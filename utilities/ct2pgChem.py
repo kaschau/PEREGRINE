@@ -156,7 +156,7 @@ def ct2pg_chem(ctyaml, cpp):
         "  double T = b.q(i,j,k,4);\n"
         "  double& rho = b.Q(i,j,k,0);\n"
         f"  double Y[{ns}];\n"
-        f"  double dYdt[{ns-1}];\n"
+        f"  double dYdt[{ns}];\n"
         "  double dTdt=0.0;\n"
         "  const double logT = log(T);\n"
         "  const double prefRuT = 101325.0/(th.Ru*T);\n"
@@ -432,7 +432,7 @@ def ct2pg_chem(ctyaml, cpp):
     )
     pg_mech.write(out_string)
 
-    for i in range(gas.n_species - 1):
+    for i in range(gas.n_species):
         out_string = []
         nu_sum = nu_b[i, :] - nu_f[i, :]
         for j, s in enumerate(nu_sum):
@@ -455,7 +455,7 @@ def ct2pg_chem(ctyaml, cpp):
     out_string = (
         "\n"
         "  dTdt = 0.0;\n"
-        f"  for (int n=0; n<{ns-1}; n++)\n"
+        f"  for (int n=0; n<{ns}; n++)\n"
         "  {\n"
         "    dTdt -= hi[n] * dYdt[n];\n"
         "    Y[n] += dYdt[n]/rho*(dt/nChemSubSteps);\n"
