@@ -40,6 +40,7 @@ void chem_CH4_O2_Stanford_Skeletal(block_ b, thtrdat_ th, int face/*=0*/, int in
   double Y[12];
   double dYdt[12];
   double dTdt=0.0;
+  double tSub=dt/nChemSubSteps;
   const double logT = log(T);
   const double prefRuT = 101325.0/(th.Ru*T);
 
@@ -518,10 +519,10 @@ void chem_CH4_O2_Stanford_Skeletal(block_ b, thtrdat_ th, int face/*=0*/, int in
   for (int n=0; n<12; n++)
   {
     dTdt -= hi[n] * dYdt[n];
-    Y[n] += dYdt[n]/rho*(dt/nChemSubSteps);
+    Y[n] += dYdt[n]/rho*tSub;
   }
   dTdt /= cp * rho;
-  T += dTdt*dt/(nChemSubSteps);
+  T += dTdt*tSub;
 
   }// End of chem sub step for loop
 

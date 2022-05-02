@@ -81,6 +81,7 @@ void chem_GRI30(block_ b, thtrdat_ th, int face/*=0*/, int indxI/*=0*/, int indx
   double Y[53];
   double dYdt[53];
   double dTdt=0.0;
+  double tSub=dt/nChemSubSteps;
   const double logT = log(T);
   const double prefRuT = 101325.0/(th.Ru*T);
 
@@ -3283,10 +3284,10 @@ void chem_GRI30(block_ b, thtrdat_ th, int face/*=0*/, int indxI/*=0*/, int indx
   for (int n=0; n<53; n++)
   {
     dTdt -= hi[n] * dYdt[n];
-    Y[n] += dYdt[n]/rho*(dt/nChemSubSteps);
+    Y[n] += dYdt[n]/rho*tSub;
   }
   dTdt /= cp * rho;
-  T += dTdt*dt/(nChemSubSteps);
+  T += dTdt*tSub;
 
   }// End of chem sub step for loop
 
