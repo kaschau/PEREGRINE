@@ -17,4 +17,7 @@ void bindSwitches(py::module_ &m) {
         py::arg("block_ object"));
   switches.def("vanAlbadaPressure", &vanAlbadaPressure, "Compute switches based on van Albada limiter",
         py::arg("block_ object"));
+  //  |----> vanLeer.cpp
+  switches.def("vanLeer", &vanLeer, "Compute switches based on modified van Leer limiter",
+        py::arg("block_ object"));
 }
