@@ -128,6 +128,8 @@ void jamesonPressure(block_ b);
 //    |------> vanAlbada
 void vanAlbadaEntropy(block_ b);
 void vanAlbadaPressure(block_ b);
+//    |------> vanLeer
+void vanLeer(block_ b);
 
 // ./thermo
 //    |------> cpg
