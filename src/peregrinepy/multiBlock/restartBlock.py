@@ -75,23 +75,23 @@ class restartBlock(gridBlock):
     def verifySpeciesSum(self, normalize=False):
         """Function to verify that the sum of species in any cell is not greater than unity"""
 
-        if self.ns > 1:
-            summation = np.sum(self.array["q"][:, :, :, 5::], axis=-1)
-            if np.max(summation) > 1.0:
-                print(
-                    "Warning! Species sum of",
-                    np.max(summation),
-                    "found at",
-                    np.unravel_index(np.argmax(summation, axis=None), summation.shape),
-                    "in block",
-                    self.nblki,
+        assert (
+            self.ns > 1
+        ), "You are trying to check species sum on a case where ns = 1."
+        summation = np.sum(self.array["q"][:, :, :, 5::], axis=-1)
+        if np.max(summation) > 1.0:
+            print(
+                "Warning! Species sum of",
+                np.max(summation),
+                "found at",
+                np.unravel_index(np.argmax(summation, axis=None), summation.shape),
+                "in block",
+                self.nblki,
+            )
+            if normalize:
+                self.array["q"][:, :, :, 5::] = np.where(
+                    summation > 1.0,
+                    self.array["q"][:, :, :, 5::] / summation[:, :, :, np.newaxis],
+                    self.array["q"][:, :, :, 5::],
                 )
-                if normalize:
-                    self.array["q"][:, :, :, 5::] = np.where(
-                        summation > 1.0,
-                        self.array["q"][:, :, :, 5::] / summation[:, :, :, np.newaxis],
-                        self.array["q"][:, :, :, 5::],
-                    )
-                return False
-        else:
-            print("You are trying to check species sum on a case where ns = 1.")
+            return False
