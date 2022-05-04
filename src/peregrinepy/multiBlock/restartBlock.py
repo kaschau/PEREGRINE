@@ -89,7 +89,7 @@ class restartBlock(gridBlock):
                 if normalize:
                     self.array["q"][:, :, :, 5::] = np.where(
                         summation > 1.0,
-                        self.array["q"][:, :, :, 5::] / summation,
+                        self.array["q"][:, :, :, 5::] / summation[:, :, :, np.newaxis],
                         self.array["q"][:, :, :, 5::],
                     )
                 return False

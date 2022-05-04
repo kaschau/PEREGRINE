@@ -30,7 +30,7 @@ class restart(grid):
             super().__init__(nblks, ls)
 
         self.nrt = 0
-        self.tme = 0
+        self.tme = 0.0
 
     def initRestartArrays(self):
         for blk in self:
