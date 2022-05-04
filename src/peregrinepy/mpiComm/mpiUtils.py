@@ -76,17 +76,18 @@ def checkForNan(mb):
     if abort[0] > 0:
         for blk in mb:
             blk.updateHostView(["Q"])
+            ng = blk.ng
             with open(f"nans_{blk.nblki}.log", "w") as f:
                 f.write(f"Nan Detection Log: Block {blk.nblki}\n")
-            for i in range(blk.ne):
-                ng = blk.ng
-                nans = np.where(np.isnan(blk.array["Q"][ng:-ng, ng:-ng, ng:-ng, i]))
+                nans = np.where(
+                    np.sum(np.isnan(blk.array["Q"][ng:-ng, ng:-ng, ng:-ng, :]), axis=-1)
+                    > 0
+                )
                 xs = blk.array["xc"][ng:-ng, ng:-ng, ng:-ng][nans]
                 ys = blk.array["yc"][ng:-ng, ng:-ng, ng:-ng][nans]
                 zs = blk.array["zc"][ng:-ng, ng:-ng, ng:-ng][nans]
-                with open(f"nans_{blk.nblki}.log", "a") as f:
-                    for x, y, z in zip(xs, ys, zs):
-                        f.write(f"x = {x}, y = {y}, z = {z}, Qindex = {i}\n")
+                for x, y, z in zip(xs, ys, zs):
+                    f.write(f"x = {x}, y = {y}, z = {z}\n")
 
     comm.Allreduce(MPI.IN_PLACE, abort, op=MPI.SUM)
 
