@@ -59,7 +59,7 @@ if __name__ == "__main__":
         action="store",
         metavar="<spdata>",
         dest="spdata",
-        help="spdata yaml file (needed for species names)",
+        help="thtr yaml file, or comma separated list of species names (in order)",
         type=str,
     )
     parser.add_argument(
@@ -94,8 +94,12 @@ if __name__ == "__main__":
 
     fromDir = args.fromDir
     toDir = args.toDir
-    with open(args.spdata, "r") as f:
-        speciesNames = list(yaml.load(f, Loader=yaml.FullLoader).keys())
+    if os.path.isfile(args.spdata):
+        with open(args.spdata, "r") as f:
+            speciesNames = list(yaml.load(f, Loader=yaml.FullLoader).keys())
+    else:
+        speciesNames = [item for item in args.spdata.split(",") if item != ""]
+
     function = args.function
     smooth = args.smooth
     verboseSearch = args.verboseSearch
