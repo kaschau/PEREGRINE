@@ -285,7 +285,7 @@ def findBounds(mbTo, mbFrom, verboseSearch):
         toBounds[3] = np.max(blkTo_xc[:, 1])
         toBounds[4] = np.min(blkTo_xc[:, 2])
         toBounds[5] = np.max(blkTo_xc[:, 2])
-        ptFound = [False] * len(blkTo_xc)
+        ptFound = np.zeros(len(blkTo_xc), dtype=bool)
         currBlkIn = []
         for blkFrom in mbFrom:
             # Test if it is possible that any test points lie inside the block
@@ -303,7 +303,7 @@ def findBounds(mbTo, mbFrom, verboseSearch):
                 inBlockBool = ptsInBlkBounds(blkFrom, blkTo_xc)
                 if True in inBlockBool:
                     currBlkIn.append(blkFrom.nblki)
-                    ptFound = ptFound + inBlockBool
+                    ptFound += inBlockBool
                 if not verboseSearch:
                     if False not in ptFound:
                         break
