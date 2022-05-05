@@ -35,6 +35,7 @@ class configFile(frozenDict):
                 "niterRestart": 10,
                 "niterPrint": 1,
                 "variableTimeStep": False,
+                "maxDt": 1e-3,
                 "maxCFL": 0.1,
                 "checkNan": False,
             }
@@ -61,6 +62,7 @@ class configFile(frozenDict):
                 "trans": "kineticTheory",
                 "chemistry": False,
                 "mechanism": None,
+                "nChemSubSteps": 1,
             }
         )
 

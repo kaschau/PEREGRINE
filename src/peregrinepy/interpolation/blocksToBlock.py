@@ -20,7 +20,7 @@ def blocksToBlock(blksFrom, blkTo, function="nearest", smooth=0.5):
 
     """
     Takes a list of blocks that encompass the blkTo parameter in space and interpolate all
-    RAPTOR data from those blocks onto the single block. qv, U,V,W are all interpolated.
+    PEREGRINE data from those blocks onto the single block.
 
     Parameters
     ----------

@@ -104,11 +104,12 @@ void periodicRotLow(
 // ./chemistry
 //    |------> CH4_O2_Stanford_Skeletal
 void chem_CH4_O2_Stanford_Skeletal(block_ b, const thtrdat_ th, const int face,
-                                   const int indxI = 0, const int indxJ = 0,
-                                   const int indxK = 0);
+                                   const int indxI = 0, const int indxJ = 0, const int indxK = 0,
+                                   const int nChemSubSteps = 1, const double dt=1.0);
 //    |------> GRI30
 void chem_GRI30(block_ b, const thtrdat_ th, const int face,
-                const int indxI = 0, const int indxJ = 0, const int indxK = 0);
+                const int indxI = 0, const int indxJ = 0, const int indxK = 0,
+                const int nChemSubSteps = 1, const double dt=1.0);
 
 // ./diffFlux
 //    |------> diffusiveFlux
@@ -127,6 +128,8 @@ void jamesonPressure(block_ b);
 //    |------> vanAlbada
 void vanAlbadaEntropy(block_ b);
 void vanAlbadaPressure(block_ b);
+//    |------> vanLeer
+void vanLeer(block_ b);
 
 // ./thermo
 //    |------> cpg

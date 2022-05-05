@@ -22,7 +22,7 @@
 #include "compute.hpp"
 #include <math.h>
 
-void chem_CH4_O2_Stanford_Skeletal(block_ b, thtrdat_ th, int face/*=0*/, int indxI/*=0*/, int indxJ/*=0*/, int indxK/*=0*/) {
+void chem_CH4_O2_Stanford_Skeletal(block_ b, thtrdat_ th, int face/*=0*/, int indxI/*=0*/, int indxJ/*=0*/, int indxK/*=0*/, int nChemSubSteps/*=1*/, double dt/*1.0*/) {
 
 // --------------------------------------------------------------|
 // cc range
@@ -35,20 +35,39 @@ void chem_CH4_O2_Stanford_Skeletal(block_ b, thtrdat_ th, int face/*=0*/, int in
                                      const int j,
                                      const int k) {
 
-  double& T = b.q(i,j,k,4);
+  double T = b.q(i,j,k,4);
   double& rho = b.Q(i,j,k,0);
   double Y[12];
+  double dYdt[12];
+  double dTdt=0.0;
+  double tSub=dt/nChemSubSteps;
   const double logT = log(T);
   const double prefRuT = 101325.0/(th.Ru*T);
 
-  // Compute nth species Y
-  Y[11] = 1.0;
+  //Set the initial values of Y array
   for (int n=0; n<11; n++)
   {
     Y[n] = b.q(i,j,k,5+n);
-    Y[11] -= Y[n];
   }
-  Y[11] = fmax(0.0,Y[11]);
+
+  for (int nSub=0; nSub<nChemSubSteps; nSub++){
+
+  // Compute nth species Y
+  Y[11] = 1.0;
+  double testSum = 0.0;
+  for (int n=0; n<11; n++)
+  {
+    Y[n] = fmax(fmin(Y[n],1.0),0.0);
+    Y[11] -= Y[n];
+    testSum += Y[n];
+  }
+  if (testSum > 1.0){
+    Y[11] = 0.0;
+    for (int n=0; n<11; n++)
+    {
+      Y[n] /= testSum;
+    }
+  }
 
   // Conecntrations
   double cs[12];
@@ -82,27 +101,35 @@ void chem_CH4_O2_Stanford_Skeletal(block_ b, thtrdat_ th, int face/*=0*/, int in
   // ----------------------------------------------------------- >
 
   int m;
-  double hi,scs;
+  double hi[12];
   double gbs[12];
+  double cp = 0.0;
 
   for (int n=0; n<=11; n++)
   {
     m = ( T <= th.NASA7(n,0) ) ? 8 : 1;
+    double cps =(th.NASA7(n,m+0)            +
+                 th.NASA7(n,m+1)*    T      +
+                 th.NASA7(n,m+2)*pow(T,2.0) +
+                 th.NASA7(n,m+3)*pow(T,3.0) +
+                 th.NASA7(n,m+4)*pow(T,4.0) )*th.Ru/th.MW(n);
 
-    hi     = th.NASA7(n,m+0)                  +
-             th.NASA7(n,m+1)*    T      / 2.0 +
-             th.NASA7(n,m+2)*pow(T,2.0) / 3.0 +
-             th.NASA7(n,m+3)*pow(T,3.0) / 4.0 +
-             th.NASA7(n,m+4)*pow(T,4.0) / 5.0 +
-             th.NASA7(n,m+5)/    T            ;
-    scs    = th.NASA7(n,m+0)*log(T)           +
-             th.NASA7(n,m+1)*    T            +
-             th.NASA7(n,m+2)*pow(T,2.0) / 2.0 +
-             th.NASA7(n,m+3)*pow(T,3.0) / 3.0 +
-             th.NASA7(n,m+4)*pow(T,4.0) / 4.0 +
-             th.NASA7(n,m+6)                  ;
+    hi[n]      = th.NASA7(n,m+0)                  +
+                 th.NASA7(n,m+1)*    T      / 2.0 +
+                 th.NASA7(n,m+2)*pow(T,2.0) / 3.0 +
+                 th.NASA7(n,m+3)*pow(T,3.0) / 4.0 +
+                 th.NASA7(n,m+4)*pow(T,4.0) / 5.0 +
+                 th.NASA7(n,m+5)/    T            ;
 
-    gbs[n] = hi-scs                         ;
+    double scs = th.NASA7(n,m+0)*log(T)           +
+                 th.NASA7(n,m+1)*    T            +
+                 th.NASA7(n,m+2)*pow(T,2.0) / 2.0 +
+                 th.NASA7(n,m+3)*pow(T,3.0) / 3.0 +
+                 th.NASA7(n,m+4)*pow(T,4.0) / 4.0 +
+                 th.NASA7(n,m+6)                  ;
+
+    cp += cps  *Y[n];
+    gbs[n] = hi[n]-scs;
   }
 
   // ----------------------------------------------------------- >
@@ -475,31 +502,42 @@ void chem_CH4_O2_Stanford_Skeletal(block_ b, thtrdat_ th, int face/*=0*/, int in
   // Source terms. --------------------------------------------- >
   // ----------------------------------------------------------- >
 
-  b.omega(i,j,k,1) = th.MW(0) * ( -q[1] -q[2] -q[3] -q[5] +q[10] +q[21] +q[26] +q[32] +q[33] +q[34]);
-  b.omega(i,j,k,2) = th.MW(1) * ( -q[0] +q[1] +q[2] +q[3] +2.0*q[5] -q[6] +q[7] +q[8] -q[9] -q[10] -q[11] -q[12] +q[18] +q[19] -q[21] -q[24] +q[25] +q[26] +q[28] +q[29] +q[31] +q[35] +q[36] +q[37]);
-  b.omega(i,j,k,3) = th.MW(2) * ( -q[0] -q[9] +q[10] +q[13] +q[14] +q[15] -q[17] +q[27] -q[29] -q[30] -q[37]);
-  b.omega(i,j,k,4) = th.MW(3) * ( q[0] -q[1] -q[2] +q[4] -q[6] +q[12] -q[13] -q[16] +q[17] -q[22] -q[25] -q[26] +q[29] -q[35]);
-  b.omega(i,j,k,5) = th.MW(4) * ( q[0] +q[1] +q[2] -q[3] -2.0*q[4] +q[6] +q[7] +q[8] +2.0*q[11] +q[13] -q[14] -q[15] -q[18] -q[19] +q[20] +q[22] -q[23] +q[28] +q[30] +q[35] -q[36]);
-  b.omega(i,j,k,6) = th.MW(5) * ( q[9] -q[10] -q[11] -q[12] -q[13] -q[14] -q[15] -q[20] -q[27] -q[28] +q[37]);
-  b.omega(i,j,k,7) = th.MW(6) * ( q[3] +q[4] -q[7] -q[8] +q[12] +q[14] +q[15] +q[23] +q[36]);
-  b.omega(i,j,k,8) = th.MW(7) * ( q[21] +q[22] +q[23] -q[24] -q[25] -q[26] -q[27] -q[28] -q[29] -q[30] -q[31]);
-  b.omega(i,j,k,9) = th.MW(8) * ( -q[21] -q[22] -q[23] +q[24] +q[27] +q[31]);
-  b.omega(i,j,k,10) = th.MW(9) * ( -q[16] -q[17] -q[18] -q[19] -q[20] +q[26] +q[31] +q[32] +q[33] +q[34] +q[35] +q[36] +q[37]);
-  b.omega(i,j,k,11) = th.MW(10) * ( q[25] +q[28] +q[29] +q[30] -q[31] -q[32] -q[33] -q[34] -q[35] -q[36] -q[37]);
+  dYdt[0] = th.MW(0) * ( -q[1] -q[2] -q[3] -q[5] +q[10] +q[21] +q[26] +q[32] +q[33] +q[34]);
+  dYdt[1] = th.MW(1) * ( -q[0] +q[1] +q[2] +q[3] +2.0*q[5] -q[6] +q[7] +q[8] -q[9] -q[10] -q[11] -q[12] +q[18] +q[19] -q[21] -q[24] +q[25] +q[26] +q[28] +q[29] +q[31] +q[35] +q[36] +q[37]);
+  dYdt[2] = th.MW(2) * ( -q[0] -q[9] +q[10] +q[13] +q[14] +q[15] -q[17] +q[27] -q[29] -q[30] -q[37]);
+  dYdt[3] = th.MW(3) * ( q[0] -q[1] -q[2] +q[4] -q[6] +q[12] -q[13] -q[16] +q[17] -q[22] -q[25] -q[26] +q[29] -q[35]);
+  dYdt[4] = th.MW(4) * ( q[0] +q[1] +q[2] -q[3] -2.0*q[4] +q[6] +q[7] +q[8] +2.0*q[11] +q[13] -q[14] -q[15] -q[18] -q[19] +q[20] +q[22] -q[23] +q[28] +q[30] +q[35] -q[36]);
+  dYdt[5] = th.MW(5) * ( q[9] -q[10] -q[11] -q[12] -q[13] -q[14] -q[15] -q[20] -q[27] -q[28] +q[37]);
+  dYdt[6] = th.MW(6) * ( q[3] +q[4] -q[7] -q[8] +q[12] +q[14] +q[15] +q[23] +q[36]);
+  dYdt[7] = th.MW(7) * ( q[21] +q[22] +q[23] -q[24] -q[25] -q[26] -q[27] -q[28] -q[29] -q[30] -q[31]);
+  dYdt[8] = th.MW(8) * ( -q[21] -q[22] -q[23] +q[24] +q[27] +q[31]);
+  dYdt[9] = th.MW(9) * ( -q[16] -q[17] -q[18] -q[19] -q[20] +q[26] +q[31] +q[32] +q[33] +q[34] +q[35] +q[36] +q[37]);
+  dYdt[10] = th.MW(10) * ( q[25] +q[28] +q[29] +q[30] -q[31] -q[32] -q[33] -q[34] -q[35] -q[36] -q[37]);
+  dYdt[11] = th.MW(11) * ( q[16] +q[17] +q[18] +q[19] +q[20]);
 
+  dTdt = 0.0;
+  for (int n=0; n<12; n++)
+  {
+    dTdt -= hi[n] * dYdt[n];
+    Y[n] += dYdt[n]/rho*tSub;
+  }
+  dTdt /= cp * rho;
+  T += dTdt*tSub;
+
+  }// End of chem sub step for loop
+
+  // Compute d(rhoYi)/dt based on where we end up
   // Add source terms to RHS
   for (int n=0; n<11; n++)
   {
-    b.dQ(i,j,k,5+n) += b.omega(i,j,k,n+1);
+    b.dQ(i,j,k,5+n) += (Y[n]*rho - b.Q(i,j,k,5+n))/dt;
   }
-  // Compute dTdt and  dYdt (for implicit chem integration)
-  double dTdt = 0.0;
+
+  // Store dTdt and dYdt (for implicit chem integration)
   for (int n=0; n<11; n++)
   {
-    dTdt -= b.qh(i,j,k,5+n) * b.omega(i,j,k,n+1);
-    b.omega(i,j,k,n+1) /= b.Q(i,j,k,0);
+    b.omega(i,j,k,n+1) = dYdt[n] / b.Q(i,j,k,0);
   }
-  dTdt /= b.qh(i,j,k,1) * b.Q(i,j,k,0);
   b.omega(i,j,k,0) = dTdt;
 
   });
