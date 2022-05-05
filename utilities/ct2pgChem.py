@@ -140,7 +140,7 @@ def ct2pg_chem(ctyaml, cpp):
         '#include "compute.hpp"\n'
         "#include <math.h>\n"
         "\n"
-        f'void {cpp.replace(".cpp","")}(block_ b, thtrdat_ th, int face/*=0*/, int indxI/*=0*/, int indxJ/*=0*/, int indxK/*=0*/) {{\n'
+        f'void {cpp.replace(".cpp","")}(block_ b, thtrdat_ th, int face/*=0*/, int indxI/*=0*/, int indxJ/*=0*/, int indxK/*=0*/, int nChemSubSteps/*=1*/, double dt/*1.0*/) {{\n'
         "\n"
         "// --------------------------------------------------------------|\n"
         "// cc range\n"
@@ -153,20 +153,39 @@ def ct2pg_chem(ctyaml, cpp):
         "                                     const int j,\n"
         "                                     const int k) {\n"
         "\n"
-        "  double& T = b.q(i,j,k,4);\n"
+        "  double T = b.q(i,j,k,4);\n"
         "  double& rho = b.Q(i,j,k,0);\n"
         f"  double Y[{ns}];\n"
+        f"  double dYdt[{ns}];\n"
+        "  double dTdt=0.0;\n"
+        "  double tSub=dt/nChemSubSteps;\n"
         "  const double logT = log(T);\n"
         "  const double prefRuT = 101325.0/(th.Ru*T);\n"
         "\n"
-        "  // Compute nth species Y\n"
-        f"  Y[{ns-1}] = 1.0;\n"
+        "  //Set the initial values of Y array\n"
         f"  for (int n=0; n<{ns-1}; n++)\n"
         "  {\n"
         "    Y[n] = b.q(i,j,k,5+n);\n"
-        f"    Y[{ns-1}] -= Y[n];\n"
         "  }\n"
-        f"  Y[{ns-1}] = fmax(0.0,Y[{ns-1}]);\n"
+        "\n"
+        "  for (int nSub=0; nSub<nChemSubSteps; nSub++){\n"
+        "\n"
+        "  // Compute nth species Y\n"
+        f"  Y[{ns-1}] = 1.0;\n"
+        "  double testSum = 0.0;\n"
+        f"  for (int n=0; n<{ns-1}; n++)\n"
+        "  {\n"
+        "    Y[n] = fmax(fmin(Y[n],1.0),0.0);\n"
+        f"    Y[{ns-1}] -= Y[n];\n"
+        "    testSum += Y[n];\n"
+        "  }\n"
+        "  if (testSum > 1.0){\n"
+        f"    Y[{ns-1}] = 0.0;\n"
+        f"    for (int n=0; n<{ns-1}; n++)\n"
+        "    {\n"
+        "      Y[n] /= testSum;\n"
+        "    }\n"
+        "  }\n"
         "\n"
         "  // Conecntrations\n"
         f"  double cs[{ns}];\n"
@@ -214,27 +233,35 @@ def ct2pg_chem(ctyaml, cpp):
         "  // ----------------------------------------------------------- >\n"
         "\n"
         "  int m;\n"
-        "  double hi,scs;\n"
+        f"  double hi[{ns}];\n"
         f"  double gbs[{ns}];\n"
+        f"  double cp = 0.0;\n"
         "\n"
         f"  for (int n=0; n<={ns-1}; n++)\n"
         "  {\n"
         "    m = ( T <= th.NASA7(n,0) ) ? 8 : 1;\n"
+        "    double cps =(th.NASA7(n,m+0)            +\n"
+        "                 th.NASA7(n,m+1)*    T      +\n"
+        "                 th.NASA7(n,m+2)*pow(T,2.0) +\n"
+        "                 th.NASA7(n,m+3)*pow(T,3.0) +\n"
+        "                 th.NASA7(n,m+4)*pow(T,4.0) )*th.Ru/th.MW(n);\n"
         "\n"
-        "    hi     = th.NASA7(n,m+0)                  +\n"
-        "             th.NASA7(n,m+1)*    T      / 2.0 +\n"
-        "             th.NASA7(n,m+2)*pow(T,2.0) / 3.0 +\n"
-        "             th.NASA7(n,m+3)*pow(T,3.0) / 4.0 +\n"
-        "             th.NASA7(n,m+4)*pow(T,4.0) / 5.0 +\n"
-        "             th.NASA7(n,m+5)/    T            ;\n"
-        "    scs    = th.NASA7(n,m+0)*log(T)           +\n"
-        "             th.NASA7(n,m+1)*    T            +\n"
-        "             th.NASA7(n,m+2)*pow(T,2.0) / 2.0 +\n"
-        "             th.NASA7(n,m+3)*pow(T,3.0) / 3.0 +\n"
-        "             th.NASA7(n,m+4)*pow(T,4.0) / 4.0 +\n"
-        "             th.NASA7(n,m+6)                  ;\n"
+        "    hi[n]      = th.NASA7(n,m+0)                  +\n"
+        "                 th.NASA7(n,m+1)*    T      / 2.0 +\n"
+        "                 th.NASA7(n,m+2)*pow(T,2.0) / 3.0 +\n"
+        "                 th.NASA7(n,m+3)*pow(T,3.0) / 4.0 +\n"
+        "                 th.NASA7(n,m+4)*pow(T,4.0) / 5.0 +\n"
+        "                 th.NASA7(n,m+5)/    T            ;\n"
         "\n"
-        "    gbs[n] = hi-scs                         ;\n"
+        "    double scs = th.NASA7(n,m+0)*log(T)           +\n"
+        "                 th.NASA7(n,m+1)*    T            +\n"
+        "                 th.NASA7(n,m+2)*pow(T,2.0) / 2.0 +\n"
+        "                 th.NASA7(n,m+3)*pow(T,3.0) / 3.0 +\n"
+        "                 th.NASA7(n,m+4)*pow(T,4.0) / 4.0 +\n"
+        "                 th.NASA7(n,m+6)                  ;\n"
+        "\n"
+        "    cp += cps  *Y[n];\n"
+        "    gbs[n] = hi[n]-scs;\n"
         "  }\n"
         "\n"
     )
@@ -406,7 +433,7 @@ def ct2pg_chem(ctyaml, cpp):
     )
     pg_mech.write(out_string)
 
-    for i in range(gas.n_species - 1):
+    for i in range(gas.n_species):
         out_string = []
         nu_sum = nu_b[i, :] - nu_f[i, :]
         for j, s in enumerate(nu_sum):
@@ -418,29 +445,39 @@ def ct2pg_chem(ctyaml, cpp):
                 out_string.append(f" {s:+}*q[{j}]")
 
         if len(out_string) == 0:
-            pg_mech.write(f"  b.omega(i,j,k,{i+1}) = th.MW({i}) * (0.0")
+            pg_mech.write(f"  dYdt[{i}] = th.MW({i}) * (0.0")
         else:
             out_string[0] = out_string[0].replace("+", "")
-            pg_mech.write(f"  b.omega(i,j,k,{i+1}) = th.MW({i}) * (")
+            pg_mech.write(f"  dYdt[{i}] = th.MW({i}) * (")
             for item in out_string:
                 pg_mech.write(item)
         pg_mech.write(");\n")
 
     out_string = (
         "\n"
+        "  dTdt = 0.0;\n"
+        f"  for (int n=0; n<{ns}; n++)\n"
+        "  {\n"
+        "    dTdt -= hi[n] * dYdt[n];\n"
+        "    Y[n] += dYdt[n]/rho*tSub;\n"
+        "  }\n"
+        "  dTdt /= cp * rho;\n"
+        "  T += dTdt*tSub;\n"
+        "\n"
+        "  }// End of chem sub step for loop\n"
+        "\n"
+        "  // Compute d(rhoYi)/dt based on where we end up\n"
         "  // Add source terms to RHS\n"
         f"  for (int n=0; n<{ns-1}; n++)\n"
         "  {\n"
-        "    b.dQ(i,j,k,5+n) += b.omega(i,j,k,n+1);\n"
+        "    b.dQ(i,j,k,5+n) += (Y[n]*rho - b.Q(i,j,k,5+n))/dt;\n"
         "  }\n"
-        "  // Compute dTdt and  dYdt (for implicit chem integration)\n"
-        "  double dTdt = 0.0;\n"
+        "\n"
+        "  // Store dTdt and dYdt (for implicit chem integration)\n"
         f"  for (int n=0; n<{ns-1}; n++)\n"
         "  {\n"
-        "    dTdt -= b.qh(i,j,k,5+n) * b.omega(i,j,k,n+1);\n"
-        "    b.omega(i,j,k,n+1) /= b.Q(i,j,k,0);\n"
+        "    b.omega(i,j,k,n+1) = dYdt[n] / b.Q(i,j,k,0);\n"
         "  }\n"
-        "  dTdt /= b.qh(i,j,k,1) * b.Q(i,j,k,0);\n"
         "  b.omega(i,j,k,0) = dTdt;\n"
         "\n"
     )

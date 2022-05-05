@@ -12,7 +12,7 @@ def writeConnectivity(mb, path="./"):
     mb : peregrinepy.multiBlock.grid (or a descendant)
 
     file_path : str
-       Path of location to write output RAPTOR grid connectivity file to
+       Path of location to write output PEREGRINE grid connectivity file to
 
     Returns
     -------
