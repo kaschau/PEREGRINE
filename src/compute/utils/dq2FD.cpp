@@ -9,10 +9,10 @@ void dq2FD(block_ b) {
 // Spatial derivatices of primative variables
 // estimated via second order finite difference
 //-------------------------------------------------------------------------------------------|
-  MDRange4 range_cc({b.ng, b.ng, b.ng,0},{b.ni+b.ng-1,
-                                          b.nj+b.ng-1,
-                                          b.nk+b.ng-1,
-                                          b.ne});
+  MDRange4 range_cc({b.ng-1, b.ng-1, b.ng-1,0},{b.ni+b.ng,
+                                                b.nj+b.ng,
+                                                b.nk+b.ng,
+                                                b.ne});
   Kokkos::parallel_for("2nd order spatial deriv",
                        range_cc,
                        KOKKOS_LAMBDA(const int i,
