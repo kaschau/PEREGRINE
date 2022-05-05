@@ -328,15 +328,15 @@ void muscl2hllc(block_ b, const thtrdat_ th) {
         // Reuse reconstruction for p, c
         double &pi   = b.q(i ,j   ,k ,0);
         double &pim1 = b.q(i ,j-1 ,k ,0);
-        //double &pim2 = b.q(i-2,j ,k ,0);
-        double &pip1 = b.q(i+1,j ,k ,0);
+        //double &pim2 = b.q(i ,j-2 ,k ,0);
+        double &pip1 = b.q(i ,j+1 ,k ,0);
         double pR = pi   - 0.5*phiR*(pip1 - pi);
         double pL = pim1 + 0.5*phiL*(pi   - pim1);
 
         double &ci   = b.qh(i ,j   ,k ,3);
         double &cim1 = b.qh(i ,j-1 ,k ,3);
-        //double &cim2 = b.qh(i-2,j ,k ,3);
-        double &cip1 = b.qh(i+1,j ,k ,3);
+        //double &cim2 = b.qh(i ,j-2 ,k ,3);
+        double &cip1 = b.qh(i ,j+1 ,k ,3);
         double cR = ci   - 0.5*phiR*(cip1 - ci);
         double cL = cim1 + 0.5*phiL*(ci   - cim1);
 
@@ -537,15 +537,15 @@ void muscl2hllc(block_ b, const thtrdat_ th) {
         // Reuse reconstruction for p, c
         double &pi   = b.q(i ,j ,k   ,0);
         double &pim1 = b.q(i ,j ,k-1 ,0);
-        //double &pim2 = b.q(i-2,j ,k ,0);
-        double &pip1 = b.q(i+1,j ,k ,0);
+        //double &pim2 = b.q(i ,j ,k-2 ,0);
+        double &pip1 = b.q(i ,j ,k+1 ,0);
         double pR = pi   - 0.5*phiR*(pip1 - pi);
         double pL = pim1 + 0.5*phiL*(pi   - pim1);
 
         double &ci   = b.qh(i ,j ,k   ,3);
         double &cim1 = b.qh(i ,j ,k-1 ,3);
-        //double &cim2 = b.qh(i-2,j ,k ,3);
-        double &cip1 = b.qh(i+1,j ,k ,3);
+        //double &cim2 = b.qh(i ,j ,k-2 ,3);
+        double &cip1 = b.qh(i ,j ,k+1 ,3);
         double cR = ci   - 0.5*phiR*(cip1 - ci);
         double cL = cim1 + 0.5*phiL*(ci   - cim1);
 
