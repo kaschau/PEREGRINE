@@ -66,10 +66,11 @@ def test_kineticTheoryUnityLewis(my_setup, ctfile, thfile):
     mb.eos(blk, mb.thtrdat, 0, "prims")
     mb.trans(blk, mb.thtrdat, 0)
     blk.updateHostView(["q", "qt"])
+    ng = blk.ng
 
     # test the properties
-    pgprim = blk.array["q"][1, 1, 1]
-    pgtrns = blk.array["qt"][1, 1, 1]
+    pgprim = blk.array["q"][ng, ng, ng]
+    pgtrns = blk.array["qt"][ng, ng, ng]
 
     def print_diff(name, c, p):
         diff = np.abs(c - p) / p * 100
