@@ -41,7 +41,6 @@ def setConsistify(cls, config):
             cls.dqdxyz = getattr(compute.utils, f"dq{dqO}FD")
         except AttributeError:
             raise pgConfigError("diffOrder", f"dq{dqO}FD")
-        cls.commList += ["dqdx", "dqdy", "dqdz"]
         # Subgrid models
         if config["RHS"]["subgrid"] is not None:
             sgs = config["RHS"]["subgrid"]
@@ -78,7 +77,6 @@ def setConsistify(cls, config):
                 switch,
                 "You set a advective flux switching option without a secondary flux.",
             )
-        cls.commList += ["phi"]
 
 
 #########################################
@@ -152,22 +150,30 @@ def setRHS(cls, config):
 
 
 def howManyNG(config):
+
+    advFluxNG = {
+        "secondOrderKEEP": 1,
+        "fourthOrderKEEP": 2,
+        "hllc": 1,
+        "rusanov": 1,
+        "muscl2hllc": 2,
+        None: 1,
+    }
+    diffOrderNG = {2: 2, 4: 3}
+
     ng = 1
 
-    # First check advective term order
-    if config["RHS"]["primaryAdvFlux"] == "fourthOrderKEEP":
-        ng = max(ng, 2)
-
-    # Check seconary advective term order
-    if config["RHS"]["secondaryAdvFlux"] == "jamesonDissipation":
-        ng = max(ng, 2)
+    # First check primary advective flux
+    pAdv = config["RHS"]["primaryAdvFlux"]
+    ng = max(ng, advFluxNG[pAdv])
+    # Check seconary advective flux
+    sAdv = config["RHS"]["secondaryAdvFlux"]
+    ng = max(ng, advFluxNG[sAdv])
 
     # Now check diffusion term order
-    dO = config["RHS"]["diffOrder"]
-    if dO == 2:
-        ng = max(ng, 1)
-    elif dO == 4:
-        ng = max(ng, 2)
+    if config["RHS"]["diffusion"]:
+        dO = config["RHS"]["diffOrder"]
+        ng = max(ng, diffOrderNG[dO])
 
     return ng
 
