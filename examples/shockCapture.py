@@ -472,7 +472,7 @@ def simulate(testnum):
     config["RHS"]["shockHandling"] = "hybrid"
     config["RHS"]["primaryAdvFlux"] = "secondOrderKEEP"
     config["RHS"]["secondaryAdvFlux"] = "rusanov"
-    config["RHS"]["switchAdvFlux"] = "jamesonPressure"
+    config["RHS"]["switchAdvFlux"] = "vanLeer"
     # config["RHS"]["primaryAdvFlux"] = "rusanov"
     config["solver"]["timeIntegration"] = "rk4"
     mb = pg.multiBlock.generateMultiBlockSolver(1, config)

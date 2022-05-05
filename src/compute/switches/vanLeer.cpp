@@ -15,7 +15,6 @@ void vanLeer(block_ b) {
                                      const int k) {
 
   double eps = 0.001;
-  double fact = 2.0 - (1.0 - eps);
 
   double& p   = b.q(i  ,j,k,0) ;
 
@@ -32,19 +31,19 @@ void vanLeer(block_ b) {
             /( (1.0-eps)*( abs( pip - p )
                          + abs( p - pim ) )
             + eps*(pip + 2.0*p + pim)     );
-  b.phi(i,j,k,0) = ri/fact;
+  b.phi(i,j,k,0) = ri;
 
   double rj = abs( pjp - 2.0*p + pjm )
             /( (1.0-eps)*( abs( pjp - p )
                          + abs( p - pjm ) )
             + eps*(pjp + 2.0*p + pjm)     );
-  b.phi(i,j,k,1) = rj/fact;
+  b.phi(i,j,k,1) = rj;
 
   double rk = abs( pkp - 2.0*p + pkm )
             /( (1.0-eps)*( abs( pkp - p )
                          + abs( p - pkm ) )
             + eps*(pkp + 2.0*p + pkm)     );
-  b.phi(i,j,k,2) = rk/fact;
+  b.phi(i,j,k,2) = rk;
 
   });
 }

@@ -159,6 +159,7 @@ def howManyNG(config):
         "muscl2hllc": 2,
         None: 1,
     }
+    fluxSwitchNG = {None: 1, "hybrid": 2}
     diffOrderNG = {2: 2, 4: 3}
 
     ng = 1
@@ -166,6 +167,11 @@ def howManyNG(config):
     # First check primary advective flux
     pAdv = config["RHS"]["primaryAdvFlux"]
     ng = max(ng, advFluxNG[pAdv])
+
+    # Check flux switching
+    sw = config["RHS"]["shockHandling"]
+    ng = max(ng, fluxSwitchNG[sw])
+
     # Check seconary advective flux
     sAdv = config["RHS"]["secondaryAdvFlux"]
     ng = max(ng, advFluxNG[sAdv])
