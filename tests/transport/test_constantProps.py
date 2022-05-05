@@ -36,10 +36,11 @@ def test_constantProps(my_setup):
     assert mb.trans.__name__ == "constantProps"
     mb.trans(blk, mb.thtrdat, 0)
     blk.updateHostView(["q", "qt"])
+    ng = blk.ng
 
     # test the properties
-    pgprim = blk.array["q"][1, 1, 1]
-    pgtrns = blk.array["qt"][1, 1, 1]
+    pgprim = blk.array["q"][ng, ng, ng]
+    pgtrns = blk.array["qt"][ng, ng, ng]
 
     def print_diff(name, c, p):
         diff = np.abs(c - p) / c * 100
