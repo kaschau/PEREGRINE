@@ -6,7 +6,7 @@
 
 void jamesonEntropy(block_ b) {
 
-  MDRange3 range_cc({b.ng,b.ng,b.ng},{b.ni+b.ng-1,b.nj+b.ng-1,b.nk+b.ng-1});
+  MDRange3 range_cc({b.ng-1,b.ng-1,b.ng-1},{b.ni+b.ng,b.nj+b.ng,b.nk+b.ng});
 
   Kokkos::parallel_for("Compute switch from entropy",
                        range_cc,
@@ -42,7 +42,7 @@ void jamesonEntropy(block_ b) {
 
 void jamesonPressure(block_ b) {
 
-  MDRange3 range_cc({b.ng,b.ng,b.ng},{b.ni+b.ng-1,b.nj+b.ng-1,b.nk+b.ng-1});
+  MDRange3 range_cc({b.ng-1,b.ng-1,b.ng-1},{b.ni+b.ng,b.nj+b.ng,b.nk+b.ng});
 
   Kokkos::parallel_for("Compute switch from pressure",
                        range_cc,
