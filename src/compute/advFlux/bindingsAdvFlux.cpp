@@ -31,4 +31,8 @@ void bindAdvFlux(py::module_ &m) {
   advFlux.def("hllc", &hllc, "Compute first order euler fluxes via hllc",
         py::arg("block_ object"),
         py::arg("thtrdat_ object"));
+  //  |----> muscl2hllc.cpp
+  advFlux.def("muscl2hllc", &muscl2hllc, "Compute first order euler fluxes via 2nd order MUSCL with hllc flux",
+        py::arg("block_ object"),
+        py::arg("thtrdat_ object"));
 }
