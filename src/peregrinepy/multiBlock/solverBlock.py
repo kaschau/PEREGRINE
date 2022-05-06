@@ -241,13 +241,7 @@ class solverBlock(restartBlock, block_):
         # ------------------------------------------------------------------- #
         #       Hybrid Flux Switches
         # ------------------------------------------------------------------- #
-        hFSshape = [
-            self.ni + 2 * ng - 1,
-            self.nj + 2 * ng - 1,
-            self.nk + 2 * ng - 1,
-            3,
-        ]
-        createViewMirrorArray(self, ["phi"], hFSshape)
+        createViewMirrorArray(self, ["phi"], cQshape)
 
     def setBlockCommunication(self):
 
