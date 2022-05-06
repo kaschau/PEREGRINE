@@ -159,6 +159,7 @@ def howManyNG(config):
         "hllc": 1,
         "rusanov": 1,
         "muscl2hllc": 2,
+        "muscl2rusanov": 2,
         None: 1,
     }
     diffOrderNG = {2: 1, 4: 2}
