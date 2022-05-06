@@ -9,10 +9,16 @@ def RHS(mb):
 
         # Primary advective fluxes
         mb.primaryAdvFlux(blk, mb.thtrdat)
+        # Apply strict advective boundary conditions
+        for face in blk.faces:
+            face.bcFunc(blk, face, mb.eos, mb.thtrdat, "strict", mb.tme)
         mb.applyPrimaryAdvFlux(blk, 1.0)  # <-- 1.0 is for primary flux
 
         # Secondary advective fluxes
         mb.secondaryAdvFlux(blk, mb.thtrdat)
+        # Apply strict advective boundary conditions
+        for face in blk.faces:
+            face.bcFunc(blk, face, mb.eos, mb.thtrdat, "strict", mb.tme)
         mb.applySecondaryAdvFlux(blk, 0.0)  # <-- 0.0 is for secondary flux
 
         # Diffusive fluxes

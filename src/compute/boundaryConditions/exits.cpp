@@ -99,6 +99,8 @@ void constantPressureSubsonicExit(block_ b,
             dqdz0(i, j, l) = dqdz1(i, j, l);
           });
     }
+  } else if (terms.compare("strict") == 0) {
+
   }
 }
 
@@ -162,5 +164,7 @@ void supersonicExit(block_ b,
             dqdz0(i, j, l) = dqdz1(i, j, l);
           });
     }
+  } else if (terms.compare("strict") == 0) {
+
   }
 }

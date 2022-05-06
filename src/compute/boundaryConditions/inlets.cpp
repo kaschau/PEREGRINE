@@ -77,6 +77,8 @@ void constantVelocitySubsonicInlet(block_ b,
             dqdz0(i, j, l) = dqdz1(i, j, l);
           });
     }
+  } else if (terms.compare("strict") == 0) {
+
   }
 }
 
@@ -219,6 +221,8 @@ void supersonicInlet(block_ b,
             dqdz0(i, j, l) = dqdz1(i, j, l);
           });
     }
+  } else if (terms.compare("strict") == 0) {
+
   }
 }
 
@@ -348,5 +352,59 @@ void constantMassFluxSubsonicInlet(block_ b,
             dqdz0(i, j, l) = dqdz1(i, j, l);
           });
     }
+  } else if (terms.compare("strict") == 0) {
+
+    int slc;
+    threeDsubview iF;
+    twoDsubview iS;
+    switch(face._nface) {
+      case 1:
+        slc = s1;
+        iF = getHaloSlice(b.iF, face._nface, slc);
+        iS = getHaloSlice(b.iS, face._nface, slc);
+        break;
+      case 3:
+        slc = s1;
+        iF = getHaloSlice(b.jF, face._nface, slc);
+        iS = getHaloSlice(b.jS, face._nface, slc);
+        break;
+      case 5:
+        slc = s1;
+        iF = getHaloSlice(b.kF, face._nface, slc);
+        iS = getHaloSlice(b.kS, face._nface, slc);
+        break;
+      case 2:
+        slc = s0;
+        iF = getHaloSlice(b.iF, face._nface, slc);
+        iS = getHaloSlice(b.iS, face._nface, slc);
+        break;
+      case 4:
+        slc = s0;
+        iF = getHaloSlice(b.jF, face._nface, slc);
+        iS = getHaloSlice(b.jS, face._nface, slc);
+        break;
+      case 6:
+        slc = s0;
+        iF = getHaloSlice(b.kF, face._nface, slc);
+        iS = getHaloSlice(b.kS, face._nface, slc);
+        break;
+    }
+    MDRange2 range_face = MDRange2({0, 0}, {iF.extent(0), iF.extent(1)});
+      Kokkos::parallel_for(
+          "Strict convective flux specification", range_face,
+          KOKKOS_LAMBDA(const int i, const int j) {
+            // explicitely set the mass flux
+            double &rhou = face.QBcVals(i,j,1);
+            double &rhov = face.QBcVals(i,j,2);
+            double &rhow = face.QBcVals(i,j,3);
+
+            double mDotPerUnitArea = rhou + rhov + rhow;
+
+            iF(i, j, 1) = mDotPerUnitArea * iS(i,j);
+            for (int n = 5; n < b.ne; n++) {
+              double &Y = face.QBcVals(i,j,n);
+              iF(i,j,n) = mDotPerUnitArea * Y * iS(i,j);
+            }
+          });
   }
 }
