@@ -82,8 +82,6 @@ void chem_GRI30(block_ b, thtrdat_ th, int face/*=0*/, int indxI/*=0*/, int indx
   double dYdt[53];
   double dTdt=0.0;
   double tSub=dt/nChemSubSteps;
-  const double logT = log(T);
-  const double prefRuT = 101325.0/(th.Ru*T);
 
   //Set the initial values of Y array
   for (int n=0; n<52; n++)
@@ -92,6 +90,9 @@ void chem_GRI30(block_ b, thtrdat_ th, int face/*=0*/, int indxI/*=0*/, int indx
   }
 
   for (int nSub=0; nSub<nChemSubSteps; nSub++){
+
+  double logT = log(T);
+  double prefRuT = 101325.0/(th.Ru*T);
 
   // Compute nth species Y
   Y[52] = 1.0;
