@@ -64,7 +64,8 @@ def simulate():
     mb.eos(blk, mb.thtrdat, 0, "prims")
     pg.consistify(mb)
 
-    dt = 1e-6
+    dt = 1e-9
+    config["simulation"]["dt"] = dt
     niterout = 1000
     pgT = []
     pgO2 = []
