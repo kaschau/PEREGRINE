@@ -156,9 +156,9 @@ void muscl2hllc(block_ b, const thtrdat_ th) {
           b.iF(i, j, k, 4) = UL * (EL + pL) * b.iS(i, j, k);
           for (int n = 0; n < th.ns - 1; n++) {
             // Reconstruct Y
-            double &Yi   = b.q(i  ,j ,k ,1);
-            double &Yim1 = b.q(i-1,j ,k ,1);
-            double &Yim2 = b.q(i-2,j ,k ,1);
+            double &Yi   = b.q(i  ,j ,k ,5+n);
+            double &Yim1 = b.q(i-1,j ,k ,5+n);
+            double &Yim2 = b.q(i-2,j ,k ,5+n);
             rL = (Yim1 - Yim2)/(Yi-Yim1);
             phiL = fmax(0.0, fmin(fmin(theta*rL, (1.0+rL)/2.0),theta));
 
@@ -191,9 +191,9 @@ void muscl2hllc(block_ b, const thtrdat_ th) {
                   b.iS(i, j, k);
           for (int n = 0; n < th.ns - 1; n++) {
             // Reconstruct Y
-            double &Yi   = b.q(i  ,j ,k ,1);
-            double &Yim1 = b.q(i-1,j ,k ,1);
-            double &Yim2 = b.q(i-2,j ,k ,1);
+            double &Yi   = b.q(i  ,j ,k ,5+n);
+            double &Yim1 = b.q(i-1,j ,k ,5+n);
+            double &Yim2 = b.q(i-2,j ,k ,5+n);
             rL = (Yim1 - Yim2)/(Yi-Yim1);
             phiL = fmax(0.0, fmin(fmin(theta*rL, (1.0+rL)/2.0),theta));
 
@@ -228,9 +228,9 @@ void muscl2hllc(block_ b, const thtrdat_ th) {
                   b.iS(i, j, k);
           for (int n = 0; n < th.ns - 1; n++) {
             // Reconstruct Y
-            double &Yi   = b.q(i  ,j ,k ,1);
-            double &Yim1 = b.q(i-1,j ,k ,1);
-            double &Yip1 = b.q(i+1,j ,k ,1);
+            double &Yi   = b.q(i  ,j ,k ,5+n);
+            double &Yim1 = b.q(i-1,j ,k ,5+n);
+            double &Yip1 = b.q(i+1,j ,k ,5+n);
             rR = (Yi - Yim1)/(Yip1-Yi);
             phiR = fmax(0.0, fmin(fmin(theta*rR, (1.0+rR)/2.0),theta));
 
@@ -248,9 +248,9 @@ void muscl2hllc(block_ b, const thtrdat_ th) {
           b.iF(i, j, k, 4) = UR * (ER + pR) * b.iS(i, j, k);
           for (int n = 0; n < th.ns - 1; n++) {
             // Reconstruct Y
-            double &Yi   = b.q(i  ,j ,k ,1);
-            double &Yim1 = b.q(i-1,j ,k ,1);
-            double &Yip1 = b.q(i+1,j ,k ,1);
+            double &Yi   = b.q(i  ,j ,k ,5+n);
+            double &Yim1 = b.q(i-1,j ,k ,5+n);
+            double &Yip1 = b.q(i+1,j ,k ,5+n);
             rR = (Yi - Yim1)/(Yip1-Yi);
             phiR = fmax(0.0, fmin(fmin(theta*rR, (1.0+rR)/2.0),theta));
 
@@ -394,9 +394,9 @@ void muscl2hllc(block_ b, const thtrdat_ th) {
           b.jF(i, j, k, 4) = UL * (EL + pL) * b.jS(i, j, k);
           for (int n = 0; n < th.ns - 1; n++) {
             // Reconstruct Y
-            double &Yi   = b.q(i ,j   ,k ,1);
-            double &Yim1 = b.q(i ,j-1 ,k ,1);
-            double &Yim2 = b.q(i ,j-2 ,k ,1);
+            double &Yi   = b.q(i ,j   ,k ,5+n);
+            double &Yim1 = b.q(i ,j-1 ,k ,5+n);
+            double &Yim2 = b.q(i ,j-2 ,k ,5+n);
             rL = (Yim1 - Yim2)/(Yi-Yim1);
             phiL = fmax(0.0, fmin(fmin(theta*rL, (1.0+rL)/2.0),theta));
 
@@ -429,9 +429,9 @@ void muscl2hllc(block_ b, const thtrdat_ th) {
                   b.jS(i, j, k);
           for (int n = 0; n < th.ns - 1; n++) {
             // Reconstruct Y
-            double &Yi   = b.q(i ,j   ,k ,1);
-            double &Yim1 = b.q(i ,j-1 ,k ,1);
-            double &Yim2 = b.q(i ,j-2 ,k ,1);
+            double &Yi   = b.q(i ,j   ,k ,5+n);
+            double &Yim1 = b.q(i ,j-1 ,k ,5+n);
+            double &Yim2 = b.q(i ,j-2 ,k ,5+n);
             rL = (Yim1 - Yim2)/(Yi-Yim1);
             phiL = fmax(0.0, fmin(fmin(theta*rL, (1.0+rL)/2.0),theta));
 
@@ -466,9 +466,9 @@ void muscl2hllc(block_ b, const thtrdat_ th) {
                   b.jS(i, j, k);
           for (int n = 0; n < th.ns - 1; n++) {
             // Reconstruct Y
-            double &Yi   = b.q(i ,j   ,k ,1);
-            double &Yim1 = b.q(i ,j-1 ,k ,1);
-            double &Yip1 = b.q(i ,j+1 ,k ,1);
+            double &Yi   = b.q(i ,j   ,k ,5+n);
+            double &Yim1 = b.q(i ,j-1 ,k ,5+n);
+            double &Yip1 = b.q(i ,j+1 ,k ,5+n);
             rR = (Yi - Yim1)/(Yip1-Yi);
             phiR = fmax(0.0, fmin(fmin(theta*rR, (1.0+rR)/2.0),theta));
 
@@ -486,9 +486,9 @@ void muscl2hllc(block_ b, const thtrdat_ th) {
           b.jF(i, j, k, 4) = UR * (ER + pR) * b.jS(i, j, k);
           for (int n = 0; n < th.ns - 1; n++) {
             // Reconstruct Y
-            double &Yi   = b.q(i ,j   ,k ,1);
-            double &Yim1 = b.q(i ,j-1 ,k ,1);
-            double &Yip1 = b.q(i ,j+1 ,k ,1);
+            double &Yi   = b.q(i ,j   ,k ,5+n);
+            double &Yim1 = b.q(i ,j-1 ,k ,5+n);
+            double &Yip1 = b.q(i ,j+1 ,k ,5+n);
             rR = (Yi - Yim1)/(Yip1-Yi);
             phiR = fmax(0.0, fmin(fmin(theta*rR, (1.0+rR)/2.0),theta));
 
@@ -631,9 +631,9 @@ void muscl2hllc(block_ b, const thtrdat_ th) {
           b.kF(i, j, k, 4) = UL * (EL + pL) * b.kS(i, j, k);
           for (int n = 0; n < th.ns - 1; n++) {
             // Reconstruct Y
-            double &Yi   = b.q(i ,j ,k   ,1);
-            double &Yim1 = b.q(i ,j ,k-1 ,1);
-            double &Yim2 = b.q(i ,j ,k-2 ,1);
+            double &Yi   = b.q(i ,j ,k   ,5+n);
+            double &Yim1 = b.q(i ,j ,k-1 ,5+n);
+            double &Yim2 = b.q(i ,j ,k-2 ,5+n);
             rL = (Yim1 - Yim2)/(Yi-Yim1);
             phiL = fmax(0.0, fmin(fmin(theta*rL, (1.0+rL)/2.0),theta));
 
@@ -666,9 +666,9 @@ void muscl2hllc(block_ b, const thtrdat_ th) {
                   b.kS(i, j, k);
           for (int n = 0; n < th.ns - 1; n++) {
             // Reconstruct Y
-            double &Yi   = b.q(i ,j ,k   ,1);
-            double &Yim1 = b.q(i ,j ,k-1 ,1);
-            double &Yim2 = b.q(i ,j ,k-2 ,1);
+            double &Yi   = b.q(i ,j ,k   ,5+n);
+            double &Yim1 = b.q(i ,j ,k-1 ,5+n);
+            double &Yim2 = b.q(i ,j ,k-2 ,5+n);
             rL = (Yim1 - Yim2)/(Yi-Yim1);
             phiL = fmax(0.0, fmin(fmin(theta*rL, (1.0+rL)/2.0),theta));
 
@@ -703,9 +703,9 @@ void muscl2hllc(block_ b, const thtrdat_ th) {
                   b.kS(i, j, k);
           for (int n = 0; n < th.ns - 1; n++) {
             // Reconstruct Y
-            double &Yi   = b.q(i ,j ,k   ,1);
-            double &Yim1 = b.q(i ,j ,k-1 ,1);
-            double &Yip1 = b.q(i ,j ,k+1 ,1);
+            double &Yi   = b.q(i ,j ,k   ,5+n);
+            double &Yim1 = b.q(i ,j ,k-1 ,5+n);
+            double &Yip1 = b.q(i ,j ,k+1 ,5+n);
             rR = (Yi - Yim1)/(Yip1-Yi);
             phiR = fmax(0.0, fmin(fmin(theta*rR, (1.0+rR)/2.0),theta));
 
@@ -723,9 +723,9 @@ void muscl2hllc(block_ b, const thtrdat_ th) {
           b.kF(i, j, k, 4) = UR * (ER + pR) * b.kS(i, j, k);
           for (int n = 0; n < th.ns - 1; n++) {
             // Reconstruct Y
-            double &Yi   = b.q(i ,j ,k   ,1);
-            double &Yim1 = b.q(i ,j ,k-1 ,1);
-            double &Yip1 = b.q(i ,j ,k+1 ,1);
+            double &Yi   = b.q(i ,j ,k   ,5+n);
+            double &Yim1 = b.q(i ,j ,k-1 ,5+n);
+            double &Yip1 = b.q(i ,j ,k+1 ,5+n);
             rR = (Yi - Yim1)/(Yip1-Yi);
             phiR = fmax(0.0, fmin(fmin(theta*rR, (1.0+rR)/2.0),theta));
 
