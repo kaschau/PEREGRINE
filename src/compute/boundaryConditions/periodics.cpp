@@ -81,6 +81,8 @@ void periodicRotHigh(block_ b,
             dqdz0(i, j, l) = tempdz;
           });
     }
+  } else if (terms.compare("strict") == 0) {
+
   }
 }
 
@@ -161,5 +163,7 @@ void periodicRotLow(block_ b,
             dqdz0(i, j, l) = tempdz;
           });
     }
+  } else if (terms.compare("strict") == 0) {
+
   }
 }
