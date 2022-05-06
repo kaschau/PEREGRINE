@@ -448,7 +448,7 @@ R = 281.4583333333333
 gamma = 1.4
 
 
-def simulate(testnum):
+def simulate(testnum, index="i"):
 
     test = state(testnum)
     print("State {}".format(testnum))
@@ -471,18 +471,26 @@ def simulate(testnum):
     config["thermochem"]["spdata"] = ["DB"]
     config["RHS"]["shockHandling"] = "hybrid"
     config["RHS"]["primaryAdvFlux"] = "secondOrderKEEP"
-    config["RHS"]["secondaryAdvFlux"] = "rusanov"
+    config["RHS"]["secondaryAdvFlux"] = "muscl2hllc"
     config["RHS"]["switchAdvFlux"] = "vanLeer"
-    # config["RHS"]["primaryAdvFlux"] = "rusanov"
+    # config["RHS"]["primaryAdvFlux"] = "muscl2hllc"
     config["solver"]["timeIntegration"] = "rk4"
     mb = pg.multiBlock.generateMultiBlockSolver(1, config)
     print(mb)
 
+    rot = {"i": 0, "j": 1, "k": 2}
+
+    def rotate(li, index):
+        return li[-rot[index] :] + li[: -rot[index]]
+
+    dimsPerBlock = rotate([nx, 2, 2], index)
+    lengths = rotate([1, 0.1, 0.1], index)
+
     pg.grid.create.multiBlockCube(
         mb,
         mbDims=[1, 1, 1],
-        dimsPerBlock=[nx, 2, 2],
-        lengths=[1, 0.1, 0.1],
+        dimsPerBlock=dimsPerBlock,
+        lengths=lengths,
     )
 
     mb.initSolverArrays(config)
@@ -496,22 +504,27 @@ def simulate(testnum):
     mb.setBlockCommunication()
     mb.unifyGrid()
     mb.computeMetrics(fdOrder=2)
-    indx = np.where(blk.array["xc"][:, 1, 1] > test.x0)
 
-    # Initialize domain to Left properties
-    blk.array["q"][:, :, :, 0] = test.pL
-    blk.array["q"][:, :, :, 1] = test.uL
-    blk.array["q"][:, :, :, 2] = 0.0
-    blk.array["q"][:, :, :, 3] = 0.0
-    blk.array["q"][:, :, :, 4] = test.TL
-
-    # Initialize Right properties
-    blk.array["q"][indx, :, :, 0] = test.pR
-    blk.array["q"][indx, :, :, 1] = test.uR
-    blk.array["q"][indx, :, :, 4] = test.TR
+    ccArray = {"i": "xc", "j": "yc", "k": "zc"}
+    uIndex = {"i": 1, "j": 2, "k": 3}
+    xc = blk.array[ccArray[index]]
+    # Initialize Left/Right properties
+    blk.array["q"][:, :, :, 0] = np.where(xc <= test.x0, test.pL, test.pR)
+    blk.array["q"][:, :, :, uIndex[index]] = np.where(xc <= test.x0, test.uL, test.uR)
+    blk.array["q"][:, :, :, 4] = np.where(xc <= test.x0, test.TL, test.TR)
 
     # Update boundary conditions
-    face = blk.getFace(1)
+    if index == "i":
+        lowFace = 1
+        highFace = 2
+    elif index == "j":
+        lowFace = 3
+        highFace = 4
+    elif index == "k":
+        lowFace = 5
+        highFace = 6
+
+    face = blk.getFace(lowFace)
     if test.uL == 0.0:
         pass
     else:
@@ -519,9 +532,10 @@ def simulate(testnum):
         inputBcValues = {}
         if test.uL > 0:
             face.bcType = "constantVelocitySubsonicInlet"
-            inputBcValues["u"] = test.uL
-            inputBcValues["v"] = 0.0
-            inputBcValues["w"] = 0.0
+            bcVelo = rotate([test.uL, 0.0, 0.0], index)
+            inputBcValues["u"] = bcVelo[0]
+            inputBcValues["v"] = bcVelo[1]
+            inputBcValues["w"] = bcVelo[2]
             inputBcValues["T"] = test.TL
             pg.bcs.prepInlets.prep_constantVelocitySubsonicInlet(
                 blk, face, inputBcValues
@@ -533,7 +547,7 @@ def simulate(testnum):
         shape = blk.array["q"][face.s1_].shape
         pg.misc.createViewMirrorArray(face, "qBcVals", shape)
 
-    face = blk.getFace(2)
+    face = blk.getFace(highFace)
     if test.uR == 0.0:
         pass
     else:
@@ -541,9 +555,10 @@ def simulate(testnum):
         inputBcValues = {}
         if test.uR < 0:
             face.bcType = "constantVelocitySubsonicInlet"
-            inputBcValues["u"] = test.uR
-            inputBcValues["v"] = 0.0
-            inputBcValues["w"] = 0.0
+            bcVelo = rotate([test.uR, 0.0, 0.0], index)
+            inputBcValues["u"] = bcVelo[0]
+            inputBcValues["v"] = bcVelo[1]
+            inputBcValues["w"] = bcVelo[2]
             inputBcValues["T"] = test.TR
             pg.bcs.prepInlets.prep_constantVelocitySubsonicInlet(
                 blk, face, inputBcValues
@@ -559,11 +574,12 @@ def simulate(testnum):
     mb.eos(blk, mb.thtrdat, 0, "prims")
     pg.consistify(mb)
 
-    x = blk.array["xc"][ng:-ng, ng, ng]
-    rho = blk.array["Q"][ng:-ng, ng, ng, 0]
-    p = blk.array["q"][ng:-ng, ng, ng, 0]
-    u = blk.array["q"][ng:-ng, ng, ng, 1]
-    phi = blk.array["phi"][ng:-ng, ng, ng, 0]
+    s_ = rotate(np.s_[ng:-ng, ng, ng], index)
+    x = blk.array[ccArray[index]][s_]
+    rho = blk.array["Q"][s_][:, 0]
+    p = blk.array["q"][s_][:, 0]
+    phi = blk.array["phi"][s_][:, uIndex[index] - 1]
+    u = blk.array["q"][s_][:, uIndex[index]]
 
     while mb.tme < test.t:
         pg.misc.progressBar(mb.tme, test.t)
@@ -595,7 +611,8 @@ if __name__ == "__main__":
     try:
         kokkos.initialize()
         testnum = 0
-        simulate(testnum)
+        index = "i"
+        simulate(testnum, index)
         kokkos.finalize()
 
     except Exception as e:
