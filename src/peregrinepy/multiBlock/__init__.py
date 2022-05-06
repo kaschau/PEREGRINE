@@ -158,7 +158,7 @@ def howManyNG(config):
         "fourthOrderKEEP": 2,
         "hllc": 1,
         "rusanov": 1,
-        "muscl2hllc": 1,
+        "muscl2hllc": 2,
         None: 1,
     }
     diffOrderNG = {2: 1, 4: 2}
