@@ -41,6 +41,7 @@ def setConsistify(cls, config):
             cls.dqdxyz = getattr(compute.utils, f"dq{dqO}FD")
         except AttributeError:
             raise pgConfigError("diffOrder", f"dq{dqO}FD")
+        cls.commList += ["dqdx", "dqdy", "dqdz"]
         # Subgrid models
         if config["RHS"]["subgrid"] is not None:
             sgs = config["RHS"]["subgrid"]
@@ -77,6 +78,7 @@ def setConsistify(cls, config):
                 switch,
                 "You set a advective flux switching option without a secondary flux.",
             )
+        cls.commList += ["phi"]
 
 
 #########################################
@@ -156,21 +158,16 @@ def howManyNG(config):
         "fourthOrderKEEP": 2,
         "hllc": 1,
         "rusanov": 1,
-        "muscl2hllc": 2,
+        "muscl2hllc": 1,
         None: 1,
     }
-    fluxSwitchNG = {None: 1, "hybrid": 2}
-    diffOrderNG = {2: 2, 4: 3}
+    diffOrderNG = {2: 1, 4: 2}
 
     ng = 1
 
     # First check primary advective flux
     pAdv = config["RHS"]["primaryAdvFlux"]
     ng = max(ng, advFluxNG[pAdv])
-
-    # Check flux switching
-    sw = config["RHS"]["shockHandling"]
-    ng = max(ng, fluxSwitchNG[sw])
 
     # Check seconary advective flux
     sAdv = config["RHS"]["secondaryAdvFlux"]

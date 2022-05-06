@@ -37,3 +37,6 @@ def consistify(mb):
 
         # Update switch
         mb.switch(blk)
+
+    # Communicate necessary halos
+    communicate(mb, mb.commList)
