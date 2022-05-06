@@ -437,7 +437,7 @@ void muscl2hllc(block_ b, const thtrdat_ th) {
 
             double YL = Yim1 + 0.5*phiL*(Yi   - Yim1);
             double rhoYL = rhoL*YL;
-            double FYL = rhoYL * UL * b.iS(i, j, k);
+            double FYL = rhoYL * UL * b.kS(i, j, k);
             b.jF(i, j, k, 5 + n) =
                 FYL + SL * (UstarL * YL - rhoYL) * b.jS(i, j, k);
           }
@@ -474,7 +474,7 @@ void muscl2hllc(block_ b, const thtrdat_ th) {
 
             double YR = Yi   - 0.5*phiR*(Yip1 - Yi);
             double rhoYR = rhoR*YR;
-            double FYR = rhoYR * UR * b.iS(i, j, k);
+            double FYR = rhoYR * UR * b.kS(i, j, k);
             b.jF(i, j, k, 5 + n) =
                 FYR + SR * (UstarR * YR - rhoYR) * b.jS(i, j, k);
           }
@@ -674,7 +674,7 @@ void muscl2hllc(block_ b, const thtrdat_ th) {
 
             double YL = Yim1 + 0.5*phiL*(Yi   - Yim1);
             double rhoYL = rhoL*YL;
-            double FYL = rhoYL * UL * b.iS(i, j, k);
+            double FYL = rhoYL * UL * b.kS(i, j, k);
             b.kF(i, j, k, 5 + n) =
                 FYL + SL * (UstarL * YL - rhoYL) * b.kS(i, j, k);
           }
@@ -711,7 +711,7 @@ void muscl2hllc(block_ b, const thtrdat_ th) {
 
             double YR = Yi   - 0.5*phiR*(Yip1 - Yi);
             double rhoYR = rhoR*YR;
-            double FYR = rhoYR * UR * b.iS(i, j, k);
+            double FYR = rhoYR * UR * b.kS(i, j, k);
             b.kF(i, j, k, 5 + n) =
                 FYR + SR * (UstarR * YR - rhoYR) * b.kS(i, j, k);
           }
