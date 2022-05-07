@@ -398,11 +398,11 @@ void constantMassFluxSubsonicInlet(block_ b,
             double &rhov = face.QBcVals(i,j,2);
             double &rhow = face.QBcVals(i,j,3);
 
-            double mDotPerUnitArea = rhou + rhov + rhow;
+            double mDotPerUnitArea = sqrt(pow(rhou,2.0) + pow(rhov,2.0) + pow(rhow,2.0));
 
-            iF(i, j, 1) = mDotPerUnitArea * iS(i,j);
+            iF(i, j, 0) = mDotPerUnitArea * iS(i,j);
             for (int n = 5; n < b.ne; n++) {
-              double &Y = face.QBcVals(i,j,n);
+              double &Y = face.qBcVals(i,j,n);
               iF(i,j,n) = mDotPerUnitArea * Y * iS(i,j);
             }
           });
