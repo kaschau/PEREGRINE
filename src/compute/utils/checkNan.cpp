@@ -10,7 +10,7 @@ int checkNan(std::vector<block_> mb) {
   // Check for nans and infs in the solution array.
   //-------------------------------------------------------------------------------------------|
   int foundFinite;
-  int allFinite = 1;
+  int allFinite = 1; // <-- allFinite stays 1 when non nans are detected
 
   for (const block_ b : mb) {
     MDRange4 range_cc({b.ng, b.ng, b.ng, 0}, {b.ni + b.ng - 1, b.nj + b.ng - 1,
@@ -21,9 +21,10 @@ int checkNan(std::vector<block_> mb) {
           finite = fmin(isfinite(b.Q(i, j, k, l)), finite);
         },
         Kokkos::Min<int>(foundFinite));
+
+    allFinite = fmin(allFinite, 1 - std::min(allFinite, foundFinite));
   }
 
-  allFinite = 1 - std::min(allFinite, foundFinite);
 
   return allFinite;
 }
