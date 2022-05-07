@@ -34,17 +34,19 @@ void muscl2rusanov(block_ b, const thtrdat_ th) {
         double rR,rL, phiR,phiL;
 
         // Reconstruct density
+        // We store density reconstrution values for species
+        double phiRhoR, phiRhoL;
         double &rhoi   = b.Q(i  ,j ,k ,0);
         double &rhoim1 = b.Q(i-1,j ,k ,0);
         double &rhoim2 = b.Q(i-2,j ,k ,0);
         double &rhoip1 = b.Q(i+1,j ,k ,0);
         rR = (rhoi - rhoim1)/(rhoip1-rhoi);
         rL = (rhoim1 - rhoim2)/(rhoi-rhoim1);
-        phiR = fmax(0.0, fmin(fmin(theta*rR, (1.0+rR)/2.0),theta));
-        phiL = fmax(0.0, fmin(fmin(theta*rL, (1.0+rL)/2.0),theta));
+        phiRhoR = fmax(0.0, fmin(fmin(theta*rR, (1.0+rR)/2.0),theta));
+        phiRhoL = fmax(0.0, fmin(fmin(theta*rL, (1.0+rL)/2.0),theta));
 
-        double rhoR = rhoi   - 0.5*phiR*(rhoip1 - rhoi);
-        double rhoL = rhoim1 + 0.5*phiL*(rhoi - rhoim1);
+        double rhoR = rhoi   - 0.5*phiRhoR*(rhoip1 - rhoi);
+        double rhoL = rhoim1 + 0.5*phiRhoL*(rhoi - rhoim1);
 
         // Reconstruct u
         double &ui   = b.q(i  ,j ,k ,1);
@@ -160,21 +162,16 @@ void muscl2rusanov(block_ b, const thtrdat_ th) {
         // Species
         for (int n = 0; n < th.ns - 1; n++) {
           double FYiR, FYiL;
-          double YiR, YiL;
+          double rhoYiR, rhoYiL;
           // Reconstruct Y
-          double &Yi   = b.q(i  ,j ,k ,5+n);
-          double &Yim1 = b.q(i-1,j ,k ,5+n);
-          double &Yim2 = b.q(i-2,j ,k ,5+n);
-          double &Yip1 = b.q(i+1,j ,k ,5+n);
-          rR = (Yi - Yim1)/(Yip1-Yi);
-          rL = (Yim1 - Yim2)/(Yi-Yim1);
-          phiR = fmax(0.0, fmin(fmin(theta*rR, (1.0+rR)/2.0),theta));
-          phiL = fmax(0.0, fmin(fmin(theta*rR, (1.0+rR)/2.0),theta));
-          YiR = Yi   - 0.5*phiR*(Yip1 - Yi);
-          YiL = Yim1 + 0.5*phiL*(Yi   - Yim1);
-          FYiR = rhoR * YiR * UR;
-          FYiL = rhoL * YiL * UL;
-          b.iF(i, j, k, 5 + n) = 0.5 * (FYiR + FYiL - lam * (YiR - YiL));
+          double &rhoYi   = b.Q(i  ,j ,k ,5+n);
+          double &rhoYim1 = b.Q(i-1,j ,k ,5+n);
+          double &rhoYip1 = b.Q(i+1,j ,k ,5+n);
+          rhoYiR = rhoYi   - 0.5*phiRhoR*(rhoYip1 - rhoYi);
+          rhoYiL = rhoYim1 + 0.5*phiRhoL*(rhoYi   - rhoYim1);
+          FYiR = rhoYiR * UR;
+          FYiL = rhoYiL * UL;
+          b.iF(i, j, k, 5 + n) = 0.5 * (FYiR + FYiL - lam * (rhoYiR - rhoYiL));
         }
       });
 
@@ -190,17 +187,19 @@ void muscl2rusanov(block_ b, const thtrdat_ th) {
         double rR,rL, phiR,phiL;
 
         // Reconstruct density
+        // We store density reconstrution values for species
+        double phiRhoR, phiRhoL;
         double &rhoi   = b.Q(i ,j   ,k ,0);
         double &rhoim1 = b.Q(i ,j-1 ,k ,0);
         double &rhoim2 = b.Q(i ,j-2 ,k ,0);
         double &rhoip1 = b.Q(i ,j+1 ,k ,0);
         rR = (rhoi - rhoim1)/(rhoip1-rhoi);
         rL = (rhoim1 - rhoim2)/(rhoi-rhoim1);
-        phiR = fmax(0.0, fmin(fmin(theta*rR, (1.0+rR)/2.0),theta));
-        phiL = fmax(0.0, fmin(fmin(theta*rL, (1.0+rL)/2.0),theta));
+        phiRhoR = fmax(0.0, fmin(fmin(theta*rR, (1.0+rR)/2.0),theta));
+        phiRhoL = fmax(0.0, fmin(fmin(theta*rL, (1.0+rL)/2.0),theta));
 
-        double rhoR = rhoi   - 0.5*phiR*(rhoip1 - rhoi);
-        double rhoL = rhoim1 + 0.5*phiL*(rhoi - rhoim1);
+        double rhoR = rhoi   - 0.5*phiRhoR*(rhoip1 - rhoi);
+        double rhoL = rhoim1 + 0.5*phiRhoL*(rhoi - rhoim1);
 
         // Reconstruct u
         double &ui   = b.q(i ,j   ,k ,1);
@@ -315,21 +314,16 @@ void muscl2rusanov(block_ b, const thtrdat_ th) {
         // Species
         for (int n = 0; n < th.ns - 1; n++) {
           double FYiR, FYiL;
-          double YiR, YiL;
+          double rhoYiR, rhoYiL;
           // Reconstruct Y
-          double &Yi   = b.q(i ,j   ,k ,5+n);
-          double &Yim1 = b.q(i ,j-1 ,k ,5+n);
-          double &Yim2 = b.q(i ,j-2 ,k ,5+n);
-          double &Yip1 = b.q(i ,j+1 ,k ,5+n);
-          rR = (Yi - Yim1)/(Yip1-Yi);
-          rL = (Yim1 - Yim2)/(Yi-Yim1);
-          phiR = fmax(0.0, fmin(fmin(theta*rR, (1.0+rR)/2.0),theta));
-          phiL = fmax(0.0, fmin(fmin(theta*rR, (1.0+rR)/2.0),theta));
-          YiR = Yi   - 0.5*phiR*(Yip1 - Yi);
-          YiL = Yim1 + 0.5*phiL*(Yi   - Yim1);
-          FYiR = rhoR * YiR * UR;
-          FYiL = rhoL * YiL * UL;
-          b.jF(i, j, k, 5 + n) = 0.5 * (FYiR + FYiL - lam * (YiR - YiL));
+          double &rhoYi   = b.Q(i ,j   ,k ,5+n);
+          double &rhoYim1 = b.Q(i ,j-1 ,k ,5+n);
+          double &rhoYip1 = b.Q(i ,j+1 ,k ,5+n);
+          rhoYiR = rhoYi   - 0.5*phiRhoR*(rhoYip1 - rhoYi);
+          rhoYiL = rhoYim1 + 0.5*phiRhoL*(rhoYi   - rhoYim1);
+          FYiR = rhoYiR * UR;
+          FYiL = rhoYiL * UL;
+          b.jF(i, j, k, 5 + n) = 0.5 * (FYiR + FYiL - lam * (rhoYiR - rhoYiL));
         }
       });
   //-------------------------------------------------------------------------------------------|
@@ -344,17 +338,19 @@ void muscl2rusanov(block_ b, const thtrdat_ th) {
         double rR,rL, phiR,phiL;
 
         // Reconstruct density
+        // We store density reconstrution values for species
+        double phiRhoR, phiRhoL;
         double &rhoi   = b.Q(i ,j ,k   ,0);
         double &rhoim1 = b.Q(i ,j ,k-1 ,0);
         double &rhoim2 = b.Q(i ,j ,k-2 ,0);
         double &rhoip1 = b.Q(i ,j ,k+1 ,0);
         rR = (rhoi - rhoim1)/(rhoip1-rhoi);
         rL = (rhoim1 - rhoim2)/(rhoi-rhoim1);
-        phiR = fmax(0.0, fmin(fmin(theta*rR, (1.0+rR)/2.0),theta));
-        phiL = fmax(0.0, fmin(fmin(theta*rL, (1.0+rL)/2.0),theta));
+        phiRhoR = fmax(0.0, fmin(fmin(theta*rR, (1.0+rR)/2.0),theta));
+        phiRhoL = fmax(0.0, fmin(fmin(theta*rL, (1.0+rL)/2.0),theta));
 
-        double rhoR = rhoi   - 0.5*phiR*(rhoip1 - rhoi);
-        double rhoL = rhoim1 + 0.5*phiL*(rhoi - rhoim1);
+        double rhoR = rhoi   - 0.5*phiRhoR*(rhoip1 - rhoi);
+        double rhoL = rhoim1 + 0.5*phiRhoL*(rhoi - rhoim1);
 
         // Reconstruct u
         double &ui   = b.q(i ,j ,k   ,1);
@@ -469,21 +465,16 @@ void muscl2rusanov(block_ b, const thtrdat_ th) {
         // Species
         for (int n = 0; n < th.ns - 1; n++) {
           double FYiR, FYiL;
-          double YiR, YiL;
+          double rhoYiR, rhoYiL;
           // Reconstruct Y
-          double &Yi   = b.q(i ,j ,k   ,5+n);
-          double &Yim1 = b.q(i ,j ,k-1 ,5+n);
-          double &Yim2 = b.q(i ,j ,k-2 ,5+n);
-          double &Yip1 = b.q(i ,j ,k+1 ,5+n);
-          rR = (Yi - Yim1)/(Yip1-Yi);
-          rL = (Yim1 - Yim2)/(Yi-Yim1);
-          phiR = fmax(0.0, fmin(fmin(theta*rR, (1.0+rR)/2.0),theta));
-          phiL = fmax(0.0, fmin(fmin(theta*rR, (1.0+rR)/2.0),theta));
-          YiR = Yi   - 0.5*phiR*(Yip1 - Yi);
-          YiL = Yim1 + 0.5*phiL*(Yi   - Yim1);
-          FYiR = rhoR * YiR * UR;
-          FYiL = rhoL * YiL * UL;
-          b.kF(i, j, k, 5 + n) = 0.5 * (FYiR + FYiL - lam * (YiR - YiL));
+          double &rhoYi   = b.Q(i ,j ,k   ,5+n);
+          double &rhoYim1 = b.Q(i ,j ,k-1 ,5+n);
+          double &rhoYip1 = b.Q(i ,j ,k+1 ,5+n);
+          rhoYiR = rhoYi   - 0.5*phiRhoR*(rhoYip1 - rhoYi);
+          rhoYiL = rhoYim1 + 0.5*phiRhoL*(rhoYi   - rhoYim1);
+          FYiR = rhoYiR * UR;
+          FYiL = rhoYiL * UL;
+          b.kF(i, j, k, 5 + n) = 0.5 * (FYiR + FYiL - lam * (rhoYiR - rhoYiL));
         }
       });
 }
