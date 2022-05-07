@@ -77,12 +77,13 @@ def checkForNan(mb):
         for blk in mb:
             blk.updateHostView(["Q"])
             ng = blk.ng
+            nans = np.where(
+                np.sum(np.isnan(blk.array["Q"][ng:-ng, ng:-ng, ng:-ng, :]), axis=-1) > 0
+            )
+            if len(nans[0]) == 0:
+                continue
             with open(f"nans_{blk.nblki}.log", "w") as f:
                 f.write(f"Nan Detection Log: Block {blk.nblki}\n")
-                nans = np.where(
-                    np.sum(np.isnan(blk.array["Q"][ng:-ng, ng:-ng, ng:-ng, :]), axis=-1)
-                    > 0
-                )
                 xs = blk.array["xc"][ng:-ng, ng:-ng, ng:-ng][nans]
                 ys = blk.array["yc"][ng:-ng, ng:-ng, ng:-ng][nans]
                 zs = blk.array["zc"][ng:-ng, ng:-ng, ng:-ng][nans]
