@@ -389,6 +389,7 @@ void constantMassFluxSubsonicInlet(block_ b,
         iS = getHaloSlice(b.kS, face._nface, slc);
         break;
     }
+    double dplus = plus;
     MDRange2 range_face = MDRange2({0, 0}, {iF.extent(0), iF.extent(1)});
       Kokkos::parallel_for(
           "Strict convective flux specification", range_face,
@@ -398,7 +399,7 @@ void constantMassFluxSubsonicInlet(block_ b,
             double &rhov = face.QBcVals(i,j,2);
             double &rhow = face.QBcVals(i,j,3);
 
-            double mDotPerUnitArea = sqrt(pow(rhou,2.0) + pow(rhov,2.0) + pow(rhow,2.0));
+            double mDotPerUnitArea = dplus * sqrt(pow(rhou,2.0) + pow(rhov,2.0) + pow(rhow,2.0));
 
             iF(i, j, 0) = mDotPerUnitArea * iS(i,j);
             for (int n = 5; n < b.ne; n++) {
