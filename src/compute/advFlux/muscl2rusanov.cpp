@@ -8,8 +8,9 @@
 //
 // Here is the strategy:
 //
-//      Reconstruct   rho, u,v,w e(internal), and Yi
+//      Reconstruct   rho, u,v,w e(internal)
 //      Use the reconstruction of e for p and c (speed of sound)
+//      Use the reconstruction of rho for Y
 //
 //      Use reconstruction of u,v,w to compute kinetic energy at face,
 //      then use KE and e to compute total energy at face.
