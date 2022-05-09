@@ -89,8 +89,8 @@ void muscl2rusanov(block_ b, const thtrdat_ th) {
         double wfL = wim1 + 0.5*phiL*(wi   - wim1);
 
         // Face normal velocity
-        double UR = b.isx(i, j, k) * ufR + b.isy(i, j, k) * vfR + b.isz(i, j, k) * wfR;
-        double UL = b.isx(i, j, k) * ufL + b.isy(i, j, k) * vfL + b.isz(i, j, k) * wfL;
+        double UR = b.inx(i, j, k) * ufR + b.iny(i, j, k) * vfR + b.inz(i, j, k) * wfR;
+        double UL = b.inx(i, j, k) * ufL + b.iny(i, j, k) * vfL + b.inz(i, j, k) * wfL;
 
         // Reconstruct e
         double ei   = b.qh(i  ,j ,k ,4)/rhoi;
@@ -131,6 +131,8 @@ void muscl2rusanov(block_ b, const thtrdat_ th) {
         // wave speed estimate
         double lam = fmax(abs(UL) + cL,
                           abs(UR) + cR) * b.iS(i, j, k);
+        UR *= b.iS(i,j,k);
+        UL *= b.iS(i,j,k);
 
         // Continuity rho*Ui
         double FrhoR, FrhoL;
@@ -242,8 +244,8 @@ void muscl2rusanov(block_ b, const thtrdat_ th) {
         double wfL = wim1 + 0.5*phiL*(wi   - wim1);
 
         // Face normal velocity
-        double UR = b.jsx(i, j, k) * ufR + b.jsy(i, j, k) * vfR + b.jsz(i, j, k) * wfR;
-        double UL = b.jsx(i, j, k) * ufL + b.jsy(i, j, k) * vfL + b.jsz(i, j, k) * wfL;
+        double UR = b.jnx(i, j, k) * ufR + b.jny(i, j, k) * vfR + b.jnz(i, j, k) * wfR;
+        double UL = b.jnx(i, j, k) * ufL + b.jny(i, j, k) * vfL + b.jnz(i, j, k) * wfL;
 
         // Reconstruct e
         double ei   = b.qh(i ,j   ,k ,4)/rhoi;
@@ -283,6 +285,8 @@ void muscl2rusanov(block_ b, const thtrdat_ th) {
         // wave speed estimate
         double lam = fmax(abs(UL) + cL,
                           abs(UR) + cR) * b.jS(i, j, k);
+        UR *= b.jS(i,j,k);
+        UL *= b.jS(i,j,k);
 
         // Continuity rho*Ui
         double FrhoR, FrhoL;
@@ -393,8 +397,8 @@ void muscl2rusanov(block_ b, const thtrdat_ th) {
         double wfL = wim1 + 0.5*phiL*(wi   - wim1);
 
         // Face normal velocity
-        double UR = b.ksx(i, j, k) * ufR + b.ksy(i, j, k) * vfR + b.ksz(i, j, k) * wfR;
-        double UL = b.ksx(i, j, k) * ufL + b.ksy(i, j, k) * vfL + b.ksz(i, j, k) * wfL;
+        double UR = b.knx(i, j, k) * ufR + b.kny(i, j, k) * vfR + b.knz(i, j, k) * wfR;
+        double UL = b.knx(i, j, k) * ufL + b.kny(i, j, k) * vfL + b.knz(i, j, k) * wfL;
 
         // Reconstruct e
         double ei   = b.qh(i ,j ,k   ,4)/rhoi;
@@ -434,6 +438,8 @@ void muscl2rusanov(block_ b, const thtrdat_ th) {
         // wave speed estimate
         double lam = fmax(abs(UL) + cL,
                           abs(UR) + cR) * b.kS(i, j, k);
+        UR *= b.kS(i,j,k);
+        UL *= b.kS(i,j,k);
 
         // Continuity rho*Ui
         double FrhoR, FrhoL;
