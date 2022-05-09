@@ -126,8 +126,6 @@ if __name__ == "__main__":
         kokkos.initialize()
         simulate(configFilePath)
         kokkos.finalize()
-        # Manually finalize MPI
-        MPI.Finalize()
 
     except Exception as e:
         import sys
