@@ -27,6 +27,9 @@ void bindUtils(py::module_ &m) {
   utils.def("dq4FD", &dq4FD, "Fourth order approx of spatial derivative of q array via finite difference",
         py::arg("block_ object"));
   //    |------> axpby
+  utils.def("AEQConst", &AEQConst, "A = Const",
+        py::arg("A view"),
+        py::arg("const double Const"));
   utils.def("AEQB", &AEQB, "A = B",
         py::arg("A view"),
         py::arg("B view"));
