@@ -92,7 +92,8 @@ def simulate():
         face.bcFunc(blk, face, mb.eos, mb.thtrdat, "viscous", mb.tme)
     pg.consistify(mb)
 
-    dt = 5.0e-9
+    dt = 1.0e-9
+    config["simulation"]["dt"] = dt
     testIndex = int(nx / 2)
     print(mb)
     while blk.array["q"][testIndex, ng, ng, 4] < 350.0:

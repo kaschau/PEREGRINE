@@ -38,6 +38,10 @@ void rusanov(block_ b, const thtrdat_ th);
 void ausmPlusUp(block_ b, const thtrdat_ th);
 //    |------> hllc
 void hllc(block_ b, const thtrdat_ th);
+//    |------> muscl2hllc
+void muscl2hllc(block_ b, const thtrdat_ th);
+//    |------> muscl2rusanov
+void muscl2rusanov(block_ b, const thtrdat_ th);
 
 // ./boundaryConditions
 //    |------> inlets
