@@ -70,11 +70,10 @@ std::array<double, 3> CFLmax(std::vector<block_> mb) {
           }
         },
         Kokkos::Max<double>(CFLmaxA), Kokkos::Max<double>(CFLmaxC), Kokkos::Max<double>(CFLmaxR));
+    returnMaxA = fmax(CFLmaxA, returnMaxA);
+    returnMaxC = fmax(fmax(CFLmaxC, returnMaxC), 1e-16);
+    returnMaxR = fmax(CFLmaxR, returnMaxR);
   }
-
-  returnMaxA = fmax(CFLmaxA, returnMaxA);
-  returnMaxC = fmax(fmax(CFLmaxC, returnMaxC), 1e-16);
-  returnMaxR = fmax(CFLmaxR, returnMaxR);
 
   return {returnMaxA, returnMaxC, returnMaxR};
 }

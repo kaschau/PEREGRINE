@@ -102,6 +102,74 @@ void adiabaticNoSlipWall(block_ b,
             }
           });
     }
+  } else if (terms.compare("strict") == 0) {
+    int slc;
+    threeDsubview q,iF;
+    twoDsubview isx,isy,isz;
+    switch(face._nface) {
+      case 1:
+        slc = s1;
+        q = getHaloSlice(b.q, face._nface, s1);
+        iF = getHaloSlice(b.iF, face._nface, slc);
+        isx = getHaloSlice(b.isx, face._nface, slc);
+        isy = getHaloSlice(b.isy, face._nface, slc);
+        isz = getHaloSlice(b.isz, face._nface, slc);
+        break;
+      case 3:
+        slc = s1;
+        q = getHaloSlice(b.q, face._nface, s1);
+        iF = getHaloSlice(b.jF, face._nface, slc);
+        isx = getHaloSlice(b.jsx, face._nface, slc);
+        isy = getHaloSlice(b.jsy, face._nface, slc);
+        isz = getHaloSlice(b.jsz, face._nface, slc);
+        break;
+      case 5:
+        slc = s1;
+        q = getHaloSlice(b.q, face._nface, s1);
+        iF = getHaloSlice(b.kF, face._nface, slc);
+        isx = getHaloSlice(b.ksx, face._nface, slc);
+        isy = getHaloSlice(b.ksy, face._nface, slc);
+        isz = getHaloSlice(b.ksz, face._nface, slc);
+        break;
+      case 2:
+        slc = s0;
+        q = getHaloSlice(b.q, face._nface, s1);
+        iF = getHaloSlice(b.iF, face._nface, slc);
+        isx = getHaloSlice(b.isx, face._nface, slc);
+        isy = getHaloSlice(b.isy, face._nface, slc);
+        isz = getHaloSlice(b.isz, face._nface, slc);
+        break;
+      case 4:
+        slc = s0;
+        q = getHaloSlice(b.q, face._nface, s1);
+        iF = getHaloSlice(b.jF, face._nface, slc);
+        isx = getHaloSlice(b.jsx, face._nface, slc);
+        isy = getHaloSlice(b.jsy, face._nface, slc);
+        isz = getHaloSlice(b.jsz, face._nface, slc);
+        break;
+      case 6:
+        slc = s0;
+        q = getHaloSlice(b.q, face._nface, s1);
+        iF = getHaloSlice(b.kF, face._nface, slc);
+        isx = getHaloSlice(b.ksx, face._nface, slc);
+        isy = getHaloSlice(b.ksy, face._nface, slc);
+        isz = getHaloSlice(b.ksz, face._nface, slc);
+        break;
+    }
+    MDRange2 range_face = MDRange2({0, 0}, {iF.extent(0), iF.extent(1)});
+    Kokkos::parallel_for(
+      "Strict convective flux specification", range_face,
+      KOKKOS_LAMBDA(const int i, const int j) {
+
+        iF(i, j, 0) = 0.0;
+        iF(i, j, 1) = q(i,j,0)*isx(i,j);
+        iF(i, j, 2) = q(i,j,0)*isy(i,j);
+        iF(i, j, 3) = q(i,j,0)*isz(i,j);
+        iF(i, j, 4) = 0.0;
+        for (int n = 5; n < b.ne; n++) {
+          iF(i,j,n) = 0.0;
+        }
+      });
   }
 }
 
@@ -213,6 +281,74 @@ void adiabaticSlipWall(block_ b,
             }
           });
     }
+  } else if (terms.compare("strict") == 0) {
+    int slc;
+    threeDsubview q,iF;
+    twoDsubview isx,isy,isz;
+    switch(face._nface) {
+      case 1:
+        slc = s1;
+        q = getHaloSlice(b.q, face._nface, s1);
+        iF = getHaloSlice(b.iF, face._nface, slc);
+        isx = getHaloSlice(b.isx, face._nface, slc);
+        isy = getHaloSlice(b.isy, face._nface, slc);
+        isz = getHaloSlice(b.isz, face._nface, slc);
+        break;
+      case 3:
+        slc = s1;
+        q = getHaloSlice(b.q, face._nface, s1);
+        iF = getHaloSlice(b.jF, face._nface, slc);
+        isx = getHaloSlice(b.jsx, face._nface, slc);
+        isy = getHaloSlice(b.jsy, face._nface, slc);
+        isz = getHaloSlice(b.jsz, face._nface, slc);
+        break;
+      case 5:
+        slc = s1;
+        q = getHaloSlice(b.q, face._nface, s1);
+        iF = getHaloSlice(b.kF, face._nface, slc);
+        isx = getHaloSlice(b.ksx, face._nface, slc);
+        isy = getHaloSlice(b.ksy, face._nface, slc);
+        isz = getHaloSlice(b.ksz, face._nface, slc);
+        break;
+      case 2:
+        slc = s0;
+        q = getHaloSlice(b.q, face._nface, s1);
+        iF = getHaloSlice(b.iF, face._nface, slc);
+        isx = getHaloSlice(b.isx, face._nface, slc);
+        isy = getHaloSlice(b.isy, face._nface, slc);
+        isz = getHaloSlice(b.isz, face._nface, slc);
+        break;
+      case 4:
+        slc = s0;
+        q = getHaloSlice(b.q, face._nface, s1);
+        iF = getHaloSlice(b.jF, face._nface, slc);
+        isx = getHaloSlice(b.jsx, face._nface, slc);
+        isy = getHaloSlice(b.jsy, face._nface, slc);
+        isz = getHaloSlice(b.jsz, face._nface, slc);
+        break;
+      case 6:
+        slc = s0;
+        q = getHaloSlice(b.q, face._nface, s1);
+        iF = getHaloSlice(b.kF, face._nface, slc);
+        isx = getHaloSlice(b.ksx, face._nface, slc);
+        isy = getHaloSlice(b.ksy, face._nface, slc);
+        isz = getHaloSlice(b.ksz, face._nface, slc);
+        break;
+    }
+    MDRange2 range_face = MDRange2({0, 0}, {iF.extent(0), iF.extent(1)});
+    Kokkos::parallel_for(
+      "Strict convective flux specification", range_face,
+      KOKKOS_LAMBDA(const int i, const int j) {
+
+        iF(i, j, 0) = 0.0;
+        iF(i, j, 1) = q(i,j,0)*isx(i,j);
+        iF(i, j, 2) = q(i,j,0)*isy(i,j);
+        iF(i, j, 3) = q(i,j,0)*isz(i,j);
+        iF(i, j, 4) = 0.0;
+        for (int n = 5; n < b.ne; n++) {
+          iF(i,j,n) = 0.0;
+        }
+      });
   }
 }
 
@@ -312,6 +448,8 @@ void adiabaticMovingWall(block_ b,
             }
           });
     }
+  } else if (terms.compare("strict") == 0) {
+
   }
 }
 
@@ -413,6 +551,8 @@ void isoTNoSlipWall(block_ b,
             }
           });
     }
+  } else if (terms.compare("strict") == 0) {
+
   }
 }
 
@@ -531,6 +671,8 @@ void isoTSlipWall(block_ b,
             }
           });
     }
+  } else if (terms.compare("strict") == 0) {
+
   }
 }
 void isoTMovingWall(block_ b,
@@ -627,5 +769,7 @@ void isoTMovingWall(block_ b,
             }
           });
     }
+  } else if (terms.compare("strict") == 0) {
+
   }
 }

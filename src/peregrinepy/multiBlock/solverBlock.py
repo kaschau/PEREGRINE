@@ -239,7 +239,7 @@ class solverBlock(restartBlock, block_):
             createViewMirrorArray(self, names, shape)
 
         # ------------------------------------------------------------------- #
-        #       Switches
+        #       Hybrid Flux Switches
         # ------------------------------------------------------------------- #
         createViewMirrorArray(self, ["phi"], cQshape)
 
