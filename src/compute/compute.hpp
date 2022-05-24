@@ -28,6 +28,8 @@ void place_recvBuffer4(fourDview view, face_ face, std::vector<int> slices);
 // ./advFlux
 //    |------> secondOrderKEEP
 void secondOrderKEEP(block_ b, const thtrdat_ th);
+//    |------> centeredDifference
+void centeredDifference(block_ b, const thtrdat_ th);
 //    |------> fourthOrderKEEP
 void fourthOrderKEEP(block_ b, const thtrdat_ th);
 //    |------> jamesonDissipation

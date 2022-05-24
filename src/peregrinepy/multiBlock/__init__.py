@@ -155,6 +155,7 @@ def howManyNG(config):
 
     advFluxNG = {
         "secondOrderKEEP": 1,
+        "centeredDifference": 1,
         "fourthOrderKEEP": 2,
         "hllc": 1,
         "rusanov": 1,
