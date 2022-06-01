@@ -28,18 +28,19 @@ def simulate():
 
     config = pg.files.configFile()
     config["RHS"]["diffusion"] = False
-    config["RHS"]["shockHandling"] = "hybrid"
+    config["RHS"]["shockHandling"] = "artificialDissipation"
     config["RHS"]["primaryAdvFlux"] = "secondOrderKEEP"
-    config["RHS"]["secondaryAdvFlux"] = "rusanov"
-    config["RHS"]["switchAdvFlux"] = "vanAlbadaPressure"
-    config["solver"]["timeIntegration"] = "strang"
+    config["RHS"]["secondaryAdvFlux"] = "scalarDissipation"
+    config["RHS"]["switchAdvFlux"] = "vanLeer"
+    config["solver"]["timeIntegration"] = "rk3"
     config["thermochem"]["chemistry"] = True
     config["thermochem"]["mechanism"] = "chem_CH4_O2_Stanford_Skeletal"
+    config["thermochem"]["nChemSubSteps"] = 10
     config["thermochem"]["eos"] = "tpg"
     config["thermochem"]["spdata"] = "thtr_CH4_O2_Stanford_Skeletal.yaml"
     mb = pg.multiBlock.generateMultiBlockSolver(1, config)
 
-    nx = 500
+    nx = 300
     dx = 0.005 / 50.0  # Aproximate rde resolution
     lx = nx * dx
     pg.grid.create.multiBlockCube(
@@ -70,18 +71,11 @@ def simulate():
 
     shockX = lx * 0.05
     q[ng:-ng, ng:-ng, ng:-ng, 0] = np.where(
-        xc < shockX, 30.0e6, q[ng:-ng, ng:-ng, ng:-ng, 0]
-    )
-    q[ng:-ng, ng:-ng, ng:-ng, 1] = np.where(
-        xc < shockX, 750.0, q[ng:-ng, ng:-ng, ng:-ng, 1]
+        xc < shockX, 4.0e6, q[ng:-ng, ng:-ng, ng:-ng, 0]
     )
     q[ng:-ng, ng:-ng, ng:-ng, 4] = np.where(
         xc < shockX, 3000.0, q[ng:-ng, ng:-ng, ng:-ng, 4]
     )
-    for i in range(11):
-        q[ng:-ng, ng:-ng, ng:-ng, 5 + i] = np.where(
-            xc < shockX, 0.0, q[ng:-ng, ng:-ng, ng:-ng, 5 + i]
-        )
 
     # Update cons
     blk.updateDeviceView(["q"])

@@ -469,12 +469,11 @@ def simulate(testnum, index="i"):
     nx = 201
     config = pg.files.configFile()
     config["thermochem"]["spdata"] = ["DB"]
-    config["RHS"]["shockHandling"] = "hybrid"
+    config["RHS"]["shockHandling"] = "artificialDissipation"
     config["RHS"]["primaryAdvFlux"] = "secondOrderKEEP"
-    config["RHS"]["secondaryAdvFlux"] = "muscl2hllc"
+    config["RHS"]["secondaryAdvFlux"] = "scalarDissipation"
     config["RHS"]["switchAdvFlux"] = "vanLeer"
-    # config["RHS"]["primaryAdvFlux"] = "muscl2hllc"
-    config["solver"]["timeIntegration"] = "rk4"
+    config["solver"]["timeIntegration"] = "rk3"
     mb = pg.multiBlock.generateMultiBlockSolver(1, config)
     print(mb)
 

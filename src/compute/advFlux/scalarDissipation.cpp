@@ -4,18 +4,18 @@
 #include "thtrdat_.hpp"
 #include "math.h"
 
-void jamesonDissipation(block_ b, const thtrdat_ th) {
+void scalarDissipation(block_ b, const thtrdat_ th) {
+
+  const double kappa2 = 0.5;
+  const double kappa4 = 0.005;
 
 //-------------------------------------------------------------------------------------------|
 // i flux face range
 //-------------------------------------------------------------------------------------------|
   MDRange3 range_i({b.ng,b.ng,b.ng},{b.ni+b.ng, b.nj+b.ng-1, b.nk+b.ng-1});
-  Kokkos::parallel_for("Jameson Dissipation i face conv fluxes", range_i, KOKKOS_LAMBDA(const int i,
+  Kokkos::parallel_for("Scalar Dissipation i face conv fluxes", range_i, KOKKOS_LAMBDA(const int i,
                                                                     const int j,
                                                                     const int k) {
-    const double kappa2 = 1.0;
-    const double kappa4 = 1.0/256.0;
-
     const double eps2 = kappa2 * fmax(b.phi(i,j,k,0), b.phi(i-1,j,k,0));
     const double eps4 = fmax( 0.0, kappa4 - eps2 );
 
@@ -83,14 +83,11 @@ void jamesonDissipation(block_ b, const thtrdat_ th) {
 // j flux face range
 //-------------------------------------------------------------------------------------------|
   MDRange3 range_j({b.ng,b.ng,b.ng},{b.ni+b.ng-1, b.nj+b.ng, b.nk+b.ng-1});
-  Kokkos::parallel_for("Jameson Dissipation j face conv fluxes", range_j, KOKKOS_LAMBDA(const int i,
+  Kokkos::parallel_for("Scalar Dissipation j face conv fluxes", range_j, KOKKOS_LAMBDA(const int i,
                                                                     const int j,
                                                                     const int k) {
 
-    const double kappa2 = 1.0;
-    const double kappa4 = 1.0/256.0;
-
-    const double eps2 = kappa2 * fmax(b.phi(i,j,k,0), b.phi(i,j-1,k,0));
+    const double eps2 = kappa2 * fmax(b.phi(i,j,k,1), b.phi(i,j-1,k,1));
     const double eps4 = fmax( 0.0, kappa4 - eps2 );
 
     // Compute face normal volume flux vector
@@ -157,14 +154,11 @@ void jamesonDissipation(block_ b, const thtrdat_ th) {
 // k flux face range
 //-------------------------------------------------------------------------------------------|
   MDRange3 range_k({b.ng,b.ng,b.ng},{b.ni+b.ng-1, b.nj+b.ng-1, b.nk+b.ng});
-  Kokkos::parallel_for("Jameson Dissipation k face conv fluxes", range_k, KOKKOS_LAMBDA(const int i,
+  Kokkos::parallel_for("Scalar Dissipation k face conv fluxes", range_k, KOKKOS_LAMBDA(const int i,
                                                                     const int j,
                                                                     const int k) {
 
-    const double kappa2 = 1.0;
-    const double kappa4 = 1.0/256.0;
-
-    const double eps2 = kappa2 * fmax(b.phi(i,j,k,0), b.phi(i,j,k-1,0));
+    const double eps2 = kappa2 * fmax(b.phi(i,j,k,2), b.phi(i,j,k-1,2));
     const double eps4 = fmax( 0.0, kappa4 - eps2 );
 
     // Compute face normal volume flux vector

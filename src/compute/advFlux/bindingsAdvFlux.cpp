@@ -15,8 +15,8 @@ void bindAdvFlux(py::module_ &m) {
   advFlux.def("centralDifference", &centralDifference, "Compute central difference euler fluxes",
         py::arg("block_ object"),
         py::arg("thtrdat_ object"));
-  //  |----> jamesonDissipation.cpp
-  advFlux.def("jamesonDissipation", &jamesonDissipation, "Compute jameson dissipation",
+  //  |----> scalarDissipation.cpp
+  advFlux.def("scalarDissipation", &scalarDissipation, "Compute scalar dissipation",
         py::arg("block_ object"),
         py::arg("thtrdat_ object"));
   //  |----> fourthOrderKEEP.cpp
