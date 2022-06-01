@@ -32,8 +32,8 @@ void secondOrderKEEP(block_ b, const thtrdat_ th);
 void centralDifference(block_ b, const thtrdat_ th);
 //    |------> fourthOrderKEEP
 void fourthOrderKEEP(block_ b, const thtrdat_ th);
-//    |------> jamesonDissipation
-void jamesonDissipation(block_ b, const thtrdat_ th);
+//    |------> scalarDissipation
+void scalarDissipation(block_ b, const thtrdat_ th);
 //    |------> rusanov
 void rusanov(block_ b, const thtrdat_ th);
 //    |------> ausmPlusUp

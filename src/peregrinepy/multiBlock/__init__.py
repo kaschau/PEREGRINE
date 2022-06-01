@@ -116,6 +116,7 @@ def setRHS(cls, config):
     if shock is None:
         cls.applySecondaryAdvFlux = null
     elif shock == "artificialDissipation":
+        assert secondary in ["scalarDissipation"]
         cls.applySecondaryAdvFlux = compute.utils.applyDissipationFlux
     elif shock == "hybrid":
         cls.applySecondaryAdvFlux = compute.utils.applyHybridFlux
@@ -161,6 +162,7 @@ def howManyNG(config):
         "rusanov": 1,
         "muscl2hllc": 2,
         "muscl2rusanov": 2,
+        "scalarDissipation": 2,
         None: 1,
     }
     diffOrderNG = {2: 1, 4: 2}
