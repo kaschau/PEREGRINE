@@ -52,11 +52,11 @@ void secondOrderKEEP(block_ b, const thtrdat_ th) {
     double e;
     double em;
 
-    e = b.qh(i  ,j,k,4)/b.Q(i  ,j,k,0);
-    em= b.qh(i-1,j,k,4)/b.Q(i-1,j,k,0);
+    e = b.qh(i  ,j,k,4);
+    em= b.qh(i-1,j,k,4);
 
-    b.iF(i,j,k,4) =( rho *(0.5*(  e         +  em         )
-                         + 0.5*(b.q(i,j,k,1)*b.q(i-1,j,k,1)  +
+    b.iF(i,j,k,4) =(      (0.5*(  e         +  em         )
+                    + rho* 0.5*(b.q(i,j,k,1)*b.q(i-1,j,k,1)  +
                                 b.q(i,j,k,2)*b.q(i-1,j,k,2)  +
                                 b.q(i,j,k,3)*b.q(i-1,j,k,3)) ) ) * U;
 
@@ -123,13 +123,13 @@ void secondOrderKEEP(block_ b, const thtrdat_ th) {
     double e;
     double em;
 
-    e = b.qh(i,j  ,k,4)/b.Q(i,j  ,k,0);
-    em= b.qh(i,j-1,k,4)/b.Q(i,j-1,k,0);
+    e = b.qh(i,j  ,k,4);
+    em= b.qh(i,j-1,k,4);
 
-    b.jF(i,j,k,4) =( rho *(0.5*(  e         +  em         )
-                         + 0.5*(b.q(i,j,k,1)*b.q(i,j-1,k,1)  +
-                                b.q(i,j,k,2)*b.q(i,j-1,k,2)  +
-                                b.q(i,j,k,3)*b.q(i,j-1,k,3)) ) ) * V;
+    b.jF(i,j,k,4) =(     (0.5*(  e         +  em         )
+                    + rho*0.5*(b.q(i,j,k,1)*b.q(i,j-1,k,1)  +
+                               b.q(i,j,k,2)*b.q(i,j-1,k,2)  +
+                               b.q(i,j,k,3)*b.q(i,j-1,k,3)) ) ) * V;
 
     b.jF(i,j,k,4)+= 0.5*(b.q(i,j-1,k,0)*(b.q(i,j  ,k,1)*b.jsx(i,j,k)
                                         +b.q(i,j  ,k,2)*b.jsy(i,j,k)
@@ -193,13 +193,13 @@ void secondOrderKEEP(block_ b, const thtrdat_ th) {
     double e;
     double em;
 
-    e = b.qh(i,j,k  ,4)/b.Q(i,j,k  ,0);
-    em= b.qh(i,j,k-1,4)/b.Q(i,j,k-1,0);
+    e = b.qh(i,j,k  ,4);
+    em= b.qh(i,j,k-1,4);
 
-    b.kF(i,j,k,4) =( rho *(0.5*(  e         +  em         )
-                         + 0.5*(b.q(i,j,k,1)*b.q(i,j,k-1,1)  +
-                                b.q(i,j,k,2)*b.q(i,j,k-1,2)  +
-                                b.q(i,j,k,3)*b.q(i,j,k-1,3)) ) ) * W;
+    b.kF(i,j,k,4) =(     (0.5*(  e         +  em         )
+                    + rho*0.5*(b.q(i,j,k,1)*b.q(i,j,k-1,1)  +
+                               b.q(i,j,k,2)*b.q(i,j,k-1,2)  +
+                               b.q(i,j,k,3)*b.q(i,j,k-1,3)) ) ) * W;
 
     b.kF(i,j,k,4)+= 0.5*(b.q(i,j,k-1,0)*(b.q(i,j,k  ,1)*b.ksx(i,j,k)
                                         +b.q(i,j,k  ,2)*b.ksy(i,j,k)
