@@ -6,8 +6,8 @@
 
 void scalarDissipation(block_ b, const thtrdat_ th) {
 
-  const double kappa2 = 0.3;
-  const double kappa4 = 0.03;
+  const double kappa2 = 0.5;
+  const double kappa4 = 0.005;
 
 //-------------------------------------------------------------------------------------------|
 // i flux face range
