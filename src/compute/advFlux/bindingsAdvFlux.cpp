@@ -12,7 +12,7 @@ void bindAdvFlux(py::module_ &m) {
         py::arg("block_ object"),
         py::arg("thtrdat_ object"));
   //  |----> centeredDifference.cpp
-  advFlux.def("centeredDifference", &centeredDifference, "Compute centeral difference euler fluxes",
+  advFlux.def("centralDifference", &centralDifference, "Compute central difference euler fluxes",
         py::arg("block_ object"),
         py::arg("thtrdat_ object"));
   //  |----> jamesonDissipation.cpp

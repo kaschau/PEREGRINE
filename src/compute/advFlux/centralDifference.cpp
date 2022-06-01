@@ -3,7 +3,7 @@
 #include "block_.hpp"
 #include "thtrdat_.hpp"
 
-void centeredDifference(block_ b, const thtrdat_ th) {
+void centralDifference(block_ b, const thtrdat_ th) {
 
 //-------------------------------------------------------------------------------------------|
 // i flux face range
