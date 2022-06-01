@@ -471,10 +471,9 @@ def simulate(testnum, index="i"):
     config["thermochem"]["spdata"] = ["DB"]
     config["RHS"]["shockHandling"] = "hybrid"
     config["RHS"]["primaryAdvFlux"] = "secondOrderKEEP"
-    config["RHS"]["secondaryAdvFlux"] = "muscl2hllc"
+    config["RHS"]["secondaryAdvFlux"] = "rusanov"
     config["RHS"]["switchAdvFlux"] = "vanLeer"
-    # config["RHS"]["primaryAdvFlux"] = "muscl2hllc"
-    config["solver"]["timeIntegration"] = "rk4"
+    config["solver"]["timeIntegration"] = "rk3"
     mb = pg.multiBlock.generateMultiBlockSolver(1, config)
     print(mb)
 
