@@ -119,6 +119,7 @@ def setRHS(cls, config):
         assert secondary in ["scalarDissipation"]
         cls.applySecondaryAdvFlux = compute.utils.applyDissipationFlux
     elif shock == "hybrid":
+        assert secondary not in ["scalarDissipation"]
         cls.applySecondaryAdvFlux = compute.utils.applyHybridFlux
 
     # Diffusive fluxes
