@@ -72,6 +72,7 @@ def simulate():
     ctT = []
     ctO2 = []
     t = []
+    print(mb)
     print("Time   PEREGRINE  CANTERA")
     while mb.tme < 0.05:
 
