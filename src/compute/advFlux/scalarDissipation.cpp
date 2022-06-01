@@ -87,7 +87,7 @@ void scalarDissipation(block_ b, const thtrdat_ th) {
                                                                     const int j,
                                                                     const int k) {
 
-    const double eps2 = kappa2 * fmax(b.phi(i,j,k,0), b.phi(i,j-1,k,0));
+    const double eps2 = kappa2 * fmax(b.phi(i,j,k,1), b.phi(i,j-1,k,1));
     const double eps4 = fmax( 0.0, kappa4 - eps2 );
 
     // Compute face normal volume flux vector
@@ -158,7 +158,7 @@ void scalarDissipation(block_ b, const thtrdat_ th) {
                                                                     const int j,
                                                                     const int k) {
 
-    const double eps2 = kappa2 * fmax(b.phi(i,j,k,0), b.phi(i,j,k-1,0));
+    const double eps2 = kappa2 * fmax(b.phi(i,j,k,2), b.phi(i,j,k-1,2));
     const double eps4 = fmax( 0.0, kappa4 - eps2 );
 
     // Compute face normal volume flux vector
