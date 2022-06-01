@@ -18,39 +18,58 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def simulate():
+def simulate(index="i"):
 
     config = pg.files.configFile()
     config["RHS"]["diffusion"] = False
     mb = pg.multiBlock.generateMultiBlockSolver(1, config)
     print(mb)
+
+    rot = {"i": 0, "j": 1, "k": 2}
+
+    def rotate(li, index):
+        return li[-rot[index] :] + li[: -rot[index]]
+
+    nx = 41
+    dimsPerBlock = rotate([nx, 2, 2], index)
+    lengths = rotate([1, 0.1, 0.1], index)
+    periodic = rotate([True, False, False], index)
+
     pg.grid.create.multiBlockCube(
         mb,
         mbDims=[1, 1, 1],
-        dimsPerBlock=[41, 2, 2],
-        lengths=[1, 0.01, 0.01],
-        periodic=[True, False, False],
+        dimsPerBlock=dimsPerBlock,
+        lengths=lengths,
+        periodic=periodic,
     )
     mb.initSolverArrays(config)
 
     blk = mb[0]
-    for face in blk.faces[2::]:
-        face.bcType = "adiabaticSlipWall"
-
-    blk.getFace(1).commRank = 0
-    blk.getFace(2).commRank = 0
+    for face in blk.faces:
+        if face.bcType.endswith("Wall"):
+            face.bcType = "adiabaticSlipWall"
+    if index == "i":
+        blk.getFace(1).commRank = 0
+        blk.getFace(2).commRank = 0
+    elif index == "j":
+        blk.getFace(3).commRank = 0
+        blk.getFace(4).commRank = 0
+    elif index == "k":
+        blk.getFace(5).commRank = 0
+        blk.getFace(6).commRank = 0
 
     mb.setBlockCommunication()
-
     mb.unifyGrid()
-
     mb.computeMetrics(config["RHS"]["diffOrder"])
 
     ng = blk.ng
     R = 281.4583333333333
+    ccArray = {"i": "xc", "j": "yc", "k": "zc"}
+    uIndex = {"i": 1, "j": 2, "k": 3}
     blk.array["q"][:, :, :, 0] = 1.0
-    blk.array["q"][:, :, :, 1] = 1.0
-    initial_rho = 2.0 + np.sin(2 * np.pi * blk.array["xc"])
+    blk.array["q"][:, :, :, uIndex[index]] = 1.0
+    xc = blk.array[ccArray[index]]
+    initial_rho = 2.0 + np.sin(2 * np.pi * xc)
     initial_T = 1.0 / (R * initial_rho)
     blk.array["q"][:, :, :, 4] = initial_T
 
@@ -72,10 +91,11 @@ def simulate():
     fig, ax1 = plt.subplots()
     ax1.set_title("1D Advection Results")
     ax1.set_xlabel(r"x")
-    x = blk.array["xc"][ng:-ng, ng, ng]
-    rho = blk.array["Q"][ng:-ng, ng, ng, 0]
-    p = blk.array["q"][ng:-ng, ng, ng, 0]
-    u = blk.array["q"][ng:-ng, ng, ng, 1]
+    s_ = rotate(np.s_[ng:-ng, ng, ng], index)
+    x = blk.array[ccArray[index]][s_]
+    rho = blk.array["Q"][s_][:, 0]
+    p = blk.array["q"][s_][:, 0]
+    u = blk.array["q"][s_][:, uIndex[index]]
     ax1.plot(x, rho, color="g", label="rho", linewidth=0.5)
     ax1.plot(x, p, color="r", label="p", linewidth=0.5)
     ax1.plot(x, u, color="k", label="u", linewidth=0.5)
@@ -96,7 +116,7 @@ def simulate():
 if __name__ == "__main__":
     try:
         kokkos.initialize()
-        simulate()
+        simulate("i")
         kokkos.finalize()
 
     except Exception as e:
