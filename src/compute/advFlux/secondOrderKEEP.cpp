@@ -69,8 +69,7 @@ void secondOrderKEEP(block_ b, const thtrdat_ th) {
     // Species
     for (int n=0; n<th.ns-1; n++)
     {
-      b.iF(i,j,k,5+n) = rho * 0.5*(b.q(i,j,k,5+n)+b.q(i-1,j,k,5+n)) * U;
-      //b.iF(i,j,k,5+n) = 0.5*(b.Q(i,j,k,5+n)+b.Q(i-1,j,k,5+n)) * U;
+      b.iF(i,j,k,5+n) = 0.5*(b.Q(i,j,k,5+n)+b.Q(i-1,j,k,5+n)) * U;
     }
 
   });
@@ -140,8 +139,7 @@ void secondOrderKEEP(block_ b, const thtrdat_ th) {
     // Species
     for (int n=0; n<th.ns-1; n++)
     {
-      b.jF(i,j,k,5+n) = rho * 0.5*(b.q(i,j,k,5+n)+b.q(i,j-1,k,5+n)) * V;
-      //b.jF(i,j,k,5+n) = 0.5*(b.Q(i,j,k,5+n)+b.Q(i,j-1,k,5+n)) * V;
+      b.jF(i,j,k,5+n) = 0.5*(b.Q(i,j,k,5+n)+b.Q(i,j-1,k,5+n)) * V;
     }
 
   });
@@ -210,8 +208,7 @@ void secondOrderKEEP(block_ b, const thtrdat_ th) {
     // Species
     for (int n=0; n<th.ns-1; n++)
     {
-      b.kF(i,j,k,5+n) = rho * 0.5*(b.q(i,j,k,5+n)+b.q(i,j,k-1,5+n)) * W;
-      //b.kF(i,j,k,5+n) = 0.5*(b.Q(i,j,k,5+n)+b.Q(i,j,k-1,5+n)) * W;
+      b.kF(i,j,k,5+n) = 0.5*(b.Q(i,j,k,5+n)+b.Q(i,j,k-1,5+n)) * W;
     }
 
   });
