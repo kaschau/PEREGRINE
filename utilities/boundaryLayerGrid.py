@@ -55,10 +55,10 @@ def ptsWithGR(start, stop, gr, startDy):
     assert gr > 1.0
 
     pts = [start]
-    dY = startDy ** gr
+    dY = startDy * gr
     while pts[-1] < stop:
         pts.append(pts[-1] + dY)
-        dY = dY ** gr
+        dY *= gr
 
     if abs(pts[-1] - stop) > abs(pts[-2] - stop):
         pts = pts[0:-1]
@@ -74,10 +74,10 @@ def growToDy(startDy, endDy, gr):
     assert gr > 1.0
 
     pts = [0]
-    dY = startDy ** gr
+    dY = startDy * gr
     while dY < endDy:
         pts.append(pts[-1] + dY)
-        dY **= gr
+        dY *= gr
 
     return np.array(pts)
 
@@ -147,6 +147,8 @@ if __name__ == "__main__":
         dYplusCore = (
             defYplusCore if inp.dYplusCore == "default" else float(inp.dYplusCore)
         )
+    else:
+        raise ValueError
 
     yLog = yBuff[-1] + growToDy(startDy, dYplusCore, logGR)
 
@@ -170,7 +172,7 @@ if __name__ == "__main__":
         totalYs = np.concatenate((totalYs, 2 * totalYs[-1] - np.flip(totalYs)[1::]))
         endY *= 2
 
-    totalYs *= yp1
+    totalYs
 
     # Create the grid
     xLength = float(inp.xLength)
@@ -185,12 +187,15 @@ if __name__ == "__main__":
     pg.grid.create.multiBlockCube(grid, lengths=[Lx, Ly, Lz], dimsPerBlock=[nx, ny, nz])
 
     # Overwrite the y values with the BL values
-    grid[0].array["y"][:, :, :] = totalYs[np.newaxis, :, np.newaxis]
+    grid[0].array["y"][:, :, :] = totalYs[np.newaxis, :, np.newaxis] * yp1
 
     string = "Summary:\n"
     string += f"Domain type: {inp.domainType}\n"
     string += f"{nx=}, {ny=}, {nz=}\n"
-    string += f"Total Cells: {nx*ny*nz}\n"
+    string += f"Total Cells: {(nx-1)*(ny-1)*(nz-1)}\n"
+    string += f"Viscous Sub Layer Cells: {len(yVSL)-1}\n"
+    string += f"Buffer Layer Cells: {len(yBuff)-1}\n"
+    string += f"Log Layer Cells: {len(np.where((totalYs > 30.0) & (totalYs*yp1/delta < 0.2))[0])}\n"
     print(string)
 
     pg.writers.writeGrid(grid)
