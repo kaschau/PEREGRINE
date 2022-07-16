@@ -185,54 +185,33 @@ def verify(mb):
 
             # Compare the face points to the neighbor face
             try:
-                diff_x = (
-                    np.mean(
-                        np.abs(
-                            (face_x - face2_x) / np.clip(np.abs(face_x), 1e-16, None)
-                        )
-                    )
-                    * 100
-                )
-                diff_y = (
-                    np.mean(
-                        np.abs(
-                            (face_y - face2_y) / np.clip(np.abs(face_y), 1e-16, None)
-                        )
-                    )
-                    * 100
-                )
-                diff_z = (
-                    np.mean(
-                        np.abs(
-                            (face_z - face2_z) / np.clip(np.abs(face_z), 1e-16, None)
-                        )
-                    )
-                    * 100
-                )
+                off_x = np.max(np.abs(face_x - face2_x))
+                off_y = np.max(np.abs(face_y - face2_y))
+                off_z = np.max(np.abs(face_z - face2_z))
             except ValueError:
                 raise ValueError(
                     f"Error when comparing block {blk.nblki} and block {blk2.nblki} connection"
                 )
 
-            if diff_x > 1e-06:
+            if off_x > 1e-10:
                 print(
                     f"Warning, the x coordinates of face {nface} on block {blk.nblki} are not matching the x coordinates of face {nface2} of block {blk2.nblki}"
                 )
-                print(f"Off by average of {diff_x}")
+                print(f"Off by average of {off_x}")
                 warn = True
 
-            if diff_y > 1e-06:
+            if off_y > 1e-10:
                 print(
                     f"Warning, the y coordinates of face {nface} on block {blk.nblki} are not matching the y coordinates of face {nface2} of block {blk2.nblki}"
                 )
-                print(f"Off by average of {diff_y}")
+                print(f"Off by average of {off_y}")
                 warn = True
 
-            if diff_z > 1e-06:
+            if off_z > 1e-10:
                 print(
                     f"Warning, the z coordinates of face {nface} on block {blk.nblki} are not matching the z coordinates of face {nface2} of block {blk2.nblki}"
                 )
-                print(f"Off by average of {diff_z}")
+                print(f"Off by average of {off_z}")
                 warn = True
 
         # Now we check that all blocks are right handed

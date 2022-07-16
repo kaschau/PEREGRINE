@@ -177,13 +177,17 @@ def cutBlock(mb, nblki, cutAxis, cutIndex, incompleteBlocks, foundFaces):
         newCutNface = 5
 
     # Before we change the cut face info copy the info
-    # from the oldFace to the new block'ss opposite face
+    # from the oldFace to the new block's opposite face
     newOppFace = newBlk.getFace(oldCutNface)
     oldOppFace = oldBlk.getFace(oldCutNface)
     newOppFace.neighbor = oldOppFace.neighbor
     newOppFace.orientation = oldOppFace.orientation
     newOppFace.bcType = oldOppFace.bcType
     newOppFace.bcFam = oldOppFace.bcFam
+    if oldOppFace.bcType.startswith("periodic"):
+        newOppFace.periodicSpan = oldOppFace.periodicSpan
+        newOppFace.periodicAxis = oldOppFace.periodicAxis
+
     foundFaces[-2][newCutNface - 1] = True
     foundFaces[-1][oldCutNface - 1] = True
     # We also need to update the oppFace neighbor of the oldBlk
