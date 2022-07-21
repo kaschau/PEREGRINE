@@ -3,7 +3,7 @@
 #include "block_.hpp"
 #include "thtrdat_.hpp"
 
-void fourthOrderKEEP(block_ b, const thtrdat_ th) {
+void fourthOrderKEEP(block_ b) {
 
 //-------------------------------------------------------------------------------------------|
 // i flux face range
@@ -156,7 +156,7 @@ void fourthOrderKEEP(block_ b, const thtrdat_ th) {
     b.iF(i,j,k,4) = rhoE * U + pu;
 
     // Species
-    for (int n=0; n<th.ns-1; n++)
+    for (int n=0; n<b.ne-5; n++)
     {
       double rhoY = 0.0;
       double temprhoY = 0.0;
@@ -321,7 +321,7 @@ void fourthOrderKEEP(block_ b, const thtrdat_ th) {
     b.jF(i,j,k,4) = rhoE * V + pu;
 
     // Species
-    for (int n=0; n<th.ns-1; n++)
+    for (int n=0; n<b.ne-5; n++)
     {
       double rhoY = 0.0;
       double temprhoY = 0.0;
@@ -486,7 +486,7 @@ void fourthOrderKEEP(block_ b, const thtrdat_ th) {
     b.kF(i,j,k,4) = rhoE * W + pu;
 
     // Species
-    for (int n=0; n<th.ns-1; n++)
+    for (int n=0; n<b.ne-5; n++)
     {
       double rhoY = 0.0;
       double temprhoY = 0.0;

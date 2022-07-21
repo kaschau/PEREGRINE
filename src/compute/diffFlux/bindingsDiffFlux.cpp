@@ -9,6 +9,5 @@ void bindDiffFlux(py::module_ &m) {
   py::module diffFlux = m.def_submodule("diffFlux", "diffusive flux module");
   //  |----> diffusiveFlux.cpp
   diffFlux.def("diffusiveFlux", &diffusiveFlux, "Compute centeral difference viscous fluxes. Order set by dqdx",
-        py::arg("block_ object"),
-        py::arg("thtrdat_ object"));
+        py::arg("block_ object"));
 }

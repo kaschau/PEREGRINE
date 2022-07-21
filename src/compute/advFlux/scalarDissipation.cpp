@@ -4,7 +4,7 @@
 #include "thtrdat_.hpp"
 #include "math.h"
 
-void scalarDissipation(block_ b, const thtrdat_ th) {
+void scalarDissipation(block_ b) {
 
   const double kappa2 = 0.5;
   const double kappa4 = 0.005;
@@ -69,7 +69,7 @@ void scalarDissipation(block_ b, const thtrdat_ th) {
     b.iF(i,j,k,4) = a*(eps2*e2 - eps4*e4) ;
 
     // Species
-    for (int n=0; n<th.ns-1; n++)
+    for (int n=0; n<b.ne-5; n++)
     {
       double Y2, Y4;
       Y2 = b.Q(i  ,j,k,5+n) -     b.Q(i-1,j,k,5+n);
@@ -140,7 +140,7 @@ void scalarDissipation(block_ b, const thtrdat_ th) {
     b.jF(i,j,k,4) = a*(eps2*e2 - eps4*e4) ;
 
     // Species
-    for (int n=0; n<th.ns-1; n++)
+    for (int n=0; n<b.ne-5; n++)
     {
       double Y2, Y4;
       Y2 = b.Q(i,j  ,k,5+n) -     b.Q(i,j-1,k,5+n);
@@ -211,7 +211,7 @@ void scalarDissipation(block_ b, const thtrdat_ th) {
     b.kF(i,j,k,4) = a*(eps2*e2 - eps4*e4) ;
 
     // Species
-    for (int n=0; n<th.ns-1; n++)
+    for (int n=0; n<b.ne-5; n++)
     {
       double Y2, Y4;
       Y2 = b.Q(i,j,k  ,5+n) -     b.Q(i,j,k-1,5+n);

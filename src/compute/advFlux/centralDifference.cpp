@@ -3,7 +3,7 @@
 #include "block_.hpp"
 #include "thtrdat_.hpp"
 
-void centralDifference(block_ b, const thtrdat_ th) {
+void centralDifference(block_ b) {
 
 //-------------------------------------------------------------------------------------------|
 // i flux face range
@@ -58,7 +58,7 @@ void centralDifference(block_ b, const thtrdat_ th) {
     b.iF(i,j,k,4) =( rhoE + pf ) * U;
 
     // Species
-    for (int n=0; n<th.ns-1; n++)
+    for (int n=0; n<b.ne-5; n++)
     {
       b.iF(i,j,k,5+n) = 0.5*(b.Q(i,j,k,5+n)+b.Q(i-1,j,k,5+n)) * U;
     }
@@ -119,7 +119,7 @@ void centralDifference(block_ b, const thtrdat_ th) {
     b.jF(i,j,k,4) =( rhoE + pf ) * V;
 
     // Species
-    for (int n=0; n<th.ns-1; n++)
+    for (int n=0; n<b.ne-5; n++)
     {
       b.jF(i,j,k,5+n) = 0.5*(b.Q(i,j,k,5+n)+b.Q(i,j-1,k,5+n)) * V;
     }
@@ -179,7 +179,7 @@ void centralDifference(block_ b, const thtrdat_ th) {
     b.kF(i,j,k,4) =( rhoE + pf ) * W;
 
     // Species
-    for (int n=0; n<th.ns-1; n++)
+    for (int n=0; n<b.ne-5; n++)
     {
       b.kF(i,j,k,5+n) = 0.5*(b.Q(i,j,k,5+n)+b.Q(i,j,k-1,5+n)) * W;
     }

@@ -20,7 +20,7 @@
 //      and theta=2 is least dissipative (according to wikipedia)
 
 
-void muscl2rusanov(block_ b, const thtrdat_ th) {
+void muscl2rusanov(block_ b) {
 
   double theta = 2.0;
   //-------------------------------------------------------------------------------------------|
@@ -163,7 +163,7 @@ void muscl2rusanov(block_ b, const thtrdat_ th) {
         b.iF(i, j, k, 4) = 0.5 * (FER + FEL - lam * (ER - EL));
 
         // Species
-        for (int n = 0; n < th.ns - 1; n++) {
+        for (int n = 0; n < b.ne - 5; n++) {
           double FYiR, FYiL;
           double rhoYiR, rhoYiL;
           // Reconstruct Y
@@ -317,7 +317,7 @@ void muscl2rusanov(block_ b, const thtrdat_ th) {
         b.jF(i, j, k, 4) = 0.5 * (FER + FEL - lam * (ER - EL));
 
         // Species
-        for (int n = 0; n < th.ns - 1; n++) {
+        for (int n = 0; n < b.ne - 5; n++) {
           double FYiR, FYiL;
           double rhoYiR, rhoYiL;
           // Reconstruct Y
@@ -470,7 +470,7 @@ void muscl2rusanov(block_ b, const thtrdat_ th) {
         b.kF(i, j, k, 4) = 0.5 * (FER + FEL - lam * (ER - EL));
 
         // Species
-        for (int n = 0; n < th.ns - 1; n++) {
+        for (int n = 0; n < b.ne - 5; n++) {
           double FYiR, FYiL;
           double rhoYiR, rhoYiL;
           // Reconstruct Y
