@@ -5,7 +5,7 @@ void AEQConst(fourDview A, const double Const) {
   //-------------------------------------------------------------------------------------------|
   // A = Const
   //-------------------------------------------------------------------------------------------|
-  Kokkos::deep_copy(A, Const );
+  Kokkos::deep_copy(A, Const);
 }
 
 void AEQB(fourDview A, fourDview B) {
@@ -24,7 +24,6 @@ void AEQB(fourDview A, fourDview B) {
       });
 }
 
-
 void ApEQxB(fourDview A, const double x, fourDview B) {
   //-------------------------------------------------------------------------------------------|
   // A += x*B
@@ -40,7 +39,6 @@ void ApEQxB(fourDview A, const double x, fourDview B) {
         A(i, j, k, l) += x * B(i, j, k, l);
       });
 }
-
 
 void AEQxB(fourDview A, const double x, fourDview B) {
   //-------------------------------------------------------------------------------------------|
@@ -58,7 +56,6 @@ void AEQxB(fourDview A, const double x, fourDview B) {
       });
 }
 
-
 void CEQxApyB(fourDview C, const double x, fourDview A, const double y,
               fourDview B) {
   //-------------------------------------------------------------------------------------------|
@@ -75,4 +72,3 @@ void CEQxApyB(fourDview C, const double x, fourDview A, const double y,
         C(i, j, k, l) = x * A(i, j, k, l) + y * B(i, j, k, l);
       });
 }
-

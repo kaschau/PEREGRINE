@@ -37,10 +37,11 @@ void rusanov(block_ b) {
         double &EL = b.Q(i - 1, j, k, 4);
 
         // wave speed estimate
-        double lam = fmax(abs(UL) + b.qh(i, j, k, 3),
-                          abs(UR) + b.qh(i - 1, j, k, 3)) * b.iS(i, j, k);
-        UR *= b.iS(i,j,k);
-        UL *= b.iS(i,j,k);
+        double lam =
+            fmax(abs(UL) + b.qh(i, j, k, 3), abs(UR) + b.qh(i - 1, j, k, 3)) *
+            b.iS(i, j, k);
+        UR *= b.iS(i, j, k);
+        UL *= b.iS(i, j, k);
 
         // Continuity rho*Ui
         double FrhoR, FrhoL;
@@ -114,10 +115,11 @@ void rusanov(block_ b) {
         double &EL = b.Q(i, j - 1, k, 4);
 
         // wave speed estimate
-        double lam = fmax(abs(UL) + b.qh(i, j, k, 3),
-                          abs(UR) + b.qh(i, j - 1, k, 3)) * b.jS(i, j, k);
-        UR *= b.jS(i,j,k);
-        UL *= b.jS(i,j,k);
+        double lam =
+            fmax(abs(UL) + b.qh(i, j, k, 3), abs(UR) + b.qh(i, j - 1, k, 3)) *
+            b.jS(i, j, k);
+        UR *= b.jS(i, j, k);
+        UL *= b.jS(i, j, k);
 
         // Continuity rho*Ui
         double FrhoR, FrhoL;
@@ -190,10 +192,11 @@ void rusanov(block_ b) {
         double &EL = b.Q(i, j, k - 1, 4);
 
         // wave speed estimate
-        double lam = fmax(abs(UL) + b.qh(i, j, k, 3),
-                          abs(UR) + b.qh(i, j, k - 1, 3)) * b.kS(i, j, k);
-        UR *= b.kS(i,j,k);
-        UL *= b.kS(i,j,k);
+        double lam =
+            fmax(abs(UL) + b.qh(i, j, k, 3), abs(UR) + b.qh(i, j, k - 1, 3)) *
+            b.kS(i, j, k);
+        UR *= b.kS(i, j, k);
+        UL *= b.kS(i, j, k);
 
         // Continuity rho*Ui
         double FrhoR, FrhoL;

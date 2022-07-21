@@ -6,12 +6,10 @@
 #include "thtrdat_.hpp"
 #include <Kokkos_CopyViews.hpp>
 
-void constantVelocitySubsonicInlet(block_ b,
-                                   face_ face,
-                                   const std::function<void(block_, thtrdat_, int, std::string)> &eos,
-                                   const thtrdat_ th,
-                                   const std::string terms,
-                                   const double /*tme*/) {
+void constantVelocitySubsonicInlet(
+    block_ b, face_ face,
+    const std::function<void(block_, thtrdat_, int, std::string)> &eos,
+    const thtrdat_ th, const std::string terms, const double /*tme*/) {
   //-------------------------------------------------------------------------------------------|
   // Apply BC to face, slice by slice.
   //-------------------------------------------------------------------------------------------|
@@ -38,16 +36,16 @@ void constantVelocitySubsonicInlet(block_ b,
             q0(i, j, 0) = 2.0 * q1(i, j, 0) - q2(i, j, 0);
 
             // apply velo in halo
-            q0(i, j, 1) = face.qBcVals(i,j,1);
-            q0(i, j, 2) = face.qBcVals(i,j,2);
-            q0(i, j, 3) = face.qBcVals(i,j,3);
+            q0(i, j, 1) = face.qBcVals(i, j, 1);
+            q0(i, j, 2) = face.qBcVals(i, j, 2);
+            q0(i, j, 3) = face.qBcVals(i, j, 3);
 
             // apply temperature in halo
-            q0(i, j, 4) = face.qBcVals(i,j,4);
+            q0(i, j, 4) = face.qBcVals(i, j, 4);
 
             // apply species in halo
             for (int n = 5; n < b.ne; n++) {
-              q0(i, j, n) = face.qBcVals(i,j,n);
+              q0(i, j, n) = face.qBcVals(i, j, n);
             }
           });
     }
@@ -78,82 +76,88 @@ void constantVelocitySubsonicInlet(block_ b,
           });
     }
   } else if (terms.compare("strict") == 0) {
-
   }
 }
 
-void cubicSplineSubsonicInlet(block_ b,
-                              face_& face,
-                              const std::function<void(block_, thtrdat_, int, std::string)> &eos,
-                              const thtrdat_ th,
-                              const std::string terms,
-                              const double tme) {
+void cubicSplineSubsonicInlet(
+    block_ b, face_ &face,
+    const std::function<void(block_, thtrdat_, int, std::string)> &eos,
+    const thtrdat_ th, const std::string terms, const double tme) {
   //-------------------------------------------------------------------------------------------|
   // Update target values with cubic spline, moving intervals if needed
   //-------------------------------------------------------------------------------------------|
   if (terms.compare("euler") == 0) {
     int totalIntervals = face.cubicSplineAlphas.extent(1);
-    int currentInterval = static_cast<int>(std::floor(tme/face.intervalDt))%totalIntervals;
+    int currentInterval =
+        static_cast<int>(std::floor(tme / face.intervalDt)) % totalIntervals;
 
     // Check if the interval time puts us into the next interval
-    if (currentInterval != face.currentInterval){
+    if (currentInterval != face.currentInterval) {
       face.currentInterval = currentInterval;
       // Now we update the interval alphas
-      auto subview = Kokkos::subview(face.cubicSplineAlphas,
-                                     Kokkos::ALL,
-                                     face.currentInterval,
-                                     Kokkos::ALL,
-                                     Kokkos::ALL,
-                                     Kokkos::ALL);
+      auto subview = Kokkos::subview(face.cubicSplineAlphas, Kokkos::ALL,
+                                     face.currentInterval, Kokkos::ALL,
+                                     Kokkos::ALL, Kokkos::ALL);
 
-      auto intervalAlphasMirror = Kokkos::create_mirror_view(face.intervalAlphas);
-      Kokkos::deep_copy(intervalAlphasMirror,subview);
+      auto intervalAlphasMirror =
+          Kokkos::create_mirror_view(face.intervalAlphas);
+      Kokkos::deep_copy(intervalAlphasMirror, subview);
       Kokkos::deep_copy(face.intervalAlphas, intervalAlphasMirror);
-
     }
     // Now we comute the target values
 
-    MDRange2 range_face = MDRange2({0, 0}, {face.intervalAlphas.extent(1)-1,
-                                            face.intervalAlphas.extent(2)-1});
-    double interpTime = tme - static_cast<double>(
-                              static_cast<int>(tme/face.intervalDt/totalIntervals) *
-                                                                   totalIntervals) * face.intervalDt;
-    double intervalTime = interpTime - face.intervalDt*static_cast<double>(face.currentInterval);
+    MDRange2 range_face = MDRange2({0, 0}, {face.intervalAlphas.extent(1) - 1,
+                                            face.intervalAlphas.extent(2) - 1});
+    double interpTime =
+        tme - static_cast<double>(
+                  static_cast<int>(tme / face.intervalDt / totalIntervals) *
+                  totalIntervals) *
+                  face.intervalDt;
+    double intervalTime =
+        interpTime -
+        face.intervalDt * static_cast<double>(face.currentInterval);
     // Form of the cubic spline for the interval "i" is
 
-    // u(t) = alpha[0]*(t-t[i-1])**3 + alpha[1]*(t-t[i-1])**2 + alpha[2]*(t-t[i-1]) + alpha[3]
+    // u(t) = alpha[0]*(t-t[i-1])**3 + alpha[1]*(t-t[i-1])**2 +
+    // alpha[2]*(t-t[i-1]) + alpha[3]
 
-    // where t[i-1] is the value of time at the beginning of the current interval,
-    // i.e. if we are in interval [3] then t[3-1] is the value of time for frame 3.
+    // where t[i-1] is the value of time at the beginning of the current
+    // interval, i.e. if we are in interval [3] then t[3-1] is the value of time
+    // for frame 3.
     //
-    //| frame 0 |              | frame 1 |              | frame 2 |              | frame 3 |
-    //|   t[0]  | -----------> |   t[1]  | -----------> |   t[2]  | -----------> |   t[3]  |
-    //|         | <interval 0> |         | <interval 1> |         | <interval 2> |         |
+    //| frame 0 |              | frame 1 |              | frame 2 | | frame 3 |
+    //|   t[0]  | -----------> |   t[1]  | -----------> |   t[2]  | ----------->
+    //|   t[3]  | |         | <interval 0> |         | <interval 1> |         |
+    //<interval 2> |         |
     Kokkos::parallel_for(
         "Cubic spline subsonic", range_face,
         KOKKOS_LAMBDA(const int i, const int j) {
-          face.qBcVals(i,j,1) = 0.0;
-          face.qBcVals(i,j,2) = 0.0;
-          face.qBcVals(i,j,3) = 0.0;
-          for (int k=0; k < 4; k++) {
-            face.qBcVals(i,j,1) += face.intervalAlphas(k,i,j,0)*pow(intervalTime,static_cast<double>(3-k));
-            face.qBcVals(i,j,2) += face.intervalAlphas(k,i,j,1)*pow(intervalTime,static_cast<double>(3-k));
-            face.qBcVals(i,j,3) += face.intervalAlphas(k,i,j,2)*pow(intervalTime,static_cast<double>(3-k));
+          face.qBcVals(i, j, 1) = 0.0;
+          face.qBcVals(i, j, 2) = 0.0;
+          face.qBcVals(i, j, 3) = 0.0;
+          for (int k = 0; k < 4; k++) {
+            face.qBcVals(i, j, 1) +=
+                face.intervalAlphas(k, i, j, 0) *
+                pow(intervalTime, static_cast<double>(3 - k));
+            face.qBcVals(i, j, 2) +=
+                face.intervalAlphas(k, i, j, 1) *
+                pow(intervalTime, static_cast<double>(3 - k));
+            face.qBcVals(i, j, 3) +=
+                face.intervalAlphas(k, i, j, 2) *
+                pow(intervalTime, static_cast<double>(3 - k));
           }
         });
-      // Now we call constant velo subsonic bc as usual
-      constantVelocitySubsonicInlet(b, face, eos, th, terms, tme);
-      }else{
-      constantVelocitySubsonicInlet(b, face, eos, th, terms, tme);
+    // Now we call constant velo subsonic bc as usual
+    constantVelocitySubsonicInlet(b, face, eos, th, terms, tme);
+  } else {
+    constantVelocitySubsonicInlet(b, face, eos, th, terms, tme);
   }
 }
 
-void supersonicInlet(block_ b,
-                     face_ face,
-                     const std::function<void(block_, thtrdat_, int, std::string)> &eos,
-                     const thtrdat_ th,
-                     const std::string terms,
-                     const double /*tme*/) {
+void supersonicInlet(
+    block_ b, face_ face,
+    const std::function<void(block_, thtrdat_, int, std::string)> &eos,
+    const thtrdat_ th, const std::string terms, const double /*tme*/) {
   //-------------------------------------------------------------------------------------------|
   // Apply BC to face, slice by slice.
   //-------------------------------------------------------------------------------------------|
@@ -177,21 +181,21 @@ void supersonicInlet(block_ b,
           "Supersonic inlet euler terms", range_face,
           KOKKOS_LAMBDA(const int i, const int j) {
             // apply pressure on face
-            q0(i, j, 0) = face.qBcVals(i,j,0);
+            q0(i, j, 0) = face.qBcVals(i, j, 0);
 
             // apply velo on face
-            q0(i, j, 1) = face.qBcVals(i,j,1);
-            q0(i, j, 2) = face.qBcVals(i,j,2);
-            q0(i, j, 3) = face.qBcVals(i,j,3);
+            q0(i, j, 1) = face.qBcVals(i, j, 1);
+            q0(i, j, 2) = face.qBcVals(i, j, 2);
+            q0(i, j, 3) = face.qBcVals(i, j, 3);
 
             // apply temperature on face
-            q0(i, j, 4) = face.qBcVals(i,j,4);
+            q0(i, j, 4) = face.qBcVals(i, j, 4);
 
             // apply species on face
             // TODO: This is an unprotected extrapolation.
             // Is this a good thing to be doing?
             for (int n = 5; n < b.ne; n++) {
-              q0(i, j, n) = face.qBcVals(i,j,n);
+              q0(i, j, n) = face.qBcVals(i, j, n);
             }
           });
     }
@@ -222,16 +226,13 @@ void supersonicInlet(block_ b,
           });
     }
   } else if (terms.compare("strict") == 0) {
-
   }
 }
 
-void constantMassFluxSubsonicInlet(block_ b,
-                                   face_ face,
-                                   const std::function<void(block_, thtrdat_, int, std::string)> &eos,
-                                   const thtrdat_ th,
-                                   const std::string terms,
-                                   const double /*tme*/) {
+void constantMassFluxSubsonicInlet(
+    block_ b, face_ face,
+    const std::function<void(block_, thtrdat_, int, std::string)> &eos,
+    const thtrdat_ th, const std::string terms, const double /*tme*/) {
   //-------------------------------------------------------------------------------------------|
   // Apply BC to face, slice by slice.
   //-------------------------------------------------------------------------------------------|
@@ -263,13 +264,13 @@ void constantMassFluxSubsonicInlet(block_ b,
             q0(i, j, 3) = 0.0;
 
             // apply temperature on face
-            q0(i, j, 4) = face.qBcVals(i,j,4);
+            q0(i, j, 4) = face.qBcVals(i, j, 4);
 
             // apply species on face
             // TODO: This is an unprotected extrapolation.
             // Is this a good thing to be doing?
             for (int n = 5; n < b.ne; n++) {
-              q0(i, j, n) = face.qBcVals(i,j,n);
+              q0(i, j, n) = face.qBcVals(i, j, n);
             }
           });
     }
@@ -282,9 +283,9 @@ void constantMassFluxSubsonicInlet(block_ b,
     // so we have to make s2 start with s1 then increment
 
     // Reset first slice indicies, and make s2 start at s1
-    s0 += plus * (ng-1);
-    s2 -= plus * (ng-1);
-    s2 -= plus ;
+    s0 += plus * (ng - 1);
+    s2 -= plus * (ng - 1);
+    s2 -= plus;
 
     for (int g = 0; g < b.ng; g++) {
       s0 -= plus * g;
@@ -299,9 +300,9 @@ void constantMassFluxSubsonicInlet(block_ b,
           "Constant mass flux subsonic inlet euler terms", range_face,
           KOKKOS_LAMBDA(const int i, const int j) {
             // Target rhoU
-            double &rhou = face.QBcVals(i,j,1);
-            double &rhov = face.QBcVals(i,j,2);
-            double &rhow = face.QBcVals(i,j,3);
+            double &rhou = face.QBcVals(i, j, 1);
+            double &rhov = face.QBcVals(i, j, 2);
+            double &rhow = face.QBcVals(i, j, 3);
 
             // Set the velocities in the halo such that
             // 1/2(rho1+rho2)*1/2(u1+u2) evaluates to our desired rhou
@@ -357,55 +358,56 @@ void constantMassFluxSubsonicInlet(block_ b,
     int slc;
     threeDsubview iF;
     twoDsubview iS;
-    switch(face._nface) {
-      case 1:
-        slc = s1;
-        iF = getHaloSlice(b.iF, face._nface, slc);
-        iS = getHaloSlice(b.iS, face._nface, slc);
-        break;
-      case 3:
-        slc = s1;
-        iF = getHaloSlice(b.jF, face._nface, slc);
-        iS = getHaloSlice(b.jS, face._nface, slc);
-        break;
-      case 5:
-        slc = s1;
-        iF = getHaloSlice(b.kF, face._nface, slc);
-        iS = getHaloSlice(b.kS, face._nface, slc);
-        break;
-      case 2:
-        slc = s0;
-        iF = getHaloSlice(b.iF, face._nface, slc);
-        iS = getHaloSlice(b.iS, face._nface, slc);
-        break;
-      case 4:
-        slc = s0;
-        iF = getHaloSlice(b.jF, face._nface, slc);
-        iS = getHaloSlice(b.jS, face._nface, slc);
-        break;
-      case 6:
-        slc = s0;
-        iF = getHaloSlice(b.kF, face._nface, slc);
-        iS = getHaloSlice(b.kS, face._nface, slc);
-        break;
+    switch (face._nface) {
+    case 1:
+      slc = s1;
+      iF = getHaloSlice(b.iF, face._nface, slc);
+      iS = getHaloSlice(b.iS, face._nface, slc);
+      break;
+    case 3:
+      slc = s1;
+      iF = getHaloSlice(b.jF, face._nface, slc);
+      iS = getHaloSlice(b.jS, face._nface, slc);
+      break;
+    case 5:
+      slc = s1;
+      iF = getHaloSlice(b.kF, face._nface, slc);
+      iS = getHaloSlice(b.kS, face._nface, slc);
+      break;
+    case 2:
+      slc = s0;
+      iF = getHaloSlice(b.iF, face._nface, slc);
+      iS = getHaloSlice(b.iS, face._nface, slc);
+      break;
+    case 4:
+      slc = s0;
+      iF = getHaloSlice(b.jF, face._nface, slc);
+      iS = getHaloSlice(b.jS, face._nface, slc);
+      break;
+    case 6:
+      slc = s0;
+      iF = getHaloSlice(b.kF, face._nface, slc);
+      iS = getHaloSlice(b.kS, face._nface, slc);
+      break;
     }
     double dplus = plus;
     MDRange2 range_face = MDRange2({0, 0}, {iF.extent(0), iF.extent(1)});
-      Kokkos::parallel_for(
-          "Strict convective flux specification", range_face,
-          KOKKOS_LAMBDA(const int i, const int j) {
-            // explicitely set the mass flux
-            double &rhou = face.QBcVals(i,j,1);
-            double &rhov = face.QBcVals(i,j,2);
-            double &rhow = face.QBcVals(i,j,3);
+    Kokkos::parallel_for(
+        "Strict convective flux specification", range_face,
+        KOKKOS_LAMBDA(const int i, const int j) {
+          // explicitely set the mass flux
+          double &rhou = face.QBcVals(i, j, 1);
+          double &rhov = face.QBcVals(i, j, 2);
+          double &rhow = face.QBcVals(i, j, 3);
 
-            double mDotPerUnitArea = dplus * sqrt(pow(rhou,2.0) + pow(rhov,2.0) + pow(rhow,2.0));
+          double mDotPerUnitArea =
+              dplus * sqrt(pow(rhou, 2.0) + pow(rhov, 2.0) + pow(rhow, 2.0));
 
-            iF(i, j, 0) = mDotPerUnitArea * iS(i,j);
-            for (int n = 5; n < b.ne; n++) {
-              double &Y = face.qBcVals(i,j,n);
-              iF(i,j,n) = mDotPerUnitArea * Y * iS(i,j);
-            }
-          });
+          iF(i, j, 0) = mDotPerUnitArea * iS(i, j);
+          for (int n = 5; n < b.ne; n++) {
+            double &Y = face.qBcVals(i, j, n);
+            iF(i, j, n) = mDotPerUnitArea * Y * iS(i, j);
+          }
+        });
   }
 }

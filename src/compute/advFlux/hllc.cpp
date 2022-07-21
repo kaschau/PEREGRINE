@@ -64,7 +64,7 @@ void hllc(block_ b) {
           b.iF(i, j, k, 2) = UL * rhovL * b.iS(i, j, k) + pL * b.isy(i, j, k);
           b.iF(i, j, k, 3) = UL * rhowL * b.iS(i, j, k) + pL * b.isz(i, j, k);
           b.iF(i, j, k, 4) = UL * (EL + pL) * b.iS(i, j, k);
-          for (int n = 0; n < b.ne-5; n++) {
+          for (int n = 0; n < b.ne - 5; n++) {
             double rhoYiL = b.Q(i - 1, j, k, 5 + n);
             b.iF(i, j, k, 5 + n) = UL * rhoYiL * b.iS(i, j, k);
           }
