@@ -3,7 +3,7 @@
 #include "block_.hpp"
 #include "thtrdat_.hpp"
 
-void secondOrderKEEP(block_ b, const thtrdat_ th) {
+void secondOrderKEEP(block_ b) {
 
 //-------------------------------------------------------------------------------------------|
 // i flux face range
@@ -67,7 +67,7 @@ void secondOrderKEEP(block_ b, const thtrdat_ th) {
                                         +b.q(i-1,j,k,2)*b.isy(i,j,k)
                                         +b.q(i-1,j,k,3)*b.isz(i,j,k) ) );
     // Species
-    for (int n=0; n<th.ns-1; n++)
+    for (int n=0; n<b.ne-5; n++)
     {
       b.iF(i,j,k,5+n) = 0.5*(b.Q(i,j,k,5+n)+b.Q(i-1,j,k,5+n)) * U;
     }
@@ -137,7 +137,7 @@ void secondOrderKEEP(block_ b, const thtrdat_ th) {
                                         +b.q(i,j-1,k,2)*b.jsy(i,j,k)
                                         +b.q(i,j-1,k,3)*b.jsz(i,j,k) ) );
     // Species
-    for (int n=0; n<th.ns-1; n++)
+    for (int n=0; n<b.ne-5; n++)
     {
       b.jF(i,j,k,5+n) = 0.5*(b.Q(i,j,k,5+n)+b.Q(i,j-1,k,5+n)) * V;
     }
@@ -206,7 +206,7 @@ void secondOrderKEEP(block_ b, const thtrdat_ th) {
                                         +b.q(i,j,k-1,2)*b.ksy(i,j,k)
                                         +b.q(i,j,k-1,3)*b.ksz(i,j,k) ) );
     // Species
-    for (int n=0; n<th.ns-1; n++)
+    for (int n=0; n<b.ne-5; n++)
     {
       b.kF(i,j,k,5+n) = 0.5*(b.Q(i,j,k,5+n)+b.Q(i,j,k-1,5+n)) * W;
     }

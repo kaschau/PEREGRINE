@@ -4,7 +4,7 @@
 #include "thtrdat_.hpp"
 #include "math.h"
 
-void ausmPlusUp(block_ b, const thtrdat_ th) {
+void ausmPlusUp(block_ b) {
 
 //-------------------------------------------------------------------------------------------|
 // i flux face range
@@ -104,7 +104,7 @@ void ausmPlusUp(block_ b, const thtrdat_ th) {
     b.iF(i,j,k,4) = mDot12* (b.Q(i+indx,j,k,4) + b.q(i+indx,j,k,0))/b.Q(i+indx,j,k,0) * b.iS(i,j,k);
 
     // Species
-    for (int n=0; n<th.ns-1; n++)
+    for (int n=0; n<b.ne-5; n++)
     {
       b.iF(i,j,k,5+n) = mDot12 * b.q(i+indx,j,k,5+n) * b.iS(i,j,k);
     }
@@ -210,7 +210,7 @@ void ausmPlusUp(block_ b, const thtrdat_ th) {
     b.jF(i,j,k,4) = mDot12* (b.Q(i,j+indx,k,4) + b.q(i,j+indx,k,0))/b.Q(i,j+indx,k,0) * b.jS(i,j,k);
 
     // Species
-    for (int n=0; n<th.ns-1; n++)
+    for (int n=0; n<b.ne-5; n++)
     {
       b.jF(i,j,k,5+n) = mDot12 * b.q(i,j+indx,k,5+n) * b.jS(i,j,k);
     }
@@ -316,7 +316,7 @@ void ausmPlusUp(block_ b, const thtrdat_ th) {
     b.kF(i,j,k,4) = mDot12* (b.Q(i,j,k+indx,4) + b.q(i,j,k+indx,0))/b.Q(i,j,k+indx,0) * b.kS(i,j,k);
 
     // Species
-    for (int n=0; n<th.ns-1; n++)
+    for (int n=0; n<b.ne-5; n++)
     {
       b.kF(i,j,k,5+n) = mDot12 * b.q(i,j,k+indx,5+n) * b.kS(i,j,k);
     }

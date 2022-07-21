@@ -3,7 +3,7 @@
 #include "kokkos_types.hpp"
 #include "thtrdat_.hpp"
 
-void rusanov(block_ b, const thtrdat_ th) {
+void rusanov(block_ b) {
 
   //-------------------------------------------------------------------------------------------|
   // i flux face range
@@ -73,7 +73,7 @@ void rusanov(block_ b, const thtrdat_ th) {
         // Species
         double FYiR, FYiL;
         double YiR, YiL;
-        for (int n = 0; n < th.ns - 1; n++) {
+        for (int n = 0; n < b.ne - 5; n++) {
           FYiR = b.Q(i, j, k, 5 + n) * UR;
           FYiL = b.Q(i - 1, j, k, 5 + n) * UL;
           YiR = b.Q(i, j, k, 5 + n);
@@ -150,7 +150,7 @@ void rusanov(block_ b, const thtrdat_ th) {
         // Species
         double FYiR, FYiL;
         double YiR, YiL;
-        for (int n = 0; n < th.ns - 1; n++) {
+        for (int n = 0; n < b.ne - 5; n++) {
           FYiR = b.Q(i, j, k, 5 + n) * UR;
           FYiL = b.Q(i, j - 1, k, 5 + n) * UL;
           YiR = b.Q(i, j, k, 5 + n);
@@ -226,7 +226,7 @@ void rusanov(block_ b, const thtrdat_ th) {
         // Species
         double FYiR, FYiL;
         double YiR, YiL;
-        for (int n = 0; n < th.ns - 1; n++) {
+        for (int n = 0; n < b.ne - 5; n++) {
           FYiR = b.Q(i, j, k, 5 + n) * UR;
           FYiL = b.Q(i, j, k - 1, 5 + n) * UL;
           YiR = b.Q(i, j, k, 5 + n);
