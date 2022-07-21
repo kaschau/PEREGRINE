@@ -3,57 +3,56 @@
 
 #include "kokkos_types.hpp"
 
-// The struct that is sent to the Peregrine compute units. Holds all the data arrays
-// for each block. Also converted into python class for modifying in the
+// The struct that is sent to the Peregrine compute units. Holds all the data
+// arrays for each block. Also converted into python class for modifying in the
 // python wrapper
 struct block_ {
   int nblki;
-  int ni,nj,nk;
+  int ni, nj, nk;
   int ng;
   int ne;
-# ifdef NSCOMPILE
+#ifdef NSCOMPILE
   const int ns = NS;
-# endif
+#endif
 
   // Grid Arrays
-  threeDview x,y,z;
+  threeDview x, y, z;
   // Metric Arrays
   // Cell Centers
-  threeDview xc,yc,zc,J;
-  threeDview dEdx,dEdy,dEdz;
-  threeDview dNdx,dNdy,dNdz;
-  threeDview dXdx,dXdy,dXdz;
+  threeDview xc, yc, zc, J;
+  threeDview dEdx, dEdy, dEdz;
+  threeDview dNdx, dNdy, dNdz;
+  threeDview dXdx, dXdy, dXdz;
   // i face centers
-  threeDview ixc,iyc,izc;
+  threeDview ixc, iyc, izc;
   // i face area vectors
-  threeDview isx,isy,isz,iS,inx,iny,inz;
+  threeDview isx, isy, isz, iS, inx, iny, inz;
   // j face centers
-  threeDview jxc,jyc,jzc;
+  threeDview jxc, jyc, jzc;
   // j face area vectors
-  threeDview jsx,jsy,jsz,jS,jnx,jny,jnz;
+  threeDview jsx, jsy, jsz, jS, jnx, jny, jnz;
   // k face centers
-  threeDview kxc,kyc,kzc;
+  threeDview kxc, kyc, kzc;
   // k face area vectors
-  threeDview ksx,ksy,ksz,kS,knx,kny,knz;
+  threeDview ksx, ksy, ksz, kS, knx, kny, knz;
 
   // Cons,Prim Arrays
-  fourDview Q,q,dQ;
+  fourDview Q, q, dQ;
   // Spatial derivative of prim array
-  fourDview dqdx,dqdy,dqdz;
+  fourDview dqdx, dqdy, dqdz;
   // thermo,trans arrays
-  fourDview qh,qt;
+  fourDview qh, qt;
   // chemistry
   fourDview omega;
 
   // RHS stages
-  fourDview rhs0,rhs1,rhs2,rhs3;
+  fourDview rhs0, rhs1, rhs2, rhs3;
 
   // Flux Arrays
-  fourDview iF,jF,kF;
+  fourDview iF, jF, kF;
 
   // Flux Switch Array
   fourDview phi;
-
 };
 
 #endif

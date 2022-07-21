@@ -2,8 +2,8 @@
 #define __thtrdat__H__
 
 #include "kokkos_types.hpp"
-#include <vector>
 #include <string>
+#include <vector>
 
 // The struct that is sent to the Peregrine compute units. Holds all the
 // thermodynamic and transport properties.
@@ -12,7 +12,7 @@
 struct thtrdat_ {
 
   int ns;
-  const double Ru=8314.46261815324; // J/kmol/K
+  const double Ru = 8314.46261815324; // J/kmol/K
 
   // Molecular weight
   oneDview MW;

@@ -23,9 +23,9 @@ int checkNan(std::vector<block_> mb) {
         },
         Kokkos::Min<int>(allFinite));
 
-    if (allFinite == 0){
-        foundNan = 1;
-        break;
+    if (allFinite == 0) {
+      foundNan = 1;
+      break;
     }
   }
 
