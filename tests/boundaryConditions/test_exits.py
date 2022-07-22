@@ -63,7 +63,7 @@ def test_constantPressureSubsonicExit(my_setup, adv, spdata):
             # apply pressure
             assert np.allclose(p[s0_], face.array["qBcVals"][:, :, 0])
 
-            # extrapolate everything else
+            # extrapolate velocity
             assert np.allclose(
                 u[s0_][outFlow], 2.0 * u[face.s1_][outFlow] - u[s2_][outFlow]
             )
@@ -86,8 +86,8 @@ def test_constantPressureSubsonicExit(my_setup, adv, spdata):
                 w[face.s1_][revFlow] - 2.0 * uDotn[revFlow] * plus * nz[revFlow],
             )
 
-            # extrapolate everything
-            assert np.allclose(TN[s0_], 2.0 * TN[face.s1_] - TN[s2_])
+            # neumann everything else
+            assert np.allclose(TN[s0_], TN[face.s1_])
 
         face.bcFunc(blk, face, mb.eos, mb.thtrdat, "viscous", mb.tme)
         blk.updateHostView(["dqdx", "dqdy", "dqdz"])

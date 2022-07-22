@@ -192,8 +192,6 @@ void supersonicInlet(
             q0(i, j, 4) = face.qBcVals(i, j, 4);
 
             // apply species on face
-            // TODO: This is an unprotected extrapolation.
-            // Is this a good thing to be doing?
             for (int n = 5; n < b.ne; n++) {
               q0(i, j, n) = face.qBcVals(i, j, n);
             }
@@ -267,8 +265,6 @@ void constantMassFluxSubsonicInlet(
             q0(i, j, 4) = face.qBcVals(i, j, 4);
 
             // apply species on face
-            // TODO: This is an unprotected extrapolation.
-            // Is this a good thing to be doing?
             for (int n = 5; n < b.ne; n++) {
               q0(i, j, n) = face.qBcVals(i, j, n);
             }
