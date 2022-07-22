@@ -33,7 +33,7 @@ def consistify(mb):
                 face.bcFunc(blk, face, mb.eos, mb.thtrdat, "viscous", mb.tme)
 
             # Apply subgrid model
-            mb.sgs(blk, mb.thtrdat)
+            mb.sgs(blk)
 
         # Update switch
         mb.switch(blk)
