@@ -65,9 +65,9 @@ void constantPressureSubsonicExit(
               q0(i, j, 3) = q1(i, j, 3) - 2.0 * uDotn * nz(i, j) * dplus;
             }
 
-            // extrapolate everything else
+            // neumann everything else
             for (int l = 4; l < b.ne; l++) {
-              q0(i, j, l) = 2.0 * q1(i, j, l) - q2(i, j, l);
+              q0(i, j, l) = q1(i, j, l);
             }
           });
     }
