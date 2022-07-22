@@ -21,13 +21,14 @@ def consistify(mb):
         for face in blk.faces:
             face.bcFunc(blk, face, mb.eos, mb.thtrdat, "euler", mb.tme)
 
-        # Update transport properties
-        mb.trans(blk, mb.thtrdat, -1)
-
-        # Update spatial derivatives
-        mb.dqdxyz(blk)
-
         if mb.config["RHS"]["diffusion"]:
+
+            # Update transport properties
+            mb.trans(blk, mb.thtrdat, -1)
+
+            # Update spatial derivatives
+            mb.dqdxyz(blk)
+
             # Apply viscous boundary conditions
             for face in blk.faces:
                 face.bcFunc(blk, face, mb.eos, mb.thtrdat, "viscous", mb.tme)
