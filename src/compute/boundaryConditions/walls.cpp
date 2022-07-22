@@ -5,12 +5,10 @@
 #include "kokkos_types.hpp"
 #include "thtrdat_.hpp"
 
-void adiabaticNoSlipWall(block_ b,
-                         face_ face,
-                         const std::function<void(block_, thtrdat_, int, std::string)> &eos,
-                         const thtrdat_ th,
-                         const std::string terms,
-                         const double /*tme*/) {
+void adiabaticNoSlipWall(
+    block_ b, face_ face,
+    const std::function<void(block_, thtrdat_, int, std::string)> &eos,
+    const thtrdat_ th, const std::string terms, const double /*tme*/) {
   //-------------------------------------------------------------------------------------------|
   // Apply BC to face, slice by slice.
   //-------------------------------------------------------------------------------------------|
@@ -104,63 +102,60 @@ void adiabaticNoSlipWall(block_ b,
     }
   } else if (terms.compare("strict") == 0) {
     int slc;
-    threeDsubview q,iF;
-    twoDsubview isx,isy,isz;
-    switch(face._nface) {
-      case 1:
-        slc = s1;
-        q = getHaloSlice(b.q, face._nface, s1);
-        iF = getHaloSlice(b.iF, face._nface, slc);
-        break;
-      case 3:
-        slc = s1;
-        q = getHaloSlice(b.q, face._nface, s1);
-        iF = getHaloSlice(b.jF, face._nface, slc);
-        break;
-      case 5:
-        slc = s1;
-        q = getHaloSlice(b.q, face._nface, s1);
-        iF = getHaloSlice(b.kF, face._nface, slc);
-        break;
-      case 2:
-        slc = s0;
-        q = getHaloSlice(b.q, face._nface, s1);
-        iF = getHaloSlice(b.iF, face._nface, slc);
-        break;
-      case 4:
-        slc = s0;
-        q = getHaloSlice(b.q, face._nface, s1);
-        iF = getHaloSlice(b.jF, face._nface, slc);
-        break;
-      case 6:
-        slc = s0;
-        q = getHaloSlice(b.q, face._nface, s1);
-        iF = getHaloSlice(b.kF, face._nface, slc);
-        break;
+    threeDsubview q, iF;
+    twoDsubview isx, isy, isz;
+    switch (face._nface) {
+    case 1:
+      slc = s1;
+      q = getHaloSlice(b.q, face._nface, s1);
+      iF = getHaloSlice(b.iF, face._nface, slc);
+      break;
+    case 3:
+      slc = s1;
+      q = getHaloSlice(b.q, face._nface, s1);
+      iF = getHaloSlice(b.jF, face._nface, slc);
+      break;
+    case 5:
+      slc = s1;
+      q = getHaloSlice(b.q, face._nface, s1);
+      iF = getHaloSlice(b.kF, face._nface, slc);
+      break;
+    case 2:
+      slc = s0;
+      q = getHaloSlice(b.q, face._nface, s1);
+      iF = getHaloSlice(b.iF, face._nface, slc);
+      break;
+    case 4:
+      slc = s0;
+      q = getHaloSlice(b.q, face._nface, s1);
+      iF = getHaloSlice(b.jF, face._nface, slc);
+      break;
+    case 6:
+      slc = s0;
+      q = getHaloSlice(b.q, face._nface, s1);
+      iF = getHaloSlice(b.kF, face._nface, slc);
+      break;
     }
     MDRange2 range_face = MDRange2({0, 0}, {iF.extent(0), iF.extent(1)});
     Kokkos::parallel_for(
-      "Strict convective flux specification", range_face,
-      KOKKOS_LAMBDA(const int i, const int j) {
-
-        iF(i, j, 0) = 0.0;
-        // iF(i, j, 1) = q(i,j,0)*isx(i,j);
-        // iF(i, j, 2) = q(i,j,0)*isy(i,j);
-        // iF(i, j, 3) = q(i,j,0)*isz(i,j);
-        iF(i, j, 4) = 0.0;
-        for (int n = 5; n < b.ne; n++) {
-          iF(i,j,n) = 0.0;
-        }
-      });
+        "Strict convective flux specification", range_face,
+        KOKKOS_LAMBDA(const int i, const int j) {
+          iF(i, j, 0) = 0.0;
+          // iF(i, j, 1) = q(i,j,0)*isx(i,j);
+          // iF(i, j, 2) = q(i,j,0)*isy(i,j);
+          // iF(i, j, 3) = q(i,j,0)*isz(i,j);
+          iF(i, j, 4) = 0.0;
+          for (int n = 5; n < b.ne; n++) {
+            iF(i, j, n) = 0.0;
+          }
+        });
   }
 }
 
-void adiabaticSlipWall(block_ b,
-                       face_ face,
-                       const std::function<void(block_, thtrdat_, int, std::string)> &eos,
-                       const thtrdat_ th,
-                       const std::string terms,
-                       const double /*tme*/) {
+void adiabaticSlipWall(
+    block_ b, face_ face,
+    const std::function<void(block_, thtrdat_, int, std::string)> &eos,
+    const thtrdat_ th, const std::string terms, const double /*tme*/) {
   //-------------------------------------------------------------------------------------------|
   // Apply BC to face, slice by slice.
   //-------------------------------------------------------------------------------------------|
@@ -201,9 +196,9 @@ void adiabaticSlipWall(block_ b,
             q0(i, j, 0) = q1(i, j, 0);
 
             // flip velo on wall
-            double uDotn = ( q1(i, j, 1) * nx(i, j) +
-                             q1(i, j, 2) * ny(i, j) +
-                             q1(i, j, 3) * nz(i, j) ) * dplus ;
+            double uDotn = (q1(i, j, 1) * nx(i, j) + q1(i, j, 2) * ny(i, j) +
+                            q1(i, j, 3) * nz(i, j)) *
+                           dplus;
             q0(i, j, 1) = q1(i, j, 1) - 2.0 * uDotn * nx(i, j) * dplus;
             q0(i, j, 2) = q1(i, j, 2) - 2.0 * uDotn * ny(i, j) * dplus;
             q0(i, j, 3) = q1(i, j, 3) - 2.0 * uDotn * nz(i, j) * dplus;
@@ -265,65 +260,61 @@ void adiabaticSlipWall(block_ b,
     }
   } else if (terms.compare("strict") == 0) {
     int slc;
-    threeDsubview q,iF;
-    twoDsubview isx,isy,isz;
-    switch(face._nface) {
-      case 1:
-        slc = s1;
-        q = getHaloSlice(b.q, face._nface, s1);
-        iF = getHaloSlice(b.iF, face._nface, slc);
-        break;
-      case 3:
-        slc = s1;
-        q = getHaloSlice(b.q, face._nface, s1);
-        iF = getHaloSlice(b.jF, face._nface, slc);
-        break;
-      case 5:
-        slc = s1;
-        q = getHaloSlice(b.q, face._nface, s1);
-        iF = getHaloSlice(b.kF, face._nface, slc);
-        break;
-      case 2:
-        slc = s0;
-        q = getHaloSlice(b.q, face._nface, s1);
-        iF = getHaloSlice(b.iF, face._nface, slc);
-        break;
-      case 4:
-        slc = s0;
-        q = getHaloSlice(b.q, face._nface, s1);
-        iF = getHaloSlice(b.jF, face._nface, slc);
-        break;
-      case 6:
-        slc = s0;
-        q = getHaloSlice(b.q, face._nface, s1);
-        iF = getHaloSlice(b.kF, face._nface, slc);
-        break;
+    threeDsubview q, iF;
+    twoDsubview isx, isy, isz;
+    switch (face._nface) {
+    case 1:
+      slc = s1;
+      q = getHaloSlice(b.q, face._nface, s1);
+      iF = getHaloSlice(b.iF, face._nface, slc);
+      break;
+    case 3:
+      slc = s1;
+      q = getHaloSlice(b.q, face._nface, s1);
+      iF = getHaloSlice(b.jF, face._nface, slc);
+      break;
+    case 5:
+      slc = s1;
+      q = getHaloSlice(b.q, face._nface, s1);
+      iF = getHaloSlice(b.kF, face._nface, slc);
+      break;
+    case 2:
+      slc = s0;
+      q = getHaloSlice(b.q, face._nface, s1);
+      iF = getHaloSlice(b.iF, face._nface, slc);
+      break;
+    case 4:
+      slc = s0;
+      q = getHaloSlice(b.q, face._nface, s1);
+      iF = getHaloSlice(b.jF, face._nface, slc);
+      break;
+    case 6:
+      slc = s0;
+      q = getHaloSlice(b.q, face._nface, s1);
+      iF = getHaloSlice(b.kF, face._nface, slc);
+      break;
     }
     MDRange2 range_face = MDRange2({0, 0}, {iF.extent(0), iF.extent(1)});
     Kokkos::parallel_for(
-      "Strict convective flux specification", range_face,
-      KOKKOS_LAMBDA(const int i, const int j) {
-
-        iF(i, j, 0) = 0.0;
-        // To incorperate artificial dissipation, we can apply the momentum flux
-        // explicitely, its kinda jank anyway.
-        // iF(i, j, 1) = q(i,j,0)*isx(i,j);
-        // iF(i, j, 2) = q(i,j,0)*isy(i,j);
-        // iF(i, j, 3) = q(i,j,0)*isz(i,j);
-        iF(i, j, 4) = 0.0;
-        for (int n = 5; n < b.ne; n++) {
-          iF(i,j,n) = 0.0;
-        }
-      });
+        "Strict convective flux specification", range_face,
+        KOKKOS_LAMBDA(const int i, const int j) {
+          iF(i, j, 0) = 0.0;
+          // To incorperate artificial dissipation, we can apply the momentum
+          // flux explicitely, its kinda jank anyway. iF(i, j, 1) =
+          // q(i,j,0)*isx(i,j); iF(i, j, 2) = q(i,j,0)*isy(i,j); iF(i, j, 3) =
+          // q(i,j,0)*isz(i,j);
+          iF(i, j, 4) = 0.0;
+          for (int n = 5; n < b.ne; n++) {
+            iF(i, j, n) = 0.0;
+          }
+        });
   }
 }
 
-void adiabaticMovingWall(block_ b,
-                         face_ face,
-                         const std::function<void(block_, thtrdat_, int, std::string)> &eos,
-                         const thtrdat_ th,
-                         const std::string terms,
-                         const double /*tme*/) {
+void adiabaticMovingWall(
+    block_ b, face_ face,
+    const std::function<void(block_, thtrdat_, int, std::string)> &eos,
+    const thtrdat_ th, const std::string terms, const double /*tme*/) {
   //-------------------------------------------------------------------------------------------|
   // Apply BC to face, slice by slice.
   //-------------------------------------------------------------------------------------------|
@@ -415,16 +406,13 @@ void adiabaticMovingWall(block_ b,
           });
     }
   } else if (terms.compare("strict") == 0) {
-
   }
 }
 
-void isoTNoSlipWall(block_ b,
-                    face_ face,
-                    const std::function<void(block_, thtrdat_, int, std::string)> &eos,
-                    const thtrdat_ th,
-                    const std::string terms,
-                    const double /*tme*/) {
+void isoTNoSlipWall(
+    block_ b, face_ face,
+    const std::function<void(block_, thtrdat_, int, std::string)> &eos,
+    const thtrdat_ th, const std::string terms, const double /*tme*/) {
   //-------------------------------------------------------------------------------------------|
   // Apply BC to face, slice by slice.
   //-------------------------------------------------------------------------------------------|
@@ -518,16 +506,13 @@ void isoTNoSlipWall(block_ b,
           });
     }
   } else if (terms.compare("strict") == 0) {
-
   }
 }
 
-void isoTSlipWall(block_ b,
-                  face_ face,
-                  const std::function<void(block_, thtrdat_, int, std::string)> &eos,
-                  const thtrdat_ th,
-                  const std::string terms,
-                  const double /*tme*/) {
+void isoTSlipWall(
+    block_ b, face_ face,
+    const std::function<void(block_, thtrdat_, int, std::string)> &eos,
+    const thtrdat_ th, const std::string terms, const double /*tme*/) {
   //-------------------------------------------------------------------------------------------|
   // Apply BC to face, slice by slice.
   //-------------------------------------------------------------------------------------------|
@@ -568,9 +553,9 @@ void isoTSlipWall(block_ b,
             q0(i, j, 0) = q1(i, j, 0);
 
             // flip velo on wall
-            double uDotn = ( q1(i, j, 1) * nx(i, j) +
-                             q1(i, j, 2) * ny(i, j) +
-                             q1(i, j, 3) * nz(i, j) ) * dplus ;
+            double uDotn = (q1(i, j, 1) * nx(i, j) + q1(i, j, 2) * ny(i, j) +
+                            q1(i, j, 3) * nz(i, j)) *
+                           dplus;
             q0(i, j, 1) = q1(i, j, 1) - 2.0 * uDotn * nx(i, j) * dplus;
             q0(i, j, 2) = q1(i, j, 2) - 2.0 * uDotn * ny(i, j) * dplus;
             q0(i, j, 3) = q1(i, j, 3) - 2.0 * uDotn * nz(i, j) * dplus;
@@ -638,15 +623,12 @@ void isoTSlipWall(block_ b,
           });
     }
   } else if (terms.compare("strict") == 0) {
-
   }
 }
-void isoTMovingWall(block_ b,
-                    face_ face,
-                    const std::function<void(block_, thtrdat_, int, std::string)> &eos,
-                    const thtrdat_ th,
-                    const std::string terms,
-                    const double /*tme*/) {
+void isoTMovingWall(
+    block_ b, face_ face,
+    const std::function<void(block_, thtrdat_, int, std::string)> &eos,
+    const thtrdat_ th, const std::string terms, const double /*tme*/) {
   //-------------------------------------------------------------------------------------------|
   // Apply BC to face, slice by slice.
   //-------------------------------------------------------------------------------------------|
@@ -736,6 +718,5 @@ void isoTMovingWall(block_ b,
           });
     }
   } else if (terms.compare("strict") == 0) {
-
   }
 }

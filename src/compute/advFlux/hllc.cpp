@@ -3,7 +3,7 @@
 #include "kokkos_types.hpp"
 #include "thtrdat_.hpp"
 
-void hllc(block_ b, const thtrdat_ th) {
+void hllc(block_ b) {
 
   //-------------------------------------------------------------------------------------------|
   // i flux face range
@@ -64,7 +64,7 @@ void hllc(block_ b, const thtrdat_ th) {
           b.iF(i, j, k, 2) = UL * rhovL * b.iS(i, j, k) + pL * b.isy(i, j, k);
           b.iF(i, j, k, 3) = UL * rhowL * b.iS(i, j, k) + pL * b.isz(i, j, k);
           b.iF(i, j, k, 4) = UL * (EL + pL) * b.iS(i, j, k);
-          for (int n = 0; n < th.ns - 1; n++) {
+          for (int n = 0; n < b.ne - 5; n++) {
             double rhoYiL = b.Q(i - 1, j, k, 5 + n);
             b.iF(i, j, k, 5 + n) = UL * rhoYiL * b.iS(i, j, k);
           }
@@ -91,7 +91,7 @@ void hllc(block_ b, const thtrdat_ th) {
                              (Sstar - UL) * (Sstar + pL / (rhoL * (SL - UL)))) -
                    EL) *
                   b.iS(i, j, k);
-          for (int n = 0; n < th.ns - 1; n++) {
+          for (int n = 0; n < b.ne - 5; n++) {
             double FYiL, YiL, rhoYiL;
             FYiL = b.Q(i - 1, j, k, 5 + n) * UL * b.iS(i, j, k);
             YiL = b.q(i - 1, j, k, 5 + n);
@@ -122,7 +122,7 @@ void hllc(block_ b, const thtrdat_ th) {
                              (Sstar - UR) * (Sstar + pR / (rhoR * (SR - UR)))) -
                    ER) *
                   b.iS(i, j, k);
-          for (int n = 0; n < th.ns - 1; n++) {
+          for (int n = 0; n < b.ne - 5; n++) {
             double FYiR, YiR, rhoYiR;
             FYiR = b.Q(i, j, k, 5 + n) * UR * b.iS(i, j, k);
             YiR = b.q(i, j, k, 5 + n);
@@ -136,7 +136,7 @@ void hllc(block_ b, const thtrdat_ th) {
           b.iF(i, j, k, 2) = UR * rhovR * b.iS(i, j, k) + pR * b.isy(i, j, k);
           b.iF(i, j, k, 3) = UR * rhowR * b.iS(i, j, k) + pR * b.isz(i, j, k);
           b.iF(i, j, k, 4) = UR * (ER + pR) * b.iS(i, j, k);
-          for (int n = 0; n < th.ns - 1; n++) {
+          for (int n = 0; n < b.ne - 5; n++) {
             double rhoYiR = b.Q(i, j, k, 5 + n);
             b.iF(i, j, k, 5 + n) = UR * rhoYiR * b.iS(i, j, k);
           }
@@ -202,7 +202,7 @@ void hllc(block_ b, const thtrdat_ th) {
           b.jF(i, j, k, 2) = UL * rhovL * b.jS(i, j, k) + pL * b.jsy(i, j, k);
           b.jF(i, j, k, 3) = UL * rhowL * b.jS(i, j, k) + pL * b.jsz(i, j, k);
           b.jF(i, j, k, 4) = UL * (EL + pL) * b.jS(i, j, k);
-          for (int n = 0; n < th.ns - 1; n++) {
+          for (int n = 0; n < b.ne - 5; n++) {
             double rhoYiL = b.Q(i, j - 1, k, 5 + n);
             b.jF(i, j, k, 5 + n) = UL * rhoYiL * b.jS(i, j, k);
           }
@@ -229,7 +229,7 @@ void hllc(block_ b, const thtrdat_ th) {
                              (Sstar - UL) * (Sstar + pL / (rhoL * (SL - UL)))) -
                    EL) *
                   b.jS(i, j, k);
-          for (int n = 0; n < th.ns - 1; n++) {
+          for (int n = 0; n < b.ne - 5; n++) {
             double FYiL, YiL, rhoYiL;
             FYiL = b.Q(i, j - 1, k, 5 + n) * UL * b.jS(i, j, k);
             YiL = b.q(i, j - 1, k, 5 + n);
@@ -260,7 +260,7 @@ void hllc(block_ b, const thtrdat_ th) {
                              (Sstar - UR) * (Sstar + pR / (rhoR * (SR - UR)))) -
                    ER) *
                   b.jS(i, j, k);
-          for (int n = 0; n < th.ns - 1; n++) {
+          for (int n = 0; n < b.ne - 5; n++) {
             double FYiR, YiR, rhoYiR;
             FYiR = b.Q(i, j, k, 5 + n) * UR * b.jS(i, j, k);
             YiR = b.q(i, j, k, 5 + n);
@@ -274,7 +274,7 @@ void hllc(block_ b, const thtrdat_ th) {
           b.jF(i, j, k, 2) = UR * rhovR * b.jS(i, j, k) + pR * b.jsy(i, j, k);
           b.jF(i, j, k, 3) = UR * rhowR * b.jS(i, j, k) + pR * b.jsz(i, j, k);
           b.jF(i, j, k, 4) = UR * (ER + pR) * b.jS(i, j, k);
-          for (int n = 0; n < th.ns - 1; n++) {
+          for (int n = 0; n < b.ne - 5; n++) {
             double rhoYiR = b.Q(i, j, k, 5 + n);
             b.jF(i, j, k, 5 + n) = UR * rhoYiR * b.jS(i, j, k);
           }
@@ -339,7 +339,7 @@ void hllc(block_ b, const thtrdat_ th) {
           b.kF(i, j, k, 2) = UL * rhovL * b.kS(i, j, k) + pL * b.ksy(i, j, k);
           b.kF(i, j, k, 3) = UL * rhowL * b.kS(i, j, k) + pL * b.ksz(i, j, k);
           b.kF(i, j, k, 4) = UL * (EL + pL) * b.kS(i, j, k);
-          for (int n = 0; n < th.ns - 1; n++) {
+          for (int n = 0; n < b.ne - 5; n++) {
             double rhoYiL = b.Q(i, j, k - 1, 5 + n);
             b.kF(i, j, k, 5 + n) = UL * rhoYiL * b.kS(i, j, k);
           }
@@ -366,7 +366,7 @@ void hllc(block_ b, const thtrdat_ th) {
                              (Sstar - UL) * (Sstar + pL / (rhoL * (SL - UL)))) -
                    EL) *
                   b.kS(i, j, k);
-          for (int n = 0; n < th.ns - 1; n++) {
+          for (int n = 0; n < b.ne - 5; n++) {
             double FYiL, YiL, rhoYiL;
             FYiL = b.Q(i, j, k - 1, 5 + n) * UL * b.kS(i, j, k);
             YiL = b.q(i, j, k - 1, 5 + n);
@@ -397,7 +397,7 @@ void hllc(block_ b, const thtrdat_ th) {
                              (Sstar - UR) * (Sstar + pR / (rhoR * (SR - UR)))) -
                    ER) *
                   b.kS(i, j, k);
-          for (int n = 0; n < th.ns - 1; n++) {
+          for (int n = 0; n < b.ne - 5; n++) {
             double FYiR, YiR, rhoYiR;
             FYiR = b.Q(i, j, k, 5 + n) * UR * b.kS(i, j, k);
             YiR = b.q(i, j, k, 5 + n);
@@ -411,7 +411,7 @@ void hllc(block_ b, const thtrdat_ th) {
           b.kF(i, j, k, 2) = UR * rhovR * b.kS(i, j, k) + pR * b.ksy(i, j, k);
           b.kF(i, j, k, 3) = UR * rhowR * b.kS(i, j, k) + pR * b.ksz(i, j, k);
           b.kF(i, j, k, 4) = UR * (ER + pR) * b.kS(i, j, k);
-          for (int n = 0; n < th.ns - 1; n++) {
+          for (int n = 0; n < b.ne - 5; n++) {
             double rhoYiR = b.Q(i, j, k, 5 + n);
             b.kF(i, j, k, 5 + n) = UR * rhoYiR * b.kS(i, j, k);
           }

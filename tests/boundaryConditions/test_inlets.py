@@ -117,7 +117,7 @@ def test_constantMassFluxSubsonicInlet(my_setup, adv, spdata):
     for face in blk.faces:
 
         face.bcFunc(blk, face, mb.eos, mb.thtrdat, "euler", mb.tme)
-        mb.primaryAdvFlux(blk, mb.thtrdat)
+        mb.primaryAdvFlux(blk)
         blk.updateHostView(["q", "Q"])
 
         s1_ = face.s1_
