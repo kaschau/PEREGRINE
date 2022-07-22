@@ -23,6 +23,7 @@ def simulate(configFilePath):
         print(string)
 
     config = pg.readers.readConfigFile(configFilePath, parallel=True)
+    comm.Barrier()
     if rank == 0:
         print("Read config.")
 
