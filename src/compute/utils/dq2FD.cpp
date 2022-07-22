@@ -1,43 +1,32 @@
 #include "Kokkos_Core.hpp"
-#include "kokkos_types.hpp"
 #include "block_.hpp"
 #include "compute.hpp"
+#include "kokkos_types.hpp"
 
 void dq2FD(block_ b) {
 
-//-------------------------------------------------------------------------------------------|
-// Spatial derivatices of primative variables
-// estimated via second order finite difference
-//-------------------------------------------------------------------------------------------|
-  MDRange4 range_cc({b.ng, b.ng, b.ng,0},{b.ni+b.ng-1,
-                                          b.nj+b.ng-1,
-                                          b.nk+b.ng-1,
-                                          b.ne});
-  Kokkos::parallel_for("2nd order spatial deriv",
-                       range_cc,
-                       KOKKOS_LAMBDA(const int i,
-                                     const int j,
-                                     const int k,
-                                     const int l) {
+  //-------------------------------------------------------------------------------------------|
+  // Spatial derivatices of primative variables
+  // estimated via second order finite difference
+  //-------------------------------------------------------------------------------------------|
+  MDRange4 range_cc({b.ng, b.ng, b.ng, 0},
+                    {b.ni + b.ng - 1, b.nj + b.ng - 1, b.nk + b.ng - 1, b.ne});
+  Kokkos::parallel_for(
+      "2nd order spatial deriv", range_cc,
+      KOKKOS_LAMBDA(const int i, const int j, const int k, const int l) {
+        double dqdE = 0.5 * (b.q(i + 1, j, k, l) - b.q(i - 1, j, k, l));
+        double dqdN = 0.5 * (b.q(i, j + 1, k, l) - b.q(i, j - 1, k, l));
+        double dqdX = 0.5 * (b.q(i, j, k + 1, l) - b.q(i, j, k - 1, l));
 
-    double dqdE =0.5*( b.q(i+1,j  ,k  ,l) - b.q(i-1,j  ,k  ,l) );
-    double dqdN =0.5*( b.q(i  ,j+1,k  ,l) - b.q(i  ,j-1,k  ,l) );
-    double dqdX =0.5*( b.q(i  ,j  ,k+1,l) - b.q(i  ,j  ,k-1,l) );
+        b.dqdx(i, j, k, l) = dqdE * b.dEdx(i, j, k) + dqdN * b.dNdx(i, j, k) +
+                             dqdX * b.dXdx(i, j, k);
 
+        b.dqdy(i, j, k, l) = dqdE * b.dEdy(i, j, k) + dqdN * b.dNdy(i, j, k) +
+                             dqdX * b.dXdy(i, j, k);
 
-    b.dqdx(i,j,k,l) =  dqdE * b.dEdx(i,j,k) +
-                       dqdN * b.dNdx(i,j,k) +
-                       dqdX * b.dXdx(i,j,k) ;
-
-    b.dqdy(i,j,k,l) = dqdE * b.dEdy(i,j,k) +
-                      dqdN * b.dNdy(i,j,k) +
-                      dqdX * b.dXdy(i,j,k) ;
-
-    b.dqdz(i,j,k,l) = dqdE * b.dEdz(i,j,k) +
-                      dqdN * b.dNdz(i,j,k) +
-                      dqdX * b.dXdz(i,j,k) ;
-  });
-
+        b.dqdz(i, j, k, l) = dqdE * b.dEdz(i, j, k) + dqdN * b.dNdz(i, j, k) +
+                             dqdX * b.dXdz(i, j, k);
+      });
 }
 
 void dq2FDoneSided(block_ b, int nface) {
@@ -49,103 +38,92 @@ void dq2FDoneSided(block_ b, int nface) {
 
   switch (nface) {
   case 1:
-  case 2:
-  {
-    MDRange3 range_cc({b.ng, b.ng,0},{b.nj+b.ng-1,
-                                      b.nk+b.ng-1,
-                                      b.ne});
-    Kokkos::parallel_for("one sided deriv i",
-                         range_cc,
-                         KOKKOS_LAMBDA(const int j,
-                                       const int k,
-                                       const int l) {
-      double dqdE = dplus*0.5*( -3.0*b.q(s1       ,j  ,k  ,l) +
-                                 4.0*b.q(s1+plus  ,j  ,k  ,l) -
-                                     b.q(s1+plus*2,j  ,k  ,l) );
+  case 2: {
+    MDRange3 range_cc({b.ng, b.ng, 0},
+                      {b.nj + b.ng - 1, b.nk + b.ng - 1, b.ne});
+    Kokkos::parallel_for(
+        "one sided deriv i", range_cc,
+        KOKKOS_LAMBDA(const int j, const int k, const int l) {
+          double dqdE =
+              dplus * 0.5 *
+              (-3.0 * b.q(s1, j, k, l) + 4.0 * b.q(s1 + plus, j, k, l) -
+               b.q(s1 + plus * 2, j, k, l));
 
-      double dqdN = 0.5*( b.q(s1  ,j+1,k  ,l) - b.q(s1 ,j-1,k  ,l) );
-      double dqdX = 0.5*( b.q(s1  ,j  ,k+1,l) - b.q(s1 ,j  ,k-1,l) );
+          double dqdN = 0.5 * (b.q(s1, j + 1, k, l) - b.q(s1, j - 1, k, l));
+          double dqdX = 0.5 * (b.q(s1, j, k + 1, l) - b.q(s1, j, k - 1, l));
 
-      b.dqdx(s1,j,k,l) =  dqdE * b.dEdx(s1,j,k) +
-                          dqdN * b.dNdx(s1,j,k) +
-                          dqdX * b.dXdx(s1,j,k) ;
+          b.dqdx(s1, j, k, l) = dqdE * b.dEdx(s1, j, k) +
+                                dqdN * b.dNdx(s1, j, k) +
+                                dqdX * b.dXdx(s1, j, k);
 
-      b.dqdy(s1,j,k,l) =  dqdE * b.dEdy(s1,j,k) +
-                          dqdN * b.dNdy(s1,j,k) +
-                          dqdX * b.dXdy(s1,j,k) ;
+          b.dqdy(s1, j, k, l) = dqdE * b.dEdy(s1, j, k) +
+                                dqdN * b.dNdy(s1, j, k) +
+                                dqdX * b.dXdy(s1, j, k);
 
-      b.dqdz(s1,j,k,l) =  dqdE * b.dEdz(s1,j,k) +
-                          dqdN * b.dNdz(s1,j,k) +
-                          dqdX * b.dXdz(s1,j,k) ;
-    });
+          b.dqdz(s1, j, k, l) = dqdE * b.dEdz(s1, j, k) +
+                                dqdN * b.dNdz(s1, j, k) +
+                                dqdX * b.dXdz(s1, j, k);
+        });
 
     break;
   }
   case 3:
-  case 4:
-  {
-    MDRange3 range_cc({b.ng, b.ng,0},{b.ni+b.ng-1,
-                                      b.nk+b.ng-1,
-                                      b.ne});
+  case 4: {
+    MDRange3 range_cc({b.ng, b.ng, 0},
+                      {b.ni + b.ng - 1, b.nk + b.ng - 1, b.ne});
 
-    Kokkos::parallel_for("one sided deriv j",
-                         range_cc,
-                         KOKKOS_LAMBDA(const int i,
-                                       const int k,
-                                       const int l) {
+    Kokkos::parallel_for(
+        "one sided deriv j", range_cc,
+        KOKKOS_LAMBDA(const int i, const int k, const int l) {
+          double dqdE = 0.5 * (b.q(i + 1, s1, k, l) - b.q(i - 1, s1, k, l));
+          double dqdN =
+              dplus * 0.5 *
+              (-3.0 * b.q(i, s1, k, l) + 4.0 * b.q(i, s1 + plus, k, l) -
+               b.q(i, s1 + plus * 2, k, l));
+          double dqdX = 0.5 * (b.q(i, s1, k + 1, l) - b.q(i, s1, k - 1, l));
 
-      double dqdE = 0.5*( b.q(i+1,s1 ,k  ,l) - b.q(i-1,s1  ,k  ,l) );
-      double dqdN = dplus*0.5*( -3.0*b.q(i, s1       ,k  ,l) +
-                                 4.0*b.q(i, s1+plus  ,k  ,l) -
-                                     b.q(i, s1+plus*2,k  ,l) );
-      double dqdX = 0.5*( b.q(i  ,s1 ,k+1,l) - b.q(i  ,s1  ,k-1,l) );
+          b.dqdx(i, s1, k, l) = dqdE * b.dEdx(i, s1, k) +
+                                dqdN * b.dNdx(i, s1, k) +
+                                dqdX * b.dXdx(i, s1, k);
 
-      b.dqdx(i,s1,k,l) =  dqdE * b.dEdx(i,s1,k) +
-                          dqdN * b.dNdx(i,s1,k) +
-                          dqdX * b.dXdx(i,s1,k) ;
+          b.dqdy(i, s1, k, l) = dqdE * b.dEdy(i, s1, k) +
+                                dqdN * b.dNdy(i, s1, k) +
+                                dqdX * b.dXdy(i, s1, k);
 
-      b.dqdy(i,s1,k,l) =  dqdE * b.dEdy(i,s1,k) +
-                          dqdN * b.dNdy(i,s1,k) +
-                          dqdX * b.dXdy(i,s1,k) ;
-
-      b.dqdz(i,s1,k,l) =  dqdE * b.dEdz(i,s1,k) +
-                          dqdN * b.dNdz(i,s1,k) +
-                          dqdX * b.dXdz(i,s1,k) ;
-    });
+          b.dqdz(i, s1, k, l) = dqdE * b.dEdz(i, s1, k) +
+                                dqdN * b.dNdz(i, s1, k) +
+                                dqdX * b.dXdz(i, s1, k);
+        });
 
     break;
   }
   case 5:
-  case 6:
-  {
-    MDRange3 range_cc({b.ng, b.ng,0},{b.ni+b.ng-1,
-                                      b.nj+b.ng-1,
-                                      b.ne});
+  case 6: {
+    MDRange3 range_cc({b.ng, b.ng, 0},
+                      {b.ni + b.ng - 1, b.nj + b.ng - 1, b.ne});
 
-    Kokkos::parallel_for("one sided deriv k",
-                         range_cc,
-                         KOKKOS_LAMBDA(const int i,
-                                       const int j,
-                                       const int l) {
+    Kokkos::parallel_for(
+        "one sided deriv k", range_cc,
+        KOKKOS_LAMBDA(const int i, const int j, const int l) {
+          double dqdE = 0.5 * (b.q(i + 1, j, s1, l) - b.q(i - 1, j, s1, l));
+          double dqdN = 0.5 * (b.q(i, j + 1, s1, l) - b.q(i, j - 1, s1, l));
+          double dqdX =
+              dplus * 0.5 *
+              (-3.0 * b.q(i, j, s1, l) + 4.0 * b.q(i, j, s1 + plus, l) -
+               b.q(i, j, s1 + plus * 2, l));
 
-      double dqdE = 0.5*( b.q(i+1,j  ,s1 ,l) - b.q(i-1,j  ,s1 ,l) );
-      double dqdN = 0.5*( b.q(i  ,j+1,s1 ,l) - b.q(i  ,j-1,s1 ,l) );
-      double dqdX = dplus*0.5*( -3.0*b.q(i ,j  , s1       ,l) +
-                                 4.0*b.q(i ,j  , s1+plus  ,l) -
-                                     b.q(i ,j  , s1+plus*2,l) );
+          b.dqdx(i, j, s1, l) = dqdE * b.dEdx(i, j, s1) +
+                                dqdN * b.dNdx(i, j, s1) +
+                                dqdX * b.dXdx(i, j, s1);
 
-      b.dqdx(i,j,s1,l) =  dqdE * b.dEdx(i,j,s1) +
-                          dqdN * b.dNdx(i,j,s1) +
-                          dqdX * b.dXdx(i,j,s1) ;
+          b.dqdy(i, j, s1, l) = dqdE * b.dEdy(i, j, s1) +
+                                dqdN * b.dNdy(i, j, s1) +
+                                dqdX * b.dXdy(i, j, s1);
 
-      b.dqdy(i,j,s1,l) =  dqdE * b.dEdy(i,j,s1) +
-                          dqdN * b.dNdy(i,j,s1) +
-                          dqdX * b.dXdy(i,j,s1) ;
-
-      b.dqdz(i,j,s1,l) =  dqdE * b.dEdz(i,j,s1) +
-                          dqdN * b.dNdz(i,j,s1) +
-                          dqdX * b.dXdz(i,j,s1) ;
-    });
+          b.dqdz(i, j, s1, l) = dqdE * b.dEdz(i, j, s1) +
+                                dqdN * b.dNdz(i, j, s1) +
+                                dqdX * b.dXdz(i, j, s1);
+        });
 
     break;
   }

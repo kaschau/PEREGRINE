@@ -62,7 +62,8 @@ MDRange3 get_range3(const block_ b, const int nface, const int indxI /*=0*/,
   return range;
 }
 
-threeDsubview getHaloSlice(const fourDview view, const int nface, const int slice) {
+threeDsubview getHaloSlice(const fourDview view, const int nface,
+                           const int slice) {
 
   threeDsubview subview;
   switch (nface) {
@@ -91,27 +92,25 @@ threeDsubview getHaloSlice(const fourDview view, const int nface, const int slic
   return subview;
 }
 
-twoDsubview getHaloSlice(const threeDview view, const int nface, const int slice) {
+twoDsubview getHaloSlice(const threeDview view, const int nface,
+                         const int slice) {
 
   twoDsubview subview;
   switch (nface) {
   case 1:
   case 2:
     // face 1,2 halo
-    subview =
-        Kokkos::subview(view, slice, Kokkos::ALL, Kokkos::ALL);
+    subview = Kokkos::subview(view, slice, Kokkos::ALL, Kokkos::ALL);
     break;
   case 3:
   case 4:
     // face 3,4 face slices
-    subview =
-        Kokkos::subview(view, Kokkos::ALL, slice, Kokkos::ALL);
+    subview = Kokkos::subview(view, Kokkos::ALL, slice, Kokkos::ALL);
     break;
   case 5:
   case 6:
     // face 5,6 face slices
-    subview =
-        Kokkos::subview(view, Kokkos::ALL, Kokkos::ALL, slice);
+    subview = Kokkos::subview(view, Kokkos::ALL, Kokkos::ALL, slice);
     break;
   default:
     throw std::invalid_argument(" <-- Unknown argument to getHaloSlice");

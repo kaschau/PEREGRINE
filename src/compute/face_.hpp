@@ -3,8 +3,8 @@
 
 #include "kokkos_types.hpp"
 
-// The struct that is sent to the Peregrine compute units. Holds all the data arrays
-// for each block. Also converted into python class for modifying in the
+// The struct that is sent to the Peregrine compute units. Holds all the data
+// arrays for each block. Also converted into python class for modifying in the
 // python wrapper
 struct face_ {
 
@@ -18,7 +18,6 @@ struct face_ {
   threeDview sendBuffer3, recvBuffer3, tempRecvBuffer3;
   fourDview sendBuffer4, recvBuffer4, tempRecvBuffer4;
 
-
   // For cubic spline inlets
   fiveDviewHost cubicSplineAlphas;
   fourDview intervalAlphas;
@@ -27,7 +26,6 @@ struct face_ {
 
   // Periodic rotation matricies
   twoDview periodicRotMatrixUp, periodicRotMatrixDown;
-
 };
 
 #endif

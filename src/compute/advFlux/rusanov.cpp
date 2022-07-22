@@ -3,7 +3,7 @@
 #include "kokkos_types.hpp"
 #include "thtrdat_.hpp"
 
-void rusanov(block_ b, const thtrdat_ th) {
+void rusanov(block_ b) {
 
   //-------------------------------------------------------------------------------------------|
   // i flux face range
@@ -37,10 +37,11 @@ void rusanov(block_ b, const thtrdat_ th) {
         double &EL = b.Q(i - 1, j, k, 4);
 
         // wave speed estimate
-        double lam = fmax(abs(UL) + b.qh(i, j, k, 3),
-                          abs(UR) + b.qh(i - 1, j, k, 3)) * b.iS(i, j, k);
-        UR *= b.iS(i,j,k);
-        UL *= b.iS(i,j,k);
+        double lam =
+            fmax(abs(UL) + b.qh(i, j, k, 3), abs(UR) + b.qh(i - 1, j, k, 3)) *
+            b.iS(i, j, k);
+        UR *= b.iS(i, j, k);
+        UL *= b.iS(i, j, k);
 
         // Continuity rho*Ui
         double FrhoR, FrhoL;
@@ -73,7 +74,7 @@ void rusanov(block_ b, const thtrdat_ th) {
         // Species
         double FYiR, FYiL;
         double YiR, YiL;
-        for (int n = 0; n < th.ns - 1; n++) {
+        for (int n = 0; n < b.ne - 5; n++) {
           FYiR = b.Q(i, j, k, 5 + n) * UR;
           FYiL = b.Q(i - 1, j, k, 5 + n) * UL;
           YiR = b.Q(i, j, k, 5 + n);
@@ -114,10 +115,11 @@ void rusanov(block_ b, const thtrdat_ th) {
         double &EL = b.Q(i, j - 1, k, 4);
 
         // wave speed estimate
-        double lam = fmax(abs(UL) + b.qh(i, j, k, 3),
-                          abs(UR) + b.qh(i, j - 1, k, 3)) * b.jS(i, j, k);
-        UR *= b.jS(i,j,k);
-        UL *= b.jS(i,j,k);
+        double lam =
+            fmax(abs(UL) + b.qh(i, j, k, 3), abs(UR) + b.qh(i, j - 1, k, 3)) *
+            b.jS(i, j, k);
+        UR *= b.jS(i, j, k);
+        UL *= b.jS(i, j, k);
 
         // Continuity rho*Ui
         double FrhoR, FrhoL;
@@ -150,7 +152,7 @@ void rusanov(block_ b, const thtrdat_ th) {
         // Species
         double FYiR, FYiL;
         double YiR, YiL;
-        for (int n = 0; n < th.ns - 1; n++) {
+        for (int n = 0; n < b.ne - 5; n++) {
           FYiR = b.Q(i, j, k, 5 + n) * UR;
           FYiL = b.Q(i, j - 1, k, 5 + n) * UL;
           YiR = b.Q(i, j, k, 5 + n);
@@ -190,10 +192,11 @@ void rusanov(block_ b, const thtrdat_ th) {
         double &EL = b.Q(i, j, k - 1, 4);
 
         // wave speed estimate
-        double lam = fmax(abs(UL) + b.qh(i, j, k, 3),
-                          abs(UR) + b.qh(i, j, k - 1, 3)) * b.kS(i, j, k);
-        UR *= b.kS(i,j,k);
-        UL *= b.kS(i,j,k);
+        double lam =
+            fmax(abs(UL) + b.qh(i, j, k, 3), abs(UR) + b.qh(i, j, k - 1, 3)) *
+            b.kS(i, j, k);
+        UR *= b.kS(i, j, k);
+        UL *= b.kS(i, j, k);
 
         // Continuity rho*Ui
         double FrhoR, FrhoL;
@@ -226,7 +229,7 @@ void rusanov(block_ b, const thtrdat_ th) {
         // Species
         double FYiR, FYiL;
         double YiR, YiL;
-        for (int n = 0; n < th.ns - 1; n++) {
+        for (int n = 0; n < b.ne - 5; n++) {
           FYiR = b.Q(i, j, k, 5 + n) * UR;
           FYiL = b.Q(i, j, k - 1, 5 + n) * UL;
           YiR = b.Q(i, j, k, 5 + n);

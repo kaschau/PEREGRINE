@@ -114,8 +114,6 @@ def simulate():
         face.bcFunc(blk, face, mb.eos, mb.thtrdat, "euler", mb.tme)
         face.bcFunc(blk, face, mb.eos, mb.thtrdat, "viscous", mb.tme)
     pg.consistify(mb)
-    pg.writers.writeGrid(mb)
-    pg.writers.writeRestart(mb, animate=False)
 
     # Set dt based on cfg estimate
     dt = 0.25 * dx / (c2 + u2)

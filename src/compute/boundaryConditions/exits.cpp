@@ -5,12 +5,10 @@
 #include "kokkos_types.hpp"
 #include "thtrdat_.hpp"
 
-void constantPressureSubsonicExit(block_ b,
-                                  face_ face,
-                                  const std::function<void(block_, thtrdat_, int, std::string)> &eos,
-                                  const thtrdat_ th,
-                                  const std::string terms,
-                                  const double /*tme*/) {
+void constantPressureSubsonicExit(
+    block_ b, face_ face,
+    const std::function<void(block_, thtrdat_, int, std::string)> &eos,
+    const thtrdat_ th, const std::string terms, const double /*tme*/) {
   //-------------------------------------------------------------------------------------------|
   // Apply BC to face, slice by slice.
   //-------------------------------------------------------------------------------------------|
@@ -50,26 +48,26 @@ void constantPressureSubsonicExit(block_ b,
           "Constant pressure subsonic exit euler terms", range_face,
           KOKKOS_LAMBDA(const int i, const int j) {
             // set pressure
-            q0(i, j, 0) = face.qBcVals(i,j,0);
+            q0(i, j, 0) = face.qBcVals(i, j, 0);
 
             // extrapolate velocity, unless reverse flow detected
-            double uDotn = ( q1(i, j, 1) * nx(i, j) +
-                             q1(i, j, 2) * ny(i, j) +
-                             q1(i, j, 3) * nz(i, j) ) * dplus;
+            double uDotn = (q1(i, j, 1) * nx(i, j) + q1(i, j, 2) * ny(i, j) +
+                            q1(i, j, 3) * nz(i, j)) *
+                           dplus;
             if (uDotn > 0.0) {
               for (int l = 1; l <= 3; l++) {
                 q0(i, j, l) = 2.0 * q1(i, j, l) - q2(i, j, l);
               }
-            }else{
+            } else {
               // flip velocity on face (like slip wall)
               q0(i, j, 1) = q1(i, j, 1) - 2.0 * uDotn * nx(i, j) * dplus;
               q0(i, j, 2) = q1(i, j, 2) - 2.0 * uDotn * ny(i, j) * dplus;
               q0(i, j, 3) = q1(i, j, 3) - 2.0 * uDotn * nz(i, j) * dplus;
             }
 
-            // extrapolate everything else
+            // neumann everything else
             for (int l = 4; l < b.ne; l++) {
-              q0(i, j, l) = 2.0 * q1(i, j, l) - q2(i, j, l);
+              q0(i, j, l) = q1(i, j, l);
             }
           });
     }
@@ -100,16 +98,13 @@ void constantPressureSubsonicExit(block_ b,
           });
     }
   } else if (terms.compare("strict") == 0) {
-
   }
 }
 
-void supersonicExit(block_ b,
-                    face_ face,
-                    const std::function<void(block_, thtrdat_, int, std::string)> &eos,
-                    const thtrdat_ th,
-                    const std::string terms,
-                    const double /*tme*/) {
+void supersonicExit(
+    block_ b, face_ face,
+    const std::function<void(block_, thtrdat_, int, std::string)> &eos,
+    const thtrdat_ th, const std::string terms, const double /*tme*/) {
   //-------------------------------------------------------------------------------------------|
   // Apply BC to face, slice by slice.
   //-------------------------------------------------------------------------------------------|
@@ -165,6 +160,5 @@ void supersonicExit(block_ b,
           });
     }
   } else if (terms.compare("strict") == 0) {
-
   }
 }

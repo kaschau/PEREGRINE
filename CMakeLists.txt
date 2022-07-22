@@ -73,7 +73,17 @@ file( GLOB compute_src ${PROJECT_SOURCE_DIR}/src/compute/*.cpp
                        ${PROJECT_SOURCE_DIR}/src/compute/chemistry/*.cpp
                        ${PROJECT_SOURCE_DIR}/src/compute/utils/*.cpp)
 
-include_directories(${PROJECT_SOURCE_DIR}/src/compute)
+include_directories(${PROJECT_SOURCE_DIR}/src/compute
+                    ${PROJECT_SOURCE_DIR}/src/compute/advFlux
+                    ${PROJECT_SOURCE_DIR}/src/compute/boundaryConditions
+                    ${PROJECT_SOURCE_DIR}/src/compute/chemistry
+                    ${PROJECT_SOURCE_DIR}/src/compute/diffFlux
+                    ${PROJECT_SOURCE_DIR}/src/compute/subgrid
+                    ${PROJECT_SOURCE_DIR}/src/compute/switches
+                    ${PROJECT_SOURCE_DIR}/src/compute/thermo
+                    ${PROJECT_SOURCE_DIR}/src/compute/timeIntegration
+                    ${PROJECT_SOURCE_DIR}/src/compute/transport
+                    ${PROJECT_SOURCE_DIR}/src/compute/utils)
 
 
 #Make the bindings for python import
