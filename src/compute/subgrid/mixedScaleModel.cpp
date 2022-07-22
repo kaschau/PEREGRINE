@@ -1,7 +1,6 @@
 #include "Kokkos_Core.hpp"
 #include "block_.hpp"
 #include "kokkos_types.hpp"
-#include "thtrdat_.hpp"
 #include <math.h>
 #include <numeric>
 
@@ -14,7 +13,7 @@
 // 2000;32: 369 – 406
 // E. Lenormand,  P. Sagautb,  and  L. Ta Phuoc
 
-void mixedScaleModel(block_ b, thtrdat_ th) {
+void mixedScaleModel(block_ b) {
 
   MDRange3 range_cc({b.ng, b.ng, b.ng},
                     {b.ni + b.ng - 1, b.nj + b.ng - 1, b.nk + b.ng - 1});
@@ -22,7 +21,6 @@ void mixedScaleModel(block_ b, thtrdat_ th) {
   Kokkos::parallel_for(
       "Mixed Scale subgrid", range_cc,
       KOKKOS_LAMBDA(const int i, const int j, const int k) {
-        const int ns = th.ns;
         const double Cm = 0.06;
         const double alpha = 0.5;
         const double Prt = 0.4;
@@ -100,7 +98,7 @@ void mixedScaleModel(block_ b, thtrdat_ th) {
         double kappasgs = musgs * b.qh(i, j, k, 1) / Prt;
         b.qt(i, j, k, 1) += kappasgs;
         // Diffusion coefficients mass
-        for (int n = 0; n <= ns - 1; n++) {
+        for (int n = 0; n <= b.ne - 5; n++) {
           b.qt(i, j, k, 2 + n) += nusgs / Sct;
         }
       });

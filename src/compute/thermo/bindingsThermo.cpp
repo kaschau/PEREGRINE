@@ -1,4 +1,4 @@
-#include "compute.hpp"
+#include "thermo.hpp"
 #include "thtrdat_.hpp"
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>

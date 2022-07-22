@@ -1,4 +1,4 @@
-#include "compute.hpp"
+#include "subgrid.hpp"
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
@@ -10,8 +10,8 @@ void bindSubgrid(py::module_ &m) {
   //  |----> mixedScaleModel.cpp
   subgrid.def("mixedScaleModel", &mixedScaleModel,
               "Compute subgrid viscosity from mixed scale model.",
-              py::arg("block_ object"), py::arg("thtrdat_ object"));
+              py::arg("block_ object"));
   subgrid.def("smagorinsky", &smagorinsky,
               "Compute subgrid viscosity from Smagorisnsky model.",
-              py::arg("block_ object"), py::arg("thtrdat_ object"));
+              py::arg("block_ object"));
 }
