@@ -221,7 +221,6 @@ class solverBlock(restartBlock, block_):
             "rk3": 2,
             "rk4": 4,
             "strang": 2,
-            "chemSubStep": 2,
         }
         names = [
             f"rhs{i}" for i in range(nstorage[config["solver"]["timeIntegration"]])
