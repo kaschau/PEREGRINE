@@ -10,6 +10,7 @@ def bootstrapCase(config):
     blocksForProcs = pg.readers.readBlocksForProcs(
         config["io"]["inputDir"], parallel=True
     )
+    comm.Barrier()
     if rank == 0:
         print("Read blocksForProcs.")
     # If blocksForProcs.inp is not found, blocksForProcs will be
@@ -45,6 +46,7 @@ def bootstrapCase(config):
 
     myblocks = blocksForProcs[rank]
     mb = pg.multiBlock.generateMultiBlockSolver(len(myblocks), config, myblocks)
+    comm.Barrier()
     if rank == 0:
         print("Generated multiblock.")
 
@@ -52,6 +54,7 @@ def bootstrapCase(config):
     # Read in the connectivity
     ################################################################
     pg.readers.readConnectivity(mb, config["io"]["inputDir"])
+    comm.Barrier()
     if rank == 0:
         print("Read connectivity.")
         # Check we have the correct number of blocks.
@@ -82,6 +85,7 @@ def bootstrapCase(config):
     # Read in the grid
     ################################################################
     pg.readers.readGrid(mb, config["io"]["gridDir"])
+    comm.Barrier()
     if rank == 0:
         print("Read grid.")
 
@@ -94,6 +98,7 @@ def bootstrapCase(config):
         config["simulation"]["restartFrom"],
         config["simulation"]["animateRestart"],
     )
+    comm.Barrier()
     if rank == 0:
         print("Read restart.")
 
@@ -117,6 +122,7 @@ def bootstrapCase(config):
     ################################################################
     mb.unifyGrid()
     mb.computeMetrics(config["RHS"]["diffOrder"])
+    comm.Barrier()
     if rank == 0:
         print("Unified grid.")
 
@@ -124,6 +130,7 @@ def bootstrapCase(config):
     # Read in boundary conditions
     ################################################################
     pg.readers.readBcs(mb, config["io"]["inputDir"], justPeriodic=False)
+    comm.Barrier()
     if rank == 0:
         print("Set boundary conditions.")
 
@@ -153,6 +160,7 @@ def bootstrapCase(config):
 
     mb.coproc = pg.coproc.coprocessor(mb)
 
+    comm.Barrier()
     if rank == 0:
         print("Ready to solve.")
 
