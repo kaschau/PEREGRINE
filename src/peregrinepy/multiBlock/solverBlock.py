@@ -223,7 +223,9 @@ class solverBlock(restartBlock, block_):
             "strang": 2,
             "dualTime": 2,
         }
-        names = [f"Q{i}" for i in range(nstorage[config["solver"]["timeIntegration"]])]
+        names = [
+            f"Q{i}" for i in range(nstorage[config["timeIntegration"]["integrator"]])
+        ]
         createViewMirrorArray(self, names, cQshape)
 
         # ------------------------------------------------------------------- #

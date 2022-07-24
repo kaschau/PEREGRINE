@@ -27,21 +27,25 @@ class configFile(frozenDict):
         self["simulation"] = frozenDict(
             {
                 "niter": 1,
-                "dt": 1e-3,
                 "restartFrom": 0,
                 "animateArchive": True,
                 "animateRestart": False,
                 "niterArchive": 1e10,
                 "niterRestart": 10,
                 "niterPrint": 1,
-                "variableTimeStep": False,
-                "maxDt": 1e-3,
-                "maxCFL": 0.1,
                 "checkNan": False,
             }
         )
 
-        self["solver"] = frozenDict({"timeIntegration": "rk4"})
+        self["timeIntegration"] = frozenDict(
+            {
+                "integrator": "rk4",
+                "dt": 1e-3,
+                "variableTimeStep": False,
+                "maxDt": 1e-3,
+                "maxCFL": 0.1,
+            }
+        )
 
         self["RHS"] = frozenDict(
             {

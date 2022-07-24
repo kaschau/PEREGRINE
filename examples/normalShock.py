@@ -31,7 +31,7 @@ def simulate():
 
     config["RHS"]["primaryAdvFlux"] = "rusanov"
 
-    config["solver"]["timeIntegration"] = "rk4"
+    config["timeIntegration"]["integrator"] = "rk4"
     config["thermochem"]["eos"] = "cpg"
     config["thermochem"]["spdata"] = ["Air"]
     mb = pg.multiBlock.generateMultiBlockSolver(1, config)
