@@ -45,8 +45,9 @@ struct block_ {
   // chemistry
   fourDview omega;
 
-  // RHS stages
+  // Time integration stages
   fourDview Q0, Q1, Q2, Q3;
+  fourDview Qn, Qnm1;
 
   // Flux Arrays
   fourDview iF, jF, kF;
