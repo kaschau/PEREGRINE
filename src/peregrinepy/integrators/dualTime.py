@@ -4,7 +4,7 @@ import numpy as np
 from mpi4py import MPI
 
 from ..compute.timeIntegration import DTrk2s1, DTrk2s2, dQdt, invertDQ, residual
-from ..compute.utils import AEQB
+from ..compute.utils import AEQB, CFLmax
 from ..consistify import consistify
 from ..mpiComm.mpiUtils import getCommRankSize
 from ..RHS import RHS
@@ -39,7 +39,10 @@ class dualTime:
         for q in range(20):
 
             # TODO: Determine dtau
-            dtau = 0.005
+            cfl = np.array(CFLmax(self), dtype=np.float64)
+            comm.Allreduce(MPI.IN_PLACE, cfl, op=MPI.MAX)
+            # For now, set dtau for a combined acoustic/convective CFL=0.5
+            dtau = 0.5 / cfl[2]
 
             # We perform rk3 stages in pseudo time
             for blk in self:
@@ -78,7 +81,7 @@ class dualTime:
             resid = np.array(residual(self), dtype=np.float64)
             comm.Allreduce(MPI.IN_PLACE, resid, op=MPI.MAX)
             if rank == 0:
-                printResidual(resid, q, mb[0].ne)
+                printResidual(resid, q, self[0].ne)
 
         ############################################################################
         # End inner, pseudo time loop
@@ -94,3 +97,9 @@ class dualTime:
 
     step.name = "dualTime"
     step.stepType = "dualTime"
+
+    def initializeDualTime(self):
+        # Set Qn
+        for blk in self:
+            AEQB(blk.Qn, blk.Q)
+            AEQB(blk.Qnm1, blk.Q)
