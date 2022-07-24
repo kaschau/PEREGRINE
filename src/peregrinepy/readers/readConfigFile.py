@@ -29,6 +29,6 @@ def readConfigFile(filePath="./peregrine.yaml", parallel=False):
             config[k1][k2] = connIn[k1][k2]
 
     # ensure common problem variables are typed correctly
-    config["simulation"]["dt"] = float(config["simulation"]["dt"])
+    config["timeIntegration"]["dt"] = float(config["timeIntegration"]["dt"])
 
     return config

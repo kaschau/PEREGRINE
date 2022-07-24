@@ -189,7 +189,7 @@ def howManyNG(config):
 def generateMultiBlockSolver(nblks, config, myblocks=None):
 
     # Get the time integrator from config file
-    ti = config["solver"]["timeIntegration"]
+    ti = config["timeIntegration"]["integrator"]
     tic = getIntegrator(ti)
     name = "solver" + ti
     # Merge the time integration class with the multiblock solver class

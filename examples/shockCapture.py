@@ -473,7 +473,7 @@ def simulate(testnum, index="i"):
     config["RHS"]["primaryAdvFlux"] = "secondOrderKEEP"
     config["RHS"]["secondaryAdvFlux"] = "scalarDissipation"
     config["RHS"]["switchAdvFlux"] = "vanLeer"
-    config["solver"]["timeIntegration"] = "rk3"
+    config["timeIntegration"]["integrator"] = "rk3"
     mb = pg.multiBlock.generateMultiBlockSolver(1, config)
     print(mb)
 
