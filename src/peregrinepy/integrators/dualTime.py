@@ -36,7 +36,7 @@ class dualTime:
 
         # At this point we assume that Qn and Qnm1 are appropriately populated
         # Inner time loop integrating in pseudo time
-        for q in range(20):
+        for nrtDT in range(20):
 
             # TODO: Determine dtau
             cfl = np.array(CFLmax(self), dtype=np.float64)
@@ -81,7 +81,7 @@ class dualTime:
             resid = np.array(residual(self), dtype=np.float64)
             comm.Allreduce(MPI.IN_PLACE, resid, op=MPI.MAX)
             if rank == 0:
-                printResidual(resid, q, self[0].ne)
+                printResidual(resid, nrtDT, self[0].ne)
 
         ############################################################################
         # End inner, pseudo time loop
