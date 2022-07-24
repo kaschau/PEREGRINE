@@ -2,8 +2,15 @@
 #define __timeIntegration_H__
 
 #include "block_.hpp"
+#include "vector"
 
 // ./timeIntegration
+//    |------> dualTime.cpp
+void dQdt(block_ b, const double dt);
+void DTrk2s1(block_ b, const double dt);
+void DTrk2s2(block_ b, const double dt);
+void invertDQ(block_ b, const double dt, const double dtau);
+std::vector<double> residual(std::vector<block_> mb);
 //    |------> maccormack.cpp
 void corrector(block_ b, const double dt);
 //    |------> rk2Stages.cpp

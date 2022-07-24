@@ -1,7 +1,7 @@
 from .mpiComm import communicate
 
 
-def consistify(mb):
+def consistify(mb, given="cons"):
 
     # We assume that the interior of the blocks have a
     # conservative Q variable field. We update the
@@ -10,12 +10,15 @@ def consistify(mb):
     # everything.
 
     # First communicate conservatives
-    communicate(mb, ["Q"])
+    if given == "cons":
+        communicate(mb, ["Q"])
+    elif given == "prims":
+        communicate(mb, ["q"])
 
     # Now update derived arrays for ENTIRE block,
     #  even exterior halos.
     for blk in mb:
-        mb.eos(blk, mb.thtrdat, -1, "cons")
+        mb.eos(blk, mb.thtrdat, -1, given)
 
         # Apply euler boundary conditions
         for face in blk.faces:
