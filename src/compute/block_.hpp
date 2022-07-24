@@ -46,7 +46,7 @@ struct block_ {
   fourDview omega;
 
   // RHS stages
-  fourDview rhs0, rhs1, rhs2, rhs3;
+  fourDview Q0, Q1, Q2, Q3;
 
   // Flux Arrays
   fourDview iF, jF, kF;

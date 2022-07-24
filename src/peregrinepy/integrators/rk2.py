@@ -15,7 +15,7 @@ class rk2:
 
         # store zeroth stage solution
         for blk in self:
-            AEQB(blk.rhs0, blk.Q)
+            AEQB(blk.Q0, blk.Q)
 
         # Stage 1
         RHS(self)
