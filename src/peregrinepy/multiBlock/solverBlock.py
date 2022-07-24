@@ -67,7 +67,7 @@ class solverBlock(restartBlock, block_):
             self.array[f"{d}"] = None
             self.mirror[f"{d}"] = None
         # RK stages
-        for d in ["rhs0", "rhs1", "rhs2", "rhs3"]:
+        for d in ["Q0", "Q1", "Q2", "Q3"]:
             self.array[f"{d}"] = None
             self.mirror[f"{d}"] = None
         # Face fluxes
@@ -212,19 +212,18 @@ class solverBlock(restartBlock, block_):
             createViewMirrorArray(self, ["omega"], shape)
 
         # ------------------------------------------------------------------- #
-        #       RK Stages
+        #       Time Integration Storage
         # ------------------------------------------------------------------- #
         nstorage = {
             "rk1": 0,
-            "rk2": 2,
+            "rk2": 1,
             "maccormack": 1,
-            "rk3": 2,
+            "rk3": 1,
             "rk4": 4,
             "strang": 2,
+            "dualTime": 2,
         }
-        names = [
-            f"rhs{i}" for i in range(nstorage[config["solver"]["timeIntegration"]])
-        ]
+        names = [f"Q{i}" for i in range(nstorage[config["solver"]["timeIntegration"]])]
         createViewMirrorArray(self, names, cQshape)
 
         # ------------------------------------------------------------------- #

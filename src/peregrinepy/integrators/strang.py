@@ -33,7 +33,7 @@ class strang:
     def non_stiff(self, dt):
         # store zeroth stage solution
         for blk in self:
-            AEQB(blk.rhs0, blk.Q)
+            AEQB(blk.Q0, blk.Q)
 
         # First Stage
         RHS(self)
