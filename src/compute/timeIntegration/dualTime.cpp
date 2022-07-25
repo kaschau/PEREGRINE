@@ -67,33 +67,48 @@ std::vector<double> residual(std::vector<block_> mb) {
   //-------------------------------------------------------------------------------------------|
 
   int ne = mb[0].ne;
-  std::vector<double> resid;
-  std::vector<double> testResid;
+  double rP, rU, rV, rW, rT, rYi;
+  std::vector<double> returnResid;
   for (int l = 0; l < ne; l++) {
-    resid.pop_back();
-    testResid.pop_back();
-    resid[l] = 0.0;
-    testResid[l] = 0.0;
+    returnResid.push_back(0.0);
   }
 
+  // First we will find the L_inf residual for each p,u,v,w,T primative
+  // RECALL: Q0 array is actually primatives when using dual time
   for (block_ b : mb) {
 
-    //   MDRange3 range_cc({b.ng, b.ng, b.ng},
-    //                     {b.ni + b.ng - 1, b.nj + b.ng - 1, b.nk + b.ng - 1});
-    //   Kokkos::parallel_reduce(
-    //       "residual", range_cc,
-    //       KOKKOS_LAMBDA(const int i, const int j, const int k, double &CFLA,
-    //                     double &CFLC, double &CFLR){
+    MDRange3 range_cc({b.ng, b.ng, b.ng},
+                      {b.ni + b.ng - 1, b.nj + b.ng - 1, b.nk + b.ng - 1});
+    Kokkos::parallel_reduce(
+        "residual", range_cc,
+        KOKKOS_LAMBDA(const int i, const int j, const int k, double &rP,
+                      double &rU, double &rV, double &rW, double &rT) {
+          rP = abs(b.q(i, j, k, 0) - b.Q0(i, j, k, 0));
+          rU = abs(b.q(i, j, k, 1) - b.Q0(i, j, k, 1));
+          rV = abs(b.q(i, j, k, 2) - b.Q0(i, j, k, 2));
+          rW = abs(b.q(i, j, k, 3) - b.Q0(i, j, k, 3));
+          rT = abs(b.q(i, j, k, 4) - b.Q0(i, j, k, 4));
+        },
+        Kokkos::Max<double>(rP), Kokkos::Max<double>(rU),
+        Kokkos::Max<double>(rV), Kokkos::Max<double>(rW),
+        Kokkos::Max<double>(rT));
 
-    //       },
+    returnResid[0] = fmax(rP, returnResid[0]);
+    returnResid[1] = fmax(rU, returnResid[1]);
+    returnResid[2] = fmax(rV, returnResid[2]);
+    returnResid[3] = fmax(rW, returnResid[3]);
+    returnResid[4] = fmax(rT, returnResid[4]);
 
-    //       Kokkos::Max<double>(CFLmaxA), Kokkos::Max<double>(CFLmaxC),
-    //       Kokkos::Max<double>(CFLmaxR));
-
-    //   returnMaxA = fmax(CFLmaxA, returnMaxA);
-    //   returnMaxC = fmax(fmax(CFLmaxC, returnMaxC), 1e-16);
-    //   returnMaxR = fmax(CFLmaxR, returnMaxR);
+    for (int n = 5; n < ne; n++) {
+      Kokkos::parallel_reduce(
+          "residual", range_cc,
+          KOKKOS_LAMBDA(const int i, const int j, const int k, double &rYi) {
+            rYi = abs(b.q(i, j, k, n) - b.Q0(i, j, k, n));
+          },
+          Kokkos::Max<double>(rYi));
+      returnResid[n] = fmax(rP, returnResid[n]);
+    }
   }
 
-  return resid;
+  return returnResid;
 }
