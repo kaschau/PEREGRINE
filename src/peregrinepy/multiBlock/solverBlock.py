@@ -27,7 +27,7 @@ class solverBlock(restartBlock, block_):
 
     blockType = "solver"
 
-    def __init__(self, nblki, sp_names, ng):
+    def __init__(self, nblki, spNames, ng):
         # The c++ stuff must be instantiated first,
         # so that inhereted python side
         # attributes are assigned values, not defined
@@ -40,7 +40,7 @@ class solverBlock(restartBlock, block_):
 
         self.ng = ng
 
-        restartBlock.__init__(self, nblki, sp_names)
+        restartBlock.__init__(self, nblki, spNames)
 
         for fn in [1, 2, 3, 4, 5, 6]:
             self.faces.append(solverFace(fn, self.ng))
