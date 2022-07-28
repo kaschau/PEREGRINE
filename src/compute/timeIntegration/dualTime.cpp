@@ -73,7 +73,7 @@ std::vector<double> residual(std::vector<block_> mb) {
     returnResid.push_back(0.0);
   }
 
-  // First we will find the L_inf residual for each p,u,v,w,T primative
+  // First we will find the max L_inf residual for each p,u,v,w,T primative
   // RECALL: Q0 array is actually primatives when using dual time
   for (block_ b : mb) {
 
