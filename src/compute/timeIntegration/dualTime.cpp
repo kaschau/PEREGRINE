@@ -281,6 +281,14 @@ void invertDQ(block_ b, const double dt, const double dtau) {
         printf("\n");
         /////////////////////////////////////////////////////////////////////////////
 
+        // Row permute dQ to match LU
+        for (int l = 0; l < ne; l++) {
+          tempRow(perm(l)) = b.dQ(i, j, k, l);
+        }
+        for (int l = 0; l < ne; l++) {
+          b.dQ(i, j, k, l) = tempRow(l);
+        }
+
         // Solve Ax = b where A = LU by first solving for
         //
         // Lz = a then Ux=z
@@ -292,11 +300,11 @@ void invertDQ(block_ b, const double dt, const double dtau) {
         // So begin with Lz = dQ where tempRow = z
         // Because L(0,0) == 1, we can just set the first element of z
 
-        tempRow(0) = b.dQ(i, j, k, perm(0));
+        tempRow(0) = b.dQ(i, j, k, 0);
         for (int l = 1; l < ne; l++) {
-          tempRow(l) = b.dQ(i, j, k, perm(l));
+          tempRow(l) = b.dQ(i, j, k, l);
           for (int q = 0; q < l; q++) {
-            tempRow(l) -= GdQ(l, q) * tempRow(l);
+            tempRow(l) -= GdQ(l, q) * tempRow(q);
           }
         }
 
@@ -307,12 +315,12 @@ void invertDQ(block_ b, const double dt, const double dtau) {
         // Recall we are working with primatives so we will modify the dQ view
         // in place with the resultant dq values
 
-        for (int l = ne - 1; l > 0; l--) {
-          b.dQ(i, j, k, perm(l)) = tempRow(l);
+        for (int l = ne - 1; l > -1; l--) {
+          b.dQ(i, j, k, l) = tempRow(l);
           for (int q = ne - 1; q > l; q--) {
-            b.dQ(i, j, k, perm(l)) -= GdQ(l, q) * tempRow(l);
+            b.dQ(i, j, k, l) -= GdQ(l, q) * tempRow(q);
           }
-          b.dQ(i, j, k, perm(l)) /= GdQ(l, l);
+          b.dQ(i, j, k, l) /= GdQ(l, l);
         }
 
         printf("x:\n");
