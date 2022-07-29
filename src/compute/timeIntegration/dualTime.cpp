@@ -109,7 +109,7 @@ void invertDQ(block_ b, const double dt, const double dtau) {
 #ifndef NSCOMPILE
   Kokkos::Experimental::UniqueToken<exec_space> token;
   int numIds = token.size();
-  const int ne = 2; // b.ne;
+  const int ne = 3; // b.ne;
   threeDview GdQ("GdQ", numIds, ne, ne);
   twoDview tempRow("tempRow", numIds, ne);
   twoDviewInt perm("perm", numIds, ne);
@@ -119,7 +119,7 @@ void invertDQ(block_ b, const double dt, const double dtau) {
 #define GdQ(INDEX, INDEX1) GdQ[INDEX][INDEX1]
 #define perm(INDEX) perm[INDEX]
 #define tempRow(INDEX) tempRow[INDEX]
-#define ne 2; // 5 + NS - 1
+#define ne 3; // 5 + NS - 1
 #else
 #define GdQ(INDEX, INDEX1) GdQ(id, INDEX, INDEX1)
 #define perm(INDEX) perm(id, INDEX)
@@ -224,14 +224,14 @@ void invertDQ(block_ b, const double dt, const double dtau) {
 
         ///////////////////////////////////////////////////////////////////////////
         GdQ(0, 0) = 1.0;
-        GdQ(0, 1) = 2.0;
-        // GdQ(0, 2) = 7.0;
-        GdQ(1, 0) = 3.0;
-        GdQ(1, 1) = 5.0;
-        // GdQ(1, 2) = 4.0;
-        // GdQ(2, 0) = 3.0;
-        // GdQ(2, 1) = 2.0;
-        // GdQ(2, 2) = 1.0;
+        GdQ(0, 1) = 4.0;
+        GdQ(0, 2) = 2.0;
+        GdQ(1, 0) = 1.0;
+        GdQ(1, 1) = 2.0;
+        GdQ(1, 2) = 3.0;
+        GdQ(2, 0) = 2.0;
+        GdQ(2, 1) = 1.0;
+        GdQ(2, 2) = 3.0;
         ///////////////////////////////////////////////////////////////////////////
 
         for (int l = 0; l < ne; l++) {
@@ -266,6 +266,7 @@ void invertDQ(block_ b, const double dt, const double dtau) {
             }
           }
         }
+
         /////////////////////////////////////////////////////////////////////////////
         printf("LU Decomposition:\n");
         for (int q = 0; q < ne; q++) {
@@ -283,7 +284,7 @@ void invertDQ(block_ b, const double dt, const double dtau) {
 
         // Row permute dQ to match LU
         for (int l = 0; l < ne; l++) {
-          tempRow(perm(l)) = b.dQ(i, j, k, l);
+          tempRow(l) = b.dQ(i, j, k, perm(l));
         }
         for (int l = 0; l < ne; l++) {
           b.dQ(i, j, k, l) = tempRow(l);
@@ -300,33 +301,41 @@ void invertDQ(block_ b, const double dt, const double dtau) {
         // So begin with Lz = dQ where tempRow = z
         // Because L(0,0) == 1, we can just set the first element of z
 
-        tempRow(0) = b.dQ(i, j, k, 0);
-        for (int l = 1; l < ne; l++) {
-          tempRow(l) = b.dQ(i, j, k, l);
+        for (int l = 0; l < ne; l++) {
           for (int q = 0; q < l; q++) {
             tempRow(l) -= GdQ(l, q) * tempRow(q);
           }
         }
+
+        /////////////////////////////////////////////////////////////////////////////
+        printf("z:\n");
+        for (int l = 0; l < ne; l++) {
+          printf("%f ", tempRow(l));
+        }
+        printf("\n");
+        /////////////////////////////////////////////////////////////////////////////
 
         // Now solve Ux=z which is actually
         //
         // U(dq) = tempRow
         //
         // Recall we are working with primatives so we will modify the dQ view
-        // in place with the resultant dq values
+        // in place with the resultant dq values (as x)
 
         for (int l = ne - 1; l > -1; l--) {
           b.dQ(i, j, k, l) = tempRow(l);
           for (int q = ne - 1; q > l; q--) {
-            b.dQ(i, j, k, l) -= GdQ(l, q) * tempRow(q);
+            b.dQ(i, j, k, l) -= GdQ(l, q) * b.dQ(i, j, k, q);
           }
           b.dQ(i, j, k, l) /= GdQ(l, l);
         }
 
+        /////////////////////////////////////////////////////////////////////////////
         printf("x:\n");
         for (int l = 0; l < ne; l++) {
           printf("%f ", b.dQ(i, j, k, l));
         }
         printf("\n");
+        /////////////////////////////////////////////////////////////////////////////
       });
 }
