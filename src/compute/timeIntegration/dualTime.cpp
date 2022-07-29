@@ -139,13 +139,13 @@ void invertDQ(block_ b, const double dt, const double dtau) {
         double tempRow(ne);
 #endif
         // Fill in preconditioning matrix
-        GdQ(0, 0) = 0.0;
-        GdQ(0, 1) = 0.0;
+        // GdQ(0, 0) = 0.0;
+        // GdQ(0, 1) = 0.0;
         // GdQ(0, 2) = 0.0;
         // GdQ(0, 3) = 0.0;
         // GdQ(0, 4) = 0.0;
-        GdQ(1, 0) = 0.0;
-        GdQ(1, 1) = 0.0;
+        // GdQ(1, 0) = 0.0;
+        // GdQ(1, 1) = 0.0;
         // GdQ(1, 2) = 0.0;
         // GdQ(1, 3) = 0.0;
         // GdQ(1, 4) = 0.0;
@@ -164,28 +164,28 @@ void invertDQ(block_ b, const double dt, const double dtau) {
         // GdQ(4, 2) = 0.0;
         // GdQ(4, 3) = 0.0;
         // GdQ(4, 4) = 0.0;
-        for (int l = 5; l < ne; l++) {
-          GdQ(l, 0) = 0.0;
-          GdQ(l, 1) = 0.0;
-          GdQ(l, 2) = 0.0;
-          GdQ(l, 3) = 0.0;
-          GdQ(l, 4) = 0.0;
-          GdQ(0, l) = 0.0;
-          GdQ(1, l) = 0.0;
-          GdQ(2, l) = 0.0;
-          GdQ(3, l) = 0.0;
-          GdQ(4, l) = 0.0;
-        }
+        // for (int l = 5; l < ne; l++) {
+        //   GdQ(l, 0) = 0.0;
+        //   GdQ(l, 1) = 0.0;
+        //   GdQ(l, 2) = 0.0;
+        //   GdQ(l, 3) = 0.0;
+        //   GdQ(l, 4) = 0.0;
+        //   GdQ(0, l) = 0.0;
+        //   GdQ(1, l) = 0.0;
+        //   GdQ(2, l) = 0.0;
+        //   GdQ(3, l) = 0.0;
+        //   GdQ(4, l) = 0.0;
+        // }
 
         // Add the primative to conservative transormation
-        double dotau = dt / dtau;
-        GdQ(0, 0) += 0.0 * dotau;
-        GdQ(0, 1) += 0.0 * dotau;
+        // double dotau = dt / dtau;
+        // GdQ(0, 0) += 0.0 * dotau;
+        // GdQ(0, 1) += 0.0 * dotau;
         // GdQ(0, 2) += 0.0 * dotau;
         // GdQ(0, 3) += 0.0 * dotau;
         // GdQ(0, 4) += 0.0 * dotau;
-        GdQ(1, 0) += 0.0 * dotau;
-        GdQ(1, 1) += 0.0 * dotau;
+        // GdQ(1, 0) += 0.0 * dotau;
+        // GdQ(1, 1) += 0.0 * dotau;
         // GdQ(1, 2) += 0.0 * dotau;
         // GdQ(1, 3) += 0.0 * dotau;
         // GdQ(1, 4) += 0.0 * dotau;
@@ -204,18 +204,18 @@ void invertDQ(block_ b, const double dt, const double dtau) {
         // GdQ(4, 2) += 0.0 * dotau;
         // GdQ(4, 3) += 0.0 * dotau;
         // GdQ(4, 4) += 0.0 * dotau;
-        for (int l = 5; l < ne; l++) {
-          GdQ(l, 0) += 0.0 * dotau;
-          GdQ(l, 1) += 0.0 * dotau;
-          GdQ(l, 2) += 0.0 * dotau;
-          GdQ(l, 3) += 0.0 * dotau;
-          GdQ(l, 4) += 0.0 * dotau;
-          GdQ(0, l) += 0.0 * dotau;
-          GdQ(1, l) += 0.0 * dotau;
-          GdQ(2, l) += 0.0 * dotau;
-          GdQ(3, l) += 0.0 * dotau;
-          GdQ(4, l) += 0.0 * dotau;
-        }
+        // for (int l = 5; l < ne; l++) {
+        //   GdQ(l, 0) += 0.0 * dotau;
+        //   GdQ(l, 1) += 0.0 * dotau;
+        //   GdQ(l, 2) += 0.0 * dotau;
+        //   GdQ(l, 3) += 0.0 * dotau;
+        //   GdQ(l, 4) += 0.0 * dotau;
+        //   GdQ(0, l) += 0.0 * dotau;
+        //   GdQ(1, l) += 0.0 * dotau;
+        //   GdQ(2, l) += 0.0 * dotau;
+        //   GdQ(3, l) += 0.0 * dotau;
+        //   GdQ(4, l) += 0.0 * dotau;
+        // }
 
         // Perform LU decomposition with partial pivoting
         // Routine modified GdQ in place resulting in a
@@ -223,31 +223,25 @@ void invertDQ(block_ b, const double dt, const double dtau) {
         // and an upper triangular matrix including the diagonal.
 
         ///////////////////////////////////////////////////////////////////////////
-        // for testing just make it the identit matrix for
-        for (int l = 0; l < ne; l++) {
-          GdQ(l, l) = 1.0;
-        }
         GdQ(0, 0) = 1.0;
         GdQ(0, 1) = 2.0;
-        // GdQ(0, 2) = 3.0;
+        // GdQ(0, 2) = 7.0;
         GdQ(1, 0) = 3.0;
         GdQ(1, 1) = 5.0;
-        // GdQ(1, 2) = 6.0;
-        // GdQ(2, 0) = 7.0;
-        // GdQ(2, 1) = 8.0;
-        // GdQ(2, 2) = 9.0;
+        // GdQ(1, 2) = 4.0;
+        // GdQ(2, 0) = 3.0;
+        // GdQ(2, 1) = 2.0;
+        // GdQ(2, 2) = 1.0;
         ///////////////////////////////////////////////////////////////////////////
 
-        int pivotInd = 0;
-        int tempInd;
-        double pivot;
-        double temp;
         for (int l = 0; l < ne; l++) {
           perm(l) = l;
         }
 
         for (int l = 0; l < ne; l++) {
-          pivot = 0;
+          int pivotInd = 0;
+          double pivot = 0.0;
+          int tempInd;
           for (int m = l; m < ne; m++)
             if (abs(GdQ(m, l)) > abs(pivot)) {
               pivot = GdQ(m, l);
@@ -258,19 +252,21 @@ void invertDQ(block_ b, const double dt, const double dtau) {
             tempRow(p) = GdQ(l, p);
             GdQ(l, p) = GdQ(pivotInd, p);
             GdQ(pivotInd, p) = tempRow(p);
-
-            tempInd = perm(l);
-            perm(l) = perm(pivotInd);
-            perm(pivotInd) = tempInd;
           }
 
+          tempInd = perm(l);
+          perm(l) = perm(pivotInd);
+          perm(pivotInd) = tempInd;
+
           for (int p = l + 1; p < ne; p++) {
+            double temp;
             temp = GdQ(p, l) /= GdQ(l, l);
             for (int q = l + 1; q < ne; q++) {
               GdQ(p, q) -= temp * GdQ(l, q);
             }
           }
         }
+        /////////////////////////////////////////////////////////////////////////////
         printf("LU Decomposition:\n");
         for (int q = 0; q < ne; q++) {
           for (int l = 0; l < ne; l++) {
@@ -283,6 +279,8 @@ void invertDQ(block_ b, const double dt, const double dtau) {
           printf("%i ", perm(q));
         }
         printf("\n");
+        /////////////////////////////////////////////////////////////////////////////
+
         // Solve Ax = b where A = LU by first solving for
         //
         // Lz = a then Ux=z
@@ -293,11 +291,12 @@ void invertDQ(block_ b, const double dt, const double dtau) {
         //
         // So begin with Lz = dQ where tempRow = z
         // Because L(0,0) == 1, we can just set the first element of z
-        tempRow(perm(0)) = b.dQ(i, j, k, perm(0));
+
+        tempRow(0) = b.dQ(i, j, k, perm(0));
         for (int l = 1; l < ne; l++) {
-          tempRow(perm(l)) = b.dQ(i, j, k, perm(l));
+          tempRow(l) = b.dQ(i, j, k, perm(l));
           for (int q = 0; q < l; q++) {
-            tempRow(perm(l)) -= GdQ(l, q) * tempRow(perm(q));
+            tempRow(l) -= GdQ(l, q) * tempRow(l);
           }
         }
 
@@ -307,10 +306,11 @@ void invertDQ(block_ b, const double dt, const double dtau) {
         //
         // Recall we are working with primatives so we will modify the dQ view
         // in place with the resultant dq values
+
         for (int l = ne - 1; l > 0; l--) {
-          b.dQ(i, j, k, perm(l)) = tempRow(perm(l));
+          b.dQ(i, j, k, perm(l)) = tempRow(l);
           for (int q = ne - 1; q > l; q--) {
-            b.dQ(i, j, k, perm(l)) -= GdQ(l, q) * tempRow(perm(q));
+            b.dQ(i, j, k, perm(l)) -= GdQ(l, q) * tempRow(l);
           }
           b.dQ(i, j, k, perm(l)) /= GdQ(l, l);
         }
