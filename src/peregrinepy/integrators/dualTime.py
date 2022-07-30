@@ -44,7 +44,7 @@ class dualTime:
             # For now, set dtau for a combined acoustic/convective CFL=0.5
             dtau = 0.5 / cfl[2]
 
-            # We perform rk3 stages in pseudo time
+            # We perform rk stages in pseudo time
             for blk in self:
                 dQdt(blk, dt)
 
