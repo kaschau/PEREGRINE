@@ -1,5 +1,4 @@
 #include "Kokkos_Core.hpp"
-#include "array"
 #include "block_.hpp"
 #include "kokkos_types.hpp"
 #include "math.h"
@@ -101,7 +100,7 @@ std::vector<double> residual(std::vector<block_> mb) {
 
 void invertDQ(block_ b, const double dt, const double dtau) {
   //-------------------------------------------------------------------------------------------|
-  // Invert \Gamma dq = dQ to solver for dqdt
+  // Solve (\Gamma + dqdQ) dq = dQ to solver for dqdt
   //-------------------------------------------------------------------------------------------|
   MDRange3 range_cc({b.ng, b.ng, b.ng},
                     {b.ni + b.ng - 1, b.nj + b.ng - 1, b.nk + b.ng - 1});
@@ -109,7 +108,7 @@ void invertDQ(block_ b, const double dt, const double dtau) {
 #ifndef NSCOMPILE
   Kokkos::Experimental::UniqueToken<exec_space> token;
   int numIds = token.size();
-  const int ne = 3; // b.ne;
+  const int ne = b.ne;
   threeDview GdQ("GdQ", numIds, ne, ne);
   twoDview tempRow("tempRow", numIds, ne);
   twoDviewInt perm("perm", numIds, ne);
@@ -119,7 +118,7 @@ void invertDQ(block_ b, const double dt, const double dtau) {
 #define GdQ(INDEX, INDEX1) GdQ[INDEX][INDEX1]
 #define perm(INDEX) perm[INDEX]
 #define tempRow(INDEX) tempRow[INDEX]
-#define ne 3; // 5 + NS - 1
+#define ne 5 + NS - 1
 #else
 #define GdQ(INDEX, INDEX1) GdQ(id, INDEX, INDEX1)
 #define perm(INDEX) perm(id, INDEX)
@@ -130,109 +129,59 @@ void invertDQ(block_ b, const double dt, const double dtau) {
       "dq = (Gamma + dqdQ)^{-1} dQ", range_cc,
       KOKKOS_LAMBDA(const int i, const int j, const int k) {
 
-#ifndef NSCOMPILE
-        int id = token.acquire();
-#endif
 #ifdef NSCOMPILE
         double GdQ(ne, ne);
         int perm(ne);
         double tempRow(ne);
+#else
+        int id = token.acquire();
 #endif
-        // Fill in preconditioning matrix
-        // GdQ(0, 0) = 0.0;
-        // GdQ(0, 1) = 0.0;
-        // GdQ(0, 2) = 0.0;
-        // GdQ(0, 3) = 0.0;
-        // GdQ(0, 4) = 0.0;
-        // GdQ(1, 0) = 0.0;
-        // GdQ(1, 1) = 0.0;
-        // GdQ(1, 2) = 0.0;
-        // GdQ(1, 3) = 0.0;
-        // GdQ(1, 4) = 0.0;
-        // GdQ(2, 0) = 0.0;
-        // GdQ(2, 1) = 0.0;
-        // GdQ(2, 2) = 0.0;
-        // GdQ(2, 3) = 0.0;
-        // GdQ(2, 4) = 0.0;
-        // GdQ(3, 0) = 0.0;
-        // GdQ(3, 1) = 0.0;
-        // GdQ(3, 2) = 0.0;
-        // GdQ(3, 3) = 0.0;
-        // GdQ(3, 4) = 0.0;
-        // GdQ(4, 0) = 0.0;
-        // GdQ(4, 1) = 0.0;
-        // GdQ(4, 2) = 0.0;
-        // GdQ(4, 3) = 0.0;
-        // GdQ(4, 4) = 0.0;
-        // for (int l = 5; l < ne; l++) {
-        //   GdQ(l, 0) = 0.0;
-        //   GdQ(l, 1) = 0.0;
-        //   GdQ(l, 2) = 0.0;
-        //   GdQ(l, 3) = 0.0;
-        //   GdQ(l, 4) = 0.0;
-        //   GdQ(0, l) = 0.0;
-        //   GdQ(1, l) = 0.0;
-        //   GdQ(2, l) = 0.0;
-        //   GdQ(3, l) = 0.0;
-        //   GdQ(4, l) = 0.0;
-        // }
 
-        // Add the primative to conservative transormation
-        // double dotau = dt / dtau;
-        // GdQ(0, 0) += 0.0 * dotau;
-        // GdQ(0, 1) += 0.0 * dotau;
-        // GdQ(0, 2) += 0.0 * dotau;
-        // GdQ(0, 3) += 0.0 * dotau;
-        // GdQ(0, 4) += 0.0 * dotau;
-        // GdQ(1, 0) += 0.0 * dotau;
-        // GdQ(1, 1) += 0.0 * dotau;
-        // GdQ(1, 2) += 0.0 * dotau;
-        // GdQ(1, 3) += 0.0 * dotau;
-        // GdQ(1, 4) += 0.0 * dotau;
-        // GdQ(2, 0) += 0.0 * dotau;
-        // GdQ(2, 1) += 0.0 * dotau;
-        // GdQ(2, 2) += 0.0 * dotau;
-        // GdQ(2, 3) += 0.0 * dotau;
-        // GdQ(2, 4) += 0.0 * dotau;
-        // GdQ(3, 0) += 0.0 * dotau;
-        // GdQ(3, 1) += 0.0 * dotau;
-        // GdQ(3, 2) += 0.0 * dotau;
-        // GdQ(3, 3) += 0.0 * dotau;
-        // GdQ(3, 4) += 0.0 * dotau;
-        // GdQ(4, 0) += 0.0 * dotau;
-        // GdQ(4, 1) += 0.0 * dotau;
-        // GdQ(4, 2) += 0.0 * dotau;
-        // GdQ(4, 3) += 0.0 * dotau;
-        // GdQ(4, 4) += 0.0 * dotau;
-        // for (int l = 5; l < ne; l++) {
-        //   GdQ(l, 0) += 0.0 * dotau;
-        //   GdQ(l, 1) += 0.0 * dotau;
-        //   GdQ(l, 2) += 0.0 * dotau;
-        //   GdQ(l, 3) += 0.0 * dotau;
-        //   GdQ(l, 4) += 0.0 * dotau;
-        //   GdQ(0, l) += 0.0 * dotau;
-        //   GdQ(1, l) += 0.0 * dotau;
-        //   GdQ(2, l) += 0.0 * dotau;
-        //   GdQ(3, l) += 0.0 * dotau;
-        //   GdQ(4, l) += 0.0 * dotau;
-        // }
+        // Construct the premultiplied matrix (Gamma + dqdQ)
+        // Start with the preconditioning matrix
+        GdQ(0, 0) = 1.0;
+        GdQ(0, 1) = 4.0;
+        GdQ(0, 2) = 2.0;
+        GdQ(0, 3) = 0.0;
+        GdQ(0, 4) = 0.0;
+
+        GdQ(1, 0) = 1.0;
+        GdQ(1, 1) = 2.0;
+        GdQ(1, 2) = 3.0;
+        GdQ(1, 3) = 0.0;
+        GdQ(1, 4) = 0.0;
+
+        GdQ(2, 0) = 2.0;
+        GdQ(2, 1) = 1.0;
+        GdQ(2, 2) = 3.0;
+        GdQ(2, 3) = 0.0;
+        GdQ(2, 4) = 0.0;
+
+        GdQ(3, 0) = 0.0;
+        GdQ(3, 1) = 0.0;
+        GdQ(3, 2) = 0.0;
+        GdQ(3, 3) = 1.0;
+        GdQ(3, 4) = 0.0;
+
+        GdQ(4, 0) = 0.0;
+        GdQ(4, 1) = 0.0;
+        GdQ(4, 2) = 0.0;
+        GdQ(4, 3) = 0.0;
+        GdQ(4, 4) = 1.0;
+
+        printf("Gamma:\n");
+        for (int q = 0; q < ne; q++) {
+          for (int l = 0; l < ne; l++) {
+            printf("%lf ", GdQ(q, l));
+          }
+          printf("\n");
+        }
+        ///////////////////////////////////////////////////////////////////////////
 
         // Perform LU decomposition with partial pivoting
         // Routine modified GdQ in place resulting in a
         // strictly lower triangle matrix with 1.0 along the diagonal
         // and an upper triangular matrix including the diagonal.
-
-        ///////////////////////////////////////////////////////////////////////////
-        GdQ(0, 0) = 1.0;
-        GdQ(0, 1) = 4.0;
-        GdQ(0, 2) = 2.0;
-        GdQ(1, 0) = 1.0;
-        GdQ(1, 1) = 2.0;
-        GdQ(1, 2) = 3.0;
-        GdQ(2, 0) = 2.0;
-        GdQ(2, 1) = 1.0;
-        GdQ(2, 2) = 3.0;
-        ///////////////////////////////////////////////////////////////////////////
 
         for (int l = 0; l < ne; l++) {
           perm(l) = l;
