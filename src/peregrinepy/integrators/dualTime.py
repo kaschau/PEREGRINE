@@ -11,10 +11,11 @@ from ..RHS import RHS
 
 
 def printResidual(resid, nrt, ne):
-    string = "           p          u          v          w          T"
-    if ne > 5:
-        string += "          Y_1 ... Y_NS"
-    print(string)
+    if nrt == 0:
+        string = "           p          u          v          w          T"
+        if ne > 5:
+            string += "          Y_1 ... Y_NS"
+        print(string)
     string = f"{nrt+1:6d}"
     for n in range(ne):
         string += f" {resid[n]: 1.3E}"
@@ -44,10 +45,6 @@ class dualTime:
             # For now, set dtau for a combined acoustic/convective CFL=0.5
             dtau = 0.5 / cfl[2]
 
-            # We perform rk stages in pseudo time
-            for blk in self:
-                dQdt(blk, dt)
-
             ##############################################
             # In pseudo time, we integrate primatives
             # so b.Q0 will actually represent primative
@@ -59,21 +56,25 @@ class dualTime:
                 AEQB(blk.Q0, blk.q)
 
             # Stage 1
+            for blk in self:
+                dQdt(blk, dtau)
             RHS(self)
 
             # Invert dqdQ, apply first rk stage
             for blk in self:
-                invertDQ(blk, dt, dtau)
-                DTrk2s1(blk, dt)
+                invertDQ(blk, dt, dtau, self.thtrdat)
+                DTrk2s1(blk, dtau)
 
             consistify(self, "prims")
 
             # Stage 2
+            for blk in self:
+                dQdt(blk, dtau)
             RHS(self)
 
             for blk in self:
-                invertDQ(blk, dt, dtau)
-                DTrk2s2(blk, dt)
+                invertDQ(blk, dt, dtau, self.thtrdat)
+                DTrk2s2(blk, dtau)
 
             consistify(self, "prims")
 

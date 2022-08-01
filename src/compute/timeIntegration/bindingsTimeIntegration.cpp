@@ -12,9 +12,9 @@ void bindTimeIntegration(py::module_ &m) {
   timeIntegration.def("dQdt", &dQdt, "Real time derivative source term",
                       py::arg("block_"), py::arg("dt"));
   timeIntegration.def("DTrk2s1", &DTrk2s1, "Dual Time rk2 stage 1",
-                      py::arg("block_"), py::arg("dt"));
+                      py::arg("block_"), py::arg("dtau"));
   timeIntegration.def("DTrk2s2", &DTrk2s2, "Dual Time rk2 stage 2",
-                      py::arg("block_"), py::arg("dt"));
+                      py::arg("block_"), py::arg("dtau"));
   timeIntegration.def("residual", &residual, "Residual", py::arg("mb"));
   timeIntegration.def("invertDQ", &invertDQ, "Solve dq = \\Gamma^{-1} dQ",
                       py::arg("block_"), py::arg("dt"), py::arg("dtau"),
