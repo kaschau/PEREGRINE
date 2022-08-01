@@ -19,11 +19,11 @@ from ..RHS import RHS
 
 def printResidual(resid, nrt, ne):
     if nrt == 0:
-        string = "           p          u          v          w          T"
+        string = " SubIter      p          u          v          w          T"
         if ne > 5:
             string += "          Y_1 ... Y_NS"
         print(string)
-    string = f"{nrt+1:6d}"
+    string = f"{nrt+1:8d}"
     for n in range(ne):
         string += f" {resid[n]: 1.3E}"
     print(string)
