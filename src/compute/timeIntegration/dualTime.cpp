@@ -239,13 +239,13 @@ void invertDQ(block_ b, const double dt, const double dtau, const thtrdat_ th) {
           rho_Y(n) = -rho * (MWmix * (1.0 / th.MW(n) - 1.0 / th.MW(ns)));
         }
 
-        ////////////////////////////////////
+        /////////////////////////////////////////////////
         // The preconditioning and transformation matrix
         // share a very similar form, only differing by
         // the multiplier of the first column, and the
         // multiplication of the time derivatives for
         // the prim/cons transformation matrix.
-        ////////////////////////////////////
+        /////////////////////////////////////////////////
         for (int l = 0; l < ne; l++) {
           for (int m = 0; m < ne; m++) {
             GdQ(l, m) = 0.0;
@@ -280,9 +280,7 @@ void invertDQ(block_ b, const double dt, const double dtau, const thtrdat_ th) {
           GdQ(1, 0) += mult * phi * u;
           GdQ(2, 0) += mult * phi * v;
           GdQ(3, 0) += mult * phi * w;
-          GdQ(4, 0) +=
-              mult * (phi * H +
-                      T * rho_T / rho); // <- For an ideal gas this is phi*H - 1
+          GdQ(4, 0) += mult * (phi * H + T * rho_T / rho);
 
           GdQ(0, 1) += mult * 0.0;
           GdQ(1, 1) += mult * rho;
