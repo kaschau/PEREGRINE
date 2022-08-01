@@ -63,9 +63,9 @@ class dualTime:
                 AEQB(blk.Q0, blk.q)
 
             # Stage 1
+            RHS(self)
             for blk in self:
                 dQdt(blk, dt)
-            RHS(self)
 
             # Invert dqdQ, apply first rk stage
             for blk in self:
@@ -75,9 +75,9 @@ class dualTime:
             consistify(self, "prims")
 
             # Stage 2
+            RHS(self)
             for blk in self:
                 dQdt(blk, dt)
-            RHS(self)
 
             for blk in self:
                 invertDQ(blk, dt, dtau, self.thtrdat)
@@ -86,9 +86,9 @@ class dualTime:
             consistify(self, "prims")
 
             # Stage 3
+            RHS(self)
             for blk in self:
                 dQdt(blk, dt)
-            RHS(self)
 
             for blk in self:
                 invertDQ(blk, dt, dtau, self.thtrdat)
