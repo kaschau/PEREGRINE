@@ -82,13 +82,24 @@ std::vector<double> residual(std::vector<block_> mb) {
                       {b.ni + b.ng - 1, b.nj + b.ng - 1, b.nk + b.ng - 1});
     Kokkos::parallel_reduce(
         "residual", range_cc,
-        KOKKOS_LAMBDA(const int i, const int j, const int k, double &rP,
-                      double &rU, double &rV, double &rW, double &rT) {
-          rP = abs(b.q(i, j, k, 0) - b.Q0(i, j, k, 0));
-          rU = abs(b.q(i, j, k, 1) - b.Q0(i, j, k, 1));
-          rV = abs(b.q(i, j, k, 2) - b.Q0(i, j, k, 2));
-          rW = abs(b.q(i, j, k, 3) - b.Q0(i, j, k, 3));
-          rT = abs(b.q(i, j, k, 4) - b.Q0(i, j, k, 4));
+        KOKKOS_LAMBDA(const int i, const int j, const int k, double &resP,
+                      double &resU, double &resV, double &resW, double &resT) {
+          double res;
+          res = abs(b.q(i, j, k, 0) - b.Q0(i, j, k, 0));
+          if (res > resP)
+            resP = res;
+          res = abs(b.q(i, j, k, 1) - b.Q0(i, j, k, 1));
+          if (res > resU)
+            resU = res;
+          res = abs(b.q(i, j, k, 2) - b.Q0(i, j, k, 2));
+          if (res > resV)
+            resV = res;
+          res = abs(b.q(i, j, k, 3) - b.Q0(i, j, k, 3));
+          if (res > resW)
+            resW = res;
+          res = abs(b.q(i, j, k, 4) - b.Q0(i, j, k, 4));
+          if (res > resT)
+            resT = res;
         },
         Kokkos::Max<double>(rP), Kokkos::Max<double>(rU),
         Kokkos::Max<double>(rV), Kokkos::Max<double>(rW),
@@ -103,14 +114,16 @@ std::vector<double> residual(std::vector<block_> mb) {
     for (int n = 5; n < ne; n++) {
       Kokkos::parallel_reduce(
           "residual", range_cc,
-          KOKKOS_LAMBDA(const int i, const int j, const int k, double &rYi) {
-            rYi = abs(b.q(i, j, k, n) - b.Q0(i, j, k, n));
+          KOKKOS_LAMBDA(const int i, const int j, const int k, double &resYi) {
+            double res;
+            res = abs(b.q(i, j, k, n) - b.Q0(i, j, k, n));
+            if (res > resYi)
+              resYi = res;
           },
           Kokkos::Max<double>(rYi));
-      returnResid[n] = fmax(rP, returnResid[n]);
+      returnResid[n] = fmax(rYi, returnResid[n]);
     }
   }
-
   return returnResid;
 }
 

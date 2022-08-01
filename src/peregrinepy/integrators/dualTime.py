@@ -46,7 +46,7 @@ class dualTime:
         # Inner time loop integrating in pseudo time
         for nrtDT in range(20):
 
-            # TODO: Determine dtau
+            # Determine dtau
             cfl = np.array(CFLmax(self), dtype=np.float64)
             comm.Allreduce(MPI.IN_PLACE, cfl, op=MPI.MAX)
             # For now, set dtau for a combined acoustic/convective CFL=0.5
