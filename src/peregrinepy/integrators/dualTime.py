@@ -3,7 +3,14 @@ from abc import ABCMeta
 import numpy as np
 from mpi4py import MPI
 
-from ..compute.timeIntegration import DTrk2s1, DTrk2s2, dQdt, invertDQ, residual
+from ..compute.timeIntegration import (
+    DTrk3s1,
+    DTrk3s2,
+    DTrk3s2,
+    dQdt,
+    invertDQ,
+    residual,
+)
 from ..compute.utils import AEQB, CFLmax
 from ..consistify import consistify
 from ..mpiComm.mpiUtils import getCommRankSize
@@ -57,24 +64,35 @@ class dualTime:
 
             # Stage 1
             for blk in self:
-                dQdt(blk, dtau)
+                dQdt(blk, dt)
             RHS(self)
 
             # Invert dqdQ, apply first rk stage
             for blk in self:
                 invertDQ(blk, dt, dtau, self.thtrdat)
-                DTrk2s1(blk, dtau)
+                DTrk3s1(blk, dtau)
 
             consistify(self, "prims")
 
             # Stage 2
             for blk in self:
-                dQdt(blk, dtau)
+                dQdt(blk, dt)
             RHS(self)
 
             for blk in self:
                 invertDQ(blk, dt, dtau, self.thtrdat)
-                DTrk2s2(blk, dtau)
+                DTrk3s2(blk, dtau)
+
+            consistify(self, "prims")
+
+            # Stage 3
+            for blk in self:
+                dQdt(blk, dt)
+            RHS(self)
+
+            for blk in self:
+                invertDQ(blk, dt, dtau, self.thtrdat)
+                DTrk3s2(blk, dtau)
 
             consistify(self, "prims")
 

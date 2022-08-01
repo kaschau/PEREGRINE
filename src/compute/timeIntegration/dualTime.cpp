@@ -20,30 +20,45 @@ void dQdt(block_ b, const double dt) {
       });
 }
 
-void DTrk2s1(block_ b, const double dtau) {
+void DTrk3s1(block_ b, const double dtau) {
   //-------------------------------------------------------------------------------------------|
-  // Apply RK2 stage 1
+  // Apply RK3 stage 1
   //-------------------------------------------------------------------------------------------|
   MDRange4 range_cc({b.ng, b.ng, b.ng, 0},
                     {b.ni + b.ng - 1, b.nj + b.ng - 1, b.nk + b.ng - 1, b.ne});
   Kokkos::parallel_for(
-      "Dual time rk2 stage 1", range_cc,
+      "DTrk3 stage 1", range_cc,
       KOKKOS_LAMBDA(const int i, const int j, const int k, const int l) {
-        b.q(i, j, k, l) += b.dQ(i, j, k, l) * dtau;
+        b.q(i, j, k, l) = b.Q0(i, j, k, l) + dtau * b.dQ(i, j, k, l);
       });
 }
 
-void DTrk2s2(block_ b, const double dtau) {
+void DTrk3s2(block_ b, const double dtau) {
   //-------------------------------------------------------------------------------------------|
-  // Apply RK2 stage 2
+  // Apply RK3 stage 2
   //-------------------------------------------------------------------------------------------|
   MDRange4 range_cc({b.ng, b.ng, b.ng, 0},
                     {b.ni + b.ng - 1, b.nj + b.ng - 1, b.nk + b.ng - 1, b.ne});
   Kokkos::parallel_for(
-      "Dual TIme rk2 stage 2", range_cc,
+      "DTrk3 stage 2", range_cc,
       KOKKOS_LAMBDA(const int i, const int j, const int k, const int l) {
-        b.q(i, j, k, l) = 0.5 * b.Q0(i, j, k, l) +
-                          0.5 * (b.q(i, j, k, l) + dtau * b.dQ(i, j, k, l));
+        b.q(i, j, k, l) = 0.75 * b.Q0(i, j, k, l) + 0.25 * b.q(i, j, k, l) +
+                          0.25 * b.dQ(i, j, k, l) * dtau;
+      });
+}
+
+void DTrk3s3(block_ b, const double dtau) {
+  //-------------------------------------------------------------------------------------------|
+  // Apply RK3 stage 3
+  //-------------------------------------------------------------------------------------------|
+  MDRange4 range_cc({b.ng, b.ng, b.ng, 0},
+                    {b.ni + b.ng - 1, b.nj + b.ng - 1, b.nk + b.ng - 1, b.ne});
+  Kokkos::parallel_for(
+      "DTrk3 stage 3", range_cc,
+      KOKKOS_LAMBDA(const int i, const int j, const int k, const int l) {
+        b.q(i, j, k, l) = (b.Q0(i, j, k, l) + 2.0 * b.q(i, j, k, l) +
+                           2.0 * b.dQ(i, j, k, l) * dtau) /
+                          3.0;
       });
 }
 
