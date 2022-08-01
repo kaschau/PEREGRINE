@@ -14,9 +14,9 @@ void dQdt(block_ b, const double dt) {
   Kokkos::parallel_for(
       "dQdt", range_cc,
       KOKKOS_LAMBDA(const int i, const int j, const int k, const int l) {
-        b.dQ(i, j, k, l) = -(3.0 * b.Q(i, j, k, l) - 4.0 * b.Qn(i, j, k, l) +
+        b.dQ(i, j, k, l) -= (3.0 * b.Q(i, j, k, l) - 4.0 * b.Qn(i, j, k, l) +
                              b.Qnm1(i, j, k, l)) /
-                           (2 * dt);
+                            (2 * dt);
       });
 }
 
