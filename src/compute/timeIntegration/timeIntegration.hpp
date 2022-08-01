@@ -8,15 +8,16 @@
 // ./timeIntegration
 //    |------> dualTime.cpp
 void dQdt(block_ b, const double dt);
-void DTrk2s1(block_ b, const double dt);
-void DTrk2s2(block_ b, const double dt);
+void DTrk3s1(block_ b, const double dtau);
+void DTrk3s2(block_ b, const double dtau);
+void DTrk3s3(block_ b, const double dtau);
 void invertDQ(block_ b, const double dt, const double dtau, const thtrdat_ th);
 std::vector<double> residual(std::vector<block_> mb);
 //    |------> maccormack.cpp
 void corrector(block_ b, const double dt);
 //    |------> rk2Stages.cpp
-void rk2s1(block_ b, const double dtau);
-void rk2s2(block_ b, const double dtau);
+void rk2s1(block_ b, const double dt);
+void rk2s2(block_ b, const double dt);
 //    |------> rk3Stages.cpp
 void rk3s1(block_ b, const double dt);
 void rk3s2(block_ b, const double dt);
