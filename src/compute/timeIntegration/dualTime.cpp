@@ -14,8 +14,8 @@ void dQdt(block_ b, const double dt) {
   Kokkos::parallel_for(
       "dQdt", range_cc,
       KOKKOS_LAMBDA(const int i, const int j, const int k, const int l) {
-        b.dQ(i, j, k, l) = (3.0 * b.Q(i, j, k, l) - 4.0 * b.Qn(i, j, k, l) +
-                            b.Qnm1(i, j, k, l)) /
+        b.dQ(i, j, k, l) = -(3.0 * b.Q(i, j, k, l) - 4.0 * b.Qn(i, j, k, l) +
+                             b.Qnm1(i, j, k, l)) /
                            (2 * dt);
       });
 }
@@ -267,8 +267,9 @@ void invertDQ(block_ b, const double dt, const double dtau, const thtrdat_ th) {
           GdQ(1, 0) += mult * phi * u;
           GdQ(2, 0) += mult * phi * v;
           GdQ(3, 0) += mult * phi * w;
-          GdQ(4, 0) += mult * phi * H +
-                       T * rho_T / rho; // <- For an ideal gas this is phi*H - 1
+          GdQ(4, 0) +=
+              mult * (phi * H +
+                      T * rho_T / rho); // <- For an ideal gas this is phi*H - 1
 
           GdQ(0, 1) += mult * 0.0;
           GdQ(1, 1) += mult * rho;
@@ -292,7 +293,7 @@ void invertDQ(block_ b, const double dt, const double dtau, const thtrdat_ th) {
           GdQ(1, 4) += mult * rho_T * u;
           GdQ(2, 4) += mult * rho_T * v;
           GdQ(3, 4) += mult * rho_T * w;
-          GdQ(4, 4) += mult * rho_T * H + rho * cp;
+          GdQ(4, 4) += mult * (rho_T * H + rho * cp);
 
           for (int n = 5; n < ne; n++) {
             GdQ(0, n) += mult * rho_Y(n);
