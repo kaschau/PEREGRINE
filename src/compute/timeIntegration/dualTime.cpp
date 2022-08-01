@@ -2,6 +2,7 @@
 #include "block_.hpp"
 #include "kokkos_types.hpp"
 #include "math.h"
+#include "thtrdat_.hpp"
 #include "vector"
 
 void dQdt(block_ b, const double dt) {
@@ -98,10 +99,19 @@ std::vector<double> residual(std::vector<block_> mb) {
   return returnResid;
 }
 
-void invertDQ(block_ b, const double dt, const double dtau) {
+void invertDQ(block_ b, const double dt, const double dtau, const thtrdat_ th) {
   //-------------------------------------------------------------------------------------------|
   // Solve (\Gamma + dqdQ) dq = dQ to solver for dqdt
+  //
+  // The premultiplying matrix takes the form of Weiss and Smith
+  //
+  // Preconditioning applied to variable and constant density flows
+  // Weiss, Jonathan M. and Smith, Wayne A.
+  // AIAA Journal
+  // 1995
+  // doi: 10.2514/3.12946
   //-------------------------------------------------------------------------------------------|
+
   MDRange3 range_cc({b.ng, b.ng, b.ng},
                     {b.ni + b.ng - 1, b.nj + b.ng - 1, b.nk + b.ng - 1});
 
@@ -125,6 +135,21 @@ void invertDQ(block_ b, const double dt, const double dtau) {
 #define tempRow(INDEX) tempRow(id, INDEX)
 #endif
 
+#ifndef NSCOMPILE
+  const int ns = th.ns;
+  twoDview Y("Y", numIds, ns);
+  twoDview rho_Y("rho_Y", numIds, ns);
+#endif
+
+#ifdef NSCOMPILE
+#define Y(INDEX) Y[INDEX]
+#define rho_Y(INDEX) Y[INDEX]
+#define ns NS
+#else
+#define Y(INDEX) Y(id, INDEX)
+#define rho_Y(INDEX) rho_Y(id, INDEX)
+#endif
+
   Kokkos::parallel_for(
       "dq = (Gamma + dqdQ)^{-1} dQ", range_cc,
       KOKKOS_LAMBDA(const int i, const int j, const int k) {
@@ -133,42 +158,138 @@ void invertDQ(block_ b, const double dt, const double dtau) {
         double GdQ(ne, ne);
         int perm(ne);
         double tempRow(ne);
+        double Y(ne);
+        double rho_Y(ne);
 #else
         int id = token.acquire();
 #endif
 
-        // Construct the premultiplied matrix (Gamma + dqdQ)
-        // Start with the preconditioning matrix
-        GdQ(0, 0) = 1.0;
-        GdQ(0, 1) = 4.0;
-        GdQ(0, 2) = 2.0;
-        GdQ(0, 3) = 0.0;
-        GdQ(0, 4) = 0.0;
+        ////////////////////////////////////////////////
+        ///// COMPUTE GdQ MATRIX
+        ///// Sum of Preconditioning matrix and
+        ///// convservative to primative variable
+        ///// transformation
+        /////
+        /////  \Gamma + 3*dtau / (2*dt) dQdq
+        /////
+        ////////////////////////////////////////////////
+        double &p = b.q(i, j, k, 0);
+        double &u = b.q(i, j, k, 1);
+        double &v = b.q(i, j, k, 2);
+        double &w = b.q(i, j, k, 3);
+        double &T = b.q(i, j, k, 4);
+        double &rho = b.Q(i, j, k, 0);
+#ifdef NSCOMPILE
+        double Y(ns);
+        double rho_Y(ns);
+#endif
+        double H = b.qh(i, j, k, 2);
+        double cp = b.qh(i, j, k, 1);
+        // Compute nth species Y
+        Y(ns - 1) = 1.0;
+        double denom = 0.0;
+        for (int n = 0; n < ns - 1; n++) {
+          Y(n) = b.q(i, j, k, 5 + n);
+          Y(ns - 1) -= Y(n);
+          denom += Y(n) / th.MW(n);
+        }
+        denom += Y(ns) / th.MW(ns);
 
-        GdQ(1, 0) = 1.0;
-        GdQ(1, 1) = 2.0;
-        GdQ(1, 2) = 3.0;
-        GdQ(1, 3) = 0.0;
-        GdQ(1, 4) = 0.0;
+        // Compute MWmix
+        double MWmix = 0.0;
+        for (int n = 0; n <= ns - 1; n++) {
+          double X = Y(n) / th.MW(n) / denom;
+          MWmix += th.MW(n) * X;
+        }
 
-        GdQ(2, 0) = 2.0;
-        GdQ(2, 1) = 1.0;
-        GdQ(2, 2) = 3.0;
-        GdQ(2, 3) = 0.0;
-        GdQ(2, 4) = 0.0;
+        // Compute required derivatives
+        double rho_p = rho / p;
+        double rho_T = -rho / T;
 
-        GdQ(3, 0) = 0.0;
-        GdQ(3, 1) = 0.0;
-        GdQ(3, 2) = 0.0;
-        GdQ(3, 3) = 1.0;
-        GdQ(3, 4) = 0.0;
+        for (int n = 0; n < ns - 1; n++) {
+          rho_Y(n) = -rho * (MWmix * (1.0 / th.MW(n) - 1.0 / th.MW(ns)));
+        }
 
-        GdQ(4, 0) = 0.0;
-        GdQ(4, 1) = 0.0;
-        GdQ(4, 2) = 0.0;
-        GdQ(4, 3) = 0.0;
-        GdQ(4, 4) = 1.0;
+        ////////////////////////////////////
+        // The preconditioning and transformation matrix
+        // share a very similar form, only differing by
+        // the multiplier of the first column, and the
+        // multiplication of the time derivatives for
+        // the prim/cons transformation matrix.
+        ////////////////////////////////////
+        for (int l = 0; l < ne; l++) {
+          for (int m = 0; m < ne; m++) {
+            GdQ(l, m) = 0.0;
+          }
+        }
+        double phis[2];
+        double mults[2];
 
+        mults[0] = 1.0;
+        mults[1] = 3.0 / 2.0 * dtau / dt;
+
+        phis[0] = 1.0;
+        phis[1] = rho_p;
+
+        for (int p = 0; p < 2; p++) {
+          double phi = phis[p];
+          double mult = mults[p];
+
+          // First column
+          GdQ(0, 0) += mult * phi;
+          GdQ(1, 0) += mult * phi * u;
+          GdQ(2, 0) += mult * phi * v;
+          GdQ(3, 0) += mult * phi * w;
+          GdQ(4, 0) += mult * phi * H +
+                       T * rho_T / rho; // <- For an ideal gas this is phi*H - 1
+
+          GdQ(0, 1) += mult * 0.0;
+          GdQ(1, 1) += mult * rho;
+          GdQ(2, 1) += mult * 0.0;
+          GdQ(3, 1) += mult * 0.0;
+          GdQ(4, 1) += mult * rho * u;
+
+          GdQ(0, 2) += mult * 0.0;
+          GdQ(1, 2) += mult * 0.0;
+          GdQ(2, 2) += mult * rho;
+          GdQ(3, 2) += mult * 0.0;
+          GdQ(4, 2) += mult * rho * v;
+
+          GdQ(0, 3) += mult * 0.0;
+          GdQ(1, 3) += mult * 0.0;
+          GdQ(2, 3) += mult * 0.0;
+          GdQ(3, 3) += mult * rho;
+          GdQ(4, 3) += mult * rho * w;
+
+          GdQ(0, 4) += mult * rho_T;
+          GdQ(1, 4) += mult * rho_T * u;
+          GdQ(2, 4) += mult * rho_T * v;
+          GdQ(3, 4) += mult * rho_T * w;
+          GdQ(4, 4) += mult * rho_T * H + rho * cp;
+
+          for (int n = 5; n < ne; n++) {
+            GdQ(0, n) += mult * rho_Y(n);
+            GdQ(1, n) += mult * rho_Y(n) * u;
+            GdQ(2, n) += mult * rho_Y(n) * v;
+            GdQ(3, n) += mult * rho_Y(n) * w;
+            GdQ(4, n) += mult * rho_T * Y(n);
+            GdQ(n, 0) += mult * phi * Y(n);
+            GdQ(n, 1) += mult * 0.0;
+            GdQ(n, 2) += mult * 0.0;
+            GdQ(n, 3) += mult * 0.0;
+            GdQ(n, 4) += mult * rho_T * Y(n);
+          }
+          for (int n = 5; n < ne; n++) {
+            for (int p = 5; p < ne; p++) {
+              GdQ(p, n) += mult * Y(p) * rho_Y(n);
+            }
+          }
+          for (int n = 5; n < ne; n++) {
+            GdQ(n, n) += mult * rho;
+          }
+        }
+
+        ///////////////////////////////////////////////////////////////////////////
         printf("Gamma:\n");
         for (int q = 0; q < ne; q++) {
           for (int l = 0; l < ne; l++) {

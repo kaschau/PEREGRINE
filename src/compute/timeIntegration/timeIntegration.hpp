@@ -2,6 +2,7 @@
 #define __timeIntegration_H__
 
 #include "block_.hpp"
+#include "thtrdat_.hpp"
 #include "vector"
 
 // ./timeIntegration
@@ -9,7 +10,7 @@
 void dQdt(block_ b, const double dt);
 void DTrk2s1(block_ b, const double dt);
 void DTrk2s2(block_ b, const double dt);
-void invertDQ(block_ b, const double dt, const double dtau);
+void invertDQ(block_ b, const double dt, const double dtau, const thtrdat_ th);
 std::vector<double> residual(std::vector<block_> mb);
 //    |------> maccormack.cpp
 void corrector(block_ b, const double dt);

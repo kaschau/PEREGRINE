@@ -15,9 +15,10 @@ void bindTimeIntegration(py::module_ &m) {
                       py::arg("block_"), py::arg("dt"));
   timeIntegration.def("DTrk2s2", &DTrk2s2, "Dual Time rk2 stage 2",
                       py::arg("block_"), py::arg("dt"));
-  timeIntegration.def("invertDQ", &invertDQ, "Solve dq = \\Gamma^{-1} dQ",
-                      py::arg("block_"), py::arg("dt"), py::arg("dtau"));
   timeIntegration.def("residual", &residual, "Residual", py::arg("mb"));
+  timeIntegration.def("invertDQ", &invertDQ, "Solve dq = \\Gamma^{-1} dQ",
+                      py::arg("block_"), py::arg("dt"), py::arg("dtau"),
+                      py::arg("thtrdat_"));
   //  |----> maccormack.cpp
   timeIntegration.def("corrector", &corrector, "maccormack corrector",
                       py::arg("block_"), py::arg("dt"));
