@@ -76,7 +76,7 @@ def simulate():
     rhoInf = 1.0
     MInf = 0.1
     pInf = 101325.0
-    R = 281.4583333333333
+    R = 287.002507
     cp = 1000.0
     cv = cp - R
     gamma = cp / cv
