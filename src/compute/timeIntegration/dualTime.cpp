@@ -20,7 +20,7 @@ void dQdt(block_ b, const double dt) {
       });
 }
 
-void DTrk2s1(block_ b, const double dt) {
+void DTrk2s1(block_ b, const double dtau) {
   //-------------------------------------------------------------------------------------------|
   // Apply RK2 stage 1
   //-------------------------------------------------------------------------------------------|
@@ -29,11 +29,11 @@ void DTrk2s1(block_ b, const double dt) {
   Kokkos::parallel_for(
       "Dual time rk2 stage 1", range_cc,
       KOKKOS_LAMBDA(const int i, const int j, const int k, const int l) {
-        b.q(i, j, k, l) += b.dQ(i, j, k, l) * dt;
+        b.q(i, j, k, l) += b.dQ(i, j, k, l) * dtau;
       });
 }
 
-void DTrk2s2(block_ b, const double dt) {
+void DTrk2s2(block_ b, const double dtau) {
   //-------------------------------------------------------------------------------------------|
   // Apply RK2 stage 2
   //-------------------------------------------------------------------------------------------|
@@ -43,7 +43,7 @@ void DTrk2s2(block_ b, const double dt) {
       "Dual TIme rk2 stage 2", range_cc,
       KOKKOS_LAMBDA(const int i, const int j, const int k, const int l) {
         b.q(i, j, k, l) = 0.5 * b.Q0(i, j, k, l) +
-                          0.5 * (b.q(i, j, k, l) + dt * b.dQ(i, j, k, l));
+                          0.5 * (b.q(i, j, k, l) + dtau * b.dQ(i, j, k, l));
       });
 }
 
@@ -183,8 +183,9 @@ void invertDQ(block_ b, const double dt, const double dtau, const thtrdat_ th) {
         double Y(ns);
         double rho_Y(ns);
 #endif
-        double H = b.qh(i, j, k, 2);
         double cp = b.qh(i, j, k, 1);
+        double H = b.qh(i, j, k, 2);
+        double c = b.qh(i, j, k, 3);
         // Compute nth species Y
         Y(ns - 1) = 1.0;
         double denom = 0.0;
@@ -228,7 +229,18 @@ void invertDQ(block_ b, const double dt, const double dtau, const thtrdat_ th) {
         mults[0] = 1.0;
         mults[1] = 3.0 / 2.0 * dtau / dt;
 
-        phis[0] = 1.0;
+        double U = abs(sqrt(pow(u, 2.0) + pow(v, 2.0) + pow(w, 2.0)));
+        double eps = 1.0e-5;
+        double Ur;
+        if (U < eps * c) {
+          Ur = eps * c;
+        } else if (U > eps * c && U < c) {
+          Ur = U;
+        } else {
+          Ur = c;
+        }
+
+        phis[0] = 1.0 / pow(Ur, 2.0) - rho_T / (rho * cp);
         phis[1] = rho_p;
 
         for (int p = 0; p < 2; p++) {
@@ -290,13 +302,13 @@ void invertDQ(block_ b, const double dt, const double dtau, const thtrdat_ th) {
         }
 
         ///////////////////////////////////////////////////////////////////////////
-        printf("Gamma:\n");
-        for (int q = 0; q < ne; q++) {
-          for (int l = 0; l < ne; l++) {
-            printf("%lf ", GdQ(q, l));
-          }
-          printf("\n");
-        }
+        // printf("Gamma:\n");
+        // for (int q = 0; q < ne; q++) {
+        //   for (int l = 0; l < ne; l++) {
+        //     printf("%lf ", GdQ(q, l));
+        //   }
+        //   printf("\n");
+        // }
         ///////////////////////////////////////////////////////////////////////////
 
         // Perform LU decomposition with partial pivoting
@@ -338,18 +350,18 @@ void invertDQ(block_ b, const double dt, const double dtau, const thtrdat_ th) {
         }
 
         /////////////////////////////////////////////////////////////////////////////
-        printf("LU Decomposition:\n");
-        for (int q = 0; q < ne; q++) {
-          for (int l = 0; l < ne; l++) {
-            printf("%lf ", GdQ(q, l));
-          }
-          printf("\n");
-        }
-        printf("Permutation:\n");
-        for (int q = 0; q < ne; q++) {
-          printf("%i ", perm(q));
-        }
-        printf("\n");
+        // printf("LU Decomposition:\n");
+        // for (int q = 0; q < ne; q++) {
+        //   for (int l = 0; l < ne; l++) {
+        //     printf("%lf ", GdQ(q, l));
+        //   }
+        //   printf("\n");
+        // }
+        // printf("Permutation:\n");
+        // for (int q = 0; q < ne; q++) {
+        //   printf("%i ", perm(q));
+        // }
+        // printf("\n");
         /////////////////////////////////////////////////////////////////////////////
 
         // Row permute dQ to match LU
@@ -378,11 +390,11 @@ void invertDQ(block_ b, const double dt, const double dtau, const thtrdat_ th) {
         }
 
         /////////////////////////////////////////////////////////////////////////////
-        printf("z:\n");
-        for (int l = 0; l < ne; l++) {
-          printf("%f ", tempRow(l));
-        }
-        printf("\n");
+        // printf("z:\n");
+        // for (int l = 0; l < ne; l++) {
+        //   printf("%f ", tempRow(l));
+        // }
+        // printf("\n");
         /////////////////////////////////////////////////////////////////////////////
 
         // Now solve Ux=z which is actually
@@ -401,11 +413,11 @@ void invertDQ(block_ b, const double dt, const double dtau, const thtrdat_ th) {
         }
 
         /////////////////////////////////////////////////////////////////////////////
-        printf("x:\n");
-        for (int l = 0; l < ne; l++) {
-          printf("%f ", b.dQ(i, j, k, l));
-        }
-        printf("\n");
+        // printf("x:\n");
+        // for (int l = 0; l < ne; l++) {
+        //   printf("%f ", b.dQ(i, j, k, l));
+        // }
+        // printf("\n");
         /////////////////////////////////////////////////////////////////////////////
       });
 }

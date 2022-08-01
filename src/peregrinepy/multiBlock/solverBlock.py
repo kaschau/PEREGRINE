@@ -66,8 +66,8 @@ class solverBlock(restartBlock, block_):
         for d in ["omega"]:
             self.array[f"{d}"] = None
             self.mirror[f"{d}"] = None
-        # RK stages
-        for d in ["Q0", "Q1", "Q2", "Q3"]:
+        # Time Integration
+        for d in ["Q0", "Q1", "Q2", "Q3", "Qn", "Qnm1"]:
             self.array[f"{d}"] = None
             self.mirror[f"{d}"] = None
         # Face fluxes
@@ -227,6 +227,8 @@ class solverBlock(restartBlock, block_):
             f"Q{i}" for i in range(nstorage[config["timeIntegration"]["integrator"]])
         ]
         createViewMirrorArray(self, names, cQshape)
+        if config["timeIntegration"]["integrator"] == "dualTime":
+            createViewMirrorArray(self, ["Qn", "Qnm1"], cQshape)
 
         # ------------------------------------------------------------------- #
         #       Fluxes

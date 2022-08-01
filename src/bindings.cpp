@@ -147,6 +147,8 @@ PYBIND11_MODULE(compute, m) {
       .def_readwrite("Q1", &block_::Q1)
       .def_readwrite("Q2", &block_::Q2)
       .def_readwrite("Q3", &block_::Q3)
+      .def_readwrite("Qn", &block_::Qn)
+      .def_readwrite("Qnm1", &block_::Qnm1)
 
       // Flux Arrays
       .def_readwrite("iF", &block_::iF)
