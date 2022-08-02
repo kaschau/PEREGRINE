@@ -310,22 +310,22 @@ void invertDQ(block_ b, const double dt, const double dtau, const thtrdat_ th) {
           double h_NS =
               th.Ru * T * (b.qh(i, j, k, ne) / Y(ns - 1) / th.MW(ns - 1));
           for (int n = 5; n < ne; n++) {
-            GdQ(0, n) += mult * rho_Y(n);
-            GdQ(1, n) += mult * rho_Y(n) * u;
-            GdQ(2, n) += mult * rho_Y(n) * v;
-            GdQ(3, n) += mult * rho_Y(n) * w;
+            GdQ(0, n) += mult * rho_Y(n - 5);
+            GdQ(1, n) += mult * rho_Y(n - 5) * u;
+            GdQ(2, n) += mult * rho_Y(n - 5) * v;
+            GdQ(3, n) += mult * rho_Y(n - 5) * w;
             double h_y =
                 th.Ru * T * (b.qh(i, j, k, n) / Y(n - 5) / th.MW(n - 5)) - h_NS;
-            GdQ(4, n) += mult * rho_T * Y(n);
-            GdQ(n, 0) += mult * phi * Y(n);
+            GdQ(4, n) += mult * (H * rho_Y(n - 5) + rho * h_y);
+            GdQ(n, 0) += mult * phi * Y(n - 5);
             GdQ(n, 1) += mult * 0.0;
             GdQ(n, 2) += mult * 0.0;
             GdQ(n, 3) += mult * 0.0;
-            GdQ(n, 4) += mult * rho_T * Y(n);
+            GdQ(n, 4) += mult * rho_T * Y(n - 5);
           }
           for (int n = 5; n < ne; n++) {
             for (int p = 5; p < ne; p++) {
-              GdQ(p, n) += mult * Y(p) * rho_Y(n);
+              GdQ(p, n) += mult * Y(p - 5) * rho_Y(n - 5);
             }
           }
           for (int n = 5; n < ne; n++) {
