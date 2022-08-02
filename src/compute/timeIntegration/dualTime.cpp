@@ -223,7 +223,7 @@ void invertDQ(block_ b, const double dt, const double dtau, const thtrdat_ th) {
           Y(ns - 1) -= Y(n);
           denom += Y(n) / th.MW(n);
         }
-        denom += Y(ns) / th.MW(ns);
+        denom += Y(ns - 1) / th.MW(ns - 1);
 
         // Compute MWmix
         double MWmix = 0.0;
