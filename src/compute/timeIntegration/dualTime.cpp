@@ -212,7 +212,8 @@ void invertDQ(block_ b, const double dt, const double dtau, const thtrdat_ th) {
         double rho_Y(ns);
 #endif
         double cp = b.qh(i, j, k, 1);
-        double H = b.qh(i, j, k, 2);
+        double H = b.qh(i, j, k, 2) +
+                   0.5 * sqrt(pow(u, 2.0) + pow(v, 2.0) + pow(w, 2.0));
         double c = b.qh(i, j, k, 3);
         // Compute nth species Y
         Y(ns - 1) = 1.0;
@@ -306,11 +307,15 @@ void invertDQ(block_ b, const double dt, const double dtau, const thtrdat_ th) {
           GdQ(3, 4) += mult * rho_T * w;
           GdQ(4, 4) += mult * (rho_T * H + rho * cp);
 
+          double h_NS =
+              th.Ru * T * (b.qh(i, j, k, ne) / Y(ns - 1) / th.MW(ns - 1));
           for (int n = 5; n < ne; n++) {
             GdQ(0, n) += mult * rho_Y(n);
             GdQ(1, n) += mult * rho_Y(n) * u;
             GdQ(2, n) += mult * rho_Y(n) * v;
             GdQ(3, n) += mult * rho_Y(n) * w;
+            double h_y =
+                th.Ru * T * (b.qh(i, j, k, n) / Y(n - 5) / th.MW(n - 5)) - h_NS;
             GdQ(4, n) += mult * rho_T * Y(n);
             GdQ(n, 0) += mult * phi * Y(n);
             GdQ(n, 1) += mult * 0.0;
