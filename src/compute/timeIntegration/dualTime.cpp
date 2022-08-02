@@ -171,7 +171,7 @@ void invertDQ(block_ b, const double dt, const double dtau, const thtrdat_ th) {
 
 #ifdef NSCOMPILE
 #define Y(INDEX) Y[INDEX]
-#define rho_Y(INDEX) Y[INDEX]
+#define rho_Y(INDEX) rho_Y[INDEX]
 #define ns NS
 #else
 #define Y(INDEX) Y(id, INDEX)
@@ -186,8 +186,6 @@ void invertDQ(block_ b, const double dt, const double dtau, const thtrdat_ th) {
         double GdQ(ne, ne);
         int perm(ne);
         double tempRow(ne);
-        double Y(ne);
-        double rho_Y(ne);
 #else
         int id = token.acquire();
 #endif
