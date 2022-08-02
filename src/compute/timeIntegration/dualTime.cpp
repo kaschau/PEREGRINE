@@ -212,8 +212,8 @@ void invertDQ(block_ b, const double dt, const double dtau, const thtrdat_ th) {
         double rho_Y(ns);
 #endif
         double cp = b.qh(i, j, k, 1);
-        double H = b.qh(i, j, k, 2) +
-                   0.5 * sqrt(pow(u, 2.0) + pow(v, 2.0) + pow(w, 2.0));
+        double H = b.qh(i, j, k, 2) / rho +
+                   0.5 * (pow(u, 2.0) + pow(v, 2.0) + pow(w, 2.0));
         double c = b.qh(i, j, k, 3);
         // Compute nth species Y
         Y(ns - 1) = 1.0;
