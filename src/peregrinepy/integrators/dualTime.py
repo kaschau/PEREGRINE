@@ -6,7 +6,7 @@ from mpi4py import MPI
 from ..compute.timeIntegration import (
     DTrk3s1,
     DTrk3s2,
-    DTrk3s2,
+    DTrk3s3,
     dQdt,
     invertDQ,
     residual,
@@ -92,7 +92,7 @@ class dualTime:
 
             for blk in self:
                 invertDQ(blk, dt, dtau, self.thtrdat)
-                DTrk3s2(blk, dtau)
+                DTrk3s3(blk, dtau)
 
             consistify(self, "prims")
 
