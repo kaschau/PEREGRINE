@@ -235,7 +235,7 @@ void invertDQ(block_ b, const double dt, const double dtau, const thtrdat_ th) {
         double rho_T = -rho / T;
 
         for (int n = 0; n < ns - 1; n++) {
-          rho_Y(n) = -rho * (MWmix * (1.0 / th.MW(n) - 1.0 / th.MW(ns)));
+          rho_Y(n) = -rho * (MWmix * (1.0 / th.MW(n) - 1.0 / th.MW(ns - 1)));
         }
 
         /////////////////////////////////////////////////
@@ -411,7 +411,6 @@ void invertDQ(block_ b, const double dt, const double dtau, const thtrdat_ th) {
         // LU(dq) = dQ
         //
         // So begin with Lz = dQ where tempRow = z
-        // Because L(0,0) == 1, we can just set the first element of z
 
         for (int l = 0; l < ne; l++) {
           for (int q = 0; q < l; q++) {
