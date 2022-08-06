@@ -17,7 +17,8 @@ void bindTimeIntegration(py::module_ &m) {
                       py::arg("block_"), py::arg("dtau"));
   timeIntegration.def("DTrk3s3", &DTrk3s3, "Dual Time rk3 stage 3",
                       py::arg("block_"), py::arg("dtau"));
-  timeIntegration.def("residual", &residual, "Residual", py::arg("mb"));
+  timeIntegration.def("residual", &residual, "Residual", py::arg("mb"),
+                      py::arg("dt"));
   timeIntegration.def("invertDQ", &invertDQ, "Solve dq = \\Gamma^{-1} dQ",
                       py::arg("block_"), py::arg("dt"), py::arg("dtau"),
                       py::arg("thtrdat_"));
