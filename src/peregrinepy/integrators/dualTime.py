@@ -21,7 +21,7 @@ def printResidual(resid, nrt, ne):
     if nrt == 0:
         string = " SubIter      p          u          v          w          T"
         if ne > 5:
-            string += "          Y_1 ... Y_NS"
+            string += "        Y(1) ... Y(NS-1)"
         print(string)
     string = f"{nrt+1:8d}"
     for n in range(ne):
@@ -97,10 +97,14 @@ class dualTime:
             consistify(self, "prims")
 
             # Compute residual
-            resid = np.array(residual(self), dtype=np.float64)
-            comm.Allreduce(MPI.IN_PLACE, resid, op=MPI.MAX)
-            if rank == 0:
-                printResidual(resid, nrtDT, self[0].ne)
+            if self.nrt % self.config["simulation"]["niterPrint"] == 0:
+                resid = np.array(residual(self, dt), dtype=np.float64)
+                comm.Allreduce(MPI.IN_PLACE, resid[0, :], op=MPI.MAX)
+                comm.Allreduce(MPI.IN_PLACE, resid[1, :], op=MPI.MIN)
+                comm.Allreduce(MPI.IN_PLACE, resid[2, :], op=MPI.SUM)
+                resid[2, :] = np.sqrt(resid[2, :])
+                if rank == 0:
+                    printResidual(resid[2, :], nrtDT, self[0].ne)
 
         ############################################################################
         # End inner, pseudo time loop
