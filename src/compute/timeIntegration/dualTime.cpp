@@ -6,6 +6,17 @@
 #include "thtrdat_.hpp"
 #include "vector"
 
+//-------------------------------------------------------------------------------------------|
+// Dual Time with preconditioning from
+//
+//     Preconditioning applied to variable and constant density flows
+//     Weiss, Jonathan M. and Smith, Wayne A.
+//     AIAA Journal
+//     1995
+//     doi: 10.2514/3.12946
+//
+//-------------------------------------------------------------------------------------------|
+
 void dQdt(block_ b, const double dt) {
   //-------------------------------------------------------------------------------------------|
   // Add to dQ with real time derivative source term
