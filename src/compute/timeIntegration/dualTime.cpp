@@ -154,9 +154,9 @@ std::array<std::vector<double>, 3> residual(std::vector<block_> mb) {
   // Compute max residual for each primative
   //-------------------------------------------------------------------------------------------|
   int ne = mb[0].ne;
-  double rPmin, rUmin, rVmin, rWmin, rTmin, rYimin;
-  double rPmax, rUmax, rVmax, rWmax, rTmax, rYimax;
-  double rPrms, rUrms, rVrms, rWrms, rTrms, rYirms;
+  double rPmin, rUmin, rVmin, rWmin, rTmin;
+  double rPmax, rUmax, rVmax, rWmax, rTmax;
+  double rPrms, rUrms, rVrms, rWrms, rTrms;
   std::array<std::vector<double>, 3> returnResid;
 
   for (int l = 0; l < ne; l++) {
@@ -241,24 +241,24 @@ std::array<std::vector<double>, 3> residual(std::vector<block_> mb) {
 
     // Species
     for (int n = 5; n < ne; n++) {
+      double rYmin;
+      double rYmax;
+      double rYrms;
       Kokkos::parallel_reduce(
           "residual", range_cc,
-          KOKKOS_LAMBDA(const int i, const int j, const int k, double &resYimin,
-                        double &resYimax, double &resYirms) {
+          KOKKOS_LAMBDA(const int i, const int j, const int k, double &resYmin,
+                        double &resYmax, double &resYrms) {
             double res;
             res = abs(b.q(i, j, k, n) - b.Q0(i, j, k, n));
-            if (res < resYimin) {
-              resYimin = res;
-            } else if (res > resYimax) {
-              resYimax = res;
-            }
-            resYirms += pow(res, 2.0);
+            resYmin = fmin(res, resYmin);
+            resYmax = fmax(res, resYmax);
+            resYrms += pow(res, 2.0);
           },
-          Kokkos::Min<double>(rYimin), Kokkos::Max<double>(rYimax),
-          Kokkos::Sum<double>(rYirms));
-      returnResid[0][n] = fmin(rYimin, returnResid[0][n]);
-      returnResid[1][n] = fmax(rYimax, returnResid[1][n]);
-      returnResid[2][n] += rYirms;
+          Kokkos::Min<double>(rYmin), Kokkos::Max<double>(rYmax),
+          Kokkos::Sum<double>(rYrms));
+      returnResid[0][n] = fmin(rYmin, returnResid[0][n]);
+      returnResid[1][n] = fmax(rYmax, returnResid[1][n]);
+      returnResid[2][n] += rYrms;
     }
   }
   return returnResid;
