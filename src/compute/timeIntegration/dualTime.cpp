@@ -73,19 +73,37 @@ void localDtau(block_ b, const bool viscous) {
 
         double &c = b.qh(i, j, k, 3);
 
-        double CFLR = 0.0;
-        if (b.ni > 2) {
-          CFLR = fmax(CFLR, (uI + c) / dI);
-        }
-        if (b.nj > 2) {
-          CFLR = fmax(CFLR, (uJ + c) / dJ);
-        }
-        if (b.nk > 2) {
-          CFLR = fmax(CFLR, (uK + c) / dK);
+        double pseudoCFL = 0.5;
+        double pseudoVNN = 0.1;
+
+        double nu;
+        if (viscous) {
+          nu = b.qt(i, j, k, 0) / b.Q(i, j, k, 0);
+        } else {
+          nu = 0.0;
         }
 
-        double pseudoCFL = 0.5;
-        b.dtau(i, j, k) = pseudoCFL / CFLR;
+        double dtau = 1.0e16;
+        if (b.ni > 2) {
+          dtau = fmin(dtau, pseudoCFL * dI / (uI + c));
+          if (viscous) {
+            dtau = fmin(dtau, pseudoVNN * pow(dI, 2.0) / nu);
+          }
+        }
+        if (b.nj > 2) {
+          dtau = fmin(dtau, pseudoCFL * dJ / (uJ + c));
+          if (viscous) {
+            dtau = fmin(dtau, pseudoVNN * pow(dJ, 2.0) / nu);
+          }
+        }
+        if (b.nk > 2) {
+          dtau = fmin(dtau, pseudoCFL * dK / (uK + c));
+          if (viscous) {
+            dtau = fmin(dtau, pseudoVNN * pow(dK, 2.0) / nu);
+          }
+        }
+
+        b.dtau(i, j, k) = dtau;
       });
 }
 
@@ -246,7 +264,8 @@ std::array<std::vector<double>, 3> residual(std::vector<block_> mb) {
   return returnResid;
 }
 
-void invertDQ(block_ b, const double dt, const thtrdat_ th) {
+void invertDQ(block_ b, const double dt, const thtrdat_ th,
+              const bool viscous) {
   //-------------------------------------------------------------------------------------------|
   // Solve (\Gamma + dqdQ) dq = dQ to solver for dqdt
   //
@@ -384,6 +403,29 @@ void invertDQ(block_ b, const double dt, const thtrdat_ th) {
           Ur = U;
         } else {
           Ur = c;
+        }
+
+        // Limit reference velocity by viscosity
+        if (viscous) {
+          double dI = sqrt(pow(b.ixc(i + 1, j, k) - b.ixc(i, j, k), 2.0) +
+                           pow(b.iyc(i + 1, j, k) - b.iyc(i, j, k), 2.0) +
+                           pow(b.izc(i + 1, j, k) - b.izc(i, j, k), 2.0));
+          double dJ = sqrt(pow(b.jxc(i, j + 1, k) - b.jxc(i, j, k), 2.0) +
+                           pow(b.jyc(i, j + 1, k) - b.jyc(i, j, k), 2.0) +
+                           pow(b.jzc(i, j + 1, k) - b.jzc(i, j, k), 2.0));
+          double dK = sqrt(pow(b.kxc(i, j, k + 1) - b.kxc(i, j, k), 2.0) +
+                           pow(b.kyc(i, j, k + 1) - b.kyc(i, j, k), 2.0) +
+                           pow(b.kzc(i, j, k + 1) - b.kzc(i, j, k), 2.0));
+          double nu = b.qt(i, j, k, 0) / b.Q(i, j, k, 0);
+          if (b.ni > 2) {
+            Ur = fmin(Ur, dI / nu);
+          }
+          if (b.nj > 2) {
+            Ur = fmin(Ur, dJ / nu);
+          }
+          if (b.nk > 2) {
+            Ur = fmin(Ur, dK / nu);
+          }
         }
 
         Thetas[0] = 1.0 / pow(Ur, 2.0) - rho_T / (rho * cp);
