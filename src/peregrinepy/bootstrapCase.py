@@ -163,7 +163,6 @@ def bootstrapCase(config):
     ################################################################
     # Initialize coprocessor
     ################################################################
-
     mb.coproc = pg.coproc.coprocessor(mb)
 
     comm.Barrier()
