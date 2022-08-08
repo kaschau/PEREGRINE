@@ -130,9 +130,12 @@ class dualTime:
                     fileName = f"{path}/Qnm1.{self.nrt:08d}.{blk.nblki:06d}.npy"
                 else:
                     fileName = f"{path}/Qnm1.{blk.nblki:06d}.npy"
-                with open(fileName, "rb") as f:
-                    blk.array["Qnm1"][:] = np.load(f)
-                blk.updateDeviceView(["Qnm1"])
+                try:
+                    with open(fileName, "rb") as f:
+                        blk.array["Qnm1"][:] = np.load(f)
+                        blk.updateDeviceView(["Qnm1"])
+                except FileNotFoundError:
+                    AEQB(blk.Qnm1, blk.Q)
                 AEQB(blk.Qn, blk.Q)
         else:
             for blk in self:
