@@ -122,6 +122,19 @@ class dualTime:
 
     def initializeDualTime(self):
         # Set Qn
-        for blk in self:
-            AEQB(blk.Qn, blk.Q)
-            AEQB(blk.Qnm1, blk.Q)
+        if self.nrt != 0:
+            animate = self.config["simulation"]["animateRestart"]
+            path = self.config["io"]["restartDir"]
+            for blk in self:
+                if animate:
+                    fileName = f"{path}/Qnm1.{self.nrt:08d}.{blk.nblki:06d}.npy"
+                else:
+                    fileName = f"{path}/Qnm1.{blk.nblki:06d}.npy"
+                with open(fileName, "rb") as f:
+                    blk.array["Qnm1"][:] = np.load(f)
+                blk.updateDeviceView(["Qnm1"])
+                AEQB(blk.Qn, blk.Q)
+        else:
+            for blk in self:
+                AEQB(blk.Qn, blk.Q)
+                AEQB(blk.Qnm1, blk.Q)
