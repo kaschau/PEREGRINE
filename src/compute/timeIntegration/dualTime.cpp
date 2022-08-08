@@ -357,7 +357,7 @@ void invertDQ(block_ b, const double dt, const thtrdat_ th) {
             GdQ(l, m) = 0.0;
           }
         }
-        double phis[2];
+        double Thetas[2];
         double mults[2];
 
         mults[0] = 1.0;
@@ -374,19 +374,19 @@ void invertDQ(block_ b, const double dt, const thtrdat_ th) {
           Ur = c;
         }
 
-        phis[0] = 1.0 / pow(Ur, 2.0) - rho_T / (rho * cp);
-        phis[1] = rho_p;
+        Thetas[0] = 1.0 / pow(Ur, 2.0) - rho_T / (rho * cp);
+        Thetas[1] = rho_p;
 
         for (int p = 0; p < 2; p++) {
-          double phi = phis[p];
+          double Theta = Thetas[p];
           double mult = mults[p];
 
           // First column
-          GdQ(0, 0) += mult * phi;
-          GdQ(1, 0) += mult * phi * u;
-          GdQ(2, 0) += mult * phi * v;
-          GdQ(3, 0) += mult * phi * w;
-          GdQ(4, 0) += mult * (phi * H + T * rho_T / rho);
+          GdQ(0, 0) += mult * Theta;
+          GdQ(1, 0) += mult * Theta * u;
+          GdQ(2, 0) += mult * Theta * v;
+          GdQ(3, 0) += mult * Theta * w;
+          GdQ(4, 0) += mult * (Theta * H + T * rho_T / rho);
 
           GdQ(0, 1) += mult * 0.0;
           GdQ(1, 1) += mult * rho;
@@ -422,7 +422,7 @@ void invertDQ(block_ b, const double dt, const thtrdat_ th) {
             double h_y =
                 th.Ru * T * (b.qh(i, j, k, n) / Y(n - 5) / th.MW(n - 5)) - h_NS;
             GdQ(4, n) += mult * (H * rho_Y(n - 5) + rho * h_y);
-            GdQ(n, 0) += mult * phi * Y(n - 5);
+            GdQ(n, 0) += mult * Theta * Y(n - 5);
             GdQ(n, 1) += mult * 0.0;
             GdQ(n, 2) += mult * 0.0;
             GdQ(n, 3) += mult * 0.0;
