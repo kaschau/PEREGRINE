@@ -77,6 +77,12 @@ def simulate(configFilePath):
                 animate=config["simulation"]["animateRestart"],
                 precision="double",
             )
+            if mb.config["timeIntegration"]["integrator"] == "dualTime":
+                pg.writers.writeDualTimeQnm1(
+                    mb,
+                    path=config["io"]["restartDir"],
+                    animate=config["simulation"]["animateRestart"],
+                )
         # Check if we need to write archive
         if mb.nrt % niterArchive == 0:
             if rank == 0:
