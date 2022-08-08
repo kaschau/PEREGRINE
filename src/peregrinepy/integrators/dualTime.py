@@ -68,7 +68,7 @@ class dualTime:
 
             # Invert dqdQ, apply first rk stage
             for blk in self:
-                invertDQ(blk, dt, self.thtrdat)
+                invertDQ(blk, dt, self.thtrdat, self.config["RHS"]["diffusion"])
                 DTrk3s1(blk)
 
             consistify(self, "prims")
@@ -79,7 +79,7 @@ class dualTime:
                 dQdt(blk, dt)
 
             for blk in self:
-                invertDQ(blk, dt, self.thtrdat)
+                invertDQ(blk, dt, self.thtrdat, self.config["RHS"]["diffusion"])
                 DTrk3s2(blk)
 
             consistify(self, "prims")
@@ -90,7 +90,7 @@ class dualTime:
                 dQdt(blk, dt)
 
             for blk in self:
-                invertDQ(blk, dt, self.thtrdat)
+                invertDQ(blk, dt, self.thtrdat, self.config["RHS"]["diffusion"])
                 DTrk3s3(blk)
 
             consistify(self, "prims")

@@ -21,7 +21,8 @@ void bindTimeIntegration(py::module_ &m) {
                       py::arg("block_"));
   timeIntegration.def("residual", &residual, "Residual", py::arg("mb"));
   timeIntegration.def("invertDQ", &invertDQ, "Solve dq = \\Gamma^{-1} dQ",
-                      py::arg("block_"), py::arg("dt"), py::arg("thtrdat_"));
+                      py::arg("block_"), py::arg("dt"), py::arg("thtrdat_"),
+                      py::arg("viscous"));
   //  |----> maccormack.cpp
   timeIntegration.def("corrector", &corrector, "maccormack corrector",
                       py::arg("block_"), py::arg("dt"));
