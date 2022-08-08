@@ -8,7 +8,7 @@
 
 void dQdt(block_ b, const double dt) {
   //-------------------------------------------------------------------------------------------|
-  // Start off dQ with real time derivative source term
+  // Add to dQ with real time derivative source term
   //-------------------------------------------------------------------------------------------|
   MDRange4 range_cc({b.ng, b.ng, b.ng, 0},
                     {b.ni + b.ng - 1, b.nj + b.ng - 1, b.nk + b.ng - 1, b.ne});
@@ -21,7 +21,63 @@ void dQdt(block_ b, const double dt) {
       });
 }
 
-void DTrk3s1(block_ b, const double dtau) {
+void localDtau(block_ b, const bool viscous) {
+  //-------------------------------------------------------------------------------------------|
+  // Compute local pseudo time step
+  //-------------------------------------------------------------------------------------------|
+  MDRange3 range_cc({b.ng, b.ng, b.ng},
+                    {b.ni + b.ng - 1, b.nj + b.ng - 1, b.nk + b.ng - 1});
+  Kokkos::parallel_for(
+      "localDtau", range_cc,
+      KOKKOS_LAMBDA(const int i, const int j, const int k) {
+        // Cell lengths
+        double dI = sqrt(pow(b.ixc(i + 1, j, k) - b.ixc(i, j, k), 2.0) +
+                         pow(b.iyc(i + 1, j, k) - b.iyc(i, j, k), 2.0) +
+                         pow(b.izc(i + 1, j, k) - b.izc(i, j, k), 2.0));
+        double dJ = sqrt(pow(b.jxc(i, j + 1, k) - b.jxc(i, j, k), 2.0) +
+                         pow(b.jyc(i, j + 1, k) - b.jyc(i, j, k), 2.0) +
+                         pow(b.jzc(i, j + 1, k) - b.jzc(i, j, k), 2.0));
+        double dK = sqrt(pow(b.kxc(i, j, k + 1) - b.kxc(i, j, k), 2.0) +
+                         pow(b.kyc(i, j, k + 1) - b.kyc(i, j, k), 2.0) +
+                         pow(b.kzc(i, j, k + 1) - b.kzc(i, j, k), 2.0));
+
+        // Find max convective CFL
+        double &u = b.q(i, j, k, 1);
+        double &v = b.q(i, j, k, 2);
+        double &w = b.q(i, j, k, 3);
+
+        double uI =
+            sqrt(pow(0.5 * (b.inx(i, j, k) + b.inx(i + 1, j, k)) * u, 2.0) +
+                 pow(0.5 * (b.iny(i, j, k) + b.iny(i + 1, j, k)) * v, 2.0) +
+                 pow(0.5 * (b.inz(i, j, k) + b.inz(i + 1, j, k)) * w, 2.0));
+        double uJ =
+            sqrt(pow(0.5 * (b.jnx(i, j, k) + b.jnx(i, j + 1, k)) * u, 2.0) +
+                 pow(0.5 * (b.jny(i, j, k) + b.jny(i, j + 1, k)) * v, 2.0) +
+                 pow(0.5 * (b.jnz(i, j, k) + b.jnz(i, j + 1, k)) * w, 2.0));
+        double uK =
+            sqrt(pow(0.5 * (b.knx(i, j, k) + b.knx(i, j, k + 1)) * u, 2.0) +
+                 pow(0.5 * (b.kny(i, j, k) + b.kny(i, j, k + 1)) * v, 2.0) +
+                 pow(0.5 * (b.knz(i, j, k) + b.knz(i, j, k + 1)) * w, 2.0));
+
+        double &c = b.qh(i, j, k, 3);
+
+        double CFLR = 0.0;
+        if (b.ni > 2) {
+          CFLR = fmax(CFLR, (uI + c) / dI);
+        }
+        if (b.nj > 2) {
+          CFLR = fmax(CFLR, (uJ + c) / dJ);
+        }
+        if (b.nk > 2) {
+          CFLR = fmax(CFLR, (uK + c) / dK);
+        }
+
+        double pseudoCFL = 0.5;
+        b.dtau(i, j, k) = pseudoCFL / CFLR;
+      });
+}
+
+void DTrk3s1(block_ b) {
   //-------------------------------------------------------------------------------------------|
   // Apply RK3 stage 1
   //-------------------------------------------------------------------------------------------|
@@ -30,11 +86,11 @@ void DTrk3s1(block_ b, const double dtau) {
   Kokkos::parallel_for(
       "DTrk3 stage 1", range_cc,
       KOKKOS_LAMBDA(const int i, const int j, const int k, const int l) {
-        b.q(i, j, k, l) = b.Q0(i, j, k, l) + dtau * b.dQ(i, j, k, l);
+        b.q(i, j, k, l) = b.Q0(i, j, k, l) + b.dtau(i, j, k) * b.dQ(i, j, k, l);
       });
 }
 
-void DTrk3s2(block_ b, const double dtau) {
+void DTrk3s2(block_ b) {
   //-------------------------------------------------------------------------------------------|
   // Apply RK3 stage 2
   //-------------------------------------------------------------------------------------------|
@@ -44,11 +100,11 @@ void DTrk3s2(block_ b, const double dtau) {
       "DTrk3 stage 2", range_cc,
       KOKKOS_LAMBDA(const int i, const int j, const int k, const int l) {
         b.q(i, j, k, l) = 0.75 * b.Q0(i, j, k, l) + 0.25 * b.q(i, j, k, l) +
-                          0.25 * b.dQ(i, j, k, l) * dtau;
+                          0.25 * b.dQ(i, j, k, l) * b.dtau(i, j, k);
       });
 }
 
-void DTrk3s3(block_ b, const double dtau) {
+void DTrk3s3(block_ b) {
   //-------------------------------------------------------------------------------------------|
   // Apply RK3 stage 3
   //-------------------------------------------------------------------------------------------|
@@ -58,17 +114,16 @@ void DTrk3s3(block_ b, const double dtau) {
       "DTrk3 stage 3", range_cc,
       KOKKOS_LAMBDA(const int i, const int j, const int k, const int l) {
         b.q(i, j, k, l) = (b.Q0(i, j, k, l) + 2.0 * b.q(i, j, k, l) +
-                           2.0 * b.dQ(i, j, k, l) * dtau) /
+                           2.0 * b.dQ(i, j, k, l) * b.dtau(i, j, k)) /
                           3.0;
       });
 }
 
-std::array<std::vector<double>, 3> residual(std::vector<block_> mb, double dt) {
+std::array<std::vector<double>, 3> residual(std::vector<block_> mb) {
   //-------------------------------------------------------------------------------------------|
   // Compute max residual for each primative
   //-------------------------------------------------------------------------------------------|
   int ne = mb[0].ne;
-  double dtInv = 1.0 / dt;
   double rPmin, rUmin, rVmin, rWmin, rTmin, rYimin;
   double rPmax, rUmax, rVmax, rWmax, rTmax, rYimax;
   double rPrms, rUrms, rVrms, rWrms, rTrms, rYirms;
@@ -98,50 +153,33 @@ std::array<std::vector<double>, 3> residual(std::vector<block_> mb, double dt) {
         ) {
           double res;
           // Pressure
-          res = abs(b.q(i, j, k, 0) - b.Q0(i, j, k, 0)) * dtInv;
-          if (res < resPmin) {
-            resPmin = res;
-          } else if (res > resPmax) {
-            resPmax = res;
-          }
+          res = abs(b.q(i, j, k, 0) - b.Q0(i, j, k, 0));
+          resPmin = fmin(res, resPmin);
+          resPmax = fmax(res, resPmax);
           resPrms += pow(res, 2.0);
 
           // u-velocity
-          res = abs(b.q(i, j, k, 1) - b.Q0(i, j, k, 1)) * dtInv;
-          if (res < resUmin) {
-            resUmin = res;
-          } else if (res > resUmax) {
-            resUmax = res;
-          }
+          res = abs(b.q(i, j, k, 1) - b.Q0(i, j, k, 1));
+          resUmin = fmin(res, resUmin);
+          resUmax = fmax(res, resUmax);
           resUrms += pow(res, 2.0);
 
           // v-velocity
-          resUrms += pow(res, 2.0);
-          res = abs(b.q(i, j, k, 2) - b.Q0(i, j, k, 2)) * dtInv;
-          if (res < resVmin) {
-            resVmin = res;
-          } else if (res > resVmax) {
-            resVmax = res;
-          }
+          res = abs(b.q(i, j, k, 2) - b.Q0(i, j, k, 2));
+          resVmin = fmin(res, resVmin);
+          resVmax = fmax(res, resVmax);
           resVrms += pow(res, 2.0);
 
           // w-velocity
-          resVrms += pow(res, 2.0);
-          res = abs(b.q(i, j, k, 3) - b.Q0(i, j, k, 3)) * dtInv;
-          if (res < resWmin) {
-            resWmin = res;
-          } else if (res > resWmax) {
-            resWmax = res;
-          }
+          res = abs(b.q(i, j, k, 3) - b.Q0(i, j, k, 3));
+          resWmin = fmin(res, resWmin);
+          resWmax = fmax(res, resWmax);
           resWrms += pow(res, 2.0);
 
           // temperature
-          res = abs(b.q(i, j, k, 4) - b.Q0(i, j, k, 4)) * dtInv;
-          if (res < resTmin) {
-            resTmin = res;
-          } else if (res > resTmax) {
-            resTmax = res;
-          }
+          res = abs(b.q(i, j, k, 4) - b.Q0(i, j, k, 4));
+          resTmin = fmin(res, resTmin);
+          resTmax = fmax(res, resTmax);
           resTrms += pow(res, 2.0);
         },
         Kokkos::Min<double>(rPmin), Kokkos::Min<double>(rUmin),
@@ -166,10 +204,10 @@ std::array<std::vector<double>, 3> residual(std::vector<block_> mb, double dt) {
     returnResid[1][4] = fmax(rTmax, returnResid[1][4]);
 
     returnResid[2][0] += rPrms;
-    returnResid[2][2] += rUrms;
-    returnResid[2][3] += rVrms;
-    returnResid[2][4] += rWrms;
-    returnResid[2][1] += rTrms;
+    returnResid[2][1] += rUrms;
+    returnResid[2][2] += rVrms;
+    returnResid[2][3] += rWrms;
+    returnResid[2][4] += rTrms;
 
     // Species
     for (int n = 5; n < ne; n++) {
@@ -178,7 +216,7 @@ std::array<std::vector<double>, 3> residual(std::vector<block_> mb, double dt) {
           KOKKOS_LAMBDA(const int i, const int j, const int k, double &resYimin,
                         double &resYimax, double &resYirms) {
             double res;
-            res = abs(b.q(i, j, k, n) - b.Q0(i, j, k, n)) * dtInv;
+            res = abs(b.q(i, j, k, n) - b.Q0(i, j, k, n));
             if (res < resYimin) {
               resYimin = res;
             } else if (res > resYimax) {
@@ -196,7 +234,7 @@ std::array<std::vector<double>, 3> residual(std::vector<block_> mb, double dt) {
   return returnResid;
 }
 
-void invertDQ(block_ b, const double dt, const double dtau, const thtrdat_ th) {
+void invertDQ(block_ b, const double dt, const thtrdat_ th) {
   //-------------------------------------------------------------------------------------------|
   // Solve (\Gamma + dqdQ) dq = dQ to solver for dqdt
   //
@@ -323,7 +361,7 @@ void invertDQ(block_ b, const double dt, const double dtau, const thtrdat_ th) {
         double mults[2];
 
         mults[0] = 1.0;
-        mults[1] = 3.0 / 2.0 * dtau / dt;
+        mults[1] = 3.0 / 2.0 * b.dtau(i, j, k) / dt;
 
         double U = abs(sqrt(pow(u, 2.0) + pow(v, 2.0) + pow(w, 2.0)));
         double eps = 1.0e-5;

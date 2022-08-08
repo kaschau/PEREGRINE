@@ -8,10 +8,11 @@ from ..compute.timeIntegration import (
     DTrk3s2,
     DTrk3s3,
     dQdt,
+    localDtau,
     invertDQ,
     residual,
 )
-from ..compute.utils import AEQB, CFLmax
+from ..compute.utils import AEQB
 from ..consistify import consistify
 from ..mpiComm.mpiUtils import getCommRankSize
 from ..RHS import RHS
@@ -47,10 +48,8 @@ class dualTime:
         for nrtDT in range(20):
 
             # Determine dtau
-            cfl = np.array(CFLmax(self), dtype=np.float64)
-            comm.Allreduce(MPI.IN_PLACE, cfl, op=MPI.MAX)
-            # For now, set dtau for a combined acoustic/convective CFL=0.5
-            dtau = 0.5 / cfl[2]
+            for blk in self:
+                localDtau(blk, self.config["RHS"]["diffusion"])
 
             ##############################################
             # In pseudo time, we integrate primatives
@@ -69,8 +68,8 @@ class dualTime:
 
             # Invert dqdQ, apply first rk stage
             for blk in self:
-                invertDQ(blk, dt, dtau, self.thtrdat)
-                DTrk3s1(blk, dtau)
+                invertDQ(blk, dt, self.thtrdat)
+                DTrk3s1(blk)
 
             consistify(self, "prims")
 
@@ -80,8 +79,8 @@ class dualTime:
                 dQdt(blk, dt)
 
             for blk in self:
-                invertDQ(blk, dt, dtau, self.thtrdat)
-                DTrk3s2(blk, dtau)
+                invertDQ(blk, dt, self.thtrdat)
+                DTrk3s2(blk)
 
             consistify(self, "prims")
 
@@ -91,20 +90,20 @@ class dualTime:
                 dQdt(blk, dt)
 
             for blk in self:
-                invertDQ(blk, dt, dtau, self.thtrdat)
-                DTrk3s3(blk, dtau)
+                invertDQ(blk, dt, self.thtrdat)
+                DTrk3s3(blk)
 
             consistify(self, "prims")
 
             # Compute residual
             if self.nrt % self.config["simulation"]["niterPrint"] == 0:
-                resid = np.array(residual(self, dt), dtype=np.float64)
+                resid = np.array(residual(self), dtype=np.float64)
                 comm.Allreduce(MPI.IN_PLACE, resid[0, :], op=MPI.MAX)
                 comm.Allreduce(MPI.IN_PLACE, resid[1, :], op=MPI.MIN)
                 comm.Allreduce(MPI.IN_PLACE, resid[2, :], op=MPI.SUM)
                 resid[2, :] = np.sqrt(resid[2, :])
                 if rank == 0:
-                    printResidual(resid[2, :], nrtDT, self[0].ne)
+                    printResidual(resid[1, :], nrtDT, self[0].ne)
 
         ############################################################################
         # End inner, pseudo time loop
