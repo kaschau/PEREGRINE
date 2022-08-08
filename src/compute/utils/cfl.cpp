@@ -61,7 +61,7 @@ std::array<double, 3> CFLmax(std::vector<block_> mb) {
           if (b.nj > 2) {
             CFLA = fmax(CFLA, c / dJ);
             CFLC = fmax(CFLC, uJ / dJ);
-            CFLR = fmax(CFLR, (uK + c) / dJ);
+            CFLR = fmax(CFLR, (uJ + c) / dJ);
           }
           if (b.nk > 2) {
             CFLA = fmax(CFLA, c / dK);
