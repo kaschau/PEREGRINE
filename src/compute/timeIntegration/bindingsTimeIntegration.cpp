@@ -11,17 +11,17 @@ void bindTimeIntegration(py::module_ &m) {
   //  |----> dualTime.cpp
   timeIntegration.def("dQdt", &dQdt, "Real time derivative source term",
                       py::arg("block_"), py::arg("dt"));
+  timeIntegration.def("localDtau", &localDtau, "Local pseudo time step",
+                      py::arg("block_"), py::arg("viscous"));
   timeIntegration.def("DTrk3s1", &DTrk3s1, "Dual Time rk3 stage 1",
-                      py::arg("block_"), py::arg("dtau"));
+                      py::arg("block_"));
   timeIntegration.def("DTrk3s2", &DTrk3s2, "Dual Time rk3 stage 2",
-                      py::arg("block_"), py::arg("dtau"));
+                      py::arg("block_"));
   timeIntegration.def("DTrk3s3", &DTrk3s3, "Dual Time rk3 stage 3",
-                      py::arg("block_"), py::arg("dtau"));
-  timeIntegration.def("residual", &residual, "Residual", py::arg("mb"),
-                      py::arg("dt"));
+                      py::arg("block_"));
+  timeIntegration.def("residual", &residual, "Residual", py::arg("mb"));
   timeIntegration.def("invertDQ", &invertDQ, "Solve dq = \\Gamma^{-1} dQ",
-                      py::arg("block_"), py::arg("dt"), py::arg("dtau"),
-                      py::arg("thtrdat_"));
+                      py::arg("block_"), py::arg("dt"), py::arg("thtrdat_"));
   //  |----> maccormack.cpp
   timeIntegration.def("corrector", &corrector, "maccormack corrector",
                       py::arg("block_"), py::arg("dt"));

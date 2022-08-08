@@ -67,7 +67,7 @@ class solverBlock(restartBlock, block_):
             self.array[f"{d}"] = None
             self.mirror[f"{d}"] = None
         # Time Integration
-        for d in ["Q0", "Q1", "Q2", "Q3", "Qn", "Qnm1"]:
+        for d in ["Q0", "Q1", "Q2", "Q3", "Qn", "Qnm1", "dtau"]:
             self.array[f"{d}"] = None
             self.mirror[f"{d}"] = None
         # Face fluxes
@@ -229,6 +229,7 @@ class solverBlock(restartBlock, block_):
         createViewMirrorArray(self, names, cQshape)
         if config["timeIntegration"]["integrator"] == "dualTime":
             createViewMirrorArray(self, ["Qn", "Qnm1"], cQshape)
+            createViewMirrorArray(self, ["dtau"], ccshape)
 
         # ------------------------------------------------------------------- #
         #       Fluxes

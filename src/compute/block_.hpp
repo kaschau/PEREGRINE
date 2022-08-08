@@ -48,6 +48,7 @@ struct block_ {
   // Time integration stages
   fourDview Q0, Q1, Q2, Q3;
   fourDview Qn, Qnm1;
+  threeDview dtau;
 
   // Flux Arrays
   fourDview iF, jF, kF;
