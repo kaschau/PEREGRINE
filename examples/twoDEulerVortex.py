@@ -24,6 +24,7 @@ np.seterr(all="raise")
 def simulate():
 
     config = pg.files.configFile()
+    config.validateConfig()
 
     mb = pg.multiBlock.generateMultiBlockSolver(1, config)
     NE = NN = 41

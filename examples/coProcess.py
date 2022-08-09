@@ -94,6 +94,7 @@ def simulate():
     config["thermochem"]["trans"] = "constantProps"
     config["coprocess"]["catalyst"] = True
     config["coprocess"]["catalystFile"] = "tempcoproc.py"
+    config.validateConfig()
 
     comm, rank, size = pg.mpiComm.mpiUtils.getCommRankSize()
     if rank == 0:

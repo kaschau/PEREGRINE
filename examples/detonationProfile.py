@@ -38,6 +38,7 @@ def simulate():
     config["thermochem"]["nChemSubSteps"] = 10
     config["thermochem"]["eos"] = "tpg"
     config["thermochem"]["spdata"] = "thtr_CH4_O2_Stanford_Skeletal.yaml"
+    config.validateConfig()
     mb = pg.multiBlock.generateMultiBlockSolver(1, config)
 
     nx = 300
