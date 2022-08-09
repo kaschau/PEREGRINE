@@ -37,7 +37,12 @@ def generateTracePoints(mb, points, tags):
                 + (blk.array["zc"] - z) ** 2
             )
             minIndex = np.where((dists == np.min(dists)))
+            minIndex = tuple([minIndex[0][0], minIndex[1][0], minIndex[2][0]])
             maxDist = max(maxDist, dists[minIndex])
+
+            indexes[index, 1] = minIndex[0]
+            indexes[index, 2] = minIndex[1]
+            indexes[index, 3] = minIndex[2]
 
             indexes[index, 1] = minIndex[0][0]
             indexes[index, 2] = minIndex[1][0]
