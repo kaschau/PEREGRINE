@@ -149,20 +149,18 @@ void DTrk3s3(block_ b) {
       });
 }
 
-std::array<std::vector<double>, 3> residual(std::vector<block_> mb) {
+std::array<std::vector<double>, 2> residual(std::vector<block_> mb) {
   //-------------------------------------------------------------------------------------------|
   // Compute max residual for each primative
   //-------------------------------------------------------------------------------------------|
   int ne = mb[0].ne;
-  double rPmin, rUmin, rVmin, rWmin, rTmin;
   double rPmax, rUmax, rVmax, rWmax, rTmax;
   double rPrms, rUrms, rVrms, rWrms, rTrms;
-  std::array<std::vector<double>, 3> returnResid;
+  std::array<std::vector<double>, 2> returnResid;
 
   for (int l = 0; l < ne; l++) {
     returnResid[0].push_back(0.0);
     returnResid[1].push_back(0.0);
-    returnResid[2].push_back(0.0);
   }
 
   // First we will find the max L_inf residual for each p,u,v,w,T primative
@@ -173,92 +171,72 @@ std::array<std::vector<double>, 3> residual(std::vector<block_> mb) {
                       {b.ni + b.ng - 1, b.nj + b.ng - 1, b.nk + b.ng - 1});
     Kokkos::parallel_reduce(
         "residual", range_cc,
-        KOKKOS_LAMBDA(const int i, const int j, const int k, double &resPmin,
-                      double &resUmin, double &resVmin, double &resWmin,
-                      double &resTmin, double &resPmax, double &resUmax,
-                      double &resVmax, double &resWmax, double &resTmax,
-                      double &resPrms, double &resUrms, double &resVrms,
-                      double &resWrms, double &resTrms
+        KOKKOS_LAMBDA(const int i, const int j, const int k, double &resPmax,
+                      double &resUmax, double &resVmax, double &resWmax,
+                      double &resTmax, double &resPrms, double &resUrms,
+                      double &resVrms, double &resWrms, double &resTrms
 
         ) {
           double res;
           // Pressure
           res = abs(b.q(i, j, k, 0) - b.Q0(i, j, k, 0));
-          resPmin = fmin(res, resPmin);
           resPmax = fmax(res, resPmax);
           resPrms += pow(res, 2.0);
 
           // u-velocity
           res = abs(b.q(i, j, k, 1) - b.Q0(i, j, k, 1));
-          resUmin = fmin(res, resUmin);
           resUmax = fmax(res, resUmax);
           resUrms += pow(res, 2.0);
 
           // v-velocity
           res = abs(b.q(i, j, k, 2) - b.Q0(i, j, k, 2));
-          resVmin = fmin(res, resVmin);
           resVmax = fmax(res, resVmax);
           resVrms += pow(res, 2.0);
 
           // w-velocity
           res = abs(b.q(i, j, k, 3) - b.Q0(i, j, k, 3));
-          resWmin = fmin(res, resWmin);
           resWmax = fmax(res, resWmax);
           resWrms += pow(res, 2.0);
 
           // temperature
           res = abs(b.q(i, j, k, 4) - b.Q0(i, j, k, 4));
-          resTmin = fmin(res, resTmin);
           resTmax = fmax(res, resTmax);
           resTrms += pow(res, 2.0);
         },
-        Kokkos::Min<double>(rPmin), Kokkos::Min<double>(rUmin),
-        Kokkos::Min<double>(rVmin), Kokkos::Min<double>(rWmin),
-        Kokkos::Min<double>(rTmin), Kokkos::Max<double>(rPmax),
-        Kokkos::Max<double>(rUmax), Kokkos::Max<double>(rVmax),
-        Kokkos::Max<double>(rWmax), Kokkos::Max<double>(rTmax),
-        Kokkos::Sum<double>(rPrms), Kokkos::Sum<double>(rUrms),
-        Kokkos::Sum<double>(rVrms), Kokkos::Sum<double>(rWrms),
-        Kokkos::Sum<double>(rTrms));
+        Kokkos::Max<double>(rPmax), Kokkos::Max<double>(rUmax),
+        Kokkos::Max<double>(rVmax), Kokkos::Max<double>(rWmax),
+        Kokkos::Max<double>(rTmax), Kokkos::Sum<double>(rPrms),
+        Kokkos::Sum<double>(rUrms), Kokkos::Sum<double>(rVrms),
+        Kokkos::Sum<double>(rWrms), Kokkos::Sum<double>(rTrms));
 
-    returnResid[0][0] = fmin(rPmin, returnResid[0][0]);
-    returnResid[0][1] = fmin(rUmin, returnResid[0][1]);
-    returnResid[0][2] = fmin(rVmin, returnResid[0][2]);
-    returnResid[0][3] = fmin(rWmin, returnResid[0][3]);
-    returnResid[0][4] = fmin(rTmin, returnResid[0][4]);
+    returnResid[0][0] = fmax(rPmax, returnResid[0][0]);
+    returnResid[0][1] = fmax(rUmax, returnResid[0][1]);
+    returnResid[0][2] = fmax(rVmax, returnResid[0][2]);
+    returnResid[0][3] = fmax(rWmax, returnResid[0][3]);
+    returnResid[0][4] = fmax(rTmax, returnResid[0][4]);
 
-    returnResid[1][0] = fmax(rPmax, returnResid[1][0]);
-    returnResid[1][1] = fmax(rUmax, returnResid[1][1]);
-    returnResid[1][2] = fmax(rVmax, returnResid[1][2]);
-    returnResid[1][3] = fmax(rWmax, returnResid[1][3]);
-    returnResid[1][4] = fmax(rTmax, returnResid[1][4]);
-
-    returnResid[2][0] += rPrms;
-    returnResid[2][1] += rUrms;
-    returnResid[2][2] += rVrms;
-    returnResid[2][3] += rWrms;
-    returnResid[2][4] += rTrms;
+    returnResid[1][0] += rPrms;
+    returnResid[1][1] += rUrms;
+    returnResid[1][2] += rVrms;
+    returnResid[1][3] += rWrms;
+    returnResid[1][4] += rTrms;
 
     // Species
     for (int n = 5; n < ne; n++) {
-      double rYmin;
       double rYmax;
       double rYrms;
       Kokkos::parallel_reduce(
           "residual", range_cc,
-          KOKKOS_LAMBDA(const int i, const int j, const int k, double &resYmin,
-                        double &resYmax, double &resYrms) {
+          KOKKOS_LAMBDA(const int i, const int j, const int k, double &resYmax,
+                        double &resYrms) {
             double res;
             res = abs(b.q(i, j, k, n) - b.Q0(i, j, k, n));
-            resYmin = fmin(res, resYmin);
             resYmax = fmax(res, resYmax);
             resYrms += pow(res, 2.0);
           },
-          Kokkos::Min<double>(rYmin), Kokkos::Max<double>(rYmax),
-          Kokkos::Sum<double>(rYrms));
-      returnResid[0][n] = fmin(rYmin, returnResid[0][n]);
-      returnResid[1][n] = fmax(rYmax, returnResid[1][n]);
-      returnResid[2][n] += rYrms;
+          Kokkos::Max<double>(rYmax), Kokkos::Sum<double>(rYrms));
+      returnResid[0][n] = fmax(rYmax, returnResid[0][n]);
+      returnResid[1][n] += rYrms;
     }
   }
   return returnResid;

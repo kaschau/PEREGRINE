@@ -12,7 +12,7 @@ void localDtau(block_ b, const bool viscous);
 void DTrk3s1(block_ b);
 void DTrk3s2(block_ b);
 void DTrk3s3(block_ b);
-std::array<std::vector<double>, 3> residual(std::vector<block_> mb);
+std::array<std::vector<double>, 2> residual(std::vector<block_> mb);
 void invertDQ(block_ b, const double dt, const thtrdat_ th, const bool viscous);
 //    |------> maccormack.cpp
 void corrector(block_ b, const double dt);

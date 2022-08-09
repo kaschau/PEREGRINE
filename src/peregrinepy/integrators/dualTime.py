@@ -98,10 +98,9 @@ class dualTime:
             # Compute residual
             if self.nrt % self.config["simulation"]["niterPrint"] == 0:
                 resid = np.array(residual(self), dtype=np.float64)
-                comm.Allreduce(MPI.IN_PLACE, resid[0, :], op=MPI.MAX)
-                comm.Allreduce(MPI.IN_PLACE, resid[1, :], op=MPI.MIN)
-                comm.Allreduce(MPI.IN_PLACE, resid[2, :], op=MPI.SUM)
-                resid[2, :] = np.sqrt(resid[2, :])
+                comm.Allreduce(MPI.IN_PLACE, resid[0, :], op=MPI.MIN)
+                comm.Allreduce(MPI.IN_PLACE, resid[1, :], op=MPI.SUM)
+                resid[1, :] = np.sqrt(resid[1, :])
                 if rank == 0:
                     printResidual(resid[1, :], nrtDT, self[0].ne)
 
