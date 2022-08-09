@@ -15,7 +15,7 @@ class maccormack:
 
         # store zeroth stage solution
         for blk in self:
-            AEQB(blk.rhs0, blk.Q)
+            AEQB(blk.Q0, blk.Q)
 
         # Predictor Stage
         RHS(self)

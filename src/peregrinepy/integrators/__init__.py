@@ -4,6 +4,7 @@ from .maccormack import maccormack
 from .rk3 import rk3
 from .rk4 import rk4
 from .strang import strang
+from .dualTime import dualTime
 
 
 def getIntegrator(ti):
@@ -20,5 +21,7 @@ def getIntegrator(ti):
         return rk4
     elif ti == "strang":
         return strang
+    elif ti == "dualTime":
+        return dualTime
     else:
         raise ValueError("What time integrator?")

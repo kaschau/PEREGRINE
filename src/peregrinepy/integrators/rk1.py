@@ -16,7 +16,7 @@ class rk1:
 
         # add it to current solution
         for blk in self:
-            # Q = dt * dQ
+            # Q += dt * dQ
             ApEQxB(blk.Q, dt, blk.dQ)
 
         consistify(self)

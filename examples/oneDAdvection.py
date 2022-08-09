@@ -22,6 +22,7 @@ def simulate(index="i"):
 
     config = pg.files.configFile()
     config["RHS"]["diffusion"] = False
+    config.validateConfig()
     mb = pg.multiBlock.generateMultiBlockSolver(1, config)
     print(mb)
 
@@ -63,7 +64,7 @@ def simulate(index="i"):
     mb.computeMetrics(config["RHS"]["diffOrder"])
 
     ng = blk.ng
-    R = 281.4583333333333
+    R = 287.002507
     ccArray = {"i": "xc", "j": "yc", "k": "zc"}
     uIndex = {"i": 1, "j": 2, "k": 3}
     blk.array["q"][:, :, :, 0] = 1.0

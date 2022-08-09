@@ -5,6 +5,7 @@ from ..files import configFile
 def readConfigFile(filePath="./peregrine.yaml", parallel=False):
 
     if not parallel:
+        rank = 0
         with open(filePath, "r") as connFile:
             connIn = yaml.load(connFile, Loader=yaml.FullLoader)
     else:
@@ -28,7 +29,7 @@ def readConfigFile(filePath="./peregrine.yaml", parallel=False):
         for k2 in connIn[k1].keys():
             config[k1][k2] = connIn[k1][k2]
 
-    # ensure common problem variables are typed correctly
-    config["simulation"]["dt"] = float(config["simulation"]["dt"])
+    if rank == 0:
+        config.validateConfig()
 
     return config

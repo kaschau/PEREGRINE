@@ -155,9 +155,14 @@ def bootstrapCase(config):
     pg.consistify(mb)
 
     ################################################################
+    # Dual time initialization
+    ################################################################
+    if mb.step.stepType == "dualTime":
+        mb.initializeDualTime()
+
+    ################################################################
     # Initialize coprocessor
     ################################################################
-
     mb.coproc = pg.coproc.coprocessor(mb)
 
     comm.Barrier()

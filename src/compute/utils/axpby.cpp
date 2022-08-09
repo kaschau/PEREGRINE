@@ -8,6 +8,13 @@ void AEQConst(fourDview A, const double Const) {
   Kokkos::deep_copy(A, Const);
 }
 
+void AEQConst(threeDview A, const double Const) {
+  //-------------------------------------------------------------------------------------------|
+  // A = Const
+  //-------------------------------------------------------------------------------------------|
+  Kokkos::deep_copy(A, Const);
+}
+
 void AEQB(fourDview A, fourDview B) {
   //-------------------------------------------------------------------------------------------|
   // A = B

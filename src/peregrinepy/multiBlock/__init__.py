@@ -62,8 +62,6 @@ def setConsistify(cls, config):
     #  just never change it.
     switch = config["RHS"]["switchAdvFlux"]
     if switch is None:
-        if config["RHS"]["secondaryAdvFlux"] is not None:
-            raise KeyError("You set a secondaryAdvFlux without setting switchAdvFlux.")
         cls.switch = null
     else:
         try:
@@ -71,13 +69,6 @@ def setConsistify(cls, config):
         except AttributeError:
             raise pgConfigError("switchAdvFlux", switch)
 
-        # Just as a check, we will make sure we didnt accidentially
-        #  set a switch without setting a secondary flux
-        if config["RHS"]["secondaryAdvFlux"] is None:
-            raise pgConfigError(
-                switch,
-                "You set a advective flux switching option without a secondary flux.",
-            )
         cls.commList += ["phi"]
 
 
@@ -87,13 +78,10 @@ def setConsistify(cls, config):
 def setRHS(cls, config):
     # Primary advective fluxes
     primary = config["RHS"]["primaryAdvFlux"]
-    if primary is None:
-        raise ValueError("Primary advective flux cannot be None")
-    else:
-        try:
-            cls.primaryAdvFlux = getattr(compute.advFlux, primary)
-        except AttributeError:
-            raise pgConfigError("primaryAdvFlux", primary)
+    try:
+        cls.primaryAdvFlux = getattr(compute.advFlux, primary)
+    except AttributeError:
+        raise pgConfigError("primaryAdvFlux", primary)
     # How to apply primary flux
     shock = config["RHS"]["shockHandling"]
     if shock is None or shock == "artificialDissipation":
@@ -116,10 +104,8 @@ def setRHS(cls, config):
     if shock is None:
         cls.applySecondaryAdvFlux = null
     elif shock == "artificialDissipation":
-        assert secondary in ["scalarDissipation"]
         cls.applySecondaryAdvFlux = compute.utils.applyDissipationFlux
     elif shock == "hybrid":
-        assert secondary not in ["scalarDissipation"]
         cls.applySecondaryAdvFlux = compute.utils.applyHybridFlux
 
     # Diffusive fluxes
@@ -133,7 +119,7 @@ def setRHS(cls, config):
     # Chemical source terms
     if config["thermochem"]["chemistry"]:
         mech = config["thermochem"]["mechanism"]
-        if cls.step.stepType == "explicit":
+        if cls.step.stepType in ["explicit", "dualTime"]:
             try:
                 cls.expChem = getattr(compute.chemistry, mech)
                 cls.impChem = null
@@ -189,7 +175,7 @@ def howManyNG(config):
 def generateMultiBlockSolver(nblks, config, myblocks=None):
 
     # Get the time integrator from config file
-    ti = config["solver"]["timeIntegration"]
+    ti = config["timeIntegration"]["integrator"]
     tic = getIntegrator(ti)
     name = "solver" + ti
     # Merge the time integration class with the multiblock solver class
