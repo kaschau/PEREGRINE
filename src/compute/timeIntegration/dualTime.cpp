@@ -498,20 +498,12 @@ void invertDQ(block_ b, const double dt, const thtrdat_ th,
           }
         }
 
-        ///////////////////////////////////////////////////////////////////////////
-        // printf("Gamma:\n");
-        // for (int q = 0; q < ne; q++) {
-        //   for (int l = 0; l < ne; l++) {
-        //     printf("%lf ", GdQ(q, l));
-        //   }
-        //   printf("\n");
-        // }
-        ///////////////////////////////////////////////////////////////////////////
-
+        /////////////////////////////////////////////////////////////////////////////
         // Perform LU decomposition with partial pivoting
-        // Routine modified GdQ in place resulting in a
+        // Routine modifies GdQ in place resulting in a
         // strictly lower triangle matrix with 1.0 along the diagonal
         // and an upper triangular matrix including the diagonal.
+        /////////////////////////////////////////////////////////////////////////////
 
         for (int l = 0; l < ne; l++) {
           perm(l) = l;
@@ -546,21 +538,6 @@ void invertDQ(block_ b, const double dt, const thtrdat_ th,
           }
         }
 
-        /////////////////////////////////////////////////////////////////////////////
-        // printf("LU Decomposition:\n");
-        // for (int q = 0; q < ne; q++) {
-        //   for (int l = 0; l < ne; l++) {
-        //     printf("%lf ", GdQ(q, l));
-        //   }
-        //   printf("\n");
-        // }
-        // printf("Permutation:\n");
-        // for (int q = 0; q < ne; q++) {
-        //   printf("%i ", perm(q));
-        // }
-        // printf("\n");
-        /////////////////////////////////////////////////////////////////////////////
-
         // Row permute dQ to match LU
         for (int l = 0; l < ne; l++) {
           tempRow(l) = b.dQ(i, j, k, perm(l));
@@ -585,14 +562,6 @@ void invertDQ(block_ b, const double dt, const thtrdat_ th,
           }
         }
 
-        /////////////////////////////////////////////////////////////////////////////
-        // printf("z:\n");
-        // for (int l = 0; l < ne; l++) {
-        //   printf("%f ", tempRow(l));
-        // }
-        // printf("\n");
-        /////////////////////////////////////////////////////////////////////////////
-
         // Now solve Ux=z which is actually
         //
         // U(dq) = tempRow
@@ -607,13 +576,5 @@ void invertDQ(block_ b, const double dt, const thtrdat_ th,
           }
           b.dQ(i, j, k, l) /= GdQ(l, l);
         }
-
-        /////////////////////////////////////////////////////////////////////////////
-        // printf("x:\n");
-        // for (int l = 0; l < ne; l++) {
-        //   printf("%f ", b.dQ(i, j, k, l));
-        // }
-        // printf("\n");
-        /////////////////////////////////////////////////////////////////////////////
       });
 }
