@@ -18,6 +18,7 @@ void dq2FDoneSided(block_ b, int nface);
 //    |------> dq4FD
 void dq4FD(block_ b);
 //    |------> axpby
+void AEQConst(threeDview A, const double Const);
 void AEQConst(fourDview A, const double Const);
 void AEQB(fourDview A, fourDview B);
 void ApEQxB(fourDview A, const double x, fourDview B);
