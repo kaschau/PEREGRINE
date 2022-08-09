@@ -22,6 +22,7 @@ def simulate(index="i"):
 
     config = pg.files.configFile()
     config["RHS"]["diffusion"] = False
+    config.validateConfig()
     mb = pg.multiBlock.generateMultiBlockSolver(1, config)
     print(mb)
 
