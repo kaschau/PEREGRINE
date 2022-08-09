@@ -31,12 +31,13 @@ def simulate():
     # PEREGRINE stuff
     config = pg.files.configFile()
     config["RHS"]["diffusion"] = False
-    config["solver"]["timeIntegration"] = "rk4"
+    config["timeIntegration"]["integrator"] = "rk4"
     config["thermochem"]["chemistry"] = True
     config["thermochem"]["mechanism"] = "chem_CH4_O2_Stanford_Skeletal"
     config["thermochem"]["nChemSubSteps"] = 10
     config["thermochem"]["eos"] = "tpg"
     config["thermochem"]["spdata"] = "thtr_CH4_O2_Stanford_Skeletal.yaml"
+    config.validateConfig()
     mb = pg.multiBlock.generateMultiBlockSolver(1, config)
     pg.grid.create.multiBlockCube(
         mb,
@@ -66,7 +67,7 @@ def simulate():
     pg.consistify(mb)
 
     dt = 1e-9
-    config["simulation"]["dt"] = dt
+    config["timeIntegration"]["dt"] = dt
     niterout = 1000
     pgT = []
     pgO2 = []

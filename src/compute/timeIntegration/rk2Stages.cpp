@@ -24,7 +24,7 @@ void rk2s2(block_ b, const double dt) {
   Kokkos::parallel_for(
       "rk2 stage 2", range_cc,
       KOKKOS_LAMBDA(const int i, const int j, const int k, const int l) {
-        b.Q(i, j, k, l) = 0.5 * b.rhs0(i, j, k, l) +
+        b.Q(i, j, k, l) = 0.5 * b.Q0(i, j, k, l) +
                           0.5 * (b.Q(i, j, k, l) + dt * b.dQ(i, j, k, l));
       });
 }

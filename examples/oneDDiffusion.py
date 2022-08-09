@@ -18,6 +18,7 @@ def simulate():
     config["thermochem"]["spdata"] = ["O2", "N2"]
     config["RHS"]["diffusion"] = True
     config["RHS"]["primaryAdvFlux"] = "rusanov"
+    config.validateConfig()
     mb = pg.multiBlock.generateMultiBlockSolver(1, config)
     pg.grid.create.multiBlockCube(
         mb,

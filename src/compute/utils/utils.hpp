@@ -18,6 +18,7 @@ void dq2FDoneSided(block_ b, int nface);
 //    |------> dq4FD
 void dq4FD(block_ b);
 //    |------> axpby
+void AEQConst(threeDview A, const double Const);
 void AEQConst(fourDview A, const double Const);
 void AEQB(fourDview A, fourDview B);
 void ApEQxB(fourDview A, const double x, fourDview B);
@@ -27,6 +28,7 @@ void CEQxApyB(fourDview C, const double x, fourDview A, const double y,
 std::array<double, 3> CFLmax(std::vector<block_> mb);
 int checkNan(std::vector<block_> mb);
 
+//    |------> sendRecvBuffer
 void extract_sendBuffer3(threeDview view, face_ face, std::vector<int> slices);
 void extract_sendBuffer4(fourDview view, face_ face, std::vector<int> slices);
 void place_recvBuffer3(threeDview view, face_ face, std::vector<int> slices);

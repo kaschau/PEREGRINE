@@ -32,12 +32,13 @@ def simulate():
     config["RHS"]["primaryAdvFlux"] = "secondOrderKEEP"
     config["RHS"]["secondaryAdvFlux"] = "scalarDissipation"
     config["RHS"]["switchAdvFlux"] = "vanLeer"
-    config["solver"]["timeIntegration"] = "rk3"
+    config["timeIntegration"]["integrator"] = "rk3"
     config["thermochem"]["chemistry"] = True
     config["thermochem"]["mechanism"] = "chem_CH4_O2_Stanford_Skeletal"
     config["thermochem"]["nChemSubSteps"] = 10
     config["thermochem"]["eos"] = "tpg"
     config["thermochem"]["spdata"] = "thtr_CH4_O2_Stanford_Skeletal.yaml"
+    config.validateConfig()
     mb = pg.multiBlock.generateMultiBlockSolver(1, config)
 
     nx = 300
@@ -87,7 +88,7 @@ def simulate():
     pg.consistify(mb)
 
     dt = 1.0e-9
-    config["simulation"]["dt"] = dt
+    config["timeIntegration"]["dt"] = dt
     testIndex = int(nx / 2)
     print(mb)
     while blk.array["q"][testIndex, ng, ng, 4] < 350.0:

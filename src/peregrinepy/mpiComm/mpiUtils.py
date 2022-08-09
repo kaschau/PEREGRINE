@@ -56,13 +56,11 @@ def getDtMaxCFL(mb):
     cfl = np.array(CFLmax(mb), dtype=np.float64)
     comm.Allreduce(MPI.IN_PLACE, cfl, op=MPI.MAX)
 
-    if mb.config["simulation"]["variableTimeStep"]:
-        cflMAX = mb.config["simulation"]["maxCFL"]
-        dt = min(cflMAX / cfl[2], mb.config["simulation"]["maxDt"])
-
-        mb.config["simulation"]["dt"] = dt
+    if mb.config["timeIntegration"]["variableTimeStep"]:
+        cflMAX = mb.config["timeIntegration"]["maxCFL"]
+        dt = min(cflMAX / cfl[2], mb.config["timeIntegration"]["maxDt"])
     else:
-        dt = mb.config["simulation"]["dt"]
+        dt = mb.config["timeIntegration"]["dt"]
 
     return dt, cfl[0], cfl[1], cfl[2]
 

@@ -27,5 +27,5 @@ def RHS(mb):
             blk,
             mb.thtrdat,
             nChemSubSteps=mb.config["thermochem"]["nChemSubSteps"],
-            dt=mb.config["simulation"]["dt"],
+            dt=mb.config["timeIntegration"]["dt"],
         )

@@ -65,6 +65,8 @@ void cpg(block_ b, const thtrdat_ th, const int nface, const std::string given,
             Y(ns - 1) -= Y(n);
             testSum += Y(n);
           }
+
+          // Renormalize if necessary
           if (testSum > 1.0) {
             Y(ns - 1) = 0.0;
             for (int n = 0; n < ns - 1; n++) {
@@ -170,6 +172,8 @@ void cpg(block_ b, const thtrdat_ th, const int nface, const std::string given,
             Y(ns - 1) -= Y(n);
             testSum += Y(n);
           }
+
+          // Renormalize if necessary
           if (testSum > 1.0) {
             Y(ns - 1) = 0.0;
             for (int n = 0; n < ns - 1; n++) {

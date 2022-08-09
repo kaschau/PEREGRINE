@@ -34,6 +34,7 @@ static const std::string KokkosLocation = "Serial";
 using oneDview = Kokkos::View<double *, layout, view_space>;
 using oneDsubview = Kokkos::View<double *, Kokkos::LayoutStride, view_space>;
 using twoDview = Kokkos::View<double **, layout, view_space>;
+using twoDviewInt = Kokkos::View<int **, layout, view_space>;
 using twoDsubview = Kokkos::View<double **, Kokkos::LayoutStride, view_space>;
 using threeDview = Kokkos::View<double ***, layout, view_space>;
 using threeDsubview =

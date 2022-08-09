@@ -11,8 +11,7 @@ void rk3s1(block_ b, const double dt) {
   Kokkos::parallel_for(
       "rk3 stage 1", range_cc,
       KOKKOS_LAMBDA(const int i, const int j, const int k, const int l) {
-        b.rhs1(i, j, k, l) = dt * b.dQ(i, j, k, l);
-        b.Q(i, j, k, l) = b.rhs0(i, j, k, l) + b.rhs1(i, j, k, l);
+        b.Q(i, j, k, l) = b.Q0(i, j, k, l) + dt * b.dQ(i, j, k, l);
       });
 }
 
@@ -25,7 +24,7 @@ void rk3s2(block_ b, const double dt) {
   Kokkos::parallel_for(
       "rk3 stage 2", range_cc,
       KOKKOS_LAMBDA(const int i, const int j, const int k, const int l) {
-        b.Q(i, j, k, l) = 0.75 * b.rhs0(i, j, k, l) + 0.25 * b.Q(i, j, k, l) +
+        b.Q(i, j, k, l) = 0.75 * b.Q0(i, j, k, l) + 0.25 * b.Q(i, j, k, l) +
                           0.25 * b.dQ(i, j, k, l) * dt;
       });
 }
@@ -39,7 +38,7 @@ void rk3s3(block_ b, const double dt) {
   Kokkos::parallel_for(
       "rk3 stage 3", range_cc,
       KOKKOS_LAMBDA(const int i, const int j, const int k, const int l) {
-        b.Q(i, j, k, l) = (b.rhs0(i, j, k, l) + 2.0 * b.Q(i, j, k, l) +
+        b.Q(i, j, k, l) = (b.Q0(i, j, k, l) + 2.0 * b.Q(i, j, k, l) +
                            2.0 * b.dQ(i, j, k, l) * dt) /
                           3.0;
       });

@@ -5,3 +5,4 @@ __pycache__
 .vscode
 compile_commands.json
 .cache
+TAGS

@@ -23,6 +23,7 @@ np.seterr(all="raise")
 def simulate():
 
     config = pg.files.configFile()
+    config.validateConfig()
 
     mb = pg.multiBlock.generateMultiBlockSolver(1, config)
     NE = 65
@@ -49,7 +50,7 @@ def simulate():
     mb.unifyGrid()
     mb.computeMetrics(config["RHS"]["diffOrder"])
 
-    R = 281.4583333333333
+    R = 287.002507
     cp = 1000.0
     cv = cp - R
     M0 = 0.4

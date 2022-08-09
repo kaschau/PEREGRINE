@@ -444,7 +444,7 @@ results = {
     ),
 }
 
-R = 281.4583333333333
+R = 287.002507
 gamma = 1.4
 
 
@@ -473,7 +473,8 @@ def simulate(testnum, index="i"):
     config["RHS"]["primaryAdvFlux"] = "secondOrderKEEP"
     config["RHS"]["secondaryAdvFlux"] = "scalarDissipation"
     config["RHS"]["switchAdvFlux"] = "vanLeer"
-    config["solver"]["timeIntegration"] = "rk3"
+    config["timeIntegration"]["integrator"] = "rk3"
+    config.validateConfig()
     mb = pg.multiBlock.generateMultiBlockSolver(1, config)
     print(mb)
 

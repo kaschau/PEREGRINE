@@ -30,10 +30,11 @@ def analytical(y, h, t, nu):
 def simulate():
 
     config = pg.files.configFile()
-    config["simulation"]["dt"] = 10 * 2.0e-5 / ny
+    config["timeIntegration"]["dt"] = 10 * 2.0e-5 / ny
     config["RHS"]["diffusion"] = True
     config["thermochem"]["trans"] = "constantProps"
     config["thermochem"]["spdata"] = ["Air"]
+    config.validateConfig()
 
     mb = pg.multiBlock.generateMultiBlockSolver(1, config)
     pg.grid.create.multiBlockCube(
@@ -91,7 +92,7 @@ def simulate():
     outputU = []
     simTme = max(outputTimes) * h ** 2 / nu
     while mb.tme < simTme:
-        mb.step(config["simulation"]["dt"])
+        mb.step(config["timeIntegration"]["dt"])
 
         if mb.nrt % 200 == 0:
             pg.misc.progressBar(mb.tme, simTme)

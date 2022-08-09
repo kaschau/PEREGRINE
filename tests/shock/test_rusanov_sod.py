@@ -23,7 +23,7 @@ def test_rusanov_sod(my_setup):
     config = pg.files.configFile()
     config["RHS"]["diffusion"] = False
     config["RHS"]["primaryAdvFlux"] = "rusanov"
-    config["solver"]["timeIntegration"] = "rk1"
+    config["timeIntegration"]["integrator"] = "rk1"
     mb = pg.multiBlock.generateMultiBlockSolver(1, config)
 
     pg.grid.create.multiBlockCube(

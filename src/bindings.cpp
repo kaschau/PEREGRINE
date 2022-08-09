@@ -142,11 +142,14 @@ PYBIND11_MODULE(compute, m) {
       // Chemistry
       .def_readwrite("omega", &block_::omega)
 
-      // RK stages
-      .def_readwrite("rhs0", &block_::rhs0)
-      .def_readwrite("rhs1", &block_::rhs1)
-      .def_readwrite("rhs2", &block_::rhs2)
-      .def_readwrite("rhs3", &block_::rhs3)
+      // Time Integration Storage
+      .def_readwrite("Q0", &block_::Q0)
+      .def_readwrite("Q1", &block_::Q1)
+      .def_readwrite("Q2", &block_::Q2)
+      .def_readwrite("Q3", &block_::Q3)
+      .def_readwrite("Qn", &block_::Qn)
+      .def_readwrite("Qnm1", &block_::Qnm1)
+      .def_readwrite("dtau", &block_::dtau)
 
       // Flux Arrays
       .def_readwrite("iF", &block_::iF)

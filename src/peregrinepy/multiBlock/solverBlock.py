@@ -27,7 +27,7 @@ class solverBlock(restartBlock, block_):
 
     blockType = "solver"
 
-    def __init__(self, nblki, sp_names, ng):
+    def __init__(self, nblki, spNames, ng):
         # The c++ stuff must be instantiated first,
         # so that inhereted python side
         # attributes are assigned values, not defined
@@ -40,7 +40,7 @@ class solverBlock(restartBlock, block_):
 
         self.ng = ng
 
-        restartBlock.__init__(self, nblki, sp_names)
+        restartBlock.__init__(self, nblki, spNames)
 
         for fn in [1, 2, 3, 4, 5, 6]:
             self.faces.append(solverFace(fn, self.ng))
@@ -66,8 +66,8 @@ class solverBlock(restartBlock, block_):
         for d in ["omega"]:
             self.array[f"{d}"] = None
             self.mirror[f"{d}"] = None
-        # RK stages
-        for d in ["rhs0", "rhs1", "rhs2", "rhs3"]:
+        # Time Integration
+        for d in ["Q0", "Q1", "Q2", "Q3", "Qn", "Qnm1", "dtau"]:
             self.array[f"{d}"] = None
             self.mirror[f"{d}"] = None
         # Face fluxes
@@ -212,20 +212,24 @@ class solverBlock(restartBlock, block_):
             createViewMirrorArray(self, ["omega"], shape)
 
         # ------------------------------------------------------------------- #
-        #       RK Stages
+        #       Time Integration Storage
         # ------------------------------------------------------------------- #
         nstorage = {
             "rk1": 0,
-            "rk2": 2,
+            "rk2": 1,
             "maccormack": 1,
-            "rk3": 2,
+            "rk3": 1,
             "rk4": 4,
             "strang": 2,
+            "dualTime": 2,
         }
         names = [
-            f"rhs{i}" for i in range(nstorage[config["solver"]["timeIntegration"]])
+            f"Q{i}" for i in range(nstorage[config["timeIntegration"]["integrator"]])
         ]
         createViewMirrorArray(self, names, cQshape)
+        if config["timeIntegration"]["integrator"] == "dualTime":
+            createViewMirrorArray(self, ["Qn", "Qnm1"], cQshape)
+            createViewMirrorArray(self, ["dtau"], ccshape)
 
         # ------------------------------------------------------------------- #
         #       Fluxes

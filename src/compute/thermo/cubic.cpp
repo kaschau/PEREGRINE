@@ -106,23 +106,23 @@ void cubic(block_ b, const thtrdat_ th, const int nface,
           // Compute nth species Y
           Y(ns - 1) = 1.0;
           double testSum = 0.0;
+          // Compute y->x denom
+          double denom = 0.0;
           for (int n = 0; n < ns - 1; n++) {
             b.q(i, j, k, 5 + n) = fmax(fmin(b.q(i, j, k, 5 + n), 1.0), 0.0);
             Y(n) = b.q(i, j, k, 5 + n);
             Y(ns - 1) -= Y(n);
+            denom += Y(n) / th.MW(n);
             testSum += Y(n);
           }
+          denom += Y(ns - 1) / th.MW(ns - 1);
+
+          // Renormalize if necessary
           if (testSum > 1.0) {
             Y(ns - 1) = 0.0;
             for (int n = 0; n < ns - 1; n++) {
               Y(n) /= testSum;
             }
-          }
-
-          // Compute y->x denom
-          double denom = 0.0;
-          for (int n = 0; n <= ns - 1; n++) {
-            denom += Y(n) / th.MW(n);
           }
 
           // Compute mole fraction, mean molecular weight
@@ -383,13 +383,19 @@ void cubic(block_ b, const thtrdat_ th, const int nface,
           // Compute species mass fraction
           Y(ns - 1) = 1.0;
           double testSum = 0.0;
+          // Compute y->x denom
+          double denom = 0.0;
           for (int n = 0; n < ns - 1; n++) {
             b.Q(i, j, k, 5 + n) =
                 fmax(fmin(b.Q(i, j, k, 5 + n), b.Q(i, j, k, 0)), 0.0);
             Y(n) = b.Q(i, j, k, 5 + n) / b.Q(i, j, k, 0);
             Y(ns - 1) -= Y(n);
+            denom += Y(n) / th.MW(n);
             testSum += Y(n);
           }
+          denom += Y(ns - 1) / th.MW(ns - 1);
+
+          // Renormalize if necessary
           if (testSum > 1.0) {
             Y(ns - 1) = 0.0;
             for (int n = 0; n < ns - 1; n++) {
@@ -420,12 +426,6 @@ void cubic(block_ b, const thtrdat_ th, const int nface,
           int nitr = 0, maxitr = 100;
           double tol = 1e-8;
           double error = 1e100;
-
-          // Compute y->x denom
-          double denom = 0.0;
-          for (int n = 0; n <= ns - 1; n++) {
-            denom += Y(n) / th.MW(n);
-          }
 
           // Compute mole fraction, mean molecular weight
           double MWmix = 0.0;

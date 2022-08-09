@@ -19,6 +19,7 @@ def simulate():
     config["thermochem"]["eos"] = "cubic"
     config["thermochem"]["spdata"] = ["CO2"]
     config["thermochem"]["trans"] = "chungDenseGasUnityLewis"
+    config.validateConfig()
     mb = pg.multiBlock.generateMultiBlockSolver(1, config)
     pg.grid.create.multiBlockCube(
         mb,
