@@ -391,9 +391,11 @@ void invertDQ(block_ b, const double dt, const thtrdat_ th,
         double Thetas[2];
         double mults[2];
 
+        // Prematrix multipliers (constants)
         mults[0] = 1.0;
         mults[1] = 3.0 / 2.0 * b.dtau(i, j, k) / dt;
 
+        // Reference velocity for preconditioning theta
         double U = abs(sqrt(pow(u, 2.0) + pow(v, 2.0) + pow(w, 2.0)));
         double eps = 1.0e-5;
         double Ur;
@@ -428,13 +430,34 @@ void invertDQ(block_ b, const double dt, const thtrdat_ th,
           }
         }
 
+        // Thetas (just rho_p for dQdq)
         Thetas[0] = 1.0 / pow(Ur, 2.0) - rho_T / (rho * cp);
         Thetas[1] = rho_p;
+
+        ///////////////////////////////////////////////////////////////////
+        // Gamma and dQdq are constricted in the following blocks
+        // |-----------------------|------------------|
+        // |                       |                  |
+        // |         (1)           |       (2)        |
+        // |      Single Comp      |  Prims/Species   |
+        // |       Primatives      |                  |
+        // |                       |                  |
+        // |-----------------------|------------------|
+        // |                       |                  |
+        // |         (3)           |       (4)        |
+        // |     Species/Prims     | Species/Species  |
+        // |                       |                  |
+        // |                       |                  |
+        // |-----------------------|------------------|
+        //
+        // In a column by column manner
+        ///////////////////////////////////////////////////////////////////
 
         for (int p = 0; p < 2; p++) {
           double Theta = Thetas[p];
           double mult = mults[p];
 
+          // Block (1)
           // First column
           GdQ(0, 0) += mult * Theta;
           GdQ(1, 0) += mult * Theta * u;
@@ -442,49 +465,54 @@ void invertDQ(block_ b, const double dt, const thtrdat_ th,
           GdQ(3, 0) += mult * Theta * w;
           GdQ(4, 0) += mult * (Theta * H + T * rho_T / rho);
 
+          // Second column
           GdQ(0, 1) += mult * 0.0;
           GdQ(1, 1) += mult * rho;
           GdQ(2, 1) += mult * 0.0;
           GdQ(3, 1) += mult * 0.0;
           GdQ(4, 1) += mult * rho * u;
 
+          // Third column
           GdQ(0, 2) += mult * 0.0;
           GdQ(1, 2) += mult * 0.0;
           GdQ(2, 2) += mult * rho;
           GdQ(3, 2) += mult * 0.0;
           GdQ(4, 2) += mult * rho * v;
 
+          // Fourth column
           GdQ(0, 3) += mult * 0.0;
           GdQ(1, 3) += mult * 0.0;
           GdQ(2, 3) += mult * 0.0;
           GdQ(3, 3) += mult * rho;
           GdQ(4, 3) += mult * rho * w;
 
+          // Fifth column
           GdQ(0, 4) += mult * rho_T;
           GdQ(1, 4) += mult * rho_T * u;
           GdQ(2, 4) += mult * rho_T * v;
           GdQ(3, 4) += mult * rho_T * w;
           GdQ(4, 4) += mult * (rho_T * H + rho * cp);
 
-          double h_NS =
-              th.Ru * T * (b.qh(i, j, k, ne) / Y(ns - 1) / th.MW(ns - 1));
           for (int n = 5; n < ne; n++) {
+            // Block (2) nth column
             GdQ(0, n) += mult * rho_Y(n - 5);
             GdQ(1, n) += mult * rho_Y(n - 5) * u;
             GdQ(2, n) += mult * rho_Y(n - 5) * v;
             GdQ(3, n) += mult * rho_Y(n - 5) * w;
-            double h_y =
-                th.Ru * T * (b.qh(i, j, k, n) / Y(n - 5) / th.MW(n - 5)) - h_NS;
+            double h_y = b.qh(i, j, k, n) - b.qh(i, j, k, ne);
             GdQ(4, n) += mult * (H * rho_Y(n - 5) + rho * h_y);
+            // Block (3)
             GdQ(n, 0) += mult * Theta * Y(n - 5);
             GdQ(n, 1) += mult * 0.0;
             GdQ(n, 2) += mult * 0.0;
             GdQ(n, 3) += mult * 0.0;
             GdQ(n, 4) += mult * rho_T * Y(n - 5);
           }
+
+          // Block (4)
           for (int n = 5; n < ne; n++) {
-            for (int p = 5; p < ne; p++) {
-              GdQ(p, n) += mult * Y(p - 5) * rho_Y(n - 5);
+            for (int q = 5; q < ne; q++) {
+              GdQ(q, n) += mult * Y(q - 5) * rho_Y(n - 5);
             }
           }
           for (int n = 5; n < ne; n++) {
