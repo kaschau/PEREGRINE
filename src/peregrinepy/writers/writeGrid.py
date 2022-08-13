@@ -70,11 +70,20 @@ def writeGrid(mb, path="./", precision="double", withHalo=False, lump=False):
     Parameters
     ----------
     mb : peregrinepy.multiBlock.grid (or a descendant)
+
     file_path : str
         Path to location to write output files
+
     precision : str
         Options - 'single' for single precision
                   'double' for double precision
+
+    withHalo : bool
+        Whether we write out with halo
+
+    lump : bool
+        Whether to write out a lumped file
+
     Returns
     -------
     None
