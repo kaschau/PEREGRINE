@@ -18,6 +18,9 @@ def readGrid(mb, path="./", lump=False, justNi=False):
     path : str
         Path to find all the HDF5 grid files to be read in
 
+    lump : bool
+        Whether we are reading in a lumped file
+
     justNi: bool
         Whether to just read in block extents or entire grid.
 
