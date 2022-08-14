@@ -129,4 +129,5 @@ def writeRestart(
     if lump:
         qf.close()
 
-    metaData.saveXdmf(path)
+    metaData.saveXdmf(path, mb.nrt)
+    return metaData

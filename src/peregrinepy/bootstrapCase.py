@@ -138,7 +138,7 @@ def bootstrapCase(config):
     ################################################################
     # Register parallel restart/archive writers
     ################################################################
-    mb.parallelRestartXdmf = mb.pg.writers.parallelWriter.registerParallelMetaData(
+    mb.restartMetaData = pg.writers.parallelWriter.registerParallelMetaData(
         mb,
         blocksForProcs,
         gridPath=f"../{config['io']['gridDir']}",
@@ -146,7 +146,7 @@ def bootstrapCase(config):
         animate=config["io"]["animateRestart"],
         lump=config["io"]["lumpIO"],
     )
-    mb.parallelArchiveXdmf = mb.pg.writers.parallelWriter.registerParallelMetaData(
+    mb.archiveMetaData = pg.writers.parallelWriter.registerParallelMetaData(
         mb,
         blocksForProcs,
         gridPath=f"../{config['io']['gridDir']}",

@@ -7,7 +7,6 @@ class gridMetaData:
         self.metaType = "grid"
         self.lump = lump
         self.precision = precision
-        self.outputName = "g.xmf"
 
         # This is the main xdmf object
         self.tree = etree.Element("Xdmf")
@@ -42,9 +41,9 @@ class gridMetaData:
         geometryElem.append(deepcopy(dataXElem))
         geometryElem[-1].text = "gridFile location:/coordinates/z"
 
-    def saveXdmf(self, path="./"):
+    def saveXdmf(self, path="./", nrt=None):
         et = etree.ElementTree(self.tree)
-        saveFile = f"{path}/{self.outputName}"
+        saveFile = f"{path}/{self.getOutputName(nrt=nrt)}"
         et.write(saveFile, pretty_print=True, encoding="UTF-8", xml_declaration=True)
 
     def addBlockElem(self, nblki, ni, nj, nk, ng):
@@ -83,6 +82,9 @@ class gridMetaData:
         else:
             return f"{gridPath}/g.{nblki:06d}.h5"
 
+    def getOutputName(self, **kwags):
+        return "g.xmf"
+
 
 class restartMetaData(gridMetaData):
     def __init__(self, gridPath, precision, animate, lump, nrt=0, tme=0.0):
@@ -91,10 +93,6 @@ class restartMetaData(gridMetaData):
 
         self.animate = animate
         self.gridPath = gridPath
-        if self.animate:
-            self.outputName = f"q.{nrt:08d}.xmf"
-        else:
-            self.outputName = "q.xmf"
 
         self.timeElem = etree.SubElement(self.blockTemplate, "Time")
         self.timeElem.set("Value", str(tme))
@@ -192,15 +190,18 @@ class restartMetaData(gridMetaData):
 
         blockElem.append(attributeElem)
 
+    def getOutputName(self, nrt):
+        if self.animate:
+            outputName = f"q.{nrt:08d}.xmf"
+        else:
+            outputName = "q.xmf"
+        return outputName
+
 
 class arbitraryMetaData(restartMetaData):
     def __init__(self, arrayName, precision, animate, lump, nrt=0, tme=0.0):
         super().__init__(precision, lump)
         self.metaType = "arbitrary"
-        if self.animate:
-            self.outputName = f"{arrayName}.{nrt:08d}.xmf"
-        else:
-            self.outputName = f"{arrayName}.xmf"
         self.arrayName = arrayName
 
     def getArrayNameIndicies(self, arrayName, speciesNames):
@@ -221,3 +222,10 @@ class arbitraryMetaData(restartMetaData):
             }
 
         return d
+
+    def getOutputName(self, nrt):
+        if self.animate:
+            outputName = f"{self.arrayName}.{nrt:08d}.xmf"
+        else:
+            outputName = f"{self.arrayName}.xmf"
+        return outputName
