@@ -44,7 +44,7 @@ def writeRestart(
 
     # If writing a lumped file, open it here
     if lump:
-        fileName = metaData.getVarFileName(None, None)
+        fileName = f"{path}/{metaData.getVarFileName(None, None)})"
         qf = h5py.File(fileName, "w")
 
     for blk in mb:
@@ -61,7 +61,7 @@ def writeRestart(
 
         # If not lumping the file, open it here
         if not lump:
-            fileName = metaData.getVarFileName(nblki=nblki, nrt=mb.nrt)
+            fileName = f"{path}/{metaData.getVarFileName(blk.nrt, blk.nblki)}"
             qf = h5py.File(fileName, "w")
 
         if "iter" not in qf.keys():
@@ -114,10 +114,12 @@ def writeRestart(
             names.insert(0, "rho")
 
         for name in names:
-            metaData.addScalarToBlockElem(blockElem, name, nblki, mb.nrt, ni, nj, nk)
+            metaData.addScalarToBlockElem(
+                blockElem, name, mb, mb.nrt, nblki, ni, nj, nk
+            )
         # Add vector variables to block tree
         metaData.addVectorToBlockElem(
-            blockElem, "Velocity", ["u", "v", "w"], nblki, mb.nrt, ni, nj, nk
+            blockElem, "Velocity", ["u", "v", "w"], mb.nrt, nblki, ni, nj, nk
         )
 
         if mb.mbType == "restart":

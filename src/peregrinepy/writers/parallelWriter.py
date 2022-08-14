@@ -85,11 +85,11 @@ def registerParallelMetaData(
 
             for name in names:
                 metaData.addScalarToBlockElem(
-                    blockElem, name, nblki, mb.nrt, ni, nj, nk
+                    blockElem, name, mb.nrt, nblki, ni, nj, nk
                 )
             # Add vector variables to block tree
             metaData.addVectorToBlockElem(
-                blockElem, "Velocity", ["u", "v", "w"], nblki, mb.nrt, ni, nj, nk
+                blockElem, "Velocity", ["u", "v", "w"], mb.nrt, nblki, ni, nj, nk
             )
 
         # We add the et to the zeroth ranks mb object
@@ -118,7 +118,7 @@ def parallelWriteRestart(
         extentCC = (blk.ni - 1) * (blk.nj - 1) * (blk.nk - 1)
         ng = blk.ng
 
-        fileName = f"{path}/{metaData.getVarFileName(blk.nblki, mb.nrt)}"
+        fileName = f"{path}/{metaData.getVarFileName(blk.nrt, mb.nblki)}"
         with h5py.File(fileName, "w") as qf:
 
             qf.create_group("iter")
@@ -164,12 +164,12 @@ def parallelWriteRestart(
             for var in grid.findall("Attribute"):
                 name = var.get("Name")
                 if name != "Velocity":
-                    text = metaData.getVarFileH5Location(name, nblki, mb.nrt)
+                    text = metaData.getVarFileH5Location(name, mb.nrt, nblki)
                     var[0].text = text
                 else:
                     for v in var.find("DataItem").findall("DataItem"):
                         name = v.get("Name")
-                        text = metaData.getVarFileH5Location(name, nblki, mb.nrt)
+                        text = metaData.getVarFileH5Location(name, mb.nrt, nblki)
                         v.text = text
 
         metaData.saveXdmf(path)

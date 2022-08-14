@@ -139,7 +139,7 @@ class restartMetaData(gridMetaData):
 
         return self.gridElem[-1]
 
-    def getVarFileH5Location(self, varName, nblki, nrt):
+    def getVarFileH5Location(self, varName, nrt, nblki):
         if self.lump:
             if self.animate:
                 return f"q.{nrt:08d}.h5:/results_{nblki:06d}/{varName}"
@@ -151,7 +151,7 @@ class restartMetaData(gridMetaData):
             else:
                 return f"q.{nblki:06d}.h5:/results_{nblki:06d}/{varName}"
 
-    def getVarFileName(self, nblki, nrt):
+    def getVarFileName(self, nrt, nblki):
         if self.lump:
             if self.animate:
                 return f"q.{nrt:08d}.h5"
@@ -163,20 +163,20 @@ class restartMetaData(gridMetaData):
             else:
                 return f"q.{nblki:06d}.h5"
 
-    def addScalarToBlockElem(self, blockElem, varName, nblki, nrt, ni, nj, nk):
+    def addScalarToBlockElem(self, blockElem, varName, nrt, nblki, ni, nj, nk):
 
         attributeElem = deepcopy(self.scalarAttributeTemplate)
         attributeElem.set("Name", varName)
 
         dataItemElem = deepcopy(self.dataItemTemplate)
         dataItemElem.set("Dimensions", f"{nk-1} {nj-1} {ni-1}")
-        dataItemElem.text = self.getVarFileH5Location(varName, nblki, nrt)
+        dataItemElem.text = self.getVarFileH5Location(varName, nrt, nblki)
 
         attributeElem.append(dataItemElem)
         blockElem.append(attributeElem)
 
     def addVectorToBlockElem(
-        self, blockElem, vectorName, varNames, nblki, nrt, ni, nj, nk
+        self, blockElem, vectorName, varNames, nrt, nblki, ni, nj, nk
     ):
 
         attributeElem = deepcopy(self.vectorAttributeTemplate)
@@ -186,7 +186,7 @@ class restartMetaData(gridMetaData):
         for varName in varNames:
             dataItemElem = deepcopy(self.dataItemTemplate)
             dataItemElem.set("Dimensions", f"{nk-1} {nj-1} {ni-1}")
-            dataItemElem.text = self.getVarFileH5Location(varName, nblki, nrt)
+            dataItemElem.text = self.getVarFileH5Location(varName, nrt, nblki)
 
             functionElem.append(dataItemElem)
 
