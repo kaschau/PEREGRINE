@@ -35,7 +35,7 @@ def writeGrid(mb, path="./", precision="double", withHalo=False, lump=False):
         fdtype = "float64"
 
     # Start the xdmf tree
-    xdmfTree = gridXdmf(path, precision, lump)
+    xdmfTree = gridXdmf(precision, lump)
 
     # If we are lumping the files, open it here
     if lump:
@@ -100,4 +100,4 @@ def writeGrid(mb, path="./", precision="double", withHalo=False, lump=False):
     if lump:
         f.close()
 
-    xdmfTree.saveXdmf()
+    xdmfTree.saveXdmf(path)

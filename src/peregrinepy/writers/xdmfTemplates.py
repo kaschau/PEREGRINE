@@ -3,10 +3,10 @@ from copy import deepcopy
 
 
 class gridXdmf:
-    def __init__(self, path, precision, lump):
+    def __init__(self, precision, lump):
         self.lump = lump
-        self.path = path
         self.outputName = "g.xmf"
+        self.xdmfType = "grid"
 
         # This is the main xdmf object
         self.tree = etree.Element("Xdmf")
@@ -41,9 +41,9 @@ class gridXdmf:
         geometryElem.append(deepcopy(dataXElem))
         geometryElem[-1].text = "gridFile location:/coordinates/z"
 
-    def saveXdmf(self):
+    def saveXdmf(self, path="./"):
         et = etree.ElementTree(self.tree)
-        saveFile = f"{self.path}/{self.outputName}"
+        saveFile = f"{path}/{self.outputName}"
         et.write(saveFile, pretty_print=True, encoding="UTF-8", xml_declaration=True)
 
     def addBlockElem(self, nblki, ni, nj, nk, ng):
@@ -61,17 +61,24 @@ class gridXdmf:
         self.gridElem.append(deepcopy(blockElem))
 
     def getGridFileLocation(self, coord, nblki):
-        if self.lump:
-            return f"./grid.h5:/coordinates_{nblki:06d}/{coord}"
+        if self.xdmfType == "grid":
+            gridPath = "."
         else:
-            return f"./g.{nblki:06d}.h5:/coordinates_{nblki:06d}/{coord}"
+            gridPath = self.gridPath
+
+        if self.lump:
+            return f"{gridPath}/grid.h5:/coordinates_{nblki:06d}/{coord}"
+        else:
+            return f"{gridPath}/g.{nblki:06d}.h5:/coordinates_{nblki:06d}/{coord}"
 
 
 class restartXdmf(gridXdmf):
-    def __init__(self, path, precision, animate, lump, nrt=0, tme=0.0):
-        super().__init__(path, precision, lump)
+    def __init__(self, gridPath, precision, animate, lump, nrt=0, tme=0.0):
+        super().__init__(precision, lump)
 
         self.animate = animate
+        self.gridPath = gridPath
+        self.xdmfType = "restart"
         if self.animate:
             self.outputName = f"q.{nrt:08d}.xmf"
         else:
@@ -163,16 +170,17 @@ class restartXdmf(gridXdmf):
 
 
 class arbitraryXdmf(restartXdmf):
-    def __init__(self, path, arrayName, precision, animate, lump, nrt=0, tme=0.0):
-        super().__init__(path, precision, lump)
+    def __init__(self, arrayName, precision, animate, lump, nrt=0, tme=0.0):
+        super().__init__(precision, lump)
         if self.animate:
             self.outputName = f"{arrayName}.{nrt:08d}.xmf"
         else:
             self.outputName = f"{arrayName}.xmf"
         self.arrayName = arrayName
 
-    def getArrayNameIndicies(arrayName, speciesNames):
+    def getArrayNameIndicies(self, arrayName, speciesNames):
         ns = len(speciesNames)
+        self.xdmfType = "arbitrary"
 
         if arrayName == "q":
             raise ValueError("Use the restart writer to write out q.")

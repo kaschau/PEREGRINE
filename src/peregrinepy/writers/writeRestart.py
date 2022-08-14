@@ -34,7 +34,7 @@ def writeRestart(
 
     # Start the xdmf tree
     xdmfTree = restartXdmf(
-        path=path,
+        gridPath=gridPath,
         precision=precision,
         animate=animate,
         lump=lump,
@@ -136,4 +136,5 @@ def writeRestart(
 
     if lump:
         qf.close()
-    xdmfTree.saveXdmf()
+
+    xdmfTree.saveXdmf(path)
