@@ -90,7 +90,9 @@ def writeGrid(mb, path="./", precision="double", withHalo=False, lump=False):
         dset[:] = blk.array["z"][writeS].ravel(order="F")
 
         # Add block to xdmf tree
-        xdmfTree.addBlockElem(blk.nblki, blk.ni, blk.nj, blk.nk, ng)
+        xdmfTree.addBlockElem(
+            blk.nblki, blk.ni + 2 * ng, blk.nj + 2 * ng, blk.nk + 2 * ng, ng
+        )
 
         if mb.mbType in ["grid", "restart"]:
             progressBar(blk.nblki + 1, len(mb), f"Writing out gridBlock {blk.nblki}")
