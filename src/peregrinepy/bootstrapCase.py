@@ -135,13 +135,23 @@ def bootstrapCase(config):
         print("Set boundary conditions.")
 
     ################################################################
-    # Register parallel writer
+    # Register parallel restart/archive writers
     ################################################################
-    pg.writers.parallelWriter.registerParallelXdmf(
+    mb.parallelRestartXdmf = mb.pg.writers.parallelWriter.registerParallelMetaData(
         mb,
         blocksForProcs,
         gridPath=f"../{config['io']['gridDir']}",
+        precision="double",
         animate=config["simulation"]["animateRestart"],
+        lump=config["simulation"]["lumpRestart"],
+    )
+    mb.parallelArchiveXdmf = mb.pg.writers.parallelWriter.registerParallelMetaData(
+        mb,
+        blocksForProcs,
+        gridPath=f"../{config['io']['gridDir']}",
+        precision="single",
+        animate=config["simulation"]["animateArchive"],
+        lump=config["simulation"]["lumpArchive"],
     )
 
     ################################################################

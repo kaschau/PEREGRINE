@@ -2,11 +2,11 @@ from lxml import etree
 from copy import deepcopy
 
 
-class gridXdmf:
+class gridMetaData:
     def __init__(self, precision, lump):
         self.lump = lump
+        self.precision = precision
         self.outputName = "g.xmf"
-        self.xdmfType = "grid"
 
         # This is the main xdmf object
         self.tree = etree.Element("Xdmf")
@@ -60,8 +60,8 @@ class gridXdmf:
 
         self.gridElem.append(deepcopy(blockElem))
 
-    def getGridFileLocation(self, coord, nblki):
-        if isinstance(self, gridXdmf):
+    def getGridFileH5Location(self, coord, nblki):
+        if isinstance(self, gridMetaData):
             gridPath = "."
         else:
             gridPath = self.gridPath
@@ -71,14 +71,24 @@ class gridXdmf:
         else:
             return f"{gridPath}/g.{nblki:06d}.h5:/coordinates_{nblki:06d}/{coord}"
 
+    def getGridFileName(self, coord, nblki):
+        if isinstance(self, gridMetaData):
+            gridPath = "."
+        else:
+            gridPath = self.gridPath
 
-class restartXdmf(gridXdmf):
+        if self.lump:
+            return f"{gridPath}/grid.h5"
+        else:
+            return f"{gridPath}/g.{nblki:06d}.h5"
+
+
+class restartMetaData(gridMetaData):
     def __init__(self, gridPath, precision, animate, lump, nrt=0, tme=0.0):
         super().__init__(precision, lump)
 
         self.animate = animate
         self.gridPath = gridPath
-        self.xdmfType = "restart"
         if self.animate:
             self.outputName = f"q.{nrt:08d}.xmf"
         else:
@@ -121,23 +131,35 @@ class restartXdmf(gridXdmf):
         for coord, i in zip(["x", "y", "z"], [0, 1, 2]):
             X = blockElem.find("Geometry")[i]
             X.set("Dimensions", f"{nk} {nj} {ni}")
-            X.text = self.getGridFileLocation(coord, nblki)
+            X.text = self.getGridFileH5Location(coord, nblki)
 
         self.gridElem.append(deepcopy(blockElem))
 
         return self.gridElem[-1]
 
-    def getVarFileLocation(self, varName, nblki, nrt):
+    def getVarFileH5Location(self, varName, nblki, nrt):
         if self.lump:
             if self.animate:
-                return f"./q.{nrt:08d}.h5:/results_{nblki:06d}/{varName}"
+                return f"q.{nrt:08d}.h5:/results_{nblki:06d}/{varName}"
             else:
-                return f"./q.h5:/results_{nblki:06d}/{varName}"
+                return f"q.h5:/results_{nblki:06d}/{varName}"
         else:
             if self.animate:
-                return f"./q.{nrt:08d}.{nblki:06d}.h5:/results_{nblki:06d}/{varName}"
+                return f"q.{nrt:08d}.{nblki:06d}.h5:/results_{nblki:06d}/{varName}"
             else:
-                return f"./q.{nblki:06d}.h5:/results_{nblki:06d}/{varName}"
+                return f"q.{nblki:06d}.h5:/results_{nblki:06d}/{varName}"
+
+    def getVarFileName(self, nblki, nrt):
+        if self.lump:
+            if self.animate:
+                return f"q.{nrt:08d}.h5"
+            else:
+                return "q.h5"
+        else:
+            if self.animate:
+                return f"q.{nrt:08d}.{nblki:06d}.h5"
+            else:
+                return f"q.{nblki:06d}.h5"
 
     def addScalarToBlockElem(self, blockElem, varName, nblki, nrt, ni, nj, nk):
 
@@ -146,7 +168,7 @@ class restartXdmf(gridXdmf):
 
         dataItemElem = deepcopy(self.dataItemTemplate)
         dataItemElem.set("Dimensions", f"{nk-1} {nj-1} {ni-1}")
-        dataItemElem.text = self.getVarFileLocation(varName, nblki, nrt)
+        dataItemElem.text = self.getVarH5FileLocation(varName, nblki, nrt)
 
         attributeElem.append(dataItemElem)
         blockElem.append(attributeElem)
@@ -162,14 +184,14 @@ class restartXdmf(gridXdmf):
         for varName in varNames:
             dataItemElem = deepcopy(self.dataItemTemplate)
             dataItemElem.set("Dimensions", f"{nk-1} {nj-1} {ni-1}")
-            dataItemElem.text = self.getVarFileLocation(varName, nblki, nrt)
+            dataItemElem.text = self.getVarH5FileLocation(varName, nblki, nrt)
 
             functionElem.append(dataItemElem)
 
         blockElem.append(attributeElem)
 
 
-class arbitraryXdmf(restartXdmf):
+class arbitraryMetaData(restartMetaData):
     def __init__(self, arrayName, precision, animate, lump, nrt=0, tme=0.0):
         super().__init__(precision, lump)
         if self.animate:
@@ -180,7 +202,6 @@ class arbitraryXdmf(restartXdmf):
 
     def getArrayNameIndicies(self, arrayName, speciesNames):
         ns = len(speciesNames)
-        self.xdmfType = "arbitrary"
 
         if arrayName == "q":
             raise ValueError("Use the restart writer to write out q.")
