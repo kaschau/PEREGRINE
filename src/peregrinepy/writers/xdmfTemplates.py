@@ -61,7 +61,7 @@ class gridXdmf:
         self.gridElem.append(deepcopy(blockElem))
 
     def getGridFileLocation(self, coord, nblki):
-        if self.xdmfType == "grid":
+        if isinstance(self, gridXdmf):
             gridPath = "."
         else:
             gridPath = self.gridPath
