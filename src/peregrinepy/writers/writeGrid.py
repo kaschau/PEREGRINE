@@ -1,68 +1,8 @@
 # -*- coding: utf-8 -*-
 import h5py
 import numpy as np
-from lxml import etree
-from copy import deepcopy
 from ..misc import progressBar
-
-
-class gridXdmf:
-    def __init__(self, path, precision, lump):
-        self.lump = lump
-        self.path = path
-
-        # This is the main xdmf object
-        self.tree = etree.Element("Xdmf")
-        self.tree.set("Version", "2")
-
-        self.domainElem = etree.SubElement(self.tree, "Domain")
-        self.gridElem = etree.SubElement(self.domainElem, "Grid")
-        self.gridElem.set("Name", "PEREGRINE Output")
-        self.gridElem.set("GridType", "Collection")
-        self.gridElem.set("CollectionType", "Spatial")
-
-        # This is a template of an individual block
-        self.blockTemplate = etree.Element("Grid")
-        self.blockTemplate.set("Name", "B#Here")
-
-        topologyElem = etree.SubElement(self.blockTemplate, "Topology")
-        topologyElem.set("TopologyType", "3DSMesh")
-        topologyElem.set("NumberOfElements", "Num Elem Here")
-        geometryElem = etree.SubElement(self.blockTemplate, "Geometry")
-        geometryElem.set("GeometryType", "X_Y_Z")
-
-        dataXElem = etree.SubElement(geometryElem, "DataItem")
-        dataXElem.set("NumberType", "Float")
-        dataXElem.set("Dimensions", "XYZ Dims Here")
-        dataXElem.set("Precision", "8" if precision == "double" else "4")
-        dataXElem.set("Format", "HDF")
-
-        dataXElem.text = "gridFile location:/coordinate/x"
-        geometryElem.append(deepcopy(dataXElem))
-        geometryElem[-1].text = "gridFile location:/coordinates/y"
-
-        geometryElem.append(deepcopy(dataXElem))
-        geometryElem[-1].text = "gridFile location:/coordinates/z"
-
-    def addBlock(self, nblki, ni, nj, nk, ng):
-
-        block = deepcopy(self.blockTemplate)
-        block.set("Name", f"B{nblki:06d}")
-        topo = block.find("Topology")
-        topo.set("NumberOfElements", f"{nk+2*ng} {nj+2*ng} {ni+2*ng}")
-
-        for coord, i in zip(["x", "y", "z"], [0, 1, 2]):
-            X = block.find("Geometry")[i]
-            X.set("Dimensions", f"{nk+2*ng} {nj+2*ng} {ni+2*ng}")
-            X.text = self.getGridFileLocation(nblki) + coord
-
-        self.gridElem.append(deepcopy(block))
-
-    def getGridFileLocation(self, nblki):
-        if self.lump:
-            return f"./grid.h5:/coordinates_{nblki:06d}/"
-        else:
-            return f"./g.{nblki:06d}.h5:/coordinates_{nblki:06d}/"
+from .xdmfTemplates import gridXdmf
 
 
 def writeGrid(mb, path="./", precision="double", withHalo=False, lump=False):
@@ -90,9 +30,9 @@ def writeGrid(mb, path="./", precision="double", withHalo=False, lump=False):
     """
 
     if precision == "single":
-        fdtype = "<f4"
+        fdtype = "float32"
     else:
-        fdtype = "<f8"
+        fdtype = "float64"
 
     # Start the xdmf tree
     xdmfTree = gridXdmf(path, precision, lump)
@@ -150,11 +90,14 @@ def writeGrid(mb, path="./", precision="double", withHalo=False, lump=False):
         dset[:] = blk.array["z"][writeS].ravel(order="F")
 
         # Add block to xdmf tree
-        xdmfTree.addBlock(blk.nblki, blk.ni, blk.nj, blk.nk, ng)
+        xdmfTree.addBlockElem(blk.nblki, blk.ni, blk.nj, blk.nk, ng)
 
         if mb.mbType in ["grid", "restart"]:
             progressBar(blk.nblki + 1, len(mb), f"Writing out gridBlock {blk.nblki}")
+        if not lump:
+            f.close()
 
-    et = etree.ElementTree(xdmfTree.tree)
-    save_file = f"{path}/g.xmf"
-    et.write(save_file, pretty_print=True, encoding="UTF-8", xml_declaration=True)
+    if lump:
+        f.close()
+
+    xdmfTree.saveXdmf()
