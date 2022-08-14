@@ -16,15 +16,13 @@ def registerParallelMetaData(
     myNiList = [[blk.ni, blk.nj, blk.nk] for blk in mb]
 
     blockIndex = 0
+    totalNiList = np.zeros((mb.totalBlocks, 3), dtype=np.int32)
     if rank == 0:
-        totalNiList = np.zeros((mb.totalBlocks, 3), dtype=np.int32)
         for blk in mb:
             totalNiList[blockIndex, 0] = blk.ni
             totalNiList[blockIndex, 1] = blk.nj
             totalNiList[blockIndex, 2] = blk.nk
             blockIndex += 1
-    else:
-        totalNiList = None
 
     for sendrank in range(1, size):
         # send ni list
@@ -55,47 +53,44 @@ def registerParallelMetaData(
             pass
 
     # Flatten the list, then sort in block order
+    totalBlockList = [nblki for b in blocksForProcs for nblki in b]
     if rank == 0:
-        totalBlockList = [nblki for b in blocksForProcs for nblki in b]
         totalBlockList, totalNiList = (
             list(t) for t in zip(*sorted(zip(totalBlockList, totalNiList)))
         )
 
-    # Create the metaData for all the blocks
-    if rank == 0:
+    # Send the list to all the other processes
+    comm.Bcast(totalBlockList, root=0)
 
-        metaData = restartMetaData(
-            gridPath=gridPath,
-            precision=precision,
-            animate=animate,
-            lump=lump,
-            nrt=mb.nrt,
-            tme=mb.tme,
+    # Create the metaData for all the blocks
+    metaData = restartMetaData(
+        gridPath=gridPath,
+        precision=precision,
+        animate=animate,
+        lump=lump,
+        nrt=mb.nrt,
+        tme=mb.tme,
+    )
+
+    for nblki, n in zip(totalBlockList, totalNiList):
+        ni = n[0]
+        nj = n[1]
+        nk = n[2]
+        # Add block to xdmf tree
+        blockElem = metaData.addBlockElem(nblki, ni, nj, nk, ng=0)
+
+        # Add scalar variables to block tree
+        names = ["rho", "p", "T"] + blk.speciesNames
+
+        for name in names:
+            metaData.addScalarToBlockElem(blockElem, name, mb.nrt, nblki, ni, nj, nk)
+        # Add vector variables to block tree
+        metaData.addVectorToBlockElem(
+            blockElem, "Velocity", ["u", "v", "w"], mb.nrt, nblki, ni, nj, nk
         )
 
-        for nblki, n in zip(totalBlockList, totalNiList):
-            ni = n[0]
-            nj = n[1]
-            nk = n[2]
-            # Add block to xdmf tree
-            blockElem = metaData.addBlockElem(nblki, ni, nj, nk, ng=0)
-
-            # Add scalar variables to block tree
-            names = ["rho", "p", "T"] + blk.speciesNames
-
-            for name in names:
-                metaData.addScalarToBlockElem(
-                    blockElem, name, mb.nrt, nblki, ni, nj, nk
-                )
-            # Add vector variables to block tree
-            metaData.addVectorToBlockElem(
-                blockElem, "Velocity", ["u", "v", "w"], mb.nrt, nblki, ni, nj, nk
-            )
-
-        # We add the et to the zeroth ranks mb object
-        return metaData
-    else:
-        return None
+    # We add the et to the zeroth ranks mb object
+    return metaData
 
 
 def parallelWriteRestart(
