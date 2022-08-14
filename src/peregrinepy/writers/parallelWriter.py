@@ -61,10 +61,10 @@ def registerParallelMetaData(
             list(t) for t in zip(*sorted(zip(totalBlockList, totalNiList)))
         )
 
-    # Create the xml for all the blocks
+    # Create the metaData for all the blocks
     if rank == 0:
-        # Start the xdmf
-        xdmf = restartMetaData(
+
+        metaData = restartMetaData(
             gridPath=gridPath,
             precision=precision,
             animate=animate,
@@ -78,20 +78,22 @@ def registerParallelMetaData(
             nj = n[1]
             nk = n[2]
             # Add block to xdmf tree
-            blockElem = xdmf.addBlockElem(nblki, ni, nj, nk, ng=0)
+            blockElem = metaData.addBlockElem(nblki, ni, nj, nk, ng=0)
 
             # Add scalar variables to block tree
             names = ["rho", "p", "T"] + blk.speciesNames
 
             for name in names:
-                xdmf.addScalarToBlockElem(blockElem, name, nblki, mb.nrt, ni, nj, nk)
+                metaData.addScalarToBlockElem(
+                    blockElem, name, nblki, mb.nrt, ni, nj, nk
+                )
             # Add vector variables to block tree
-            xdmf.addVectorToBlockElem(
+            metaData.addVectorToBlockElem(
                 blockElem, "Velocity", ["u", "v", "w"], nblki, mb.nrt, ni, nj, nk
             )
 
         # We add the et to the zeroth ranks mb object
-        return xdmf
+        return metaData
     else:
         return None
 
