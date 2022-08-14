@@ -170,7 +170,7 @@ class restartMetaData(gridMetaData):
 
         dataItemElem = deepcopy(self.dataItemTemplate)
         dataItemElem.set("Dimensions", f"{nk-1} {nj-1} {ni-1}")
-        dataItemElem.text = self.getVarH5FileLocation(varName, nblki, nrt)
+        dataItemElem.text = self.getVarFileH5Location(varName, nblki, nrt)
 
         attributeElem.append(dataItemElem)
         blockElem.append(attributeElem)
@@ -186,7 +186,7 @@ class restartMetaData(gridMetaData):
         for varName in varNames:
             dataItemElem = deepcopy(self.dataItemTemplate)
             dataItemElem.set("Dimensions", f"{nk-1} {nj-1} {ni-1}")
-            dataItemElem.text = self.getVarH5FileLocation(varName, nblki, nrt)
+            dataItemElem.text = self.getVarFileH5Location(varName, nblki, nrt)
 
             functionElem.append(dataItemElem)
 
