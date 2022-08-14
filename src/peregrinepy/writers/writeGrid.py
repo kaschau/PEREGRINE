@@ -2,7 +2,7 @@
 import h5py
 import numpy as np
 from ..misc import progressBar
-from .xdmfTemplates import gridXdmf
+from .writerMetaData import gridMetaData
 
 
 def writeGrid(mb, path="./", precision="double", withHalo=False, lump=False):
@@ -35,7 +35,7 @@ def writeGrid(mb, path="./", precision="double", withHalo=False, lump=False):
         fdtype = "float64"
 
     # Start the xdmf tree
-    xdmfTree = gridXdmf(precision, lump)
+    metaData = gridMetaData(precision, lump)
 
     # If we are lumping the files, open it here
     if lump:
@@ -90,7 +90,7 @@ def writeGrid(mb, path="./", precision="double", withHalo=False, lump=False):
         dset[:] = blk.array["z"][writeS].ravel(order="F")
 
         # Add block to xdmf tree
-        xdmfTree.addBlockElem(
+        metaData.addBlockElem(
             blk.nblki, blk.ni + 2 * ng, blk.nj + 2 * ng, blk.nk + 2 * ng, ng
         )
 
@@ -102,4 +102,4 @@ def writeGrid(mb, path="./", precision="double", withHalo=False, lump=False):
     if lump:
         f.close()
 
-    xdmfTree.saveXdmf(path)
+    metaData.saveXdmf(path)

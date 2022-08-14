@@ -28,14 +28,16 @@ class configFile(frozenDict):
                 "inputDir": "./Input",
                 "restartDir": "./Restart",
                 "archiveDir": "./Archive",
+                "animateArchive": True,
+                "animateRestart": False,
+                "lumpRestart": False,
+                "lumpArchive": False,
             }
         )
         self["simulation"] = frozenDict(
             {
                 "niter": 1,
                 "restartFrom": 0,
-                "animateArchive": True,
-                "animateRestart": False,
                 "niterArchive": 1e10,
                 "niterRestart": 10,
                 "niterPrint": 1,

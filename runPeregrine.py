@@ -73,9 +73,8 @@ def simulate(configFilePath):
                 print("Saving restart.\n")
             pg.writers.parallelWriter.parallelWriteRestart(
                 mb,
+                mb.restartMetaData,
                 path=config["io"]["restartDir"],
-                animate=config["simulation"]["animateRestart"],
-                precision="double",
             )
             if mb.config["timeIntegration"]["integrator"] == "dualTime":
                 pg.writers.writeDualTimeQnm1(
@@ -89,9 +88,8 @@ def simulate(configFilePath):
                 print("Saving archive.\n")
             pg.writers.parallelWriter.parallelWriteRestart(
                 mb,
+                mb.archiveMetaData,
                 path=config["io"]["archiveDir"],
-                animate=config["simulation"]["animateArchive"],
-                precision="single",
             )
 
         # Check if we need to check for Nan

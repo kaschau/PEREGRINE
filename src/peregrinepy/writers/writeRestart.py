@@ -1,7 +1,7 @@
 import h5py
 import numpy as np
 from ..misc import progressBar
-from .xdmfTemplates import restartXdmf
+from .writerMetaData import restartMetaData
 
 
 def writeRestart(
@@ -33,7 +33,7 @@ def writeRestart(
         fdtype = "float32"
 
     # Start the xdmf tree
-    xdmfTree = restartXdmf(
+    metaData = restartMetaData(
         gridPath=gridPath,
         precision=precision,
         animate=animate,
@@ -60,7 +60,6 @@ def writeRestart(
             ng = blk.ng
             writeS = np.s_[ng:-ng, ng:-ng, ng:-ng]
         else:
-            ng = 1
             writeS = np.s_[:, :, :]
 
         if not lump:
@@ -114,7 +113,7 @@ def writeRestart(
             dset[:] = 1.0
 
         # Add block to xdmf tree
-        blockElem = xdmfTree.addBlockElem(nblki, ni, nj, nk, ng)
+        blockElem = metaData.addBlockElem(nblki, ni, nj, nk, ng=0)
 
         # Add scalar variables to block tree
         names = ["p", "T"] + blk.speciesNames
@@ -122,9 +121,9 @@ def writeRestart(
             names.insert(0, "rho")
 
         for name in names:
-            xdmfTree.addScalarToBlockElem(blockElem, name, nblki, mb.nrt, ni, nj, nk)
+            metaData.addScalarToBlockElem(blockElem, name, nblki, mb.nrt, ni, nj, nk)
         # Add vector variables to block tree
-        xdmfTree.addVectorToBlockElem(
+        metaData.addVectorToBlockElem(
             blockElem, "Velocity", ["u", "v", "w"], nblki, mb.nrt, ni, nj, nk
         )
 
@@ -137,4 +136,4 @@ def writeRestart(
     if lump:
         qf.close()
 
-    xdmfTree.saveXdmf(path)
+    metaData.saveXdmf(path)
