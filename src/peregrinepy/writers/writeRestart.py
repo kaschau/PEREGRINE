@@ -114,9 +114,7 @@ def writeRestart(
             names.insert(0, "rho")
 
         for name in names:
-            metaData.addScalarToBlockElem(
-                blockElem, name, mb, mb.nrt, nblki, ni, nj, nk
-            )
+            metaData.addScalarToBlockElem(blockElem, name, mb.nrt, nblki, ni, nj, nk)
         # Add vector variables to block tree
         metaData.addVectorToBlockElem(
             blockElem, "Velocity", ["u", "v", "w"], mb.nrt, nblki, ni, nj, nk
