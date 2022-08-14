@@ -96,7 +96,7 @@ class dualTime:
             consistify(self, "prims")
 
             # Compute residual
-            if self.nrt % self.config["simulation"]["niterPrint"] == 0:
+            if self.nrt % self.config["io"]["niterPrint"] == 0:
                 resid = np.array(residual(self), dtype=np.float64)
                 comm.Allreduce(MPI.IN_PLACE, resid[0, :], op=MPI.MIN)
                 comm.Allreduce(MPI.IN_PLACE, resid[1, :], op=MPI.SUM)
@@ -122,7 +122,7 @@ class dualTime:
     def initializeDualTime(self):
         # Set Qn
         if self.nrt != 0:
-            animate = self.config["simulation"]["animateRestart"]
+            animate = self.config["io"]["animateRestart"]
             path = self.config["io"]["restartDir"]
             for blk in self:
                 if animate:
