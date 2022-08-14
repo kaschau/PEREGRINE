@@ -2,7 +2,7 @@
 
 import h5py
 import numpy as np
-from .xdmfTemplates import restartXdmf
+from .writerMetaData import restartMetaData
 from ..mpiComm.mpiUtils import getCommRankSize
 from mpi4py.MPI import INT as MPIINT
 
@@ -64,7 +64,7 @@ def registerParallelMetaData(
     # Create the xml for all the blocks
     if rank == 0:
         # Start the xdmf
-        xdmf = restartXdmf(
+        xdmf = restartMetaData(
             gridPath=gridPath,
             precision=precision,
             animate=animate,
