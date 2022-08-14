@@ -39,7 +39,7 @@ def writeGrid(mb, path="./", precision="double", withHalo=False, lump=False):
 
     # If we are lumping the files, open it here
     if lump:
-        gf = h5py.File(f"{path}/grid.h5", "w")
+        gf = h5py.File(f"{path}/g.h5", "w")
 
     for blk in mb:
         if withHalo and blk.blockType == "solver":
