@@ -33,13 +33,13 @@ class configFile(frozenDict):
                 "lumpIO": False,
                 "niterArchive": 1e10,
                 "niterRestart": 10,
+                "niterPrint": 1,
             }
         )
         self["simulation"] = frozenDict(
             {
                 "niter": 1,
                 "restartFrom": 0,
-                "niterPrint": 1,
                 "checkNan": False,
             }
         )
