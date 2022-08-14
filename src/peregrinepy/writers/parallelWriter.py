@@ -118,7 +118,7 @@ def parallelWriteRestart(
         extentCC = (blk.ni - 1) * (blk.nj - 1) * (blk.nk - 1)
         ng = blk.ng
 
-        fileName = f"{path}{metaData.getVarFileName(blk.nblki, mb.nrt)}"
+        fileName = f"{path}/{metaData.getVarFileName(blk.nblki, mb.nrt)}"
         with h5py.File(fileName, "w") as qf:
 
             qf.create_group("iter")

@@ -35,7 +35,7 @@ def readGrid(mb, path="./", lump=False, justNi=False):
 
     # If were reading a lumped open the file here
     if lump:
-        f = h5py.File(f"{path}/grid.h5", "r")
+        gf = h5py.File(f"{path}/g.h5", "r")
 
     for blk in mb:
         if blk.blockType == "solver":
@@ -48,15 +48,15 @@ def readGrid(mb, path="./", lump=False, justNi=False):
         # If were not reading a lumped file, open it here
         if not lump:
             fileName = f"{path}/g.{blk.nblki:06d}.h5"
-            f = h5py.File(fileName, "r")
+            gf = h5py.File(fileName, "r")
 
         nblkiS = f"{blk.nblki:06d}"
         coordS = "coordinates_" + nblkiS
         dimS = "dimensions_" + nblkiS
 
-        ni = list(f[dimS]["ni"])[0]
-        nj = list(f[dimS]["nj"])[0]
-        nk = list(f[dimS]["nk"])[0]
+        ni = list(gf[dimS]["ni"])[0]
+        nj = list(gf[dimS]["nj"])[0]
+        nk = list(gf[dimS]["nk"])[0]
 
         blk.ni = int(ni)
         blk.nj = int(nj)
@@ -65,7 +65,7 @@ def readGrid(mb, path="./", lump=False, justNi=False):
         if not justNi:
             blk.initGridArrays()
             for name in ("x", "y", "z"):
-                blk.array[name][readS] = np.array(f[coordS][name]).reshape(
+                blk.array[name][readS] = np.array(gf[coordS][name]).reshape(
                     (ni, nj, nk), order="F"
                 )
 
@@ -74,3 +74,8 @@ def readGrid(mb, path="./", lump=False, justNi=False):
 
         if blk.blockType in ["restart", "solver"]:
             blk.initRestartArrays()
+        if not lump:
+            gf.close()
+
+    if lump:
+        gf.close()

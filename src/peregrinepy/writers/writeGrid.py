@@ -39,7 +39,7 @@ def writeGrid(mb, path="./", precision="double", withHalo=False, lump=False):
 
     # If we are lumping the files, open it here
     if lump:
-        f = h5py.File(f"{path}/grid.h5", "w")
+        gf = h5py.File(f"{path}/grid.h5", "w")
 
     for blk in mb:
         if withHalo and blk.blockType == "solver":
@@ -61,32 +61,32 @@ def writeGrid(mb, path="./", precision="double", withHalo=False, lump=False):
 
         # If we are doing serial output, open the file here
         if not lump:
-            f = h5py.File(f"{path}/g.{nblkiS}.h5", "w")
+            gf = h5py.File(f"{path}/g.{nblkiS}.h5", "w")
 
-        f.create_group(coordS)
-        f.create_group(dimS)
+        gf.create_group(coordS)
+        gf.create_group(dimS)
 
-        f[dimS].create_dataset("ni", shape=(1,), dtype="int32")
-        f[dimS].create_dataset("nj", shape=(1,), dtype="int32")
-        f[dimS].create_dataset("nk", shape=(1,), dtype="int32")
+        gf[dimS].create_dataset("ni", shape=(1,), dtype="int32")
+        gf[dimS].create_dataset("nj", shape=(1,), dtype="int32")
+        gf[dimS].create_dataset("nk", shape=(1,), dtype="int32")
 
-        dset = f[dimS]["ni"]
+        dset = gf[dimS]["ni"]
         dset[0] = blk.ni + 2 * ng
-        dset = f[dimS]["nj"]
+        dset = gf[dimS]["nj"]
         dset[0] = blk.nj + 2 * ng
-        dset = f[dimS]["nk"]
+        dset = gf[dimS]["nk"]
         dset[0] = blk.nk + 2 * ng
 
         extent = (blk.ni + 2 * ng) * (blk.nj + 2 * ng) * (blk.nk + 2 * ng)
-        f[coordS].create_dataset("x", shape=(extent,), dtype=fdtype)
-        f[coordS].create_dataset("y", shape=(extent,), dtype=fdtype)
-        f[coordS].create_dataset("z", shape=(extent,), dtype=fdtype)
+        gf[coordS].create_dataset("x", shape=(extent,), dtype=fdtype)
+        gf[coordS].create_dataset("y", shape=(extent,), dtype=fdtype)
+        gf[coordS].create_dataset("z", shape=(extent,), dtype=fdtype)
 
-        dset = f[coordS]["x"]
+        dset = gf[coordS]["x"]
         dset[:] = blk.array["x"][writeS].ravel(order="F")
-        dset = f[coordS]["y"]
+        dset = gf[coordS]["y"]
         dset[:] = blk.array["y"][writeS].ravel(order="F")
-        dset = f[coordS]["z"]
+        dset = gf[coordS]["z"]
         dset[:] = blk.array["z"][writeS].ravel(order="F")
 
         # Add block to xdmf tree
@@ -97,9 +97,9 @@ def writeGrid(mb, path="./", precision="double", withHalo=False, lump=False):
         if mb.mbType in ["grid", "restart"]:
             progressBar(blk.nblki + 1, len(mb), f"Writing out gridBlock {blk.nblki}")
         if not lump:
-            f.close()
+            gf.close()
 
     if lump:
-        f.close()
+        gf.close()
 
     metaData.saveXdmf(path)
