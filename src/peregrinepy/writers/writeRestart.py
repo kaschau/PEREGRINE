@@ -44,10 +44,7 @@ def writeRestart(
 
     # If writing a lumped file, open it here
     if lump:
-        if animate:
-            fileName = f"{path}/q.{mb.nrt:08d}.h5"
-        else:
-            fileName = f"{path}/q.h5"
+        fileName = metaData.getVarFileName(nblki=0, nrt=0)
         qf = h5py.File(fileName, "w")
 
     for blk in mb:
@@ -62,16 +59,12 @@ def writeRestart(
         else:
             writeS = np.s_[:, :, :]
 
+        # If not lumping the file, open it here
         if not lump:
-            if animate:
-                fileName = f"{path}/q.{mb.nrt:08d}.{nblki:06d}.h5"
-            else:
-                fileName = f"{path}/q.{nblki:06d}.h5"
-
-            # If not lumping the file, open it here
+            fileName = metaData.getVarFileName(nblki=nblki, nrt=mb.nrt)
             qf = h5py.File(fileName, "w")
 
-        if not lump or nblki == mb[0].nblki:
+        if "iter" not in qf.keys():
             qf.create_group("iter")
             qf["iter"].create_dataset("nrt", shape=(1,), dtype="int32")
             qf["iter"].create_dataset("tme", shape=(1,), dtype="float64")
