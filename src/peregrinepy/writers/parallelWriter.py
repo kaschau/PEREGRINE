@@ -53,14 +53,17 @@ def registerParallelMetaData(
             pass
 
     # Flatten the list, then sort in block order
-    totalBlockList = [nblki for b in blocksForProcs for nblki in b]
+    totalBlockList = np.array(
+        [nblki for b in blocksForProcs for nblki in b], dtype=np.int32
+    )
     if rank == 0:
         totalBlockList, totalNiList = (
-            list(t) for t in zip(*sorted(zip(totalBlockList, totalNiList)))
+            np.array(list(t), np.int32)
+            for t in zip(*sorted(zip(totalBlockList, totalNiList)))
         )
 
     # Send the list to all the other processes
-    comm.Bcast(totalBlockList, root=0)
+    comm.Bcast([totalBlockList, mb.totalBlocks, MPIINT], root=0)
 
     # Create the metaData for all the blocks
     metaData = restartMetaData(
@@ -106,65 +109,99 @@ def parallelWriteRestart(
     else:
         fdtype = "float32"
 
+    # If lumping use parallel writer
+    if metaData.lump:
+        fileName = f"{path}/{metaData.getVarFileName(mb.nrt, None)}"
+        qf = h5py.File(fileName, "w", driver="mpio", comm=comm)
+        qf.create_group("iter")
+        qf["iter"].create_dataset("nrt", shape=(1,), dtype="int32")
+        qf["iter"].create_dataset("tme", shape=(1,), dtype="float64")
+
+        if rank == 0:
+            qf["iter"]["nrt"][0] = mb.nrt
+            qf["iter"]["tme"][0] = mb.tme
+        # If lumping we need to create the meta data for each block
+        names = ["rho", "p", "u", "v", "w", "T"] + mb[0].speciesNames
+        for nblki in range(mb.totalBlocks):
+            qf.create_group(f"results_{nblki:06d}")
+            ni, nj, nk = (
+                int(i)
+                for i in metaData.tree[0][0][nblki][0]
+                .get("NumberOfElements")
+                .split(" ")
+            )
+            extentCC = (ni - 1) * (nj - 1) * (nk - 1)
+            for name in names:
+                qf[f"results_{nblki:06d}"].create_dataset(
+                    name, shape=(extentCC,), dtype=fdtype
+                )
+
+    # Write the data
     for blk in mb:
         # update the host views
         blk.updateHostView(["q", "Q"])
 
         extentCC = (blk.ni - 1) * (blk.nj - 1) * (blk.nk - 1)
         ng = blk.ng
+        nblki = blk.nblki
 
-        fileName = f"{path}/{metaData.getVarFileName(blk.nrt, mb.nblki)}"
-        with h5py.File(fileName, "w") as qf:
+        if not metaData.lump:
+            fileName = f"{path}/{metaData.getVarFileName(blk.nrt, blk.nblki)}"
+            qf = h5py.File(fileName, "w")
 
             qf.create_group("iter")
             qf["iter"].create_dataset("nrt", shape=(1,), dtype="int32")
             qf["iter"].create_dataset("tme", shape=(1,), dtype="float64")
+            qf["iter"]["nrt"][0] = mb.nrt
+            qf["iter"]["tme"][0] = mb.tme
+            qf.create_group(f"results_{nblki:06d}")
+            names = ["rho", "p", "u", "v", "w", "T"] + blk.speciesNames
+            for name in names:
+                qf[f"results_{nblki:06d}"].create_dataset(
+                    name, shape=(extentCC,), dtype=fdtype
+                )
 
-            dset = qf["iter"]["nrt"]
-            dset[0] = blk.nrt
-            dset = qf["iter"]["tme"]
-            dset[0] = blk.tme
+        resS = f"results_{nblki:06d}"
+        dsetName = "rho"
+        dset = qf[resS][dsetName]
+        dset[:] = blk.array["Q"][ng:-ng, ng:-ng, ng:-ng, 0].ravel(order="F")
+        names = ["p", "u", "v", "w", "T"] + blk.speciesNames[0:-1]
+        for j in range(len(names)):
+            dsetName = names[j]
+            dset = qf[resS][dsetName]
+            dset[:] = blk.array["q"][ng:-ng, ng:-ng, ng:-ng, j].ravel(order="F")
+        # Compute the nth species here
+        dsetName = blk.speciesNames[-1]
+        dset = qf[resS][dsetName]
+        if blk.ns > 1:
+            dset[:] = 1.0 - np.sum(
+                blk.array["q"][ng:-ng, ng:-ng, ng:-ng, 5::], axis=-1
+            ).ravel(order="F")
+        elif blk.ns == 1:
+            dset[:] = 1.0
 
-            qf.create_group("results")
+        if not metaData.lump:
+            qf.close()
 
-            if blk.blockType == "solver":
-                dsetName = "rho"
-                qf["results"].create_dataset(dsetName, shape=(extentCC,), dtype=fdtype)
-                dset = qf["results"][dsetName]
-                dset[:] = blk.array["Q"][ng:-ng, ng:-ng, ng:-ng, 0].ravel(order="F")
-            names = ["p", "u", "v", "w", "T"] + blk.speciesNames[0:-1]
-            for j in range(len(names)):
-                dsetName = names[j]
-                qf["results"].create_dataset(dsetName, shape=(extentCC,), dtype=fdtype)
-                dset = qf["results"][dsetName]
-                dset[:] = blk.array["q"][ng:-ng, ng:-ng, ng:-ng, j].ravel(order="F")
-            # Compute the nth species here
-            dsetName = blk.speciesNames[-1]
-            qf["results"].create_dataset(dsetName, shape=(extentCC,), dtype=fdtype)
-            dset = qf["results"][dsetName]
-            if blk.ns > 1:
-                dset[:] = 1.0 - np.sum(
-                    blk.array["q"][ng:-ng, ng:-ng, ng:-ng, 5::], axis=-1
-                ).ravel(order="F")
-            elif blk.ns == 1:
-                dset[:] = 1.0
+    if metaData.lump:
+        qf.close()
 
     # Update and write out xdmf
+
+    for grid in metaData.tree[0][0]:
+        nblki = int(grid.get("Name")[1::])
+        time = grid.find("Time")
+        time.set("Value", str(mb.tme))
+        for var in grid.findall("Attribute"):
+            name = var.get("Name")
+            if name != "Velocity":
+                text = metaData.getVarFileH5Location(name, mb.nrt, nblki)
+                var[0].text = text
+            else:
+                for v in var.find("DataItem").findall("DataItem"):
+                    varName = v.text.split("/")[-1]
+                    text = metaData.getVarFileH5Location(varName, mb.nrt, nblki)
+                    v.text = text
+
     if rank == 0:
-
-        for grid in metaData.tree.getroot()[0][0]:
-            nblki = int(grid.get("Name")[1::])
-            time = grid.find("Time")
-            time.set("Value", str(mb.tme))
-            for var in grid.findall("Attribute"):
-                name = var.get("Name")
-                if name != "Velocity":
-                    text = metaData.getVarFileH5Location(name, mb.nrt, nblki)
-                    var[0].text = text
-                else:
-                    for v in var.find("DataItem").findall("DataItem"):
-                        name = v.get("Name")
-                        text = metaData.getVarFileH5Location(name, mb.nrt, nblki)
-                        v.text = text
-
-        metaData.saveXdmf(path)
+        metaData.saveXdmf(path, nrt=mb.nrt)
