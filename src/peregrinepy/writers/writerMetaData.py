@@ -4,6 +4,7 @@ from copy import deepcopy
 
 class gridMetaData:
     def __init__(self, precision, lump):
+        self.metaType = "grid"
         self.lump = lump
         self.precision = precision
         self.outputName = "g.xmf"
@@ -56,29 +57,29 @@ class gridMetaData:
         for coord, i in zip(["x", "y", "z"], [0, 1, 2]):
             X = blockElem.find("Geometry")[i]
             X.set("Dimensions", f"{nk+2*ng} {nj+2*ng} {ni+2*ng}")
-            X.text = self.getGridFileLocation(coord, nblki)
+            X.text = self.getGridFileH5Location(coord, nblki)
 
         self.gridElem.append(deepcopy(blockElem))
 
     def getGridFileH5Location(self, coord, nblki):
-        if isinstance(self, gridMetaData):
+        if self.metaType == "grid":
             gridPath = "."
         else:
             gridPath = self.gridPath
 
         if self.lump:
-            return f"{gridPath}/grid.h5:/coordinates_{nblki:06d}/{coord}"
+            return f"{gridPath}/g.h5:/coordinates_{nblki:06d}/{coord}"
         else:
             return f"{gridPath}/g.{nblki:06d}.h5:/coordinates_{nblki:06d}/{coord}"
 
     def getGridFileName(self, coord, nblki):
-        if isinstance(self, gridMetaData):
+        if self.metaType == "grid":
             gridPath = "."
         else:
             gridPath = self.gridPath
 
         if self.lump:
-            return f"{gridPath}/grid.h5"
+            return f"{gridPath}/g.h5"
         else:
             return f"{gridPath}/g.{nblki:06d}.h5"
 
@@ -86,6 +87,7 @@ class gridMetaData:
 class restartMetaData(gridMetaData):
     def __init__(self, gridPath, precision, animate, lump, nrt=0, tme=0.0):
         super().__init__(precision, lump)
+        self.metaType = "restart"
 
         self.animate = animate
         self.gridPath = gridPath
@@ -194,6 +196,7 @@ class restartMetaData(gridMetaData):
 class arbitraryMetaData(restartMetaData):
     def __init__(self, arrayName, precision, animate, lump, nrt=0, tme=0.0):
         super().__init__(precision, lump)
+        self.metaType = "arbitrary"
         if self.animate:
             self.outputName = f"{arrayName}.{nrt:08d}.xmf"
         else:
