@@ -43,8 +43,8 @@ class gridXdmf:
 
     def saveXdmf(self):
         et = etree.ElementTree(self.tree)
-        save_file = f"{self.path}/{self.outputName}"
-        et.write(save_file, pretty_print=True, encoding="UTF-8", xml_declaration=True)
+        saveFile = f"{self.path}/{self.outputName}"
+        et.write(saveFile, pretty_print=True, encoding="UTF-8", xml_declaration=True)
 
     def addBlockElem(self, nblki, ni, nj, nk, ng):
 
@@ -68,14 +68,17 @@ class gridXdmf:
 
 
 class restartXdmf(gridXdmf):
-    def __init__(self, path, precision, animate, lump):
+    def __init__(self, path, precision, animate, lump, nrt=0, tme=0.0):
         super().__init__(path, precision, lump)
 
         self.animate = animate
-        self.outputName = "q.xmf"
+        if self.animate:
+            self.outputName = f"q.{nrt:08d}.xmf"
+        else:
+            self.outputName = "q.xmf"
 
         self.timeElem = etree.SubElement(self.blockTemplate, "Time")
-        self.timeElem.set("Value", "Time Value Here")
+        self.timeElem.set("Value", str(tme))
 
         # Scalar attribute template
         self.scalarAttributeTemplate = etree.Element("Attribute")
@@ -101,11 +104,10 @@ class restartXdmf(gridXdmf):
         self.dataItemTemplate.set("Format", "HDF")
         self.dataItemTemplate.text = "resultFile location:/results/"
 
-    def addBlockElem(self, nblki, ni, nj, nk, ng, tme):
+    def addBlockElem(self, nblki, ni, nj, nk, ng):
 
         blockElem = deepcopy(self.blockTemplate)
         blockElem.set("Name", f"B{nblki:06d}")
-        blockElem.find("Time").set("Value", f"{tme}")
         topo = blockElem.find("Topology")
         topo.set("NumberOfElements", f"{nk} {nj} {ni}")
 
@@ -155,15 +157,18 @@ class restartXdmf(gridXdmf):
             dataItemElem.set("Dimensions", f"{nk-1} {nj-1} {ni-1}")
             dataItemElem.text = self.getVarFileLocation(varName, nblki, nrt)
 
-            attributeElem.append(dataItemElem)
+            functionElem.append(dataItemElem)
 
         blockElem.append(attributeElem)
 
 
 class arbitraryXdmf(restartXdmf):
-    def __init__(self, path, arrayName, precision, animate, lump):
+    def __init__(self, path, arrayName, precision, animate, lump, nrt=0, tme=0.0):
         super().__init__(path, precision, lump)
-        self.outputName = f"{arrayName}.xmf"
+        if self.animate:
+            self.outputName = f"{arrayName}.{nrt:08d}.xmf"
+        else:
+            self.outputName = f"{arrayName}.xmf"
         self.arrayName = arrayName
 
     def getArrayNameIndicies(arrayName, speciesNames):

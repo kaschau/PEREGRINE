@@ -33,7 +33,14 @@ def writeRestart(
         fdtype = "float32"
 
     # Start the xdmf tree
-    xdmfTree = restartXdmf(path=path, precision=precision, animate=animate, lump=lump)
+    xdmfTree = restartXdmf(
+        path=path,
+        precision=precision,
+        animate=animate,
+        lump=lump,
+        nrt=mb.nrt,
+        tme=mb.tme,
+    )
 
     # If writing a lumped file, open it here
     if lump:
@@ -107,7 +114,7 @@ def writeRestart(
             dset[:] = 1.0
 
         # Add block to xdmf tree
-        blockElem = xdmfTree.addBlockElem(nblki, ni, nj, nk, ng, mb.tme)
+        blockElem = xdmfTree.addBlockElem(nblki, ni, nj, nk, ng)
 
         # Add scalar variables to block tree
         names = ["p", "T"] + blk.speciesNames
