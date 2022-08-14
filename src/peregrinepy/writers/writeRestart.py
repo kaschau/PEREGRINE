@@ -44,7 +44,7 @@ def writeRestart(
 
     # If writing a lumped file, open it here
     if lump:
-        fileName = f"{path}/{metaData.getVarFileName(None, None)})"
+        fileName = f"{path}/{metaData.getVarFileName(mb.nrt, None)}"
         qf = h5py.File(fileName, "w")
 
     for blk in mb:
