@@ -47,9 +47,9 @@ def simulate(configFilePath):
 
     # Time integration
     niter = config["simulation"]["niter"]
-    niterRestart = config["simulation"]["niterRestart"]
-    niterArchive = config["simulation"]["niterArchive"]
-    niterPrint = config["simulation"]["niterPrint"]
+    niterRestart = config["io"]["niterRestart"]
+    niterArchive = config["io"]["niterArchive"]
+    niterPrint = config["io"]["niterPrint"]
     checkNan = config["simulation"]["checkNan"]
     for niter in range(niter):
         dt, CFLmaxA, CFLmaxC, CFLmax = pg.mpiComm.mpiUtils.getDtMaxCFL(mb)
@@ -80,7 +80,7 @@ def simulate(configFilePath):
                 pg.writers.writeDualTimeQnm1(
                     mb,
                     path=config["io"]["restartDir"],
-                    animate=config["simulation"]["animateRestart"],
+                    animate=config["io"]["animateRestart"],
                 )
         # Check if we need to write archive
         if mb.nrt % niterArchive == 0:

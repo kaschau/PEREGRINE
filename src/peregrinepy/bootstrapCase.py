@@ -84,7 +84,7 @@ def bootstrapCase(config):
     ################################################################
     # Read in the grid
     ################################################################
-    pg.readers.readGrid(mb, config["io"]["gridDir"])
+    pg.readers.readGrid(mb, path=config["io"]["gridDir"], lump=config["io"]["lumpIO"])
     comm.Barrier()
     if rank == 0:
         print("Read grid.")
@@ -94,9 +94,10 @@ def bootstrapCase(config):
     ################################################################
     pg.readers.readRestart(
         mb,
-        config["io"]["restartDir"],
-        config["simulation"]["restartFrom"],
-        config["simulation"]["animateRestart"],
+        path=config["io"]["restartDir"],
+        nrt=config["simulation"]["restartFrom"],
+        animate=config["io"]["animateRestart"],
+        lump=config["io"]["lumpIO"],
     )
     comm.Barrier()
     if rank == 0:
@@ -142,16 +143,16 @@ def bootstrapCase(config):
         blocksForProcs,
         gridPath=f"../{config['io']['gridDir']}",
         precision="double",
-        animate=config["simulation"]["animateRestart"],
-        lump=config["simulation"]["lumpRestart"],
+        animate=config["io"]["animateRestart"],
+        lump=config["io"]["lumpIO"],
     )
     mb.parallelArchiveXdmf = mb.pg.writers.parallelWriter.registerParallelMetaData(
         mb,
         blocksForProcs,
         gridPath=f"../{config['io']['gridDir']}",
         precision="single",
-        animate=config["simulation"]["animateArchive"],
-        lump=config["simulation"]["lumpArchive"],
+        animate=config["io"]["animateArchive"],
+        lump=config["io"]["lumpIO"],
     )
 
     ################################################################
