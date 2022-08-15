@@ -83,7 +83,7 @@ def registerParallelMetaData(
         blockElem = metaData.addBlockElem(nblki, ni, nj, nk, ng=0)
 
         # Add scalar variables to block tree
-        names = ["rho", "p", "T"] + blk.speciesNames
+        names = ["rho", "p", "T"] + mb[0].speciesNames
 
         for name in names:
             metaData.addScalarToBlockElem(blockElem, name, mb.nrt, nblki, ni, nj, nk)
