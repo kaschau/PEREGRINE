@@ -44,10 +44,10 @@ def registerParallelMetaData(
 
             recvBuff = recvBuff.reshape(len(blocksForProcs[sendrank]), 3)
             mult = 0
-            for blk in recvBuff:
-                totalNiList[blockIndex, 0] = blk[0]
-                totalNiList[blockIndex, 1] = blk[1]
-                totalNiList[blockIndex, 2] = blk[2]
+            for b in recvBuff:
+                totalNiList[blockIndex, 0] = b[0]
+                totalNiList[blockIndex, 1] = b[1]
+                totalNiList[blockIndex, 2] = b[2]
                 blockIndex += 1
         else:
             pass
