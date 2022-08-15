@@ -2,28 +2,65 @@
 
 import h5py
 import numpy as np
-from lxml import etree
-from copy import deepcopy
+from .writerMetaData import restartMetaData
 from ..mpiComm.mpiUtils import getCommRankSize
 from mpi4py.MPI import INT as MPIINT
 
 
-def registerParallelXdmf(mb, blocksForProcs, gridPath="./", animate=True):
+def registerParallelMetaData(
+    mb, blocksForProcs, gridPath="./", precision="double", animate=True, lump=False
+):
+    """This function creates a metaData object when blocks are spread out over multiple
+    processors. The strategie is to first create an ordered list of blocks of block
+    extents. So we send ni,nj,nk to the zeroth rank, sort that list by block #,
+    then broadcast that array.
+
+    Once each processor has the sorted list, we create a meta data object on each processor.
+    This writer meta data will only be used by the non zeroth rank if we are writing in
+    parallel (via hdf5 + lump). In that case, we use the meta data to write the hdf5 meta data
+    on each process. If we are writing in serial, then the non zeroth ranks dont ever use their
+    meta data.
+
+    Parameters
+    ----------
+
+    mb : peregrinepy.multiBlock.grid (or a descendant)
+
+    blocksForProcs : list
+        List of lists with the first index being the rank, second index the block number(s)
+
+    gridPath : str
+        Path to grid.
+
+    precision : str ["double","single"]
+        Double or single precision writing.
+
+    animate : bool
+        Controls the output nameing convention to overwrite previous output or not.
+
+    lump : bool
+        Controls whether to output to a single file or one file per block.
+
+
+    Returns
+    -------
+    peregrinepy.writer.writerMetaData.restartMetaData
+
+    """
 
     comm, rank, size = getCommRankSize()
+
     # the mb with Block0 must get a list of all other block's ni,nj,nk
     myNiList = [[blk.ni, blk.nj, blk.nk] for blk in mb]
 
     blockIndex = 0
+    totalNiList = np.zeros((mb.totalBlocks, 3), dtype=np.int32)
     if rank == 0:
-        totalNiList = np.zeros((mb.totalBlocks, 3), dtype=np.int32)
         for blk in mb:
             totalNiList[blockIndex, 0] = blk.ni
             totalNiList[blockIndex, 1] = blk.nj
             totalNiList[blockIndex, 2] = blk.nk
             blockIndex += 1
-    else:
-        totalNiList = None
 
     for sendrank in range(1, size):
         # send ni list
@@ -45,209 +82,163 @@ def registerParallelXdmf(mb, blocksForProcs, gridPath="./", animate=True):
 
             recvBuff = recvBuff.reshape(len(blocksForProcs[sendrank]), 3)
             mult = 0
-            for blk in recvBuff:
-                totalNiList[blockIndex, 0] = blk[0]
-                totalNiList[blockIndex, 1] = blk[1]
-                totalNiList[blockIndex, 2] = blk[2]
+            for b in recvBuff:
+                totalNiList[blockIndex, 0] = b[0]
+                totalNiList[blockIndex, 1] = b[1]
+                totalNiList[blockIndex, 2] = b[2]
                 blockIndex += 1
         else:
             pass
 
     # Flatten the list, then sort in block order
     if rank == 0:
-        totalBlockList = [nblki for b in blocksForProcs for nblki in b]
+        totalBlockList = np.array(
+            [nblki for b in blocksForProcs for nblki in b], dtype=np.int32
+        )
         totalBlockList, totalNiList = (
-            list(t) for t in zip(*sorted(zip(totalBlockList, totalNiList)))
+            np.array(list(t), np.int32)
+            for t in zip(*sorted(zip(totalBlockList, totalNiList)))
         )
 
-    # Create the xml for all the blocks
-    if rank == 0:
-        xdmfElem = etree.Element("Xdmf")
-        xdmfElem.set("Version", "2")
+    # Send the list to all the other processes
+    comm.Bcast([totalNiList, mb.totalBlocks * 3, MPIINT], root=0)
 
-        domainElem = etree.SubElement(xdmfElem, "Domain")
+    # Create the metaData for all the blocks
+    metaData = restartMetaData(
+        gridPath=gridPath,
+        precision=precision,
+        animate=animate,
+        lump=lump,
+        nrt=mb.nrt,
+        tme=mb.tme,
+    )
 
-        gridElem = etree.SubElement(domainElem, "Grid")
-        gridElem.set("Name", "PEREGRINE Output")
-        gridElem.set("GridType", "Collection")
-        gridElem.set("CollectionType", "Spatial")
+    for nblki, n in enumerate(totalNiList):
+        ni = n[0]
+        nj = n[1]
+        nk = n[2]
+        # Add block to xdmf tree
+        blockElem = metaData.addBlockElem(nblki, ni, nj, nk, ng=0)
 
-        for nblki, n in zip(totalBlockList, totalNiList):
-            ni = n[0]
-            nj = n[1]
-            nk = n[2]
+        # Add scalar variables to block tree
+        names = ["rho", "p", "T"] + mb[0].speciesNames
 
-            blockElem = etree.Element("Grid")
-            blockElem.set("Name", f"B{nblki:06d}")
+        for name in names:
+            metaData.addScalarToBlockElem(blockElem, name, mb.nrt, nblki, ni, nj, nk)
+        # Add vector variables to block tree
+        metaData.addVectorToBlockElem(
+            blockElem, "Velocity", ["u", "v", "w"], mb.nrt, nblki, ni, nj, nk
+        )
 
-            timeElem = etree.SubElement(blockElem, "Time")
-            timeElem.set("Value", str(mb.tme))
-
-            topologyElem = etree.SubElement(blockElem, "Topology")
-            topologyElem.set("TopologyType", "3DSMesh")
-            topologyElem.set("NumberOfElements", f"{nk} {nj} {ni}")
-
-            geometryElem = etree.SubElement(blockElem, "Geometry")
-            geometryElem.set("GeometryType", "X_Y_Z")
-
-            dataXElem = etree.SubElement(geometryElem, "DataItem")
-            dataXElem.set("NumberType", "Float")
-            dataXElem.set("Dimensions", f"{nk} {nj} {ni}")
-            dataXElem.set("Precision", "8")
-            dataXElem.set("Format", "HDF")
-            dataXElem.text = f"{gridPath}/g.{nblki:06d}.h5:/coordinates/x"
-
-            geometryElem.append(deepcopy(dataXElem))
-            geometryElem[-1].text = f"{gridPath}/g.{nblki:06d}.h5:/coordinates/y"
-
-            geometryElem.append(deepcopy(dataXElem))
-            geometryElem[-1].text = f"{gridPath}/g.{nblki:06d}.h5:/coordinates/z"
-
-            # Only solvers will call this
-            names = ["rho", "p", "T"] + mb[0].speciesNames
-
-            name = names[0]
-            # Attributes
-            attributeElem = etree.SubElement(blockElem, "Attribute")
-            attributeElem.set("Name", name)
-            attributeElem.set("AttributeType", "Scalar")
-            attributeElem.set("Center", "Cell")
-            dataResElem = etree.SubElement(attributeElem, "DataItem")
-            dataResElem.set("NumberType", "Float")
-            dataResElem.set("Dimensions", f"{nk-1} {nj-1} {ni-1}")
-            dataResElem.set("Precision", "8")
-            dataResElem.set("Format", "HDF")
-
-            if animate:
-                textPrepend = f"q.{mb.nrt:08d}.{nblki:06d}.h5:/results/"
-            else:
-                textPrepend = f"q.{nblki:06d}.h5:/results/"
-
-            text = f"{textPrepend}{name}"
-            dataResElem.text = text
-
-            for name in names[1::]:
-                blockElem.append(deepcopy(attributeElem))
-                blockElem[-1].set("Name", name)
-                text = f"{textPrepend}/{name}"
-                blockElem[-1][0].text = text
-
-            # Velocity Attributes
-            attributeElem = etree.SubElement(blockElem, "Attribute")
-            attributeElem.set("Name", "Velocity")
-            attributeElem.set("AttributeType", "Vector")
-            attributeElem.set("Center", "Cell")
-            function = etree.SubElement(attributeElem, "DataItem")
-            function.set("ItemType", "Function")
-            function.set("Function", "JOIN($0, $1, $2)")
-            function.set("Dimensions", f"{nk-1} {nj-1} {ni-1} 3")
-
-            for name in ["u", "v", "w"]:
-                dataResElem = etree.SubElement(function, "DataItem")
-                dataResElem.set("NumberType", "Float")
-                dataResElem.set("Dimensions", f"{nk-1} {nj-1} {ni-1}")
-                dataResElem.set("Precision", "8")
-                dataResElem.set("Format", "HDF")
-                dataResElem.set("Name", name)
-                text = f"{textPrepend}/{name}"
-                dataResElem.text = text
-
-            gridElem.append(deepcopy(blockElem))
-
-        # We add the et to the zeroth ranks mb object
-        mb.parallelXmf = etree.ElementTree(xdmfElem)
-    else:
-        mb.parallelXmf = None
+    # Return the meta data
+    return metaData
 
 
 def parallelWriteRestart(
     mb,
+    metaData,
     path="./",
-    animate=True,
-    precision="double",
 ):
 
     comm, rank, size = getCommRankSize()
 
-    if precision == "double":
+    if metaData.precision == "double":
         fdtype = "float64"
     else:
         fdtype = "float32"
 
+    # If lumping use parallel writer
+    if metaData.lump:
+        fileName = f"{path}/{metaData.getVarFileName(mb.nrt, None)}"
+        qf = h5py.File(fileName, "w", driver="mpio", comm=comm)
+        qf.create_group("iter")
+        qf["iter"].create_dataset("nrt", shape=(1,), dtype="int32")
+        qf["iter"].create_dataset("tme", shape=(1,), dtype="float64")
+
+        if rank == 0:
+            qf["iter"]["nrt"][0] = mb.nrt
+            qf["iter"]["tme"][0] = mb.tme
+        # If lumping we need to create the meta data for each block
+        names = ["rho", "p", "u", "v", "w", "T"] + mb[0].speciesNames
+        for nblki in range(mb.totalBlocks):
+            qf.create_group(f"results_{nblki:06d}")
+            blockMetaData = metaData.tree[0][0][nblki][0]
+            ni, nj, nk = (
+                int(i) for i in blockMetaData.get("NumberOfElements").split(" ")
+            )
+            extentCC = (ni - 1) * (nj - 1) * (nk - 1)
+            for name in names:
+                qf[f"results_{nblki:06d}"].create_dataset(
+                    name, shape=(extentCC,), dtype=fdtype
+                )
+
+    # Write the hdf5 data
     for blk in mb:
         # update the host views
         blk.updateHostView(["q", "Q"])
 
         extentCC = (blk.ni - 1) * (blk.nj - 1) * (blk.nk - 1)
         ng = blk.ng
+        nblki = blk.nblki
 
-        if animate:
-            fileName = f"{path}/q.{mb.nrt:08d}.{blk.nblki:06d}.h5"
-        else:
-            fileName = f"{path}/q.{blk.nblki:06d}.h5"
-
-        with h5py.File(fileName, "w") as qf:
+        # If we arent lumping, each block will open a file, write the iter group
+        # then create the datasets with the correct size
+        if not metaData.lump:
+            fileName = f"{path}/{metaData.getVarFileName(blk.nrt, blk.nblki)}"
+            qf = h5py.File(fileName, "w")
 
             qf.create_group("iter")
             qf["iter"].create_dataset("nrt", shape=(1,), dtype="int32")
             qf["iter"].create_dataset("tme", shape=(1,), dtype="float64")
+            qf["iter"]["nrt"][0] = mb.nrt
+            qf["iter"]["tme"][0] = mb.tme
+            qf.create_group(f"results_{nblki:06d}")
+            names = ["rho", "p", "u", "v", "w", "T"] + blk.speciesNames
+            for name in names:
+                qf[f"results_{nblki:06d}"].create_dataset(
+                    name, shape=(extentCC,), dtype=fdtype
+                )
 
-            dset = qf["iter"]["nrt"]
-            dset[0] = blk.nrt
-            dset = qf["iter"]["tme"]
-            dset[0] = blk.tme
+        resS = f"results_{nblki:06d}"
+        dsetName = "rho"
+        dset = qf[resS][dsetName]
+        dset[:] = blk.array["Q"][ng:-ng, ng:-ng, ng:-ng, 0].ravel(order="F")
+        names = ["p", "u", "v", "w", "T"] + blk.speciesNames[0:-1]
+        for j in range(len(names)):
+            dsetName = names[j]
+            dset = qf[resS][dsetName]
+            dset[:] = blk.array["q"][ng:-ng, ng:-ng, ng:-ng, j].ravel(order="F")
+        # Compute the nth species here
+        dsetName = blk.speciesNames[-1]
+        dset = qf[resS][dsetName]
+        if blk.ns > 1:
+            dset[:] = 1.0 - np.sum(
+                blk.array["q"][ng:-ng, ng:-ng, ng:-ng, 5::], axis=-1
+            ).ravel(order="F")
+        elif blk.ns == 1:
+            dset[:] = 1.0
 
-            qf.create_group("results")
+        if not metaData.lump:
+            qf.close()
 
-            if blk.blockType == "solver":
-                dsetName = "rho"
-                qf["results"].create_dataset(dsetName, shape=(extentCC,), dtype=fdtype)
-                dset = qf["results"][dsetName]
-                dset[:] = blk.array["Q"][ng:-ng, ng:-ng, ng:-ng, 0].ravel(order="F")
-            names = ["p", "u", "v", "w", "T"] + blk.speciesNames[0:-1]
-            for j in range(len(names)):
-                dsetName = names[j]
-                qf["results"].create_dataset(dsetName, shape=(extentCC,), dtype=fdtype)
-                dset = qf["results"][dsetName]
-                dset[:] = blk.array["q"][ng:-ng, ng:-ng, ng:-ng, j].ravel(order="F")
-            # Compute the nth species here
-            dsetName = blk.speciesNames[-1]
-            qf["results"].create_dataset(dsetName, shape=(extentCC,), dtype=fdtype)
-            dset = qf["results"][dsetName]
-            if blk.ns > 1:
-                dset[:] = 1.0 - np.sum(
-                    blk.array["q"][ng:-ng, ng:-ng, ng:-ng, 5::], axis=-1
-                ).ravel(order="F")
-            elif blk.ns == 1:
-                dset[:] = 1.0
+    if metaData.lump:
+        qf.close()
 
-    # Write out xmf
-    if rank == 0:
-        et = mb.parallelXmf
-
-        for grid in et.getroot()[0][0]:
-            nblki = int(grid.get("Name")[1::])
-            if animate:
-                textPrepend = f"q.{mb.nrt:08d}.{nblki:06d}.h5:/results/"
+    # Update and write out xdmf
+    for grid in metaData.tree[0][0]:
+        nblki = int(grid.get("Name")[1::])
+        time = grid.find("Time")
+        time.set("Value", str(mb.tme))
+        for var in grid.findall("Attribute"):
+            name = var.get("Name")
+            if name != "Velocity":
+                text = metaData.getVarFileH5Location(name, mb.nrt, nblki)
+                var[0].text = text
             else:
-                textPrepend = f"q.{nblki:06d}.h5:/results/"
+                for v in var.find("DataItem").findall("DataItem"):
+                    varName = v.text.split("/")[-1]
+                    text = metaData.getVarFileH5Location(varName, mb.nrt, nblki)
+                    v.text = text
 
-            time = grid.find("Time")
-            time.set("Value", str(mb.tme))
-            time = grid.find("Time")
-            for var in grid.findall("Attribute"):
-                name = var.get("Name")
-                if name != "Velocity":
-                    text = f"{textPrepend}{name}"
-                    var[0].text = text
-                else:
-                    for v in var.find("DataItem").findall("DataItem"):
-                        name = v.get("Name")
-                        text = f"{textPrepend}{name}"
-                        v.text = text
-
-        if animate:
-            saveFile = f"{path}/q.{mb.nrt:08d}.xmf"
-        else:
-            saveFile = f"{path}/q.xmf"
-        et.write(saveFile, pretty_print=True, encoding="UTF-8", xml_declaration=True)
+    if rank == 0:
+        metaData.saveXdmf(path, nrt=mb.nrt)

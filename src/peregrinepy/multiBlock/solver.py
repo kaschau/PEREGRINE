@@ -81,7 +81,8 @@ class solver(restart):
         self.impChem = None
 
         # Parallel output
-        self.parallelXmf = None
+        self.restartMetaData = None
+        self.archiveMetaData = None
 
     def initSolverArrays(self, config):
         for blk in self:
