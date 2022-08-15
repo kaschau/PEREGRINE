@@ -71,6 +71,16 @@ is set. Finally, run the simulation with nsys enabling cuda,nvtx trace options.
 # Performance
 PEREGRINE is pretty fast by default. However, when running a simulation, it is recommended to turn on ```PEREGRINE_NSCOMPILE``` in cmake, and then specify the value of ```numSpecies```. This will hard code ```ns``` at compile time, and gives roughly a 10x improvement in speed.
 
+# Parallel I/O 
+Parallel I/O can be achieved with a parallel capable h5py installation. 
+
+    $ export CC=mpicc
+    $ export HDF5_MPI="ON"
+    $ export HDF5_DIR="/path/to/parallel/hdf5"  # If this isn't found by default
+    $ pip install h5py --no-binary=h5py
+    
+``` $HDF5_DIR ``` must point to a parallel enabled HDF5 installation. Parallel I/O is only applicable when running simulations with ```config["io"]["lumpIO"]=true```.
+
 ## License
 
 PEREGRINE is released under the New BSD License (see the LICENSE file for details).
