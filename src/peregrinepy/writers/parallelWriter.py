@@ -162,11 +162,9 @@ def parallelWriteRestart(
         names = ["rho", "p", "u", "v", "w", "T"] + mb[0].speciesNames
         for nblki in range(mb.totalBlocks):
             qf.create_group(f"results_{nblki:06d}")
+            blockMetaData = metaData.tree[0][0][nblki][0]
             ni, nj, nk = (
-                int(i)
-                for i in metaData.tree[0][0][nblki][0]
-                .get("NumberOfElements")
-                .split(" ")
+                int(i) for i in blockMetaData.get("NumberOfElements").split(" ")
             )
             extentCC = (ni - 1) * (nj - 1) * (nk - 1)
             for name in names:
@@ -174,7 +172,7 @@ def parallelWriteRestart(
                     name, shape=(extentCC,), dtype=fdtype
                 )
 
-    # Write the data
+    # Write the hdf5 data
     for blk in mb:
         # update the host views
         blk.updateHostView(["q", "Q"])
@@ -183,6 +181,8 @@ def parallelWriteRestart(
         ng = blk.ng
         nblki = blk.nblki
 
+        # If we arent lumping, each block will open a file, write the iter group
+        # then create the datasets with the correct size
         if not metaData.lump:
             fileName = f"{path}/{metaData.getVarFileName(blk.nrt, blk.nblki)}"
             qf = h5py.File(fileName, "w")
@@ -225,7 +225,6 @@ def parallelWriteRestart(
         qf.close()
 
     # Update and write out xdmf
-
     for grid in metaData.tree[0][0]:
         nblki = int(grid.get("Name")[1::])
         time = grid.find("Time")
