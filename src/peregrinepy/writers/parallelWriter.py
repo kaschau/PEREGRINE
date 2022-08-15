@@ -53,17 +53,17 @@ def registerParallelMetaData(
             pass
 
     # Flatten the list, then sort in block order
-    totalBlockList = np.array(
-        [nblki for b in blocksForProcs for nblki in b], dtype=np.int32
-    )
     if rank == 0:
+        totalBlockList = np.array(
+            [nblki for b in blocksForProcs for nblki in b], dtype=np.int32
+        )
         totalBlockList, totalNiList = (
             np.array(list(t), np.int32)
             for t in zip(*sorted(zip(totalBlockList, totalNiList)))
         )
 
     # Send the list to all the other processes
-    comm.Bcast([totalBlockList, mb.totalBlocks, MPIINT], root=0)
+    comm.Bcast([totalNiList, mb.totalBlocks * 3, MPIINT], root=0)
 
     # Create the metaData for all the blocks
     metaData = restartMetaData(
@@ -75,7 +75,7 @@ def registerParallelMetaData(
         tme=mb.tme,
     )
 
-    for nblki, n in zip(totalBlockList, totalNiList):
+    for nblki, n in enumerate(totalNiList):
         ni = n[0]
         nj = n[1]
         nk = n[2]
