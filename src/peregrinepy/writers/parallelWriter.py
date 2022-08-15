@@ -10,8 +10,46 @@ from mpi4py.MPI import INT as MPIINT
 def registerParallelMetaData(
     mb, blocksForProcs, gridPath="./", precision="double", animate=True, lump=False
 ):
+    """This function creates a metaData object when blocks are spread out over multiple
+    processors. The strategie is to first create an ordered list of blocks of block
+    extents. So we send ni,nj,nk to the zeroth rank, sort that list by block #,
+    then broadcast that array.
+
+    Once each processor has the sorted list, we create a meta data object on each processor.
+    This writer meta data will only be used by the non zeroth rank if we are writing in
+    parallel (via hdf5 + lump). In that case, we use the meta data to write the hdf5 meta data
+    on each process. If we are writing in serial, then the non zeroth ranks dont ever use their
+    meta data.
+
+    Parameters
+    ----------
+
+    mb : peregrinepy.multiBlock.grid (or a descendant)
+
+    blocksForProcs : list
+        List of lists with the first index being the rank, second index the block number(s)
+
+    gridPath : str
+        Path to grid.
+
+    precision : str ["double","single"]
+        Double or single precision writing.
+
+    animate : bool
+        Controls the output nameing convention to overwrite previous output or not.
+
+    lump : bool
+        Controls whether to output to a single file or one file per block.
+
+
+    Returns
+    -------
+    peregrinepy.writer.writerMetaData.restartMetaData
+
+    """
 
     comm, rank, size = getCommRankSize()
+
     # the mb with Block0 must get a list of all other block's ni,nj,nk
     myNiList = [[blk.ni, blk.nj, blk.nk] for blk in mb]
 
@@ -92,7 +130,7 @@ def registerParallelMetaData(
             blockElem, "Velocity", ["u", "v", "w"], mb.nrt, nblki, ni, nj, nk
         )
 
-    # We add the et to the zeroth ranks mb object
+    # Return the meta data
     return metaData
 
 
