@@ -130,4 +130,3 @@ def writeRestart(
         qf.close()
 
     metaData.saveXdmf(path, mb.nrt)
-    return metaData
