@@ -16,7 +16,7 @@ void periodicRotHigh(
   int s0, s1, s2, plus;
   setHaloSlices(s0, s1, s2, plus, b.ni, b.nj, b.nk, ng, face._nface);
 
-  if (terms.compare("euler") == 0) {
+  if (terms.compare("eulerRot") == 0) {
 
     threeDsubview q1 = getHaloSlice(b.q, face._nface, s1);
     MDRange2 range_face = MDRange2({0, 0}, {q1.extent(0), q1.extent(1)});
@@ -56,7 +56,7 @@ void periodicRotHigh(
           });
     }
 
-  } else if (terms.compare("viscous") == 0) {
+  } else if (terms.compare("viscousRot") == 0) {
 
     threeDsubview dqdx1 = getHaloSlice(b.dqdx, face._nface, s1);
     MDRange3 range_face =
@@ -106,7 +106,7 @@ void periodicRotLow(
   int s0, s1, s2, plus;
   setHaloSlices(s0, s1, s2, plus, b.ni, b.nj, b.nk, ng, face._nface);
 
-  if (terms.compare("euler") == 0) {
+  if (terms.compare("eulerRot") == 0) {
 
     threeDsubview q1 = getHaloSlice(b.q, face._nface, s1);
     MDRange2 range_face = MDRange2({0, 0}, {q1.extent(0), q1.extent(1)});
@@ -146,7 +146,7 @@ void periodicRotLow(
           });
     }
 
-  } else if (terms.compare("viscous") == 0) {
+  } else if (terms.compare("viscousRot") == 0) {
 
     threeDsubview dqdx1 = getHaloSlice(b.dqdx, face._nface, s1);
     MDRange3 range_face =

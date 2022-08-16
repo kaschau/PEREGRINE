@@ -175,7 +175,8 @@ class solverBlock(restartBlock, block_):
         # ------------------------------------------------------------------- #
         #       Spatial derivative of primative array
         # ------------------------------------------------------------------- #
-        createViewMirrorArray(self, ["dqdx", "dqdy", "dqdz"], cQshape)
+        if config["RHS"]["diffusion"]:
+            createViewMirrorArray(self, ["dqdx", "dqdy", "dqdz"], cQshape)
 
         # ------------------------------------------------------------------- #
         #       Thermo
@@ -197,7 +198,8 @@ class solverBlock(restartBlock, block_):
             self.nk + 2 * ng - 1,
             2 + self.ns,
         ]
-        createViewMirrorArray(self, ["qt"], shape)
+        if config["RHS"]["diffusion"]:
+            createViewMirrorArray(self, ["qt"], shape)
 
         # ------------------------------------------------------------------- #
         #       Chemistry
