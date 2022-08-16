@@ -16,7 +16,7 @@ from pathlib import Path
 def simulate():
 
     relpath = str(Path(__file__).parent)
-    ct.add_directory(relpath + "/../src/peregrinepy/thermo_transport/database/source")
+    ct.add_directory(relpath + "/../src/peregrinepy/thermoTransport/database/source")
 
     # Cantera stuff
     T, p = 1100.0, 101325
