@@ -14,7 +14,7 @@ from .bootstrapCase import bootstrapCase
 from .consistify import consistify
 from .RHS import RHS
 from . import bcs
-from . import thermo_transport
+from . import thermoTransport
 
 from . import coproc
 

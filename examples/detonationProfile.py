@@ -19,7 +19,7 @@ import peregrinepy as pg
 def simulate():
 
     relpath = str(Path(__file__).parent)
-    ct.add_directory(relpath + "/../src/peregrinepy/thermo_transport/database/source")
+    ct.add_directory(relpath + "/../src/peregrinepy/thermoTransport/database/source")
     gas = ct.Solution("CH4_O2_Stanford_Skeletal.yaml")
     # set the gas state
     gas.TP = 300.0, 101325.0
