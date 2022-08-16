@@ -79,8 +79,8 @@ void diffusiveFlux(block_ b) {
         dTdy = 0.5 * (b.dqdy(i, j, k, 4) + b.dqdy(i - 1, j, k, 4));
         dTdz = 0.5 * (b.dqdz(i, j, k, 4) + b.dqdz(i - 1, j, k, 4));
 
-        q = kappa * (dTdx * b.isx(i, j, k) + dTdy * b.isy(i, j, k) +
-                     dTdz * b.isz(i, j, k));
+        q = -kappa * (dTdx * b.isx(i, j, k) + dTdy * b.isy(i, j, k) +
+                      dTdz * b.isz(i, j, k));
 
         // flow work
         // Compute face normal volume flux vector
@@ -88,10 +88,10 @@ void diffusiveFlux(block_ b) {
         vf = 0.5 * (b.q(i, j, k, 2) + b.q(i - 1, j, k, 2));
         wf = 0.5 * (b.q(i, j, k, 3) + b.q(i - 1, j, k, 3));
 
-        b.iF(i, j, k, 4) =
-            (uf * txx * b.isx(i, j, k) + vf * txy * b.isy(i, j, k) +
-             wf * txz * b.isz(i, j, k)) -
-            q;
+        b.iF(i, j, k, 4) = -(uf * txx + vf * txy + wf * txz) * b.isx(i, j, k) -
+                           (uf * tyx + vf * tyy + wf * tyz) * b.isy(i, j, k) -
+                           (uf * tzx + vf * tzy + wf * tzz) * b.isz(i, j, k) +
+                           q;
 
         // Species
         double gradYk, Dij, Dcorr = 0.0;
@@ -204,8 +204,8 @@ void diffusiveFlux(block_ b) {
         dTdy = 0.5 * (b.dqdy(i, j, k, 4) + b.dqdy(i, j - 1, k, 4));
         dTdz = 0.5 * (b.dqdz(i, j, k, 4) + b.dqdz(i, j - 1, k, 4));
 
-        q = kappa * (dTdx * b.jsx(i, j, k) + dTdy * b.jsy(i, j, k) +
-                     dTdz * b.jsz(i, j, k));
+        q = -kappa * (dTdx * b.jsx(i, j, k) + dTdy * b.jsy(i, j, k) +
+                      dTdz * b.jsz(i, j, k));
 
         // flow work
         // Compute face normal volume flux vector
@@ -213,10 +213,10 @@ void diffusiveFlux(block_ b) {
         vf = 0.5 * (b.q(i, j, k, 2) + b.q(i, j - 1, k, 2));
         wf = 0.5 * (b.q(i, j, k, 3) + b.q(i, j - 1, k, 3));
 
-        b.jF(i, j, k, 4) =
-            (uf * txx * b.jsx(i, j, k) + vf * txy * b.jsy(i, j, k) +
-             wf * txz * b.jsz(i, j, k)) -
-            q;
+        b.jF(i, j, k, 4) = -(uf * txx + vf * txy + wf * txz) * b.jsx(i, j, k) -
+                           (uf * tyx + vf * tyy + wf * tyz) * b.jsy(i, j, k) -
+                           (uf * tzx + vf * tzy + wf * tzz) * b.jsz(i, j, k) +
+                           q;
 
         // Species
         double gradYk, Dij, Dcorr = 0.0;
@@ -329,8 +329,8 @@ void diffusiveFlux(block_ b) {
         dTdy = 0.5 * (b.dqdy(i, j, k, 4) + b.dqdy(i, j, k - 1, 4));
         dTdz = 0.5 * (b.dqdz(i, j, k, 4) + b.dqdz(i, j, k - 1, 4));
 
-        q = kappa * (dTdx * b.ksx(i, j, k) + dTdy * b.ksy(i, j, k) +
-                     dTdz * b.ksz(i, j, k));
+        q = -kappa * (dTdx * b.ksx(i, j, k) + dTdy * b.ksy(i, j, k) +
+                      dTdz * b.ksz(i, j, k));
 
         // flow work
         // Compute face normal volume flux vector
@@ -338,10 +338,10 @@ void diffusiveFlux(block_ b) {
         vf = 0.5 * (b.q(i, j, k, 2) + b.q(i, j, k - 1, 2));
         wf = 0.5 * (b.q(i, j, k, 3) + b.q(i, j, k - 1, 3));
 
-        b.kF(i, j, k, 4) =
-            (uf * txx * b.ksx(i, j, k) + vf * txy * b.ksy(i, j, k) +
-             wf * txz * b.ksz(i, j, k)) -
-            q;
+        b.kF(i, j, k, 4) = -(uf * txx + vf * txy + wf * txz) * b.ksx(i, j, k) -
+                           (uf * tyx + vf * tyy + wf * tyz) * b.ksy(i, j, k) -
+                           (uf * tzx + vf * tzy + wf * tzz) * b.ksz(i, j, k) +
+                           q;
 
         // Species
         double gradYk, Dij, Dcorr = 0.0;
