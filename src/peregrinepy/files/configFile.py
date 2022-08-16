@@ -70,7 +70,7 @@ class configFile(frozenDict):
             {
                 "spdata": ["Air"],
                 "eos": "cpg",
-                "trans": "kineticTheory",
+                "trans": "constantProps",
                 "chemistry": False,
                 "mechanism": None,
                 "nChemSubSteps": 1,
