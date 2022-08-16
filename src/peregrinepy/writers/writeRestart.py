@@ -11,7 +11,7 @@ def writeRestart(
     animate=True,
     precision="double",
     withHalo=False,
-    lump=False,
+    lump=True,
 ):
     """This function produces an hdf5 file from a peregrinepy.multiBlock.restart for viewing in Paraview.
 
