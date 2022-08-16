@@ -1,11 +1,11 @@
 import h5py
 import numpy as np
-from ..misc import progressBar
-from .writerMetaData import restartMetaData
+from .writerMetaData import arbitraryMetaData
 
 
-def writeRestart(
+def writeArbitraryArray(
     mb,
+    arrayName,
     path="./",
     gridPath="./",
     animate=True,
@@ -32,6 +32,7 @@ def writeRestart(
     None
 
     """
+    assert mb.mbType == "solver"
 
     if precision == "double":
         fdtype = "float64"
@@ -39,7 +40,8 @@ def writeRestart(
         fdtype = "float32"
 
     # Start the xdmf tree
-    metaData = restartMetaData(
+    metaData = arbitraryMetaData(
+        arrayName=arrayName,
         gridPath=gridPath,
         precision=precision,
         animate=animate,
@@ -57,15 +59,11 @@ def writeRestart(
         nblki = blk.nblki
         ni, nj, nk = blk.ni, blk.nj, blk.nk
 
-        if blk.blockType == "solver":
-            if withHalo:
-                writeS = np.s_[:, :, :]
-                ng = blk.ng
-            else:
-                writeS = np.s_[blk.ng : -blk.ng, blk.ng : -blk.ng, blk.ng : -blk.ng]
-                ng = 0
-        else:
+        if withHalo:
             writeS = np.s_[:, :, :]
+            ng = blk.ng
+        else:
+            writeS = np.s_[blk.ng : -blk.ng, blk.ng : -blk.ng, blk.ng : -blk.ng]
             ng = 0
 
         extentCC = (ni + 2 * ng - 1) * (nj + 2 * ng - 1) * (nk + 2 * ng - 1)
@@ -88,51 +86,29 @@ def writeRestart(
         resS = f"results_{nblki:06d}"
         qf.create_group(resS)
 
-        if blk.blockType == "solver":
-            dsetName = "rho"
-            qf[resS].create_dataset(dsetName, shape=(extentCC,), dtype=fdtype)
-            dset = qf[resS][dsetName]
-            try:
-                dset[:] = blk.array["Q"][writeS + tuple([0])].ravel(order="F")
-            except TypeError:
-                pass
+        array = blk.array[arrayName]
+        arrayDim = len(array.shape)
+        if arrayDim > 3:
+            names = [f"{arrayName}_{i}" for i in range(array.shape[-1])]
+        else:
+            names = [arrayName]
 
-        names = ["p", "u", "v", "w", "T"] + blk.speciesNames[0:-1]
         for j in range(len(names)):
             dsetName = names[j]
             qf[resS].create_dataset(dsetName, shape=(extentCC,), dtype=fdtype)
             dset = qf[resS][dsetName]
-            dset[:] = blk.array["q"][writeS + tuple([j])].ravel(order="F")
-        # Compute the nth species here
-        dsetName = blk.speciesNames[-1]
-        qf[resS].create_dataset(dsetName, shape=(extentCC,), dtype=fdtype)
-        dset = qf[resS][dsetName]
-        if blk.ns > 1:
-            dset[:] = 1.0 - np.sum(
-                blk.array["q"][writeS + tuple([slice(5, None, None)])], axis=-1
-            ).ravel(order="F")
-        elif blk.ns == 1:
-            dset[:] = 1.0
+            if arrayDim > 3:
+                dset[:] = array[writeS + tuple([j])].ravel(order="F")
+            else:
+                dset[:] = array[writeS].ravel(order="F")
 
         # Add block to xdmf tree
         blockElem = metaData.addBlockElem(nblki, ni, nj, nk, ng)
-
-        # Add scalar variables to block tree
-        names = ["p", "T"] + blk.speciesNames
-        if blk.blockType == "solver":
-            names.insert(0, "rho")
 
         for name in names:
             metaData.addScalarToBlockElem(
                 blockElem, name, mb.nrt, nblki, ni, nj, nk, ng
             )
-        # Add vector variables to block tree
-        metaData.addVectorToBlockElem(
-            blockElem, "Velocity", ["u", "v", "w"], mb.nrt, nblki, ni, nj, nk, ng
-        )
-
-        if mb.mbType == "restart":
-            progressBar(nblki + 1, len(mb), f"Writing out restartBlock {nblki}")
 
         if not lump:
             qf.close()

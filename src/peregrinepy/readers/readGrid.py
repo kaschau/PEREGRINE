@@ -5,7 +5,7 @@ import numpy as np
 from ..misc import progressBar
 
 
-def readGrid(mb, path="./", lump=False, justNi=False):
+def readGrid(mb, path="./", lump=True, justNi=False):
     """
     This function reads in all the HDF5 grid files in
     :path: and adds the coordinate data to a supplied
