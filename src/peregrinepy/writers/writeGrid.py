@@ -42,18 +42,16 @@ def writeGrid(mb, path="./", precision="double", withHalo=False, lump=False):
         gf = h5py.File(f"{path}/g.h5", "w")
 
     for blk in mb:
-        if withHalo and blk.blockType == "solver":
-            ng = blk.ng
-        else:
-            ng = 0
-
         if blk.blockType == "solver":
             if withHalo:
                 writeS = np.s_[:, :, :]
+                ng = blk.ng
             else:
                 writeS = np.s_[blk.ng : -blk.ng, blk.ng : -blk.ng, blk.ng : -blk.ng]
+                ng = 0
         else:
             writeS = np.s_[:, :, :]
+            ng = 0
 
         nblkiS = f"{blk.nblki:06d}"
         coordS = "coordinates_" + nblkiS
@@ -90,9 +88,7 @@ def writeGrid(mb, path="./", precision="double", withHalo=False, lump=False):
         dset[:] = blk.array["z"][writeS].ravel(order="F")
 
         # Add block to xdmf tree
-        metaData.addBlockElem(
-            blk.nblki, blk.ni + 2 * ng, blk.nj + 2 * ng, blk.nk + 2 * ng, ng
-        )
+        metaData.addBlockElem(blk.nblki, blk.ni, blk.nj, blk.nk, ng)
 
         if mb.mbType in ["grid", "restart"]:
             progressBar(blk.nblki + 1, len(mb), f"Writing out gridBlock {blk.nblki}")

@@ -126,11 +126,11 @@ class restartMetaData(gridMetaData):
         blockElem = deepcopy(self.blockTemplate)
         blockElem.set("Name", f"B{nblki:06d}")
         topo = blockElem.find("Topology")
-        topo.set("NumberOfElements", f"{nk} {nj} {ni}")
+        topo.set("NumberOfElements", f"{nk+2*ng} {nj+2*ng} {ni+2*ng}")
 
         for coord, i in zip(["x", "y", "z"], [0, 1, 2]):
             X = blockElem.find("Geometry")[i]
-            X.set("Dimensions", f"{nk} {nj} {ni}")
+            X.set("Dimensions", f"{nk+2*ng} {nj+2*ng} {ni+2*ng}")
             X.text = self.getGridFileH5Location(coord, nblki)
 
         self.gridElem.append(deepcopy(blockElem))
@@ -161,29 +161,29 @@ class restartMetaData(gridMetaData):
             else:
                 return f"q.{nblki:06d}.h5"
 
-    def addScalarToBlockElem(self, blockElem, varName, nrt, nblki, ni, nj, nk):
+    def addScalarToBlockElem(self, blockElem, varName, nrt, nblki, ni, nj, nk, ng):
 
         attributeElem = deepcopy(self.scalarAttributeTemplate)
         attributeElem.set("Name", varName)
 
         dataItemElem = deepcopy(self.dataItemTemplate)
-        dataItemElem.set("Dimensions", f"{nk-1} {nj-1} {ni-1}")
+        dataItemElem.set("Dimensions", f"{nk+2*ng-1} {nj+2*ng-1} {ni+2*ng-1}")
         dataItemElem.text = self.getVarFileH5Location(varName, nrt, nblki)
 
         attributeElem.append(dataItemElem)
         blockElem.append(attributeElem)
 
     def addVectorToBlockElem(
-        self, blockElem, vectorName, varNames, nrt, nblki, ni, nj, nk
+        self, blockElem, vectorName, varNames, nrt, nblki, ni, nj, nk, ng
     ):
 
         attributeElem = deepcopy(self.vectorAttributeTemplate)
         attributeElem.set("Name", vectorName)
         functionElem = attributeElem.find("DataItem")
-        functionElem.set("Dimensions", f"{nk-1} {nj-1} {ni-1} 3")
+        functionElem.set("Dimensions", f"{nk+2*ng-1} {nj+2*ng-1} {ni+2*ng-1} 3")
         for varName in varNames:
             dataItemElem = deepcopy(self.dataItemTemplate)
-            dataItemElem.set("Dimensions", f"{nk-1} {nj-1} {ni-1}")
+            dataItemElem.set("Dimensions", f"{nk+2*ng-1} {nj+2*ng-1} {ni+2*ng-1}")
             dataItemElem.text = self.getVarFileH5Location(varName, nrt, nblki)
 
             functionElem.append(dataItemElem)
@@ -199,29 +199,36 @@ class restartMetaData(gridMetaData):
 
 
 class arbitraryMetaData(restartMetaData):
-    def __init__(self, arrayName, precision, animate, lump, nrt=0, tme=0.0):
-        super().__init__(precision, lump)
+    def __init__(self, arrayName, gridPath, precision, animate, lump, nrt=0, tme=0.0):
+        super().__init__(gridPath, precision, animate, lump, nrt=0, tme=0.0)
         self.metaType = "arbitrary"
         self.arrayName = arrayName
 
-    def getArrayNameIndicies(self, arrayName, speciesNames):
-        ns = len(speciesNames)
+    def getVarFileH5Location(self, varName, nrt, nblki):
+        arrayName = self.arrayName
+        if self.lump:
+            if self.animate:
+                return f"{arrayName}.{nrt:08d}.h5:/results_{nblki:06d}/{varName}"
+            else:
+                return f"{arrayName}.h5:/results_{nblki:06d}/{varName}"
+        else:
+            if self.animate:
+                return f"{arrayName}.{nrt:08d}.{nblki:06d}.h5:/results_{nblki:06d}/{varName}"
+            else:
+                return f"{arrayName}.{nblki:06d}.h5:/results_{nblki:06d}/{varName}"
 
-        if arrayName == "q":
-            raise ValueError("Use the restart writer to write out q.")
-
-        elif arrayName == "Q":
-            d = {
-                "scalars": {
-                    "names": ["rho", "E"] + [f"rho{i}" for i in speciesNames[0::-1]],
-                    "indicies": [0, 4] + [5 + i for i in range(ns - 1)],
-                },
-                "vectors": {"names": ["Momentum"]},
-                "lables": [["rhou", "rhov", "rhow"]],
-                "indicies": [[1, 2, 3]],
-            }
-
-        return d
+    def getVarFileName(self, nrt, nblki):
+        arrayName = self.arrayName
+        if self.lump:
+            if self.animate:
+                return f"{arrayName}.{nrt:08d}.h5"
+            else:
+                return f"{arrayName}.h5"
+        else:
+            if self.animate:
+                return f"{arrayName}.{nrt:08d}.{nblki:06d}.h5"
+            else:
+                return f"{arrayName}.{nblki:06d}.h5"
 
     def getOutputName(self, nrt):
         if self.animate:
