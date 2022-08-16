@@ -31,9 +31,7 @@ def test_chemistry(my_setup, thfile, ctfile, chmfile):
     config = pg.files.configFile()
 
     relpath = str(Path(__file__).parent)
-    ct.add_directory(
-        relpath + "/../../src/peregrinepy/thermo_transport/database/source"
-    )
+    ct.add_directory(relpath + "/../../src/peregrinepy/thermoTransport/database/source")
 
     gas = ct.Solution(ctfile)
     p = np.random.uniform(low=1e6, high=30e6)

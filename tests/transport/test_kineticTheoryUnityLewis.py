@@ -28,9 +28,7 @@ pytestmark = pytest.mark.parametrize(
 def test_kineticTheoryUnityLewis(my_setup, ctfile, thfile):
 
     relpath = str(Path(__file__).parent)
-    ct.add_directory(
-        relpath + "/../../src/peregrinepy/thermo_transport/database/source"
-    )
+    ct.add_directory(relpath + "/../../src/peregrinepy/thermoTransport/database/source")
 
     gas = ct.Solution(ctfile)
     p = np.random.uniform(low=10000, high=1000000)

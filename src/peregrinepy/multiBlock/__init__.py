@@ -4,7 +4,7 @@ from .restart import restart
 from .solver import solver
 
 from ..integrators import getIntegrator
-from ..thermo_transport import thtrdat, findUserSpData
+from ..thermoTransport import thtrdat, findUserSpData
 from peregrinepy import compute
 
 from ..misc import null
