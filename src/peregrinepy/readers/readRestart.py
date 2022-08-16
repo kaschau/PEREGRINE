@@ -5,7 +5,7 @@ import h5py
 from ..misc import progressBar
 
 
-def readRestart(mb, path="./", nrt=0, animate=True, lump=False):
+def readRestart(mb, path="./", nrt=0, animate=True, lump=True):
     """This function reads in all the HDF5 grid files in :path:
     and adds the coordinate data to a supplied peregrinepy.multiBlock.grid
     object (or one of its descendants)

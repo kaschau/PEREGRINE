@@ -8,7 +8,7 @@ from mpi4py.MPI import INT as MPIINT
 
 
 def registerParallelMetaData(
-    mb, blocksForProcs, gridPath="./", precision="double", animate=True, lump=False
+    mb, blocksForProcs, gridPath="./", precision="double", animate=True, lump=True
 ):
     """This function creates a metaData object when blocks are spread out over multiple
     processors. The strategie is to first create an ordered list of blocks of block

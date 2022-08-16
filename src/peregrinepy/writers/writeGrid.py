@@ -5,7 +5,7 @@ from ..misc import progressBar
 from .writerMetaData import gridMetaData
 
 
-def writeGrid(mb, path="./", precision="double", withHalo=False, lump=False):
+def writeGrid(mb, path="./", precision="double", withHalo=False, lump=True):
     """This function produces an hdf5 file from a peregrinepy.multiBlock.grid (or a descendant) for viewing in Paraview.
     Parameters
     ----------
