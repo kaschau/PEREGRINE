@@ -44,3 +44,11 @@ def consistify(mb, given="cons"):
 
     # Communicate necessary halos
     communicate(mb, mb.commList)
+
+    # Rotational Periodics require rotation AFTER communication, not before
+    for blk in mb:
+        for face in blk.faces:
+            if face.bcType.startswith("periodicRot"):
+                face.bcFunc(blk, face, mb.eos, mb.thtrdat, "eulerRot", mb.tme)
+                if mb.config["RHS"]["diffusion"]:
+                    face.bcFunc(blk, face, mb.eos, mb.thtrdat, "viscousRot", mb.tme)
