@@ -124,10 +124,12 @@ def registerParallelMetaData(
         names = ["rho", "p", "T"] + mb[0].speciesNames
 
         for name in names:
-            metaData.addScalarToBlockElem(blockElem, name, mb.nrt, nblki, ni, nj, nk)
+            metaData.addScalarToBlockElem(
+                blockElem, name, mb.nrt, nblki, ni, nj, nk, ng=0
+            )
         # Add vector variables to block tree
         metaData.addVectorToBlockElem(
-            blockElem, "Velocity", ["u", "v", "w"], mb.nrt, nblki, ni, nj, nk
+            blockElem, "Velocity", ["u", "v", "w"], mb.nrt, nblki, ni, nj, nk, ng=0
         )
 
     # Return the meta data
