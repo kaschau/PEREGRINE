@@ -33,6 +33,7 @@ class TestPeriodics:
 
         config = pg.files.configFile()
         config["RHS"]["primaryAdvFlux"] = adv
+        config["RHS"]["diffusion"] = True
         config["thermochem"]["spdata"] = spdata
 
         mb = pg.multiBlock.generateMultiBlockSolver(1, config)
