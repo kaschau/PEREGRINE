@@ -48,7 +48,16 @@ myPlane:
     - 1.0
     - 0.0
   n01: 10
-  n02: 10"""
+  n02: 10
+
+# A custom user defined function in udf.py
+myCustomFunction:
+  type: userFunction"""
+
+udf = """
+def udf():
+    # generate your points here
+    return pts"""
 
 
 def createPoint(pdict):
@@ -144,6 +153,10 @@ def getPointsTagsFromInput(inp):
             tpts = createPlane(pdict)
         elif ptype == "circle":
             tpts = createCircle(pdict)
+        elif ptype == "userFunction":
+            from .udf import udf
+
+            tpts = udf()
         else:
             raise TypeError(f"Unknown template type {item}")
 
@@ -242,6 +255,8 @@ if __name__ == "__main__":
     if args.genInp:
         with open("tracePoints.yaml", "w") as f:
             f.write(inpFileTemplate)
+        with open("udf.py", "w") as f:
+            f.write(udf)
         raise SystemExit(0)
 
     with open(args.inputFile, "r") as connFile:
