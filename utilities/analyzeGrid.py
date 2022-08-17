@@ -6,11 +6,12 @@ of the grid.
 
 """
 
-import os
 import argparse
-from peregrinepy.readers import readGrid
-from peregrinepy.multiBlock import grid as mbg
+
 import numpy as np
+from lxml import etree
+from peregrinepy.multiBlock import grid as mbg
+from peregrinepy.readers import readGrid
 
 
 def analyzeGrid(mb):
@@ -53,7 +54,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
     gp = args.gridDir
 
-    nblks = len([i for i in os.listdir(gp) if i.startswith("g.") and i.endswith(".h5")])
+    tree = etree.parse(f"{gp}/g.xmf")
+    nblks = len(tree.getroot().find("Domain").find("Grid"))
 
     mb = mbg(nblks)
     readGrid(mb, gp)

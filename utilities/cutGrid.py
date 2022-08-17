@@ -12,6 +12,7 @@ import numpy as np
 import peregrinepy as pg
 from verifyGrid import verify
 from analyzeGrid import analyzeGrid
+from lxml import etree
 
 
 def faceSlice(nface):
@@ -390,7 +391,8 @@ if __name__ == "__main__":
     if cutOps and maxBlockSize > 0:
         raise ValueError("Cannot specify both cutOps and maxBlockSize")
 
-    nblks = len([f for f in os.listdir(f"./{fromDir}") if f.endswith(".h5")])
+    tree = etree.parse(f"{fromDir}/g.xmf")
+    nblks = len(tree.getroot().find("Domain").find("Grid"))
     mb = pg.multiBlock.grid(nblks)
     pg.readers.readGrid(mb, fromDir)
     pg.readers.readConnectivity(mb, fromDir)

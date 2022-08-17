@@ -15,11 +15,10 @@ Output will print any discrepencies to the screen
 """
 
 import argparse
-import os
 
 import numpy as np
 import peregrinepy as pg
-
+from lxml import etree
 
 faceToOrientIndexMapping = {
     1: 0,
@@ -279,7 +278,8 @@ if __name__ == "__main__":
     gp = args.gridPath
     cp = args.connPath
     bcFamPath = args.bcFamPath
-    nblks = len([i for i in os.listdir(gp) if i.startswith("g.") and i.endswith(".h5")])
+    tree = etree.parse(f"{gp}/g.xmf")
+    nblks = len(tree.getroot().find("Domain").find("Grid"))
     assert nblks > 0
     mb = pg.multiBlock.grid(nblks)
 

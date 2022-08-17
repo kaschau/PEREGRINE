@@ -203,13 +203,14 @@ def generateTracePoints(mb, points, tags):
             minIndex = tuple([minIndex[0][0], minIndex[1][0], minIndex[2][0]])
             maxDist = max(maxDist, dists[minIndex])
 
-            indexes[index, 1] = minIndex[0]
-            indexes[index, 2] = minIndex[1]
-            indexes[index, 3] = minIndex[2]
-
-            indexes[index, 1] = minIndex[0][0]
-            indexes[index, 2] = minIndex[1][0]
-            indexes[index, 3] = minIndex[2][0]
+            try:
+                indexes[index, 1] = minIndex[0][0]
+                indexes[index, 2] = minIndex[1][0]
+                indexes[index, 3] = minIndex[2][0]
+            except IndexError:
+                indexes[index, 1] = minIndex[0]
+                indexes[index, 2] = minIndex[1]
+                indexes[index, 3] = minIndex[2]
 
     if False in found:
         print(
@@ -233,6 +234,7 @@ def generateTracePoints(mb, points, tags):
 
 if __name__ == "__main__":
     import argparse
+    from lxml import etree
 
     parser = argparse.ArgumentParser(
         description="Utility to generate the tracePoints.npy binary file used in peregrine to trace point data in situ."
@@ -265,15 +267,13 @@ if __name__ == "__main__":
     with open(args.inputFile, "r") as connFile:
         inp = yaml.load(connFile, Loader=yaml.FullLoader)
 
-    # gp = args.gridPath
-    # nblks = len([i for i in os.listdir(gp) if i.startswith("g.") and i.endswith(".h5")])
-    # assert nblks > 0
+    gp = args.gridPath
+    tree = etree.parse(f"{gp}/g.xmf")
+    nblks = len(tree.getroot().find("Domain").find("Grid"))
+    assert nblks > 0
 
-    # mb = pg.multiBlock.grid(nblks)
-    # pg.readers.readGrid(mb, gp)
+    mb = pg.multiBlock.grid(nblks)
+    pg.readers.readGrid(mb, gp)
 
-    mb = []
     points, tags = getPointsTagsFromInput(inp)
-    print(points)
-    print(tags)
-    # generateTracePoints(mb, points, tags)
+    generateTracePoints(mb, points, tags)

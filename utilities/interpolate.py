@@ -26,6 +26,7 @@ from peregrinepy.multiBlock import restart as mbr
 from peregrinepy import interpolation
 from peregrinepy.misc import progressBar
 import yaml
+from lxml import etree
 import os
 
 
@@ -105,9 +106,8 @@ if __name__ == "__main__":
     verboseSearch = args.verboseSearch
 
     # Read in from data
-    nblkFrom = len(
-        [i for i in os.listdir(fromDir) if i.startswith("g.") and i.endswith(".h5")]
-    )
+    tree = etree.parse(f"{fromDir}/g.xmf")
+    nblkFrom = len(tree.getroot().find("Domain").find("Grid"))
     mbFrom = mbr(nblkFrom, speciesNames)
     fromNrst = int(
         [i for i in os.listdir(fromDir) if i.startswith("q.")][0].strip().split(".")[1]
