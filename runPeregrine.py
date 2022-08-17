@@ -91,6 +91,12 @@ def simulate(configFilePath):
                 mb.archiveMetaData,
                 path=config["io"]["archiveDir"],
             )
+            for metaData in mb.extraMetaData:
+                pg.writers.parallelWriter.parallelWriteArbitraryArray(
+                    mb,
+                    metaData,
+                    path=config["io"]["archiveDir"],
+                )
 
         # Check if we need to check for Nan
         if checkNan:

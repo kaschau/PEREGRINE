@@ -154,6 +154,17 @@ def bootstrapCase(config):
         animate=config["io"]["animateArchive"],
         lump=config["io"]["lumpIO"],
     )
+    for extraVar in config["io"]["saveExtraVars"]:
+        meta = pg.writers.parallelWriter.registerParallelMetaData(
+            mb,
+            blocksForProcs,
+            gridPath=f"../{config['io']['gridDir']}",
+            precision="single",
+            animate=config["io"]["animateArchive"],
+            lump=config["io"]["lumpIO"],
+            arrayName=extraVar,
+        )
+        mb.extraMetaData.append(meta)
 
     ################################################################
     # Prepare interior fields
