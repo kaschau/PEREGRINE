@@ -57,7 +57,7 @@ myCustomFunction:
 udf = """
 def udf():
     # generate your points here
-    return pts"""
+    return pts,tags"""
 
 
 def createPoint(pdict):
