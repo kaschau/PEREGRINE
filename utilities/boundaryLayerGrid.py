@@ -84,7 +84,9 @@ def growToDy(startDy, endDy, gr):
 
 if __name__ == "__main__":
 
-    parser = argparse.ArgumentParser(description="Create a template input file.")
+    parser = argparse.ArgumentParser(
+        description="Utility to create a boundary layer grid."
+    )
     parser.add_argument(
         "-genInp",
         "--generateInput",
