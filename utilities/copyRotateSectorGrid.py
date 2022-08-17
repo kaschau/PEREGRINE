@@ -12,7 +12,8 @@ The utility will output the copy/rotated grid in the "to" folder.
 import argparse
 import peregrinepy as pg
 import numpy as np
-import os
+from lxml import etree
+
 
 if __name__ == "__main__":
 
@@ -78,9 +79,8 @@ if __name__ == "__main__":
             "nseg must be > 1 (it corresponds to the total number of output segments)"
         )
 
-    nblks = len(
-        [f for f in os.listdir(fromDir) if f.startswith("g.") and f.endswith(".h5")]
-    )
+    tree = etree.parse(f"{fromDir}/g.xmf")
+    nblks = len(tree.getroot().find("Domain").find("Grid"))
 
     fromGrid = pg.multiBlock.grid(nblks)
     pg.readers.readGrid(fromGrid, fromDir)

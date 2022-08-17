@@ -7,6 +7,7 @@ MPI ranks.
 
 import numpy as np
 import peregrinepy as pg
+from lxml import etree
 
 
 def getSortedBlockSizes(mb):
@@ -119,7 +120,8 @@ if __name__ == "__main__":
     blksPerProcLimit = args.blksPerProcLimit
     numProcs = args.numProcs
 
-    nblks = len([f for f in os.listdir(f"{fromDir}") if f.endswith(".h5")])
+    tree = etree.parse(f"{fromDir}/g.xmf")
+    nblks = len(tree.getroot().find("Domain").find("Grid"))
     mb = pg.multiBlock.grid(nblks)
     pg.readers.readGrid(mb, fromDir, justNi=True)
 
