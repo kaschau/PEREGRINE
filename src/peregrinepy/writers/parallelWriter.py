@@ -2,13 +2,19 @@
 
 import h5py
 import numpy as np
-from .writerMetaData import restartMetaData
+from .writerMetaData import restartMetaData, arbitraryMetaData
 from ..mpiComm.mpiUtils import getCommRankSize
 from mpi4py.MPI import INT as MPIINT
 
 
 def registerParallelMetaData(
-    mb, blocksForProcs, gridPath="./", precision="double", animate=True, lump=True
+    mb,
+    blocksForProcs,
+    gridPath="./",
+    precision="double",
+    animate=True,
+    lump=True,
+    arrayName="default",
 ):
     """This function creates a metaData object when blocks are spread out over multiple
     processors. The strategie is to first create an ordered list of blocks of block
@@ -49,6 +55,15 @@ def registerParallelMetaData(
     """
 
     comm, rank, size = getCommRankSize()
+    if arrayName == "default":
+        # Add scalar variables to block tree
+        names = ["rho", "p", "T"] + mb[0].speciesNames
+    else:
+        shape = mb[0].array[arrayName].shape
+        if len(shape) > 3:
+            names = [f"{arrayName}_{i}" for i in range(shape[-1])]
+        else:
+            names = [arrayName]
 
     # the mb with Block0 must get a list of all other block's ni,nj,nk
     myNiList = [[blk.ni, blk.nj, blk.nk] for blk in mb]
@@ -104,14 +119,25 @@ def registerParallelMetaData(
     comm.Bcast([totalNiList, mb.totalBlocks * 3, MPIINT], root=0)
 
     # Create the metaData for all the blocks
-    metaData = restartMetaData(
-        gridPath=gridPath,
-        precision=precision,
-        animate=animate,
-        lump=lump,
-        nrt=mb.nrt,
-        tme=mb.tme,
-    )
+    if arrayName == "default":
+        metaData = restartMetaData(
+            gridPath=gridPath,
+            precision=precision,
+            animate=animate,
+            lump=lump,
+            nrt=mb.nrt,
+            tme=mb.tme,
+        )
+    else:
+        metaData = arbitraryMetaData(
+            arrayName=arrayName,
+            gridPath=gridPath,
+            precision=precision,
+            animate=animate,
+            lump=lump,
+            nrt=mb.nrt,
+            tme=mb.tme,
+        )
 
     for nblki, n in enumerate(totalNiList):
         ni = n[0]
@@ -120,17 +146,15 @@ def registerParallelMetaData(
         # Add block to xdmf tree
         blockElem = metaData.addBlockElem(nblki, ni, nj, nk, ng=0)
 
-        # Add scalar variables to block tree
-        names = ["rho", "p", "T"] + mb[0].speciesNames
-
         for name in names:
             metaData.addScalarToBlockElem(
                 blockElem, name, mb.nrt, nblki, ni, nj, nk, ng=0
             )
-        # Add vector variables to block tree
-        metaData.addVectorToBlockElem(
-            blockElem, "Velocity", ["u", "v", "w"], mb.nrt, nblki, ni, nj, nk, ng=0
-        )
+        if arrayName == "default":
+            # Add vector variables to block tree
+            metaData.addVectorToBlockElem(
+                blockElem, "Velocity", ["u", "v", "w"], mb.nrt, nblki, ni, nj, nk, ng=0
+            )
 
     # Return the meta data
     return metaData
@@ -149,6 +173,8 @@ def parallelWriteRestart(
     else:
         fdtype = "float32"
 
+    names = ["rho", "p", "u", "v", "w", "T"] + mb[0].speciesNames
+
     # If lumping use parallel writer
     if metaData.lump:
         fileName = f"{path}/{metaData.getVarFileName(mb.nrt, None)}"
@@ -161,7 +187,6 @@ def parallelWriteRestart(
             qf["iter"]["nrt"][0] = mb.nrt
             qf["iter"]["tme"][0] = mb.tme
         # If lumping we need to create the meta data for each block
-        names = ["rho", "p", "u", "v", "w", "T"] + mb[0].speciesNames
         for nblki in range(mb.totalBlocks):
             qf.create_group(f"results_{nblki:06d}")
             blockMetaData = metaData.tree[0][0][nblki][0]
@@ -205,9 +230,8 @@ def parallelWriteRestart(
         dsetName = "rho"
         dset = qf[resS][dsetName]
         dset[:] = blk.array["Q"][ng:-ng, ng:-ng, ng:-ng, 0].ravel(order="F")
-        names = ["p", "u", "v", "w", "T"] + blk.speciesNames[0:-1]
-        for j in range(len(names)):
-            dsetName = names[j]
+        for j in range(len(names[1:-1])):
+            dsetName = names[j + 1]
             dset = qf[resS][dsetName]
             dset[:] = blk.array["q"][ng:-ng, ng:-ng, ng:-ng, j].ravel(order="F")
         # Compute the nth species here
@@ -241,6 +265,107 @@ def parallelWriteRestart(
                     varName = v.text.split("/")[-1]
                     text = metaData.getVarFileH5Location(varName, mb.nrt, nblki)
                     v.text = text
+
+    if rank == 0:
+        metaData.saveXdmf(path, nrt=mb.nrt)
+
+
+def parallelWriteArbitraryArray(
+    mb,
+    metaData,
+    path="./",
+):
+
+    comm, rank, size = getCommRankSize()
+
+    if metaData.precision == "double":
+        fdtype = "float64"
+    else:
+        fdtype = "float32"
+
+    arrayName = metaData.arrayName
+    shape = mb[0].array[arrayName].shape
+    if len(shape) > 3:
+        names = [f"{arrayName}_{i}" for i in range(shape[-1])]
+    else:
+        names = [arrayName]
+
+    # If lumping use parallel writer
+    if metaData.lump:
+        fileName = f"{path}/{metaData.getVarFileName(mb.nrt, None)}"
+        qf = h5py.File(fileName, "w", driver="mpio", comm=comm)
+        qf.create_group("iter")
+        qf["iter"].create_dataset("nrt", shape=(1,), dtype="int32")
+        qf["iter"].create_dataset("tme", shape=(1,), dtype="float64")
+
+        if rank == 0:
+            qf["iter"]["nrt"][0] = mb.nrt
+            qf["iter"]["tme"][0] = mb.tme
+        # If lumping we need to create the meta data for each block
+        for nblki in range(mb.totalBlocks):
+            qf.create_group(f"results_{nblki:06d}")
+            blockMetaData = metaData.tree[0][0][nblki][0]
+            ni, nj, nk = (
+                int(i) for i in blockMetaData.get("NumberOfElements").split(" ")
+            )
+            extentCC = (ni - 1) * (nj - 1) * (nk - 1)
+            for name in names:
+                qf[f"results_{nblki:06d}"].create_dataset(
+                    name, shape=(extentCC,), dtype=fdtype
+                )
+
+    # Write the hdf5 data
+    for blk in mb:
+        # update the host views
+        blk.updateHostView([arrayName])
+
+        extentCC = (blk.ni - 1) * (blk.nj - 1) * (blk.nk - 1)
+        ng = blk.ng
+        nblki = blk.nblki
+
+        # If we arent lumping, each block will open a file, write the iter group
+        # then create the datasets with the correct size
+        if not metaData.lump:
+            fileName = f"{path}/{metaData.getVarFileName(blk.nrt, blk.nblki)}"
+            qf = h5py.File(fileName, "w")
+
+            qf.create_group("iter")
+            qf["iter"].create_dataset("nrt", shape=(1,), dtype="int32")
+            qf["iter"].create_dataset("tme", shape=(1,), dtype="float64")
+            qf["iter"]["nrt"][0] = mb.nrt
+            qf["iter"]["tme"][0] = mb.tme
+            qf.create_group(f"results_{nblki:06d}")
+            for name in names:
+                qf[f"results_{nblki:06d}"].create_dataset(
+                    name, shape=(extentCC,), dtype=fdtype
+                )
+
+        resS = f"results_{nblki:06d}"
+        for j in range(len(names)):
+            dsetName = names[j]
+            dset = qf[resS][dsetName]
+            if len(shape) > 3:
+                dset[:] = blk.array[arrayName][ng:-ng, ng:-ng, ng:-ng, j].ravel(
+                    order="F"
+                )
+            else:
+                dset[:] = blk.array[arrayName][ng:-ng, ng:-ng, ng:-ng].ravel(order="F")
+
+        if not metaData.lump:
+            qf.close()
+
+    if metaData.lump:
+        qf.close()
+
+    # Update and write out xdmf
+    for grid in metaData.tree[0][0]:
+        nblki = int(grid.get("Name")[1::])
+        time = grid.find("Time")
+        time.set("Value", str(mb.tme))
+        for var in grid.findall("Attribute"):
+            name = var.get("Name")
+            text = metaData.getVarFileH5Location(name, mb.nrt, nblki)
+            var[0].text = text
 
     if rank == 0:
         metaData.saveXdmf(path, nrt=mb.nrt)

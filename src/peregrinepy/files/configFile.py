@@ -34,6 +34,7 @@ class configFile(frozenDict):
                 "niterArchive": 1e10,
                 "niterRestart": 10,
                 "niterPrint": 1,
+                "saveExtraVars": [],
             }
         )
         self["simulation"] = frozenDict(

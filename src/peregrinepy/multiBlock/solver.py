@@ -83,6 +83,7 @@ class solver(restart):
         # Parallel output
         self.restartMetaData = None
         self.archiveMetaData = None
+        self.extraMetaData = []
 
     def initSolverArrays(self, config):
         for blk in self:
