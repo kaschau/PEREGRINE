@@ -3,8 +3,155 @@
 A utility to generate trace point file for use in peregrine simulation.
 """
 
-import peregrinepy as pg
 import numpy as np
+import peregrinepy as pg
+import yaml
+
+inpFileTemplate = """---
+
+# Template for input file to generate trace points
+
+# The level 1 headings are the tags given for the collection
+# so rename them to be distinct if you wang
+
+myPoint:
+  type: point
+  p0:
+    - 0.0
+    - 0.0
+    - 0.0
+
+myLine:
+  type: line
+  p0:
+    - 0.0
+    - 0.0
+    - 0.0
+  p1:
+    - 1.0
+    - 0.0
+    - 0.0
+  n: 10
+
+myPlane:
+  type: plane
+  p0:
+    - 0.0
+    - 0.0
+    - 0.0
+  p1:
+    - 1.0
+    - 0.0
+    - 0.0
+  p2:
+    - 0.0
+    - 1.0
+    - 0.0
+  n01: 10
+  n02: 10"""
+
+
+def createPoint(pdict):
+    x = pdict["p0"][0]
+    y = pdict["p0"][1]
+    z = pdict["p0"][2]
+
+    pts = np.array([[x, y, z]])
+    return pts
+
+
+def createLine(pdict):
+    x0 = pdict["p0"][0]
+    y0 = pdict["p0"][1]
+    z0 = pdict["p0"][2]
+    x1 = pdict["p1"][0]
+    y1 = pdict["p1"][1]
+    z1 = pdict["p1"][2]
+
+    n = pdict["n"]
+
+    pts = np.empty((n, 3))
+    pts[:, 0] = np.linspace(x0, x1, n)
+    pts[:, 1] = np.linspace(y0, y1, n)
+    pts[:, 2] = np.linspace(z0, z1, n)
+    return pts
+
+
+def createPlane(pdict):
+    x0 = pdict["p0"][0]
+    y0 = pdict["p0"][1]
+    z0 = pdict["p0"][2]
+    p0 = np.array([x0, y0, z0])
+    x1 = pdict["p1"][0]
+    y1 = pdict["p1"][1]
+    z1 = pdict["p1"][2]
+    p1 = np.array([x1, y1, z1])
+    x2 = pdict["p2"][0]
+    y2 = pdict["p2"][1]
+    z2 = pdict["p2"][2]
+    p2 = np.array([x2, y2, z2])
+
+    n01 = pdict["n01"]
+    n02 = pdict["n02"]
+
+    v01 = p1 - p0
+    v02 = p2 - p0
+    l01 = np.linalg.norm(v01)
+    l02 = np.linalg.norm(v02)
+    norm01 = v01 / l01
+    norm02 = v02 / l02
+
+    d01 = np.linspace(0, 1, n01)
+    d02 = np.linspace(0, 1, n02)
+    xx = np.zeros((n01, n02))
+    yy = np.zeros((n01, n02))
+    zz = np.zeros((n01, n02))
+
+    for j in range(n02):
+        for i in range(n01):
+            xx[i, j] = x0 + norm01[0] * d01[i] + norm02[0] * d02[j]
+            yy[i, j] = y0 + norm01[1] * d01[i] + norm02[1] * d02[j]
+            zz[i, j] = z0 + norm01[2] * d01[i] + norm02[2] * d02[j]
+    pts = np.zeros((n01 * n02, 3))
+    pts[:, 0] = xx.ravel()
+    pts[:, 1] = yy.ravel()
+    pts[:, 2] = zz.ravel()
+
+    return pts
+
+
+def createCircle(pdict):
+    pass
+
+
+def getPointsTagsFromInput(inp):
+    # Create a list of points to trace, points is a numpy array
+    # Also create "tags" for each point that will prepend
+    # the output file name to make sorting through data easier.
+    # So create a numpy array of (npts,3) in size, and a list of
+    # tag names that is [npts] long
+
+    pts = np.empty((0, 3))
+    tags = []
+    for item in inp:
+        pdict = inp[item]
+        ptype = pdict["type"]
+        if ptype == "point":
+            tpts = createPoint(pdict)
+        elif ptype == "line":
+            tpts = createLine(pdict)
+        elif ptype == "plane":
+            tpts = createPlane(pdict)
+        elif ptype == "circle":
+            tpts = createCircle(pdict)
+        else:
+            raise TypeError(f"Unknown template type {item}")
+
+        ttags = [item for _ in range(tpts.shape[0])]
+        pts = np.append(pts, tpts, axis=0)
+        tags += ttags
+
+    return pts, tags
 
 
 def generateTracePoints(mb, points, tags):
@@ -70,36 +217,16 @@ def generateTracePoints(mb, points, tags):
 
 if __name__ == "__main__":
     import argparse
-    import os
-
-    # Create a list of points to trace, points is a numpy array
-    # Also create "tags" for each point that will prepend
-    # the output file name to make sorting through data easier.
-    # So create a numpy array of (npts,3) in size, and a list of
-    # tag names that is [npts] long
-
-    # Circle
-    points = np.empty((10, 3))
-    radius = 38.05e-3
-    radians = np.linspace(0, 2 * np.pi / 4.0, points.shape[0] + 1)[0:-1]
-    points[:, 0] = radius * np.cos(radians)
-    points[:, 1] = 8.9e-3
-    points[:, 2] = -radius * np.sin(radians)
-    tags = [f"Circle{i}" for i in range(points.shape[0])]
-
-    # Probe 2
-    points = np.append(points, np.array([[radius, 28.6e-3, 0.0]]), axis=0)
-    tags.append("Probe2")
-    # Probe 3
-    points = np.append(points, np.array([[radius, 65.3e-3, 0.0]]), axis=0)
-    tags.append("Probe3")
-
-    ##########################################################
-    # End edit region
-    ##########################################################
 
     parser = argparse.ArgumentParser(
         description="Utility to generate the tracePoints.npy binary file used in peregrine to trace point data in situ."
+    )
+    parser.add_argument("inputFile", nargs="?", help="Input yaml file.", default=None)
+    parser.add_argument(
+        "-genInp",
+        "--generateInput",
+        action="store_true",
+        dest="genInp",
     )
     parser.add_argument(
         "-gpath",
@@ -112,12 +239,23 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
+    if args.genInp:
+        with open("tracePoints.yaml", "w") as f:
+            f.write(inpFileTemplate)
+        raise SystemExit(0)
 
-    gp = args.gridPath
-    nblks = len([i for i in os.listdir(gp) if i.startswith("g.") and i.endswith(".h5")])
-    assert nblks > 0
+    with open(args.inputFile, "r") as connFile:
+        inp = yaml.load(connFile, Loader=yaml.FullLoader)
 
-    mb = pg.multiBlock.grid(nblks)
-    pg.readers.readGrid(mb, gp)
+    # gp = args.gridPath
+    # nblks = len([i for i in os.listdir(gp) if i.startswith("g.") and i.endswith(".h5")])
+    # assert nblks > 0
 
-    generateTracePoints(mb, points, tags)
+    # mb = pg.multiBlock.grid(nblks)
+    # pg.readers.readGrid(mb, gp)
+
+    mb = []
+    points, tags = getPointsTagsFromInput(inp)
+    print(points)
+    print(tags)
+    # generateTracePoints(mb, points, tags)
