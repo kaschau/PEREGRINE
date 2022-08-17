@@ -158,7 +158,7 @@ def getPointsTagsFromInput(inp):
             tpts = createCircle(pdict)
             ttags = [item for _ in range(tpts.shape[0])]
         elif ptype == "userFunction":
-            from .udf import udf
+            from udf import udf
 
             tpts, ttags = udf()
         else:
