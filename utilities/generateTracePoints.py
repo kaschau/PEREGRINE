@@ -147,20 +147,23 @@ def getPointsTagsFromInput(inp):
         ptype = pdict["type"]
         if ptype == "point":
             tpts = createPoint(pdict)
+            ttags = [item for _ in range(tpts.shape[0])]
         elif ptype == "line":
             tpts = createLine(pdict)
+            ttags = [item for _ in range(tpts.shape[0])]
         elif ptype == "plane":
             tpts = createPlane(pdict)
+            ttags = [item for _ in range(tpts.shape[0])]
         elif ptype == "circle":
             tpts = createCircle(pdict)
+            ttags = [item for _ in range(tpts.shape[0])]
         elif ptype == "userFunction":
             from .udf import udf
 
-            tpts = udf()
+            tpts, ttags = udf()
         else:
             raise TypeError(f"Unknown template type {item}")
 
-        ttags = [item for _ in range(tpts.shape[0])]
         pts = np.append(pts, tpts, axis=0)
         tags += ttags
 
