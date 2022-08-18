@@ -1,5 +1,6 @@
-PEREGRINE multiBlock
---------------------
+# PEREGRINE multiBlock #
+
+## Blendin the Classes with C++ ##
 
 This is really the heart of PEREGRINE. All the functionality of the code is
 enabled by the structure created here. It is also where the C++/Kokkos library
@@ -50,15 +51,15 @@ So on the python side we create a setter method for the ```topologyFace```.
 object.
 
 ``` python
-self._nface  # This is just an int_
-
-@property
-def nface(self):
-    return self._nface
+    self._nface  # This is just an int_
     
-@nface.setter(value):
-    assert 1 <= value <= 6, "nface must be between 1 and 6"
-    self._nface = value
+    @property
+    def nface(self):
+        return self._nface
+
+    @nface.setter(value):
+        assert 1 <= value <= 6, "nface must be between 1 and 6"
+        self._nface = value
 ```
         
 Now, when we set a value of ```nface``` on the python side, it will go through
@@ -67,8 +68,52 @@ the ```nface_``` attribute. This will subsequently be updated on the C++ object
 and accessible on the C++ side. Speaking of the C++ side, we use the underscored name.
 
 ``` c++
-int nface_
+    int nface_
 ```
 
 And then in C++ code we access the ```nface_``` variable no problem.
 
+## Building of inherited setter methods ##
+
+Sometime in the inheritance structure, we want to do more when we set the
+class attribute than the inherited setter does. For example, when we set the
+```periodixAxis``` values for a ```topologyFace```, we want to set the axis
+values, normalize them if needed, and move on. But for a ```gridFace``` object,
+we want to set the value s*AND*  calculate the ```periodicRotMatrixUp/Down```
+arrays as well (if the periodic is rotational). But when we are a solver face,
+we want to do all that *AND* create the corresponding Kokkos views/mirrors so
+the rotational matrices are available on the C++ side. To do this we define the
+setter that computes the matrix in the ```gridFace``` class, the build on it in
+the solver setter for  ```periodicAxis``` as follows.
+
+**topologyFace**
+
+``` python
+    @periodicAxis.setter
+    def periodicAxis(self, axis):
+        a = axis / np.linalg.norm(axis)
+        self._periodicAxis = a
+```
+
+**gridFace**
+``` python
+    @topologyFace.periodicAxis.setter
+    def periodicAxis(self, axis):
+        # This calls the topology setter method
+        topologyFace.periodicAxis.fset(self, axis) 
+        
+        # ... compute rotational matrix
+```
+
+**solverFace**
+``` python
+    @gridFace.periodicAxis.setter
+    def periodicAxis(self, axis):
+        # This calls the grid setter method
+        gridFace.periodicAxis.fset(self, axis) 
+        
+        # ... set kokkos view/mirrors
+```
+
+Thus, setting the value of ```periodicAxis``` achieves the desired behavior at
+each level of the inheritance structure.
