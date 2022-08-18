@@ -136,7 +136,7 @@ class solverBlock(restartBlock, block_):
         # Cell center metrics
         createViewMirrorArray(
             self,
-            ["dEdx", "dEdy", "dEdz", "dNdx", "dNdy", "dNdz", "dXdx", "dXdy", "dXdz"],
+            ["dEdx", "dEdy", "dEdz", "dNdx", "dNdy", "dNdz", "dCdx", "dCdy", "dCdz"],
             shape,
         )
 

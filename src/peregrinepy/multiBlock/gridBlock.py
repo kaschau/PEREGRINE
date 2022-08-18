@@ -57,9 +57,9 @@ class gridBlock(topologyBlock):
             "dNdx",
             "dNdy",
             "dNdz",
-            "dXdx",
-            "dXdy",
-            "dXdz",
+            "dCdx",
+            "dCdy",
+            "dCdz",
         ]:
             self.array[f"{d}"] = None
             self.mirror[f"{d}"] = None
@@ -106,9 +106,9 @@ class gridBlock(topologyBlock):
             "dNdx",
             "dNdy",
             "dNdz",
-            "dXdx",
-            "dXdy",
-            "dXdz",
+            "dCdx",
+            "dCdy",
+            "dCdz",
         ]:
             self.array[name] = np.zeros((shape))
 

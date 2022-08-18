@@ -82,9 +82,9 @@ PYBIND11_MODULE(compute, m) {
       .def_readwrite("dNdx", &block_::dNdx)
       .def_readwrite("dNdy", &block_::dNdy)
       .def_readwrite("dNdz", &block_::dNdz)
-      .def_readwrite("dXdx", &block_::dXdx)
-      .def_readwrite("dXdy", &block_::dXdy)
-      .def_readwrite("dXdz", &block_::dXdz)
+      .def_readwrite("dCdx", &block_::dCdx)
+      .def_readwrite("dCdy", &block_::dCdy)
+      .def_readwrite("dCdz", &block_::dCdz)
       // i Face centers
       .def_readwrite("ixc", &block_::ixc)
       .def_readwrite("iyc", &block_::iyc)
