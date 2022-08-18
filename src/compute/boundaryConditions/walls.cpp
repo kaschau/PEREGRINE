@@ -102,37 +102,30 @@ void adiabaticNoSlipWall(
     }
   } else if (terms.compare("strict") == 0) {
     int slc;
-    threeDsubview q, iF;
-    twoDsubview isx, isy, isz;
+    threeDsubview iF;
     switch (face._nface) {
     case 1:
       slc = s1;
-      q = getHaloSlice(b.q, face._nface, s1);
       iF = getHaloSlice(b.iF, face._nface, slc);
       break;
     case 3:
       slc = s1;
-      q = getHaloSlice(b.q, face._nface, s1);
       iF = getHaloSlice(b.jF, face._nface, slc);
       break;
     case 5:
       slc = s1;
-      q = getHaloSlice(b.q, face._nface, s1);
       iF = getHaloSlice(b.kF, face._nface, slc);
       break;
     case 2:
       slc = s0;
-      q = getHaloSlice(b.q, face._nface, s1);
       iF = getHaloSlice(b.iF, face._nface, slc);
       break;
     case 4:
       slc = s0;
-      q = getHaloSlice(b.q, face._nface, s1);
       iF = getHaloSlice(b.jF, face._nface, slc);
       break;
     case 6:
       slc = s0;
-      q = getHaloSlice(b.q, face._nface, s1);
       iF = getHaloSlice(b.kF, face._nface, slc);
       break;
     }
@@ -257,37 +250,30 @@ void adiabaticSlipWall(
     }
   } else if (terms.compare("strict") == 0) {
     int slc;
-    threeDsubview q, iF;
-    twoDsubview isx, isy, isz;
+    threeDsubview iF;
     switch (face._nface) {
     case 1:
       slc = s1;
-      q = getHaloSlice(b.q, face._nface, s1);
       iF = getHaloSlice(b.iF, face._nface, slc);
       break;
     case 3:
       slc = s1;
-      q = getHaloSlice(b.q, face._nface, s1);
       iF = getHaloSlice(b.jF, face._nface, slc);
       break;
     case 5:
       slc = s1;
-      q = getHaloSlice(b.q, face._nface, s1);
       iF = getHaloSlice(b.kF, face._nface, slc);
       break;
     case 2:
       slc = s0;
-      q = getHaloSlice(b.q, face._nface, s1);
       iF = getHaloSlice(b.iF, face._nface, slc);
       break;
     case 4:
       slc = s0;
-      q = getHaloSlice(b.q, face._nface, s1);
       iF = getHaloSlice(b.jF, face._nface, slc);
       break;
     case 6:
       slc = s0;
-      q = getHaloSlice(b.q, face._nface, s1);
       iF = getHaloSlice(b.kF, face._nface, slc);
       break;
     }
@@ -400,37 +386,30 @@ void adiabaticMovingWall(
     }
   } else if (terms.compare("strict") == 0) {
     int slc;
-    threeDsubview q, iF;
-    twoDsubview isx, isy, isz;
+    threeDsubview iF;
     switch (face._nface) {
     case 1:
       slc = s1;
-      q = getHaloSlice(b.q, face._nface, s1);
       iF = getHaloSlice(b.iF, face._nface, slc);
       break;
     case 3:
       slc = s1;
-      q = getHaloSlice(b.q, face._nface, s1);
       iF = getHaloSlice(b.jF, face._nface, slc);
       break;
     case 5:
       slc = s1;
-      q = getHaloSlice(b.q, face._nface, s1);
       iF = getHaloSlice(b.kF, face._nface, slc);
       break;
     case 2:
       slc = s0;
-      q = getHaloSlice(b.q, face._nface, s1);
       iF = getHaloSlice(b.iF, face._nface, slc);
       break;
     case 4:
       slc = s0;
-      q = getHaloSlice(b.q, face._nface, s1);
       iF = getHaloSlice(b.jF, face._nface, slc);
       break;
     case 6:
       slc = s0;
-      q = getHaloSlice(b.q, face._nface, s1);
       iF = getHaloSlice(b.kF, face._nface, slc);
       break;
     }
@@ -545,37 +524,30 @@ void isoTNoSlipWall(
     }
   } else if (terms.compare("strict") == 0) {
     int slc;
-    threeDsubview q, iF;
-    twoDsubview isx, isy, isz;
+    threeDsubview iF;
     switch (face._nface) {
     case 1:
       slc = s1;
-      q = getHaloSlice(b.q, face._nface, s1);
       iF = getHaloSlice(b.iF, face._nface, slc);
       break;
     case 3:
       slc = s1;
-      q = getHaloSlice(b.q, face._nface, s1);
       iF = getHaloSlice(b.jF, face._nface, slc);
       break;
     case 5:
       slc = s1;
-      q = getHaloSlice(b.q, face._nface, s1);
       iF = getHaloSlice(b.kF, face._nface, slc);
       break;
     case 2:
       slc = s0;
-      q = getHaloSlice(b.q, face._nface, s1);
       iF = getHaloSlice(b.iF, face._nface, slc);
       break;
     case 4:
       slc = s0;
-      q = getHaloSlice(b.q, face._nface, s1);
       iF = getHaloSlice(b.jF, face._nface, slc);
       break;
     case 6:
       slc = s0;
-      q = getHaloSlice(b.q, face._nface, s1);
       iF = getHaloSlice(b.kF, face._nface, slc);
       break;
     }
@@ -706,37 +678,30 @@ void isoTSlipWall(
     }
   } else if (terms.compare("strict") == 0) {
     int slc;
-    threeDsubview q, iF;
-    twoDsubview isx, isy, isz;
+    threeDsubview iF;
     switch (face._nface) {
     case 1:
       slc = s1;
-      q = getHaloSlice(b.q, face._nface, s1);
       iF = getHaloSlice(b.iF, face._nface, slc);
       break;
     case 3:
       slc = s1;
-      q = getHaloSlice(b.q, face._nface, s1);
       iF = getHaloSlice(b.jF, face._nface, slc);
       break;
     case 5:
       slc = s1;
-      q = getHaloSlice(b.q, face._nface, s1);
       iF = getHaloSlice(b.kF, face._nface, slc);
       break;
     case 2:
       slc = s0;
-      q = getHaloSlice(b.q, face._nface, s1);
       iF = getHaloSlice(b.iF, face._nface, slc);
       break;
     case 4:
       slc = s0;
-      q = getHaloSlice(b.q, face._nface, s1);
       iF = getHaloSlice(b.jF, face._nface, slc);
       break;
     case 6:
       slc = s0;
-      q = getHaloSlice(b.q, face._nface, s1);
       iF = getHaloSlice(b.kF, face._nface, slc);
       break;
     }
@@ -845,37 +810,30 @@ void isoTMovingWall(
     }
   } else if (terms.compare("strict") == 0) {
     int slc;
-    threeDsubview q, iF;
-    twoDsubview isx, isy, isz;
+    threeDsubview iF;
     switch (face._nface) {
     case 1:
       slc = s1;
-      q = getHaloSlice(b.q, face._nface, s1);
       iF = getHaloSlice(b.iF, face._nface, slc);
       break;
     case 3:
       slc = s1;
-      q = getHaloSlice(b.q, face._nface, s1);
       iF = getHaloSlice(b.jF, face._nface, slc);
       break;
     case 5:
       slc = s1;
-      q = getHaloSlice(b.q, face._nface, s1);
       iF = getHaloSlice(b.kF, face._nface, slc);
       break;
     case 2:
       slc = s0;
-      q = getHaloSlice(b.q, face._nface, s1);
       iF = getHaloSlice(b.iF, face._nface, slc);
       break;
     case 4:
       slc = s0;
-      q = getHaloSlice(b.q, face._nface, s1);
       iF = getHaloSlice(b.jF, face._nface, slc);
       break;
     case 6:
       slc = s0;
-      q = getHaloSlice(b.q, face._nface, s1);
       iF = getHaloSlice(b.kF, face._nface, slc);
       break;
     }
