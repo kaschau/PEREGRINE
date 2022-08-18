@@ -28,13 +28,12 @@ def simulate():
 
     config = pg.files.configFile()
     config["RHS"]["diffusion"] = False
-
     config["RHS"]["primaryAdvFlux"] = "rusanov"
-
     config["timeIntegration"]["integrator"] = "rk4"
     config["thermochem"]["eos"] = "cpg"
     config["thermochem"]["spdata"] = ["Air"]
     config.validateConfig()
+
     mb = pg.multiBlock.generateMultiBlockSolver(1, config)
 
     nx = 300
@@ -113,7 +112,6 @@ def simulate():
     # Apply euler boundary conditions
     for face in blk.faces:
         face.bcFunc(blk, face, mb.eos, mb.thtrdat, "euler", mb.tme)
-        face.bcFunc(blk, face, mb.eos, mb.thtrdat, "viscous", mb.tme)
     pg.consistify(mb)
 
     # Set dt based on cfg estimate
