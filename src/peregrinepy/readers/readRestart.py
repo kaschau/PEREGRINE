@@ -25,7 +25,7 @@ def readRestart(mb, path="./", nrt=0, animate=True, lump=True):
     """
     if lump:
         if animate:
-            fileName = f"{path}/q.{mb.nrt:08d}.h5"
+            fileName = f"{path}/q.{nrt:08d}.h5"
         else:
             fileName = f"{path}/q.h5"
         qf = h5py.File(fileName, "r")

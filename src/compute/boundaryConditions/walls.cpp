@@ -141,9 +141,6 @@ void adiabaticNoSlipWall(
         "Strict convective flux specification", range_face,
         KOKKOS_LAMBDA(const int i, const int j) {
           iF(i, j, 0) = 0.0;
-          // iF(i, j, 1) = q(i,j,0)*isx(i,j);
-          // iF(i, j, 2) = q(i,j,0)*isy(i,j);
-          // iF(i, j, 3) = q(i,j,0)*isz(i,j);
           iF(i, j, 4) = 0.0;
           for (int n = 5; n < b.ne; n++) {
             iF(i, j, n) = 0.0;
@@ -299,10 +296,6 @@ void adiabaticSlipWall(
         "Strict convective flux specification", range_face,
         KOKKOS_LAMBDA(const int i, const int j) {
           iF(i, j, 0) = 0.0;
-          // To incorperate artificial dissipation, we can apply the momentum
-          // flux explicitely, its kinda jank anyway. iF(i, j, 1) =
-          // q(i,j,0)*isx(i,j); iF(i, j, 2) = q(i,j,0)*isy(i,j); iF(i, j, 3) =
-          // q(i,j,0)*isz(i,j);
           iF(i, j, 4) = 0.0;
           for (int n = 5; n < b.ne; n++) {
             iF(i, j, n) = 0.0;
@@ -406,6 +399,51 @@ void adiabaticMovingWall(
           });
     }
   } else if (terms.compare("strict") == 0) {
+    int slc;
+    threeDsubview q, iF;
+    twoDsubview isx, isy, isz;
+    switch (face._nface) {
+    case 1:
+      slc = s1;
+      q = getHaloSlice(b.q, face._nface, s1);
+      iF = getHaloSlice(b.iF, face._nface, slc);
+      break;
+    case 3:
+      slc = s1;
+      q = getHaloSlice(b.q, face._nface, s1);
+      iF = getHaloSlice(b.jF, face._nface, slc);
+      break;
+    case 5:
+      slc = s1;
+      q = getHaloSlice(b.q, face._nface, s1);
+      iF = getHaloSlice(b.kF, face._nface, slc);
+      break;
+    case 2:
+      slc = s0;
+      q = getHaloSlice(b.q, face._nface, s1);
+      iF = getHaloSlice(b.iF, face._nface, slc);
+      break;
+    case 4:
+      slc = s0;
+      q = getHaloSlice(b.q, face._nface, s1);
+      iF = getHaloSlice(b.jF, face._nface, slc);
+      break;
+    case 6:
+      slc = s0;
+      q = getHaloSlice(b.q, face._nface, s1);
+      iF = getHaloSlice(b.kF, face._nface, slc);
+      break;
+    }
+    MDRange2 range_face = MDRange2({0, 0}, {iF.extent(0), iF.extent(1)});
+    Kokkos::parallel_for(
+        "Strict convective flux specification", range_face,
+        KOKKOS_LAMBDA(const int i, const int j) {
+          iF(i, j, 0) = 0.0;
+          iF(i, j, 4) = 0.0;
+          for (int n = 5; n < b.ne; n++) {
+            iF(i, j, n) = 0.0;
+          }
+        });
   }
 }
 
@@ -506,6 +544,50 @@ void isoTNoSlipWall(
           });
     }
   } else if (terms.compare("strict") == 0) {
+    int slc;
+    threeDsubview q, iF;
+    twoDsubview isx, isy, isz;
+    switch (face._nface) {
+    case 1:
+      slc = s1;
+      q = getHaloSlice(b.q, face._nface, s1);
+      iF = getHaloSlice(b.iF, face._nface, slc);
+      break;
+    case 3:
+      slc = s1;
+      q = getHaloSlice(b.q, face._nface, s1);
+      iF = getHaloSlice(b.jF, face._nface, slc);
+      break;
+    case 5:
+      slc = s1;
+      q = getHaloSlice(b.q, face._nface, s1);
+      iF = getHaloSlice(b.kF, face._nface, slc);
+      break;
+    case 2:
+      slc = s0;
+      q = getHaloSlice(b.q, face._nface, s1);
+      iF = getHaloSlice(b.iF, face._nface, slc);
+      break;
+    case 4:
+      slc = s0;
+      q = getHaloSlice(b.q, face._nface, s1);
+      iF = getHaloSlice(b.jF, face._nface, slc);
+      break;
+    case 6:
+      slc = s0;
+      q = getHaloSlice(b.q, face._nface, s1);
+      iF = getHaloSlice(b.kF, face._nface, slc);
+      break;
+    }
+    MDRange2 range_face = MDRange2({0, 0}, {iF.extent(0), iF.extent(1)});
+    Kokkos::parallel_for(
+        "Strict convective flux specification", range_face,
+        KOKKOS_LAMBDA(const int i, const int j) {
+          iF(i, j, 0) = 0.0;
+          for (int n = 5; n < b.ne; n++) {
+            iF(i, j, n) = 0.0;
+          }
+        });
   }
 }
 
@@ -623,6 +705,50 @@ void isoTSlipWall(
           });
     }
   } else if (terms.compare("strict") == 0) {
+    int slc;
+    threeDsubview q, iF;
+    twoDsubview isx, isy, isz;
+    switch (face._nface) {
+    case 1:
+      slc = s1;
+      q = getHaloSlice(b.q, face._nface, s1);
+      iF = getHaloSlice(b.iF, face._nface, slc);
+      break;
+    case 3:
+      slc = s1;
+      q = getHaloSlice(b.q, face._nface, s1);
+      iF = getHaloSlice(b.jF, face._nface, slc);
+      break;
+    case 5:
+      slc = s1;
+      q = getHaloSlice(b.q, face._nface, s1);
+      iF = getHaloSlice(b.kF, face._nface, slc);
+      break;
+    case 2:
+      slc = s0;
+      q = getHaloSlice(b.q, face._nface, s1);
+      iF = getHaloSlice(b.iF, face._nface, slc);
+      break;
+    case 4:
+      slc = s0;
+      q = getHaloSlice(b.q, face._nface, s1);
+      iF = getHaloSlice(b.jF, face._nface, slc);
+      break;
+    case 6:
+      slc = s0;
+      q = getHaloSlice(b.q, face._nface, s1);
+      iF = getHaloSlice(b.kF, face._nface, slc);
+      break;
+    }
+    MDRange2 range_face = MDRange2({0, 0}, {iF.extent(0), iF.extent(1)});
+    Kokkos::parallel_for(
+        "Strict convective flux specification", range_face,
+        KOKKOS_LAMBDA(const int i, const int j) {
+          iF(i, j, 0) = 0.0;
+          for (int n = 5; n < b.ne; n++) {
+            iF(i, j, n) = 0.0;
+          }
+        });
   }
 }
 void isoTMovingWall(
@@ -718,5 +844,49 @@ void isoTMovingWall(
           });
     }
   } else if (terms.compare("strict") == 0) {
+    int slc;
+    threeDsubview q, iF;
+    twoDsubview isx, isy, isz;
+    switch (face._nface) {
+    case 1:
+      slc = s1;
+      q = getHaloSlice(b.q, face._nface, s1);
+      iF = getHaloSlice(b.iF, face._nface, slc);
+      break;
+    case 3:
+      slc = s1;
+      q = getHaloSlice(b.q, face._nface, s1);
+      iF = getHaloSlice(b.jF, face._nface, slc);
+      break;
+    case 5:
+      slc = s1;
+      q = getHaloSlice(b.q, face._nface, s1);
+      iF = getHaloSlice(b.kF, face._nface, slc);
+      break;
+    case 2:
+      slc = s0;
+      q = getHaloSlice(b.q, face._nface, s1);
+      iF = getHaloSlice(b.iF, face._nface, slc);
+      break;
+    case 4:
+      slc = s0;
+      q = getHaloSlice(b.q, face._nface, s1);
+      iF = getHaloSlice(b.jF, face._nface, slc);
+      break;
+    case 6:
+      slc = s0;
+      q = getHaloSlice(b.q, face._nface, s1);
+      iF = getHaloSlice(b.kF, face._nface, slc);
+      break;
+    }
+    MDRange2 range_face = MDRange2({0, 0}, {iF.extent(0), iF.extent(1)});
+    Kokkos::parallel_for(
+        "Strict convective flux specification", range_face,
+        KOKKOS_LAMBDA(const int i, const int j) {
+          iF(i, j, 0) = 0.0;
+          for (int n = 5; n < b.ne; n++) {
+            iF(i, j, n) = 0.0;
+          }
+        });
   }
 }
