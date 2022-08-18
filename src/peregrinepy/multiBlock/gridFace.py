@@ -20,7 +20,7 @@ class gridFace(topologyFace):
 
     @topologyFace.periodicAxis.setter
     def periodicAxis(self, axis):
-        super(topologyFace, type(self)).periodicAxis.fset(self, axis)
+        super(gridFace, type(self)).periodicAxis.fset(self, axis)
 
         # Do we need to compute the rotational matrix?
         if not self.bcType.startswith("periodicRot"):

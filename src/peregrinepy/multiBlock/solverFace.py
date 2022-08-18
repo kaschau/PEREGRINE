@@ -102,7 +102,7 @@ class solverFace(gridFace, face_):
 
     @gridFace.periodicAxis.setter
     def periodicAxis(self, axis):
-        super(gridFace, type(self)).periodicAxis.fset(self, axis)
+        super(solverFace, type(self)).periodicAxis.fset(self, axis)
         createViewMirrorArray(self, "periodicRotMatrixUp", (3, 3))
         createViewMirrorArray(self, "periodicRotMatrixDown", (3, 3))
 
