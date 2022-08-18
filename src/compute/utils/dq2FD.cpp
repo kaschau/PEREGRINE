@@ -16,16 +16,16 @@ void dq2FD(block_ b) {
       KOKKOS_LAMBDA(const int i, const int j, const int k, const int l) {
         double dqdE = 0.5 * (b.q(i + 1, j, k, l) - b.q(i - 1, j, k, l));
         double dqdN = 0.5 * (b.q(i, j + 1, k, l) - b.q(i, j - 1, k, l));
-        double dqdX = 0.5 * (b.q(i, j, k + 1, l) - b.q(i, j, k - 1, l));
+        double dqdC = 0.5 * (b.q(i, j, k + 1, l) - b.q(i, j, k - 1, l));
 
         b.dqdx(i, j, k, l) = dqdE * b.dEdx(i, j, k) + dqdN * b.dNdx(i, j, k) +
-                             dqdX * b.dXdx(i, j, k);
+                             dqdC * b.dCdx(i, j, k);
 
         b.dqdy(i, j, k, l) = dqdE * b.dEdy(i, j, k) + dqdN * b.dNdy(i, j, k) +
-                             dqdX * b.dXdy(i, j, k);
+                             dqdC * b.dCdy(i, j, k);
 
         b.dqdz(i, j, k, l) = dqdE * b.dEdz(i, j, k) + dqdN * b.dNdz(i, j, k) +
-                             dqdX * b.dXdz(i, j, k);
+                             dqdC * b.dCdz(i, j, k);
       });
 }
 
@@ -50,19 +50,19 @@ void dq2FDoneSided(block_ b, int nface) {
                b.q(s1 + plus * 2, j, k, l));
 
           double dqdN = 0.5 * (b.q(s1, j + 1, k, l) - b.q(s1, j - 1, k, l));
-          double dqdX = 0.5 * (b.q(s1, j, k + 1, l) - b.q(s1, j, k - 1, l));
+          double dqdC = 0.5 * (b.q(s1, j, k + 1, l) - b.q(s1, j, k - 1, l));
 
           b.dqdx(s1, j, k, l) = dqdE * b.dEdx(s1, j, k) +
                                 dqdN * b.dNdx(s1, j, k) +
-                                dqdX * b.dXdx(s1, j, k);
+                                dqdC * b.dCdx(s1, j, k);
 
           b.dqdy(s1, j, k, l) = dqdE * b.dEdy(s1, j, k) +
                                 dqdN * b.dNdy(s1, j, k) +
-                                dqdX * b.dXdy(s1, j, k);
+                                dqdC * b.dCdy(s1, j, k);
 
           b.dqdz(s1, j, k, l) = dqdE * b.dEdz(s1, j, k) +
                                 dqdN * b.dNdz(s1, j, k) +
-                                dqdX * b.dXdz(s1, j, k);
+                                dqdC * b.dCdz(s1, j, k);
         });
 
     break;
@@ -80,19 +80,19 @@ void dq2FDoneSided(block_ b, int nface) {
               dplus * 0.5 *
               (-3.0 * b.q(i, s1, k, l) + 4.0 * b.q(i, s1 + plus, k, l) -
                b.q(i, s1 + plus * 2, k, l));
-          double dqdX = 0.5 * (b.q(i, s1, k + 1, l) - b.q(i, s1, k - 1, l));
+          double dqdC = 0.5 * (b.q(i, s1, k + 1, l) - b.q(i, s1, k - 1, l));
 
           b.dqdx(i, s1, k, l) = dqdE * b.dEdx(i, s1, k) +
                                 dqdN * b.dNdx(i, s1, k) +
-                                dqdX * b.dXdx(i, s1, k);
+                                dqdC * b.dCdx(i, s1, k);
 
           b.dqdy(i, s1, k, l) = dqdE * b.dEdy(i, s1, k) +
                                 dqdN * b.dNdy(i, s1, k) +
-                                dqdX * b.dXdy(i, s1, k);
+                                dqdC * b.dCdy(i, s1, k);
 
           b.dqdz(i, s1, k, l) = dqdE * b.dEdz(i, s1, k) +
                                 dqdN * b.dNdz(i, s1, k) +
-                                dqdX * b.dXdz(i, s1, k);
+                                dqdC * b.dCdz(i, s1, k);
         });
 
     break;
@@ -107,22 +107,22 @@ void dq2FDoneSided(block_ b, int nface) {
         KOKKOS_LAMBDA(const int i, const int j, const int l) {
           double dqdE = 0.5 * (b.q(i + 1, j, s1, l) - b.q(i - 1, j, s1, l));
           double dqdN = 0.5 * (b.q(i, j + 1, s1, l) - b.q(i, j - 1, s1, l));
-          double dqdX =
+          double dqdC =
               dplus * 0.5 *
               (-3.0 * b.q(i, j, s1, l) + 4.0 * b.q(i, j, s1 + plus, l) -
                b.q(i, j, s1 + plus * 2, l));
 
           b.dqdx(i, j, s1, l) = dqdE * b.dEdx(i, j, s1) +
                                 dqdN * b.dNdx(i, j, s1) +
-                                dqdX * b.dXdx(i, j, s1);
+                                dqdC * b.dCdx(i, j, s1);
 
           b.dqdy(i, j, s1, l) = dqdE * b.dEdy(i, j, s1) +
                                 dqdN * b.dNdy(i, j, s1) +
-                                dqdX * b.dXdy(i, j, s1);
+                                dqdC * b.dCdy(i, j, s1);
 
           b.dqdz(i, j, s1, l) = dqdE * b.dEdz(i, j, s1) +
                                 dqdN * b.dNdz(i, j, s1) +
-                                dqdX * b.dXdz(i, j, s1);
+                                dqdC * b.dCdz(i, j, s1);
         });
 
     break;

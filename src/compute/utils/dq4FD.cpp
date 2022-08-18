@@ -24,15 +24,15 @@ void dq4FD(block_ b) {
 
         b.dqdx(i, j, k, l) =
             (term1 * b.dEdx(i, j, k) + term2 * b.dNdx(i, j, k) +
-             term3 * b.dXdx(i, j, k)) /
+             term3 * b.dCdx(i, j, k)) /
             12.0;
         b.dqdy(i, j, k, l) =
             (term1 * b.dEdy(i, j, k) + term2 * b.dNdy(i, j, k) +
-             term3 * b.dXdy(i, j, k)) /
+             term3 * b.dCdy(i, j, k)) /
             12.0;
         b.dqdz(i, j, k, l) =
             (term1 * b.dEdz(i, j, k) + term2 * b.dNdz(i, j, k) +
-             term3 * b.dXdz(i, j, k)) /
+             term3 * b.dCdz(i, j, k)) /
             12.0;
       });
 }

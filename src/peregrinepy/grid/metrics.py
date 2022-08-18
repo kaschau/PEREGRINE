@@ -246,6 +246,7 @@ def metrics(blk, fdOrder, xcOnly=False):
     # ----------------------------------------------------------------------------
     # Cell center transformation metrics (ferda FD diffusion operator)
     # ----------------------------------------------------------------------------
+    # The i,j,k block coordinate directions are \Xi (E), \Eta (N), and \Zeta (C)
     #
     #                  2  o--------------------------o  3
     #                     |\                         |\
@@ -258,14 +259,14 @@ def metrics(blk, fdOrder, xcOnly=False):
     #                     |     |                    |     |
     #                     |     |                    |     |
     #                     |     |                    |     |
-    #   ^ j            1  o-----|--------------------o  4  |
+    #   ^ j,N          1  o-----|--------------------o  4  |
     #   |                  \    |                     \    |
     #   |                   \   |                      \   |
     #   |                    \  |                       \  |
-    #   o-----> i             \ |                        \ |
+    #   o-----> i,E           \ |                        \ |
     #    \                     \|                         \|
     #     \                     o------------------------- o
-    #      v  k               5                              8
+    #      v  k,C             5                              8
     #
 
     if fdOrder == 2:
@@ -297,7 +298,7 @@ def metrics(blk, fdOrder, xcOnly=False):
         z7 = z[1::, 1::, 1::]
         z8 = z[1::, 0:-1, 1::]
 
-        # Derivative of (x,y,z) w.r.t. (E,N,X)
+        # Derivative of (x,y,z) w.r.t. (E,N,C)
         dxdE = 0.25 * ((x4 - x1) + (x8 - x5) + (x3 - x2) + (x7 - x6))
         dydE = 0.25 * ((y4 - y1) + (y8 - y5) + (y3 - y2) + (y7 - y6))
         dzdE = 0.25 * ((z4 - z1) + (z8 - z5) + (z3 - z2) + (z7 - z6))
@@ -306,21 +307,21 @@ def metrics(blk, fdOrder, xcOnly=False):
         dydN = 0.25 * ((y2 - y1) + (y3 - y4) + (y7 - y8) + (y6 - y5))
         dzdN = 0.25 * ((z2 - z1) + (z3 - z4) + (z7 - z8) + (z6 - z5))
 
-        dxdX = 0.25 * ((x5 - x1) + (x8 - x4) + (x6 - x2) + (x7 - x3))
-        dydX = 0.25 * ((y5 - y1) + (y8 - y4) + (y6 - y2) + (y7 - y3))
-        dzdX = 0.25 * ((z5 - z1) + (z8 - z4) + (z6 - z2) + (z7 - z3))
+        dxdC = 0.25 * ((x5 - x1) + (x8 - x4) + (x6 - x2) + (x7 - x3))
+        dydC = 0.25 * ((y5 - y1) + (y8 - y4) + (y6 - y2) + (y7 - y3))
+        dzdC = 0.25 * ((z5 - z1) + (z8 - z4) + (z6 - z2) + (z7 - z3))
 
-        blk.array["dEdx"][:] = (dydN * dzdX - dydX * dzdN) / blk.array["J"]
-        blk.array["dEdy"][:] = (dxdN * dzdX - dxdX * dzdN) / -blk.array["J"]
-        blk.array["dEdz"][:] = (dxdN * dydX - dxdX * dydN) / blk.array["J"]
+        blk.array["dEdx"][:] = (dydN * dzdC - dydC * dzdN) / blk.array["J"]
+        blk.array["dEdy"][:] = (dxdN * dzdC - dxdC * dzdN) / -blk.array["J"]
+        blk.array["dEdz"][:] = (dxdN * dydC - dxdC * dydN) / blk.array["J"]
 
-        blk.array["dNdx"][:] = (dydE * dzdX - dydX * dzdE) / -blk.array["J"]
-        blk.array["dNdy"][:] = (dxdE * dzdX - dxdX * dzdE) / blk.array["J"]
-        blk.array["dNdz"][:] = (dxdE * dydX - dxdX * dydE) / -blk.array["J"]
+        blk.array["dNdx"][:] = (dydE * dzdC - dydC * dzdE) / -blk.array["J"]
+        blk.array["dNdy"][:] = (dxdE * dzdC - dxdC * dzdE) / blk.array["J"]
+        blk.array["dNdz"][:] = (dxdE * dydC - dxdC * dydE) / -blk.array["J"]
 
-        blk.array["dXdx"][:] = (dydE * dzdN - dydN * dzdE) / blk.array["J"]
-        blk.array["dXdy"][:] = (dxdE * dzdN - dxdN * dzdE) / -blk.array["J"]
-        blk.array["dXdz"][:] = (dxdE * dydN - dxdN * dydE) / blk.array["J"]
+        blk.array["dCdx"][:] = (dydE * dzdN - dydN * dzdE) / blk.array["J"]
+        blk.array["dCdy"][:] = (dxdE * dzdN - dxdN * dzdE) / -blk.array["J"]
+        blk.array["dCdz"][:] = (dxdE * dydN - dxdN * dydE) / blk.array["J"]
 
     elif fdOrder == 4:
         xc = blk.array["xc"]
@@ -339,7 +340,7 @@ def metrics(blk, fdOrder, xcOnly=False):
             - 8.0 * xc[2:-2, 1:-3, 2:-2]
             + xc[2:-2, 0:-4, 2:-2]
         ) / 12.0
-        dxdX = (
+        dxdC = (
             -xc[2:-2, 2:-2, 4::]
             + 8.0 * xc[2:-2, 2:-2, 3:-1]
             - 8.0 * xc[2:-2, 2:-2, 1:-3]
@@ -358,7 +359,7 @@ def metrics(blk, fdOrder, xcOnly=False):
             - 8.0 * yc[2:-2, 1:-3, 2:-2]
             + yc[2:-2, 0:-4, 2:-2]
         ) / 12.0
-        dydX = (
+        dydC = (
             -yc[2:-2, 2:-2, 4::]
             + 8.0 * yc[2:-2, 2:-2, 3:-1]
             - 8.0 * yc[2:-2, 2:-2, 1:-3]
@@ -377,40 +378,40 @@ def metrics(blk, fdOrder, xcOnly=False):
             - 8.0 * zc[2:-2, 1:-3, 2:-2]
             + zc[2:-2, 0:-4, 2:-2]
         ) / 12.0
-        dzdX = (
+        dzdC = (
             -zc[2:-2, 2:-2, 4::]
             + 8.0 * zc[2:-2, 2:-2, 3:-1]
             - 8.0 * zc[2:-2, 2:-2, 1:-3]
             + zc[2:-2, 2:-2, 0:-4]
         ) / 12.0
 
-        blk.array["dEdx"][2:-2, 2:-2, 2:-2] = (dydN * dzdX - dydX * dzdN) / blk.array[
+        blk.array["dEdx"][2:-2, 2:-2, 2:-2] = (dydN * dzdC - dydC * dzdN) / blk.array[
             "J"
         ][2:-2, 2:-2, 2:-2]
-        blk.array["dEdy"][2:-2, 2:-2, 2:-2] = (dxdN * dzdX - dxdX * dzdN) / -blk.array[
+        blk.array["dEdy"][2:-2, 2:-2, 2:-2] = (dxdN * dzdC - dxdC * dzdN) / -blk.array[
             "J"
         ][2:-2, 2:-2, 2:-2]
-        blk.array["dEdz"][2:-2, 2:-2, 2:-2] = (dxdN * dydX - dxdX * dydN) / blk.array[
-            "J"
-        ][2:-2, 2:-2, 2:-2]
-
-        blk.array["dNdx"][2:-2, 2:-2, 2:-2] = (dydE * dzdX - dydX * dzdE) / -blk.array[
-            "J"
-        ][2:-2, 2:-2, 2:-2]
-        blk.array["dNdy"][2:-2, 2:-2, 2:-2] = (dxdE * dzdX - dxdX * dzdE) / blk.array[
-            "J"
-        ][2:-2, 2:-2, 2:-2]
-        blk.array["dNdz"][2:-2, 2:-2, 2:-2] = (dxdE * dydX - dxdX * dydE) / -blk.array[
+        blk.array["dEdz"][2:-2, 2:-2, 2:-2] = (dxdN * dydC - dxdC * dydN) / blk.array[
             "J"
         ][2:-2, 2:-2, 2:-2]
 
-        blk.array["dXdx"][2:-2, 2:-2, 2:-2] = (dydE * dzdN - dydN * dzdE) / blk.array[
+        blk.array["dNdx"][2:-2, 2:-2, 2:-2] = (dydE * dzdC - dydC * dzdE) / -blk.array[
             "J"
         ][2:-2, 2:-2, 2:-2]
-        blk.array["dXdy"][2:-2, 2:-2, 2:-2] = (dxdE * dzdN - dxdN * dzdE) / -blk.array[
+        blk.array["dNdy"][2:-2, 2:-2, 2:-2] = (dxdE * dzdC - dxdC * dzdE) / blk.array[
             "J"
         ][2:-2, 2:-2, 2:-2]
-        blk.array["dXdz"][2:-2, 2:-2, 2:-2] = (dxdE * dydN - dxdN * dydE) / blk.array[
+        blk.array["dNdz"][2:-2, 2:-2, 2:-2] = (dxdE * dydC - dxdC * dydE) / -blk.array[
+            "J"
+        ][2:-2, 2:-2, 2:-2]
+
+        blk.array["dCdx"][2:-2, 2:-2, 2:-2] = (dydE * dzdN - dydN * dzdE) / blk.array[
+            "J"
+        ][2:-2, 2:-2, 2:-2]
+        blk.array["dCdy"][2:-2, 2:-2, 2:-2] = (dxdE * dzdN - dxdN * dzdE) / -blk.array[
+            "J"
+        ][2:-2, 2:-2, 2:-2]
+        blk.array["dCdz"][2:-2, 2:-2, 2:-2] = (dxdE * dydN - dxdN * dydE) / blk.array[
             "J"
         ][2:-2, 2:-2, 2:-2]
 
@@ -422,8 +423,8 @@ def metrics(blk, fdOrder, xcOnly=False):
             "dNdx",
             "dNdy",
             "dNdz",
-            "dXdx",
-            "dXdy",
-            "dXdz",
+            "dCdx",
+            "dCdy",
+            "dCdz",
         ]:
             blk.updateDeviceView(var)

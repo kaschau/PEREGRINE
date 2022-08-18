@@ -22,7 +22,7 @@ struct block_ {
   threeDview xc, yc, zc, J;
   threeDview dEdx, dEdy, dEdz;
   threeDview dNdx, dNdy, dNdz;
-  threeDview dXdx, dXdy, dXdz;
+  threeDview dCdx, dCdy, dCdz;
   // i face centers
   threeDview ixc, iyc, izc;
   // i face area vectors
