@@ -47,11 +47,11 @@ In the case of ```nface```, we decorate the name ```nface``` on the python side,
 and store the end results in a variable ```_nface```.
 
 
-So on the python side we create a setter method for the ```topologyFace```.
+So on the python side we create a setter method for the ```topologyFace```
 object.
 
 ``` python
-    self._nface  # This is just an int_
+    self._nface  # This is just an int
     
     @property
     def nface(self):
@@ -64,14 +64,15 @@ object.
         
 Now, when we set a value of ```nface``` on the python side, it will go through
 the setter method, perform the check on the value, and then apply the value to
-the ```nface_``` attribute. This will subsequently be updated on the C++ object
+the ```_nface``` attribute. When we access the ```nface``` attribute, the property
+decorator just returns```_nface```. This will subsequently be updated on the C++ object
 and accessible on the C++ side. Speaking of the C++ side, we use the underscored name.
 
 ``` c++
-    int nface_
+    int _nface
 ```
 
-And then in C++ code we access the ```nface_``` variable no problem.
+And then in C++ code we access the ```_nface``` variable no problem.
 
 ## Building of inherited setter methods ##
 
@@ -79,7 +80,7 @@ Sometime in the inheritance structure, we want to do more when we set the
 class attribute than the inherited setter does. For example, when we set the
 ```periodixAxis``` values for a ```topologyFace```, we want to set the axis
 values, normalize them if needed, and move on. But for a ```gridFace``` object,
-we want to set the value s*AND*  calculate the ```periodicRotMatrixUp/Down```
+we want to set the values *AND* calculate the ```periodicRotMatrixUp/Down```
 arrays as well (if the periodic is rotational). But when we are a solver face,
 we want to do all that *AND* create the corresponding Kokkos views/mirrors so
 the rotational matrices are available on the C++ side. To do this we define the
