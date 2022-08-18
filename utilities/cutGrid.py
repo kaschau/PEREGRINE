@@ -101,13 +101,13 @@ def findInteriorNeighbor(mb, incompleteBlocks, foundFaces):
                 meanZ -= face.periodicAxis[2] * face.periodicSpan
             elif face.bcType == "periodicRotLow":
                 mean = np.array([meanX, meanY, meanZ])
-                points = np.matmul(face.periodicRotMatrixUp, mean)
+                points = np.matmul(face.array["periodicRotMatrixUp"], mean)
                 meanX = points[0]
                 meanY = points[1]
                 meanZ = points[2]
             elif face.bcType == "periodicRotHigh":
                 mean = np.array([meanX, meanY, meanZ])
-                points = np.matmul(face.periodicRotMatrixDown, mean)
+                points = np.matmul(face.array["periodicRotMatrixDown"], mean)
                 meanX = points[0]
                 meanY = points[1]
                 meanZ = points[2]

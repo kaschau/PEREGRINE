@@ -275,8 +275,8 @@ if gridIsPeriodic:
                 faceUp = myFaceCenter + face.periodicAxis * face.periodicSpan
                 faceDown = myFaceCenter - face.periodicAxis * face.periodicSpan
             elif face.bcType == "periodicRotLow":
-                faceUp = np.matmul(face.periodicRotMatrixUp, myFaceCenter)
-                faceDown = np.matmul(face.periodicRotMatrixDown, myFaceCenter)
+                faceUp = np.matmul(face.array["periodicRotMatrixUp"], myFaceCenter)
+                faceDown = np.matmul(face.array["periodicRotMatrixDown"], myFaceCenter)
             else:
                 raise ValueError("Didnt find either periodic Trans or Rot")
 

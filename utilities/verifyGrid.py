@@ -168,7 +168,7 @@ def verify(mb):
                 points = np.column_stack(
                     (face_x.ravel(), face_y.ravel(), face_z.ravel())
                 )
-                points = np.matmul(face.periodicRotMatrixUp, points.T).T
+                points = np.matmul(face.array["periodicRotMatrixUp"], points.T).T
                 face_x = points[:, 0].reshape(shape)
                 face_y = points[:, 1].reshape(shape)
                 face_z = points[:, 2].reshape(shape)
@@ -177,7 +177,7 @@ def verify(mb):
                 points = np.column_stack(
                     (face_x.ravel(), face_y.ravel(), face_z.ravel())
                 )
-                points = np.matmul(face.periodicRotMatrixDown, points.T).T
+                points = np.matmul(face.array["periodicRotMatrixDown"], points.T).T
                 face_x = points[:, 0].reshape(shape)
                 face_y = points[:, 1].reshape(shape)
                 face_z = points[:, 2].reshape(shape)

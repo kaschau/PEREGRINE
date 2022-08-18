@@ -1,19 +1,21 @@
-from kokkos import deep_copy
 import numpy as np
+from kokkos import deep_copy
+
+from ..compute import bcs, face_
+from ..misc import createViewMirrorArray, frozenDict, null
+from .gridFace import gridFace
 from .topologyFace import topologyFace
-from ..misc import null, frozenDict, createViewMirrorArray
-from ..compute import face_, bcs
 
 s_ = np.s_
 
 
-class solverFace(topologyFace, face_):
+class solverFace(gridFace, face_):
 
     faceType = "solver"
 
     def __init__(self, nface, ng):
         face_.__init__(self)
-        topologyFace.__init__(self, nface)
+        gridFace.__init__(self, nface)
         assert 1 <= nface <= 6, "nface must be between (1,6)"
 
         self._ng = ng
@@ -49,20 +51,17 @@ class solverFace(topologyFace, face_):
             self.s2_ = [s_[:, :, i] for i in largeS2]
 
         # Boundary condition values
-        self.array = frozenDict(
-            {
-                "sendBuffer3": None,
-                "sendBuffer4": None,
-                "recvBuffer3": None,
-                "recvBuffer4": None,
-                "tempRecvBuffer3": None,
-                "tempRecvBuffer4": None,
-                "qBcVals": None,
-                "QBcVals": None,
-                "periodicRotMatrixUp": None,
-                "periodicRotMatrixDown": None,
-            }
-        )
+        for d in [
+            "sendBuffer3",
+            "sendBuffer4",
+            "recvBuffer3",
+            "recvBuffer4",
+            "tempRecvBuffer3",
+            "tempRecvBuffer4",
+            "qBcVals",
+            "QBcVals",
+        ]:
+            self.array[d] = None
         self.mirror = frozenDict(
             {
                 "sendBuffer3": None,
@@ -77,6 +76,10 @@ class solverFace(topologyFace, face_):
                 "periodicRotMatrixDown": None,
             }
         )
+        if self.faceType == "solver":
+            self.array._freeze()
+            self.mirror._freeze()
+
         # Boundary function
         self.bcFunc = bcs.walls.adiabaticSlipWall
 
@@ -96,6 +99,12 @@ class solverFace(topologyFace, face_):
     def bcType(self, value):
         super(solverFace, type(self)).bcType.fset(self, value)
         self._setBcFunc()
+
+    @gridFace.periodicAxis.setter
+    def periodicAxis(self, axis):
+        super(gridFace, type(self)).periodicAxis.fset(self, axis)
+        createViewMirrorArray(self, "periodicRotMatrixUp", (3, 3))
+        createViewMirrorArray(self, "periodicRotMatrixDown", (3, 3))
 
     def _setBcFunc(self):
 
