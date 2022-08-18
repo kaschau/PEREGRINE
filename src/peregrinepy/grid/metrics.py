@@ -243,9 +243,6 @@ def metrics(blk, fdOrder, xcOnly=False):
         for var in ["J"]:
             blk.updateDeviceView(var)
 
-    # Only solver blocks get transformation metrics
-    if blk.blockType != "solver":
-        return
     # ----------------------------------------------------------------------------
     # Cell center transformation metrics (ferda FD diffusion operator)
     # ----------------------------------------------------------------------------
