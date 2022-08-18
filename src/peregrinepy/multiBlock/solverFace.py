@@ -97,12 +97,12 @@ class solverFace(gridFace, face_):
 
     @topologyFace.bcType.setter
     def bcType(self, value):
-        super(solverFace, type(self)).bcType.fset(self, value)
+        gridFace.bcType.fset(self, value)
         self._setBcFunc()
 
     @gridFace.periodicAxis.setter
     def periodicAxis(self, axis):
-        super(solverFace, type(self)).periodicAxis.fset(self, axis)
+        gridFace.periodicAxis.fset(self, axis)
         createViewMirrorArray(self, "periodicRotMatrixUp", (3, 3))
         createViewMirrorArray(self, "periodicRotMatrixDown", (3, 3))
 
