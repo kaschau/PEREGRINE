@@ -18,9 +18,13 @@ class gridFace(topologyFace):
         if self.faceType == "grid":
             self.array._freeze()
 
+    @topologyFace.bcType.setter
+    def bcType(self, value):
+        topologyFace.bcType.fset(self, value)
+
     @topologyFace.periodicAxis.setter
     def periodicAxis(self, axis):
-        super(gridFace, type(self)).periodicAxis.fset(self, axis)
+        topologyFace.periodicAxis.fset(self, axis)
 
         # Do we need to compute the rotational matrix?
         if not self.bcType.startswith("periodicRot"):
