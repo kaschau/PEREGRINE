@@ -31,7 +31,7 @@ class configFile(frozenDict):
                 "animateArchive": True,
                 "animateRestart": False,
                 "lumpIO": True,
-                "niterArchive": 1e10,
+                "niterArchive": 1000000000,
                 "niterRestart": 10,
                 "niterPrint": 1,
                 "saveExtraVars": [],
