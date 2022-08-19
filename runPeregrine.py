@@ -104,11 +104,12 @@ def simulate(configFilePath):
                 abort = pg.mpiComm.mpiUtils.checkForNan(mb)
                 if abort > 0:
                     mb.nrt = 99999999
+                    mb.restartMetaData.animate = True
+                    mb.restartMetaData.precision = "single"
                     pg.writers.parallelWriter.parallelWriteRestart(
                         mb,
+                        mb.restartMetaData,
                         path=config["io"]["restartDir"],
-                        animate=True,
-                        precision="single",
                     )
                     comm.Barrier()
                     if rank == 0:
