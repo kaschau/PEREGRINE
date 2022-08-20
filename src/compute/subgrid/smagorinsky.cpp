@@ -55,7 +55,7 @@ void smagorinsky(block_ b) {
             magSij += S[l][m] * S[l][m];
           }
         }
-        magSij = sqrt(2 * magSij);
+        magSij = sqrt(2.0 * magSij);
 
         double delta = pow(b.J(i, j, k), 1.0 / 3.0);
 

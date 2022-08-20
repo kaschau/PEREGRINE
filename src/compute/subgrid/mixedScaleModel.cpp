@@ -60,7 +60,7 @@ void mixedScaleModel(block_ b) {
             magSij += S[l][m] * S[l][m];
           }
         }
-        magSij = sqrt(2 * magSij);
+        magSij = sqrt(2.0 * magSij);
 
         double usg, vsg, wsg;
         usg =
