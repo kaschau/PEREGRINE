@@ -109,18 +109,33 @@ if __name__ == "__main__":
     tree = etree.parse(f"{fromDir}/g.xmf")
     nblkFrom = len(tree.getroot().find("Domain").find("Grid"))
     mbFrom = mbr(nblkFrom, speciesNames)
-    fromNrst = int(
-        [i for i in os.listdir(fromDir) if i.startswith("q.")][0].strip().split(".")[1]
-    )
-    readGrid(mbFrom, fromDir)
-    readRestart(mbFrom, fromDir, fromNrst)
+    try:
+        readGrid(mbFrom, fromDir)  # lumped
+        lump = True
+    except FileNotFoundError:
+        readGrid(mbFrom, fromDir, lump=False)  # not lumped
+        lump = False
+
+    try:
+        readRestart(mbFrom, fromDir, animate=False, lump=lump)  # not animate
+        animate = False
+    except FileNotFoundError:
+        # Try to determint nrt for animate
+        qxmf = [i for i in os.listdir(fromDir) if i.endswith("xmf")][0]
+        nrt = int(qxmf.strip().split(".")[1])
+        readRestart(mbFrom, fromDir, nrt=nrt, animate=True, lump=lump)
+        animate = True
 
     # Read in to data
-    nblkTo = len(
-        [i for i in os.listdir(toDir) if i.startswith("g.") and i.endswith(".h5")]
-    )
+    tree = etree.parse(f"{toDir}/g.xmf")
+    nblkTo = len(tree.getroot().find("Domain").find("Grid"))
     mbTo = mbr(nblkTo, speciesNames)
-    readGrid(mbTo, toDir)
+    try:
+        readGrid(mbTo, toDir)
+        lump = True
+    except FileNotFoundError:
+        readGrid(mbTo, toDir, lump=False)
+        lump = False
 
     # Compute bounding blocks of each block
     boundsList = interpolation.bounds.findBounds(mbTo, mbFrom, verboseSearch)
@@ -144,4 +159,4 @@ if __name__ == "__main__":
     mbTo.tme = mbFrom.tme
     mbTo.nrt = mbFrom.nrt
 
-    writeRestart(mbTo, toDir)
+    writeRestart(mbTo, toDir, lump=lump, animate=animate)
