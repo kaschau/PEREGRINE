@@ -541,6 +541,9 @@ def simulate(testnum, index="i"):
     # Update cons
     mb.eos(blk, mb.thtrdat, 0, "prims")
     pg.consistify(mb)
+    while mb.tme < test.t:
+        pg.misc.progressBar(mb.tme, test.t)
+        mb.step(test.dt)
 
     s_ = rotate(np.s_[ng:-ng, ng, ng], index)
     x = blk.array[ccArray[index]][s_]
@@ -549,10 +552,6 @@ def simulate(testnum, index="i"):
     phi = blk.array["phi"][s_][:, uIndex[index] - 1]
     u = blk.array["q"][s_][:, uIndex[index]]
     e = blk.array["qh"][s_][:, 4]
-
-    while mb.tme < test.t:
-        pg.misc.progressBar(mb.tme, test.t)
-        mb.step(test.dt)
 
     _, _, res = solve(
         (test.pL, test.rhoL, test.uL),
@@ -599,7 +598,7 @@ def simulate(testnum, index="i"):
 
     # energy
     ax4.set_xlabel(r"x")
-    ax4.plot(x, e * rho, color="k", label="e", linewidth=lw)
+    ax4.plot(x, e / rho, color="k", label="e", linewidth=lw)
     ax4.scatter(rx, re, color="k", label="Analyticsl", marker="o", s=ms)
     ax4.legend()
 
