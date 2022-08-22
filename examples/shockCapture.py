@@ -81,16 +81,7 @@ def calculateRegions(pl, ul, rhol, pr, ur, rhor, gamma):
     return (p1, rho1, u1), (p3, rho3, u3), (p4, rho4, u4), (p5, rho5, u5), w
 
 
-def calcPositions(
-    pl,
-    pr,
-    region1,
-    region3,
-    w,
-    xi,
-    t,
-    gamma,
-):
+def calcPositions(pl, pr, region1, region3, w, xi, t, gamma):
     """
     :return: tuple of positions in the following order ->
             Head of Rarefaction: xhd,  Foot of Rarefaction: xft,
@@ -139,7 +130,7 @@ def regionStates(pl, pr, region1, region3, region4, region5):
         }
 
 
-def create_arrays(
+def createArrays(
     pl,
     pr,
     xl,
@@ -238,6 +229,7 @@ def solve(left_state, right_state, geometry, t, gamma, npts=500):
         Adiabatic index for the gas.
     npts: int
         number of points for array of pressure, density and velocity
+
     Returns
     -------
     positions: dict
@@ -281,7 +273,7 @@ def solve(left_state, right_state, geometry, t, gamma, npts=500):
     positions = dict(zip(pos_description, x_positions))
 
     # create arrays
-    x, p, rho, u = create_arrays(
+    x, p, rho, u = createArrays(
         pl,
         pr,
         xl,
