@@ -322,8 +322,8 @@ class state:
             self.rhoR = 0.125
             self.uR = 0.0
             self.pR = 0.1
-            self.x0 = 0.5
 
+            self.x0 = 0.5
             self.t = 0.2
             self.dt = 1e-4
 
@@ -335,8 +335,8 @@ class state:
             self.rhoR = 0.125
             self.uR = 0.0
             self.pR = 0.1
-            self.x0 = 0.3
 
+            self.x0 = 0.3
             self.t = 0.2
             self.dt = 1e-4
 
@@ -348,8 +348,8 @@ class state:
             self.rhoR = 0.125
             self.uR = 0.0
             self.pR = 0.1
-            self.x0 = 0.3
 
+            self.x0 = 0.3
             self.t = 0.2
             self.dt = 1e-4
 
@@ -361,8 +361,8 @@ class state:
             self.rhoR = 1.0
             self.uR = 2.0
             self.pR = 0.4
-            self.x0 = 0.5
 
+            self.x0 = 0.5
             self.t = 0.15
             self.dt = 1e-4
 
@@ -374,8 +374,8 @@ class state:
             self.rhoR = 1.0
             self.uR = 0.0
             self.pR = 0.01
-            self.x0 = 0.5
 
+            self.x0 = 0.5
             self.t = 0.012
             self.dt = 5e-6
 
@@ -383,12 +383,12 @@ class state:
             self.rhoL = 5.99924
             self.uL = 19.5975
             self.pL = 460.894
-            self.x0 = 0.4
 
             self.rhoR = 5.99242
             self.uR = -6.19633
             self.pR = 46.0950
 
+            self.x0 = 0.4
             self.t = 0.035
             self.dt = 1e-5
 
@@ -548,19 +548,11 @@ def simulate(testnum, index="i"):
     p = blk.array["q"][s_][:, 0]
     phi = blk.array["phi"][s_][:, uIndex[index] - 1]
     u = blk.array["q"][s_][:, uIndex[index]]
-    e = blk.array["Q"][s_][:, 4]
+    e = blk.array["qh"][s_][:, 4]
 
     while mb.tme < test.t:
         pg.misc.progressBar(mb.tme, test.t)
         mb.step(test.dt)
-
-    fig, ax1 = plt.subplots()
-    ax1.set_title(f"{mb.tme:.2f}")
-    ax1.set_xlabel(r"x")
-    ax1.plot(x, phi, "--", color="gold", label="phi", linewidth=0.25)
-    ax1.plot(x, rho, color="g", label="rho", linewidth=0.5)
-    ax1.plot(x, p, color="r", label="p", linewidth=0.5)
-    ax1.plot(x, u, color="k", label="u", linewidth=0.5)
 
     _, _, res = solve(
         (test.pL, test.rhoL, test.uL),
@@ -568,16 +560,49 @@ def simulate(testnum, index="i"):
         (0.0, 1.0, test.x0),
         test.t,
         gamma=gamma,
+        npts=250,
     )
     rx = res["x"]
     rrho = res["rho"]
     ru = res["u"]
     rp = res["p"]
-    ax1.scatter(rx, rrho, color="g", label="Analyticsl", marker="o", s=0.2)
-    ax1.scatter(rx, rp, color="r", marker="o", s=0.2)
-    ax1.scatter(rx, ru, color="k", marker="o", s=0.2)
+    re = res["energy"]
 
+    fig, ax = plt.subplots(nrows=2, ncols=2, figsize=(6, 6))
+    ax1 = ax[0][0]
+    ax2 = ax[0][1]
+    ax3 = ax[1][0]
+    ax4 = ax[1][1]
+
+    ax1.set_title(f"{mb.tme:.2f}")
+
+    ms = 1.5
+    lw = 0.5
+    # rho
+    ax1.set_xlabel(r"x")
+    ax1.plot(x, phi, "--", color="gold", label="phi", linewidth=lw)
+    ax1.plot(x, rho, color="k", label="rho", linewidth=lw)
+    ax1.scatter(rx, rrho, color="k", label="Analyticsl", marker="o", s=ms)
     ax1.legend()
+
+    # velocity
+    ax2.set_xlabel(r"x")
+    ax2.plot(x, u, color="k", label="u", linewidth=lw)
+    ax2.scatter(rx, ru, color="k", label="Analytical", marker="o", s=ms)
+    ax2.legend()
+
+    # pressure
+    ax3.set_xlabel(r"x")
+    ax3.plot(x, p, color="k", label="p", linewidth=lw)
+    ax3.scatter(rx, rp, color="k", label="Analytical", marker="o", s=ms)
+    ax3.legend()
+
+    # energy
+    ax4.set_xlabel(r"x")
+    ax4.plot(x, e * rho, color="k", label="e", linewidth=lw)
+    ax4.scatter(rx, re, color="k", label="Analyticsl", marker="o", s=ms)
+    ax4.legend()
+
     plt.show()
     plt.close()
 
@@ -585,7 +610,7 @@ def simulate(testnum, index="i"):
 if __name__ == "__main__":
     try:
         kokkos.initialize()
-        testnum = 1
+        testnum = 0
         index = "i"
         simulate(testnum, index)
         kokkos.finalize()
