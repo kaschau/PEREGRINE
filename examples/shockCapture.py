@@ -534,7 +534,7 @@ def simulate(testnum, index="i"):
         elif test.uR > 0:
             face.bcType = "constantPressureSubsonicExit"
             inputBcValues["p"] = test.pR
-        pg.bcs.prepExits.prep_constantPressureSubsonicExit(blk, face, inputBcValues)
+            pg.bcs.prepExits.prep_constantPressureSubsonicExit(blk, face, inputBcValues)
         shape = blk.array["q"][face.s1_].shape
         pg.misc.createViewMirrorArray(face, "qBcVals", shape)
 
