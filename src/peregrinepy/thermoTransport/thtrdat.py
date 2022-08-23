@@ -1,9 +1,12 @@
-import yaml
 from pathlib import Path
+
+import yaml
+from kokkos import deep_copy
+
 from ..compute.thermo import thtrdat_
+from ..misc import createViewMirrorArray, frozenDict
 from .completeSpecies import completeSpecies
 from .findUserSpData import findUserSpData
-from ..misc import frozenDict, createViewMirrorArray
 
 
 class thtrdat(thtrdat_):
@@ -159,3 +162,15 @@ class thtrdat(thtrdat_):
                 raise KeyError(
                     f'PEREGRINE ERROR: Unknown TRANS {config["thermochem"]["trans"]}'
                 )
+
+    def updateDeviceView(self, vars):
+        if type(vars) == str:
+            vars = [vars]
+        for var in vars:
+            deep_copy(getattr(self, var), self.mirror[var])
+
+    def updateHostView(self, vars):
+        if type(vars) == str:
+            vars = [vars]
+        for var in vars:
+            deep_copy(self.mirror[var], getattr(self, var))
