@@ -4,7 +4,7 @@
 #include "vector"
 #include <math.h>
 
-int checkNan(std::vector<block_> mb) {
+int checkNan(const std::vector<block_> &mb) {
 
   //-------------------------------------------------------------------------------------------|
   // Check for nans and infs in the solution array.

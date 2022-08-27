@@ -2,7 +2,7 @@
 #include "block_.hpp"
 #include "kokkos_types.hpp"
 
-void dq4FD(block_ b) {
+void dq4FD(block_ &b) {
 
   //-------------------------------------------------------------------------------------------|
   // Spatial derivatices of primative variables

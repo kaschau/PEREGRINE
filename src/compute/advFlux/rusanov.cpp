@@ -3,7 +3,7 @@
 #include "kokkos_types.hpp"
 #include "thtrdat_.hpp"
 
-void rusanov(block_ b) {
+void rusanov(block_ &b) {
 
   //-------------------------------------------------------------------------------------------|
   // i flux face range

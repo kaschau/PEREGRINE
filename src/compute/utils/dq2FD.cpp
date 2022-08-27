@@ -3,7 +3,7 @@
 #include "compute.hpp"
 #include "kokkos_types.hpp"
 
-void dq2FD(block_ b) {
+void dq2FD(block_ &b) {
 
   //-------------------------------------------------------------------------------------------|
   // Spatial derivatices of primative variables
@@ -29,7 +29,7 @@ void dq2FD(block_ b) {
       });
 }
 
-void dq2FDoneSided(block_ b, int nface) {
+void dq2FDoneSided(block_ &b, const int &nface) {
 
   const int ng = b.ng;
   int s0, s1, s2, plus;

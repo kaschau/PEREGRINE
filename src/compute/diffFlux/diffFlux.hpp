@@ -5,6 +5,6 @@
 
 // ./diffFlux
 //    |------> diffusiveFlux
-void diffusiveFlux(block_ b);
+void diffusiveFlux(block_ &b);
 
 #endif

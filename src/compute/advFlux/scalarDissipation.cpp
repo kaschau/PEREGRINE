@@ -4,7 +4,7 @@
 #include "math.h"
 #include "thtrdat_.hpp"
 
-void scalarDissipation(block_ b) {
+void scalarDissipation(block_ &b) {
 
   const double kappa2 = 0.5;
   const double kappa4 = 0.005;

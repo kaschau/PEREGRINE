@@ -29,11 +29,12 @@ void bindUtils(py::module_ &m) {
             "difference",
             py::arg("block_ object"));
   //    |------> axpby
-  utils.def("AEQConst", py::overload_cast<fourDview, double>(&AEQConst),
+  utils.def("AEQConst",
+            py::overload_cast<fourDview &, const double &>(&AEQConst),
             "A = Const", py::arg("A fourDview"), py::arg("const double Const"));
-  utils.def("AEQConst", py::overload_cast<threeDview, double>(&AEQConst),
-            "A = Const", py::arg("A threeDview"),
-            py::arg("const double Const"));
+  utils.def(
+      "AEQConst", py::overload_cast<threeDview &, const double &>(&AEQConst),
+      "A = Const", py::arg("A threeDview"), py::arg("const double Const"));
   utils.def("AEQB", &AEQB, "A = B", py::arg("A view"), py::arg("B view"));
   utils.def("ApEQxB", &ApEQxB, "A += x*B", py::arg("A view"),
             py::arg("x double"), py::arg("B view"));

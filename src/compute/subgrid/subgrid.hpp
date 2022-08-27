@@ -5,8 +5,8 @@
 
 // ./subgrid
 //    |------> mixedScaleModel
-void mixedScaleModel(block_ b);
+void mixedScaleModel(block_ &b);
 //    |------> smagorinsky
-void smagorinsky(block_ b);
+void smagorinsky(block_ &b);
 
 #endif

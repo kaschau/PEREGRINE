@@ -4,7 +4,7 @@
 #include <math.h>
 #include <numeric>
 
-void jamesonPressure(block_ b) {
+void jamesonPressure(block_ &b) {
 
   MDRange3 range_cc({b.ng, b.ng, b.ng},
                     {b.ni + b.ng - 1, b.nj + b.ng - 1, b.nk + b.ng - 1});

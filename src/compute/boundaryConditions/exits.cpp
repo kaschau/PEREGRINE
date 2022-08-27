@@ -6,9 +6,9 @@
 #include "thtrdat_.hpp"
 
 void constantPressureSubsonicExit(
-    block_ b, face_ face,
+    block_ &b, face_ &face,
     const std::function<void(block_, thtrdat_, int, std::string)> &eos,
-    const thtrdat_ th, const std::string terms, const double /*tme*/) {
+    const thtrdat_ &th, const std::string &terms, const double /*&tme*/) {
   //-------------------------------------------------------------------------------------------|
   // Apply BC to face, slice by slice.
   //-------------------------------------------------------------------------------------------|
@@ -102,9 +102,9 @@ void constantPressureSubsonicExit(
 }
 
 void supersonicExit(
-    block_ b, face_ face,
+    block_ &b, face_ &face,
     const std::function<void(block_, thtrdat_, int, std::string)> &eos,
-    const thtrdat_ th, const std::string terms, const double /*tme*/) {
+    const thtrdat_ &th, const std::string &terms, const double /*&tme*/) {
   //-------------------------------------------------------------------------------------------|
   // Apply BC to face, slice by slice.
   //-------------------------------------------------------------------------------------------|

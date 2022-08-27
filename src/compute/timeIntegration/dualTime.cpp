@@ -18,7 +18,7 @@
 //
 //---------------------------------------------------------------------------------------------|
 
-void dQdt(block_ b, const double dt) {
+void dQdt(block_ &b, const double &dt) {
   //-------------------------------------------------------------------------------------------|
   // Add to dQ with real time derivative source term
   //-------------------------------------------------------------------------------------------|
@@ -33,7 +33,7 @@ void dQdt(block_ b, const double dt) {
       });
 }
 
-void localDtau(block_ b, const bool viscous) {
+void localDtau(block_ &b, const bool &viscous) {
   //-------------------------------------------------------------------------------------------|
   // Compute local pseudo time step
   //-------------------------------------------------------------------------------------------|
@@ -107,7 +107,7 @@ void localDtau(block_ b, const bool viscous) {
       });
 }
 
-void DTrk3s1(block_ b) {
+void DTrk3s1(block_ &b) {
   //-------------------------------------------------------------------------------------------|
   // Apply RK3 stage 1
   //-------------------------------------------------------------------------------------------|
@@ -120,7 +120,7 @@ void DTrk3s1(block_ b) {
       });
 }
 
-void DTrk3s2(block_ b) {
+void DTrk3s2(block_ &b) {
   //-------------------------------------------------------------------------------------------|
   // Apply RK3 stage 2
   //-------------------------------------------------------------------------------------------|
@@ -134,7 +134,7 @@ void DTrk3s2(block_ b) {
       });
 }
 
-void DTrk3s3(block_ b) {
+void DTrk3s3(block_ &b) {
   //-------------------------------------------------------------------------------------------|
   // Apply RK3 stage 3
   //-------------------------------------------------------------------------------------------|
@@ -149,7 +149,7 @@ void DTrk3s3(block_ b) {
       });
 }
 
-std::array<std::vector<double>, 2> residual(std::vector<block_> mb) {
+std::array<std::vector<double>, 2> residual(std::vector<block_> &mb) {
   //-------------------------------------------------------------------------------------------|
   // Compute max residual for each primative
   //-------------------------------------------------------------------------------------------|
@@ -242,8 +242,8 @@ std::array<std::vector<double>, 2> residual(std::vector<block_> mb) {
   return returnResid;
 }
 
-void invertDQ(block_ b, const double dt, const thtrdat_ th,
-              const bool viscous) {
+void invertDQ(block_ &b, const double &dt, const thtrdat_ &th,
+              const bool &viscous) {
   //-------------------------------------------------------------------------------------------|
   // Solve (\Gamma + dqdQ) dq = dQ to solver for dqdt
   //

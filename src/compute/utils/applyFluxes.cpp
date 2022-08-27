@@ -3,7 +3,7 @@
 #include "kokkos_types.hpp"
 #include "math.h"
 
-void applyFlux(block_ b, double[]) {
+void applyFlux(block_ &b, double[]) {
 
   //-------------------------------------------------------------------------------------------|
   // Apply fluxes to cc range
@@ -24,7 +24,7 @@ void applyFlux(block_ b, double[]) {
       });
 }
 
-void applyHybridFlux(block_ b, const double primary) {
+void applyHybridFlux(block_ &b, const double &primary) {
 
   //-------------------------------------------------------------------------------------------|
   // Apply fluxes to cc range
@@ -61,7 +61,7 @@ void applyHybridFlux(block_ b, const double primary) {
       });
 }
 
-void applyDissipationFlux(block_ b, double[]) {
+void applyDissipationFlux(block_ &b, double[]) {
 
   //-------------------------------------------------------------------------------------------|
   // Apply fluxes to cc range

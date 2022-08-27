@@ -6,9 +6,9 @@
 #include "thtrdat_.hpp"
 
 void periodicRotHigh(
-    block_ b, face_ face,
-    const std::function<void(block_, thtrdat_, int, std::string)> & /*eos*/,
-    const thtrdat_ /*th*/, const std::string terms, const double /*tme*/) {
+    block_ &b, face_ &face,
+    const std::function<void(block_, thtrdat_, int, std::string)> /*&eos*/,
+    const thtrdat_ /*&th*/, const std::string &terms, const double /*&tme*/) {
   //-------------------------------------------------------------------------------------------|
   // Apply BC to face, slice by slice.
   //-------------------------------------------------------------------------------------------|
@@ -96,9 +96,9 @@ void periodicRotHigh(
 }
 
 void periodicRotLow(
-    block_ b, face_ face,
-    const std::function<void(block_, thtrdat_, int, std::string)> & /*eos*/,
-    const thtrdat_ /*th*/, const std::string terms, const double /*tme*/) {
+    block_ &b, face_ &face,
+    const std::function<void(block_, thtrdat_, int, std::string)> /*&eos*/,
+    const thtrdat_ /*&th*/, const std::string &terms, const double /*&tme*/) {
   //-------------------------------------------------------------------------------------------|
   // Apply BC to face, slice by slice.
   //-------------------------------------------------------------------------------------------|

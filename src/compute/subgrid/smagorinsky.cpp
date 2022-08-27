@@ -13,7 +13,7 @@
 // FLUIDSInt.J.Numer.Meth.Fluids2000;32: 369 – 406 E. Lenormand,  P. Sagautb,
 // and  L. Ta Phuoc
 
-void smagorinsky(block_ b) {
+void smagorinsky(block_ &b) {
 
   MDRange3 range_cc({b.ng, b.ng, b.ng},
                     {b.ni + b.ng - 1, b.nj + b.ng - 1, b.nk + b.ng - 1});

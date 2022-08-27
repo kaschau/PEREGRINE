@@ -4,10 +4,10 @@
 #include "block_.hpp"
 // ./switches
 //    |------> jameson
-void jamesonPressure(block_ b);
+void jamesonPressure(block_ &b);
 //    |------> vanAlbada
-void vanAlbadaPressure(block_ b);
+void vanAlbadaPressure(block_ &b);
 //    |------> vanLeer
-void vanLeer(block_ b);
+void vanLeer(block_ &b);
 
 #endif

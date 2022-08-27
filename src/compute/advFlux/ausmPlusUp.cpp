@@ -4,7 +4,7 @@
 #include "math.h"
 #include "thtrdat_.hpp"
 
-void ausmPlusUp(block_ b) {
+void ausmPlusUp(block_ &b) {
 
   //-------------------------------------------------------------------------------------------|
   // i flux face range

@@ -2,7 +2,7 @@
 #include "block_.hpp"
 #include "kokkos_types.hpp"
 
-void corrector(block_ b, const double dt) {
+void corrector(block_ &b, const double &dt) {
   //-------------------------------------------------------------------------------------------|
   // Apply Maccormack corrector stage
   //-------------------------------------------------------------------------------------------|
