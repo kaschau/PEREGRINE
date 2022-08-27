@@ -2,7 +2,7 @@
 #include "block_.hpp"
 #include "kokkos_types.hpp"
 
-void rk2s1(block_ b, const double dt) {
+void rk2s1(block_ &b, const double &dt) {
   //-------------------------------------------------------------------------------------------|
   // Apply RK2 stage 1
   //-------------------------------------------------------------------------------------------|
@@ -18,7 +18,7 @@ void rk2s1(block_ b, const double dt) {
 //-------------------------------------------------------------------------------------------|
 // Apply RK2 stage 2
 //-------------------------------------------------------------------------------------------|
-void rk2s2(block_ b, const double dt) {
+void rk2s2(block_ &b, const double &dt) {
   MDRange4 range_cc({b.ng, b.ng, b.ng, 0},
                     {b.ni + b.ng - 1, b.nj + b.ng - 1, b.nk + b.ng - 1, b.ne});
   Kokkos::parallel_for(

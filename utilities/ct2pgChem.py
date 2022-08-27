@@ -13,9 +13,11 @@ file name.
 
 Example
 -------
-ct2pg_chem.py <cantera.yaml>
+ct2pgChem.py <cantera.yaml>
 
 """
+
+import subprocess
 
 import cantera as ct
 import numpy as np
@@ -33,7 +35,7 @@ class UnknownFalloffType(Exception):
         super().__init__(message)
 
 
-def int_or_float(val):
+def intOrFloat(val):
     ival = int(val)
 
     if abs(val - ival) > 1e-16:
@@ -42,7 +44,7 @@ def int_or_float(val):
         return ival
 
 
-def rate_const_string(A, m, Ea):
+def rateConstString(A, m, Ea):
     if m == 0.0 and Ea == 0.0:
         string = f"{A}"
     elif m == 0.0 and Ea != 0.0:
@@ -64,7 +66,7 @@ def rate_const_string(A, m, Ea):
     return string
 
 
-def ct2pg_chem(ctyaml, cpp):
+def ct2pgChem(ctyaml, cpp):
 
     gas = ct.Solution(ctyaml)
     ns = gas.n_species
@@ -111,28 +113,28 @@ def ct2pg_chem(ctyaml, cpp):
                 A_o.append(0.0)
         elif r.reaction_type == "reaction":
             Ea_f.append(rate.activation_energy / Ru)
-            m_f.append(int_or_float(rate.temperature_exponent))
+            m_f.append(intOrFloat(rate.temperature_exponent))
             A_f.append(rate.pre_exponential_factor)
         else:
             raise UnknownReactionType(r.reaction_type, i, r.equation)
 
     nTBC = len(rTBC)  # number of third body collision reaction
-    pg_mech = open(cpp, "w")
+    pgMech = open(cpp, "w")
 
     # --------------------------------
     # HEADER
     # --------------------------------
     # WRITE OUT SPECIES ORDER
-    pg_mech.write("// ========================================================== //\n")
+    pgMech.write("// ========================================================== //\n")
     for i, sp in enumerate(gas.species_names):
-        pg_mech.write(f"// Y({i:>3d}) = {sp}\n")
-    pg_mech.write(
+        pgMech.write(f"// Y({i:>3d}) = {sp}\n")
+    pgMech.write(
         "\n"
         f"// {nr} reactions.\n"
         "// ========================================================== //\n\n"
     )
 
-    out_string = (
+    outString = (
         '#include "Kokkos_Core.hpp"\n'
         '#include "kokkos_types.hpp"\n'
         '#include "block_.hpp"\n'
@@ -140,12 +142,16 @@ def ct2pg_chem(ctyaml, cpp):
         '#include "compute.hpp"\n'
         "#include <math.h>\n"
         "\n"
-        f'void {cpp.replace(".cpp","")}(block_ b, thtrdat_ th, int face/*=0*/, int indxI/*=0*/, int indxJ/*=0*/, int indxK/*=0*/, int nChemSubSteps/*=1*/, double dt/*1.0*/) {{\n'
+        f"void {cpp.replace('.cpp','')}(block_ &b,\n"
+        "                               const thtrdat_ &th,\n"
+        "                               const int &rface/*=0*/,\n"
+        "                               const int &indxI/*=0*/, const int &indxJ/*=0*/, const int &indxK/*=0*/,\n"
+        "                               const int &nChemSubSteps/*=1*/, const double &dt/*=1.0*/) {\n"
         "\n"
         "// --------------------------------------------------------------|\n"
         "// cc range\n"
         "// --------------------------------------------------------------|\n"
-        "  MDRange3 range = get_range3(b, face, indxI, indxJ, indxK);\n"
+        "  MDRange3 range = get_range3(b, rface, indxI, indxJ, indxK);\n"
         "\n"
         '  Kokkos::parallel_for("Compute chemical source terms",\n'
         "                       range,\n"
@@ -197,38 +203,38 @@ def ct2pg_chem(ctyaml, cpp):
         "\n"
     )
 
-    pg_mech.write(out_string)
+    pgMech.write(outString)
 
     # -----------------------------------------------------------------------------
     # Chaperone Efficiencies
     # -----------------------------------------------------------------------------
 
-    out_string = (
+    outString = (
         "  // ----------------------------------------------------------- >\n"
         "  // Chaperon efficiencies. ------------------------------------ >\n"
         "  // ----------------------------------------------------------- >\n"
         "\n"
         f"  double cTBC[{nTBC}];\n\n"
     )
-    pg_mech.write(out_string)
+    pgMech.write(outString)
 
     # ThreeBodyReaction and FallOffReactions
     for i in range(nTBC):
-        out_string = []
+        outString = []
         for j in range(ns):
             eff = aij[i][j]
             if eff > 0.0:
                 if eff != 1.0:
-                    out_string.append(f" + {eff}*cs[{j}]")
+                    outString.append(f" + {eff}*cs[{j}]")
                 else:
-                    out_string.append(f" + cs[{j}]")
-        out_string[0] = out_string[0].replace(" + ", "")
-        pg_mech.write(f"  cTBC[{i}] = ")
-        for item in out_string:
-            pg_mech.write(item)
-        pg_mech.write(";\n\n")
+                    outString.append(f" + cs[{j}]")
+        outString[0] = outString[0].replace(" + ", "")
+        pgMech.write(f"  cTBC[{i}] = ")
+        for item in outString:
+            pgMech.write(item)
+        pgMech.write(";\n\n")
 
-    out_string = (
+    outString = (
         "  // ----------------------------------------------------------- >\n"
         "  // Gibbs energy. --------------------------------------------- >\n"
         "  // ----------------------------------------------------------- >\n"
@@ -266,12 +272,12 @@ def ct2pg_chem(ctyaml, cpp):
         "  }\n"
         "\n"
     )
-    pg_mech.write(out_string)
+    pgMech.write(outString)
 
     # -----------------------------------------------------------------------------
     # HARD CODED forward rate constants k_f,  dG and K_c
     # -----------------------------------------------------------------------------
-    out_string = (
+    outString = (
         "  // ----------------------------------------------------------- >\n"
         "  // Rate Constants. ------------------------------------------- >\n"
         "  // FallOff Modifications. ------------------------------------ >\n"
@@ -280,9 +286,9 @@ def ct2pg_chem(ctyaml, cpp):
         "\n"
         "  double k_f, dG, K_c; \n\n"
     )
-    pg_mech.write(out_string)
+    pgMech.write(outString)
 
-    out_string = (
+    outString = (
         "  double Fcent;\n"
         "  double pmod;\n"
         "  double Pr,k0;\n"
@@ -290,43 +296,43 @@ def ct2pg_chem(ctyaml, cpp):
         "  double C,N;\n"
         "\n"
     )
-    pg_mech.write(out_string)
+    pgMech.write(outString)
 
-    out_string = "  double q_f, q_b;\n" + f"  double q[{nr}];\n\n"
-    pg_mech.write(out_string)
+    outString = "  double q_f, q_b;\n" + f"  double q[{nr}];\n\n"
+    pgMech.write(outString)
 
     for i in range(nr):
-        pg_mech.write(f"  // Reaction #{i}\n")
-        out_string = "  k_f = " + rate_const_string(A_f[i], m_f[i], Ea_f[i]) + ";\n"
+        pgMech.write(f"  // Reaction #{i}\n")
+        outString = "  k_f = " + rateConstString(A_f[i], m_f[i], Ea_f[i]) + ";\n"
 
-        pg_mech.write(out_string)
+        pgMech.write(outString)
         nu_sum = nu_b[:, i] - nu_f[:, i]
-        out_string = []
+        outString = []
         for j, s in enumerate(nu_sum):
             if s == 1:
-                out_string.append(f" + gbs[{j}]")
+                outString.append(f" + gbs[{j}]")
             elif s == -1:
-                out_string.append(f" - gbs[{j}]")
+                outString.append(f" - gbs[{j}]")
             elif s != 0:
-                out_string.append(f" {s:+}*gbs[{j}]")
-        out_string[0] = out_string[0].replace("+", "")
-        pg_mech.write("   dG = ")
-        for item in out_string:
-            pg_mech.write(item)
-        pg_mech.write(";\n")
+                outString.append(f" {s:+}*gbs[{j}]")
+        outString[0] = outString[0].replace("+", "")
+        pgMech.write("   dG = ")
+        for item in outString:
+            pgMech.write(item)
+        pgMech.write(";\n")
 
         sum_nu_sum = np.sum(nu_sum)
         if sum_nu_sum != 0.0:
             if sum_nu_sum == 1.0:
-                out_string = "  K_c = prefRuT*exp(-dG);"
+                outString = "  K_c = prefRuT*exp(-dG);"
             elif sum_nu_sum == -1.0:
-                out_string = "  K_c = exp(-dG)/prefRuT;"
+                outString = "  K_c = exp(-dG)/prefRuT;"
             else:
-                out_string = f"  K_c = pow(prefRuT,{sum_nu_sum})*exp(-dG);"
+                outString = f"  K_c = pow(prefRuT,{sum_nu_sum})*exp(-dG);"
         else:
-            out_string = "  K_c = exp(-dG);"
-        pg_mech.write(out_string)
-        pg_mech.write("\n")
+            outString = "  K_c = exp(-dG);"
+        pgMech.write(outString)
+        pgMech.write("\n")
 
         # -----------------------------------------------------------------------------
         # FallOff Modifications
@@ -335,47 +341,47 @@ def ct2pg_chem(ctyaml, cpp):
         if i in rTBC:
             j = rTBC.index(i)
         if r.reaction_type == "three-body":  # ThreeBodyReaction
-            pg_mech.write(f"  //  Three Body Reaction #{i}\n")
-            out_string = f"  k_f *= cTBC[{j}];\n"
-            pg_mech.write(out_string)
+            pgMech.write(f"  //  Three Body Reaction #{i}\n")
+            outString = f"  k_f *= cTBC[{j}];\n"
+            pgMech.write(outString)
         elif r.reaction_type == "falloff":  # FallOff Reactions
             rate = r.rate
             if rate.type == "Lindemann":
-                pg_mech.write(f"  //  Lindeman Reaction #{i}\n")
-                pg_mech.write("  Fcent = 1.0;\n")
-                pg_mech.write(
-                    "  k0 = " + rate_const_string(A_o[j], m_o[j], Ea_o[j]) + ";\n"
+                pgMech.write(f"  //  Lindeman Reaction #{i}\n")
+                pgMech.write("  Fcent = 1.0;\n")
+                pgMech.write(
+                    "  k0 = " + rateConstString(A_o[j], m_o[j], Ea_o[j]) + ";\n"
                 )
-                out_string = (
+                outString = (
                     f"  Pr = cTBC[{j}]*k0/k_f;\n"
                     f"  pmod = Pr/(1.0 + Pr);\n"
                     f"  k_f *= pmod;\n"
                 )
-                pg_mech.write(out_string)
+                pgMech.write(outString)
 
             elif rate.type == "Troe":
                 alpha = rate.falloff_coeffs[0]
                 Tsss = rate.falloff_coeffs[1]
                 Ts = rate.falloff_coeffs[2]
-                pg_mech.write(f"  //  Troe Reaction #{i}\n")
+                pgMech.write(f"  //  Troe Reaction #{i}\n")
                 tp = rate.falloff_coeffs
                 if tp[-1] == 0:  # Three Parameter Troe form
-                    out_string = f"  Fcent = (1.0 - ({alpha}))*exp(-T/({Tsss})) + ({alpha}) *exp(-T/({Ts}));\n"
-                    pg_mech.write(out_string)
+                    outString = f"  Fcent = (1.0 - ({alpha}))*exp(-T/({Tsss})) + ({alpha}) *exp(-T/({Ts}));\n"
+                    pgMech.write(outString)
                 elif tp[-1] != 0:  # Four Parameter Troe form
                     Tss = rate.falloff_coeffs[3]
-                    out_string = f"  Fcent = (1.0 - ({alpha}))*exp(-T/({Tsss})) + ({alpha}) *exp(-T/({Ts})) + exp(-({Tss})/T);\n"
-                    pg_mech.write(out_string)
+                    outString = f"  Fcent = (1.0 - ({alpha}))*exp(-T/({Tsss})) + ({alpha}) *exp(-T/({Ts})) + exp(-({Tss})/T);\n"
+                    pgMech.write(outString)
 
-                out_string = (
+                outString = (
                     "  C = - 0.4 - 0.67*log10(Fcent);\n"
                     "  N =   0.75 - 1.27*log10(Fcent);\n"
                 )
-                pg_mech.write(out_string)
-                pg_mech.write(
-                    "  k0 = " + rate_const_string(A_o[j], m_o[j], Ea_o[j]) + ";\n"
+                pgMech.write(outString)
+                pgMech.write(
+                    "  k0 = " + rateConstString(A_o[j], m_o[j], Ea_o[j]) + ";\n"
                 )
-                out_string = (
+                outString = (
                     f"  Pr = cTBC[{j}]*k0/k_f;\n"
                     "  A = log10(Pr) + C;\n"
                     "  f1 = A/(N - 0.14*A);\n"
@@ -384,7 +390,7 @@ def ct2pg_chem(ctyaml, cpp):
                     "  k_f *= pmod;\n"
                 )
 
-                pg_mech.write(out_string)
+                pgMech.write(outString)
             elif rate.type == "SRI":  # SRI Form
                 raise NotImplementedError(
                     " Warning, this utility cant handle SRI type reactions yet... so add it now"
@@ -395,66 +401,66 @@ def ct2pg_chem(ctyaml, cpp):
         # -----------------------------------------------------------------------------
         # Rates of progress
         # -----------------------------------------------------------------------------
-        out_string = []
+        outString = []
         for j, s in enumerate(nu_f[:, i]):
             if s == 1.0:
-                out_string.append(f" * cs[{j}]")
+                outString.append(f" * cs[{j}]")
             elif s > 0.0:
-                out_string.append(f" * pow(cs[{j}],{float(s)})")
+                outString.append(f" * pow(cs[{j}],{float(s)})")
         # cTBC has already been applied to falloffs above!!!
-        pg_mech.write("  q_f =  k_f")
-        for item in out_string:
-            pg_mech.write(item)
-        pg_mech.write(";\n")
+        pgMech.write("  q_f =  k_f")
+        for item in outString:
+            pgMech.write(item)
+        pgMech.write(";\n")
 
-        out_string = []
+        outString = []
         for j, s in enumerate(nu_b[:, i]):
             if s == 1:
-                out_string.append(f" * cs[{j}]")
+                outString.append(f" * cs[{j}]")
             elif s > 0.0:
-                out_string.append(f" * pow(cs[{j}],{float(s)})")
+                outString.append(f" * pow(cs[{j}],{float(s)})")
         # cTBC has already been applied to falloffs above!!!
-        pg_mech.write("  q_b = -k_f/K_c")
-        for item in out_string:
-            pg_mech.write(item)
-        pg_mech.write(";\n")
+        pgMech.write("  q_b = -k_f/K_c")
+        for item in outString:
+            pgMech.write(item)
+        pgMech.write(";\n")
         if r.reversible:
-            pg_mech.write(f"  q[{i}] = q_f + q_b;\n\n")
+            pgMech.write(f"  q[{i}] = q_f + q_b;\n\n")
         else:
-            pg_mech.write(f"  q[{i}] = q_f;\n\n")
+            pgMech.write(f"  q[{i}] = q_f;\n\n")
 
     # -------------------------------------------------------------------
     # SOURCE TERMS
     # -------------------------------------------------------------------
-    out_string = (
+    outString = (
         "  // ----------------------------------------------------------- >\n"
         "  // Source terms. --------------------------------------------- >\n"
         "  // ----------------------------------------------------------- >\n"
         "\n"
     )
-    pg_mech.write(out_string)
+    pgMech.write(outString)
 
     for i in range(gas.n_species):
-        out_string = []
+        outString = []
         nu_sum = nu_b[i, :] - nu_f[i, :]
         for j, s in enumerate(nu_sum):
             if s == 1:
-                out_string.append(f" +q[{j}]")
+                outString.append(f" +q[{j}]")
             elif s == -1:
-                out_string.append(f" -q[{j}]")
+                outString.append(f" -q[{j}]")
             elif s != 0:
-                out_string.append(f" {s:+}*q[{j}]")
+                outString.append(f" {s:+}*q[{j}]")
 
-        if len(out_string) == 0:
-            pg_mech.write(f"  dYdt[{i}] = th.MW({i}) * (0.0")
+        if len(outString) == 0:
+            pgMech.write(f"  dYdt[{i}] = th.MW({i}) * (0.0")
         else:
-            out_string[0] = out_string[0].replace("+", "")
-            pg_mech.write(f"  dYdt[{i}] = th.MW({i}) * (")
-            for item in out_string:
-                pg_mech.write(item)
-        pg_mech.write(");\n")
+            outString[0] = outString[0].replace("+", "")
+            pgMech.write(f"  dYdt[{i}] = th.MW({i}) * (")
+            for item in outString:
+                pgMech.write(item)
+        pgMech.write(");\n")
 
-    out_string = (
+    outString = (
         "\n"
         "  dTdt = 0.0;\n"
         f"  for (int n=0; n<{ns}; n++)\n"
@@ -482,12 +488,12 @@ def ct2pg_chem(ctyaml, cpp):
         "  b.omega(i,j,k,0) = dTdt;\n"
         "\n"
     )
-    pg_mech.write(out_string)
+    pgMech.write(outString)
 
     # END
-    out_string = "  });\n" "}"
-    pg_mech.write(out_string)
-    pg_mech.close()
+    outString = "  });\n" "}"
+    pgMech.write(outString)
+    pgMech.close()
 
 
 if __name__ == "__main__":
@@ -502,7 +508,7 @@ if __name__ == "__main__":
         chemical source term c++ source code used by PEREGRINE"""
     )
     parser.add_argument(
-        "ct_file_name",
+        "ctFileName",
         metavar="<ct_file>",
         help="""Cantera .yaml file to convert into hard coded PEREGRINE
         chemical source term.""",
@@ -510,8 +516,12 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    ct_file_name = args.ct_file_name
+    ctFileName = args.ctFileName
 
-    cpp_file_name = f'chem_{ct_file_name.replace(".yaml",".cpp")}'.replace("-", "_")
+    cppFileName = f'chem_{ctFileName.replace(".yaml",".cpp")}'.replace("-", "_")
 
-    ct2pg_chem(ct_file_name, cpp_file_name)
+    ct2pgChem(ctFileName, cppFileName)
+
+    proc = subprocess.run(["clang-format", "-i", cppFileName])
+    if proc.returncode != 0:
+        print(proc.returncode)

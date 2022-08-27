@@ -6,20 +6,20 @@
 
 // ./transport
 //    |------> kineticThreory
-void kineticTheory(block_ b, const thtrdat_ th, const int face,
-                   const int indxI = 0, const int indxJ = 0,
-                   const int indxK = 0);
+void kineticTheory(block_ &b, const thtrdat_ &th, const int &face,
+                   const int &indxI /*=0*/, const int &indxJ /*=0*/,
+                   const int &indxK /*=0*/);
 //    |------> constantProps
-void constantProps(block_ b, const thtrdat_ th, const int face,
-                   const int indxI = 0, const int indxJ = 0,
-                   const int indxK = 0);
+void constantProps(block_ &b, const thtrdat_ &th, const int &face,
+                   const int &indxI /*=0*/, const int &indxJ /*=0*/,
+                   const int &indxK /*=0*/);
 //    |------> kineticThreoryUnityLewis
-void kineticTheoryUnityLewis(block_ b, const thtrdat_ th, const int face,
-                             const int indxI = 0, const int indxJ = 0,
-                             const int indxK = 0);
+void kineticTheoryUnityLewis(block_ &b, const thtrdat_ &th, const int &face,
+                             const int &indxI /*=0*/, const int &indxJ /*=0*/,
+                             const int &indxK /*=0*/);
 //    |------> chungDenseGasUnityLewis
-void chungDenseGasUnityLewis(block_ b, const thtrdat_ th, const int face,
-                             const int indxI = 0, const int indxJ = 0,
-                             const int indxK = 0);
+void chungDenseGasUnityLewis(block_ &b, const thtrdat_ &th, const int &face,
+                             const int &indxI /*=0*/, const int &indxJ /*=0*/,
+                             const int &indxK /*=0*/);
 
 #endif

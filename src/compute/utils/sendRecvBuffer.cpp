@@ -4,7 +4,8 @@
 #include "kokkos_types.hpp"
 #include <Kokkos_CopyViews.hpp>
 
-void extract_sendBuffer3(threeDview view, face_ face, std::vector<int> slices) {
+void extract_sendBuffer3(threeDview &view, face_ &face,
+                         const std::vector<int> &slices) {
 
   int &nface = face._nface;
   int &ng = face._ng;
@@ -32,7 +33,8 @@ void extract_sendBuffer3(threeDview view, face_ face, std::vector<int> slices) {
   }
 }
 
-void extract_sendBuffer4(fourDview view, face_ face, std::vector<int> slices) {
+void extract_sendBuffer4(fourDview &view, face_ &face,
+                         const std::vector<int> &slices) {
 
   int &nface = face._nface;
   int &ng = face._ng;
@@ -60,7 +62,8 @@ void extract_sendBuffer4(fourDview view, face_ face, std::vector<int> slices) {
   }
 }
 
-void place_recvBuffer3(threeDview view, face_ face, std::vector<int> slices) {
+void place_recvBuffer3(threeDview &view, face_ &face,
+                       const std::vector<int> &slices) {
 
   int &nface = face._nface;
   int &ng = face._ng;
@@ -88,7 +91,8 @@ void place_recvBuffer3(threeDview view, face_ face, std::vector<int> slices) {
   }
 }
 
-void place_recvBuffer4(fourDview view, face_ face, std::vector<int> slices) {
+void place_recvBuffer4(fourDview &view, face_ &face,
+                       const std::vector<int> &slices) {
 
   int &nface = face._nface;
   int &ng = face._ng;

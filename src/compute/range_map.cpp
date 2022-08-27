@@ -2,8 +2,8 @@
 #include "kokkos_types.hpp"
 #include <stdexcept>
 
-MDRange3 get_range3(const block_ b, const int nface, const int indxI /*=0*/,
-                    const int indxJ /*=0*/, const int indxK /*=0*/) {
+MDRange3 get_range3(const block_ &b, const int &nface, const int &indxI /*=0*/,
+                    const int &indxJ /*=0*/, const int &indxK /*=0*/) {
 
   MDRange3 range;
 
@@ -62,8 +62,8 @@ MDRange3 get_range3(const block_ b, const int nface, const int indxI /*=0*/,
   return range;
 }
 
-threeDsubview getHaloSlice(const fourDview view, const int nface,
-                           const int slice) {
+threeDsubview getHaloSlice(const fourDview &view, const int &nface,
+                           const int &slice) {
 
   threeDsubview subview;
   switch (nface) {
@@ -92,8 +92,8 @@ threeDsubview getHaloSlice(const fourDview view, const int nface,
   return subview;
 }
 
-twoDsubview getHaloSlice(const threeDview view, const int nface,
-                         const int slice) {
+twoDsubview getHaloSlice(const threeDview &view, const int &nface,
+                         const int &slice) {
 
   twoDsubview subview;
   switch (nface) {
@@ -119,8 +119,9 @@ twoDsubview getHaloSlice(const threeDview view, const int nface,
   return subview;
 }
 
-void setHaloSlices(int &s0, int &s1, int &s2, int &plus, const int ni,
-                   const int nj, const int nk, const int ng, const int nface) {
+void setHaloSlices(int &s0, int &s1, int &s2, int &plus, const int &ni,
+                   const int &nj, const int &nk, const int &ng,
+                   const int &nface) {
   // For low faces (1,3,5) plus = 1, i.e. inward normal for the face. For high
   // faces (2,4,6) plus = -1, i.e. inward normal for the face.
   switch (nface) {

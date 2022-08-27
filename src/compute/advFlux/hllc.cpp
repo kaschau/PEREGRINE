@@ -3,7 +3,7 @@
 #include "kokkos_types.hpp"
 #include "thtrdat_.hpp"
 
-void hllc(block_ b) {
+void hllc(block_ &b) {
 
   //-------------------------------------------------------------------------------------------|
   // i flux face range

@@ -4,7 +4,7 @@
 #include "math.h"
 #include "thtrdat_.hpp"
 
-void diffusiveFlux(block_ b) {
+void diffusiveFlux(block_ &b) {
 
   //-------------------------------------------------------------------------------------------|
   // i flux face range

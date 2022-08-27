@@ -7,9 +7,9 @@
 #include <Kokkos_CopyViews.hpp>
 
 void constantVelocitySubsonicInlet(
-    block_ b, face_ face,
+    block_ &b, face_ &face,
     const std::function<void(block_, thtrdat_, int, std::string)> &eos,
-    const thtrdat_ th, const std::string terms, const double /*tme*/) {
+    const thtrdat_ &th, const std::string &terms, const double /*&tme*/) {
   //-------------------------------------------------------------------------------------------|
   // Apply BC to face, slice by slice.
   //-------------------------------------------------------------------------------------------|
@@ -80,9 +80,9 @@ void constantVelocitySubsonicInlet(
 }
 
 void cubicSplineSubsonicInlet(
-    block_ b, face_ &face,
+    block_ &b, face_ &face,
     const std::function<void(block_, thtrdat_, int, std::string)> &eos,
-    const thtrdat_ th, const std::string terms, const double tme) {
+    const thtrdat_ &th, const std::string &terms, const double &tme) {
   //-------------------------------------------------------------------------------------------|
   // Update target values with cubic spline, moving intervals if needed
   //-------------------------------------------------------------------------------------------|
@@ -155,9 +155,9 @@ void cubicSplineSubsonicInlet(
 }
 
 void supersonicInlet(
-    block_ b, face_ face,
+    block_ &b, face_ &face,
     const std::function<void(block_, thtrdat_, int, std::string)> &eos,
-    const thtrdat_ th, const std::string terms, const double /*tme*/) {
+    const thtrdat_ &th, const std::string &terms, const double /*&tme*/) {
   //-------------------------------------------------------------------------------------------|
   // Apply BC to face, slice by slice.
   //-------------------------------------------------------------------------------------------|
@@ -228,9 +228,9 @@ void supersonicInlet(
 }
 
 void constantMassFluxSubsonicInlet(
-    block_ b, face_ face,
+    block_ &b, face_ &face,
     const std::function<void(block_, thtrdat_, int, std::string)> &eos,
-    const thtrdat_ th, const std::string terms, const double /*tme*/) {
+    const thtrdat_ &th, const std::string &terms, const double /*&tme*/) {
   //-------------------------------------------------------------------------------------------|
   // Apply BC to face, slice by slice.
   //-------------------------------------------------------------------------------------------|

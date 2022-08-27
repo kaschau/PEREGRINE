@@ -2,7 +2,7 @@
 #include "block_.hpp"
 #include "kokkos_types.hpp"
 
-void dQzero(block_ b) {
+void dQzero(block_ &b) {
 
   //-------------------------------------------------------------------------------------------|
   // Zero out dQ

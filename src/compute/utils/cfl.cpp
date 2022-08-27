@@ -5,7 +5,7 @@
 #include "math.h"
 #include "vector"
 
-std::array<double, 3> CFLmax(std::vector<block_> mb) {
+std::array<double, 3> CFLmax(const std::vector<block_> &mb) {
 
   //-------------------------------------------------------------------------------------------|
   // Compute the max acoustic and convective CFL factor speed/dx

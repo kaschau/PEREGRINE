@@ -20,7 +20,7 @@
 //      where we can adjust theta E[1,2] where theta=1 is most dissipative
 //      and theta=2 is least dissipative (according to wikipedia)
 
-void muscl2rusanov(block_ b) {
+void muscl2rusanov(block_ &b) {
 
   double theta = 2.0;
   //-------------------------------------------------------------------------------------------|

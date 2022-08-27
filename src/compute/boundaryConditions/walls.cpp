@@ -6,9 +6,9 @@
 #include "thtrdat_.hpp"
 
 void adiabaticNoSlipWall(
-    block_ b, face_ face,
+    block_ &b, face_ &face,
     const std::function<void(block_, thtrdat_, int, std::string)> &eos,
-    const thtrdat_ th, const std::string terms, const double /*tme*/) {
+    const thtrdat_ &th, const std::string &terms, const double /*&tme*/) {
   //-------------------------------------------------------------------------------------------|
   // Apply BC to face, slice by slice.
   //-------------------------------------------------------------------------------------------|
@@ -143,9 +143,9 @@ void adiabaticNoSlipWall(
 }
 
 void adiabaticSlipWall(
-    block_ b, face_ face,
+    block_ &b, face_ &face,
     const std::function<void(block_, thtrdat_, int, std::string)> &eos,
-    const thtrdat_ th, const std::string terms, const double /*tme*/) {
+    const thtrdat_ &th, const std::string &terms, const double /*&tme*/) {
   //-------------------------------------------------------------------------------------------|
   // Apply BC to face, slice by slice.
   //-------------------------------------------------------------------------------------------|
@@ -291,9 +291,9 @@ void adiabaticSlipWall(
 }
 
 void adiabaticMovingWall(
-    block_ b, face_ face,
+    block_ &b, face_ &face,
     const std::function<void(block_, thtrdat_, int, std::string)> &eos,
-    const thtrdat_ th, const std::string terms, const double /*tme*/) {
+    const thtrdat_ &th, const std::string &terms, const double /*&tme*/) {
   //-------------------------------------------------------------------------------------------|
   // Apply BC to face, slice by slice.
   //-------------------------------------------------------------------------------------------|
@@ -427,9 +427,9 @@ void adiabaticMovingWall(
 }
 
 void isoTNoSlipWall(
-    block_ b, face_ face,
+    block_ &b, face_ &face,
     const std::function<void(block_, thtrdat_, int, std::string)> &eos,
-    const thtrdat_ th, const std::string terms, const double /*tme*/) {
+    const thtrdat_ &th, const std::string &terms, const double /*&tme*/) {
   //-------------------------------------------------------------------------------------------|
   // Apply BC to face, slice by slice.
   //-------------------------------------------------------------------------------------------|
@@ -564,9 +564,9 @@ void isoTNoSlipWall(
 }
 
 void isoTSlipWall(
-    block_ b, face_ face,
+    block_ &b, face_ &face,
     const std::function<void(block_, thtrdat_, int, std::string)> &eos,
-    const thtrdat_ th, const std::string terms, const double /*tme*/) {
+    const thtrdat_ &th, const std::string &terms, const double /*&tme*/) {
   //-------------------------------------------------------------------------------------------|
   // Apply BC to face, slice by slice.
   //-------------------------------------------------------------------------------------------|
@@ -717,9 +717,9 @@ void isoTSlipWall(
   }
 }
 void isoTMovingWall(
-    block_ b, face_ face,
+    block_ &b, face_ &face,
     const std::function<void(block_, thtrdat_, int, std::string)> &eos,
-    const thtrdat_ th, const std::string terms, const double /*tme*/) {
+    const thtrdat_ &th, const std::string &terms, const double /*&tme*/) {
   //-------------------------------------------------------------------------------------------|
   // Apply BC to face, slice by slice.
   //-------------------------------------------------------------------------------------------|

@@ -22,15 +22,15 @@
 #include "thtrdat_.hpp"
 #include <math.h>
 
-void chem_CH4_O2_Stanford_Skeletal(block_ b, thtrdat_ th, int face /*=0*/,
-                                   int indxI /*=0*/, int indxJ /*=0*/,
-                                   int indxK /*=0*/, int nChemSubSteps /*=1*/,
-                                   double dt /*1.0*/) {
+void chem_CH4_O2_Stanford_Skeletal(
+    block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
+    const int &indxI /*=0*/, const int &indxJ /*=0*/, const int &indxK /*=0*/,
+    const int &nChemSubSteps /*=1*/, const double &dt /*=1.0*/) {
 
   // --------------------------------------------------------------|
   // cc range
   // --------------------------------------------------------------|
-  MDRange3 range = get_range3(b, face, indxI, indxJ, indxK);
+  MDRange3 range = get_range3(b, rface, indxI, indxJ, indxK);
 
   Kokkos::parallel_for(
       "Compute chemical source terms", range,

@@ -21,9 +21,9 @@
 //     O'Connell
 //     5th Edition, 2001
 
-void chungDenseGasUnityLewis(block_ b, const thtrdat_ th, const int nface,
-                             const int indxI /*=0*/, const int indxJ /*=0*/,
-                             const int indxK /*=0*/) {
+void chungDenseGasUnityLewis(block_ &b, const thtrdat_ &th, const int &nface,
+                             const int &indxI /*=0*/, const int &indxJ /*=0*/,
+                             const int &indxK /*=0*/) {
 #ifndef NSCOMPILE
   Kokkos::Experimental::UniqueToken<exec_space> token;
   int numIds = token.size();

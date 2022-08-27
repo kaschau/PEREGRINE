@@ -43,9 +43,9 @@
 //
 // ----------------------------------------------------------------------//
 
-void cubic(block_ b, const thtrdat_ th, const int nface,
-           const std::string given, const int indxI /*=0*/,
-           const int indxJ /*=0*/, const int indxK /*=0*/) {
+void cubic(block_ &b, const thtrdat_ &th, const int &nface,
+           const std::string &given, const int &indxI /*=0*/,
+           const int &indxJ /*=0*/, const int &indxK /*=0*/) {
 
 #ifndef NSCOMPILE
   Kokkos::Experimental::UniqueToken<exec_space> token;

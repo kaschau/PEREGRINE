@@ -5,9 +5,9 @@
 #include "thtrdat_.hpp"
 #include <math.h>
 
-void kineticTheoryUnityLewis(block_ b, const thtrdat_ th, const int nface,
-                             const int indxI /*=0*/, const int indxJ /*=0*/,
-                             const int indxK /*=0*/) {
+void kineticTheoryUnityLewis(block_ &b, const thtrdat_ &th, const int &nface,
+                             const int &indxI /*=0*/, const int &indxJ /*=0*/,
+                             const int &indxK /*=0*/) {
 
 #ifndef NSCOMPILE
   Kokkos::Experimental::UniqueToken<exec_space> token;

@@ -6,9 +6,9 @@
 #include <math.h>
 #include <stdexcept>
 
-void cpg(block_ b, const thtrdat_ th, const int nface, const std::string given,
-         const int indxI /*=0*/, const int indxJ /*=0*/,
-         const int indxK /*=0*/) {
+void cpg(block_ &b, const thtrdat_ &th, const int &nface,
+         const std::string &given, const int &indxI /*=0*/,
+         const int &indxJ /*=0*/, const int &indxK /*=0*/) {
 
 // For performance purposes, we want to compile with ns known whenever possible
 // however, for testing, developement, etc. we want the flexibility to

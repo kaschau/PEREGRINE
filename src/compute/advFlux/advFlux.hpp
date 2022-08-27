@@ -5,22 +5,22 @@
 
 // ./advFlux
 //    |------> secondOrderKEEP
-void secondOrderKEEP(block_ b);
+void secondOrderKEEP(block_ &b);
 //    |------> centralDifference
-void centralDifference(block_ b);
+void centralDifference(block_ &b);
 //    |------> fourthOrderKEEP
-void fourthOrderKEEP(block_ b);
+void fourthOrderKEEP(block_ &b);
 //    |------> scalarDissipation
-void scalarDissipation(block_ b);
+void scalarDissipation(block_ &b);
 //    |------> rusanov
-void rusanov(block_ b);
+void rusanov(block_ &b);
 //    |------> ausmPlusUp
-void ausmPlusUp(block_ b);
+void ausmPlusUp(block_ &b);
 //    |------> hllc
-void hllc(block_ b);
+void hllc(block_ &b);
 //    |------> muscl2hllc
-void muscl2hllc(block_ b);
+void muscl2hllc(block_ &b);
 //    |------> muscl2rusanov
-void muscl2rusanov(block_ b);
+void muscl2rusanov(block_ &b);
 
 #endif
