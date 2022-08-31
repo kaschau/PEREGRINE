@@ -1,308 +1,237 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
+
+"""
+Solves the shock tube problem defined with arbutrary left and right states states separated by a membrane
+at some x location between zero and one.
+
+Solves the problem numerically with peregrine, and exactly using an exact Riemann solver.
+
+See
+
+Riemann Solvers and Numerical Methods for Fluid Dynamic 3rd Ed.
+Eleuterio F. Toro
+Spring
+
+for more.
+"""
 
 from mpi4py import MPI
 import kokkos
 import peregrinepy as pg
 import numpy as np
 import matplotlib.pyplot as plt
-import scipy
-import scipy.optimize
 
 
-def soundSpeed(gamma, pressure, density):
-    return np.sqrt(gamma * pressure / density)
+def guessP(test):
+    pL, rhoL, uL = test.pL, test.rhoL, test.uL
+    pR, rhoR, uR = test.pR, test.rhoR, test.uR
+    cL, cR = test.cL, test.cR
+    gamma = test.gamma
 
+    # Gamma constants
+    g1 = (gamma - 1.0) / (2.0 * gamma)
+    g3 = 2.0 * gamma / (gamma - 1.0)
+    g4 = 2.0 / (gamma - 1.0)
+    g5 = 2.0 / (gamma + 1.0)
+    g6 = (gamma - 1.0) / (gamma + 1.0)
+    g7 = (gamma - 1.0) / 2.0
 
-def shockTubeFunction(p4, p1, p5, rho1, rho5, gamma):
-    """
-    Shock tube equation
-    """
-    z = p4 / p5 - 1.0
-    c1 = soundSpeed(gamma, p1, rho1)
-    c5 = soundSpeed(gamma, p5, rho5)
+    qUser = 2.0
+    cup = 0.25 * (rhoL + rhoR) * (cL + cR)
+    ppv = 0.5 * (pL + pR) + 0.5 * (uL - uR) * cup
+    ppv = max(0.0, ppv)
+    pmin = min(pL, pR)
+    pmax = max(pL, pR)
+    qmax = pmax / pmin
 
-    gm1 = gamma - 1.0
-    gp1 = gamma + 1.0
-    g2 = 2.0 * gamma
-
-    fact = gm1 / g2 * (c5 / c1) * z / np.sqrt(1.0 + gp1 / g2 * z)
-    fact = (1.0 - fact) ** (g2 / gm1)
-
-    return p1 * fact - p4
-
-
-def calculateRegions(pl, ul, rhol, pr, ur, rhor, gamma):
-    """
-    Compute regions
-    :rtype : tuple
-    :return: returns p, rho and u for regions 1,3,4,5 as well as the shock speed
-    """
-    # if pl > pr...
-    rho1 = rhol
-    p1 = pl
-    u1 = ul
-    rho5 = rhor
-    p5 = pr
-    u5 = ur
-
-    # unless...
-    if pl < pr:
-        rho1 = rhor
-        p1 = pr
-        u1 = ur
-        rho5 = rhol
-        p5 = pl
-        u5 = ul
-
-    # solve for post-shock pressure
-    p4 = scipy.optimize.fsolve(shockTubeFunction, p1, (p1, p5, rho1, rho5, gamma))[0]
-
-    # compute post-shock density and velocity
-    z = p4 / p5 - 1.0
-    c5 = soundSpeed(gamma, p5, rho5)
-
-    gm1 = gamma - 1.0
-    gp1 = gamma + 1.0
-    gmfac1 = 0.5 * gm1 / gamma
-    gmfac2 = 0.5 * gp1 / gamma
-
-    fact = np.sqrt(1.0 + gmfac2 * z)
-
-    u4 = c5 * z / (gamma * fact)
-    rho4 = rho5 * (1.0 + gmfac2 * z) / (1.0 + gmfac1 * z)
-
-    # shock speed
-    w = c5 * fact
-
-    # compute values at foot of rarefaction
-    p3 = p4
-    u3 = u4
-    rho3 = rho1 * (p3 / p1) ** (1.0 / gamma)
-    return (p1, rho1, u1), (p3, rho3, u3), (p4, rho4, u4), (p5, rho5, u5), w
-
-
-def calcPositions(pl, pr, region1, region3, w, xi, t, gamma):
-    """
-    :return: tuple of positions in the following order ->
-            Head of Rarefaction: xhd,  Foot of Rarefaction: xft,
-            Contact Discontinuity: xcd, Shock: xsh
-    """
-    p1, rho1 = region1[:2]  # don't need velocity
-    p3, rho3, u3 = region3
-    c1 = soundSpeed(gamma, p1, rho1)
-    c3 = soundSpeed(gamma, p3, rho3)
-
-    if pl > pr:
-        xsh = xi + w * t
-        xcd = xi + u3 * t
-        xft = xi + (u3 - c3) * t
-        xhd = xi - c1 * t
+    if qmax < qUser and (pmin < ppv & ppv < pmax):
+        pM = ppv
     else:
-        # pr > pl
-        xsh = xi - w * t
-        xcd = xi - u3 * t
-        xft = xi - (u3 - c3) * t
-        xhd = xi + c1 * t
+        if ppv < pmin:
+            pQ = (pL / pR) ** g1
+            uM = (pQ * uL / cL + uR / cR + g4 * (pQ - 1.0)) / (pQ / cL + 1.0 / cR)
+            pTL = 1.0 + g7 * (uL - uM) / cL
+            pTR = 1.0 + g7 * (uM - uR) / cR
+            pM = 0.5 * (pL * pTL ** g3 + pR * pTR ** g3)
+        else:
+            gEL = np.sqrt((g5 / rhoL) / (g6 * pL + ppv))
+            gER = np.sqrt((g5 / rhoR) / (g6 * pR + ppv))
+            pM = (gEL * pL + gER * pR - (uR - uL)) / (gEL + gER)
 
-    return xhd, xft, xcd, xsh
+    return pM
 
 
-def regionStates(pl, pr, region1, region3, region4, region5):
-    """
-    :return: dictionary (region no.: p, rho, u), except for rarefaction region
-    where the value is a string, obviously
-    """
-    if pl > pr:
-        return {
-            "Region 1": region1,
-            "Region 2": "RAREFACTION",
-            "Region 3": region3,
-            "Region 4": region4,
-            "Region 5": region5,
-        }
+def prefun(p, test, side):
+    if side == "L":
+        pK, rhoK = test.pL, test.rhoL
+        cK = test.cL
     else:
-        return {
-            "Region 1": region5,
-            "Region 2": region4,
-            "Region 3": region3,
-            "Region 4": "RAREFACTION",
-            "Region 5": region1,
-        }
+        pK, rhoK = test.pR, test.rhoR
+        cK = test.cR
+    gamma = test.gamma
+    g1 = (gamma - 1.0) / (2.0 * gamma)
+    g2 = (gamma + 1.0) / (2.0 * gamma)
+    g4 = 2.0 / (gamma - 1.0)
+    g5 = 2.0 / (gamma + 1.0)
+    g6 = (gamma - 1.0) / (gamma + 1.0)
+
+    if p < pK:
+        pRatio = p / pK
+        F = g4 * cK * (pRatio ** g1 - 1.0)
+        FD = (1.0 / (rhoK * cK)) * pRatio ** (-g2)
+    else:
+        AK = g5 / rhoK
+        BK = g6 * pK
+        qrt = np.sqrt(AK / (BK + p))
+        F = (p - pK) * qrt
+        FD = (1.0 - 0.5 * (p - pK) / (BK + p)) * qrt
+
+    return F, FD
 
 
-def createArrays(
-    pl,
-    pr,
-    xl,
-    xr,
-    positions,
-    state1,
-    state3,
-    state4,
-    state5,
-    npts,
-    gamma,
-    t,
-    xi,
-):
-    """
-    :return: tuple of x, p, rho and u values across the domain of interest
-    """
-    xhd, xft, xcd, xsh = positions
-    p1, rho1, u1 = state1
-    p3, rho3, u3 = state3
-    p4, rho4, u4 = state4
-    p5, rho5, u5 = state5
-    gm1 = gamma - 1.0
-    gp1 = gamma + 1.0
+def pStar(test):
 
-    x_arr = np.linspace(xl, xr, npts)
-    rho = np.zeros(npts, dtype=float)
-    p = np.zeros(npts, dtype=float)
-    u = np.zeros(npts, dtype=float)
-    c1 = soundSpeed(gamma, p1, rho1)
-    if pl > pr:
-        for i, x in enumerate(x_arr):
-            if x < xhd:
-                rho[i] = rho1
-                p[i] = p1
-                u[i] = u1
-            elif x < xft:
-                u[i] = 2.0 / gp1 * (c1 + (x - xi) / t)
-                fact = 1.0 - 0.5 * gm1 * u[i] / c1
-                rho[i] = rho1 * fact ** (2.0 / gm1)
-                p[i] = p1 * fact ** (2.0 * gamma / gm1)
-            elif x < xcd:
-                rho[i] = rho3
-                p[i] = p3
-                u[i] = u3
-            elif x < xsh:
-                rho[i] = rho4
-                p[i] = p4
-                u[i] = u4
+    uL = test.uL
+    uR = test.uR
+
+    maxIter = 100
+    tol = 1e-6
+
+    n = 0
+    deltaP = 1e10
+
+    pOld = guessP(test)
+    uDiff = uR - uL
+    for n in range(maxIter):
+        fL, fDL = prefun(pOld, test, "L")
+        fR, fDR = prefun(pOld, test, "R")
+        p = pOld - (fL + fR + uDiff) / (fDL + fDR)
+        deltaP = 2.0 * abs((p - pOld) / (p + pOld))
+        pOld = p
+        if deltaP < tol:
+            break
+    else:
+        raise ValueError("Did not converge.")
+
+    u = 0.5 * (uL + uR + fR - fL)
+    return p, u
+
+
+def sample(test, pM, uM, s):
+    pL, rhoL, uL = test.pL, test.rhoL, test.uL
+    pR, rhoR, uR = test.pR, test.rhoR, test.uR
+    cL, cR = test.cL, test.cR
+    gamma = test.gamma
+    # Gamma constants
+    g1 = (gamma - 1.0) / (2.0 * gamma)
+    g2 = (gamma + 1.0) / (2.0 * gamma)
+    g3 = 2.0 * gamma / (gamma - 1.0)
+    g4 = 2.0 / (gamma - 1.0)
+    g5 = 2.0 / (gamma + 1.0)
+    g6 = (gamma - 1.0) / (gamma + 1.0)
+    g7 = (gamma - 1.0) / 2.0
+    g8 = gamma - 1.0
+
+    if s < uM:
+        if pM < pL:
+            shL = uL - cL
+            if s < shL:
+                rho = rhoL
+                u = uL
+                p = pL
             else:
-                rho[i] = rho5
-                p[i] = p5
-                u[i] = u5
-    else:
-        for i, x in enumerate(x_arr):
-            if x < xsh:
-                rho[i] = rho5
-                p[i] = p5
-                u[i] = -u1
-            elif x < xcd:
-                rho[i] = rho4
-                p[i] = p4
-                u[i] = -u4
-            elif x < xft:
-                rho[i] = rho3
-                p[i] = p3
-                u[i] = -u3
-            elif x < xhd:
-                u[i] = -2.0 / gp1 * (c1 + (xi - x) / t)
-                fact = 1.0 + 0.5 * gm1 * u[i] / c1
-                rho[i] = rho1 * fact ** (2.0 / gm1)
-                p[i] = p1 * fact ** (2.0 * gamma / gm1)
+                cmL = cL * (pM / pL) ** g1
+                stL = uM - cmL
+                if s > stL:
+                    rho = rhoL * (pM / pL) ** (1.0 / gamma)
+                    u = uM
+                    p = pM
+                else:
+                    u = g5 * (cL + g7 * uL + s)
+                    c = g5 * (cL + g7 * (uL - s))
+                    rho = rhoL * (c / cL) ** g4
+                    p = pL * (c / cL) ** g3
+        else:
+            pmL = pM / pL
+            sL = uL - cL * np.sqrt(g2 * pmL + g1)
+            if s < sL:
+                rho = rhoL
+                u = uL
+                p = pL
             else:
-                rho[i] = rho1
-                p[i] = p1
-                u[i] = -u1
+                rho = rhoL * (pmL + g6) / (pmL * g6 + 1.0)
+                u = uM
+                p = pM
+    else:
+        if pM > pR:
+            pmR = pM / pR
+            sR = uR + cR * np.sqrt(g2 * pmR + g1)
+            if s > sR:
+                rho = rhoR
+                u = uR
+                p = pR
+            else:
+                rho = rhoR * (pmR + g6) / (pmR * g6 + 1.0)
+                u = uM
+                p = pM
+        else:
+            shR = uR + cR
+            if s > shR:
+                rho = rhoR
+                u = uR
+                p = pR
+            else:
+                cmR = cR * (pM / pR) ** g1
+                stR = uM + cmR
+                if s < stR:
+                    rho = rhoR * (pM / pR) ** (1.0 / gamma)
+                    u = uM
+                    p = pM
+                else:
+                    u = g5 * (-cR + g7 * uR + s)
+                    c = g5 * (cR - g7 * (uR - s))
+                    rho = rhoR * (c / cR) ** g4
+                    p = pR * (c / cR) ** g3
 
-    return x_arr, p, rho, u
+    e = p / rho / g8
+    return p, u, rho, e
 
 
-def solve(left_state, right_state, geometry, t, gamma, npts=500):
-    """
-    Solves the Sod shock tube problem (i.e. riemann problem) of discontinuity
-    across an interface.
+def solve(test, npts=250):
 
-    Parameters
-    ----------
-    left_state, right_state: tuple
-        A tuple of the state (pressure, density, velocity) on each side of the
-        shocktube barrier for the ICs.
-    geometry: tuple
-        A tuple of positions for (left boundary, right boundary, barrier)
-    t: float
-        Time to calculate the solution at
-    gamma: float
-        Adiabatic index for the gas.
-    npts: int
-        number of points for array of pressure, density and velocity
+    uL = test.uL
+    uR = test.uR
+    cL, cR = test.cL, test.cR
+    gamma = test.gamma
+    x0 = test.x0
 
-    Returns
-    -------
-    positions: dict
-        Locations of the important places (rarefaction wave, shock, etc...)
-    regions: dict
-        constant pressure, density and velocity states in distinct regions
-    values: dict
-        Arrays of pressure, density, and velocity as a function of position.
-        The density ('rho') is the gas density.
-        Also calculates the specific internal energy
-    """
+    g4 = 2.0 / (gamma - 1.0)
+    assert g4 * (cL + cR) > (uR - uL)
 
-    pl, rhol, ul = left_state
-    pr, rhor, ur = right_state
-    xl, xr, xi = geometry
+    pM, uM = pStar(test)
 
-    # basic checking
-    if xl >= xr:
-        print("xl has to be less than xr!")
-        exit()
-    if xi >= xr or xi <= xl:
-        print("xi has in between xl and xr!")
-        exit()
-
-    # calculate regions
-    region1, region3, region4, region5, w = calculateRegions(
-        pl, ul, rhol, pr, ur, rhor, gamma
-    )
-
-    regions = regionStates(pl, pr, region1, region3, region4, region5)
-
-    # calculate positions
-    x_positions = calcPositions(pl, pr, region1, region3, w, xi, t, gamma)
-
-    pos_description = (
-        "Head of Rarefaction",
-        "Foot of Rarefaction",
-        "Contact Discontinuity",
-        "Shock",
-    )
-    positions = dict(zip(pos_description, x_positions))
-
-    # create arrays
-    x, p, rho, u = createArrays(
-        pl,
-        pr,
-        xl,
-        xr,
-        x_positions,
-        region1,
-        region3,
-        region4,
-        region5,
-        npts,
-        gamma,
-        t,
-        xi,
-    )
-
-    energy = p / (rho * (gamma - 1.0))
-    val_dict = {
-        "x": x,
-        "p": p,
-        "rho": rho,
-        "u": u,
-        "energy": energy,
+    pts = np.linspace(0, 1)
+    res = {
+        "x": np.empty(npts),
+        "p": np.empty(npts),
+        "u": np.empty(npts),
+        "rho": np.empty(npts),
+        "energy": np.empty(npts),
     }
+    for i, x in enumerate(pts):
+        s = (x - x0) / test.t
+        p, u, rho, e = sample(test, pM, uM, s)
+        res["x"][i] = x
+        res["p"][i] = p
+        res["u"][i] = u
+        res["rho"][i] = rho
+        res["energy"][i] = e
 
-    return positions, regions, val_dict
+    return res
 
 
 class state:
-    def __init__(self, test, R):
+    def __init__(self, test, gamma, R):
 
         self.name = str(test)
 
@@ -399,6 +328,9 @@ class state:
 
         self.TL = self.pL / (self.rhoL * R)
         self.TR = self.pR / (self.rhoR * R)
+        self.cL = np.sqrt(gamma * self.pL / self.rhoL)
+        self.cR = np.sqrt(gamma * self.pR / self.rhoR)
+        self.gamma = gamma
 
 
 def simulate(testnum, index="i"):
@@ -422,7 +354,7 @@ def simulate(testnum, index="i"):
 
     print(mb)
 
-    test = state(testnum, R)
+    test = state(testnum, gamma, R)
     print("State {}".format(testnum))
     print("--------------------------")
     print("Left State")
@@ -545,14 +477,7 @@ def simulate(testnum, index="i"):
     u = blk.array["q"][s_][:, uIndex[index]]
     e = blk.array["qh"][s_][:, 4]
 
-    _, _, res = solve(
-        (test.pL, test.rhoL, test.uL),
-        (test.pR, test.rhoR, test.uR),
-        (0.0, 1.0, test.x0),
-        test.t,
-        gamma=gamma,
-        npts=250,
-    )
+    res = solve(test)
     rx = res["x"]
     rrho = res["rho"]
     ru = res["u"]
@@ -601,7 +526,7 @@ def simulate(testnum, index="i"):
 if __name__ == "__main__":
     try:
         kokkos.initialize()
-        testnum = 0
+        testnum = 5
         index = "i"
         simulate(testnum, index)
         kokkos.finalize()
