@@ -44,7 +44,7 @@ def guessP(test):
     pmax = max(pL, pR)
     qmax = pmax / pmin
 
-    if qmax < qUser and (pmin < ppv & ppv < pmax):
+    if (qmax < qUser) and ((pmin < ppv) and (ppv < pmax)):
         pM = ppv
     else:
         if ppv < pmin:
@@ -210,7 +210,7 @@ def solve(test, npts=250):
 
     pM, uM = pStar(test)
 
-    pts = np.linspace(0, 1)
+    pts = np.linspace(0, 1, npts)
     res = {
         "x": np.empty(npts),
         "p": np.empty(npts),
