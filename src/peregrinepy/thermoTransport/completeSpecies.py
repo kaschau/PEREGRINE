@@ -22,6 +22,10 @@ def completeSpecies(key, usersp, refsp):
                 raise TypeError(
                     "The top level in your spieces data input yaml file must only be species names."
                 )
+            except KeyError:
+                raise KeyError(
+                    f"You want to use species {sp}, but did not provide a {key}, and it is not in the PEREGRINE species database."
+                )
     if type(prop[0]) == str:
         return prop
     else:
