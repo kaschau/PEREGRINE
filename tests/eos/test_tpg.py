@@ -24,6 +24,13 @@ pytestmark = pytest.mark.parametrize(
 )
 
 
+def print_diff(name, c, p):
+    diff = np.abs(c - p) / c * 100
+    print(f"{name:<6s}: {c:16.8e} | {p:16.8e} | {diff:16.15e}")
+
+    return diff
+
+
 def test_tpg(my_setup, ctfile, thfile):
 
     relpath = str(Path(__file__).parent)
@@ -68,12 +75,6 @@ def test_tpg(my_setup, ctfile, thfile):
     pgcons = blk.array["Q"][ng, ng, ng]
     pgprim = blk.array["q"][ng, ng, ng]
     pgthrm = blk.array["qh"][ng, ng, ng]
-
-    def print_diff(name, c, p):
-        diff = np.abs(c - p) / c * 100
-        print(f"{name:<6s}: {c:16.8e} | {p:16.8e} | {diff:16.15e}")
-
-        return diff
 
     pd = []
     print("******** Primatives to Conservatives ***************")

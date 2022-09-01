@@ -458,11 +458,13 @@ CH4:
   well: 1.952237686e-21
   diam: 3.7460000000000003e-10
   dipole: 0.0
+  acentric: 0.011
   polarize: 2.6000000000000002e-30
   zrot: 13.0
   geometry: nonlinear
   Tcrit: 190.56
   pcrit: 45.99E+5
+  Vcrit: 6.145982671570155E-06
 
 CO:
   comp:
