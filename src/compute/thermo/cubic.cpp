@@ -84,11 +84,11 @@ void cubic(block_ &b, const thtrdat_ &th, const int &nface,
           // gamma, cp, h, e, hi
           // So we store these as well.
 
-          double &p = b.q(i, j, k, 0);
-          double &u = b.q(i, j, k, 1);
-          double &v = b.q(i, j, k, 2);
-          double &w = b.q(i, j, k, 3);
-          double &T = b.q(i, j, k, 4);
+          const double p = b.q(i, j, k, 0);
+          const double u = b.q(i, j, k, 1);
+          const double v = b.q(i, j, k, 2);
+          const double w = b.q(i, j, k, 3);
+          const double T = b.q(i, j, k, 4);
 #ifdef NSCOMPILE
           double Y(ns);
           double X(ns);
@@ -358,11 +358,11 @@ void cubic(block_ &b, const thtrdat_ &th, const int &nface,
           // gamma, cp, h, e, hi
           // So we store these as well.
 
-          double &rho = b.Q(i, j, k, 0);
-          double &rhou = b.Q(i, j, k, 1);
-          double &rhov = b.Q(i, j, k, 2);
-          double &rhow = b.Q(i, j, k, 3);
-          double &rhoE = b.Q(i, j, k, 4);
+          const double rho = b.Q(i, j, k, 0);
+          const double rhou = b.Q(i, j, k, 1);
+          const double rhov = b.Q(i, j, k, 2);
+          const double rhow = b.Q(i, j, k, 3);
+          const double rhoE = b.Q(i, j, k, 4);
 
           double p;
           double e, tke;
