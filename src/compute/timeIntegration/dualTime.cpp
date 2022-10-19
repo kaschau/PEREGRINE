@@ -1,7 +1,7 @@
 #include "Kokkos_Core.hpp"
 #include "array"
 #include "block_.hpp"
-#include "kokkos_types.hpp"
+#include "kokkosTypes.hpp"
 #include "math.h"
 #include "thtrdat_.hpp"
 #include "vector"
@@ -260,7 +260,7 @@ void invertDQ(block_ &b, const double &dt, const thtrdat_ &th,
                     {b.ni + b.ng - 1, b.nj + b.ng - 1, b.nk + b.ng - 1});
 
 #ifndef NSCOMPILE
-  Kokkos::Experimental::UniqueToken<exec_space> token;
+  Kokkos::Experimental::UniqueToken<execSpace> token;
   int numIds = token.size();
   const int ne = b.ne;
   threeDview GdQ("GdQ", numIds, ne, ne);

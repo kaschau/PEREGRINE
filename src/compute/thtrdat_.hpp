@@ -1,9 +1,7 @@
 #ifndef __thtrdat__H__
 #define __thtrdat__H__
 
-#include "kokkos_types.hpp"
-#include <string>
-#include <vector>
+#include "kokkosTypes.hpp"
 
 // The struct that is sent to the Peregrine compute units. Holds all the
 // thermodynamic and transport properties.
