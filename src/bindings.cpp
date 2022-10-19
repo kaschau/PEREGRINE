@@ -2,7 +2,7 @@
 #include "block_.hpp"
 #include "compute.hpp"
 #include "face_.hpp"
-#include "kokkos_types.hpp"
+#include "kokkosTypes.hpp"
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 

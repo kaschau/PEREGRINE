@@ -136,7 +136,7 @@ def ct2pgChem(ctyaml, cpp):
 
     outString = (
         '#include "Kokkos_Core.hpp"\n'
-        '#include "kokkos_types.hpp"\n'
+        '#include "kokkosTypes.hpp"\n'
         '#include "block_.hpp"\n'
         '#include "thtrdat_.hpp"\n'
         '#include "compute.hpp"\n'
@@ -151,7 +151,7 @@ def ct2pgChem(ctyaml, cpp):
         "// --------------------------------------------------------------|\n"
         "// cc range\n"
         "// --------------------------------------------------------------|\n"
-        "  MDRange3 range = get_range3(b, rface, indxI, indxJ, indxK);\n"
+        "  MDRange3 range = getRange3(b, rface, indxI, indxJ, indxK);\n"
         "\n"
         '  Kokkos::parallel_for("Compute chemical source terms",\n'
         "                       range,\n"

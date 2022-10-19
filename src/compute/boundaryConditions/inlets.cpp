@@ -2,9 +2,8 @@
 #include "block_.hpp"
 #include "compute.hpp"
 #include "face_.hpp"
-#include "kokkos_types.hpp"
+#include "kokkosTypes.hpp"
 #include "thtrdat_.hpp"
-#include <Kokkos_CopyViews.hpp>
 
 void constantVelocitySubsonicInlet(
     block_ &b, face_ &face,

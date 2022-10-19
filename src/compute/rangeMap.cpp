@@ -1,9 +1,9 @@
 #include "block_.hpp"
-#include "kokkos_types.hpp"
+#include "kokkosTypes.hpp"
 #include <stdexcept>
 
-MDRange3 get_range3(const block_ &b, const int &nface, const int &indxI /*=0*/,
-                    const int &indxJ /*=0*/, const int &indxK /*=0*/) {
+MDRange3 getRange3(const block_ &b, const int &nface, const int &indxI /*=0*/,
+                   const int &indxJ /*=0*/, const int &indxK /*=0*/) {
 
   MDRange3 range;
 
@@ -56,7 +56,7 @@ MDRange3 get_range3(const block_ &b, const int &nface, const int &indxI /*=0*/,
     range = MDRange3({indxI, indxJ, indxK}, {indxI + 1, indxJ + 1, indxK + 1});
     break;
   default:
-    throw std::invalid_argument("Unknown argument to get_range3");
+    throw std::invalid_argument("Unknown argument to getRange3");
   }
 
   return range;
