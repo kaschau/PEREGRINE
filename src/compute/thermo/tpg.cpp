@@ -1,7 +1,7 @@
 #include "Kokkos_Core.hpp"
 #include "block_.hpp"
 #include "compute.hpp"
-#include "kokkos_types.hpp"
+#include "kokkosTypes.hpp"
 #include "thtrdat_.hpp"
 #include <math.h>
 #include <stdexcept>
@@ -14,7 +14,7 @@ void tpg(block_ &b, const thtrdat_ &th, const int &nface,
 // however, for testing, developement, etc. we want the flexibility to
 // have it at run time as well. So we define some macros here to allow that.
 #ifndef NSCOMPILE
-  Kokkos::Experimental::UniqueToken<exec_space> token;
+  Kokkos::Experimental::UniqueToken<execSpace> token;
   int numIds = token.size();
   const int ns = th.ns;
   twoDview Y("Y", numIds, ns);
@@ -30,7 +30,7 @@ void tpg(block_ &b, const thtrdat_ &th, const int &nface,
 #define hi(INDEX) hi(id, INDEX)
 #endif
 
-  MDRange3 range = get_range3(b, nface, indxI, indxJ, indxK);
+  MDRange3 range = getRange3(b, nface, indxI, indxJ, indxK);
   if (given.compare("prims") == 0) {
     Kokkos::parallel_for(
         "Compute all conserved quantities from primatives via tgp", range,
