@@ -59,7 +59,7 @@
 #include "Kokkos_Core.hpp"
 #include "block_.hpp"
 #include "compute.hpp"
-#include "kokkos_types.hpp"
+#include "kokkosTypes.hpp"
 #include "thtrdat_.hpp"
 #include <math.h>
 
@@ -71,7 +71,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
   // --------------------------------------------------------------|
   // cc range
   // --------------------------------------------------------------|
-  MDRange3 range = get_range3(b, rface, indxI, indxJ, indxK);
+  MDRange3 range = getRange3(b, rface, indxI, indxJ, indxK);
 
   Kokkos::parallel_for(
       "Compute chemical source terms", range,

@@ -1,8 +1,7 @@
 #include "block_.hpp"
 #include "compute.hpp"
 #include "face_.hpp"
-#include "kokkos_types.hpp"
-#include <Kokkos_CopyViews.hpp>
+#include "kokkosTypes.hpp"
 
 void extract_sendBuffer3(threeDview &view, face_ &face,
                          const std::vector<int> &slices) {

@@ -1,7 +1,7 @@
 #include "Kokkos_Core.hpp"
 #include "block_.hpp"
 #include "compute.hpp"
-#include "kokkos_types.hpp"
+#include "kokkosTypes.hpp"
 #include "thtrdat_.hpp"
 #include <math.h>
 
@@ -10,7 +10,7 @@ void kineticTheory(block_ &b, const thtrdat_ &th, const int &nface,
                    const int &indxK /*=0*/) {
 
 #ifndef NSCOMPILE
-  Kokkos::Experimental::UniqueToken<exec_space> token;
+  Kokkos::Experimental::UniqueToken<execSpace> token;
   int numIds = token.size();
   const int ns = th.ns;
   twoDview Y("Y", numIds, ns);
@@ -40,7 +40,7 @@ void kineticTheory(block_ &b, const thtrdat_ &th, const int &nface,
   // poly'l degree
   const int deg = 4;
 
-  MDRange3 range = get_range3(b, nface, indxI, indxJ, indxK);
+  MDRange3 range = getRange3(b, nface, indxI, indxJ, indxK);
   Kokkos::parallel_for(
       "Kinetic Theory trans props", range,
       KOKKOS_LAMBDA(const int i, const int j, const int k) {

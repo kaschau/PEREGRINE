@@ -1,6 +1,6 @@
 #include "Kokkos_Core.hpp"
 #include "block_.hpp"
-#include "kokkos_types.hpp"
+#include "kokkosTypes.hpp"
 
 void rk3s1(block_ &b, const double &dt) {
   //-------------------------------------------------------------------------------------------|

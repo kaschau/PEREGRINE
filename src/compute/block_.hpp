@@ -1,7 +1,7 @@
 #ifndef __block__H__
 #define __block__H__
 
-#include "kokkos_types.hpp"
+#include "kokkosTypes.hpp"
 
 // The struct that is sent to the Peregrine compute units. Holds all the data
 // arrays for each block. Also converted into python class for modifying in the

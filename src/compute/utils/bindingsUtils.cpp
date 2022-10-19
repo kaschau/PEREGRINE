@@ -1,5 +1,5 @@
 #include "utils.hpp"
-#include <kokkos_types.hpp>
+#include <kokkosTypes.hpp>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 

@@ -221,30 +221,30 @@ go = True
 for blk in mb:
 
     gpBlkFile.seek(blockStart)
-    blk_shape = tuple([int(b) for b in gpBlkFile.readline().strip().split()])
+    blkShape = tuple([int(b) for b in gpBlkFile.readline().strip().split()])
 
-    blk.ni = blk_shape[0]
-    blk.nj = blk_shape[1]
-    blk.nk = blk_shape[2]
+    blk.ni = blkShape[0]
+    blk.nj = blkShape[1]
+    blk.nk = blkShape[2]
 
     if args.isBinary:
-        byte = gpBlkFile.read(8 * blk_shape[0] * blk_shape[1] * blk_shape[2] * 3)
+        byte = gpBlkFile.read(8 * blkShape[0] * blkShape[1] * blkShape[2] * 3)
         temp = np.frombuffer(byte, dtype=np.float64).reshape(
-            (blk_shape[0] * blk_shape[1] * blk_shape[2], 3)
+            (blkShape[0] * blkShape[1] * blkShape[2], 3)
         )
-        blk.array["x"] = temp[:, 0].reshape(blk_shape) * factor
-        blk.array["y"] = temp[:, 1].reshape(blk_shape) * factor
-        blk.array["z"] = temp[:, 2].reshape(blk_shape) * factor
+        blk.array["x"] = temp[:, 0].reshape(blkShape) * factor
+        blk.array["y"] = temp[:, 1].reshape(blkShape) * factor
+        blk.array["z"] = temp[:, 2].reshape(blkShape) * factor
 
         gpBlkFile.read(1)
     else:
-        blk.array["x"] = np.empty(blk_shape, dtype=np.float64)
-        blk.array["y"] = np.empty(blk_shape, dtype=np.float64)
-        blk.array["z"] = np.empty(blk_shape, dtype=np.float64)
+        blk.array["x"] = np.empty(blkShape, dtype=np.float64)
+        blk.array["y"] = np.empty(blkShape, dtype=np.float64)
+        blk.array["z"] = np.empty(blkShape, dtype=np.float64)
 
-        for i in range(blk_shape[0]):
-            for j in range(blk_shape[1]):
-                for k in range(blk_shape[2]):
+        for i in range(blkShape[0]):
+            for j in range(blkShape[1]):
+                for k in range(blkShape[2]):
                     line = gpBlkFile.readline().strip().split()
                     blk.array["x"][i, j, k] = float(line[0]) * factor
                     blk.array["y"][i, j, k] = float(line[1]) * factor
