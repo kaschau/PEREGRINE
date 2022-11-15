@@ -194,7 +194,7 @@ def ct2pgChem(ctyaml, cpp):
         "    }\n"
         "  }\n"
         "\n"
-        "  // Conecntrations\n"
+        "  // Concentrations\n"
         f"  double cs[{ns}];\n"
         f"  for (int n=0; n<={ns-1}; n++)\n"
         "  {\n"
