@@ -86,7 +86,7 @@ def checkForNan(mb):
                 ys = blk.array["yc"][ng:-ng, ng:-ng, ng:-ng][nans]
                 zs = blk.array["zc"][ng:-ng, ng:-ng, ng:-ng][nans]
                 for x, y, z in zip(xs, ys, zs):
-                    f.write(f"x = {x}, y = {y}, z = {z}\n")
+                    f.write(f"x = {x} y = {y} z = {z}\n")
 
     comm.Allreduce(MPI.IN_PLACE, abort, op=MPI.SUM)
 

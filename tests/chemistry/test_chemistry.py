@@ -13,6 +13,11 @@ pytestmark = pytest.mark.parametrize(
     "ctfile,thfile,chmfile",
     [
         (
+            "C2H4_Air_Skeletal.yaml",
+            "thtr_C2H4_Air_Skeletal.yaml",
+            "chem_C2H4_Air_Skeletal",
+        ),
+        (
             "CH4_O2_Stanford_Skeletal.yaml",
             "thtr_CH4_O2_Stanford_Skeletal.yaml",
             "chem_CH4_O2_Stanford_Skeletal",
