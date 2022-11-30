@@ -90,7 +90,6 @@ def ct2pgChem(ctyaml, cpp):
         if r.reaction_type.startswith(
             tuple(["three-body", "falloff"])
         ):  # ThreeBodyReaction or FallOffReactions
-            print(r.reaction_type, i + 1)
             rTBC.append(i)
             efficiencies = []
             for j in range(ns):
