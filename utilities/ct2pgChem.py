@@ -498,8 +498,8 @@ if __name__ == "__main__":
 
     import argparse
 
-    if float(ct.__version__[0:3]) < 2.6:
-        raise ImportError("Cantera version > 2.6 required.")
+    if float(ct.__version__[0:3]) < 3.0:
+        raise ImportError("Cantera version > 3.0 required.")
 
     parser = argparse.ArgumentParser(
         description="""Convert a cantera .yaml file to hard coded finite rate
