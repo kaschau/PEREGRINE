@@ -1,3 +1,15 @@
+// ****************************************************************************
+//
+//  A skeletal model for methane oxygen combustion in rocket engine.
+//
+//  Rui Xu, Hai Wang
+//  Stanford University
+//
+//  October 31, 2018
+//
+//  Please contact Hai Wang at haiwang@stanford.edu for questions and comments.
+//
+// ****************************************************************************
 // ========================================================== //
 // Y(  0) = H2
 // Y(  1) = H
@@ -67,7 +79,7 @@ void chem_CH4_O2_Stanford_Skeletal(
             }
           }
 
-          // Conecntrations
+          // Concentrations
           double cs[12];
           for (int n = 0; n <= 11; n++) {
             cs[n] = rho * Y[n] / th.MW(n);
@@ -77,7 +89,7 @@ void chem_CH4_O2_Stanford_Skeletal(
           // Chaperon efficiencies. ------------------------------------ >
           // ----------------------------------------------------------- >
 
-          double cTBC[7];
+          double cTBC[10];
 
           cTBC[0] = 2.5 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + cs[5] +
                     12.0 * cs[6] + cs[7] + 2.0 * cs[8] + 1.9 * cs[9] +
@@ -91,21 +103,27 @@ void chem_CH4_O2_Stanford_Skeletal(
                     cs[7] + 7.0 * cs[8] + 1.9 * cs[9] + 2.5 * cs[10] +
                     3.8 * cs[11];
 
-          cTBC[3] = 2.0 * cs[0] + cs[1] + 0.78 * cs[2] + cs[3] + cs[4] + cs[5] +
+          cTBC[3] = cs[6];
+
+          cTBC[4] = 2.0 * cs[0] + cs[1] + 0.78 * cs[2] + cs[3] + cs[4] + cs[5] +
                     14.0 * cs[6] + cs[7] + 2.0 * cs[8] + 1.9 * cs[9] +
                     2.5 * cs[10] + 3.8 * cs[11];
 
-          cTBC[4] = 2.5 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + cs[5] +
+          cTBC[5] = 2.5 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + cs[5] +
                     12.0 * cs[6] + cs[7] + 2.0 * cs[8] + 1.9 * cs[9] +
                     2.5 * cs[10] + 3.8 * cs[11];
-
-          cTBC[5] = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + cs[5] +
-                    6.0 * cs[6] + cs[7] + 2.0 * cs[8] + 1.5 * cs[9] +
-                    2.5 * cs[10] + 2.0 * cs[11];
 
           cTBC[6] = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + cs[5] +
                     6.0 * cs[6] + cs[7] + 2.0 * cs[8] + 1.5 * cs[9] +
                     2.5 * cs[10] + 2.0 * cs[11];
+
+          cTBC[7] = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + cs[5] +
+                    6.0 * cs[6] + cs[7] + 2.0 * cs[8] + 1.5 * cs[9] +
+                    2.5 * cs[10] + 2.0 * cs[11];
+
+          cTBC[8] = cs[1];
+
+          cTBC[9] = cs[1];
 
           // ----------------------------------------------------------- >
           // Gibbs energy. --------------------------------------------- >
@@ -236,8 +254,10 @@ void chem_CH4_O2_Stanford_Skeletal(
                     (60486.98792655164 / T));
           dG = gbs[1] + gbs[4] - gbs[6];
           K_c = prefRuT * exp(-dG);
-          q_f = k_f * pow(cs[6], 2.0);
-          q_b = -k_f / K_c * cs[1] * cs[4] * cs[6];
+          //  Three Body Reaction #8
+          k_f *= cTBC[3];
+          q_f = k_f * cs[6];
+          q_b = -k_f / K_c * cs[1] * cs[4];
           q[8] = q_f + q_b;
 
           // Reaction #9
@@ -251,7 +271,7 @@ void chem_CH4_O2_Stanford_Skeletal(
           N = 0.75 - 1.27 * log10(Fcent);
           k0 = exp(log(1910000000000000.2) - 1.72 * logT -
                    (264.190255086852 / T));
-          Pr = cTBC[3] * k0 / k_f;
+          Pr = cTBC[4] * k0 / k_f;
           A = log10(Pr) + C;
           f1 = A / (N - 0.14 * A);
           F_pdr = pow(10.0, log10(Fcent) / (1.0 + f1 * f1));
@@ -319,7 +339,7 @@ void chem_CH4_O2_Stanford_Skeletal(
           Fcent = 1.0;
           k0 = exp(log(1400000000000000.2) - 2.1 * logT -
                    (2767.7074342432115 / T));
-          Pr = cTBC[4] * k0 / k_f;
+          Pr = cTBC[5] * k0 / k_f;
           pmod = Pr / (1.0 + Pr);
           k_f *= pmod;
           q_f = k_f * cs[3] * cs[9];
@@ -398,7 +418,7 @@ void chem_CH4_O2_Stanford_Skeletal(
           C = -0.4 - 0.67 * log10(Fcent);
           N = 0.75 - 1.27 * log10(Fcent);
           k0 = exp(log(6.35e+29) - 5.57 * logT - (1921.2921788982876 / T));
-          Pr = cTBC[5] * k0 / k_f;
+          Pr = cTBC[6] * k0 / k_f;
           A = log10(Pr) + C;
           f1 = A / (N - 0.14 * A);
           F_pdr = pow(10.0, log10(Fcent) / (1.0 + f1 * f1));
@@ -478,7 +498,7 @@ void chem_CH4_O2_Stanford_Skeletal(
           N = 0.75 - 1.27 * log10(Fcent);
           k0 = exp(log(4.4000000000000005e+35) - 6.1 * logT -
                    (47302.636148883976 / T));
-          Pr = cTBC[6] * k0 / k_f;
+          Pr = cTBC[7] * k0 / k_f;
           A = log10(Pr) + C;
           f1 = A / (N - 0.14 * A);
           F_pdr = pow(10.0, log10(Fcent) / (1.0 + f1 * f1));
@@ -493,8 +513,10 @@ void chem_CH4_O2_Stanford_Skeletal(
                     (2319.338829895811 / T));
           dG = gbs[0] + gbs[9] - gbs[10];
           K_c = prefRuT * exp(-dG);
-          q_f = k_f * cs[1] * cs[10];
-          q_b = -k_f / K_c * cs[0] * cs[1] * cs[9];
+          //  Three Body Reaction #33
+          k_f *= cTBC[8];
+          q_f = k_f * cs[10];
+          q_b = -k_f / K_c * cs[0] * cs[9];
           q[33] = q_f;
 
           // Reaction #34
@@ -502,8 +524,10 @@ void chem_CH4_O2_Stanford_Skeletal(
                     (7243.845184714733 / T));
           dG = gbs[0] + gbs[9] - gbs[10];
           K_c = prefRuT * exp(-dG);
-          q_f = k_f * cs[1] * cs[10];
-          q_b = -k_f / K_c * cs[0] * cs[1] * cs[9];
+          //  Three Body Reaction #34
+          k_f *= cTBC[9];
+          q_f = k_f * cs[10];
+          q_b = -k_f / K_c * cs[0] * cs[9];
           q[34] = q_f;
 
           // Reaction #35

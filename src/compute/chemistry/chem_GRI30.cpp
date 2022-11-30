@@ -1,3 +1,11 @@
+// GRI-Mech Version 3.0 7/30/99  CHEMKIN-II format
+// See README30 file at anonymous FTP site unix.sri.com, directory gri;
+// WorldWideWeb home page http://www.me.berkeley.edu/gri_mech/ or
+// through http://www.gri.org , under 'Basic  Research',
+// for additional information, contacts, and disclaimer
+//
+// Updated webpage at
+// http://combustion.berkeley.edu/gri-mech/version30/text30.html
 // ========================================================== //
 // Y(  0) = H2
 // Y(  1) = H
@@ -108,7 +116,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             }
           }
 
-          // Conecntrations
+          // Concentrations
           double cs[53];
           for (int n = 0; n <= 52; n++) {
             cs[n] = rho * Y[n] / th.MW(n);

@@ -80,24 +80,24 @@ def ct2pgChem(ctyaml, cpp):
     m_o = []
     A_o = []
     aij = []
-    nu_f = gas.reactant_stoich_coeffs3
-    nu_b = gas.product_stoich_coeffs3
+    nu_f = gas.reactant_stoich_coeffs
+    nu_b = gas.product_stoich_coeffs
 
     Ru = ct.gas_constant  # J/kmol.K
 
     for i, r in enumerate(gas.reactions()):
         rate = r.rate
-        if r.reaction_type in [
-            "three-body",
-            "falloff",
-        ]:  # ThreeBodyReaction or FallOffReactions
+        if r.reaction_type.startswith(
+            tuple(["three-body", "falloff"])
+        ):  # ThreeBodyReaction or FallOffReactions
+            print(r.reaction_type, i + 1)
             rTBC.append(i)
             efficiencies = []
             for j in range(ns):
-                efficiencies.append(r.efficiency(gas.species_names[j]))
+                efficiencies.append(r.third_body.efficiency(gas.species_names[j]))
             aij.append(efficiencies)
 
-            if r.reaction_type == "falloff":
+            if r.reaction_type.startswith("falloff"):
                 Ea_f.append(rate.high_rate.activation_energy / Ru)
                 m_f.append(rate.high_rate.temperature_exponent)
                 A_f.append(rate.high_rate.pre_exponential_factor)
@@ -111,7 +111,7 @@ def ct2pgChem(ctyaml, cpp):
                 Ea_o.append(0.0)
                 m_o.append(0.0)
                 A_o.append(0.0)
-        elif r.reaction_type == "reaction":
+        elif r.reaction_type == "Arrhenius":
             Ea_f.append(rate.activation_energy / Ru)
             m_f.append(intOrFloat(rate.temperature_exponent))
             A_f.append(rate.pre_exponential_factor)
@@ -125,6 +125,9 @@ def ct2pgChem(ctyaml, cpp):
     # HEADER
     # --------------------------------
     # WRITE OUT SPECIES ORDER
+    for line in gas.input_header["description"].split("\n"):
+        pgMech.write("// " + line + "\n")
+    pgMech.write("")
     pgMech.write("// ========================================================== //\n")
     for i, sp in enumerate(gas.species_names):
         pgMech.write(f"// Y({i:>3d}) = {sp}\n")
@@ -338,65 +341,61 @@ def ct2pgChem(ctyaml, cpp):
         # FallOff Modifications
         # -----------------------------------------------------------------------------
         r = gas.reactions()[i]
+        rate = r.rate
         if i in rTBC:
             j = rTBC.index(i)
-        if r.reaction_type == "three-body":  # ThreeBodyReaction
+        if r.reaction_type == "three-body-Arrhenius":  # ThreeBodyReaction
             pgMech.write(f"  //  Three Body Reaction #{i}\n")
             outString = f"  k_f *= cTBC[{j}];\n"
             pgMech.write(outString)
-        elif r.reaction_type == "falloff":  # FallOff Reactions
-            rate = r.rate
-            if rate.type == "Lindemann":
-                pgMech.write(f"  //  Lindeman Reaction #{i}\n")
-                pgMech.write("  Fcent = 1.0;\n")
-                pgMech.write(
-                    "  k0 = " + rateConstString(A_o[j], m_o[j], Ea_o[j]) + ";\n"
-                )
-                outString = (
-                    f"  Pr = cTBC[{j}]*k0/k_f;\n"
-                    f"  pmod = Pr/(1.0 + Pr);\n"
-                    f"  k_f *= pmod;\n"
-                )
+        elif r.reaction_type == "falloff-Lindemann":
+            pgMech.write(f"  //  Lindeman Reaction #{i}\n")
+            pgMech.write("  Fcent = 1.0;\n")
+            pgMech.write("  k0 = " + rateConstString(A_o[j], m_o[j], Ea_o[j]) + ";\n")
+            outString = (
+                f"  Pr = cTBC[{j}]*k0/k_f;\n"
+                f"  pmod = Pr/(1.0 + Pr);\n"
+                f"  k_f *= pmod;\n"
+            )
+            pgMech.write(outString)
+
+        elif r.reaction_type == "falloff-Troe":
+            alpha = rate.falloff_coeffs[0]
+            Tsss = rate.falloff_coeffs[1]
+            Ts = rate.falloff_coeffs[2]
+            pgMech.write(f"  //  Troe Reaction #{i}\n")
+            tp = rate.falloff_coeffs
+            if tp[-1] == 0:  # Three Parameter Troe form
+                outString = f"  Fcent = (1.0 - ({alpha}))*exp(-T/({Tsss})) + ({alpha}) *exp(-T/({Ts}));\n"
+                pgMech.write(outString)
+            elif tp[-1] != 0:  # Four Parameter Troe form
+                Tss = rate.falloff_coeffs[3]
+                outString = f"  Fcent = (1.0 - ({alpha}))*exp(-T/({Tsss})) + ({alpha}) *exp(-T/({Ts})) + exp(-({Tss})/T);\n"
                 pgMech.write(outString)
 
-            elif rate.type == "Troe":
-                alpha = rate.falloff_coeffs[0]
-                Tsss = rate.falloff_coeffs[1]
-                Ts = rate.falloff_coeffs[2]
-                pgMech.write(f"  //  Troe Reaction #{i}\n")
-                tp = rate.falloff_coeffs
-                if tp[-1] == 0:  # Three Parameter Troe form
-                    outString = f"  Fcent = (1.0 - ({alpha}))*exp(-T/({Tsss})) + ({alpha}) *exp(-T/({Ts}));\n"
-                    pgMech.write(outString)
-                elif tp[-1] != 0:  # Four Parameter Troe form
-                    Tss = rate.falloff_coeffs[3]
-                    outString = f"  Fcent = (1.0 - ({alpha}))*exp(-T/({Tsss})) + ({alpha}) *exp(-T/({Ts})) + exp(-({Tss})/T);\n"
-                    pgMech.write(outString)
+            outString = (
+                "  C = - 0.4 - 0.67*log10(Fcent);\n"
+                "  N =   0.75 - 1.27*log10(Fcent);\n"
+            )
+            pgMech.write(outString)
+            pgMech.write("  k0 = " + rateConstString(A_o[j], m_o[j], Ea_o[j]) + ";\n")
+            outString = (
+                f"  Pr = cTBC[{j}]*k0/k_f;\n"
+                "  A = log10(Pr) + C;\n"
+                "  f1 = A/(N - 0.14*A);\n"
+                "  F_pdr = pow(10.0,log10(Fcent)/(1.0+f1*f1));\n"
+                "  pmod = Pr/(1.0 + Pr) * F_pdr;\n"
+                "  k_f *= pmod;\n"
+            )
 
-                outString = (
-                    "  C = - 0.4 - 0.67*log10(Fcent);\n"
-                    "  N =   0.75 - 1.27*log10(Fcent);\n"
-                )
-                pgMech.write(outString)
-                pgMech.write(
-                    "  k0 = " + rateConstString(A_o[j], m_o[j], Ea_o[j]) + ";\n"
-                )
-                outString = (
-                    f"  Pr = cTBC[{j}]*k0/k_f;\n"
-                    "  A = log10(Pr) + C;\n"
-                    "  f1 = A/(N - 0.14*A);\n"
-                    "  F_pdr = pow(10.0,log10(Fcent)/(1.0+f1*f1));\n"
-                    "  pmod = Pr/(1.0 + Pr) * F_pdr;\n"
-                    "  k_f *= pmod;\n"
-                )
-
-                pgMech.write(outString)
-            elif rate.type == "SRI":  # SRI Form
-                raise NotImplementedError(
-                    " Warning, this utility cant handle SRI type reactions yet... so add it now"
-                )
-            else:
-                raise UnknownFalloffType(rate.type, i, r.equation)
+            pgMech.write(outString)
+        elif r.reaction_type == "SRI":  # SRI Form
+            raise NotImplementedError(
+                " Warning, this utility cant handle SRI type reactions yet... so add it now"
+            )
+        else:
+            if r.reaction_type not in ["Arrhenius"]:
+                raise UnknownReactionType(r.reaction_type, i, r.equation)
 
         # -----------------------------------------------------------------------------
         # Rates of progress
