@@ -6,7 +6,7 @@
 This utility converts a Cantera input yaml format file into a hard coded
 PEREGRINE chem finite rate source file.
 
-Requires Cantera >2.6 installation.
+Requires Cantera >3.0 installation.
 
 Default behavior is to use the name of the .yaml file for the output c++
 file name.
