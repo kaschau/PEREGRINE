@@ -49,32 +49,6 @@ void constantVelocitySubsonicInlet(
           });
     }
     eos(b, th, face._nface, "prims");
-
-  } else if (terms.compare("viscous") == 0) {
-
-    threeDsubview dqdx1 = getHaloSlice(b.dqdx, face._nface, s1);
-    threeDsubview dqdy1 = getHaloSlice(b.dqdy, face._nface, s1);
-    threeDsubview dqdz1 = getHaloSlice(b.dqdz, face._nface, s1);
-
-    MDRange3 range_face =
-        MDRange3({0, 0, 0}, {static_cast<long>(dqdx1.extent(0)),
-                             static_cast<long>(dqdx1.extent(1)), b.ne});
-    for (int g = 0; g < b.ng; g++) {
-      s0 -= plus * g;
-      threeDsubview dqdx0 = getHaloSlice(b.dqdx, face._nface, s0);
-      threeDsubview dqdy0 = getHaloSlice(b.dqdy, face._nface, s0);
-      threeDsubview dqdz0 = getHaloSlice(b.dqdz, face._nface, s0);
-
-      Kokkos::parallel_for(
-          "Constant velocity subsonic inlet viscous terms", range_face,
-          KOKKOS_LAMBDA(const int i, const int j, const int l) {
-            // neumann all gradients
-            dqdx0(i, j, l) = dqdx1(i, j, l);
-            dqdy0(i, j, l) = dqdy1(i, j, l);
-            dqdz0(i, j, l) = dqdz1(i, j, l);
-          });
-    }
-  } else if (terms.compare("strict") == 0) {
   }
 }
 
@@ -121,13 +95,13 @@ void cubicSplineSubsonicInlet(
     // alpha[2]*(t-t[i-1]) + alpha[3]
 
     // where t[i-1] is the value of time at the beginning of the current
-    // interval, i.e. if we are in interval [3] then t[3-1] is the value of time
-    // for frame 3.
+    // interval, i.e. if we are in interval [3] then t[3-1] is the value of
+    // time for frame 3.
     //
-    //| frame 0 |              | frame 1 |              | frame 2 | | frame 3 |
-    //|   t[0]  | -----------> |   t[1]  | -----------> |   t[2]  | ----------->
-    //|   t[3]  | |         | <interval 0> |         | <interval 1> |         |
-    //<interval 2> |         |
+    //| frame 0 |              | frame 1 |              | frame 2 | | frame 3
+    //| |   t[0]  | -----------> |   t[1]  | -----------> |   t[2]  |
+    //-----------> |   t[3]  | |         | <interval 0> |         | <interval
+    // 1> |         | <interval 2> |         |
     Kokkos::parallel_for(
         "Cubic spline subsonic", range_face,
         KOKKOS_LAMBDA(const int i, const int j) {
@@ -197,32 +171,6 @@ void supersonicInlet(
           });
     }
     eos(b, th, face._nface, "prims");
-
-  } else if (terms.compare("viscous") == 0) {
-
-    threeDsubview dqdx1 = getHaloSlice(b.dqdx, face._nface, s1);
-    threeDsubview dqdy1 = getHaloSlice(b.dqdy, face._nface, s1);
-    threeDsubview dqdz1 = getHaloSlice(b.dqdz, face._nface, s1);
-
-    MDRange3 range_face =
-        MDRange3({0, 0, 0}, {static_cast<long>(dqdx1.extent(0)),
-                             static_cast<long>(dqdx1.extent(1)), b.ne});
-    for (int g = 0; g < b.ng; g++) {
-      s0 -= plus * g;
-      threeDsubview dqdx0 = getHaloSlice(b.dqdx, face._nface, s0);
-      threeDsubview dqdy0 = getHaloSlice(b.dqdy, face._nface, s0);
-      threeDsubview dqdz0 = getHaloSlice(b.dqdz, face._nface, s0);
-
-      Kokkos::parallel_for(
-          "Supersonic inlet viscous terms", range_face,
-          KOKKOS_LAMBDA(const int i, const int j, const int l) {
-            // neumann all gradients
-            dqdx0(i, j, l) = dqdx1(i, j, l);
-            dqdy0(i, j, l) = dqdy1(i, j, l);
-            dqdz0(i, j, l) = dqdz1(i, j, l);
-          });
-    }
-  } else if (terms.compare("strict") == 0) {
   }
 }
 
@@ -274,8 +222,8 @@ void constantMassFluxSubsonicInlet(
     // We now have a valid density value
     // set momentums, and velocities to match the desired mass flux
     // NOTE: We have to be careful with the indexing to accomodate fourth
-    // order. In particular, we cannot just use s1 for all the extrapolations
-    // so we have to make s2 start with s1 then increment
+    // order. In particular, we cannot just use s1 for all the
+    // extrapolations so we have to make s2 start with s1 then increment
 
     // Reset first slice indicies, and make s2 start at s1
     s0 += plus * (ng - 1);
@@ -315,7 +263,8 @@ void constantMassFluxSubsonicInlet(
             Q0(i, j, 3) = q0(i, j, 3) * rho;
 
             // we have created tke in halo, compute that and add it to
-            // the existing rhoE, which is just internal energy at this point
+            // the existing rhoE, which is just internal energy at this
+            // point
             double tke = 0.5 *
                          (pow(q0(i, j, 1), 2.0) + pow(q0(i, j, 2), 2.0) +
                           pow(q0(i, j, 3), 2.0)) *
@@ -323,87 +272,6 @@ void constantMassFluxSubsonicInlet(
             Q0(i, j, 4) += tke;
           });
     }
-
-  } else if (terms.compare("viscous") == 0) {
-
-    threeDsubview dqdx1 = getHaloSlice(b.dqdx, face._nface, s1);
-    threeDsubview dqdy1 = getHaloSlice(b.dqdy, face._nface, s1);
-    threeDsubview dqdz1 = getHaloSlice(b.dqdz, face._nface, s1);
-
-    MDRange3 range_face =
-        MDRange3({0, 0, 0}, {static_cast<long>(dqdx1.extent(0)),
-                             static_cast<long>(dqdx1.extent(1)), b.ne});
-    for (int g = 0; g < b.ng; g++) {
-      s0 -= plus * g;
-      threeDsubview dqdx0 = getHaloSlice(b.dqdx, face._nface, s0);
-      threeDsubview dqdy0 = getHaloSlice(b.dqdy, face._nface, s0);
-      threeDsubview dqdz0 = getHaloSlice(b.dqdz, face._nface, s0);
-
-      Kokkos::parallel_for(
-          "Constant mass flux subsonic inlet viscous terms", range_face,
-          KOKKOS_LAMBDA(const int i, const int j, const int l) {
-            // neumann all gradients
-            dqdx0(i, j, l) = dqdx1(i, j, l);
-            dqdy0(i, j, l) = dqdy1(i, j, l);
-            dqdz0(i, j, l) = dqdz1(i, j, l);
-          });
-    }
-  } else if (terms.compare("strict") == 0) {
-
-    int slc;
-    threeDsubview iF;
-    twoDsubview iS;
-    switch (face._nface) {
-    case 1:
-      slc = s1;
-      iF = getHaloSlice(b.iF, face._nface, slc);
-      iS = getHaloSlice(b.iS, face._nface, slc);
-      break;
-    case 3:
-      slc = s1;
-      iF = getHaloSlice(b.jF, face._nface, slc);
-      iS = getHaloSlice(b.jS, face._nface, slc);
-      break;
-    case 5:
-      slc = s1;
-      iF = getHaloSlice(b.kF, face._nface, slc);
-      iS = getHaloSlice(b.kS, face._nface, slc);
-      break;
-    case 2:
-      slc = s0;
-      iF = getHaloSlice(b.iF, face._nface, slc);
-      iS = getHaloSlice(b.iS, face._nface, slc);
-      break;
-    case 4:
-      slc = s0;
-      iF = getHaloSlice(b.jF, face._nface, slc);
-      iS = getHaloSlice(b.jS, face._nface, slc);
-      break;
-    case 6:
-      slc = s0;
-      iF = getHaloSlice(b.kF, face._nface, slc);
-      iS = getHaloSlice(b.kS, face._nface, slc);
-      break;
-    }
-    double dplus = plus;
-    MDRange2 range_face = MDRange2({0, 0}, {iF.extent(0), iF.extent(1)});
-    Kokkos::parallel_for(
-        "Strict convective flux specification", range_face,
-        KOKKOS_LAMBDA(const int i, const int j) {
-          // explicitely set the mass flux
-          double &rhou = face.QBcVals(i, j, 1);
-          double &rhov = face.QBcVals(i, j, 2);
-          double &rhow = face.QBcVals(i, j, 3);
-
-          double mDotPerUnitArea =
-              dplus * sqrt(pow(rhou, 2.0) + pow(rhov, 2.0) + pow(rhow, 2.0));
-
-          iF(i, j, 0) = mDotPerUnitArea * iS(i, j);
-          for (int n = 5; n < b.ne; n++) {
-            double &Y = face.qBcVals(i, j, n);
-            iF(i, j, n) = mDotPerUnitArea * Y * iS(i, j);
-          }
-        });
   }
 }
 
@@ -494,31 +362,5 @@ void stagnationSubsonicInlet(
           });
     }
     eos(b, th, face._nface, "prims");
-
-  } else if (terms.compare("viscous") == 0) {
-
-    threeDsubview dqdx1 = getHaloSlice(b.dqdx, face._nface, s1);
-    threeDsubview dqdy1 = getHaloSlice(b.dqdy, face._nface, s1);
-    threeDsubview dqdz1 = getHaloSlice(b.dqdz, face._nface, s1);
-
-    MDRange3 range_face =
-        MDRange3({0, 0, 0}, {static_cast<long>(dqdx1.extent(0)),
-                             static_cast<long>(dqdx1.extent(1)), b.ne});
-    for (int g = 0; g < b.ng; g++) {
-      s0 -= plus * g;
-      threeDsubview dqdx0 = getHaloSlice(b.dqdx, face._nface, s0);
-      threeDsubview dqdy0 = getHaloSlice(b.dqdy, face._nface, s0);
-      threeDsubview dqdz0 = getHaloSlice(b.dqdz, face._nface, s0);
-
-      Kokkos::parallel_for(
-          "Constant velocity subsonic inlet viscous terms", range_face,
-          KOKKOS_LAMBDA(const int i, const int j, const int l) {
-            // neumann all gradients
-            dqdx0(i, j, l) = dqdx1(i, j, l);
-            dqdy0(i, j, l) = dqdy1(i, j, l);
-            dqdz0(i, j, l) = dqdz1(i, j, l);
-          });
-    };
-  } else if (terms.compare("strict") == 0) {
   }
 }
