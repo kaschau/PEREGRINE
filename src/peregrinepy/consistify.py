@@ -8,6 +8,12 @@ def consistify(mb, given="cons"):
     # interior primatives, apply boundary conditions,
     # update halo values as needed, then communicate
     # everything.
+    #
+    # Since we are storing derivatives on faces now,
+    # the calculation of spatial derivatives is moved
+    # to RHS so viscous boundary conditions can be
+    # applied after inviscid flux calculation, and
+    # before viscous flux calculations.
 
     # First communicate conservatives
     if given == "cons":
@@ -24,31 +30,14 @@ def consistify(mb, given="cons"):
         for face in blk.faces:
             face.bcFunc(blk, face, mb.eos, mb.thtrdat, "euler", mb.tme)
 
-        if mb.config["RHS"]["diffusion"]:
+        # Update transport properties
+        mb.trans(blk, mb.thtrdat, -1)
 
-            # Update transport properties
-            mb.trans(blk, mb.thtrdat, -1)
-
-            # Update spatial derivatives
-            mb.dqdxyz(blk)
-
-            # Apply viscous boundary conditions
-            for face in blk.faces:
-                face.bcFunc(blk, face, mb.eos, mb.thtrdat, "viscous", mb.tme)
-
-            # Apply subgrid model
-            mb.sgs(blk)
+        # Apply subgrid model
+        mb.sgs(blk)
 
         # Update switch
         mb.switch(blk)
 
     # Communicate necessary halos
     communicate(mb, mb.commList)
-
-    # Rotational Periodics require rotation AFTER communication, not before
-    for blk in mb:
-        for face in blk.faces:
-            if face.bcType.startswith("periodicRot"):
-                face.bcFunc(blk, face, mb.eos, mb.thtrdat, "eulerRot", mb.tme)
-                if mb.config["RHS"]["diffusion"]:
-                    face.bcFunc(blk, face, mb.eos, mb.thtrdat, "viscousRot", mb.tme)
