@@ -21,7 +21,7 @@ public:
 void smagorinsky(block_ &b) {
   NotImplemented();
 
-  MDRange3 range_cc({b.ng, b.ng, b.ng},
+  // MDRange3 range_cc({b.ng, b.ng, b.ng},
   //                   {b.ni + b.ng - 1, b.nj + b.ng - 1, b.nk + b.ng - 1});
 
   // Kokkos::parallel_for(
