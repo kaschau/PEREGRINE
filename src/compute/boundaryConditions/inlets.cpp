@@ -103,7 +103,7 @@ void cubicSplineSubsonicInlet(
       Kokkos::deep_copy(intervalAlphasMirror, subview);
       Kokkos::deep_copy(face.intervalAlphas, intervalAlphasMirror);
     }
-    // Now we comute the target values
+    // Now we compute the target values
 
     MDRange2 range_face = MDRange2({0, 0}, {face.intervalAlphas.extent(1) - 1,
                                             face.intervalAlphas.extent(2) - 1});
@@ -404,5 +404,121 @@ void constantMassFluxSubsonicInlet(
             iF(i, j, n) = mDotPerUnitArea * Y * iS(i, j);
           }
         });
+  }
+}
+
+void stagnationSubsonicInlet(
+    block_ &b, face_ &face,
+    const std::function<void(block_, thtrdat_, int, std::string)> &eos,
+    const thtrdat_ &th, const std::string &terms, const double /*&tme*/) {
+  // Stagnation boundary condition from
+  // https://ntrs.nasa.gov/api/citations/20180001221/downloads/20180001221.pdf
+
+  //-------------------------------------------------------------------------------------------|
+  // Apply BC to face, slice by slice.
+  //-------------------------------------------------------------------------------------------|
+  const int ng = b.ng;
+  int s0, s1, s2, plus;
+  setHaloSlices(s0, s1, s2, plus, b.ni, b.nj, b.nk, ng, face._nface);
+
+  if (terms.compare("euler") == 0) {
+
+    threeDsubview q1 = getHaloSlice(b.q, face._nface, s1);
+    threeDsubview Q1 = getHaloSlice(b.Q, face._nface, s1);
+    threeDsubview qh1 = getHaloSlice(b.qh, face._nface, s1);
+    twoDsubview nx, ny, nz;
+    if (face._nface == 1 || face._nface == 2) {
+      nx = getHaloSlice(b.inx, face._nface, s1);
+      ny = getHaloSlice(b.iny, face._nface, s1);
+      nz = getHaloSlice(b.inz, face._nface, s1);
+    } else if (face._nface == 3 || face._nface == 4) {
+      nx = getHaloSlice(b.jnx, face._nface, s1);
+      ny = getHaloSlice(b.jny, face._nface, s1);
+      nz = getHaloSlice(b.jnz, face._nface, s1);
+    } else if (face._nface == 5 || face._nface == 6) {
+      nx = getHaloSlice(b.knx, face._nface, s1);
+      ny = getHaloSlice(b.kny, face._nface, s1);
+      nz = getHaloSlice(b.knz, face._nface, s1);
+    }
+    double dplus = plus;
+
+    MDRange2 range_face = MDRange2({0, 0}, {q1.extent(0), q1.extent(1)});
+
+    for (int g = 0; g < b.ng; g++) {
+      s0 -= plus * g;
+      s2 += plus * g;
+
+      threeDsubview q0 = getHaloSlice(b.q, face._nface, s0);
+      threeDsubview q2 = getHaloSlice(b.q, face._nface, s2);
+
+      Kokkos::parallel_for(
+          "Constant velocity subsonic inlet euler terms", range_face,
+          KOKKOS_LAMBDA(const int i, const int j) {
+            // neumann total enthalpy, gamma to halo
+            double &gamma = qh1(i, j, 0);
+            double V = sqrt(Q1(i, j, 4) - qh1(i, j, 4) / Q1(i, j, 0));
+            double Ht = qh1(i, j, 2) / Q1(i, j, 0) + pow(V, 2.0);
+            double Jm = -V + 2.0 * qh1(i, j, 3) / (gamma - 1.0);
+
+            // solve quadratic for cb = -b/2a +/- sqrt(b**2-4ac)/2a
+            double aq = 1 + 2.0 / (gamma - 1.0);
+            double bq = 2.0 * Jm;
+            double cq = (gamma - 1.0) / 2.0 * (pow(Jm, 2.0) - 2.0 * Ht);
+            double t1 = -bq / (2.0 * aq);
+            double t2 = sqrt(pow(bq, 2.0) - 4.0 * aq * cq) / (2.0 * aq);
+
+            double cb = fmax(t1 + t2, t1 - t2);
+
+            // boundary velocity, Ma
+            double Vb = 2.0 * cb / (gamma - 1.0) - Jm;
+            double Mb = Vb / cb;
+
+            // compute static pressure
+            q0(i, j, 0) = face.qBcVals(i, j, 0) *
+                          pow(1.0 + (gamma - 1.0) / 2.0 * pow(Mb, 2.0),
+                              -gamma / (gamma - 1.0));
+
+            // extrapolate velocity
+            q0(i, j, 1) = Vb * nx(i, j) * dplus;
+            q0(i, j, 2) = Vb * ny(i, j) * dplus;
+            q0(i, j, 3) = Vb * nz(i, j) * dplus;
+
+            // compute static temperature
+            q0(i, j, 4) = face.qBcVals(i, j, 4) * 1.0 /
+                          (1.0 + (gamma - 1.0) / 2.0 * pow(Mb, 2.0));
+
+            // apply species in halo
+            for (int n = 5; n < b.ne; n++) {
+              q0(i, j, n) = face.qBcVals(i, j, n);
+            }
+          });
+    }
+    eos(b, th, face._nface, "prims");
+
+  } else if (terms.compare("viscous") == 0) {
+
+    threeDsubview dqdx1 = getHaloSlice(b.dqdx, face._nface, s1);
+    threeDsubview dqdy1 = getHaloSlice(b.dqdy, face._nface, s1);
+    threeDsubview dqdz1 = getHaloSlice(b.dqdz, face._nface, s1);
+
+    MDRange3 range_face =
+        MDRange3({0, 0, 0}, {static_cast<long>(dqdx1.extent(0)),
+                             static_cast<long>(dqdx1.extent(1)), b.ne});
+    for (int g = 0; g < b.ng; g++) {
+      s0 -= plus * g;
+      threeDsubview dqdx0 = getHaloSlice(b.dqdx, face._nface, s0);
+      threeDsubview dqdy0 = getHaloSlice(b.dqdy, face._nface, s0);
+      threeDsubview dqdz0 = getHaloSlice(b.dqdz, face._nface, s0);
+
+      Kokkos::parallel_for(
+          "Constant velocity subsonic inlet viscous terms", range_face,
+          KOKKOS_LAMBDA(const int i, const int j, const int l) {
+            // neumann all gradients
+            dqdx0(i, j, l) = dqdx1(i, j, l);
+            dqdy0(i, j, l) = dqdy1(i, j, l);
+            dqdz0(i, j, l) = dqdz1(i, j, l);
+          });
+    };
+  } else if (terms.compare("strict") == 0) {
   }
 }
