@@ -3,6 +3,7 @@
 #include "kokkosTypes.hpp"
 #include <math.h>
 #include <numeric>
+#include <stdexcept>
 
 // References
 //
@@ -19,7 +20,7 @@ public:
 };
 
 void smagorinsky(block_ &b) {
-  NotImplemented();
+  throw NotImplemented();
 
   // MDRange3 range_cc({b.ng, b.ng, b.ng},
   //                   {b.ni + b.ng - 1, b.nj + b.ng - 1, b.nk + b.ng - 1});

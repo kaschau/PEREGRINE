@@ -9,7 +9,7 @@ public:
 };
 void dq4FD(block_ &b) {
 
-  NotImplemented();
+  throw NotImplemented();
   //-------------------------------------------------------------------------------------------|
   // Spatial derivatices of primative variables
   // estimated via fourth order finite difference
