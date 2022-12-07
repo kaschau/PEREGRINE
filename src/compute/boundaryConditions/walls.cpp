@@ -271,6 +271,7 @@ void isoTNoSlipWall(
     }
 
     MDRange2 range_face = MDRange2({0, 0}, {q1.extent(0), q1.extent(1)});
+    double dplus = plus;
     for (int g = 0; g < b.ng; g++) {
       s0 -= plus * g;
       s2 += plus * g;
@@ -284,10 +285,13 @@ void isoTNoSlipWall(
             // match pressure
             q0(i, j, 0) = q1(i, j, 0);
 
-            // flip velo on wall
-            q0(i, j, 1) = -q1(i, j, 1);
-            q0(i, j, 2) = -q1(i, j, 2);
-            q0(i, j, 3) = -q1(i, j, 3);
+            // mirror velo on wall
+            double uDotn = (q1(i, j, 1) * nx(i, j) + q1(i, j, 2) * ny(i, j) +
+                            q1(i, j, 3) * nz(i, j)) *
+                           dplus;
+            q0(i, j, 1) = q1(i, j, 1) - 2.0 * uDotn * nx(i, j) * dplus;
+            q0(i, j, 2) = q1(i, j, 2) - 2.0 * uDotn * ny(i, j) * dplus;
+            q0(i, j, 3) = q1(i, j, 3) - 2.0 * uDotn * nz(i, j) * dplus;
 
             // set temperature
             q0(i, j, 4) = face.qBcVals(i, j, 4);
@@ -414,8 +418,9 @@ void isoTMovingWall(
       ny = getHaloSlice(b.kny, face._nface, s1);
       nz = getHaloSlice(b.knz, face._nface, s1);
     }
-    MDRange2 range_face = MDRange2({0, 0}, {q1.extent(0), q1.extent(1)});
 
+    MDRange2 range_face = MDRange2({0, 0}, {q1.extent(0), q1.extent(1)});
+    double dplus = plus;
     for (int g = 0; g < b.ng; g++) {
       s0 -= plus * g;
 
@@ -427,10 +432,13 @@ void isoTMovingWall(
             // match pressure
             q0(i, j, 0) = q1(i, j, 0);
 
-            // apply velo on wall
-            q0(i, j, 1) = 2.0 * face.qBcVals(i, j, 1) - q1(i, j, 1);
-            q0(i, j, 2) = 2.0 * face.qBcVals(i, j, 2) - q1(i, j, 2);
-            q0(i, j, 3) = 2.0 * face.qBcVals(i, j, 3) - q1(i, j, 3);
+            // mirror velo on wall
+            double uDotn = (q1(i, j, 1) * nx(i, j) + q1(i, j, 2) * ny(i, j) +
+                            q1(i, j, 3) * nz(i, j)) *
+                           dplus;
+            q0(i, j, 1) = q1(i, j, 1) - 2.0 * uDotn * nx(i, j) * dplus;
+            q0(i, j, 2) = q1(i, j, 2) - 2.0 * uDotn * ny(i, j) * dplus;
+            q0(i, j, 3) = q1(i, j, 3) - 2.0 * uDotn * nz(i, j) * dplus;
 
             // set temperature
             q0(i, j, 4) = face.qBcVals(i, j, 4);

@@ -88,14 +88,6 @@ def test_constantPressureSubsonicExit(my_setup, adv, spdata):
             # neumann everything else
             assert np.allclose(TN[s0_], TN[face.s1_])
 
-        face.bcFunc(blk, face, mb.eos, mb.thtrdat, "viscous", mb.tme)
-        blk.updateHostView(["dqdx", "dqdy", "dqdz"])
-        for s0_ in face.s0_:
-            # neumann all gradients
-            assert np.allclose(blk.array["dqdx"][s0_], blk.array["dqdx"][face.s1_])
-            assert np.allclose(blk.array["dqdy"][s0_], blk.array["dqdy"][face.s1_])
-            assert np.allclose(blk.array["dqdz"][s0_], blk.array["dqdz"][face.s1_])
-
 
 def test_supersonicExit(my_setup, adv, spdata):
 
@@ -167,11 +159,3 @@ def test_supersonicExit(my_setup, adv, spdata):
                 assert np.allclose(
                     np.clip(N[s0_], 0.0, 1.0), 2.0 * N[face.s1_] - N[s2_]
                 )
-
-        face.bcFunc(blk, face, mb.eos, mb.thtrdat, "viscous", mb.tme)
-        blk.updateHostView(["dqdx", "dqdy", "dqdz"])
-        for s0_ in face.s0_:
-            # neumann all gradients
-            assert np.allclose(blk.array["dqdx"][s0_], blk.array["dqdx"][face.s1_])
-            assert np.allclose(blk.array["dqdy"][s0_], blk.array["dqdy"][face.s1_])
-            assert np.allclose(blk.array["dqdz"][s0_], blk.array["dqdz"][face.s1_])
