@@ -324,8 +324,10 @@ void stagnationSubsonicInlet(
           KOKKOS_LAMBDA(const int i, const int j) {
             // neumann total enthalpy, gamma to halo
             double &gamma = qh1(i, j, 0);
-            double V = sqrt(Q1(i, j, 4) - qh1(i, j, 4) / Q1(i, j, 0));
-            double Ht = qh1(i, j, 2) / Q1(i, j, 0) + pow(V, 2.0);
+            double V = sqrt(pow(q1(i, j, 1), 2.0) + pow(q1(i, j, 2), 2.0) +
+                            pow(q1(i, j, 3), 2.0));
+            double Ht =
+                pow(qh1(i, j, 3), 2.0) / (gamma - 1.0) + 0.5 * pow(V, 2.0);
             double Jm = -V + 2.0 * qh1(i, j, 3) / (gamma - 1.0);
 
             // solve quadratic for cb = -b/2a +/- sqrt(b**2-4ac)/2a
@@ -352,7 +354,7 @@ void stagnationSubsonicInlet(
             q0(i, j, 3) = Vb * nz(i, j) * dplus;
 
             // compute static temperature
-            q0(i, j, 4) = face.qBcVals(i, j, 4) * 1.0 /
+            q0(i, j, 4) = face.qBcVals(i, j, 4) /
                           (1.0 + (gamma - 1.0) / 2.0 * pow(Mb, 2.0));
 
             // apply species in halo

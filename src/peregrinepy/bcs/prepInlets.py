@@ -221,7 +221,7 @@ def prep_stagnationSubsonicInlet(blk, face, valueDict):
         return
 
     # We only need total temperature and pressure for this b
-    face.array["qBcVals"][:, :, 0] = valueDict["Pt"]
+    face.array["qBcVals"][:, :, 0] = valueDict["pt"]
     face.array["qBcVals"][:, :, 4] = valueDict["Tt"]
     for i, spn in enumerate(blk.speciesNames[0:-1]):
         try:
