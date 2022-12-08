@@ -324,11 +324,17 @@ void stagnationSubsonicInlet(
           KOKKOS_LAMBDA(const int i, const int j) {
             // neumann total enthalpy, gamma to halo
             double &gamma = qh1(i, j, 0);
+            double uxi = q1(i, j, 1) * nx(i, j);
+            double uvi = q1(i, j, 2) * ny(i, j);
+            double uwi = q1(i, j, 3) * nz(i, j);
+            // Interior velo normal to face
+            double Un = uxi + uvi + uwi;
+
             double V = sqrt(pow(q1(i, j, 1), 2.0) + pow(q1(i, j, 2), 2.0) +
                             pow(q1(i, j, 3), 2.0));
             double Ht =
                 pow(qh1(i, j, 3), 2.0) / (gamma - 1.0) + 0.5 * pow(V, 2.0);
-            double Jm = -V + 2.0 * qh1(i, j, 3) / (gamma - 1.0);
+            double Jm = -Un + 2.0 * qh1(i, j, 3) / (gamma - 1.0);
 
             // solve quadratic for cb = -b/2a +/- sqrt(b**2-4ac)/2a
             double aq = 1 + 2.0 / (gamma - 1.0);
