@@ -338,8 +338,8 @@ void stagnationSubsonicInlet(
 
             // solve quadratic for cb = -b/2a +/- sqrt(b**2-4ac)/2a
             double aq = 1 + 2.0 / (gamma - 1.0);
-            double bq = 2.0 * Jm;
-            double cq = (gamma - 1.0) / 2.0 * (pow(Jm, 2.0) - 2.0 * Ht);
+            double bq = -2.0 * Jm;
+            double cq = (gamma - 1.0) * (0.5 * pow(Jm, 2.0) - Ht);
             double t1 = -bq / (2.0 * aq);
             double t2 = sqrt(pow(bq, 2.0) - 4.0 * aq * cq) / (2.0 * aq);
 
