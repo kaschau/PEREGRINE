@@ -69,7 +69,7 @@ is set. Finally, run the simulation with nsys enabling cuda,nvtx trace options.
 ```jsrun -p 1 -g 1 nsys profile -o twelveSpecies30Cubed --trace cuda,nvtx  -f true --stats=false python -m mpi4py threeDTaylorProf.py```
 
 # Performance
-PEREGRINE is pretty fast by default. However, when running a simulation, it is recommended to turn on ```PEREGRINE_NSCOMPILE``` in cmake, and then specify the value of ```numSpecies```. This will hard code ```ns``` at compile time, and gives roughly a 10x improvement in speed.
+PEREGRINE is pretty fast by default. However, when running a simulation, it is recommended to turn on ```PEREGRINE_NSCOMPILE``` in cmake, and then specify the value of ```numSpecies```. This will hard code ```ns``` at compile time, and gives a considerable performance improvement for EOS/transport calculations.
 
 # Parallel I/O 
 Parallel I/O can be achieved with a parallel capable h5py installation. 
