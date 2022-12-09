@@ -140,7 +140,9 @@ void supersonicInlet(
   if (terms.compare("euler") == 0) {
 
     threeDsubview q1 = getHaloSlice(b.q, face._nface, s1);
-    MDRange2 range_face = MDRange2({0, 0}, {q1.extent(0), q1.extent(1)});
+    MDRange3 range_face =
+        MDRange3({0, 0, 0}, {static_cast<int>(q1.extent(0)),
+                             static_cast<int>(q1.extent(1)), b.ne});
 
     for (int g = 0; g < b.ng; g++) {
       s0 -= plus * g;
@@ -151,22 +153,9 @@ void supersonicInlet(
 
       Kokkos::parallel_for(
           "Supersonic inlet euler terms", range_face,
-          KOKKOS_LAMBDA(const int i, const int j) {
-            // apply pressure on face
-            q0(i, j, 0) = face.qBcVals(i, j, 0);
-
-            // apply velo on face
-            q0(i, j, 1) = face.qBcVals(i, j, 1);
-            q0(i, j, 2) = face.qBcVals(i, j, 2);
-            q0(i, j, 3) = face.qBcVals(i, j, 3);
-
-            // apply temperature on face
-            q0(i, j, 4) = face.qBcVals(i, j, 4);
-
-            // apply species on face
-            for (int n = 5; n < b.ne; n++) {
-              q0(i, j, n) = face.qBcVals(i, j, n);
-            }
+          KOKKOS_LAMBDA(const int i, const int j, const int l) {
+            // apply all variables on face
+            q0(i, j, l) = face.qBcVals(i, j, l);
           });
     }
     eos(b, th, face._nface, "prims");
@@ -202,15 +191,15 @@ void constantMassFluxSubsonicInlet(
             // extrapolate pressure
             q0(i, j, 0) = 2.0 * q1(i, j, 0) - q2(i, j, 0);
 
-            // apply zero velo on face to make subsequent updates easier
+            // apply zero velo to halo to make subsequent updates easier
             q0(i, j, 1) = 0.0;
             q0(i, j, 2) = 0.0;
             q0(i, j, 3) = 0.0;
 
-            // apply temperature on face
+            // apply temperature to halo
             q0(i, j, 4) = face.qBcVals(i, j, 4);
 
-            // apply species on face
+            // apply species to halo
             for (int n = 5; n < b.ne; n++) {
               q0(i, j, n) = face.qBcVals(i, j, n);
             }

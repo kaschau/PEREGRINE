@@ -130,7 +130,7 @@ def test_supersonicExit(my_setup, adv, spdata):
         revFlow = (uDotn < 0.0,)[0]
         for s0_, s2_ in zip(face.s0_, face.s2_):
             # extrapolate pressure
-            assert np.allclose(p[s0_], 2.0 * p[face.s1_] - p[s2_])
+            assert np.allclose(p[s0_], np.clip(2.0 * p[face.s1_] - p[s2_], 0.0, None))
             # extrapolate velocity
             assert np.allclose(
                 u[s0_][outFlow], 2.0 * u[face.s1_][outFlow] - u[s2_][outFlow]
@@ -154,8 +154,8 @@ def test_supersonicExit(my_setup, adv, spdata):
                 w[face.s1_][revFlow] - 2.0 * uDotn[revFlow] * plus * nz[revFlow],
             )
             # extrapolate TN
-            assert np.allclose(T[s0_], 2.0 * T[face.s1_] - T[s2_])
+            assert np.allclose(T[s0_], np.clip(2.0 * T[face.s1_] - T[s2_], 0.0, None))
             if blk.ns > 1:
                 assert np.allclose(
-                    np.clip(N[s0_], 0.0, 1.0), 2.0 * N[face.s1_] - N[s2_]
+                    N[s0_], np.clip(2.0 * N[face.s1_] - N[s2_], 0.0, 1.0)
                 )
