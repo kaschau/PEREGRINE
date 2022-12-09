@@ -95,13 +95,12 @@ void cubicSplineSubsonicInlet(
     // alpha[2]*(t-t[i-1]) + alpha[3]
 
     // where t[i-1] is the value of time at the beginning of the current
-    // interval, i.e. if we are in interval [3] then t[3-1] is the value of
-    // time for frame 3.
+    // interval, i.e. if we are in interval [2] then t[2-1] is the value of
+    // time for frame 2.
     //
-    //| frame 0 |              | frame 1 |              | frame 2 | | frame 3
-    //| |   t[0]  | -----------> |   t[1]  | -----------> |   t[2]  |
-    //-----------> |   t[3]  | |         | <interval 0> |         | <interval
-    // 1> |         | <interval 2> |         |
+    //|frame 0|             |frame 1|             |frame 2|             |...
+    //|  t[0] | ----------> |  t[1] | ----------> |  t[2] | ----------> |...
+    //|       |<interval 0> |       |<interval 1> |       |<interval 2> |...
     Kokkos::parallel_for(
         "Cubic spline subsonic", range_face,
         KOKKOS_LAMBDA(const int i, const int j) {
@@ -308,7 +307,6 @@ void stagnationSubsonicInlet(
       ny = getHaloSlice(b.kny, face._nface, s1);
       nz = getHaloSlice(b.knz, face._nface, s1);
     }
-    double dplus = plus;
 
     MDRange2 range_face = MDRange2({0, 0}, {q1.extent(0), q1.extent(1)});
 
@@ -354,10 +352,10 @@ void stagnationSubsonicInlet(
                           pow(1.0 + (gamma - 1.0) / 2.0 * pow(Mb, 2.0),
                               -gamma / (gamma - 1.0));
 
-            // extrapolate velocity
-            q0(i, j, 1) = Vb * nx(i, j) * dplus;
-            q0(i, j, 2) = Vb * ny(i, j) * dplus;
-            q0(i, j, 3) = Vb * nz(i, j) * dplus;
+            // extrapolate face normal velocity
+            q0(i, j, 1) = Vb * nx(i, j);
+            q0(i, j, 2) = Vb * ny(i, j);
+            q0(i, j, 3) = Vb * nz(i, j);
 
             // compute static temperature
             q0(i, j, 4) = face.qBcVals(i, j, 4) /
