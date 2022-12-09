@@ -117,7 +117,7 @@ void supersonicExit(
       Kokkos::parallel_for(
           "Supersonic exit euler terms", range_face,
           KOKKOS_LAMBDA(const int i, const int j) {
-            // extrapolate everything
+            // extrapolate pressure (keep it positive)
             q0(i, j, 0) = fmax(0.0, 2.0 * q1(i, j, 0) - q2(i, j, 0));
 
             // extrapolate velocity, unless reverse flow detected
@@ -135,10 +135,12 @@ void supersonicExit(
               q0(i, j, 3) = q1(i, j, 3) - 2.0 * uDotn * nz(i, j) * dplus;
             }
 
+            // extrapolate temperature (keep it positive)
             q0(i, j, 4) = fmax(0.0, 2.0 * q1(i, j, 4) - q2(i, j, 4));
-            // extrapolate everything else
+            // extrapolate species
             for (int l = 5; l < b.ne; l++) {
-              q0(i, j, l) = fmax(0.0, fmin(1.0, q1(i, j, l)));
+              q0(i, j, l) =
+                  fmax(0.0, fmin(1.0, 2.0 * q1(i, j, l) - q2(i, j, l)));
             }
           });
     }

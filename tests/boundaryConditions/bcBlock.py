@@ -29,16 +29,11 @@ def create(bc, adv, spdata):
         face.array["QBcVals"] = np.random.random(blk.ne)
 
     qshape = blk.array["q"][:, :, :, 0].shape
-    # NOTE: Nov, 2021 KAS: The currently un protected extrapolation of
-    # boundary conditions were making the constantMassFluxInlet test case
-    # behave poorly (negative species, etc.). So instead of random physical
-    # values everywhere we narrow the scope a bit. Maybe down the line
-    # we see how necessary it is to protect those BC extraplations.
-    p = np.random.uniform(low=101325 * 0.9, high=101325 * 1.1)
-    u = np.random.uniform(low=1, high=1000, size=qshape)
-    v = np.random.uniform(low=1, high=1000, size=qshape)
-    w = np.random.uniform(low=1, high=1000, size=qshape)
-    T = np.random.uniform(low=300 * 0.9, high=300 * 1.1)
+    p = np.random.uniform(low=101325.0 * 0.1, high=101325 * 10)
+    u = np.random.uniform(low=-200, high=200, size=qshape)
+    v = np.random.uniform(low=-200, high=200, size=qshape)
+    w = np.random.uniform(low=-200, high=200, size=qshape)
+    T = np.random.uniform(low=200, high=3000)
     if blk.ns > 1:
         Y = np.random.uniform(low=0.0, high=1.0, size=(blk.ns - 1))
         Y = Y / np.sum(Y)
