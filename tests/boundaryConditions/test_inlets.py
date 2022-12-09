@@ -54,14 +54,6 @@ def test_constantVelocitySubsonicInlet(my_setup, adv, spdata):
                         face.array["qBcVals"][:, :, 5 + n],
                     )
 
-        face.bcFunc(blk, face, mb.eos, mb.thtrdat, "viscous", mb.tme)
-        blk.updateHostView(["dqdx", "dqdy", "dqdz"])
-        for s0_ in face.s0_:
-            # neumann all gradients
-            assert np.allclose(blk.array["dqdx"][s0_], blk.array["dqdx"][face.s1_])
-            assert np.allclose(blk.array["dqdy"][s0_], blk.array["dqdy"][face.s1_])
-            assert np.allclose(blk.array["dqdz"][s0_], blk.array["dqdz"][face.s1_])
-
 
 def test_supersonicInlet(my_setup, adv, spdata):
 
@@ -96,14 +88,6 @@ def test_supersonicInlet(my_setup, adv, spdata):
                         N[s0_],
                         face.array["qBcVals"][:, :, 5 + n],
                     )
-
-        face.bcFunc(blk, face, mb.eos, mb.thtrdat, "viscous", mb.tme)
-        blk.updateHostView(["dqdx", "dqdy", "dqdz"])
-        for s0_ in face.s0_:
-            # neumann all gradients
-            assert np.allclose(blk.array["dqdx"][s0_], blk.array["dqdx"][face.s1_])
-            assert np.allclose(blk.array["dqdy"][s0_], blk.array["dqdy"][face.s1_])
-            assert np.allclose(blk.array["dqdz"][s0_], blk.array["dqdz"][face.s1_])
 
 
 def test_constantMassFluxSubsonicInlet(my_setup, adv, spdata):
@@ -162,11 +146,3 @@ def test_constantMassFluxSubsonicInlet(my_setup, adv, spdata):
         s0_ = face.s0_[0]
 
         assert abs(targetMassFlux - computedMassFlux) / targetMassFlux * 100.0 < 1e-3
-
-        face.bcFunc(blk, face, mb.eos, mb.thtrdat, "viscous", mb.tme)
-        blk.updateHostView(["dqdx", "dqdy", "dqdz"])
-        for s0_ in face.s0_:
-            # neumann all gradients
-            assert np.allclose(blk.array["dqdx"][s0_], blk.array["dqdx"][face.s1_])
-            assert np.allclose(blk.array["dqdy"][s0_], blk.array["dqdy"][face.s1_])
-            assert np.allclose(blk.array["dqdz"][s0_], blk.array["dqdz"][face.s1_])

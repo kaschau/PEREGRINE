@@ -64,6 +64,17 @@ def readRestart(mb, path="./", nrt=0, animate=True, lump=True):
         if not lump:
             qf.close()
 
+        # If we are a solver, just fill in the halos with the nearest value to
+        # help with boundary conditions and eos calculations from dividing by 0
+        # and so on.
+        if mb.mbType == "solver":
+            blk.array["q"][0:ng, :, :, :] = blk.array["q"][[ng], :, :, :]
+            blk.array["q"][-ng::, :, :, :] = blk.array["q"][[-ng - 1], :, :, :]
+            blk.array["q"][:, 0:ng, :, :] = blk.array["q"][:, [ng], :, :]
+            blk.array["q"][:, -ng::, :, :] = blk.array["q"][:, [-ng - 1], :, :]
+            blk.array["q"][:, :, 0:ng, :] = blk.array["q"][:, :, [ng], :]
+            blk.array["q"][:, :, -ng::, :] = blk.array["q"][:, :, [-ng - 1], :]
+
     if lump:
         qf.close()
 

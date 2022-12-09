@@ -1,0 +1,8 @@
+---
+
+dummy_inlet:
+  bcType: stagnationSubsonicInlet
+  bcVals:
+    Pt: 101325.0
+    Tt: 300.0
+    N2: 1.0

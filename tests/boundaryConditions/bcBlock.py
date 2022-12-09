@@ -54,12 +54,6 @@ def create(bc, adv, spdata):
 
     mb.eos(blk, mb.thtrdat, 0, "prims")
 
-    dqdxshape = blk.array["dqdx"].shape
-    blk.array["dqdx"][:] = np.random.random((dqdxshape))
-    blk.array["dqdy"][:] = np.random.random((dqdxshape))
-    blk.array["dqdz"][:] = np.random.random((dqdxshape))
-    blk.updateDeviceView(["dqdx", "dqdy", "dqdz"])
-
     if blk.ns > 1:
         Ybc = np.random.uniform(low=0.0, high=1.0, size=blk.ns)
         Ybc = Ybc / np.sum(Ybc)
