@@ -171,7 +171,7 @@ def bootstrapCase(config):
     ################################################################
     # Generate conserved variables
     for blk in mb:
-        mb.eos(blk, mb.thtrdat, 0, "prims")
+        mb.eos(blk, mb.thtrdat, -1, "prims")
 
     # Consistify total flow field
     pg.consistify(mb)
