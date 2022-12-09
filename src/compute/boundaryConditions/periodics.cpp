@@ -16,7 +16,7 @@ void periodicRotHigh(
   int s0, s1, s2, plus;
   setHaloSlices(s0, s1, s2, plus, b.ni, b.nj, b.nk, ng, face._nface);
 
-  if (terms.compare("eulerRot") == 0) {
+  if (terms.compare("euler") == 0) {
 
     threeDsubview q1 = getHaloSlice(b.q, face._nface, s1);
     MDRange2 range_face = MDRange2({0, 0}, {q1.extent(0), q1.extent(1)});
@@ -55,43 +55,6 @@ void periodicRotHigh(
             Q0(i, j, 3) = tempW * Q0(i, j, 0);
           });
     }
-
-  } else if (terms.compare("viscousRot") == 0) {
-
-    threeDsubview dqdx1 = getHaloSlice(b.dqdx, face._nface, s1);
-    MDRange3 range_face =
-        MDRange3({0, 0, 0}, {static_cast<long>(dqdx1.extent(0)),
-                             static_cast<long>(dqdx1.extent(1)), b.ne});
-    for (int g = 0; g < b.ng; g++) {
-      s0 -= plus * g;
-      threeDsubview dqdx0 = getHaloSlice(b.dqdx, face._nface, s0);
-      threeDsubview dqdy0 = getHaloSlice(b.dqdy, face._nface, s0);
-      threeDsubview dqdz0 = getHaloSlice(b.dqdz, face._nface, s0);
-
-      Kokkos::parallel_for(
-          "Periodic viscous terms", range_face,
-          KOKKOS_LAMBDA(const int i, const int j, const int l) {
-            // rotate gradients vector up to high face
-            double tempdx, tempdy, tempdz;
-            double dx = dqdx0(i, j, l);
-            double dy = dqdy0(i, j, l);
-            double dz = dqdz0(i, j, l);
-            tempdx = face.periodicRotMatrixUp(0, 0) * dx +
-                     face.periodicRotMatrixUp(0, 1) * dy +
-                     face.periodicRotMatrixUp(0, 2) * dz;
-            tempdy = face.periodicRotMatrixUp(1, 0) * dx +
-                     face.periodicRotMatrixUp(1, 1) * dy +
-                     face.periodicRotMatrixUp(1, 2) * dz;
-            tempdz = face.periodicRotMatrixUp(2, 0) * dx +
-                     face.periodicRotMatrixUp(2, 1) * dy +
-                     face.periodicRotMatrixUp(2, 2) * dz;
-
-            dqdx0(i, j, l) = tempdx;
-            dqdy0(i, j, l) = tempdy;
-            dqdz0(i, j, l) = tempdz;
-          });
-    }
-  } else if (terms.compare("strict") == 0) {
   }
 }
 
@@ -106,7 +69,7 @@ void periodicRotLow(
   int s0, s1, s2, plus;
   setHaloSlices(s0, s1, s2, plus, b.ni, b.nj, b.nk, ng, face._nface);
 
-  if (terms.compare("eulerRot") == 0) {
+  if (terms.compare("euler") == 0) {
 
     threeDsubview q1 = getHaloSlice(b.q, face._nface, s1);
     MDRange2 range_face = MDRange2({0, 0}, {q1.extent(0), q1.extent(1)});
@@ -145,42 +108,5 @@ void periodicRotLow(
             Q0(i, j, 3) = tempW * Q0(i, j, 0);
           });
     }
-
-  } else if (terms.compare("viscousRot") == 0) {
-
-    threeDsubview dqdx1 = getHaloSlice(b.dqdx, face._nface, s1);
-    MDRange3 range_face =
-        MDRange3({0, 0, 0}, {static_cast<long>(dqdx1.extent(0)),
-                             static_cast<long>(dqdx1.extent(1)), b.ne});
-    for (int g = 0; g < b.ng; g++) {
-      s0 -= plus * g;
-      threeDsubview dqdx0 = getHaloSlice(b.dqdx, face._nface, s0);
-      threeDsubview dqdy0 = getHaloSlice(b.dqdy, face._nface, s0);
-      threeDsubview dqdz0 = getHaloSlice(b.dqdz, face._nface, s0);
-
-      Kokkos::parallel_for(
-          "Periodic viscous terms", range_face,
-          KOKKOS_LAMBDA(const int i, const int j, const int l) {
-            // rotate gradients vector up to high face
-            double tempdx, tempdy, tempdz;
-            double dx = dqdx0(i, j, l);
-            double dy = dqdy0(i, j, l);
-            double dz = dqdz0(i, j, l);
-            tempdx = face.periodicRotMatrixDown(0, 0) * dx +
-                     face.periodicRotMatrixDown(0, 1) * dy +
-                     face.periodicRotMatrixDown(0, 2) * dz;
-            tempdy = face.periodicRotMatrixDown(1, 0) * dx +
-                     face.periodicRotMatrixDown(1, 1) * dy +
-                     face.periodicRotMatrixDown(1, 2) * dz;
-            tempdz = face.periodicRotMatrixDown(2, 0) * dx +
-                     face.periodicRotMatrixDown(2, 1) * dy +
-                     face.periodicRotMatrixDown(2, 2) * dz;
-
-            dqdx0(i, j, l) = tempdx;
-            dqdy0(i, j, l) = tempdy;
-            dqdz0(i, j, l) = tempdz;
-          });
-    }
-  } else if (terms.compare("strict") == 0) {
   }
 }

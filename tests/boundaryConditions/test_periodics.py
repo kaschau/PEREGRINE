@@ -90,15 +90,11 @@ class TestPeriodics:
         mb.eos(blk, mb.thtrdat, 0, "prims")
         pg.consistify(mb)
 
-        blk.updateHostView(["q", "dqdx", "dqdy", "dqdz"])
+        blk.updateHostView(["q"])
 
         u = blk.array["q"][:, :, :, 1]
         v = blk.array["q"][:, :, :, 2]
         w = blk.array["q"][:, :, :, 3]
-
-        dqdx = blk.array["dqdx"]
-        dqdy = blk.array["dqdy"]
-        dqdz = blk.array["dqdz"]
 
         nx = blk.array["knx"]
         ny = blk.array["kny"]
@@ -108,9 +104,9 @@ class TestPeriodics:
         for g in range(ng):
 
             # face5 halo compares to interior on side 6
-            s5 = np.s_[:, :, g]
-            s6c = np.s_[:, :, -2 * ng + g]
-            s6f = np.s_[:, :, -2 * ng - 1 + g]
+            s5 = np.s_[ng:-ng, ng:-ng, g]
+            s6c = np.s_[ng:-ng, ng:-ng, -2 * ng + g]
+            s6f = np.s_[ng:-ng, ng:-ng, -2 * ng - 1 + g]
 
             normals5 = np.column_stack((nx[s5].ravel(), ny[s5].ravel(), nz[s5].ravel()))
             velo5 = np.column_stack((u[s5].ravel(), v[s5].ravel(), w[s5].ravel()))
@@ -124,32 +120,11 @@ class TestPeriodics:
                 np.sum(normals5 * velo5, axis=1), np.sum(normals6 * velo6, axis=1)
             )
 
-            # check the gradients
-            for i in range(blk.ne):
-                dqdx5 = np.column_stack(
-                    (
-                        dqdx[s5][:, :, i].ravel(),
-                        dqdy[s5][:, :, i].ravel(),
-                        dqdz[s5][:, :, i].ravel(),
-                    )
-                )
-
-                dqdx6 = np.column_stack(
-                    (
-                        dqdx[s6c][:, :, i].ravel(),
-                        dqdy[s6c][:, :, i].ravel(),
-                        dqdz[s6c][:, :, i].ravel(),
-                    )
-                )
-                assert np.allclose(
-                    np.sum(normals5 * dqdx5, axis=1), np.sum(normals6 * dqdx6, axis=1)
-                )
-
             # Now check the other way
             # face6 halo compares to interior on side 5
-            s6 = np.s_[:, :, -(g + 1)]
-            s5c = np.s_[:, :, 2 * ng - g - 1]
-            s5f = np.s_[:, :, 2 * ng - g]
+            s6 = np.s_[ng:-ng, ng:-ng, -(g + 1)]
+            s5c = np.s_[ng:-ng, ng:-ng, 2 * ng - g - 1]
+            s5f = np.s_[ng:-ng, ng:-ng, 2 * ng - g]
 
             normals6 = np.column_stack((nx[s6].ravel(), ny[s6].ravel(), nz[s6].ravel()))
             velo6 = np.column_stack((u[s6].ravel(), v[s6].ravel(), w[s6].ravel()))
@@ -162,24 +137,3 @@ class TestPeriodics:
             assert np.allclose(
                 np.sum(normals6 * velo6, axis=1), np.sum(normals5 * velo5, axis=1)
             )
-
-            # check the gradients
-            for i in range(blk.ne):
-                dqdx6 = np.column_stack(
-                    (
-                        dqdx[s6][:, :, i].ravel(),
-                        dqdy[s6][:, :, i].ravel(),
-                        dqdz[s6][:, :, i].ravel(),
-                    )
-                )
-
-                dqdx5 = np.column_stack(
-                    (
-                        dqdx[s5c][:, :, i].ravel(),
-                        dqdy[s5c][:, :, i].ravel(),
-                        dqdz[s5c][:, :, i].ravel(),
-                    )
-                )
-                assert np.allclose(
-                    np.sum(normals6 * dqdx6, axis=1), np.sum(normals5 * dqdx5, axis=1)
-                )

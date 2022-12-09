@@ -99,6 +99,8 @@ class configFile(frozenDict):
         ###################################################################################
 
         # Simulation checks
+        if self["io"]["saveExtraVars"] is None:
+            self["io"]["saveExtraVars"] = []
 
         # Time Integration Checks
         ti = self["timeIntegration"]["integrator"]

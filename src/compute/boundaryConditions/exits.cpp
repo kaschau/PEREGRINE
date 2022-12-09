@@ -72,32 +72,6 @@ void constantPressureSubsonicExit(
           });
     }
     eos(b, th, face._nface, "prims");
-
-  } else if (terms.compare("viscous") == 0) {
-
-    threeDsubview dqdx1 = getHaloSlice(b.dqdx, face._nface, s1);
-    threeDsubview dqdy1 = getHaloSlice(b.dqdy, face._nface, s1);
-    threeDsubview dqdz1 = getHaloSlice(b.dqdz, face._nface, s1);
-
-    MDRange3 range_face =
-        MDRange3({0, 0, 0}, {static_cast<long>(dqdx1.extent(0)),
-                             static_cast<long>(dqdx1.extent(1)), b.ne});
-    for (int g = 0; g < b.ng; g++) {
-      s0 -= plus * g;
-      threeDsubview dqdx0 = getHaloSlice(b.dqdx, face._nface, s0);
-      threeDsubview dqdy0 = getHaloSlice(b.dqdy, face._nface, s0);
-      threeDsubview dqdz0 = getHaloSlice(b.dqdz, face._nface, s0);
-
-      Kokkos::parallel_for(
-          "Constant pressure subsonic exit viscous terms", range_face,
-          KOKKOS_LAMBDA(const int i, const int j, const int l) {
-            // neumann all gradients
-            dqdx0(i, j, l) = dqdx1(i, j, l);
-            dqdy0(i, j, l) = dqdy1(i, j, l);
-            dqdz0(i, j, l) = dqdz1(i, j, l);
-          });
-    }
-  } else if (terms.compare("strict") == 0) {
   }
 }
 
@@ -169,31 +143,5 @@ void supersonicExit(
           });
     }
     eos(b, th, face._nface, "prims");
-
-  } else if (terms.compare("viscous") == 0) {
-
-    threeDsubview dqdx1 = getHaloSlice(b.dqdx, face._nface, s1);
-    threeDsubview dqdy1 = getHaloSlice(b.dqdy, face._nface, s1);
-    threeDsubview dqdz1 = getHaloSlice(b.dqdz, face._nface, s1);
-
-    MDRange3 range_face =
-        MDRange3({0, 0, 0}, {static_cast<long>(dqdx1.extent(0)),
-                             static_cast<long>(dqdx1.extent(1)), b.ne});
-    for (int g = 0; g < b.ng; g++) {
-      s0 -= plus * g;
-      threeDsubview dqdx0 = getHaloSlice(b.dqdx, face._nface, s0);
-      threeDsubview dqdy0 = getHaloSlice(b.dqdy, face._nface, s0);
-      threeDsubview dqdz0 = getHaloSlice(b.dqdz, face._nface, s0);
-
-      Kokkos::parallel_for(
-          "Supersonic exit viscous terms", range_face,
-          KOKKOS_LAMBDA(const int i, const int j, const int l) {
-            // neumann all gradients
-            dqdx0(i, j, l) = dqdx1(i, j, l);
-            dqdy0(i, j, l) = dqdy1(i, j, l);
-            dqdz0(i, j, l) = dqdz1(i, j, l);
-          });
-    }
-  } else if (terms.compare("strict") == 0) {
   }
 }

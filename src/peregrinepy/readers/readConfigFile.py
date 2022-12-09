@@ -29,7 +29,6 @@ def readConfigFile(filePath="./peregrine.yaml", parallel=False):
         for k2 in connIn[k1].keys():
             config[k1][k2] = connIn[k1][k2]
 
-    if rank == 0:
-        config.validateConfig()
+    config.validateConfig()
 
     return config

@@ -28,7 +28,7 @@ def setConsistify(cls, config):
     except AttributeError:
         raise pgConfigError("eos", eos)
 
-    # Diffusion, transport properties, spatial derivatives.
+    # Transport properties, subgrid models.
     if config["RHS"]["diffusion"]:
         trans = config["thermochem"]["trans"]
         try:
@@ -36,12 +36,6 @@ def setConsistify(cls, config):
         except AttributeError:
             raise pgConfigError("trans", trans)
 
-        dqO = config["RHS"]["diffOrder"]
-        try:
-            cls.dqdxyz = getattr(compute.utils, f"dq{dqO}FD")
-        except AttributeError:
-            raise pgConfigError("diffOrder", f"dq{dqO}FD")
-        cls.commList += ["dqdx", "dqdy", "dqdz"]
         # Subgrid models
         if config["RHS"]["subgrid"] is not None:
             sgs = config["RHS"]["subgrid"]
@@ -53,7 +47,6 @@ def setConsistify(cls, config):
             cls.sgs = null
     else:
         cls.trans = null
-        cls.dqdxyz = null
         cls.sgs = null
 
     # Switching function between primary and secondary advective fluxes
@@ -96,6 +89,9 @@ def setRHS(cls, config):
     if secondary is None:
         cls.secondaryAdvFlux = null
     else:
+        assert (
+            shock is not None
+        ), "*** You set a secondary flux without a shock handler!"
         try:
             cls.secondaryAdvFlux = getattr(compute.advFlux, secondary)
         except AttributeError:
@@ -108,11 +104,17 @@ def setRHS(cls, config):
     elif shock == "hybrid":
         cls.applySecondaryAdvFlux = compute.utils.applyHybridFlux
 
-    # Diffusive fluxes
+    # Diffusive fluxes, spatial derivatives
     if config["RHS"]["diffusion"]:
+        dqO = config["RHS"]["diffOrder"]
+        try:
+            cls.dqdxyz = getattr(compute.utils, f"dq{dqO}FD")
+        except AttributeError:
+            raise pgConfigError("diffOrder", f"dq{dqO}FD")
         cls.diffFlux = compute.diffFlux.diffusiveFlux
         cls.applyDiffFlux = compute.utils.applyFlux
     else:
+        cls.dqdxyz = null
         cls.diffFlux = null
         cls.applyDiffFlux = null
 

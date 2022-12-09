@@ -22,7 +22,7 @@ def analytical(y, h, t, nu):
     return wallSpeed * y / h - 2 * wallSpeed / np.pi * np.sum(
         1.0
         / n
-        * np.exp(-(n ** 2) * np.pi ** 2 * nu * t / h ** 2)
+        * np.exp(-(n**2) * np.pi**2 * nu * t / h**2)
         * np.sin(n * np.pi * (1 - y / h))
     )
 
@@ -86,11 +86,11 @@ def simulate():
     rho = np.unique(blk.array["Q"][:, :, :, 0])[0]
     nu = mu / rho
 
-    outputTimes = [0.0005, 0.005, 0.05]
+    outputTimes = [0.0005, 0.005, 0.05, 0.5]
+    doneOutput = [False for _ in range(len(outputTimes))]
 
-    doneOutput = [False, False, False]
     outputU = []
-    simTme = max(outputTimes) * h ** 2 / nu
+    simTme = max(outputTimes) * h**2 / nu
     while mb.tme < simTme:
         mb.step(config["timeIntegration"]["dt"])
 
@@ -101,7 +101,7 @@ def simulate():
                 raise ValueError("Nan detected")
 
         for i, oT in enumerate(outputTimes):
-            t = oT * h ** 2 / nu
+            t = oT * h**2 / nu
             if mb.tme >= t and not doneOutput[i]:
                 blk.updateHostView(["q"])
                 outputU.append(blk.array["q"][ng, ng:-ng, ng, 1].copy())
@@ -113,7 +113,7 @@ def simulate():
     for oT in outputTimes:
         sol = []
         for yy in yplot:
-            t = oT * h ** 2 / nu
+            t = oT * h**2 / nu
             sol.append(analytical(yy, h, t, nu))
         anSol.append(np.array(sol))
 
