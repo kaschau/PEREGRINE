@@ -44,9 +44,9 @@ Gives access to the primitive variables.
 | **qh**    | **Thermo**         |         |              |
 |           | gamma              | 0       | []           |
 |           | cp                 | 1       | J/kg.K       |
-|           | enthalpy           | 2       | J/m^3        |
+|           | enthalpy           | 2       | J            |
 |           | c                  | 3       | m/s          |
-|           | internal energy    | 4       | J/m^3        |
+|           | internal energy    | 4       | J            |
 |           | species enthalpy\* | 5..5+ns | J/kg         |
 | **qt**    | **Transport**      |         |              |
 |           | mu                 | 0       | Pa.s         |
