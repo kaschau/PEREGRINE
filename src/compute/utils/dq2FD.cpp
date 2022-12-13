@@ -14,7 +14,7 @@ void dq2FD(block_ &b) {
   Kokkos::parallel_for(
       "2nd order spatial deriv iFaces", range_i,
       KOKKOS_LAMBDA(const int i, const int j, const int k, const int l) {
-        double dqdE = 0.5 * (b.q(i, j, k, l) - b.q(i - 1, j, k, l));
+        double dqdE = b.q(i, j, k, l) - b.q(i - 1, j, k, l);
 
         b.idqdx(i, j, k, l) =
             dqdE * 0.5 * (b.dEdx(i, j, k) + b.dEdx(i - 1, j, k));
@@ -29,7 +29,7 @@ void dq2FD(block_ &b) {
   Kokkos::parallel_for(
       "2nd order spatial deriv jFaces", range_j,
       KOKKOS_LAMBDA(const int i, const int j, const int k, const int l) {
-        double dqdN = 0.5 * (b.q(i, j, k, l) - b.q(i, j - 1, k, l));
+        double dqdN = b.q(i, j, k, l) - b.q(i, j - 1, k, l);
 
         b.jdqdx(i, j, k, l) =
             dqdN * 0.5 * (b.dNdx(i, j, k) + b.dNdx(i, j - 1, k));
@@ -44,7 +44,7 @@ void dq2FD(block_ &b) {
   Kokkos::parallel_for(
       "2nd order spatial deriv kFaces", range_k,
       KOKKOS_LAMBDA(const int i, const int j, const int k, const int l) {
-        double dqdC = 0.5 * (b.q(i, j, k, l) - b.q(i, j, k - 1, l));
+        double dqdC = b.q(i, j, k, l) - b.q(i, j, k - 1, l);
 
         b.kdqdx(i, j, k, l) =
             dqdC * 0.5 * (b.dCdx(i, j, k) + b.dCdx(i, j, k - 1));
