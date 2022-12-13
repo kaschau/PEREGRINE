@@ -41,11 +41,11 @@ void cpg(block_ &b, const thtrdat_ &th, const int &nface,
           // gamma, cp, h, e
           // So we store these as well.
 
-          const double p = b.q(i, j, k, 0);
-          const double u = b.q(i, j, k, 1);
-          const double v = b.q(i, j, k, 2);
-          const double w = b.q(i, j, k, 3);
-          const double T = b.q(i, j, k, 4);
+          const double &p = b.q(i, j, k, 0);
+          const double &u = b.q(i, j, k, 1);
+          const double &v = b.q(i, j, k, 2);
+          const double &w = b.q(i, j, k, 3);
+          const double &T = b.q(i, j, k, 4);
 #ifdef NSCOMPILE
           double Y(ns);
 #endif
@@ -144,11 +144,11 @@ void cpg(block_ &b, const thtrdat_ &th, const int &nface,
           // gamma, cp, h, e, hi
           // So we store these as well.
 
-          const double rho = b.Q(i, j, k, 0);
-          const double rhou = b.Q(i, j, k, 1);
-          const double rhov = b.Q(i, j, k, 2);
-          const double rhow = b.Q(i, j, k, 3);
-          const double rhoE = b.Q(i, j, k, 4);
+          const double &rho = b.Q(i, j, k, 0);
+          const double &rhou = b.Q(i, j, k, 1);
+          const double &rhov = b.Q(i, j, k, 2);
+          const double &rhow = b.Q(i, j, k, 3);
+          const double &rhoE = b.Q(i, j, k, 4);
 
           double p;
           double T;
