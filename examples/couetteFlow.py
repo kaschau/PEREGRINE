@@ -86,7 +86,7 @@ def simulate():
     rho = np.unique(blk.array["Q"][:, :, :, 0])[0]
     nu = mu / rho
 
-    outputTimes = [0.0005, 0.005, 0.05, 0.5]
+    outputTimes = [0.0005, 0.005, 0.05]
     doneOutput = [False for _ in range(len(outputTimes))]
 
     outputU = []
@@ -130,7 +130,7 @@ def simulate():
         ax1.plot(oA / wallSpeed, yplot / h, linewidth=0.5, color="k")
     ax1.scatter(
         np.linspace(0, 1, y.shape[0]),
-        y,
+        np.linspace(0, 1, y.shape[0]),
         marker="o",
         facecolor="None",
         edgecolor="b",
