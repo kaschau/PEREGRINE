@@ -377,6 +377,8 @@ void invertDQ(block_ &b, const double &dt, const thtrdat_ &th,
         double U = abs(sqrt(pow(u, 2.0) + pow(v, 2.0) + pow(w, 2.0)));
         double eps = 1.0e-5;
         double Ur;
+
+        // Ideal gas reference velocity
         if (U < eps * c) {
           Ur = eps * c;
         } else if (U > eps * c && U < c) {
@@ -384,6 +386,13 @@ void invertDQ(block_ &b, const double &dt, const thtrdat_ &th,
         } else {
           Ur = c;
         }
+        // // Incompressible reference velocity
+        // double Umax = 5.0; \\ <- Case specific
+        // if (U < epc) {
+        //   Ur = eps * Umax;
+        // } else {
+        //   Ur = U;
+        // }
 
         // Limit reference velocity by viscosity
         if (viscous) {
