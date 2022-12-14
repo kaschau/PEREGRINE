@@ -87,7 +87,7 @@ void diffusiveFlux(block_ &b) {
                            q;
 
         // Species
-        double gradYk, Dk, Vc = 0.0;
+        double Dk, Vc = 0.0;
         double gradYns = 0.0;
         double rho = 0.5 * (b.Q(i, j, k, 0) + b.Q(i - 1, j, k, 0));
         // Compute the species flux and correction term \sum(k=1,ns) Dk*gradYk
@@ -96,8 +96,8 @@ void diffusiveFlux(block_ &b) {
           const double &dYdx = b.idqdx(i, j, k, 5 + n);
           const double &dYdy = b.idqdy(i, j, k, 5 + n);
           const double &dYdz = b.idqdz(i, j, k, 5 + n);
-          gradYk = (dYdx * b.isx(i, j, k) + dYdy * b.isy(i, j, k) +
-                    dYdz * b.isz(i, j, k));
+          const double gradYk = (dYdx * b.isx(i, j, k) + dYdy * b.isy(i, j, k) +
+                                 dYdz * b.isz(i, j, k));
           gradYns -= gradYk;
           Vc += Dk * gradYk;
           b.iF(i, j, k, 5 + n) = -rho * Dk * gradYk;
@@ -121,8 +121,7 @@ void diffusiveFlux(block_ &b) {
         // Apply the n=ns species to thermal diffusion
         Yns = fmax(Yns, 0.0);
         hk = 0.5 * (b.qh(i, j, k, b.ne) + b.qh(i - 1, j, k, b.ne));
-        b.iF(i, j, k, 4) +=
-            (-rho * Dk * gradYns + Yns * rho * Vc) * hk * b.iS(i, j, k);
+        b.iF(i, j, k, 4) += (-rho * Dk * gradYns + Yns * rho * Vc) * hk;
       });
 
   //-------------------------------------------------------------------------------------------|
@@ -206,7 +205,7 @@ void diffusiveFlux(block_ &b) {
                            q;
 
         // Species
-        double gradYk, Dk, Vc = 0.0;
+        double Dk, Vc = 0.0;
         double gradYns = 0.0;
         double rho = 0.5 * (b.Q(i, j, k, 0) + b.Q(i, j - 1, k, 0));
         // Compute the species flux and correction term \sum(k=1,ns) Dk*gradYk
@@ -215,8 +214,8 @@ void diffusiveFlux(block_ &b) {
           const double &dYdx = b.jdqdx(i, j, k, 5 + n);
           const double &dYdy = b.jdqdy(i, j, k, 5 + n);
           const double &dYdz = b.jdqdz(i, j, k, 5 + n);
-          gradYk = (dYdx * b.jsx(i, j, k) + dYdy * b.jsy(i, j, k) +
-                    dYdz * b.jsz(i, j, k));
+          const double gradYk = (dYdx * b.jsx(i, j, k) + dYdy * b.jsy(i, j, k) +
+                                 dYdz * b.jsz(i, j, k));
           gradYns -= gradYk;
           Vc += Dk * gradYk;
           b.jF(i, j, k, 5 + n) = -rho * Dk * gradYk;
@@ -240,8 +239,7 @@ void diffusiveFlux(block_ &b) {
         // Apply the n=ns species to thermal diffusion
         Yns = fmax(Yns, 0.0);
         hk = 0.5 * (b.qh(i, j, k, b.ne) + b.qh(i, j - 1, k, b.ne));
-        b.jF(i, j, k, 4) +=
-            (-rho * Dk * gradYns + Yns * rho * Vc) * hk * b.jS(i, j, k);
+        b.jF(i, j, k, 4) += (-rho * Dk * gradYns + Yns * rho * Vc) * hk;
       });
 
   //-------------------------------------------------------------------------------------------|
@@ -325,7 +323,7 @@ void diffusiveFlux(block_ &b) {
                            q;
 
         // Species
-        double gradYk, Dk, Vc = 0.0;
+        double Dk, Vc = 0.0;
         double gradYns = 0.0;
         double rho = 0.5 * (b.Q(i, j, k, 0) + b.Q(i, j, k - 1, 0));
         // Compute the species flux and correction term \sum(k=1,ns) Dk*gradYk
@@ -334,8 +332,8 @@ void diffusiveFlux(block_ &b) {
           const double &dYdx = b.kdqdx(i, j, k, 5 + n);
           const double &dYdy = b.kdqdy(i, j, k, 5 + n);
           const double &dYdz = b.kdqdz(i, j, k, 5 + n);
-          gradYk = (dYdx * b.ksx(i, j, k) + dYdy * b.ksy(i, j, k) +
-                    dYdz * b.ksz(i, j, k));
+          const double gradYk = (dYdx * b.ksx(i, j, k) + dYdy * b.ksy(i, j, k) +
+                                 dYdz * b.ksz(i, j, k));
           gradYns -= gradYk;
           Vc += Dk * gradYk;
           b.kF(i, j, k, 5 + n) = -rho * Dk * gradYk;
@@ -359,7 +357,6 @@ void diffusiveFlux(block_ &b) {
         // Apply the n=ns species to thermal diffusion
         Yns = fmax(Yns, 0.0);
         hk = 0.5 * (b.qh(i, j, k, b.ne) + b.qh(i, j, k - 1, b.ne));
-        b.kF(i, j, k, 4) +=
-            (-rho * Dk * gradYns + Yns * rho * Vc) * hk * b.kS(i, j, k);
+        b.kF(i, j, k, 4) += (-rho * Dk * gradYns + Yns * rho * Vc) * hk;
       });
 }
