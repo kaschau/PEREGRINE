@@ -388,7 +388,7 @@ void invertDQ(block_ &b, const double &dt, const thtrdat_ &th,
         }
         // // Incompressible reference velocity
         // double Umax = 5.0; // <- Case specific
-        // if (U < epc) {
+        // if (U < eps) {
         //   Ur = eps * Umax;
         // } else {
         //   Ur = U;
