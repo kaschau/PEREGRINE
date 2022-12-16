@@ -87,6 +87,15 @@ class configFile(frozenDict):
             },
         )
 
+        self["viscousSponge"] = frozenDict(
+            {
+                "spongeON": False,
+                "origin": [0.0, 0.0, 0.0],
+                "ending": [1.0, 0.0, 0.0],
+                "multiplier": 5.0,
+            },
+        )
+
         for key in self.keys():
             self[key]._freeze()
 
@@ -158,4 +167,13 @@ class configFile(frozenDict):
                     switch,
                     secondaryAdvFlux,
                     "\nYou set an flux switching option without a secondary flux.",
+                )
+
+        # viscous sponge check
+        if self["viscousSponge"]["spongeON"]:
+            if not self["RHS"]["diffusion"]:
+                raise pgConfigError(
+                    True,
+                    False,
+                    "\nYou turned on viscousSponge without solving for diffusion.",
                 )

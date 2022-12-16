@@ -63,4 +63,8 @@ void bindUtils(py::module_ &m) {
   utils.def("place_recvBuffer4", &place_recvBuffer4,
             "Place the recv buffer of a view", py::arg("kokkos view"),
             py::arg("face object"), py::arg("lists of slices"));
+  //    |------> viscousSponge
+  utils.def("viscousSponge", &viscousSponge, "Compute viscous multiplier",
+            py::arg("block_"), py::arg("origin"), py::arg("ending"),
+            py::arg("mult"));
 }

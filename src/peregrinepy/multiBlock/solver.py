@@ -73,6 +73,7 @@ class solver(restart):
 
         self.diffFlux = None
         self.applyDiffFlux = None
+        self.viscousSponge = None
 
         # Explicit chemistry is solved for in RHS,
         #  so we want to keep implicit chemistry
