@@ -18,9 +18,9 @@ void viscousSponge(block_ &b, const std::vector<double> &origin,
         double vectorY = yc - origin[1];
         double vectorZ = zc - origin[2];
 
-        double spongeLength = pow(ending[0] - origin[0], 2.0) +
-                              pow(ending[1] - origin[1], 2.0) +
-                              pow(ending[2] - origin[2], 2.0);
+        double spongeLength = sqrt(pow(ending[0] - origin[0], 2.0) +
+                                   pow(ending[1] - origin[1], 2.0) +
+                                   pow(ending[2] - origin[2], 2.0));
 
         double normal[3] = {
             (ending[0] - origin[0]) / spongeLength,
@@ -30,9 +30,9 @@ void viscousSponge(block_ &b, const std::vector<double> &origin,
 
         double dist =
             vectorX * normal[0] + vectorY * normal[1] + vectorZ * normal[2];
-        double multiplier = dist / spongeLength * mult;
 
-        multiplier = fmax(0.0, multiplier) + 1.0;
+        double multiplier = dist / spongeLength * (mult - 1.0);
+        multiplier = 1.0 + fmax(0.0, multiplier);
 
         b.qt(i, j, k, 0) *= multiplier;
       });
