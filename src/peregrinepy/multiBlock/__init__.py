@@ -118,6 +118,11 @@ def setRHS(cls, config):
         cls.diffFlux = null
         cls.applyDiffFlux = null
 
+    if config["viscousSponge"]["spongeON"]:
+        cls.viscousSponge = compute.utils.viscousSponge
+    else:
+        cls.viscousSponge = null
+
     # Chemical source terms
     if config["thermochem"]["chemistry"]:
         mech = config["thermochem"]["mechanism"]
