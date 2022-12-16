@@ -39,5 +39,13 @@ def consistify(mb, given="cons"):
         # Update switch
         mb.switch(blk)
 
+        # Apply viscous sponge
+        mb.viscousSponge(
+            blk,
+            mb.config["viscousSponge"]["origin"],
+            mb.config["viscousSponge"]["ending"],
+            mb.config["viscousSponge"]["multiplier"],
+        )
+
     # Communicate necessary halos
     communicate(mb, mb.commList)
