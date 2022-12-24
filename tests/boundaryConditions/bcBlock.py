@@ -25,18 +25,16 @@ def create(bc, adv, spdata):
     blk = mb[0]
     for face in blk.faces:
         face.bcType = bc
-        face.array["qBcVals"] = np.random.random(blk.ne)
-        face.array["QBcVals"] = np.random.random(blk.ne)
 
     qshape = blk.array["q"][:, :, :, 0].shape
-    p = np.random.uniform(low=101325.0 * 0.1, high=101325 * 10)
+    p = np.random.uniform(low=101325.0 * 0.1, high=101325 * 10, size=qshape)
     u = np.random.uniform(low=-200, high=200, size=qshape)
     v = np.random.uniform(low=-200, high=200, size=qshape)
     w = np.random.uniform(low=-200, high=200, size=qshape)
-    T = np.random.uniform(low=200, high=3000)
+    T = np.random.uniform(low=200, high=3000, size=qshape)
     if blk.ns > 1:
-        Y = np.random.uniform(low=0.0, high=1.0, size=(blk.ns - 1))
-        Y = Y / np.sum(Y)
+        Y = np.random.uniform(low=0.0, high=1.0, size=qshape + (blk.ns - 1,))
+        Y = Y / np.sum(Y, axis=-1)[:, :, :, np.newaxis]
 
     blk.array["q"][:, :, :, 0] = p
     blk.array["q"][:, :, :, 1] = u
