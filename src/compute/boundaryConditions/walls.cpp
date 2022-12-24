@@ -223,6 +223,8 @@ void adiabaticSlipWall(
         KOKKOS_LAMBDA(const int i, const int j, const int l) {
           // negate all gradients
           dqdx0(i, j, l) = -dqdx1(i, j, l);
+          dqdy0(i, j, l) = -dqdy1(i, j, l);
+          dqdz0(i, j, l) = -dqdz1(i, j, l);
         });
   }
 }
@@ -694,21 +696,22 @@ void isoTMovingWall(
     Kokkos::parallel_for(
         "Iso T moving wall postDqDxyz terms", range_face,
         KOKKOS_LAMBDA(const int i, const int j) {
-          // extrapolate velocity gradients
-          // extrapolate temp gradient
-          dqdx0(i, j, 0) = 2.0 * dqdx1(i, j, 0) - dqdx2(i, j, 0);
+          // negate pressure gradient
+          dqdx0(i, j, 0) = -dqdx1(i, j, 0);
+          dqdy0(i, j, 0) = -dqdy1(i, j, 0);
+          dqdz0(i, j, 0) = -dqdz1(i, j, 0);
+
+          // extrapolate pressure,velocity, temperature gradients
           dqdx0(i, j, 1) = 2.0 * dqdx1(i, j, 1) - dqdx2(i, j, 1);
           dqdx0(i, j, 2) = 2.0 * dqdx1(i, j, 2) - dqdx2(i, j, 2);
           dqdx0(i, j, 3) = 2.0 * dqdx1(i, j, 3) - dqdx2(i, j, 3);
           dqdx0(i, j, 4) = 2.0 * dqdx1(i, j, 4) - dqdx2(i, j, 4);
 
-          dqdy0(i, j, 0) = 2.0 * dqdy1(i, j, 0) - dqdy2(i, j, 0);
           dqdy0(i, j, 1) = 2.0 * dqdy1(i, j, 1) - dqdy2(i, j, 1);
           dqdy0(i, j, 2) = 2.0 * dqdy1(i, j, 2) - dqdy2(i, j, 2);
           dqdy0(i, j, 3) = 2.0 * dqdy1(i, j, 3) - dqdy2(i, j, 3);
           dqdy0(i, j, 4) = 2.0 * dqdy1(i, j, 4) - dqdy2(i, j, 4);
 
-          dqdz0(i, j, 0) = 2.0 * dqdz1(i, j, 0) - dqdz2(i, j, 0);
           dqdz0(i, j, 1) = 2.0 * dqdz1(i, j, 1) - dqdz2(i, j, 1);
           dqdz0(i, j, 2) = 2.0 * dqdz1(i, j, 2) - dqdz2(i, j, 2);
           dqdz0(i, j, 3) = 2.0 * dqdz1(i, j, 3) - dqdz2(i, j, 3);
