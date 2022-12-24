@@ -131,17 +131,9 @@ PYBIND11_MODULE(compute, m) {
       .def_readwrite("dQ", &block_::dQ)
 
       // Spatial derivative of prim array
-      .def_readwrite("idqdx", &block_::idqdx)
-      .def_readwrite("idqdy", &block_::idqdy)
-      .def_readwrite("idqdz", &block_::idqdz)
-
-      .def_readwrite("jdqdx", &block_::jdqdx)
-      .def_readwrite("jdqdy", &block_::jdqdy)
-      .def_readwrite("jdqdz", &block_::jdqdz)
-
-      .def_readwrite("kdqdx", &block_::kdqdx)
-      .def_readwrite("kdqdy", &block_::kdqdy)
-      .def_readwrite("kdqdz", &block_::kdqdz)
+      .def_readwrite("dqdx", &block_::dqdx)
+      .def_readwrite("dqdy", &block_::dqdy)
+      .def_readwrite("dqdz", &block_::dqdz)
 
       // Thermo,transport variables
       .def_readwrite("qh", &block_::qh)

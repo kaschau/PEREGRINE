@@ -55,7 +55,8 @@ class solver(restart):
         #########################################
         # We need the following in order to use
         # consisify method
-        self.commList = []
+        self.dqdxyzCommList = []
+        self.phiCommList = []
         self.eos = None
         self.trans = None
         self.dqdxyz = None

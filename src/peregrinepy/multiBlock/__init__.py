@@ -62,7 +62,7 @@ def setConsistify(cls, config):
         except AttributeError:
             raise pgConfigError("switchAdvFlux", switch)
 
-        cls.commList += ["phi"]
+        cls.phiCommList += ["phi"]
 
 
 #########################################
@@ -113,6 +113,7 @@ def setRHS(cls, config):
             raise pgConfigError("diffOrder", f"dq{dqO}FD")
         cls.diffFlux = compute.diffFlux.diffusiveFlux
         cls.applyDiffFlux = compute.utils.applyFlux
+        cls.dqdxyzCommList += ["dqdx", "dqdy", "dqdz"]
     else:
         cls.dqdxyz = null
         cls.diffFlux = null

@@ -63,11 +63,6 @@ class TestPeriodics:
         mb.computeMetrics(config["RHS"]["diffOrder"])
 
         qshape = blk.array["q"][:, :, :, 0].shape
-        # NOTE: Nov, 2021 KAS: The currently un protected extrapolation of
-        # boundary conditions were making the constantMassFluxInlet test case
-        # behave poorly (negative species, etc.). So instead of random physical
-        # values everywhere we narrow the scope a bit. Maybe down the line
-        # we see how necessary it is to protect those BC extraplations.
         p = np.random.uniform(low=101325 * 0.9, high=101325 * 1.1)
         u = np.random.uniform(low=1, high=1000, size=qshape)
         v = np.random.uniform(low=1, high=1000, size=qshape)
@@ -100,9 +95,12 @@ class TestPeriodics:
         ny = blk.array["kny"]
         nz = blk.array["knz"]
 
+        dqdx = blk.array["dqdx"]
+        dqdy = blk.array["dqdy"]
+        dqdz = blk.array["dqdz"]
+
         ng = blk.ng
         for g in range(ng):
-
             # face5 halo compares to interior on side 6
             s5 = np.s_[ng:-ng, ng:-ng, g]
             s6c = np.s_[ng:-ng, ng:-ng, -2 * ng + g]
@@ -120,6 +118,7 @@ class TestPeriodics:
                 np.sum(normals5 * velo5, axis=1), np.sum(normals6 * velo6, axis=1)
             )
 
+        for g in range(ng):
             # Now check the other way
             # face6 halo compares to interior on side 5
             s6 = np.s_[ng:-ng, ng:-ng, -(g + 1)]
@@ -136,4 +135,68 @@ class TestPeriodics:
 
             assert np.allclose(
                 np.sum(normals6 * velo6, axis=1), np.sum(normals5 * velo5, axis=1)
+            )
+
+        # check the gradients
+        mb.dqdxyz(blk)
+        pg.mpiComm.communicate(mb, ["dqdx", "dqdy", "dqdz"])
+        for face in blk.faces:
+            face.bcFunc(blk, face, mb.eos, mb.thtrdat, "postDqDxyz", mb.tme)
+
+        blk.updateHostView(["dqdx", "dqdy", "dqdz"])
+
+        # only need the first halo cell
+        g = ng - 1
+        s5 = np.s_[ng:-ng, ng:-ng, g]
+        s6c = np.s_[ng:-ng, ng:-ng, -2 * ng + g]
+        s6f = np.s_[ng:-ng, ng:-ng, -2 * ng - 1 + g]
+        s6 = np.s_[ng:-ng, ng:-ng, -(g + 1)]
+        s5c = np.s_[ng:-ng, ng:-ng, 2 * ng - g - 1]
+        s5f = np.s_[ng:-ng, ng:-ng, 2 * ng - g]
+        for i in range(blk.ne):
+            normals6 = np.column_stack((nx[s6].ravel(), ny[s6].ravel(), nz[s6].ravel()))
+            normals5 = np.column_stack(
+                (nx[s5f].ravel(), ny[s5f].ravel(), nz[s5f].ravel())
+            )
+            dqdx6 = np.column_stack(
+                (
+                    dqdx[s6][:, :, i].ravel(),
+                    dqdy[s6][:, :, i].ravel(),
+                    dqdz[s6][:, :, i].ravel(),
+                )
+            )
+
+            dqdx5 = np.column_stack(
+                (
+                    dqdx[s5c][:, :, i].ravel(),
+                    dqdy[s5c][:, :, i].ravel(),
+                    dqdz[s5c][:, :, i].ravel(),
+                )
+            )
+            assert np.allclose(
+                np.sum(normals6 * dqdx6, axis=1), np.sum(normals5 * dqdx5, axis=1)
+            )
+
+            # now go the other way
+            normals5 = np.column_stack((nx[s5].ravel(), ny[s5].ravel(), nz[s5].ravel()))
+            normals6 = np.column_stack(
+                (nx[s6f].ravel(), ny[s6f].ravel(), nz[s6f].ravel())
+            )
+            dqdx5 = np.column_stack(
+                (
+                    dqdx[s5][:, :, i].ravel(),
+                    dqdy[s5][:, :, i].ravel(),
+                    dqdz[s5][:, :, i].ravel(),
+                )
+            )
+
+            dqdx6 = np.column_stack(
+                (
+                    dqdx[s6c][:, :, i].ravel(),
+                    dqdy[s6c][:, :, i].ravel(),
+                    dqdz[s6c][:, :, i].ravel(),
+                )
+            )
+            assert np.allclose(
+                np.sum(normals5 * dqdx5, axis=1), np.sum(normals6 * dqdx6, axis=1)
             )

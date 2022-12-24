@@ -54,6 +54,16 @@ def test_constantVelocitySubsonicInlet(my_setup, adv, spdata):
                         face.array["qBcVals"][:, :, 5 + n],
                     )
 
+        # gradients
+        face.bcFunc(blk, face, mb.eos, mb.thtrdat, "postDqDxyz", mb.tme)
+        blk.updateHostView(["dqdx", "dqdy", "dqdz"])
+
+        s0_ = face.s0_[0]
+        # neumann all gradients
+        assert np.allclose(blk.array["dqdx"][s0_], blk.array["dqdx"][face.s1_])
+        assert np.allclose(blk.array["dqdy"][s0_], blk.array["dqdy"][face.s1_])
+        assert np.allclose(blk.array["dqdz"][s0_], blk.array["dqdz"][face.s1_])
+
 
 def test_supersonicInlet(my_setup, adv, spdata):
 
@@ -89,6 +99,16 @@ def test_supersonicInlet(my_setup, adv, spdata):
                         face.array["qBcVals"][:, :, 5 + n],
                     )
 
+        # gradients
+        face.bcFunc(blk, face, mb.eos, mb.thtrdat, "postDqDxyz", mb.tme)
+        blk.updateHostView(["dqdx", "dqdy", "dqdz"])
+
+        s0_ = face.s0_[0]
+        # neumann all gradients
+        assert np.allclose(blk.array["dqdx"][s0_], blk.array["dqdx"][face.s1_])
+        assert np.allclose(blk.array["dqdy"][s0_], blk.array["dqdy"][face.s1_])
+        assert np.allclose(blk.array["dqdz"][s0_], blk.array["dqdz"][face.s1_])
+
 
 def test_constantMassFluxSubsonicInlet(my_setup, adv, spdata):
 
@@ -122,7 +142,7 @@ def test_constantMassFluxSubsonicInlet(my_setup, adv, spdata):
             # extrapolate pressure
             assert np.allclose(p[s0_], 2.0 * p[face.s1_] - p[s2_])
 
-            # apply T and Ns in face
+            # apply T and Ns in halo
             assert np.allclose(T[s0_], face.array["qBcVals"][:, :, 4])
 
             if blk.ns > 1:
@@ -142,7 +162,14 @@ def test_constantMassFluxSubsonicInlet(my_setup, adv, spdata):
         faceArea = np.sum(S)
         targetMassFlux = face.array["QBcVals"][0, 0, 0] * faceArea
         computedMassFlux = mult * np.sum(F)
+        assert abs(targetMassFlux - computedMassFlux) / targetMassFlux * 100.0 < 1e-3
+
+        # gradients
+        face.bcFunc(blk, face, mb.eos, mb.thtrdat, "postDqDxyz", mb.tme)
+        blk.updateHostView(["dqdx", "dqdy", "dqdz"])
 
         s0_ = face.s0_[0]
-
-        assert abs(targetMassFlux - computedMassFlux) / targetMassFlux * 100.0 < 1e-3
+        # neumann all gradients
+        assert np.allclose(blk.array["dqdx"][s0_], blk.array["dqdx"][face.s1_])
+        assert np.allclose(blk.array["dqdy"][s0_], blk.array["dqdy"][face.s1_])
+        assert np.allclose(blk.array["dqdz"][s0_], blk.array["dqdz"][face.s1_])

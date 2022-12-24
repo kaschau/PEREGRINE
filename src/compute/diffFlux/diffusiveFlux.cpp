@@ -30,17 +30,17 @@ void diffusiveFlux(block_ &b) {
         b.iF(i, j, k, 0) = 0.0;
 
         // Derivatives on face
-        const double &dudx = b.idqdx(i, j, k, 1);
-        const double &dvdx = b.idqdx(i, j, k, 2);
-        const double &dwdx = b.idqdx(i, j, k, 3);
+        double dudx = 0.5 * (b.dqdx(i, j, k, 1) + b.dqdx(i - 1, j, k, 1));
+        double dvdx = 0.5 * (b.dqdx(i, j, k, 2) + b.dqdx(i - 1, j, k, 2));
+        double dwdx = 0.5 * (b.dqdx(i, j, k, 3) + b.dqdx(i - 1, j, k, 3));
 
-        const double &dudy = b.idqdy(i, j, k, 1);
-        const double &dvdy = b.idqdy(i, j, k, 2);
-        const double &dwdy = b.idqdy(i, j, k, 3);
+        double dudy = 0.5 * (b.dqdy(i, j, k, 1) + b.dqdy(i - 1, j, k, 1));
+        double dvdy = 0.5 * (b.dqdy(i, j, k, 2) + b.dqdy(i - 1, j, k, 2));
+        double dwdy = 0.5 * (b.dqdy(i, j, k, 3) + b.dqdy(i - 1, j, k, 3));
 
-        const double &dudz = b.idqdz(i, j, k, 1);
-        const double &dvdz = b.idqdz(i, j, k, 2);
-        const double &dwdz = b.idqdz(i, j, k, 3);
+        double dudz = 0.5 * (b.dqdz(i, j, k, 1) + b.dqdz(i - 1, j, k, 1));
+        double dvdz = 0.5 * (b.dqdz(i, j, k, 2) + b.dqdz(i - 1, j, k, 2));
+        double dwdz = 0.5 * (b.dqdz(i, j, k, 3) + b.dqdz(i - 1, j, k, 3));
 
         // x momentum
         txx = c23 * mu * (2.0 * dudx - dvdy - dwdz);
@@ -68,9 +68,9 @@ void diffusiveFlux(block_ &b) {
 
         // energy
         //   heat conduction
-        const double &dTdx = b.idqdx(i, j, k, 4);
-        const double &dTdy = b.idqdy(i, j, k, 4);
-        const double &dTdz = b.idqdz(i, j, k, 4);
+        double dTdx = 0.5 * (b.dqdx(i, j, k, 4) + b.dqdx(i - 1, j, k, 4));
+        double dTdy = 0.5 * (b.dqdy(i, j, k, 4) + b.dqdy(i - 1, j, k, 4));
+        double dTdz = 0.5 * (b.dqdz(i, j, k, 4) + b.dqdz(i - 1, j, k, 4));
 
         q = -kappa * (dTdx * b.isx(i, j, k) + dTdy * b.isy(i, j, k) +
                       dTdz * b.isz(i, j, k));
@@ -93,11 +93,15 @@ void diffusiveFlux(block_ &b) {
         // Compute the species flux and correction term \sum(k=1,ns) Dk*gradYk
         for (int n = 0; n < b.ne - 5; n++) {
           Dk = 0.5 * (b.qt(i, j, k, 2 + n) + b.qt(i - 1, j, k, 2 + n));
-          const double &dYdx = b.idqdx(i, j, k, 5 + n);
-          const double &dYdy = b.idqdy(i, j, k, 5 + n);
-          const double &dYdz = b.idqdz(i, j, k, 5 + n);
-          const double gradYk = (dYdx * b.isx(i, j, k) + dYdy * b.isy(i, j, k) +
-                                 dYdz * b.isz(i, j, k));
+          double dYdx =
+              0.5 * (b.dqdx(i, j, k, 5 + n) + b.dqdx(i - 1, j, k, 5 + n));
+          double dYdy =
+              0.5 * (b.dqdy(i, j, k, 5 + n) + b.dqdy(i - 1, j, k, 5 + n));
+          double dYdz =
+              0.5 * (b.dqdz(i, j, k, 5 + n) + b.dqdz(i - 1, j, k, 5 + n));
+
+          double gradYk = (dYdx * b.isx(i, j, k) + dYdy * b.isy(i, j, k) +
+                           dYdz * b.isz(i, j, k));
           gradYns -= gradYk;
           Vc += Dk * gradYk;
           b.iF(i, j, k, 5 + n) = -rho * Dk * gradYk;
@@ -148,17 +152,17 @@ void diffusiveFlux(block_ &b) {
         b.jF(i, j, k, 0) = 0.0;
 
         // Spatial derivative on face
-        const double &dudx = b.jdqdx(i, j, k, 1);
-        const double &dvdx = b.jdqdx(i, j, k, 2);
-        const double &dwdx = b.jdqdx(i, j, k, 3);
+        double dudx = 0.5 * (b.dqdx(i, j, k, 1) + b.dqdx(i, j - 1, k, 1));
+        double dvdx = 0.5 * (b.dqdx(i, j, k, 2) + b.dqdx(i, j - 1, k, 2));
+        double dwdx = 0.5 * (b.dqdx(i, j, k, 3) + b.dqdx(i, j - 1, k, 3));
 
-        const double &dudy = b.jdqdy(i, j, k, 1);
-        const double &dvdy = b.jdqdy(i, j, k, 2);
-        const double &dwdy = b.jdqdy(i, j, k, 3);
+        double dudy = 0.5 * (b.dqdy(i, j, k, 1) + b.dqdy(i, j - 1, k, 1));
+        double dvdy = 0.5 * (b.dqdy(i, j, k, 2) + b.dqdy(i, j - 1, k, 2));
+        double dwdy = 0.5 * (b.dqdy(i, j, k, 3) + b.dqdy(i, j - 1, k, 3));
 
-        const double &dudz = b.jdqdz(i, j, k, 1);
-        const double &dvdz = b.jdqdz(i, j, k, 2);
-        const double &dwdz = b.jdqdz(i, j, k, 3);
+        double dudz = 0.5 * (b.dqdz(i, j, k, 1) + b.dqdz(i, j - 1, k, 1));
+        double dvdz = 0.5 * (b.dqdz(i, j, k, 2) + b.dqdz(i, j - 1, k, 2));
+        double dwdz = 0.5 * (b.dqdz(i, j, k, 3) + b.dqdz(i, j - 1, k, 3));
 
         // x momentum
         txx = c23 * mu * (2.0 * dudx - dvdy - dwdz);
@@ -186,9 +190,9 @@ void diffusiveFlux(block_ &b) {
 
         // energy
         //   heat conduction
-        const double &dTdx = b.jdqdx(i, j, k, 4);
-        const double &dTdy = b.jdqdy(i, j, k, 4);
-        const double &dTdz = b.jdqdz(i, j, k, 4);
+        double dTdx = 0.5 * (b.dqdx(i, j, k, 4) + b.dqdx(i, j - 1, k, 4));
+        double dTdy = 0.5 * (b.dqdy(i, j, k, 4) + b.dqdy(i, j - 1, k, 4));
+        double dTdz = 0.5 * (b.dqdz(i, j, k, 4) + b.dqdz(i, j - 1, k, 4));
 
         q = -kappa * (dTdx * b.jsx(i, j, k) + dTdy * b.jsy(i, j, k) +
                       dTdz * b.jsz(i, j, k));
@@ -211,11 +215,15 @@ void diffusiveFlux(block_ &b) {
         // Compute the species flux and correction term \sum(k=1,ns) Dk*gradYk
         for (int n = 0; n < b.ne - 5; n++) {
           Dk = 0.5 * (b.qt(i, j, k, 2 + n) + b.qt(i, j - 1, k, 2 + n));
-          const double &dYdx = b.jdqdx(i, j, k, 5 + n);
-          const double &dYdy = b.jdqdy(i, j, k, 5 + n);
-          const double &dYdz = b.jdqdz(i, j, k, 5 + n);
-          const double gradYk = (dYdx * b.jsx(i, j, k) + dYdy * b.jsy(i, j, k) +
-                                 dYdz * b.jsz(i, j, k));
+          double dYdx =
+              0.5 * (b.dqdx(i, j, k, 5 + n) + b.dqdx(i, j - 1, k, 5 + n));
+          double dYdy =
+              0.5 * (b.dqdy(i, j, k, 5 + n) + b.dqdy(i, j - 1, k, 5 + n));
+          double dYdz =
+              0.5 * (b.dqdz(i, j, k, 5 + n) + b.dqdz(i, j - 1, k, 5 + n));
+
+          double gradYk = (dYdx * b.jsx(i, j, k) + dYdy * b.jsy(i, j, k) +
+                           dYdz * b.jsz(i, j, k));
           gradYns -= gradYk;
           Vc += Dk * gradYk;
           b.jF(i, j, k, 5 + n) = -rho * Dk * gradYk;
@@ -266,17 +274,17 @@ void diffusiveFlux(block_ &b) {
         b.kF(i, j, k, 0) = 0.0;
 
         // Spatial derivative on face
-        const double &dudx = b.kdqdx(i, j, k, 1);
-        const double &dvdx = b.kdqdx(i, j, k, 2);
-        const double &dwdx = b.kdqdx(i, j, k, 3);
+        double dudx = 0.5 * (b.dqdx(i, j, k, 1) + b.dqdx(i, j, k - 1, 1));
+        double dvdx = 0.5 * (b.dqdx(i, j, k, 2) + b.dqdx(i, j, k - 1, 2));
+        double dwdx = 0.5 * (b.dqdx(i, j, k, 3) + b.dqdx(i, j, k - 1, 3));
 
-        const double &dudy = b.kdqdy(i, j, k, 1);
-        const double &dvdy = b.kdqdy(i, j, k, 2);
-        const double &dwdy = b.kdqdy(i, j, k, 3);
+        double dudy = 0.5 * (b.dqdy(i, j, k, 1) + b.dqdy(i, j, k - 1, 1));
+        double dvdy = 0.5 * (b.dqdy(i, j, k, 2) + b.dqdy(i, j, k - 1, 2));
+        double dwdy = 0.5 * (b.dqdy(i, j, k, 3) + b.dqdy(i, j, k - 1, 3));
 
-        const double &dudz = b.kdqdz(i, j, k, 1);
-        const double &dvdz = b.kdqdz(i, j, k, 2);
-        const double &dwdz = b.kdqdz(i, j, k, 3);
+        double dudz = 0.5 * (b.dqdz(i, j, k, 1) + b.dqdz(i, j, k - 1, 1));
+        double dvdz = 0.5 * (b.dqdz(i, j, k, 2) + b.dqdz(i, j, k - 1, 2));
+        double dwdz = 0.5 * (b.dqdz(i, j, k, 3) + b.dqdz(i, j, k - 1, 3));
 
         // x momentum
         txx = c23 * mu * (2.0 * dudx - dvdy - dwdz);
@@ -304,9 +312,9 @@ void diffusiveFlux(block_ &b) {
 
         // energy
         //   heat conduction
-        const double &dTdx = b.kdqdx(i, j, k, 4);
-        const double &dTdy = b.kdqdy(i, j, k, 4);
-        const double &dTdz = b.kdqdz(i, j, k, 4);
+        double dTdx = 0.5 * (b.dqdx(i, j, k, 4) + b.dqdx(i, j, k - 1, 4));
+        double dTdy = 0.5 * (b.dqdy(i, j, k, 4) + b.dqdy(i, j, k - 1, 4));
+        double dTdz = 0.5 * (b.dqdz(i, j, k, 4) + b.dqdz(i, j, k - 1, 4));
 
         q = -kappa * (dTdx * b.ksx(i, j, k) + dTdy * b.ksy(i, j, k) +
                       dTdz * b.ksz(i, j, k));
@@ -329,11 +337,14 @@ void diffusiveFlux(block_ &b) {
         // Compute the species flux and correction term \sum(k=1,ns) Dk*gradYk
         for (int n = 0; n < b.ne - 5; n++) {
           Dk = 0.5 * (b.qt(i, j, k, 2 + n) + b.qt(i, j, k - 1, 2 + n));
-          const double &dYdx = b.kdqdx(i, j, k, 5 + n);
-          const double &dYdy = b.kdqdy(i, j, k, 5 + n);
-          const double &dYdz = b.kdqdz(i, j, k, 5 + n);
-          const double gradYk = (dYdx * b.ksx(i, j, k) + dYdy * b.ksy(i, j, k) +
-                                 dYdz * b.ksz(i, j, k));
+          double dYdx =
+              0.5 * (b.dqdx(i, j, k, 5 + n) + b.dqdx(i, j, k - 1, 5 + n));
+          double dYdy =
+              0.5 * (b.dqdy(i, j, k, 5 + n) + b.dqdy(i, j, k - 1, 5 + n));
+          double dYdz =
+              0.5 * (b.dqdz(i, j, k, 5 + n) + b.dqdz(i, j, k - 1, 5 + n));
+          double gradYk = (dYdx * b.ksx(i, j, k) + dYdy * b.ksy(i, j, k) +
+                           dYdz * b.ksz(i, j, k));
           gradYns -= gradYk;
           Vc += Dk * gradYk;
           b.kF(i, j, k, 5 + n) = -rho * Dk * gradYk;

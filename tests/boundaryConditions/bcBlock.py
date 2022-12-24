@@ -49,6 +49,8 @@ def create(bc, adv, spdata):
 
     mb.eos(blk, mb.thtrdat, 0, "prims")
 
+    mb.dqdxyz(blk)
+
     if blk.ns > 1:
         Ybc = np.random.uniform(low=0.0, high=1.0, size=blk.ns)
         Ybc = Ybc / np.sum(Ybc)
