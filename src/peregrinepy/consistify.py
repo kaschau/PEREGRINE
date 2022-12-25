@@ -32,9 +32,6 @@ def consistify(mb, given="cons"):
         # Update transport properties
         mb.trans(blk, mb.thtrdat, -1)
 
-        # Apply subgrid model
-        mb.sgs(blk)
-
         # Update switch
         mb.switch(blk)
 

@@ -28,7 +28,7 @@ def setConsistify(cls, config):
     except AttributeError:
         raise pgConfigError("eos", eos)
 
-    # Transport properties, subgrid models.
+    # Transport properties.
     if config["RHS"]["diffusion"]:
         trans = config["thermochem"]["trans"]
         try:
@@ -36,18 +36,8 @@ def setConsistify(cls, config):
         except AttributeError:
             raise pgConfigError("trans", trans)
 
-        # Subgrid models
-        if config["RHS"]["subgrid"] is not None:
-            sgs = config["RHS"]["subgrid"]
-            try:
-                cls.sgs = getattr(compute.subgrid, sgs)
-            except AttributeError:
-                raise pgConfigError("sgs", sgs)
-        else:
-            cls.sgs = null
     else:
         cls.trans = null
-        cls.sgs = null
 
     # Switching function between primary and secondary advective fluxes
     #  If we aren't using a secondary flux function, we rely on the
@@ -104,18 +94,29 @@ def setRHS(cls, config):
     elif shock == "hybrid":
         cls.applySecondaryAdvFlux = compute.utils.applyHybridFlux
 
-    # Diffusive fluxes, spatial derivatives
+    # spatial derivatives, subgrid mode, diffusive fluxes
     if config["RHS"]["diffusion"]:
         dqO = config["RHS"]["diffOrder"]
         try:
             cls.dqdxyz = getattr(compute.utils, f"dq{dqO}FD")
         except AttributeError:
             raise pgConfigError("diffOrder", f"dq{dqO}FD")
+
+        # Subgrid models
+        if config["RHS"]["subgrid"] is not None:
+            sgs = config["RHS"]["subgrid"]
+            try:
+                cls.sgs = getattr(compute.subgrid, sgs)
+            except AttributeError:
+                raise pgConfigError("sgs", sgs)
+        else:
+            cls.sgs = null
         cls.diffFlux = compute.diffFlux.diffusiveFlux
         cls.applyDiffFlux = compute.utils.applyFlux
-        cls.dqdxyzCommList += ["dqdx", "dqdy", "dqdz"]
+
     else:
         cls.dqdxyz = null
+        cls.sgs = null
         cls.diffFlux = null
         cls.applyDiffFlux = null
 

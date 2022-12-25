@@ -23,10 +23,13 @@ def RHS(mb):
 
             # Update spatial derivatives
             mb.dqdxyz(blk)
-            communicate(mb, mb.dqdxyzCommList)
+            communicate(mb, ["dqdx", "dqdy", "dqdz"])
             # Apply spatial derivative boundary conditions
             for face in blk.faces:
                 face.bcFunc(blk, face, mb.eos, mb.thtrdat, "postDqDxyz", mb.tme)
+
+            # Apply subgrid model (must be after dqdxyz)
+            mb.sgs(blk)
 
             # Diffusive fluxes
             mb.diffFlux(blk)
