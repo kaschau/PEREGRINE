@@ -32,7 +32,7 @@ void viscousSponge(block_ &b, const std::vector<double> &origin,
             vectorX * normal[0] + vectorY * normal[1] + vectorZ * normal[2];
 
         double multiplier = dist / spongeLength * (mult - 1.0);
-        multiplier = 1.0 + fmax(0.0, multiplier);
+        multiplier = 1.0 + fmin(fmax(0.0, multiplier), mult);
 
         b.qt(i, j, k, 0) *= multiplier;
       });
