@@ -104,7 +104,7 @@ def simulate():
     yc = blk.array["yc"]
     zc = blk.array["zc"]
 
-    blk.array["q"][:, :, :, 0] = 1 / gamma + (rho0 * M0 ** 2 / 16.0) * (
+    blk.array["q"][:, :, :, 0] = 1 / gamma + (rho0 * M0**2 / 16.0) * (
         np.cos(2 * xc) + np.cos(2 * yc)
     ) * (np.cos(2 * zc) + 2.0)
     blk.array["q"][:, :, :, 1] = M0 * np.sin(xc) * np.cos(yc) * np.cos(zc)
