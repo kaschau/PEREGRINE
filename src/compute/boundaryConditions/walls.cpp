@@ -8,8 +8,8 @@
 // Strategy for wall halo velocities:
 //  For euler boundary conditions, we make all walls
 //  slip walls. This is for computation of inviscid fluxes.
-//  Then we apply the viscous bcs and make no slip walls
-//  correct, so that velocity gradients will be correct
+//  Then we apply the viscous bcs ("preDqDxyz")and make no
+//  slip walls correct, so that velocity gradients will be correct
 //  on no slip wall faces.
 
 void adiabaticNoSlipWall(
@@ -74,7 +74,7 @@ void adiabaticNoSlipWall(
     }
     eos(b, th, face._nface, "prims");
 
-  } else if (terms.compare("viscous") == 0) {
+  } else if (terms.compare("preDqDxyz") == 0) {
 
     threeDsubview q1 = getHaloSlice(b.q, face._nface, s1);
     MDRange2 range_face = MDRange2({0, 0}, {q1.extent(0), q1.extent(1)});
@@ -86,7 +86,7 @@ void adiabaticNoSlipWall(
       threeDsubview q2 = getHaloSlice(b.q, face._nface, s2);
 
       Kokkos::parallel_for(
-          "Adia no slip wall euler terms", range_face,
+          "Adia no slip wall preDqDxyz terms", range_face,
           KOKKOS_LAMBDA(const int i, const int j) {
             // flip velo on wall
             q0(i, j, 1) = -q1(i, j, 1);
@@ -94,6 +94,53 @@ void adiabaticNoSlipWall(
             q0(i, j, 3) = -q1(i, j, 3);
           });
     }
+  } else if (terms.compare("postDqDxyz") == 0) {
+
+    // Only applied to first halo slice
+    threeDsubview dqdx0 = getHaloSlice(b.dqdx, face._nface, s0);
+    threeDsubview dqdy0 = getHaloSlice(b.dqdy, face._nface, s0);
+    threeDsubview dqdz0 = getHaloSlice(b.dqdz, face._nface, s0);
+
+    threeDsubview dqdx1 = getHaloSlice(b.dqdx, face._nface, s1);
+    threeDsubview dqdy1 = getHaloSlice(b.dqdy, face._nface, s1);
+    threeDsubview dqdz1 = getHaloSlice(b.dqdz, face._nface, s1);
+
+    threeDsubview dqdx2 = getHaloSlice(b.dqdx, face._nface, s2);
+    threeDsubview dqdy2 = getHaloSlice(b.dqdy, face._nface, s2);
+    threeDsubview dqdz2 = getHaloSlice(b.dqdz, face._nface, s2);
+
+    MDRange2 range_face = MDRange2({0, 0}, {dqdx1.extent(0), dqdx1.extent(1)});
+    Kokkos::parallel_for(
+        "Adia no slip postDqDxyz terms", range_face,
+        KOKKOS_LAMBDA(const int i, const int j) {
+          // negate pressure,  extrapolate velocity gradients
+          dqdx0(i, j, 0) = -dqdx1(i, j, 0);
+          dqdx0(i, j, 1) = 2.0 * dqdx1(i, j, 1) - dqdx2(i, j, 1);
+          dqdx0(i, j, 2) = 2.0 * dqdx1(i, j, 2) - dqdx2(i, j, 2);
+          dqdx0(i, j, 3) = 2.0 * dqdx1(i, j, 3) - dqdx2(i, j, 3);
+
+          dqdy0(i, j, 0) = -dqdy1(i, j, 0);
+          dqdy0(i, j, 1) = 2.0 * dqdy1(i, j, 1) - dqdy2(i, j, 1);
+          dqdy0(i, j, 2) = 2.0 * dqdy1(i, j, 2) - dqdy2(i, j, 2);
+          dqdy0(i, j, 3) = 2.0 * dqdy1(i, j, 3) - dqdy2(i, j, 3);
+
+          dqdz0(i, j, 0) = -dqdz1(i, j, 0);
+          dqdz0(i, j, 1) = 2.0 * dqdz1(i, j, 1) - dqdz2(i, j, 1);
+          dqdz0(i, j, 2) = 2.0 * dqdz1(i, j, 2) - dqdz2(i, j, 2);
+          dqdz0(i, j, 3) = 2.0 * dqdz1(i, j, 3) - dqdz2(i, j, 3);
+
+          // negate temp and species gradient (so gradient evaluates to zero
+          // on wall)
+          dqdx0(i, j, 4) = -dqdx1(i, j, 4);
+          dqdy0(i, j, 4) = -dqdy1(i, j, 4);
+          dqdz0(i, j, 4) = -dqdz1(i, j, 4);
+
+          for (int n = 5; n < b.ne; n++) {
+            dqdx0(i, j, n) = -dqdx1(i, j, n);
+            dqdy0(i, j, n) = -dqdy1(i, j, n);
+            dqdz0(i, j, n) = -dqdz1(i, j, n);
+          }
+        });
   }
 }
 
@@ -157,6 +204,28 @@ void adiabaticSlipWall(
           });
     }
     eos(b, th, face._nface, "prims");
+  } else if (terms.compare("postDqDxyz") == 0) {
+
+    // Only applied to first halo slice
+    threeDsubview dqdx0 = getHaloSlice(b.dqdx, face._nface, s0);
+    threeDsubview dqdy0 = getHaloSlice(b.dqdy, face._nface, s0);
+    threeDsubview dqdz0 = getHaloSlice(b.dqdz, face._nface, s0);
+
+    threeDsubview dqdx1 = getHaloSlice(b.dqdx, face._nface, s1);
+    threeDsubview dqdy1 = getHaloSlice(b.dqdy, face._nface, s1);
+    threeDsubview dqdz1 = getHaloSlice(b.dqdz, face._nface, s1);
+
+    MDRange3 range_face =
+        MDRange3({0, 0, 0}, {static_cast<long>(dqdx1.extent(0)),
+                             static_cast<long>(dqdx1.extent(1)), b.ne});
+    Kokkos::parallel_for(
+        "Adia slip visc terms", range_face,
+        KOKKOS_LAMBDA(const int i, const int j, const int l) {
+          // negate all gradients
+          dqdx0(i, j, l) = -dqdx1(i, j, l);
+          dqdy0(i, j, l) = -dqdy1(i, j, l);
+          dqdz0(i, j, l) = -dqdz1(i, j, l);
+        });
   }
 }
 
@@ -220,7 +289,7 @@ void adiabaticMovingWall(
     }
     eos(b, th, face._nface, "prims");
 
-  } else if (terms.compare("viscous") == 0) {
+  } else if (terms.compare("preDqDxyz") == 0) {
 
     threeDsubview q1 = getHaloSlice(b.q, face._nface, s1);
     MDRange2 range_face = MDRange2({0, 0}, {q1.extent(0), q1.extent(1)});
@@ -229,7 +298,7 @@ void adiabaticMovingWall(
 
       threeDsubview q0 = getHaloSlice(b.q, face._nface, s0);
       Kokkos::parallel_for(
-          "Adia moving wall viscous terms", range_face,
+          "Adia moving wall preDqDxyz terms", range_face,
           KOKKOS_LAMBDA(const int i, const int j) {
             // apply velo to face
             q0(i, j, 1) = 2.0 * face.qBcVals(i, j, 1) - q1(i, j, 1);
@@ -237,6 +306,52 @@ void adiabaticMovingWall(
             q0(i, j, 3) = 2.0 * face.qBcVals(i, j, 3) - q1(i, j, 3);
           });
     }
+  } else if (terms.compare("postDqDxyz") == 0) {
+
+    threeDsubview dqdx0 = getHaloSlice(b.dqdx, face._nface, s0);
+    threeDsubview dqdy0 = getHaloSlice(b.dqdy, face._nface, s0);
+    threeDsubview dqdz0 = getHaloSlice(b.dqdz, face._nface, s0);
+
+    threeDsubview dqdx1 = getHaloSlice(b.dqdx, face._nface, s1);
+    threeDsubview dqdy1 = getHaloSlice(b.dqdy, face._nface, s1);
+    threeDsubview dqdz1 = getHaloSlice(b.dqdz, face._nface, s1);
+
+    threeDsubview dqdx2 = getHaloSlice(b.dqdx, face._nface, s2);
+    threeDsubview dqdy2 = getHaloSlice(b.dqdy, face._nface, s2);
+    threeDsubview dqdz2 = getHaloSlice(b.dqdz, face._nface, s2);
+
+    MDRange2 range_face = MDRange2({0, 0}, {dqdx1.extent(0), dqdx1.extent(1)});
+    Kokkos::parallel_for(
+        "Adia moving wall postDqDxyz terms", range_face,
+        KOKKOS_LAMBDA(const int i, const int j) {
+          // extrapolate velocity gradients
+          dqdx0(i, j, 0) = 2.0 * dqdx1(i, j, 0) - dqdx2(i, j, 0);
+          dqdx0(i, j, 1) = 2.0 * dqdx1(i, j, 1) - dqdx2(i, j, 1);
+          dqdx0(i, j, 2) = 2.0 * dqdx1(i, j, 2) - dqdx2(i, j, 2);
+          dqdx0(i, j, 3) = 2.0 * dqdx1(i, j, 3) - dqdx2(i, j, 3);
+
+          dqdy0(i, j, 0) = 2.0 * dqdy1(i, j, 0) - dqdy2(i, j, 0);
+          dqdy0(i, j, 1) = 2.0 * dqdy1(i, j, 1) - dqdy2(i, j, 1);
+          dqdy0(i, j, 2) = 2.0 * dqdy1(i, j, 2) - dqdy2(i, j, 2);
+          dqdy0(i, j, 3) = 2.0 * dqdy1(i, j, 3) - dqdy2(i, j, 3);
+
+          dqdz0(i, j, 0) = 2.0 * dqdz1(i, j, 0) - dqdz2(i, j, 0);
+          dqdz0(i, j, 1) = 2.0 * dqdz1(i, j, 1) - dqdz2(i, j, 1);
+          dqdz0(i, j, 2) = 2.0 * dqdz1(i, j, 2) - dqdz2(i, j, 2);
+          dqdz0(i, j, 3) = 2.0 * dqdz1(i, j, 3) - dqdz2(i, j, 3);
+
+          // negate temp and species gradient (so gradient evaluates to zero
+          // on wall)
+          dqdx0(i, j, 4) = -dqdx1(i, j, 4);
+          dqdy0(i, j, 4) = -dqdy1(i, j, 4);
+          dqdz0(i, j, 4) = -dqdz1(i, j, 4);
+
+          for (int n = 5; n < b.ne; n++) {
+            dqdx0(i, j, n) = -dqdx1(i, j, n);
+            dqdy0(i, j, n) = -dqdy1(i, j, n);
+            dqdz0(i, j, n) = -dqdz1(i, j, n);
+          }
+        });
   }
 }
 
@@ -303,7 +418,7 @@ void isoTNoSlipWall(
     }
     eos(b, th, face._nface, "prims");
 
-  } else if (terms.compare("viscous") == 0) {
+  } else if (terms.compare("preDqDxyz") == 0) {
 
     threeDsubview q1 = getHaloSlice(b.q, face._nface, s1);
     MDRange2 range_face = MDRange2({0, 0}, {q1.extent(0), q1.extent(1)});
@@ -315,7 +430,7 @@ void isoTNoSlipWall(
       threeDsubview q2 = getHaloSlice(b.q, face._nface, s2);
 
       Kokkos::parallel_for(
-          "isoT no slip wall euler terms", range_face,
+          "isoT no slip wall preDqDxyz terms", range_face,
           KOKKOS_LAMBDA(const int i, const int j) {
             // flip velo on wall
             q0(i, j, 1) = -q1(i, j, 1);
@@ -323,6 +438,53 @@ void isoTNoSlipWall(
             q0(i, j, 3) = -q1(i, j, 3);
           });
     }
+  } else if (terms.compare("postDqDxyz") == 0) {
+
+    threeDsubview dqdx0 = getHaloSlice(b.dqdx, face._nface, s0);
+    threeDsubview dqdy0 = getHaloSlice(b.dqdy, face._nface, s0);
+    threeDsubview dqdz0 = getHaloSlice(b.dqdz, face._nface, s0);
+
+    threeDsubview dqdx1 = getHaloSlice(b.dqdx, face._nface, s1);
+    threeDsubview dqdy1 = getHaloSlice(b.dqdy, face._nface, s1);
+    threeDsubview dqdz1 = getHaloSlice(b.dqdz, face._nface, s1);
+
+    threeDsubview dqdx2 = getHaloSlice(b.dqdx, face._nface, s2);
+    threeDsubview dqdy2 = getHaloSlice(b.dqdy, face._nface, s2);
+    threeDsubview dqdz2 = getHaloSlice(b.dqdz, face._nface, s2);
+
+    MDRange2 range_face = MDRange2({0, 0}, {dqdx1.extent(0), dqdx1.extent(1)});
+    Kokkos::parallel_for(
+        "isoT no slip postDqDxyz terms", range_face,
+        KOKKOS_LAMBDA(const int i, const int j) {
+          // negate pressure,  extrapolate velocity gradients
+          dqdx0(i, j, 0) = -dqdx1(i, j, 0);
+          dqdx0(i, j, 1) = 2.0 * dqdx1(i, j, 1) - dqdx2(i, j, 1);
+          dqdx0(i, j, 2) = 2.0 * dqdx1(i, j, 2) - dqdx2(i, j, 2);
+          dqdx0(i, j, 3) = 2.0 * dqdx1(i, j, 3) - dqdx2(i, j, 3);
+
+          dqdy0(i, j, 0) = -dqdy1(i, j, 0);
+          dqdy0(i, j, 1) = 2.0 * dqdy1(i, j, 1) - dqdy2(i, j, 1);
+          dqdy0(i, j, 2) = 2.0 * dqdy1(i, j, 2) - dqdy2(i, j, 2);
+          dqdy0(i, j, 3) = 2.0 * dqdy1(i, j, 3) - dqdy2(i, j, 3);
+
+          dqdz0(i, j, 0) = -dqdz1(i, j, 0);
+          dqdz0(i, j, 1) = 2.0 * dqdz1(i, j, 1) - dqdz2(i, j, 1);
+          dqdz0(i, j, 2) = 2.0 * dqdz1(i, j, 2) - dqdz2(i, j, 2);
+          dqdz0(i, j, 3) = 2.0 * dqdz1(i, j, 3) - dqdz2(i, j, 3);
+
+          // extrapolate temp gradients
+          dqdx0(i, j, 4) = 2.0 * dqdx1(i, j, 4) - dqdx2(i, j, 4);
+          dqdy0(i, j, 4) = 2.0 * dqdy1(i, j, 4) - dqdy2(i, j, 4);
+          dqdz0(i, j, 4) = 2.0 * dqdz1(i, j, 4) - dqdz2(i, j, 4);
+
+          // negatespecies gradient (so gradient evaluates to zero
+          // on wall)
+          for (int n = 5; n < b.ne; n++) {
+            dqdx0(i, j, n) = -dqdx1(i, j, n);
+            dqdy0(i, j, n) = -dqdy1(i, j, n);
+            dqdz0(i, j, n) = -dqdz1(i, j, n);
+          }
+        });
   }
 }
 
@@ -386,6 +548,54 @@ void isoTSlipWall(
           });
     }
     eos(b, th, face._nface, "prims");
+
+  } else if (terms.compare("postDqDxyz") == 0) {
+
+    threeDsubview dqdx0 = getHaloSlice(b.dqdx, face._nface, s0);
+    threeDsubview dqdy0 = getHaloSlice(b.dqdy, face._nface, s0);
+    threeDsubview dqdz0 = getHaloSlice(b.dqdz, face._nface, s0);
+
+    threeDsubview dqdx1 = getHaloSlice(b.dqdx, face._nface, s1);
+    threeDsubview dqdy1 = getHaloSlice(b.dqdy, face._nface, s1);
+    threeDsubview dqdz1 = getHaloSlice(b.dqdz, face._nface, s1);
+
+    threeDsubview dqdx2 = getHaloSlice(b.dqdx, face._nface, s2);
+    threeDsubview dqdy2 = getHaloSlice(b.dqdy, face._nface, s2);
+    threeDsubview dqdz2 = getHaloSlice(b.dqdz, face._nface, s2);
+
+    MDRange2 range_face = MDRange2({0, 0}, {dqdx1.extent(0), dqdx1.extent(1)});
+    Kokkos::parallel_for(
+        "isoT slip visc terms", range_face,
+        KOKKOS_LAMBDA(const int i, const int j) {
+          // negate velocity gradients
+          dqdx0(i, j, 0) = -dqdx1(i, j, 0);
+          dqdx0(i, j, 1) = -dqdx1(i, j, 1);
+          dqdx0(i, j, 2) = -dqdx1(i, j, 2);
+          dqdx0(i, j, 3) = -dqdx1(i, j, 3);
+
+          dqdy0(i, j, 0) = -dqdy1(i, j, 0);
+          dqdy0(i, j, 1) = -dqdy1(i, j, 1);
+          dqdy0(i, j, 2) = -dqdy1(i, j, 2);
+          dqdy0(i, j, 3) = -dqdy1(i, j, 3);
+
+          dqdz0(i, j, 0) = -dqdz1(i, j, 0);
+          dqdz0(i, j, 1) = -dqdz1(i, j, 1);
+          dqdz0(i, j, 2) = -dqdz1(i, j, 2);
+          dqdz0(i, j, 3) = -dqdz1(i, j, 3);
+
+          // extrapolate temp gradients
+          dqdx0(i, j, 4) = 2.0 * dqdx1(i, j, 4) - dqdx2(i, j, 4);
+          dqdy0(i, j, 4) = 2.0 * dqdy1(i, j, 4) - dqdy2(i, j, 4);
+          dqdz0(i, j, 4) = 2.0 * dqdz1(i, j, 4) - dqdz2(i, j, 4);
+
+          // negate species gradient (so gradient evaluates to zero
+          // on wall)
+          for (int n = 5; n < b.ne; n++) {
+            dqdx0(i, j, n) = -dqdx1(i, j, n);
+            dqdy0(i, j, n) = -dqdy1(i, j, n);
+            dqdz0(i, j, n) = -dqdz1(i, j, n);
+          }
+        });
   }
 }
 
@@ -450,7 +660,7 @@ void isoTMovingWall(
     }
     eos(b, th, face._nface, "prims");
 
-  } else if (terms.compare("viscous") == 0) {
+  } else if (terms.compare("preDqDxyz") == 0) {
 
     threeDsubview q1 = getHaloSlice(b.q, face._nface, s1);
     MDRange2 range_face = MDRange2({0, 0}, {q1.extent(0), q1.extent(1)});
@@ -460,7 +670,7 @@ void isoTMovingWall(
       threeDsubview q0 = getHaloSlice(b.q, face._nface, s0);
 
       Kokkos::parallel_for(
-          "Iso T moving wall viscous terms", range_face,
+          "Iso T moving wall preDqDxyz terms", range_face,
           KOKKOS_LAMBDA(const int i, const int j) {
             // apply velo on wall
             q0(i, j, 1) = 2.0 * face.qBcVals(i, j, 1) - q1(i, j, 1);
@@ -468,5 +678,51 @@ void isoTMovingWall(
             q0(i, j, 3) = 2.0 * face.qBcVals(i, j, 3) - q1(i, j, 3);
           });
     }
+  } else if (terms.compare("postDqDxyz") == 0) {
+
+    threeDsubview dqdx0 = getHaloSlice(b.dqdx, face._nface, s0);
+    threeDsubview dqdy0 = getHaloSlice(b.dqdy, face._nface, s0);
+    threeDsubview dqdz0 = getHaloSlice(b.dqdz, face._nface, s0);
+
+    threeDsubview dqdx1 = getHaloSlice(b.dqdx, face._nface, s1);
+    threeDsubview dqdy1 = getHaloSlice(b.dqdy, face._nface, s1);
+    threeDsubview dqdz1 = getHaloSlice(b.dqdz, face._nface, s1);
+
+    threeDsubview dqdx2 = getHaloSlice(b.dqdx, face._nface, s2);
+    threeDsubview dqdy2 = getHaloSlice(b.dqdy, face._nface, s2);
+    threeDsubview dqdz2 = getHaloSlice(b.dqdz, face._nface, s2);
+
+    MDRange2 range_face = MDRange2({0, 0}, {dqdx1.extent(0), dqdx1.extent(1)});
+    Kokkos::parallel_for(
+        "Iso T moving wall postDqDxyz terms", range_face,
+        KOKKOS_LAMBDA(const int i, const int j) {
+          // negate pressure gradient
+          dqdx0(i, j, 0) = -dqdx1(i, j, 0);
+          dqdy0(i, j, 0) = -dqdy1(i, j, 0);
+          dqdz0(i, j, 0) = -dqdz1(i, j, 0);
+
+          // extrapolate pressure,velocity, temperature gradients
+          dqdx0(i, j, 1) = 2.0 * dqdx1(i, j, 1) - dqdx2(i, j, 1);
+          dqdx0(i, j, 2) = 2.0 * dqdx1(i, j, 2) - dqdx2(i, j, 2);
+          dqdx0(i, j, 3) = 2.0 * dqdx1(i, j, 3) - dqdx2(i, j, 3);
+          dqdx0(i, j, 4) = 2.0 * dqdx1(i, j, 4) - dqdx2(i, j, 4);
+
+          dqdy0(i, j, 1) = 2.0 * dqdy1(i, j, 1) - dqdy2(i, j, 1);
+          dqdy0(i, j, 2) = 2.0 * dqdy1(i, j, 2) - dqdy2(i, j, 2);
+          dqdy0(i, j, 3) = 2.0 * dqdy1(i, j, 3) - dqdy2(i, j, 3);
+          dqdy0(i, j, 4) = 2.0 * dqdy1(i, j, 4) - dqdy2(i, j, 4);
+
+          dqdz0(i, j, 1) = 2.0 * dqdz1(i, j, 1) - dqdz2(i, j, 1);
+          dqdz0(i, j, 2) = 2.0 * dqdz1(i, j, 2) - dqdz2(i, j, 2);
+          dqdz0(i, j, 3) = 2.0 * dqdz1(i, j, 3) - dqdz2(i, j, 3);
+          dqdz0(i, j, 4) = 2.0 * dqdz1(i, j, 4) - dqdz2(i, j, 4);
+
+          // negate species gradient (so gradient evaluates to zero on wall)
+          for (int n = 5; n < b.ne; n++) {
+            dqdx0(i, j, n) = -dqdx1(i, j, n);
+            dqdy0(i, j, n) = -dqdy1(i, j, n);
+            dqdz0(i, j, n) = -dqdz1(i, j, n);
+          }
+        });
   }
 }

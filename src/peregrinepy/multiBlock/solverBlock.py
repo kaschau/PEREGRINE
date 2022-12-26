@@ -55,13 +55,7 @@ class solverBlock(restartBlock, block_):
             self.array[f"{d}"] = None
             self.mirror[f"{d}"] = None
         # Spatial derivative of primative array
-        for d in ["idqdx", "idqdy", "idqdz"]:
-            self.array[f"{d}"] = None
-            self.mirror[f"{d}"] = None
-        for d in ["jdqdx", "jdqdy", "jdqdz"]:
-            self.array[f"{d}"] = None
-            self.mirror[f"{d}"] = None
-        for d in ["kdqdx", "kdqdy", "kdqdz"]:
+        for d in ["dqdx", "dqdy", "dqdz"]:
             self.array[f"{d}"] = None
             self.mirror[f"{d}"] = None
         # thermo,trans arrays
@@ -182,9 +176,7 @@ class solverBlock(restartBlock, block_):
         #       Spatial derivative of primative array
         # ------------------------------------------------------------------- #
         if config["RHS"]["diffusion"]:
-            createViewMirrorArray(self, ["idqdx", "idqdy", "idqdz"], ifQshape)
-            createViewMirrorArray(self, ["jdqdx", "jdqdy", "jdqdz"], jfQshape)
-            createViewMirrorArray(self, ["kdqdx", "kdqdy", "kdqdz"], kfQshape)
+            createViewMirrorArray(self, ["dqdx", "dqdy", "dqdz"], cQshape)
 
         # ------------------------------------------------------------------- #
         #       Thermo

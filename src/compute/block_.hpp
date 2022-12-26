@@ -39,9 +39,7 @@ struct block_ {
   // Cons,Prim Arrays
   fourDview Q, q, dQ;
   // Spatial derivative of prim array
-  fourDview idqdx, idqdy, idqdz;
-  fourDview jdqdx, jdqdy, jdqdz;
-  fourDview kdqdx, kdqdy, kdqdz;
+  fourDview dqdx, dqdy, dqdz;
   // thermo,trans arrays
   fourDview qh, qt;
   // chemistry

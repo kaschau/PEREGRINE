@@ -49,6 +49,28 @@ void constantVelocitySubsonicInlet(
           });
     }
     eos(b, th, face._nface, "prims");
+  } else if (terms.compare("postDqDxyz") == 0) {
+
+    // Only applied to first halo slice
+    threeDsubview dqdx1 = getHaloSlice(b.dqdx, face._nface, s1);
+    threeDsubview dqdy1 = getHaloSlice(b.dqdy, face._nface, s1);
+    threeDsubview dqdz1 = getHaloSlice(b.dqdz, face._nface, s1);
+
+    threeDsubview dqdx0 = getHaloSlice(b.dqdx, face._nface, s0);
+    threeDsubview dqdy0 = getHaloSlice(b.dqdy, face._nface, s0);
+    threeDsubview dqdz0 = getHaloSlice(b.dqdz, face._nface, s0);
+
+    MDRange3 range_face =
+        MDRange3({0, 0, 0}, {static_cast<long>(dqdx1.extent(0)),
+                             static_cast<long>(dqdx1.extent(1)), b.ne});
+    Kokkos::parallel_for(
+        "Constant velocity subsonic inlet postDqDxyz terms", range_face,
+        KOKKOS_LAMBDA(const int i, const int j, const int l) {
+          // neumann all gradients
+          dqdx0(i, j, l) = dqdx1(i, j, l);
+          dqdy0(i, j, l) = dqdy1(i, j, l);
+          dqdz0(i, j, l) = dqdz1(i, j, l);
+        });
   }
 }
 
@@ -159,6 +181,28 @@ void supersonicInlet(
           });
     }
     eos(b, th, face._nface, "prims");
+  } else if (terms.compare("postDqDxyz") == 0) {
+
+    // Only applied to first halo slice
+    threeDsubview dqdx1 = getHaloSlice(b.dqdx, face._nface, s1);
+    threeDsubview dqdy1 = getHaloSlice(b.dqdy, face._nface, s1);
+    threeDsubview dqdz1 = getHaloSlice(b.dqdz, face._nface, s1);
+
+    threeDsubview dqdx0 = getHaloSlice(b.dqdx, face._nface, s0);
+    threeDsubview dqdy0 = getHaloSlice(b.dqdy, face._nface, s0);
+    threeDsubview dqdz0 = getHaloSlice(b.dqdz, face._nface, s0);
+
+    MDRange3 range_face =
+        MDRange3({0, 0, 0}, {static_cast<long>(dqdx1.extent(0)),
+                             static_cast<long>(dqdx1.extent(1)), b.ne});
+    Kokkos::parallel_for(
+        "Supersonic inlet postDqDxyz terms", range_face,
+        KOKKOS_LAMBDA(const int i, const int j, const int l) {
+          // neumann all gradients
+          dqdx0(i, j, l) = dqdx1(i, j, l);
+          dqdy0(i, j, l) = dqdy1(i, j, l);
+          dqdz0(i, j, l) = dqdz1(i, j, l);
+        });
   }
 }
 
@@ -260,6 +304,28 @@ void constantMassFluxSubsonicInlet(
             Q0(i, j, 4) += tke;
           });
     }
+  } else if (terms.compare("postDqDxyz") == 0) {
+
+    // Only applied to first halo slice
+    threeDsubview dqdx1 = getHaloSlice(b.dqdx, face._nface, s1);
+    threeDsubview dqdy1 = getHaloSlice(b.dqdy, face._nface, s1);
+    threeDsubview dqdz1 = getHaloSlice(b.dqdz, face._nface, s1);
+
+    threeDsubview dqdx0 = getHaloSlice(b.dqdx, face._nface, s0);
+    threeDsubview dqdy0 = getHaloSlice(b.dqdy, face._nface, s0);
+    threeDsubview dqdz0 = getHaloSlice(b.dqdz, face._nface, s0);
+
+    MDRange3 range_face =
+        MDRange3({0, 0, 0}, {static_cast<long>(dqdx1.extent(0)),
+                             static_cast<long>(dqdx1.extent(1)), b.ne});
+    Kokkos::parallel_for(
+        "Supersonic inlet postDqDxyz terms", range_face,
+        KOKKOS_LAMBDA(const int i, const int j, const int l) {
+          // neumann all gradients
+          dqdx0(i, j, l) = dqdx1(i, j, l);
+          dqdy0(i, j, l) = dqdy1(i, j, l);
+          dqdz0(i, j, l) = dqdz1(i, j, l);
+        });
   }
 }
 
@@ -267,6 +333,7 @@ void stagnationSubsonicInlet(
     block_ &b, face_ &face,
     const std::function<void(block_, thtrdat_, int, std::string)> &eos,
     const thtrdat_ &th, const std::string &terms, const double /*&tme*/) {
+
   // Stagnation boundary condition from
   // https://ntrs.nasa.gov/api/citations/20180001221/downloads/20180001221.pdf
 
@@ -357,5 +424,28 @@ void stagnationSubsonicInlet(
           });
     }
     eos(b, th, face._nface, "prims");
+
+  } else if (terms.compare("postDqDxyz") == 0) {
+
+    // Only applied to first halo slice
+    threeDsubview dqdx1 = getHaloSlice(b.dqdx, face._nface, s1);
+    threeDsubview dqdy1 = getHaloSlice(b.dqdy, face._nface, s1);
+    threeDsubview dqdz1 = getHaloSlice(b.dqdz, face._nface, s1);
+
+    threeDsubview dqdx0 = getHaloSlice(b.dqdx, face._nface, s0);
+    threeDsubview dqdy0 = getHaloSlice(b.dqdy, face._nface, s0);
+    threeDsubview dqdz0 = getHaloSlice(b.dqdz, face._nface, s0);
+
+    MDRange3 range_face =
+        MDRange3({0, 0, 0}, {static_cast<long>(dqdx1.extent(0)),
+                             static_cast<long>(dqdx1.extent(1)), b.ne});
+    Kokkos::parallel_for(
+        "Supersonic inlet postDqDxyz terms", range_face,
+        KOKKOS_LAMBDA(const int i, const int j, const int l) {
+          // neumann all gradients
+          dqdx0(i, j, l) = dqdx1(i, j, l);
+          dqdy0(i, j, l) = dqdy1(i, j, l);
+          dqdz0(i, j, l) = dqdz1(i, j, l);
+        });
   }
 }

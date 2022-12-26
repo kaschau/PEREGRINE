@@ -52,7 +52,7 @@ def guessP(test):
             uM = (pQ * uL / cL + uR / cR + g4 * (pQ - 1.0)) / (pQ / cL + 1.0 / cR)
             pTL = 1.0 + g7 * (uL - uM) / cL
             pTR = 1.0 + g7 * (uM - uR) / cR
-            pM = 0.5 * (pL * pTL ** g3 + pR * pTR ** g3)
+            pM = 0.5 * (pL * pTL**g3 + pR * pTR**g3)
         else:
             gEL = np.sqrt((g5 / rhoL) / (g6 * pL + ppv))
             gER = np.sqrt((g5 / rhoR) / (g6 * pR + ppv))
@@ -77,7 +77,7 @@ def prefun(p, test, side):
 
     if p < pK:
         pRatio = p / pK
-        F = g4 * cK * (pRatio ** g1 - 1.0)
+        F = g4 * cK * (pRatio**g1 - 1.0)
         FD = (1.0 / (rhoK * cK)) * pRatio ** (-g2)
     else:
         AK = g5 / rhoK

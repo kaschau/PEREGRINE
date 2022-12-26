@@ -76,9 +76,8 @@ class solverFace(gridFace, face_):
                 "periodicRotMatrixDown": None,
             }
         )
-        if self.faceType == "solver":
-            self.array._freeze()
-            self.mirror._freeze()
+        self.array._freeze()
+        self.mirror._freeze()
 
         # Boundary function
         self.bcFunc = bcs.walls.adiabaticSlipWall
@@ -273,7 +272,7 @@ class solverFace(gridFace, face_):
         neighborNface = self.neighborNface
         neighborOrientation = self.neighborOrientation
 
-        # What are the orientations of our neighbot face plane? i.e.
+        # What are the orientations of our neighbor face plane? i.e.
         #  face #1 with orientation "123" then the face in quetions has
         #  the orientation [2,3]
         faceOrientations = [
@@ -335,23 +334,19 @@ class solverFace(gridFace, face_):
     ##########################################################
     @staticmethod
     def orientT(temp):
-        axT = (1, 0, 2) if temp.ndim == 3 else (1, 0)
-        return np.transpose(temp, axT)
+        return np.moveaxis(temp, (0, 1), (1, 0))
 
     @staticmethod
     def orientTf0(temp):
-        axT = (1, 0, 2) if temp.ndim == 3 else (1, 0)
-        return np.flip(np.transpose(temp, axT), 0)
+        return np.flip(np.moveaxis(temp, (0, 1), (1, 0)), 0)
 
     @staticmethod
     def orientTf1(temp):
-        axT = (1, 0, 2) if temp.ndim == 3 else (1, 0)
-        return np.flip(np.transpose(temp, axT), 1)
+        return np.flip(np.moveaxis(temp, (0, 1), (1, 0)), 1)
 
     @staticmethod
     def orientTf0f1(temp):
-        axT = (1, 0, 2) if temp.ndim == 3 else (1, 0)
-        return np.flip(np.transpose(temp, axT), (0, 1))
+        return np.flip(np.moveaxis(temp, (0, 1), (1, 0)), (0, 1))
 
     @staticmethod
     def orientf0(temp):

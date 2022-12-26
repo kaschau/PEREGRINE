@@ -89,18 +89,18 @@ def simulate():
     xc = blk.array["xc"]
     yc = blk.array["yc"]
 
-    r = np.sqrt(((xc - x0) ** 2 + (yc - y0) ** 2) / Rc ** 2)
+    r = np.sqrt(((xc - x0) ** 2 + (yc - y0) ** 2) / Rc**2)
 
     # u
-    blk.array["q"][:, :, :, 1] = uInf - (C0 * (yc - y0) / Rc ** 2) * np.exp(
-        -(r ** 2) / 2.0
+    blk.array["q"][:, :, :, 1] = uInf - (C0 * (yc - y0) / Rc**2) * np.exp(
+        -(r**2) / 2.0
     )
     # v
-    blk.array["q"][:, :, :, 2] = (C0 * (xc - x0) / Rc ** 2) * np.exp(-(r ** 2) / 2.0)
+    blk.array["q"][:, :, :, 2] = (C0 * (xc - x0) / Rc**2) * np.exp(-(r**2) / 2.0)
 
     # p
-    blk.array["q"][:, :, :, 0] = pInf - rhoInf * C0 ** 2 / (2.0 * Rc ** 2) * np.exp(
-        -(r ** 2) / 2.0
+    blk.array["q"][:, :, :, 0] = pInf - rhoInf * C0**2 / (2.0 * Rc**2) * np.exp(
+        -(r**2) / 2.0
     )
     # T
     blk.array["q"][:, :, :, 4] = blk.array["q"][:, :, :, 0] / (R * rhoInf)
