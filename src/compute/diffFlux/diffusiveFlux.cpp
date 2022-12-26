@@ -6,6 +6,9 @@
 
 void diffusiveFlux(block_ &b) {
 
+  // Stokes hypothesis
+  double const bulkVisc = 0.0;
+
   //-------------------------------------------------------------------------------------------|
   // i flux face range
   //-------------------------------------------------------------------------------------------|
@@ -14,17 +17,9 @@ void diffusiveFlux(block_ &b) {
   Kokkos::parallel_for(
       "i face visc fluxes", range_i,
       KOKKOS_LAMBDA(const int i, const int j, const int k) {
-        double txx, txy, txz;
-        double tyx, tyy, tyz;
-        double tzx, tzy, tzz;
-
-        double uf, vf, wf;
-        double q;
-
-        const double c23 = 2.0 / 3.0;
-
         double mu = 0.5 * (b.qt(i, j, k, 0) + b.qt(i - 1, j, k, 0));
         double kappa = 0.5 * (b.qt(i, j, k, 1) + b.qt(i - 1, j, k, 1));
+        double lambda = bulkVisc - 2.0 / 3.0 * mu;
 
         // continuity
         b.iF(i, j, k, 0) = 0.0;
@@ -42,29 +37,31 @@ void diffusiveFlux(block_ &b) {
         double dvdz = 0.5 * (b.dqdz(i, j, k, 2) + b.dqdz(i - 1, j, k, 2));
         double dwdz = 0.5 * (b.dqdz(i, j, k, 3) + b.dqdz(i - 1, j, k, 3));
 
-        // x momentum
-        txx = c23 * mu * (2.0 * dudx - dvdy - dwdz);
-        txy = mu * (dvdx + dudy);
-        txz = mu * (dwdx + dudz);
+        double div = dudx + dvdy + dwdz;
 
-        b.iF(i, j, k, 1) = -(txx * b.isx(i, j, k) + txy * b.isy(i, j, k) +
-                             txz * b.isz(i, j, k));
+        // x momentum
+        double txx = -2.0 * mu * dudx - lambda * div;
+        double txy = -mu * (dvdx + dudy);
+        double txz = -mu * (dwdx + dudz);
+
+        b.iF(i, j, k, 1) =
+            txx * b.isx(i, j, k) + txy * b.isy(i, j, k) + txz * b.isz(i, j, k);
 
         // y momentum
-        tyx = txy;
-        tyy = c23 * mu * (-dudx + 2.0 * dvdy - dwdz);
-        tyz = mu * (dwdy + dvdz);
+        double &tyx = txy;
+        double tyy = -2.0 * mu * dvdy - lambda * div;
+        double tyz = -mu * (dwdy + dvdz);
 
-        b.iF(i, j, k, 2) = -(tyx * b.isx(i, j, k) + tyy * b.isy(i, j, k) +
-                             tyz * b.isz(i, j, k));
+        b.iF(i, j, k, 2) =
+            tyx * b.isx(i, j, k) + tyy * b.isy(i, j, k) + tyz * b.isz(i, j, k);
 
         // z momentum
-        tzx = txz;
-        tzy = tyz;
-        tzz = c23 * mu * (-dudx - dvdy + 2.0 * dwdz);
+        double &tzx = txz;
+        double &tzy = tyz;
+        double tzz = -2.0 * mu * dwdz - lambda * div;
 
-        b.iF(i, j, k, 3) = -(tzx * b.isx(i, j, k) + tzy * b.isy(i, j, k) +
-                             tzz * b.isz(i, j, k));
+        b.iF(i, j, k, 3) =
+            tzx * b.isx(i, j, k) + tzy * b.isy(i, j, k) + tzz * b.isz(i, j, k);
 
         // energy
         //   heat conduction
@@ -72,14 +69,14 @@ void diffusiveFlux(block_ &b) {
         double dTdy = 0.5 * (b.dqdy(i, j, k, 4) + b.dqdy(i - 1, j, k, 4));
         double dTdz = 0.5 * (b.dqdz(i, j, k, 4) + b.dqdz(i - 1, j, k, 4));
 
-        q = -kappa * (dTdx * b.isx(i, j, k) + dTdy * b.isy(i, j, k) +
-                      dTdz * b.isz(i, j, k));
+        double q = -kappa * (dTdx * b.isx(i, j, k) + dTdy * b.isy(i, j, k) +
+                             dTdz * b.isz(i, j, k));
 
         // flow work
         // Compute face normal volume flux vector
-        uf = 0.5 * (b.q(i, j, k, 1) + b.q(i - 1, j, k, 1));
-        vf = 0.5 * (b.q(i, j, k, 2) + b.q(i - 1, j, k, 2));
-        wf = 0.5 * (b.q(i, j, k, 3) + b.q(i - 1, j, k, 3));
+        double uf = 0.5 * (b.q(i, j, k, 1) + b.q(i - 1, j, k, 1));
+        double vf = 0.5 * (b.q(i, j, k, 2) + b.q(i - 1, j, k, 2));
+        double wf = 0.5 * (b.q(i, j, k, 3) + b.q(i - 1, j, k, 3));
 
         b.iF(i, j, k, 4) = -(uf * txx + vf * txy + wf * txz) * b.isx(i, j, k) -
                            (uf * tyx + vf * tyy + wf * tyz) * b.isy(i, j, k) -
@@ -136,17 +133,9 @@ void diffusiveFlux(block_ &b) {
   Kokkos::parallel_for(
       "j face visc fluxes", range_j,
       KOKKOS_LAMBDA(const int i, const int j, const int k) {
-        double txx, txy, txz;
-        double tyx, tyy, tyz;
-        double tzx, tzy, tzz;
-
-        double uf, vf, wf;
-        double q;
-
-        const double c23 = 2.0 / 3.0;
-
         double mu = 0.5 * (b.qt(i, j, k, 0) + b.qt(i, j - 1, k, 0));
         double kappa = 0.5 * (b.qt(i, j, k, 1) + b.qt(i, j - 1, k, 1));
+        double lambda = bulkVisc - 2.0 / 3.0 * mu;
 
         // continuity
         b.jF(i, j, k, 0) = 0.0;
@@ -164,29 +153,31 @@ void diffusiveFlux(block_ &b) {
         double dvdz = 0.5 * (b.dqdz(i, j, k, 2) + b.dqdz(i, j - 1, k, 2));
         double dwdz = 0.5 * (b.dqdz(i, j, k, 3) + b.dqdz(i, j - 1, k, 3));
 
-        // x momentum
-        txx = c23 * mu * (2.0 * dudx - dvdy - dwdz);
-        txy = mu * (dvdx + dudy);
-        txz = mu * (dwdx + dudz);
+        double div = dudx + dvdy + dwdz;
 
-        b.jF(i, j, k, 1) = -(txx * b.jsx(i, j, k) + txy * b.jsy(i, j, k) +
-                             txz * b.jsz(i, j, k));
+        // x momentum
+        double txx = -2.0 * mu * dudx - lambda * div;
+        double txy = -mu * (dvdx + dudy);
+        double txz = -mu * (dwdx + dudz);
+
+        b.jF(i, j, k, 1) =
+            txx * b.jsx(i, j, k) + txy * b.jsy(i, j, k) + txz * b.jsz(i, j, k);
 
         // y momentum
-        tyx = txy;
-        tyy = c23 * mu * (-dudx + 2.0 * dvdy - dwdz);
-        tyz = mu * (dwdy + dvdz);
+        double &tyx = txy;
+        double tyy = -2.0 * mu * dvdy - lambda * div;
+        double tyz = -mu * (dwdy + dvdz);
 
-        b.jF(i, j, k, 2) = -(tyx * b.jsx(i, j, k) + tyy * b.jsy(i, j, k) +
-                             tyz * b.jsz(i, j, k));
+        b.jF(i, j, k, 2) =
+            tyx * b.jsx(i, j, k) + tyy * b.jsy(i, j, k) + tyz * b.jsz(i, j, k);
 
         // z momentum
-        tzx = txz;
-        tzy = tyz;
-        tzz = c23 * mu * (-dudx - dvdy + 2.0 * dwdz);
+        double &tzx = txz;
+        double &tzy = tyz;
+        double tzz = -2.0 * mu * dwdz - lambda * div;
 
-        b.jF(i, j, k, 3) = -(tzx * b.jsx(i, j, k) + tzy * b.jsy(i, j, k) +
-                             tzz * b.jsz(i, j, k));
+        b.jF(i, j, k, 3) =
+            tzx * b.jsx(i, j, k) + tzy * b.jsy(i, j, k) + tzz * b.jsz(i, j, k);
 
         // energy
         //   heat conduction
@@ -194,14 +185,14 @@ void diffusiveFlux(block_ &b) {
         double dTdy = 0.5 * (b.dqdy(i, j, k, 4) + b.dqdy(i, j - 1, k, 4));
         double dTdz = 0.5 * (b.dqdz(i, j, k, 4) + b.dqdz(i, j - 1, k, 4));
 
-        q = -kappa * (dTdx * b.jsx(i, j, k) + dTdy * b.jsy(i, j, k) +
-                      dTdz * b.jsz(i, j, k));
+        double q = -kappa * (dTdx * b.jsx(i, j, k) + dTdy * b.jsy(i, j, k) +
+                             dTdz * b.jsz(i, j, k));
 
         // flow work
         // Compute face normal volume flux vector
-        uf = 0.5 * (b.q(i, j, k, 1) + b.q(i, j - 1, k, 1));
-        vf = 0.5 * (b.q(i, j, k, 2) + b.q(i, j - 1, k, 2));
-        wf = 0.5 * (b.q(i, j, k, 3) + b.q(i, j - 1, k, 3));
+        double uf = 0.5 * (b.q(i, j, k, 1) + b.q(i, j - 1, k, 1));
+        double vf = 0.5 * (b.q(i, j, k, 2) + b.q(i, j - 1, k, 2));
+        double wf = 0.5 * (b.q(i, j, k, 3) + b.q(i, j - 1, k, 3));
 
         b.jF(i, j, k, 4) = -(uf * txx + vf * txy + wf * txz) * b.jsx(i, j, k) -
                            (uf * tyx + vf * tyy + wf * tyz) * b.jsy(i, j, k) -
@@ -258,17 +249,9 @@ void diffusiveFlux(block_ &b) {
   Kokkos::parallel_for(
       "k face visc fluxes", range_k,
       KOKKOS_LAMBDA(const int i, const int j, const int k) {
-        double txx, txy, txz;
-        double tyx, tyy, tyz;
-        double tzx, tzy, tzz;
-
-        double uf, vf, wf;
-        double q;
-
-        const double c23 = 2.0 / 3.0;
-
         double mu = 0.5 * (b.qt(i, j, k, 0) + b.qt(i, j, k - 1, 0));
         double kappa = 0.5 * (b.qt(i, j, k, 1) + b.qt(i, j, k - 1, 1));
+        double lambda = bulkVisc - 2.0 / 3.0 * mu;
 
         // continuity
         b.kF(i, j, k, 0) = 0.0;
@@ -286,29 +269,31 @@ void diffusiveFlux(block_ &b) {
         double dvdz = 0.5 * (b.dqdz(i, j, k, 2) + b.dqdz(i, j, k - 1, 2));
         double dwdz = 0.5 * (b.dqdz(i, j, k, 3) + b.dqdz(i, j, k - 1, 3));
 
-        // x momentum
-        txx = c23 * mu * (2.0 * dudx - dvdy - dwdz);
-        txy = mu * (dvdx + dudy);
-        txz = mu * (dwdx + dudz);
+        double div = dudx + dvdy + dwdz;
 
-        b.kF(i, j, k, 1) = -(txx * b.ksx(i, j, k) + txy * b.ksy(i, j, k) +
-                             txz * b.ksz(i, j, k));
+        // x momentum
+        double txx = -2.0 * mu * dudx - lambda * div;
+        double txy = -mu * (dvdx + dudy);
+        double txz = -mu * (dwdx + dudz);
+
+        b.kF(i, j, k, 1) =
+            txx * b.ksx(i, j, k) + txy * b.ksy(i, j, k) + txz * b.ksz(i, j, k);
 
         // y momentum
-        tyx = txy;
-        tyy = c23 * mu * (-dudx + 2.0 * dvdy - dwdz);
-        tyz = mu * (dwdy + dvdz);
+        double &tyx = txy;
+        double tyy = -2.0 * mu * dvdy - lambda * div;
+        double tyz = -mu * (dwdy + dvdz);
 
-        b.kF(i, j, k, 2) = -(tyx * b.ksx(i, j, k) + tyy * b.ksy(i, j, k) +
-                             tyz * b.ksz(i, j, k));
+        b.kF(i, j, k, 2) =
+            tyx * b.ksx(i, j, k) + tyy * b.ksy(i, j, k) + tyz * b.ksz(i, j, k);
 
         // z momentum
-        tzx = txz;
-        tzy = tyz;
-        tzz = c23 * mu * (-dudx - dvdy + 2.0 * dwdz);
+        double &tzx = txz;
+        double &tzy = tyz;
+        double tzz = -2.0 * mu * dwdz - lambda * div;
 
-        b.kF(i, j, k, 3) = -(tzx * b.ksx(i, j, k) + tzy * b.ksy(i, j, k) +
-                             tzz * b.ksz(i, j, k));
+        b.kF(i, j, k, 3) =
+            tzx * b.ksx(i, j, k) + tzy * b.ksy(i, j, k) + tzz * b.ksz(i, j, k);
 
         // energy
         //   heat conduction
@@ -316,14 +301,14 @@ void diffusiveFlux(block_ &b) {
         double dTdy = 0.5 * (b.dqdy(i, j, k, 4) + b.dqdy(i, j, k - 1, 4));
         double dTdz = 0.5 * (b.dqdz(i, j, k, 4) + b.dqdz(i, j, k - 1, 4));
 
-        q = -kappa * (dTdx * b.ksx(i, j, k) + dTdy * b.ksy(i, j, k) +
-                      dTdz * b.ksz(i, j, k));
+        double q = -kappa * (dTdx * b.ksx(i, j, k) + dTdy * b.ksy(i, j, k) +
+                             dTdz * b.ksz(i, j, k));
 
         // flow work
         // Compute face normal volume flux vector
-        uf = 0.5 * (b.q(i, j, k, 1) + b.q(i, j, k - 1, 1));
-        vf = 0.5 * (b.q(i, j, k, 2) + b.q(i, j, k - 1, 2));
-        wf = 0.5 * (b.q(i, j, k, 3) + b.q(i, j, k - 1, 3));
+        double uf = 0.5 * (b.q(i, j, k, 1) + b.q(i, j, k - 1, 1));
+        double vf = 0.5 * (b.q(i, j, k, 2) + b.q(i, j, k - 1, 2));
+        double wf = 0.5 * (b.q(i, j, k, 3) + b.q(i, j, k - 1, 3));
 
         b.kF(i, j, k, 4) = -(uf * txx + vf * txy + wf * txz) * b.ksx(i, j, k) -
                            (uf * tyx + vf * tyy + wf * tyz) * b.ksy(i, j, k) -
