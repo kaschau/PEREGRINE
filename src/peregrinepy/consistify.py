@@ -9,11 +9,10 @@ def consistify(mb, given="cons"):
     # update halo values as needed, then communicate
     # everything.
     #
-    # Since we are storing derivatives on faces now,
-    # the calculation of spatial derivatives is moved
-    # to RHS so viscous boundary conditions can be
-    # applied after inviscid flux calculation, and
-    # before viscous flux calculations.
+    # Update all pointwise solution arrays, except for
+    # derivatives. This routine prepares the block for
+    # RHS advective calculations (so inviscid boundary
+    # conditions)
 
     # First communicate conservatives
     if given == "cons":
@@ -33,9 +32,6 @@ def consistify(mb, given="cons"):
         # Update transport properties
         mb.trans(blk, mb.thtrdat, -1)
 
-        # Apply subgrid model
-        mb.sgs(blk)
-
         # Update switch
         mb.switch(blk)
 
@@ -48,4 +44,4 @@ def consistify(mb, given="cons"):
         )
 
     # Communicate necessary halos
-    communicate(mb, mb.commList)
+    communicate(mb, mb.phiCommList)

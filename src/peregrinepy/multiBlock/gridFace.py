@@ -39,32 +39,32 @@ class gridFace(topologyFace):
         ct = np.cos(th)
         st = np.sin(th)
         ux, uy, uz = tuple(axis)
-        rotUp[0, 0] = ct + ux ** 2 * (1 - ct)
+        rotUp[0, 0] = ct + ux**2 * (1 - ct)
         rotUp[0, 1] = ux * uy * (1 - ct) - uz * st
         rotUp[0, 2] = ux * uz * (1 - ct) + uy * st
 
         rotUp[1, 0] = uy * ux * (1 - ct) + uz * st
-        rotUp[1, 1] = ct + uy ** 2 * (1 - ct)
+        rotUp[1, 1] = ct + uy**2 * (1 - ct)
         rotUp[1, 2] = uy * uz * (1 - ct) - ux * st
 
         rotUp[2, 0] = uz * ux * (1 - ct) - uy * st
         rotUp[2, 1] = uz * uy * (1 - ct) + ux * st
-        rotUp[2, 2] = ct + uz ** 2 * (1 - ct)
+        rotUp[2, 2] = ct + uz**2 * (1 - ct)
 
         rotDown = np.zeros((3, 3))
         ct = np.cos(-th)
         st = np.sin(-th)
-        rotDown[0, 0] = ct + ux ** 2 * (1 - ct)
+        rotDown[0, 0] = ct + ux**2 * (1 - ct)
         rotDown[0, 1] = ux * uy * (1 - ct) - uz * st
         rotDown[0, 2] = ux * uz * (1 - ct) + uy * st
 
         rotDown[1, 0] = uy * ux * (1 - ct) + uz * st
-        rotDown[1, 1] = ct + uy ** 2 * (1 - ct)
+        rotDown[1, 1] = ct + uy**2 * (1 - ct)
         rotDown[1, 2] = uy * uz * (1 - ct) - ux * st
 
         rotDown[2, 0] = uz * ux * (1 - ct) - uy * st
         rotDown[2, 1] = uz * uy * (1 - ct) + ux * st
-        rotDown[2, 2] = ct + uz ** 2 * (1 - ct)
+        rotDown[2, 2] = ct + uz**2 * (1 - ct)
 
         self.array["periodicRotMatrixUp"] = rotUp
         self.array["periodicRotMatrixDown"] = rotDown

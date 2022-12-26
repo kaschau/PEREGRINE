@@ -111,10 +111,10 @@ def kineticTheoryPoly(usersp, refsp, eos):
                 dipolestar = r_dipole[kp, kp] / np.sqrt(
                     4 * np.pi * eps0 * d3p * well[kp]
                 )
-                xi = 1.0 + 0.25 * alphastar * dipolestar ** 2 * np.sqrt(
+                xi = 1.0 + 0.25 * alphastar * dipolestar**2 * np.sqrt(
                     well[kp] / well[knp]
                 )
-                f_well = xi ** 2
+                f_well = xi**2
                 f_diam = xi ** (-1 / 6)
 
             r_well[i, j] *= f_well
@@ -135,7 +135,7 @@ def kineticTheoryPoly(usersp, refsp, eos):
         Tstar = T * kb / well
         omga22 = intrp_o22(Tstar, r_deltastar.diagonal(), grid=False)
         visc[i, :] = (
-            (5.0 / 16.0) * np.sqrt(np.pi * mass * kb * T) / (np.pi * diam ** 2 * omga22)
+            (5.0 / 16.0) * np.sqrt(np.pi * mass * kb * T) / (np.pi * diam**2 * omga22)
         )
 
     ##########################################
@@ -150,8 +150,8 @@ def kineticTheoryPoly(usersp, refsp, eos):
             Tstar = kb * 298.0 / well[k]
             fz_298 = (
                 1.0
-                + np.pi ** 1.5 / np.sqrt(Tstar) * (0.5 + 1.0 / Tstar)
-                + (0.25 * np.pi ** 2 + 2) / Tstar
+                + np.pi**1.5 / np.sqrt(Tstar) * (0.5 + 1.0 / Tstar)
+                + (0.25 * np.pi**2 + 2) / Tstar
             )
 
             Tstar = T * kb / well[k]
@@ -174,8 +174,8 @@ def kineticTheoryPoly(usersp, refsp, eos):
             A_factor = 2.5 - f_int
             fz_tstar = (
                 1.0
-                + np.pi ** 1.5 / np.sqrt(Tstar) * (0.5 + 1.0 / Tstar)
-                + (0.25 * np.pi ** 2 + 2) / Tstar
+                + np.pi**1.5 / np.sqrt(Tstar) * (0.5 + 1.0 / Tstar)
+                + (0.25 * np.pi**2 + 2) / Tstar
             )
             B_factor = zrot[k] * fz_298 / fz_tstar + 2.0 / np.pi * (
                 5 / 3 * rotDOF[k] + f_int
@@ -223,21 +223,21 @@ def kineticTheoryPoly(usersp, refsp, eos):
 
     # We fit the visc pol'y to the sqrtT as visc is proportional to sqrtT
     visc = visc / sqrtTs[:, None]
-    w = 1.0 / (visc ** 2)
+    w = 1.0 / (visc**2)
     muPoly = np.array(
         [list(np.polyfit(logTs, visc[:, k], deg=deg, w=w[:, k])) for k in range(ns)]
     )
 
     # We fit the cond pol'y to the sqrtT as cond is proportional to sqrtT
     cond = cond / np.sqrt(Ts[:, None])
-    w = 1.0 / (cond ** 2)
+    w = 1.0 / (cond**2)
     kappaPoly = np.array(
         [list(np.polyfit(logTs, cond[:, k], deg=deg, w=w[:, k])) for k in range(ns)]
     )
 
     Dij = []
     diff = diff / Ts[:, None, None] ** 1.5
-    w = 1.0 / (diff ** 2)
+    w = 1.0 / (diff**2)
     for k in range(ns):
         for j in range(k, ns):
             Dij.append(list(np.polyfit(logTs, diff[:, k, j], deg=deg, w=w[:, k, j])))

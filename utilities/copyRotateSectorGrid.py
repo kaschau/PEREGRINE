@@ -124,17 +124,17 @@ if __name__ == "__main__":
         ct = np.cos(angle)
         st = np.sin(angle)
         ux, uy, uz = tuple(axis)
-        rotM[0, 0] = ct + ux ** 2 * (1 - ct)
+        rotM[0, 0] = ct + ux**2 * (1 - ct)
         rotM[0, 1] = ux * uy * (1 - ct) - uz * st
         rotM[0, 2] = ux * uz * (1 - ct) + uy * st
 
         rotM[1, 0] = uy * ux * (1 - ct) + uz * st
-        rotM[1, 1] = ct + uy ** 2 * (1 - ct)
+        rotM[1, 1] = ct + uy**2 * (1 - ct)
         rotM[1, 2] = uy * uz * (1 - ct) - ux * st
 
         rotM[2, 0] = uz * ux * (1 - ct) - uy * st
         rotM[2, 1] = uz * uy * (1 - ct) + ux * st
-        rotM[2, 2] = ct + uz ** 2 * (1 - ct)
+        rotM[2, 2] = ct + uz**2 * (1 - ct)
 
         for j in range(nblks):
             fromBlk = fromGrid[j]

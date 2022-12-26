@@ -5,8 +5,8 @@
 void viscousSponge(block_ &b, const std::vector<double> &origin,
                    const std::vector<double> &ending, double mult) {
 
-  MDRange3 range_cc({b.ng, b.ng, b.ng},
-                    {b.ni + b.ng - 1, b.nj + b.ng - 1, b.nk + b.ng - 1});
+  MDRange3 range_cc({b.ng - 1, b.ng - 1, b.ng - 1},
+                    {b.ni + b.ng, b.nj + b.ng, b.nk + b.ng});
   Kokkos::parallel_for(
       "Apply viscous sponge", range_cc,
       KOKKOS_LAMBDA(const int i, const int j, const int k) {
@@ -32,7 +32,7 @@ void viscousSponge(block_ &b, const std::vector<double> &origin,
             vectorX * normal[0] + vectorY * normal[1] + vectorZ * normal[2];
 
         double multiplier = dist / spongeLength * (mult - 1.0);
-        multiplier = 1.0 + fmax(0.0, multiplier);
+        multiplier = 1.0 + fmin(fmax(0.0, multiplier), mult);
 
         b.qt(i, j, k, 0) *= multiplier;
       });

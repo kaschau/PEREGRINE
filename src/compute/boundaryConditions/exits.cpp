@@ -72,6 +72,28 @@ void constantPressureSubsonicExit(
           });
     }
     eos(b, th, face._nface, "prims");
+  } else if (terms.compare("postDqDxyz") == 0) {
+
+    // Only gets applied to first halo slice
+    threeDsubview dqdx1 = getHaloSlice(b.dqdx, face._nface, s1);
+    threeDsubview dqdy1 = getHaloSlice(b.dqdy, face._nface, s1);
+    threeDsubview dqdz1 = getHaloSlice(b.dqdz, face._nface, s1);
+
+    threeDsubview dqdx0 = getHaloSlice(b.dqdx, face._nface, s0);
+    threeDsubview dqdy0 = getHaloSlice(b.dqdy, face._nface, s0);
+    threeDsubview dqdz0 = getHaloSlice(b.dqdz, face._nface, s0);
+
+    MDRange3 range_face =
+        MDRange3({0, 0, 0}, {static_cast<long>(dqdx1.extent(0)),
+                             static_cast<long>(dqdx1.extent(1)), b.ne});
+    Kokkos::parallel_for(
+        "Constant pressure subsonic exit postDqDxyz terms", range_face,
+        KOKKOS_LAMBDA(const int i, const int j, const int l) {
+          // neumann all gradients
+          dqdx0(i, j, l) = dqdx1(i, j, l);
+          dqdy0(i, j, l) = dqdy1(i, j, l);
+          dqdz0(i, j, l) = dqdz1(i, j, l);
+        });
   }
 }
 
@@ -145,5 +167,27 @@ void supersonicExit(
           });
     }
     eos(b, th, face._nface, "prims");
+  } else if (terms.compare("postDqDxyz") == 0) {
+
+    // Only applied to first halo slice
+    threeDsubview dqdx1 = getHaloSlice(b.dqdx, face._nface, s1);
+    threeDsubview dqdy1 = getHaloSlice(b.dqdy, face._nface, s1);
+    threeDsubview dqdz1 = getHaloSlice(b.dqdz, face._nface, s1);
+
+    threeDsubview dqdx0 = getHaloSlice(b.dqdx, face._nface, s0);
+    threeDsubview dqdy0 = getHaloSlice(b.dqdy, face._nface, s0);
+    threeDsubview dqdz0 = getHaloSlice(b.dqdz, face._nface, s0);
+
+    MDRange3 range_face =
+        MDRange3({0, 0, 0}, {static_cast<long>(dqdx1.extent(0)),
+                             static_cast<long>(dqdx1.extent(1)), b.ne});
+    Kokkos::parallel_for(
+        "Supersonic exit postDqDxyz terms", range_face,
+        KOKKOS_LAMBDA(const int i, const int j, const int l) {
+          // neumann all gradients
+          dqdx0(i, j, l) = dqdx1(i, j, l);
+          dqdy0(i, j, l) = dqdy1(i, j, l);
+          dqdz0(i, j, l) = dqdz1(i, j, l);
+        });
   }
 }

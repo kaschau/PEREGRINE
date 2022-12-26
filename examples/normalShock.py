@@ -65,12 +65,12 @@ def simulate():
     rho1 = blk.array["Q"][ng, ng, ng, 0]
 
     # Compute post shock state
-    M2 = np.sqrt((M1 ** 2 * (gamma - 1) + 2) / (2 * gamma * M1 ** 2 - (gamma - 1)))
+    M2 = np.sqrt((M1**2 * (gamma - 1) + 2) / (2 * gamma * M1**2 - (gamma - 1)))
     T2 = T1 * (
-        ((1 + (gamma - 1) / 2 * M1 ** 2) * (2 * gamma / (gamma - 1) * M1 ** 2 - 1))
-        / (M1 ** 2 * (2 * gamma / (gamma - 1) + (gamma - 1) / 2))
+        ((1 + (gamma - 1) / 2 * M1**2) * (2 * gamma / (gamma - 1) * M1**2 - 1))
+        / (M1**2 * (2 * gamma / (gamma - 1) + (gamma - 1) / 2))
     )
-    p2 = p1 * (2 * gamma * M1 ** 2 / (gamma + 1) - (gamma - 1) / (gamma + 1))
+    p2 = p1 * (2 * gamma * M1**2 / (gamma + 1) - (gamma - 1) / (gamma + 1))
 
     q[ng:-ng, ng:-ng, ng:-ng, 0] = p2
     q[ng:-ng, ng:-ng, ng:-ng, 4] = T2
