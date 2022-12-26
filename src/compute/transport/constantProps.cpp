@@ -109,7 +109,7 @@ void constantProps(block_ &b, const thtrdat_ &th, const int &nface,
   // if ns == 1, we need the diffusion coeff to be zero
   // so the viscous flux correction term is zero in
   // diffusiveFlux.cpp
-  if (th.ns == 1) {
+  if (ns == 1) {
     MDRange3 range = getRange3(b, nface, indxI, indxJ, indxK);
     Kokkos::parallel_for(
         "Const Props Transport", range,
