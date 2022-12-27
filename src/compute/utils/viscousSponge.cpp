@@ -2,8 +2,8 @@
 #include "block_.hpp"
 #include "kokkosTypes.hpp"
 
-void viscousSponge(block_ &b, const std::vector<double> &origin,
-                   const std::vector<double> &ending, double mult) {
+void viscousSponge(block_ &b, const std::array<double, 3> &origin,
+                   const std::array<double, 3> &ending, double mult) {
 
   MDRange3 range_cc({b.ng - 1, b.ng - 1, b.ng - 1},
                     {b.ni + b.ng, b.nj + b.ng, b.nk + b.ng});
