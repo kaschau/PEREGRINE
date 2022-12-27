@@ -39,7 +39,7 @@ void place_recvBuffer4(fourDview &view, face_ &face,
                        const std::vector<int> &slices);
 
 //    |------> viscousSponge
-void viscousSponge(block_ &b, const std::vector<double> &origin,
-                   const std::vector<double> &ending, double mult);
+void viscousSponge(block_ &b, const std::array<double, 3> &origin,
+                   const std::array<double, 3> &ending, double mult);
 
 #endif
