@@ -218,6 +218,16 @@ class solverFace(gridFace, face_):
                 s_[:, :, nk + 2 * ng + i - 1, :] for i in largeFaceRecvCcAll
             ]
 
+        # We only need first halo slice for some variables (dqdxyz,phi)
+        # make sure we pick up the correct send face, this must be done
+        # before the send faces are reversed!
+        if self.nface in [1, 3, 5]:
+            self.ccSendFirstHaloSlice = [self.ccSendAllSlices[0]]
+            self.ccRecvFirstHaloSlice = [self.ccRecvAllSlices[-1]]
+        elif self.nface in [2, 4, 6]:
+            self.ccSendFirstHaloSlice = [self.ccSendAllSlices[-1]]
+            self.ccRecvFirstHaloSlice = [self.ccRecvAllSlices[0]]
+
         # We reverse the order of the send slices if the face's neighbor
         # and this face axis is counter aligned. That way the recv buffer
         # arrives good to go.
@@ -230,15 +240,6 @@ class solverFace(gridFace, face_):
         if self.orientation[indx] in ["4", "5", "6"]:
             self.nodeSendSlices.reverse()
             self.ccSendAllSlices.reverse()
-
-        # We only need first halo slice for some variables (dqdxyz,phi)
-        # make sure we pick up the correct send face
-        if self.nface in [1, 3, 5]:
-            self.ccSendFirstHaloSlice = [self.ccSendAllSlices[0]]
-            self.ccRecvFirstHaloSlice = [self.ccRecvAllSlices[-1]]
-        elif self.nface in [2, 4, 6]:
-            self.ccSendFirstHaloSlice = [self.ccSendAllSlices[-1]]
-            self.ccRecvFirstHaloSlice = [self.ccRecvAllSlices[0]]
 
         # We send the data in the correct shape already
         # Node shape

@@ -13,14 +13,16 @@ class twoblock123:
     def __init__(self, adv, spdata):
         self.config = pg.files.configFile()
         self.config["RHS"]["primaryAdvFlux"] = adv
+        self.config["RHS"]["shockHandling"] = "hybrid"
+        self.config["RHS"]["secondaryAdvFlux"] = "rusanov"
+
+        self.config["RHS"]["diffusion"] = True
         if adv == "secondOrderKEEP":
             self.config["RHS"]["diffOrder"] = 2
         elif adv == "fourthOrderKEEP":
             self.config["RHS"]["diffOrder"] = 4
-        self.config["RHS"]["shockHandling"] = "hybrid"
-        self.config["RHS"]["secondaryAdvFlux"] = "rusanov"
+
         self.config["thermochem"]["spdata"] = spdata
-        self.config["RHS"]["diffusion"] = True
         self.mb = pg.multiBlock.generateMultiBlockSolver(2, self.config)
 
         pg.grid.create.multiBlockCube(
@@ -56,7 +58,7 @@ class twoblock123:
             self.qshape,
             self.phishape,
         ]
-        self.offsets = [0, 0, 0, 1, 1, 1, 1, 1, 1]
+        self.offsets = [1, 1, 1, 0, 0, 0, 0, 0, 0]
         self.nLayers = [ng, ng, ng, ng, ng, 1, 1, 1, 1]
 
         for blk in self.mb:
@@ -117,18 +119,23 @@ class TestOrientation:
             tb.offsets,
             tb.nLayers,
         ):
+            # halo starting indicies (march from inner out)
+            b0ss = -(ng + 1) - off
+            b0rs = -ng
+            b1ss = ng + off
+            b1rs = ng - 1
             check0 = True
             check1 = True
-            for k in range(shape[2]):
+            for i in range(nLayers):
                 for j in range(shape[1]):
-                    for i in range(nLayers):
+                    for k in range(shape[2]):
                         check0 = np.all(
-                            blk0.array[var][-(2 * ng + 1) + off + i, j, k]
-                            == blk1.array[var][i, j, k]
+                            blk0.array[var][b0ss - i, j, k]
+                            == blk1.array[var][b1rs - i, j, k]
                         )
                         check1 = np.all(
-                            blk0.array[var][-ng + i, j, k]
-                            == blk1.array[var][ng + 1 - off + i, j, k]
+                            blk0.array[var][b0rs + i, j, k]
+                            == blk1.array[var][b1ss + i, j, k]
                         )
                         if not check0 or not check1:
                             break
@@ -186,19 +193,24 @@ class TestOrientation:
             tb.offsets,
             tb.nLayers,
         ):
+            # halo starting indicies (march from inner out)
+            b0ss = -(ng + 1) - off
+            b0rs = -ng
+            b1ss = ng + off
+            b1rs = ng - 1
             check0 = True
             check1 = True
             shape = blk0.array[var].shape
-            for i in range(ng):
+            for i in range(nLayers):
                 for j in range(shape[1]):
                     for k in range(shape[2]):
                         check0 = np.all(
-                            blk0.array[var][-(2 * ng + 1) + off + i, j, k]
-                            == blk1.array[var][i, -(k + 1), j]
+                            blk0.array[var][b0ss, j, k]
+                            == blk1.array[var][b1rs, -(k + 1), j]
                         )
                         check1 = np.all(
-                            blk0.array[var][-ng + i, j, k]
-                            == blk1.array[var][ng + 1 - off + i, -(k + 1), j]
+                            blk0.array[var][b0rs, j, k]
+                            == blk1.array[var][b1ss, -(k + 1), j]
                         )
                         if not check0 or not check1:
                             break
@@ -250,23 +262,30 @@ class TestOrientation:
 
         b02b1 = []
         b12b0 = []
-        for var, off in zip(
+        for var, shape, off, nLayers in zip(
             tb.varList,
-            [0, 0, 0, 1, 1, 1, 1],
+            tb.varShapes,
+            tb.offsets,
+            tb.nLayers,
         ):
+            # halo starting indicies (march from inner out)
+            b0ss = -(ng + 1) - off
+            b0rs = -ng
+            b1ss = ng + off
+            b1rs = ng - 1
             check0 = True
             check1 = True
             shape = blk0.array[var].shape
-            for i in range(ng):
+            for i in range(nLayers):
                 for j in range(shape[1]):
                     for k in range(shape[2]):
                         check0 = np.all(
-                            blk0.array[var][-(2 * ng + 1) + off + i, j, k]
-                            == blk1.array[var][i, k, -(j + 1)]
+                            blk0.array[var][b0ss, j, k]
+                            == blk1.array[var][b1rs, k, -(j + 1)]
                         )
                         check1 = np.all(
-                            blk0.array[var][-ng + i, j, k]
-                            == blk1.array[var][ng + 1 - off + i, k, -(j + 1)]
+                            blk0.array[var][b0rs, j, k]
+                            == blk1.array[var][b1ss, k, -(j + 1)]
                         )
                         if not check0 or not check1:
                             break
@@ -330,23 +349,28 @@ class TestOrientation:
 
         b02b1 = []
         b12b0 = []
-        for var, off in zip(
+        for var, shape, off, nLayers in zip(
             tb.varList,
-            [0, 0, 0, 1, 1, 1, 1],
+            tb.varShapes,
+            tb.offsets,
+            tb.nLayers,
         ):
+            # halo starting indicies (march from inner out)
+            b0ss = -(ng + 1) - off
+            b0rs = -ng
+            b1ss = ng + off
+            b1rs = ng - 1
             check0 = True
             check1 = True
             shape = blk0.array[var].shape
-            for i in range(ng):
+            for i in range(nLayers):
                 for j in range(shape[1]):
                     for k in range(shape[2]):
                         check0 = np.all(
-                            blk0.array[var][-(2 * ng + 1) + off + i, j, k]
-                            == blk1.array[var][k, i, j]
+                            blk0.array[var][b0ss, j, k] == blk1.array[var][k, b1rs, j]
                         )
                         check1 = np.all(
-                            blk0.array[var][-ng + i, j, k]
-                            == blk1.array[var][k, ng + 1 - off + i, j]
+                            blk0.array[var][b0rs, j, k] == blk1.array[var][k, b1ss, j]
                         )
                         if not check0 or not check1:
                             break
@@ -410,23 +434,28 @@ class TestOrientation:
 
         b02b1 = []
         b12b0 = []
-        for var, off in zip(
+        for var, shape, off, nLayers in zip(
             tb.varList,
-            [0, 0, 0, 1, 1, 1, 1],
+            tb.varShapes,
+            tb.offsets,
+            tb.nLayers,
         ):
+            # halo starting indicies (march from inner out)
+            b0ss = -(ng + 1) - off
+            b0rs = -ng
+            b1ss = ng + off
+            b1rs = ng - 1
             check0 = True
             check1 = True
             shape = blk0.array[var].shape
-            for i in range(ng):
+            for i in range(nLayers):
                 for j in range(shape[1]):
                     for k in range(shape[2]):
                         check0 = np.all(
-                            blk0.array[var][-(2 * ng + 1) + off + i, j, k]
-                            == blk1.array[var][j, k, i]
+                            blk0.array[var][b0ss, j, k] == blk1.array[var][j, k, b1rs]
                         )
                         check1 = np.all(
-                            blk0.array[var][-ng + i, j, k]
-                            == blk1.array[var][j, k, ng + 1 - off + i]
+                            blk0.array[var][b0rs, j, k] == blk1.array[var][j, k, b1ss]
                         )
                         if not check0 or not check1:
                             break
@@ -490,23 +519,28 @@ class TestOrientation:
 
         b02b1 = []
         b12b0 = []
-        for var, off in zip(
+        for var, shape, off, nLayers in zip(
             tb.varList,
-            [0, 0, 0, 1, 1, 1, 1],
+            tb.varShapes,
+            tb.offsets,
+            tb.nLayers,
         ):
+            # halo starting indicies (march from inner out)
+            b0ss = -(ng + 1) - off
+            b0rs = -ng
+            b1ss = b0ss
+            b1rs = b0rs
             check0 = True
             check1 = True
             shape = blk0.array[var].shape
-            for i in range(ng):
+            for i in range(nLayers):
                 for j in range(shape[1]):
                     for k in range(shape[2]):
                         check0 = np.all(
-                            blk0.array[var][-(2 * ng + 1) + off + i, j, k]
-                            == blk1.array[var][-(i + 1), k, j]
+                            blk0.array[var][b0ss, j, k] == blk1.array[var][b1rs, k, j]
                         )
                         check1 = np.all(
-                            blk0.array[var][-(i + 1), j, k]
-                            == blk1.array[var][-(2 * ng + 1) + off + i, k, j]
+                            blk0.array[var][b0rs, j, k] == blk1.array[var][b1ss, k, j]
                         )
                         if not check0 or not check1:
                             break
@@ -570,23 +604,28 @@ class TestOrientation:
 
         b02b1 = []
         b12b0 = []
-        for var, off in zip(
+        for var, shape, off, nLayers in zip(
             tb.varList,
-            [0, 0, 0, 1, 1, 1, 1],
+            tb.varShapes,
+            tb.offsets,
+            tb.nLayers,
         ):
+            # halo starting indicies (march from inner out)
+            b0ss = -(ng + 1) - off
+            b0rs = -ng
+            b1ss = b0ss
+            b1rs = b0rs
             check0 = True
             check1 = True
             shape = blk0.array[var].shape
-            for i in range(ng):
+            for i in range(nLayers):
                 for j in range(shape[1]):
                     for k in range(shape[2]):
                         check0 = np.all(
-                            blk0.array[var][-(2 * ng + 1) + off + i, j, k]
-                            == blk1.array[var][j, -(i + 1), k]
+                            blk0.array[var][b0ss, j, k] == blk1.array[var][j, b1rs, k]
                         )
                         check1 = np.all(
-                            blk0.array[var][-(i + 1), j, k]
-                            == blk1.array[var][j, -(2 * ng + 1) + off + i, k]
+                            blk0.array[var][b0rs, j, k] == blk1.array[var][j, b1ss, k]
                         )
                         if not check0 or not check1:
                             break
@@ -650,23 +689,28 @@ class TestOrientation:
 
         b02b1 = []
         b12b0 = []
-        for var, off in zip(
+        for var, shape, off, nLayers in zip(
             tb.varList,
-            [0, 0, 0, 1, 1, 1, 1],
+            tb.varShapes,
+            tb.offsets,
+            tb.nLayers,
         ):
+            # halo starting indicies (march from inner out)
+            b0ss = -(ng + 1) - off
+            b0rs = -ng
+            b1ss = b0ss
+            b1rs = b0rs
             check0 = True
             check1 = True
             shape = blk0.array[var].shape
-            for i in range(ng):
+            for i in range(nLayers):
                 for j in range(shape[1]):
                     for k in range(shape[2]):
                         check0 = np.all(
-                            blk0.array[var][-(2 * ng + 1) + off + i, j, k]
-                            == blk1.array[var][k, j, -(i + 1)]
+                            blk0.array[var][b0ss, j, k] == blk1.array[var][k, j, b1rs]
                         )
                         check1 = np.all(
-                            blk0.array[var][-(i + 1), j, k]
-                            == blk1.array[var][k, j, -(2 * ng + 1) + off + i]
+                            blk0.array[var][b0rs, j, k] == blk1.array[var][k, j, b1ss]
                         )
                         if not check0 or not check1:
                             break
