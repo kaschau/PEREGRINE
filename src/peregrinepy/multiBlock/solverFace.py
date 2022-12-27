@@ -139,20 +139,17 @@ class solverFace(gridFace, face_):
         #  o----------o----------o|x----------x----------x
         ng = self.ng
 
+        # List of node halo indicies
         smallFaceSendNodesSlices = list(range(ng + 1, 2 * ng + 1))
         smallFaceRecvNodesSlices = list(range(0, ng))
         largeFaceSendNodesSlices = list(range(-(2 * ng + 1), -(ng + 1)))
         largeFaceRecvNodesSlices = list(range(-ng, 0))
 
+        # List of cc halo indices
         smallFaceSendCcAll = list(range(ng, 2 * ng))
         smallFaceRecvCcAll = list(range(0, ng))
         largeFaceSendCcAll = list(range(-2 * ng, -ng))
         largeFaceRecvCcAll = list(range(-ng, 0))
-
-        smallFaceSendCcFirstHalo = [ng]
-        smallFaceRecvCcFirstHalo = [ng - 1]
-        largeFaceSendCcFirstHalo = [-2 * ng]
-        largeFaceRecvCcFirstHalo = [-ng]
 
         if self.nface == 1:
             self.nodeSendSlices = [s_[i, :, :] for i in smallFaceSendNodesSlices]
@@ -161,8 +158,6 @@ class solverFace(gridFace, face_):
             ccShape = (ng, nj + 2 * ng - 1, nk + 2 * ng - 1)
             self.nodeRecvSlices = [s_[i, :, :] for i in smallFaceRecvNodesSlices]
             self.ccRecvAllSlices = [s_[i, :, :, :] for i in smallFaceRecvCcAll]
-            self.ccSendFirstHaloSlice = [s_[ng, :, :, :]]
-            self.ccRecvFirstHaloSlice = [s_[ng - 1, :, :, :]]
         elif self.nface == 2:
             self.nodeSendSlices = [
                 s_[ni + 2 * ng + i, :, :] for i in largeFaceSendNodesSlices
@@ -178,8 +173,6 @@ class solverFace(gridFace, face_):
             self.ccRecvAllSlices = [
                 s_[ni + 2 * ng + i - 1, :, :, :] for i in largeFaceRecvCcAll
             ]
-            self.ccSendFirstHaloSlice = [s_[-2 * ng, :, :, :]]
-            self.ccRecvFirstHaloSlice = [s_[-ng, :, :, :]]
         elif self.nface == 3:
             self.nodeSendSlices = [s_[:, i, :] for i in smallFaceSendNodesSlices]
             self.ccSendAllSlices = [s_[:, i, :, :] for i in smallFaceSendCcAll]
@@ -187,8 +180,6 @@ class solverFace(gridFace, face_):
             ccShape = (ng, ni + 2 * ng - 1, nk + 2 * ng - 1)
             self.nodeRecvSlices = [s_[:, i, :] for i in smallFaceRecvNodesSlices]
             self.ccRecvAllSlices = [s_[:, i, :, :] for i in smallFaceRecvCcAll]
-            self.ccSendFirstHaloSlice = [s_[:, ng, :, :]]
-            self.ccRecvFirstHaloSlice = [s_[:, ng - 1, :, :]]
         elif self.nface == 4:
             self.nodeSendSlices = [
                 s_[:, nj + 2 * ng + i, :] for i in largeFaceSendNodesSlices
@@ -204,8 +195,6 @@ class solverFace(gridFace, face_):
             self.ccRecvAllSlices = [
                 s_[:, nj + 2 * ng + i - 1, :, :] for i in largeFaceRecvCcAll
             ]
-            self.ccSendFirstHaloSlice = [s_[:, -2 * ng, :, :]]
-            self.ccRecvFirstHaloSlice = [s_[:, -ng, :, :]]
         elif self.nface == 5:
             self.nodeSendSlices = [s_[:, :, i] for i in smallFaceSendNodesSlices]
             self.ccSendAllSlices = [s_[:, :, i, :] for i in smallFaceSendCcAll]
@@ -213,8 +202,6 @@ class solverFace(gridFace, face_):
             ccShape = (ng, ni + 2 * ng - 1, nj + 2 * ng - 1)
             self.nodeRecvSlices = [s_[:, :, i] for i in smallFaceRecvNodesSlices]
             self.ccRecvAllSlices = [s_[:, :, i, :] for i in smallFaceRecvCcAll]
-            self.ccSendFirstHaloSlice = [s_[:, :, ng, :]]
-            self.ccRecvFirstHaloSlice = [s_[:, :, ng - 1, :]]
         elif self.nface == 6:
             self.nodeSendSlices = [
                 s_[:, :, nk + 2 * ng + i] for i in largeFaceSendNodesSlices
@@ -230,8 +217,6 @@ class solverFace(gridFace, face_):
             self.ccRecvAllSlices = [
                 s_[:, :, nk + 2 * ng + i - 1, :] for i in largeFaceRecvCcAll
             ]
-            self.ccSendFirstHaloSlice = [s_[:, :, -2 * ng, :]]
-            self.ccRecvFirstHaloSlice = [s_[:, :, -ng, :]]
 
         # We reverse the order of the send slices if the face's neighbor
         # and this face axis is counter aligned. That way the recv buffer
@@ -245,6 +230,10 @@ class solverFace(gridFace, face_):
         if self.orientation[indx] in ["4", "5", "6"]:
             self.nodeSendSlices.reverse()
             self.ccSendAllSlices.reverse()
+
+        # We only need first halo slice for some variables (dqdxyz,phi)
+        self.ccSendFirstHaloSlice = [self.ccSendAllSlices[0]]
+        self.ccRecvFirstHaloSlice = [self.ccRecvAllSlices[0]]
 
         # We send the data in the correct shape already
         # Node shape

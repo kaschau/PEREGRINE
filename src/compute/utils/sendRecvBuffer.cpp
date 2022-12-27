@@ -3,13 +3,11 @@
 #include "face_.hpp"
 #include "kokkosTypes.hpp"
 
-void extract_sendBuffer3(threeDview &view, face_ &face,
-                         const std::vector<int> &slices) {
+void extractSendBuffer(threeDview &view, threeDview &buffer, face_ &face,
+                       const std::vector<int> &slices) {
 
   int &nface = face._nface;
   int nLayer = slices.size();
-
-  threeDview &buffer = face.tempRecvBuffer3;
 
   for (int g = 0; g < nLayer; g++) {
     int s = slices[g];
@@ -22,13 +20,12 @@ void extract_sendBuffer3(threeDview &view, face_ &face,
   }
 }
 
-void extract_sendBuffer4(fourDview &view, face_ &face,
-                         const std::vector<int> &slices) {
+void extractSendBuffer(fourDview &view, fourDview &buffer, face_ &face,
+                       const std::vector<int> &slices) {
 
   int &nface = face._nface;
   int nLayer = slices.size();
 
-  fourDview &buffer = face.tempRecvBuffer4;
   for (int g = 0; g < nLayer; g++) {
     int s = slices[g];
 
@@ -40,13 +37,11 @@ void extract_sendBuffer4(fourDview &view, face_ &face,
   }
 }
 
-void place_recvBuffer3(threeDview &view, face_ &face,
-                       const std::vector<int> &slices) {
+void placeRecvBuffer(threeDview &view, threeDview &buffer, face_ &face,
+                     const std::vector<int> &slices) {
 
   int &nface = face._nface;
   int nLayer = slices.size();
-
-  threeDview &buffer = face.recvBuffer3;
 
   for (int g = 0; g < nLayer; g++) {
     int s = slices[g];
@@ -59,13 +54,11 @@ void place_recvBuffer3(threeDview &view, face_ &face,
   }
 }
 
-void place_recvBuffer4(fourDview &view, face_ &face,
-                       const std::vector<int> &slices) {
+void placeRecvBuffer(fourDview &view, fourDview &buffer, face_ &face,
+                     const std::vector<int> &slices) {
 
   int &nface = face._nface;
   int nLayer = slices.size();
-
-  fourDview &buffer = face.recvBuffer4;
 
   for (int g = 0; g < nLayer; g++) {
     int s = slices[g];
