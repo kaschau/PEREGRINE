@@ -17,11 +17,7 @@ def communicate(mb, varis):
                 if face.neighbor is None:
                     continue
 
-                recv = (
-                    face.array["recvBuffer4"]
-                    if ndim == 4
-                    else face.array["recvBuffer3"]
-                )
+                recv = face.array["recvBuffer_" + var]
                 ssize = recv.size
                 reqs.append(
                     comm.Irecv(
@@ -37,11 +33,13 @@ def communicate(mb, varis):
                 if face.neighbor is None:
                     continue
 
-                send, sliceS = (
-                    (face.array["sendBuffer4"], face.sliceS4)
-                    if ndim == 4
-                    else (face.array["sendBuffer3"], face.sliceS3)
-                )
+                send = face.array["sendBuffer_" + var]
+                if var in ["Q", "q"]:
+                    sliceS = face.ccSendAllSlices
+                elif var in ["dqdx", "dqdy", "dqdz", "phi"]:
+                    sliceS = face.ccSendFirstHaloSlice
+                elif var in ["x", "y", "z"]:
+                    sliceS = face.nodeSendSlices
                 for i, sS in enumerate(sliceS):
                     send[i] = face.orient(blk.array[var][sS])
                 ssize = send.size
@@ -55,11 +53,13 @@ def communicate(mb, varis):
                 if face.neighbor is None:
                     continue
                 Request.Wait(reqs.__next__())
-                recv, sliceR = (
-                    (face.array["recvBuffer4"], face.sliceR4)
-                    if ndim == 4
-                    else (face.array["recvBuffer3"], face.sliceR3)
-                )
+                recv = face.array["recvBuffer_" + var]
+                if var in ["Q", "q"]:
+                    sliceR = face.ccRecvFirstHaloSlice
+                elif var in ["dqdx", "dqdy", "dqdz", "phi"]:
+                    sliceR = face.ccRecvAllSlices
+                elif var in ["x", "y", "z"]:
+                    sliceR = face.nodeRecvSlices
                 for i, sR in enumerate(sliceR):
                     blk.array[var][sR] = recv[i]
             # Push back up the device

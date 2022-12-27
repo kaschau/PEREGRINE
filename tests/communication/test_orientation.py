@@ -17,6 +17,8 @@ class twoblock123:
             self.config["RHS"]["diffOrder"] = 2
         elif adv == "fourthOrderKEEP":
             self.config["RHS"]["diffOrder"] = 4
+        self.config["RHS"]["shockHandling"] = "hybrid"
+        self.config["RHS"]["secondaryAdvFlux"] = "rusanov"
         self.config["thermochem"]["spdata"] = spdata
         self.config["RHS"]["diffusion"] = True
         self.mb = pg.multiBlock.generateMultiBlockSolver(2, self.config)
@@ -74,8 +76,8 @@ pytestmark = pytest.mark.parametrize(
     "adv,spdata",
     list(
         itertools.product(
-            ("secondOrderKEEP", "fourthOrderKEEP"),
-            (["Air"], "thtr_CH4_O2_Stanford_Skeletal.yaml"),
+            ("secondOrderKEEP",),  # "fourthOrderKEEP"),
+            (["Air"],),  # "thtr_CH4_O2_Stanford_Skeletal.yaml"),
         )
     ),
 )
@@ -109,16 +111,17 @@ class TestOrientation:
             blk.updateHostView(tb.varList)
 
         passfail = []
-        for var, shape, off in zip(
+        for var, shape, off, nLayers in zip(
             tb.varList,
             tb.varShapes,
             tb.offsets,
+            tb.nLayers,
         ):
             check0 = True
             check1 = True
             for k in range(shape[2]):
                 for j in range(shape[1]):
-                    for i in range(tb.nLayers):
+                    for i in range(nLayers):
                         check0 = np.all(
                             blk0.array[var][-(2 * ng + 1) + off + i, j, k]
                             == blk1.array[var][i, j, k]
@@ -145,7 +148,7 @@ class TestOrientation:
         blk1 = tb.mb[1]
         ng = blk0.ng
 
-        for var in ["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"]:
+        for var in tb.varList:
             blk1.array[var] = np.moveaxis(
                 np.flip(blk1.array[var], axis=2), (0, 1, 2), (0, 2, 1)
             )
@@ -153,7 +156,7 @@ class TestOrientation:
         # HACK: It seems like previous test data still exists
         # We need to clear out residual arrays from previous tests
         for v in blk0.array.keys():
-            if v not in ["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"]:
+            if v not in tb.varList:
                 blk0.array[v] = None
                 blk0.mirror[v] = None
                 blk1.array[v] = None
@@ -170,16 +173,18 @@ class TestOrientation:
         tb.mb.initSolverArrays(tb.config)
         # Execute communication
         for blk in tb.mb:
-            blk.updateDeviceView(["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"])
-        pg.mpiComm.communicate(tb.mb, ["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"])
+            blk.updateDeviceView(tb.varList)
+        pg.mpiComm.communicate(tb.mb, tb.varList)
         for blk in tb.mb:
-            blk.updateHostView(["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"])
+            blk.updateHostView(tb.varList)
 
         b02b1 = []
         b12b0 = []
-        for var, off in zip(
-            ["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"],
-            [0, 0, 0, 1, 1, 1, 1],
+        for var, shape, off, nLayers in zip(
+            tb.varList,
+            tb.varShapes,
+            tb.offsets,
+            tb.nLayers,
         ):
             check0 = True
             check1 = True
@@ -213,7 +218,7 @@ class TestOrientation:
         blk1 = tb.mb[1]
         ng = blk0.ng
 
-        for var in ["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"]:
+        for var in tb.varList:
             blk1.array[var] = np.moveaxis(
                 np.flip(blk1.array[var], axis=1), (0, 1, 2), (0, 2, 1)
             )
@@ -221,7 +226,7 @@ class TestOrientation:
         # HACK: It seems like previous test data still exists
         # We need to clear out residual arrays from previous tests
         for v in blk0.array.keys():
-            if v not in ["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"]:
+            if v not in tb.varList:
                 blk0.array[v] = None
                 blk0.mirror[v] = None
                 blk1.array[v] = None
@@ -238,15 +243,15 @@ class TestOrientation:
         tb.mb.initSolverArrays(tb.config)
         # Execute communication
         for blk in tb.mb:
-            blk.updateDeviceView(["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"])
-        pg.mpiComm.communicate(tb.mb, ["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"])
+            blk.updateDeviceView(tb.varList)
+        pg.mpiComm.communicate(tb.mb, tb.varList)
         for blk in tb.mb:
-            blk.updateHostView(["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"])
+            blk.updateHostView(tb.varList)
 
         b02b1 = []
         b12b0 = []
         for var, off in zip(
-            ["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"],
+            tb.varList,
             [0, 0, 0, 1, 1, 1, 1],
         ):
             check0 = True
@@ -285,13 +290,13 @@ class TestOrientation:
         blk1 = tb.mb[1]
         ng = blk0.ng
 
-        for var in ["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"]:
+        for var in tb.varList:
             blk1.array[var] = np.moveaxis(blk1.array[var], (0, 1, 2), (1, 2, 0))
 
         # HACK: It seems like previous test data still exists
         # We need to clear out residual arrays from previous tests
         for v in blk0.array.keys():
-            if v not in ["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"]:
+            if v not in tb.varList:
                 blk0.array[v] = None
                 blk0.mirror[v] = None
                 blk1.array[v] = None
@@ -318,15 +323,15 @@ class TestOrientation:
         tb.mb.initSolverArrays(tb.config)
         # Execute communication
         for blk in tb.mb:
-            blk.updateDeviceView(["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"])
-        pg.mpiComm.communicate(tb.mb, ["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"])
+            blk.updateDeviceView(tb.varList)
+        pg.mpiComm.communicate(tb.mb, tb.varList)
         for blk in tb.mb:
-            blk.updateHostView(["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"])
+            blk.updateHostView(tb.varList)
 
         b02b1 = []
         b12b0 = []
         for var, off in zip(
-            ["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"],
+            tb.varList,
             [0, 0, 0, 1, 1, 1, 1],
         ):
             check0 = True
@@ -365,13 +370,13 @@ class TestOrientation:
         blk1 = tb.mb[1]
         ng = blk0.ng
 
-        for var in ["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"]:
+        for var in tb.varList:
             blk1.array[var] = np.moveaxis(blk1.array[var], (0, 1, 2), (2, 0, 1))
 
         # HACK: It seems like previous test data still exists
         # We need to clear out residual arrays from previous tests
         for v in blk0.array.keys():
-            if v not in ["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"]:
+            if v not in tb.varList:
                 blk0.array[v] = None
                 blk0.mirror[v] = None
                 blk1.array[v] = None
@@ -398,15 +403,15 @@ class TestOrientation:
         tb.mb.initSolverArrays(tb.config)
         # Execute communication
         for blk in tb.mb:
-            blk.updateDeviceView(["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"])
-        pg.mpiComm.communicate(tb.mb, ["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"])
+            blk.updateDeviceView(tb.varList)
+        pg.mpiComm.communicate(tb.mb, tb.varList)
         for blk in tb.mb:
-            blk.updateHostView(["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"])
+            blk.updateHostView(tb.varList)
 
         b02b1 = []
         b12b0 = []
         for var, off in zip(
-            ["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"],
+            tb.varList,
             [0, 0, 0, 1, 1, 1, 1],
         ):
             check0 = True
@@ -445,13 +450,13 @@ class TestOrientation:
         blk1 = tb.mb[1]
         ng = blk0.ng
 
-        for var in ["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"]:
+        for var in tb.varList:
             blk1.array[var] = np.moveaxis(blk1.array[var], (0, 1, 2), (0, 2, 1))
 
         # HACK: It seems like previous test data still exists
         # We need to clear out residual arrays from previous tests
         for v in blk0.array.keys():
-            if v not in ["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"]:
+            if v not in tb.varList:
                 blk0.array[v] = None
                 blk0.mirror[v] = None
                 blk1.array[v] = None
@@ -478,15 +483,15 @@ class TestOrientation:
         tb.mb.initSolverArrays(tb.config)
         # Execute communication
         for blk in tb.mb:
-            blk.updateDeviceView(["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"])
-        pg.mpiComm.communicate(tb.mb, ["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"])
+            blk.updateDeviceView(tb.varList)
+        pg.mpiComm.communicate(tb.mb, tb.varList)
         for blk in tb.mb:
-            blk.updateHostView(["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"])
+            blk.updateHostView(tb.varList)
 
         b02b1 = []
         b12b0 = []
         for var, off in zip(
-            ["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"],
+            tb.varList,
             [0, 0, 0, 1, 1, 1, 1],
         ):
             check0 = True
@@ -525,13 +530,13 @@ class TestOrientation:
         blk1 = tb.mb[1]
         ng = blk0.ng
 
-        for var in ["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"]:
+        for var in tb.varList:
             blk1.array[var] = np.moveaxis(blk1.array[var], (0, 1, 2), (1, 0, 2))
 
         # HACK: It seems like previous test data still exists
         # We need to clear out residual arrays from previous tests
         for v in blk0.array.keys():
-            if v not in ["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"]:
+            if v not in tb.varList:
                 blk0.array[v] = None
                 blk0.mirror[v] = None
                 blk1.array[v] = None
@@ -558,15 +563,15 @@ class TestOrientation:
         tb.mb.initSolverArrays(tb.config)
         # Execute communication
         for blk in tb.mb:
-            blk.updateDeviceView(["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"])
-        pg.mpiComm.communicate(tb.mb, ["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"])
+            blk.updateDeviceView(tb.varList)
+        pg.mpiComm.communicate(tb.mb, tb.varList)
         for blk in tb.mb:
-            blk.updateHostView(["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"])
+            blk.updateHostView(tb.varList)
 
         b02b1 = []
         b12b0 = []
         for var, off in zip(
-            ["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"],
+            tb.varList,
             [0, 0, 0, 1, 1, 1, 1],
         ):
             check0 = True
@@ -605,13 +610,13 @@ class TestOrientation:
         blk1 = tb.mb[1]
         ng = blk0.ng
 
-        for var in ["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"]:
+        for var in tb.varList:
             blk1.array[var] = np.moveaxis(blk1.array[var], (0, 1, 2), (2, 1, 0))
 
         # HACK: It seems like previous test data still exists
         # We need to clear out residual arrays from previous tests
         for v in blk0.array.keys():
-            if v not in ["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"]:
+            if v not in tb.varList:
                 blk0.array[v] = None
                 blk0.mirror[v] = None
                 blk1.array[v] = None
@@ -638,15 +643,15 @@ class TestOrientation:
         tb.mb.initSolverArrays(tb.config)
         # Execute communication
         for blk in tb.mb:
-            blk.updateDeviceView(["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"])
-        pg.mpiComm.communicate(tb.mb, ["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"])
+            blk.updateDeviceView(tb.varList)
+        pg.mpiComm.communicate(tb.mb, tb.varList)
         for blk in tb.mb:
-            blk.updateHostView(["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"])
+            blk.updateHostView(tb.varList)
 
         b02b1 = []
         b12b0 = []
         for var, off in zip(
-            ["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"],
+            tb.varList,
             [0, 0, 0, 1, 1, 1, 1],
         ):
             check0 = True
