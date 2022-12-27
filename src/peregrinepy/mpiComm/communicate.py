@@ -50,11 +50,12 @@ def communicate(mb, varis):
                 # update the device temp recv buffer
                 face.updateHostView(recvName)
                 # Now, orient each send slice and place in send buffer
-                for i in range(face.ng):
+                for i in range(len(sliceIndxs)):
                     send[i] = face.orient(face.array[recvName][i])
                 ssize = send.size
                 comm.Send([send, ssize, MPIDOUBLE], dest=face.commRank, tag=face.tagS)
 
+        # Post non-blocking sends
         # wait and assign
         reqs = iter(reqs)
         for blk in mb:
@@ -66,9 +67,9 @@ def communicate(mb, varis):
 
                 recvName = "recvBuffer_" + var
                 if var in ["Q", "q"]:
-                    sliceR = face.ccRecvFirstHaloSlice
-                elif var in ["dqdx", "dqdy", "dqdz", "phi"]:
                     sliceR = face.ccRecvAllSlices
+                elif var in ["dqdx", "dqdy", "dqdz", "phi"]:
+                    sliceR = face.ccRecvFirstHaloSlice
                 elif var in ["x", "y", "z"]:
                     sliceR = face.nodeRecvSlices
 

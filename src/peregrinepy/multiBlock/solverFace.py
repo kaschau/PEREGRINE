@@ -232,8 +232,13 @@ class solverFace(gridFace, face_):
             self.ccSendAllSlices.reverse()
 
         # We only need first halo slice for some variables (dqdxyz,phi)
-        self.ccSendFirstHaloSlice = [self.ccSendAllSlices[0]]
-        self.ccRecvFirstHaloSlice = [self.ccRecvAllSlices[0]]
+        # make sure we pick up the correct send face
+        if self.nface in [1, 3, 5]:
+            self.ccSendFirstHaloSlice = [self.ccSendAllSlices[0]]
+            self.ccRecvFirstHaloSlice = [self.ccRecvAllSlices[-1]]
+        elif self.nface in [2, 4, 6]:
+            self.ccSendFirstHaloSlice = [self.ccSendAllSlices[-1]]
+            self.ccRecvFirstHaloSlice = [self.ccRecvAllSlices[0]]
 
         # We send the data in the correct shape already
         # Node shape
