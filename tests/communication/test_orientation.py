@@ -13,12 +13,16 @@ class twoblock123:
     def __init__(self, adv, spdata):
         self.config = pg.files.configFile()
         self.config["RHS"]["primaryAdvFlux"] = adv
+        self.config["RHS"]["shockHandling"] = "hybrid"
+        self.config["RHS"]["secondaryAdvFlux"] = "rusanov"
+
+        self.config["RHS"]["diffusion"] = True
         if adv == "secondOrderKEEP":
             self.config["RHS"]["diffOrder"] = 2
         elif adv == "fourthOrderKEEP":
             self.config["RHS"]["diffOrder"] = 4
+
         self.config["thermochem"]["spdata"] = spdata
-        self.config["RHS"]["diffusion"] = True
         self.mb = pg.multiBlock.generateMultiBlockSolver(2, self.config)
 
         pg.grid.create.multiBlockCube(
@@ -36,20 +40,38 @@ class twoblock123:
         blk1 = self.mb[1]
         blk0.getFace(2).commRank = 0
         blk1.getFace(1).commRank = 0
+        ng = blk0.ng
 
         self.xshape = self.mb[0].array["x"].shape
         self.qshape = self.mb[0].array["q"].shape
+        self.phishape = self.mb[0].array["phi"].shape
+
+        self.varList = ["x", "y", "z", "q", "Q", "dqdx", "dqdy", "dqdz", "phi"]
+        self.varShapes = [
+            self.xshape,
+            self.xshape,
+            self.xshape,
+            self.qshape,
+            self.qshape,
+            self.qshape,
+            self.qshape,
+            self.qshape,
+            self.phishape,
+        ]
+        self.offsets = [1, 1, 1, 0, 0, 0, 0, 0, 0]
+        self.nLayers = [ng, ng, ng, ng, ng, 1, 1, 1, 1]
 
         for blk in self.mb:
             blk.array["x"][:] = np.random.random((self.xshape))
             blk.array["y"][:] = np.random.random((self.xshape))
             blk.array["z"][:] = np.random.random((self.xshape))
             blk.array["q"][:] = np.random.random((self.qshape))
+            blk.array["Q"][:] = np.random.random((self.qshape))
             blk.array["dqdx"][:] = np.random.random((self.qshape))
             blk.array["dqdy"][:] = np.random.random((self.qshape))
             blk.array["dqdz"][:] = np.random.random((self.qshape))
-            blk.array["phi"][:] = np.random.random((self.qshape))
-            blk.updateDeviceView(["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"])
+            blk.array["phi"][:] = np.random.random((self.phishape))
+            blk.updateDeviceView(self.varList)
 
 
 pytestmark = pytest.mark.parametrize(
@@ -86,36 +108,34 @@ class TestOrientation:
         tb.mb.setBlockCommunication()
         tb.mb.initSolverArrays(tb.config)
         # Execute communication
-        pg.mpiComm.communicate(tb.mb, ["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"])
+        pg.mpiComm.communicate(tb.mb, tb.varList)
         for blk in tb.mb:
-            blk.updateHostView(["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"])
+            blk.updateHostView(tb.varList)
 
         passfail = []
-        for var, shape, off in zip(
-            ["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"],
-            [
-                tb.xshape,
-                tb.xshape,
-                tb.xshape,
-                tb.qshape,
-                tb.qshape,
-                tb.qshape,
-                tb.qshape,
-            ],
-            [0, 0, 0, 1, 1, 1, 1],
+        for var, shape, off, nLayers in zip(
+            tb.varList,
+            tb.varShapes,
+            tb.offsets,
+            tb.nLayers,
         ):
+            # halo starting indicies (march from inner out)
+            b0ss = -(ng + 1) - off
+            b0rs = -ng
+            b1ss = ng + off
+            b1rs = ng - 1
             check0 = True
             check1 = True
-            for k in range(shape[2]):
+            for i in range(nLayers):
                 for j in range(shape[1]):
-                    for i in range(ng):
+                    for k in range(shape[2]):
                         check0 = np.all(
-                            blk0.array[var][-(2 * ng + 1) + off + i, j, k]
-                            == blk1.array[var][i, j, k]
+                            blk0.array[var][b0ss - i, j, k]
+                            == blk1.array[var][b1rs - i, j, k]
                         )
                         check1 = np.all(
-                            blk0.array[var][-ng + i, j, k]
-                            == blk1.array[var][ng + 1 - off + i, j, k]
+                            blk0.array[var][b0rs + i, j, k]
+                            == blk1.array[var][b1ss + i, j, k]
                         )
                         if not check0 or not check1:
                             break
@@ -135,7 +155,7 @@ class TestOrientation:
         blk1 = tb.mb[1]
         ng = blk0.ng
 
-        for var in ["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"]:
+        for var in tb.varList:
             blk1.array[var] = np.moveaxis(
                 np.flip(blk1.array[var], axis=2), (0, 1, 2), (0, 2, 1)
             )
@@ -143,7 +163,7 @@ class TestOrientation:
         # HACK: It seems like previous test data still exists
         # We need to clear out residual arrays from previous tests
         for v in blk0.array.keys():
-            if v not in ["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"]:
+            if v not in tb.varList:
                 blk0.array[v] = None
                 blk0.mirror[v] = None
                 blk1.array[v] = None
@@ -160,30 +180,37 @@ class TestOrientation:
         tb.mb.initSolverArrays(tb.config)
         # Execute communication
         for blk in tb.mb:
-            blk.updateDeviceView(["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"])
-        pg.mpiComm.communicate(tb.mb, ["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"])
+            blk.updateDeviceView(tb.varList)
+        pg.mpiComm.communicate(tb.mb, tb.varList)
         for blk in tb.mb:
-            blk.updateHostView(["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"])
+            blk.updateHostView(tb.varList)
 
         b02b1 = []
         b12b0 = []
-        for var, off in zip(
-            ["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"],
-            [0, 0, 0, 1, 1, 1, 1],
+        for var, shape, off, nLayers in zip(
+            tb.varList,
+            tb.varShapes,
+            tb.offsets,
+            tb.nLayers,
         ):
+            # halo starting indicies (march from inner out)
+            b0ss = -(ng + 1) - off
+            b0rs = -ng
+            b1ss = ng + off
+            b1rs = ng - 1
             check0 = True
             check1 = True
             shape = blk0.array[var].shape
-            for i in range(ng):
+            for i in range(nLayers):
                 for j in range(shape[1]):
                     for k in range(shape[2]):
                         check0 = np.all(
-                            blk0.array[var][-(2 * ng + 1) + off + i, j, k]
-                            == blk1.array[var][i, -(k + 1), j]
+                            blk0.array[var][b0ss, j, k]
+                            == blk1.array[var][b1rs, -(k + 1), j]
                         )
                         check1 = np.all(
-                            blk0.array[var][-ng + i, j, k]
-                            == blk1.array[var][ng + 1 - off + i, -(k + 1), j]
+                            blk0.array[var][b0rs, j, k]
+                            == blk1.array[var][b1ss, -(k + 1), j]
                         )
                         if not check0 or not check1:
                             break
@@ -203,7 +230,7 @@ class TestOrientation:
         blk1 = tb.mb[1]
         ng = blk0.ng
 
-        for var in ["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"]:
+        for var in tb.varList:
             blk1.array[var] = np.moveaxis(
                 np.flip(blk1.array[var], axis=1), (0, 1, 2), (0, 2, 1)
             )
@@ -211,7 +238,7 @@ class TestOrientation:
         # HACK: It seems like previous test data still exists
         # We need to clear out residual arrays from previous tests
         for v in blk0.array.keys():
-            if v not in ["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"]:
+            if v not in tb.varList:
                 blk0.array[v] = None
                 blk0.mirror[v] = None
                 blk1.array[v] = None
@@ -228,30 +255,37 @@ class TestOrientation:
         tb.mb.initSolverArrays(tb.config)
         # Execute communication
         for blk in tb.mb:
-            blk.updateDeviceView(["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"])
-        pg.mpiComm.communicate(tb.mb, ["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"])
+            blk.updateDeviceView(tb.varList)
+        pg.mpiComm.communicate(tb.mb, tb.varList)
         for blk in tb.mb:
-            blk.updateHostView(["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"])
+            blk.updateHostView(tb.varList)
 
         b02b1 = []
         b12b0 = []
-        for var, off in zip(
-            ["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"],
-            [0, 0, 0, 1, 1, 1, 1],
+        for var, shape, off, nLayers in zip(
+            tb.varList,
+            tb.varShapes,
+            tb.offsets,
+            tb.nLayers,
         ):
+            # halo starting indicies (march from inner out)
+            b0ss = -(ng + 1) - off
+            b0rs = -ng
+            b1ss = ng + off
+            b1rs = ng - 1
             check0 = True
             check1 = True
             shape = blk0.array[var].shape
-            for i in range(ng):
+            for i in range(nLayers):
                 for j in range(shape[1]):
                     for k in range(shape[2]):
                         check0 = np.all(
-                            blk0.array[var][-(2 * ng + 1) + off + i, j, k]
-                            == blk1.array[var][i, k, -(j + 1)]
+                            blk0.array[var][b0ss, j, k]
+                            == blk1.array[var][b1rs, k, -(j + 1)]
                         )
                         check1 = np.all(
-                            blk0.array[var][-ng + i, j, k]
-                            == blk1.array[var][ng + 1 - off + i, k, -(j + 1)]
+                            blk0.array[var][b0rs, j, k]
+                            == blk1.array[var][b1ss, k, -(j + 1)]
                         )
                         if not check0 or not check1:
                             break
@@ -275,13 +309,13 @@ class TestOrientation:
         blk1 = tb.mb[1]
         ng = blk0.ng
 
-        for var in ["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"]:
+        for var in tb.varList:
             blk1.array[var] = np.moveaxis(blk1.array[var], (0, 1, 2), (1, 2, 0))
 
         # HACK: It seems like previous test data still exists
         # We need to clear out residual arrays from previous tests
         for v in blk0.array.keys():
-            if v not in ["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"]:
+            if v not in tb.varList:
                 blk0.array[v] = None
                 blk0.mirror[v] = None
                 blk1.array[v] = None
@@ -308,30 +342,35 @@ class TestOrientation:
         tb.mb.initSolverArrays(tb.config)
         # Execute communication
         for blk in tb.mb:
-            blk.updateDeviceView(["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"])
-        pg.mpiComm.communicate(tb.mb, ["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"])
+            blk.updateDeviceView(tb.varList)
+        pg.mpiComm.communicate(tb.mb, tb.varList)
         for blk in tb.mb:
-            blk.updateHostView(["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"])
+            blk.updateHostView(tb.varList)
 
         b02b1 = []
         b12b0 = []
-        for var, off in zip(
-            ["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"],
-            [0, 0, 0, 1, 1, 1, 1],
+        for var, shape, off, nLayers in zip(
+            tb.varList,
+            tb.varShapes,
+            tb.offsets,
+            tb.nLayers,
         ):
+            # halo starting indicies (march from inner out)
+            b0ss = -(ng + 1) - off
+            b0rs = -ng
+            b1ss = ng + off
+            b1rs = ng - 1
             check0 = True
             check1 = True
             shape = blk0.array[var].shape
-            for i in range(ng):
+            for i in range(nLayers):
                 for j in range(shape[1]):
                     for k in range(shape[2]):
                         check0 = np.all(
-                            blk0.array[var][-(2 * ng + 1) + off + i, j, k]
-                            == blk1.array[var][k, i, j]
+                            blk0.array[var][b0ss, j, k] == blk1.array[var][k, b1rs, j]
                         )
                         check1 = np.all(
-                            blk0.array[var][-ng + i, j, k]
-                            == blk1.array[var][k, ng + 1 - off + i, j]
+                            blk0.array[var][b0rs, j, k] == blk1.array[var][k, b1ss, j]
                         )
                         if not check0 or not check1:
                             break
@@ -355,13 +394,13 @@ class TestOrientation:
         blk1 = tb.mb[1]
         ng = blk0.ng
 
-        for var in ["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"]:
+        for var in tb.varList:
             blk1.array[var] = np.moveaxis(blk1.array[var], (0, 1, 2), (2, 0, 1))
 
         # HACK: It seems like previous test data still exists
         # We need to clear out residual arrays from previous tests
         for v in blk0.array.keys():
-            if v not in ["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"]:
+            if v not in tb.varList:
                 blk0.array[v] = None
                 blk0.mirror[v] = None
                 blk1.array[v] = None
@@ -388,30 +427,35 @@ class TestOrientation:
         tb.mb.initSolverArrays(tb.config)
         # Execute communication
         for blk in tb.mb:
-            blk.updateDeviceView(["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"])
-        pg.mpiComm.communicate(tb.mb, ["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"])
+            blk.updateDeviceView(tb.varList)
+        pg.mpiComm.communicate(tb.mb, tb.varList)
         for blk in tb.mb:
-            blk.updateHostView(["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"])
+            blk.updateHostView(tb.varList)
 
         b02b1 = []
         b12b0 = []
-        for var, off in zip(
-            ["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"],
-            [0, 0, 0, 1, 1, 1, 1],
+        for var, shape, off, nLayers in zip(
+            tb.varList,
+            tb.varShapes,
+            tb.offsets,
+            tb.nLayers,
         ):
+            # halo starting indicies (march from inner out)
+            b0ss = -(ng + 1) - off
+            b0rs = -ng
+            b1ss = ng + off
+            b1rs = ng - 1
             check0 = True
             check1 = True
             shape = blk0.array[var].shape
-            for i in range(ng):
+            for i in range(nLayers):
                 for j in range(shape[1]):
                     for k in range(shape[2]):
                         check0 = np.all(
-                            blk0.array[var][-(2 * ng + 1) + off + i, j, k]
-                            == blk1.array[var][j, k, i]
+                            blk0.array[var][b0ss, j, k] == blk1.array[var][j, k, b1rs]
                         )
                         check1 = np.all(
-                            blk0.array[var][-ng + i, j, k]
-                            == blk1.array[var][j, k, ng + 1 - off + i]
+                            blk0.array[var][b0rs, j, k] == blk1.array[var][j, k, b1ss]
                         )
                         if not check0 or not check1:
                             break
@@ -435,13 +479,13 @@ class TestOrientation:
         blk1 = tb.mb[1]
         ng = blk0.ng
 
-        for var in ["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"]:
+        for var in tb.varList:
             blk1.array[var] = np.moveaxis(blk1.array[var], (0, 1, 2), (0, 2, 1))
 
         # HACK: It seems like previous test data still exists
         # We need to clear out residual arrays from previous tests
         for v in blk0.array.keys():
-            if v not in ["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"]:
+            if v not in tb.varList:
                 blk0.array[v] = None
                 blk0.mirror[v] = None
                 blk1.array[v] = None
@@ -468,30 +512,35 @@ class TestOrientation:
         tb.mb.initSolverArrays(tb.config)
         # Execute communication
         for blk in tb.mb:
-            blk.updateDeviceView(["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"])
-        pg.mpiComm.communicate(tb.mb, ["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"])
+            blk.updateDeviceView(tb.varList)
+        pg.mpiComm.communicate(tb.mb, tb.varList)
         for blk in tb.mb:
-            blk.updateHostView(["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"])
+            blk.updateHostView(tb.varList)
 
         b02b1 = []
         b12b0 = []
-        for var, off in zip(
-            ["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"],
-            [0, 0, 0, 1, 1, 1, 1],
+        for var, shape, off, nLayers in zip(
+            tb.varList,
+            tb.varShapes,
+            tb.offsets,
+            tb.nLayers,
         ):
+            # halo starting indicies (march from inner out)
+            b0ss = -(ng + 1) - off
+            b0rs = -ng
+            b1ss = b0ss
+            b1rs = b0rs
             check0 = True
             check1 = True
             shape = blk0.array[var].shape
-            for i in range(ng):
+            for i in range(nLayers):
                 for j in range(shape[1]):
                     for k in range(shape[2]):
                         check0 = np.all(
-                            blk0.array[var][-(2 * ng + 1) + off + i, j, k]
-                            == blk1.array[var][-(i + 1), k, j]
+                            blk0.array[var][b0ss, j, k] == blk1.array[var][b1rs, k, j]
                         )
                         check1 = np.all(
-                            blk0.array[var][-(i + 1), j, k]
-                            == blk1.array[var][-(2 * ng + 1) + off + i, k, j]
+                            blk0.array[var][b0rs, j, k] == blk1.array[var][b1ss, k, j]
                         )
                         if not check0 or not check1:
                             break
@@ -515,13 +564,13 @@ class TestOrientation:
         blk1 = tb.mb[1]
         ng = blk0.ng
 
-        for var in ["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"]:
+        for var in tb.varList:
             blk1.array[var] = np.moveaxis(blk1.array[var], (0, 1, 2), (1, 0, 2))
 
         # HACK: It seems like previous test data still exists
         # We need to clear out residual arrays from previous tests
         for v in blk0.array.keys():
-            if v not in ["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"]:
+            if v not in tb.varList:
                 blk0.array[v] = None
                 blk0.mirror[v] = None
                 blk1.array[v] = None
@@ -548,30 +597,35 @@ class TestOrientation:
         tb.mb.initSolverArrays(tb.config)
         # Execute communication
         for blk in tb.mb:
-            blk.updateDeviceView(["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"])
-        pg.mpiComm.communicate(tb.mb, ["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"])
+            blk.updateDeviceView(tb.varList)
+        pg.mpiComm.communicate(tb.mb, tb.varList)
         for blk in tb.mb:
-            blk.updateHostView(["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"])
+            blk.updateHostView(tb.varList)
 
         b02b1 = []
         b12b0 = []
-        for var, off in zip(
-            ["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"],
-            [0, 0, 0, 1, 1, 1, 1],
+        for var, shape, off, nLayers in zip(
+            tb.varList,
+            tb.varShapes,
+            tb.offsets,
+            tb.nLayers,
         ):
+            # halo starting indicies (march from inner out)
+            b0ss = -(ng + 1) - off
+            b0rs = -ng
+            b1ss = b0ss
+            b1rs = b0rs
             check0 = True
             check1 = True
             shape = blk0.array[var].shape
-            for i in range(ng):
+            for i in range(nLayers):
                 for j in range(shape[1]):
                     for k in range(shape[2]):
                         check0 = np.all(
-                            blk0.array[var][-(2 * ng + 1) + off + i, j, k]
-                            == blk1.array[var][j, -(i + 1), k]
+                            blk0.array[var][b0ss, j, k] == blk1.array[var][j, b1rs, k]
                         )
                         check1 = np.all(
-                            blk0.array[var][-(i + 1), j, k]
-                            == blk1.array[var][j, -(2 * ng + 1) + off + i, k]
+                            blk0.array[var][b0rs, j, k] == blk1.array[var][j, b1ss, k]
                         )
                         if not check0 or not check1:
                             break
@@ -595,13 +649,13 @@ class TestOrientation:
         blk1 = tb.mb[1]
         ng = blk0.ng
 
-        for var in ["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"]:
+        for var in tb.varList:
             blk1.array[var] = np.moveaxis(blk1.array[var], (0, 1, 2), (2, 1, 0))
 
         # HACK: It seems like previous test data still exists
         # We need to clear out residual arrays from previous tests
         for v in blk0.array.keys():
-            if v not in ["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"]:
+            if v not in tb.varList:
                 blk0.array[v] = None
                 blk0.mirror[v] = None
                 blk1.array[v] = None
@@ -628,30 +682,35 @@ class TestOrientation:
         tb.mb.initSolverArrays(tb.config)
         # Execute communication
         for blk in tb.mb:
-            blk.updateDeviceView(["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"])
-        pg.mpiComm.communicate(tb.mb, ["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"])
+            blk.updateDeviceView(tb.varList)
+        pg.mpiComm.communicate(tb.mb, tb.varList)
         for blk in tb.mb:
-            blk.updateHostView(["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"])
+            blk.updateHostView(tb.varList)
 
         b02b1 = []
         b12b0 = []
-        for var, off in zip(
-            ["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"],
-            [0, 0, 0, 1, 1, 1, 1],
+        for var, shape, off, nLayers in zip(
+            tb.varList,
+            tb.varShapes,
+            tb.offsets,
+            tb.nLayers,
         ):
+            # halo starting indicies (march from inner out)
+            b0ss = -(ng + 1) - off
+            b0rs = -ng
+            b1ss = b0ss
+            b1rs = b0rs
             check0 = True
             check1 = True
             shape = blk0.array[var].shape
-            for i in range(ng):
+            for i in range(nLayers):
                 for j in range(shape[1]):
                     for k in range(shape[2]):
                         check0 = np.all(
-                            blk0.array[var][-(2 * ng + 1) + off + i, j, k]
-                            == blk1.array[var][k, j, -(i + 1)]
+                            blk0.array[var][b0ss, j, k] == blk1.array[var][k, j, b1rs]
                         )
                         check1 = np.all(
-                            blk0.array[var][-(i + 1), j, k]
-                            == blk1.array[var][k, j, -(2 * ng + 1) + off + i]
+                            blk0.array[var][b0rs, j, k] == blk1.array[var][k, j, b1ss]
                         )
                         if not check0 or not check1:
                             break

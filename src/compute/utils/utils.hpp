@@ -29,14 +29,14 @@ std::array<double, 3> CFLmax(const std::vector<block_> &mb);
 int checkNan(const std::vector<block_> &mb);
 
 //    |------> sendRecvBuffer
-void extract_sendBuffer3(threeDview &view, face_ &face,
-                         const std::vector<int> &slices);
-void extract_sendBuffer4(fourDview &view, face_ &face,
-                         const std::vector<int> &slices);
-void place_recvBuffer3(threeDview &view, face_ &face,
+void extractSendBuffer(threeDview &view, threeDview &buffer, face_ &face,
                        const std::vector<int> &slices);
-void place_recvBuffer4(fourDview &view, face_ &face,
+void extractSendBuffer(fourDview &view, fourDview &buffer, face_ &face,
                        const std::vector<int> &slices);
+void placeRecvBuffer(threeDview &view, threeDview &buffer, face_ &face,
+                     const std::vector<int> &slices);
+void placeRecvBuffer(fourDview &view, fourDview &buffer, face_ &face,
+                     const std::vector<int> &slices);
 
 //    |------> viscousSponge
 void viscousSponge(block_ &b, const std::array<double, 3> &origin,
