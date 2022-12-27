@@ -50,32 +50,27 @@ class solverFace(gridFace, face_):
             self.s1_ = s_[:, :, -(ng + 1)]
             self.s2_ = [s_[:, :, i] for i in largeS2]
 
-        # Boundary condition values
-        for d in [
-            "sendBuffer3",
-            "sendBuffer4",
-            "recvBuffer3",
-            "recvBuffer4",
-            "tempRecvBuffer3",
-            "tempRecvBuffer4",
-            "qBcVals",
-            "QBcVals",
-        ]:
-            self.array[d] = None
-        self.mirror = frozenDict(
-            {
-                "sendBuffer3": None,
-                "sendBuffer4": None,
-                "recvBuffer3": None,
-                "recvBuffer4": None,
-                "tempRecvBuffer3": None,
-                "tempRecvBuffer4": None,
-                "qBcVals": None,
-                "QBcVals": None,
-                "periodicRotMatrixUp": None,
-                "periodicRotMatrixDown": None,
-            }
-        )
+        # arrays that faces save
+        #
+        # List of all possible communicate vars
+        commVars = ["x", "y", "z", "q", "Q", "dqdx", "dqdy", "dqdz", "phi"]
+        self.mirror = frozenDict()
+        for d in commVars:
+            self.array["sendBuffer_" + d] = None
+            self.array["recvBuffer_" + d] = None
+            self.array["tempRecvBuffer_" + d] = None
+
+            self.mirror["sendBuffer_" + d] = None
+            self.mirror["recvBuffer_" + d] = None
+            self.mirror["tempRecvBuffer_" + d] = None
+
+        self.array["qBcVals"] = None
+        self.array["QBcVals"] = None
+        self.mirror["qBcVals"] = None
+        self.mirror["QBcVals"] = None
+        self.mirror["periodicRotMatrixUp"] = None
+        self.mirror["periodicRotMatrixDown"] = None
+
         self.array._freeze()
         self.mirror._freeze()
 
@@ -144,58 +139,99 @@ class solverFace(gridFace, face_):
         #  o----------o----------o|x----------x----------x
         ng = self.ng
 
-        smallSfp = list(range(ng + 1, 2 * ng + 1))
-        smallRfp = list(range(0, ng))
-        largeSfp = list(range(-(2 * ng + 1), -(ng + 1)))
-        largeRfp = list(range(-ng, 0))
+        smallFaceSendNodesSlices = list(range(ng + 1, 2 * ng + 1))
+        smallFaceRecvNodesSlices = list(range(0, ng))
+        largeFaceSendNodesSlices = list(range(-(2 * ng + 1), -(ng + 1)))
+        largeFaceRecvNodesSlices = list(range(-ng, 0))
 
-        smallSc = list(range(ng, 2 * ng))
-        smallRc = list(range(0, ng))
-        largeSc = list(range(-2 * ng, -ng))
-        largeRc = list(range(-ng, 0))
+        smallFaceSendCcAll = list(range(ng, 2 * ng))
+        smallFaceRecvCcAll = list(range(0, ng))
+        largeFaceSendCcAll = list(range(-2 * ng, -ng))
+        largeFaceRecvCcAll = list(range(-ng, 0))
+
+        smallFaceSendCcFirstHalo = [ng]
+        smallFaceRecvCcFirstHalo = [ng - 1]
+        largeFaceSendCcFirstHalo = [-2 * ng]
+        largeFaceRecvCcFirstHalo = [-ng]
 
         if self.nface == 1:
-            self.sliceS3 = [s_[i, :, :] for i in smallSfp]
-            self.sliceS4 = [s_[i, :, :, :] for i in smallSc]
-            commfpshape = (ng, nj + 2 * ng, nk + 2 * ng)
-            commcshape = (ng, nj + 2 * ng - 1, nk + 2 * ng - 1, ne)
-            self.sliceR3 = [s_[i, :, :] for i in smallRfp]
-            self.sliceR4 = [s_[i, :, :, :] for i in smallRc]
+            self.nodeSendSlices = [s_[i, :, :] for i in smallFaceSendNodesSlices]
+            self.ccSendAllSlices = [s_[i, :, :, :] for i in smallFaceSendCcAll]
+            nodeShape = (ng, nj + 2 * ng, nk + 2 * ng)
+            ccShape = (ng, nj + 2 * ng - 1, nk + 2 * ng - 1)
+            self.nodeRecvSlices = [s_[i, :, :] for i in smallFaceRecvNodesSlices]
+            self.ccRecvAllSlices = [s_[i, :, :, :] for i in smallFaceRecvCcAll]
+            self.ccSendFirstHaloSlice = [s_[ng, :, :, :]]
+            self.ccRecvFirstHaloSlice = [s_[ng - 1, :, :, :]]
         elif self.nface == 2:
-            self.sliceS3 = [s_[ni + 2 * ng + i, :, :] for i in largeSfp]
-            self.sliceS4 = [s_[ni + 2 * ng + i - 1, :, :, :] for i in largeSc]
-            commfpshape = (ng, nj + 2 * ng, nk + 2 * ng)
-            commcshape = (ng, nj + 2 * ng - 1, nk + 2 * ng - 1, ne)
-            self.sliceR3 = [s_[ni + 2 * ng + i, :, :] for i in largeRfp]
-            self.sliceR4 = [s_[ni + 2 * ng + i - 1, :, :, :] for i in largeRc]
+            self.nodeSendSlices = [
+                s_[ni + 2 * ng + i, :, :] for i in largeFaceSendNodesSlices
+            ]
+            self.ccSendAllSlices = [
+                s_[ni + 2 * ng + i - 1, :, :, :] for i in largeFaceSendCcAll
+            ]
+            nodeShape = (ng, nj + 2 * ng, nk + 2 * ng)
+            ccShape = (ng, nj + 2 * ng - 1, nk + 2 * ng - 1)
+            self.nodeRecvSlices = [
+                s_[ni + 2 * ng + i, :, :] for i in largeFaceRecvNodesSlices
+            ]
+            self.ccRecvAllSlices = [
+                s_[ni + 2 * ng + i - 1, :, :, :] for i in largeFaceRecvCcAll
+            ]
+            self.ccSendFirstHaloSlice = [s_[-2 * ng, :, :, :]]
+            self.ccRecvFirstHaloSlice = [s_[-ng, :, :, :]]
         elif self.nface == 3:
-            self.sliceS3 = [s_[:, i, :] for i in smallSfp]
-            self.sliceS4 = [s_[:, i, :, :] for i in smallSc]
-            commfpshape = (ng, ni + 2 * ng, nk + 2 * ng)
-            commcshape = (ng, ni + 2 * ng - 1, nk + 2 * ng - 1, ne)
-            self.sliceR3 = [s_[:, i, :] for i in smallRfp]
-            self.sliceR4 = [s_[:, i, :, :] for i in smallRc]
+            self.nodeSendSlices = [s_[:, i, :] for i in smallFaceSendNodesSlices]
+            self.ccSendAllSlices = [s_[:, i, :, :] for i in smallFaceSendCcAll]
+            nodeShape = (ng, ni + 2 * ng, nk + 2 * ng)
+            ccShape = (ng, ni + 2 * ng - 1, nk + 2 * ng - 1)
+            self.nodeRecvSlices = [s_[:, i, :] for i in smallFaceRecvNodesSlices]
+            self.ccRecvAllSlices = [s_[:, i, :, :] for i in smallFaceRecvCcAll]
+            self.ccSendFirstHaloSlice = [s_[:, ng, :, :]]
+            self.ccRecvFirstHaloSlice = [s_[:, ng - 1, :, :]]
         elif self.nface == 4:
-            self.sliceS3 = [s_[:, nj + 2 * ng + i, :] for i in largeSfp]
-            self.sliceS4 = [s_[:, nj + 2 * ng + i - 1, :, :] for i in largeSc]
-            commfpshape = (ng, ni + 2 * ng, nk + 2 * ng)
-            commcshape = (ng, ni + 2 * ng - 1, nk + 2 * ng - 1, ne)
-            self.sliceR3 = [s_[:, nj + 2 * ng + i, :] for i in largeRfp]
-            self.sliceR4 = [s_[:, nj + 2 * ng + i - 1, :, :] for i in largeRc]
+            self.nodeSendSlices = [
+                s_[:, nj + 2 * ng + i, :] for i in largeFaceSendNodesSlices
+            ]
+            self.ccSendAllSlices = [
+                s_[:, nj + 2 * ng + i - 1, :, :] for i in largeFaceSendCcAll
+            ]
+            nodeShape = (ng, ni + 2 * ng, nk + 2 * ng)
+            ccShape = (ng, ni + 2 * ng - 1, nk + 2 * ng - 1)
+            self.nodeRecvSlices = [
+                s_[:, nj + 2 * ng + i, :] for i in largeFaceRecvNodesSlices
+            ]
+            self.ccRecvAllSlices = [
+                s_[:, nj + 2 * ng + i - 1, :, :] for i in largeFaceRecvCcAll
+            ]
+            self.ccSendFirstHaloSlice = [s_[:, -2 * ng, :, :]]
+            self.ccRecvFirstHaloSlice = [s_[:, -ng, :, :]]
         elif self.nface == 5:
-            self.sliceS3 = [s_[:, :, i] for i in smallSfp]
-            self.sliceS4 = [s_[:, :, i, :] for i in smallSc]
-            commfpshape = (ng, ni + 2 * ng, nj + 2 * ng)
-            commcshape = (ng, ni + 2 * ng - 1, nj + 2 * ng - 1, ne)
-            self.sliceR3 = [s_[:, :, i] for i in smallRfp]
-            self.sliceR4 = [s_[:, :, i, :] for i in smallRc]
+            self.nodeSendSlices = [s_[:, :, i] for i in smallFaceSendNodesSlices]
+            self.ccSendAllSlices = [s_[:, :, i, :] for i in smallFaceSendCcAll]
+            nodeShape = (ng, ni + 2 * ng, nj + 2 * ng)
+            ccShape = (ng, ni + 2 * ng - 1, nj + 2 * ng - 1)
+            self.nodeRecvSlices = [s_[:, :, i] for i in smallFaceRecvNodesSlices]
+            self.ccRecvAllSlices = [s_[:, :, i, :] for i in smallFaceRecvCcAll]
+            self.ccSendFirstHaloSlice = [s_[:, :, ng, :]]
+            self.ccRecvFirstHaloSlice = [s_[:, :, ng - 1, :]]
         elif self.nface == 6:
-            self.sliceS3 = [s_[:, :, nk + 2 * ng + i] for i in largeSfp]
-            self.sliceS4 = [s_[:, :, nk + 2 * ng + i - 1, :] for i in largeSc]
-            commfpshape = (ng, ni + 2 * ng, nj + 2 * ng)
-            commcshape = (ng, ni + 2 * ng - 1, nj + 2 * ng - 1, ne)
-            self.sliceR3 = [s_[:, :, nk + 2 * ng + i] for i in largeRfp]
-            self.sliceR4 = [s_[:, :, nk + 2 * ng + i - 1, :] for i in largeRc]
+            self.nodeSendSlices = [
+                s_[:, :, nk + 2 * ng + i] for i in largeFaceSendNodesSlices
+            ]
+            self.ccSendAllSlices = [
+                s_[:, :, nk + 2 * ng + i - 1, :] for i in largeFaceSendCcAll
+            ]
+            nodeShape = (ng, ni + 2 * ng, nj + 2 * ng)
+            ccShape = (ng, ni + 2 * ng - 1, nj + 2 * ng - 1)
+            self.nodeRecvSlices = [
+                s_[:, :, nk + 2 * ng + i] for i in largeFaceRecvNodesSlices
+            ]
+            self.ccRecvAllSlices = [
+                s_[:, :, nk + 2 * ng + i - 1, :] for i in largeFaceRecvCcAll
+            ]
+            self.ccSendFirstHaloSlice = [s_[:, :, -2 * ng, :]]
+            self.ccRecvFirstHaloSlice = [s_[:, :, -ng, :]]
 
         # We reverse the order of the send slices if the face's neighbor
         # and this face axis is counter aligned. That way the recv buffer
@@ -207,42 +243,67 @@ class solverFace(gridFace, face_):
         elif self.nface in [5, 6]:
             indx = 2
         if self.orientation[indx] in ["4", "5", "6"]:
-            self.sliceS3.reverse()
-            self.sliceS4.reverse()
+            self.nodeSendSlices.reverse()
+            self.ccSendAllSlices.reverse()
 
         # We send the data in the correct shape already
-        # Face and point shape
-        temp = self.orient(np.empty(commfpshape[1::]))
-        self.array["sendBuffer3"] = np.ascontiguousarray(
-            np.empty(tuple([ng]) + temp.shape)
-        )
-        shape = self.array["sendBuffer3"].shape
-        createViewMirrorArray(self, "sendBuffer3", shape)
+        # Node shape
+        temp = self.orient(np.empty(nodeShape[1::]))
+        for var in ["x", "y", "z"]:
+            sendName = "sendBuffer_" + var
+            self.array[sendName] = np.ascontiguousarray(
+                np.empty(tuple([ng]) + temp.shape)
+            )
+            shape = self.array[sendName].shape
+            createViewMirrorArray(self, sendName, shape)
 
-        # We recieve the data in the correct shape already
-        self.array["recvBuffer3"] = np.ascontiguousarray(np.empty(commfpshape))
-        shape = self.array["recvBuffer3"].shape
-        createViewMirrorArray(self, "recvBuffer3", shape)
-        # We use temporary buffers for some storage
-        self.array["tempRecvBuffer3"] = np.ascontiguousarray(np.empty(commfpshape))
-        shape = self.array["tempRecvBuffer3"].shape
-        createViewMirrorArray(self, "tempRecvBuffer3", shape)
+            # We recieve the data in the correct shape already
+            recvName = "recvBuffer_" + var
+            self.array[recvName] = np.ascontiguousarray(np.empty(nodeShape))
+            shape = self.array[recvName].shape
+            createViewMirrorArray(self, recvName, shape)
 
-        # Cell
-        temp = self.orient(np.empty(commcshape[1::]))
-        self.array["sendBuffer4"] = np.ascontiguousarray(
-            np.empty(tuple([ng]) + temp.shape)
-        )
-        shape = self.array["sendBuffer4"].shape
-        createViewMirrorArray(self, "sendBuffer4", shape)
-        # We revieve the data in the correct shape already
-        self.array["recvBuffer4"] = np.ascontiguousarray(np.empty(commcshape))
-        shape = self.array["recvBuffer4"].shape
-        createViewMirrorArray(self, "recvBuffer4", shape)
-        # We use temporary buffers for some storage
-        self.array["tempRecvBuffer4"] = np.ascontiguousarray(np.empty(commcshape))
-        shape = self.array["tempRecvBuffer4"].shape
-        createViewMirrorArray(self, "tempRecvBuffer4", shape)
+            # We use temporary buffers for some storage
+            tempRecvName = "tempRecvBuffer_" + var
+            self.array[tempRecvName] = np.ascontiguousarray(np.empty(nodeShape))
+            shape = self.array[tempRecvName].shape
+            createViewMirrorArray(self, tempRecvName, shape)
+
+        # Cell Center, ne vars
+        for var in ["q", "Q", "dqdx", "dqdy", "dqdz", "phi"]:
+
+            # Only "q" and "Q" need ALL ghost layers
+            if var in ["q", "Q"]:
+                nLayers = ng
+            else:
+                nLayers = 1
+            # phi only uses 3 last exis elements not ne
+            if var in ["phi"]:
+                nE = 3
+            else:
+                nE = ne
+
+            temp = self.orient(np.empty(ccShape[1::] + tuple([nE])))
+            sendName = "sendBuffer_" + var
+            self.array[sendName] = np.ascontiguousarray(
+                np.empty(tuple([nLayers]) + temp.shape)
+            )
+            shape = self.array[sendName].shape
+            createViewMirrorArray(self, sendName, shape)
+
+            # We revieve the data in the correct shape already
+            recvName = "recvBuffer_" + var
+            self.array[recvName] = np.ascontiguousarray(np.empty(ccShape + tuple([nE])))
+            shape = self.array[recvName].shape
+            createViewMirrorArray(self, recvName, shape)
+
+            # We use temporary buffers for some storage
+            tempRecvName = "tempRecvBuffer_" + var
+            self.array[tempRecvName] = np.ascontiguousarray(
+                np.empty(ccShape + tuple([nE]))
+            )
+            shape = self.array[tempRecvName].shape
+            createViewMirrorArray(self, tempRecvName, shape)
 
         # Unique tags.
         self.tagR = int(nblki * 6 + self.nface)

@@ -18,16 +18,11 @@ def communicate(mb, varis):
         reqs = []
         # Post non-blocking recieves
         for blk in mb:
-            ndim = blk.array[var].ndim
             for face in blk.faces:
                 if face.neighbor is None:
                     continue
 
-                recv = (
-                    face.array["recvBuffer4"]
-                    if ndim == 4
-                    else face.array["recvBuffer3"]
-                )
+                recv = face.array["recvBuffer_" + var]
                 ssize = recv.size
                 reqs.append(
                     comm.Irecv(
@@ -37,31 +32,32 @@ def communicate(mb, varis):
 
         # Post non-blocking sends
         for blk in mb:
-            ndim = blk.array[var].ndim
             for face in blk.faces:
                 if face.neighbor is None:
                     continue
 
-                if ndim == 4:
-                    send = face.array["sendBuffer4"]
-                    recv = "tempRecvBuffer4"
-                    sliceS = face.sliceS4
+                send = face.array["sendBuffer_" + var]
+                recvName = "tempRecBuffer_" + var
+                if var in ["Q", "q"]:
+                    sliceS = face.ccSendAllSlices
                     extract = extract_sendBuffer4
-                else:
-                    send = face.array["sendBuffer3"]
-                    recv = "tempRecvBuffer3"
-                    sliceS = face.sliceS3
+                elif var in ["dqdx", "dqdy", "dqdz", "phi"]:
+                    sliceS = face.ccSendFirstHaloSlice
+                    extract = extract_sendBuffer4
+                elif var in ["x", "y", "z"]:
+                    sliceS = face.nodeSendSlices
                     extract = extract_sendBuffer3
+
                 # Get the indices of the send slices from the numpy slice object
                 sliceIndxs = [s for f in sliceS for s in f if type(s) is int]
                 # populate the temp recv array with the unoriented send data, since its
                 # the correct size and shape
                 extract(getattr(blk, var), face, sliceIndxs)
                 # update the device temp recv buffer
-                face.updateHostView(recv)
+                face.updateHostView(recvName)
                 # Now, orient each send slice and place in send buffer
                 for i in range(face.ng):
-                    send[i] = face.orient(face.array[recv][i])
+                    send[i] = face.orient(face.array[recvName][i])
                 ssize = send.size
                 comm.Send([send, ssize, MPIDOUBLE], dest=face.commRank, tag=face.tagS)
 
@@ -73,16 +69,20 @@ def communicate(mb, varis):
                 if face.neighbor is None:
                     continue
                 Request.Wait(reqs.__next__())
-                if ndim == 4:
-                    recv = "recvBuffer4"
-                    sliceR = face.sliceR4
+
+                recvName = "recvBuffer_" + var
+                if var in ["Q", "q"]:
+                    sliceR = face.ccRecvFirstHaloSlice
                     place = place_recvBuffer4
-                else:
-                    recv = "recvBuffer3"
-                    sliceR = face.sliceR3
+                elif var in ["dqdx", "dqdy", "dqdz", "phi"]:
+                    sliceR = face.ccRecvAllSlices
+                    place = place_recvBuffer4
+                elif var in ["x", "y", "z"]:
+                    sliceR = face.nodeRecvSlices
                     place = place_recvBuffer3
+
                 # Push back up the device
-                face.updateDeviceView(recv)
+                face.updateDeviceView(recvName)
                 # Get the indices of the send slices from the numpy slice object
                 sliceIndxs = [s for f in sliceR for s in f if type(s) is int]
                 # Place the recv in the view

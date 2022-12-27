@@ -36,20 +36,38 @@ class twoblock123:
         blk1 = self.mb[1]
         blk0.getFace(2).commRank = 0
         blk1.getFace(1).commRank = 0
+        ng = blk0.ng
 
         self.xshape = self.mb[0].array["x"].shape
         self.qshape = self.mb[0].array["q"].shape
+        self.phishape = self.mb[0].array["phi"].shape
+
+        self.varList = ["x", "y", "z", "q", "Q", "dqdx", "dqdy", "dqdz", "phi"]
+        self.varShapes = [
+            self.xshape,
+            self.xshape,
+            self.xshape,
+            self.qshape,
+            self.qshape,
+            self.qshape,
+            self.qshape,
+            self.qshape,
+            self.phishape,
+        ]
+        self.offsets = [0, 0, 0, 1, 1, 1, 1, 1, 1]
+        self.nLayers = [ng, ng, ng, ng, ng, 1, 1, 1, 1]
 
         for blk in self.mb:
             blk.array["x"][:] = np.random.random((self.xshape))
             blk.array["y"][:] = np.random.random((self.xshape))
             blk.array["z"][:] = np.random.random((self.xshape))
             blk.array["q"][:] = np.random.random((self.qshape))
+            blk.array["Q"][:] = np.random.random((self.qshape))
             blk.array["dqdx"][:] = np.random.random((self.qshape))
             blk.array["dqdy"][:] = np.random.random((self.qshape))
             blk.array["dqdz"][:] = np.random.random((self.qshape))
-            blk.array["phi"][:] = np.random.random((self.qshape))
-            blk.updateDeviceView(["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"])
+            blk.array["phi"][:] = np.random.random((self.phishape))
+            blk.updateDeviceView(self.varList)
 
 
 pytestmark = pytest.mark.parametrize(
@@ -86,29 +104,21 @@ class TestOrientation:
         tb.mb.setBlockCommunication()
         tb.mb.initSolverArrays(tb.config)
         # Execute communication
-        pg.mpiComm.communicate(tb.mb, ["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"])
+        pg.mpiComm.communicate(tb.mb, tb.varList)
         for blk in tb.mb:
-            blk.updateHostView(["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"])
+            blk.updateHostView(tb.varList)
 
         passfail = []
         for var, shape, off in zip(
-            ["x", "y", "z", "q", "dqdx", "dqdy", "dqdz"],
-            [
-                tb.xshape,
-                tb.xshape,
-                tb.xshape,
-                tb.qshape,
-                tb.qshape,
-                tb.qshape,
-                tb.qshape,
-            ],
-            [0, 0, 0, 1, 1, 1, 1],
+            tb.varList,
+            tb.varShapes,
+            tb.offsets,
         ):
             check0 = True
             check1 = True
             for k in range(shape[2]):
                 for j in range(shape[1]):
-                    for i in range(ng):
+                    for i in range(tb.nLayers):
                         check0 = np.all(
                             blk0.array[var][-(2 * ng + 1) + off + i, j, k]
                             == blk1.array[var][i, j, k]
