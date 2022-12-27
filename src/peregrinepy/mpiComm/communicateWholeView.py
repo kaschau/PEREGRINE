@@ -55,9 +55,9 @@ def communicate(mb, varis):
                 Request.Wait(reqs.__next__())
                 recv = face.array["recvBuffer_" + var]
                 if var in ["Q", "q"]:
-                    sliceR = face.ccRecvFirstHaloSlice
-                elif var in ["dqdx", "dqdy", "dqdz", "phi"]:
                     sliceR = face.ccRecvAllSlices
+                elif var in ["dqdx", "dqdy", "dqdz", "phi"]:
+                    sliceR = face.ccRecvFirstHaloSlice
                 elif var in ["x", "y", "z"]:
                     sliceR = face.nodeRecvSlices
                 for i, sR in enumerate(sliceR):
