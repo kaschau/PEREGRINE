@@ -29,7 +29,7 @@ def simulate():
 
     config["simulation"]["niter"] = 100
 
-    config["timeIntegration"]["integrator"] = rk3
+    config["timeIntegration"]["integrator"] = "rk3"
     config["timeIntegration"]["variableTimeStep"] = True
     config.validateConfig()
 
@@ -49,13 +49,33 @@ def simulate():
         blk.array["q"][:, :, :, 4] = 300.0
 
     # Create the case structure
-    os.mkdir("./Grid")
-    os.mkdir("./Restart")
-    os.mkdir("./Input")
+    try:
+        os.mkdir("./Grid")
+    except FileExistsError:
+        pass
+    try:
+        os.mkdir("./Restart")
+    except FileExistsError:
+        pass
+    try:
+        os.mkdir("./Input")
+    except FileExistsError:
+        pass
 
     pg.writers.writeGrid(mb, "./Grid")
-    pg.writers.writeRestart(mb, "./Restart", gridPath="../Grid", animate=True)
-    pg.writers.writeConfigFile(config, "./Input")
+    pg.writers.writeRestart(mb, "./Restart", gridPath="../Grid", animate=False)
+    pg.writers.writeConfigFile(config, "./")
+    pg.writers.writeConnectivity(mb, "./Input")
+
+    bcFam = """---
+
+periodic:
+  bcType: periodicTrans
+  bcVals:
+    periodicSpan: 0.1
+    periodicAxis: [1, 0, 0]"""
+    with open("./Input/bcFams.yaml", "w") as f:
+        f.write(bcFam)
 
 
 if __name__ == "__main__":
