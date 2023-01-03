@@ -25,7 +25,6 @@ def RHS(mb):
             # Update spatial derivatives
             mb.dqdxyz(blk)
 
-    if mb.config["RHS"]["diffusion"]:
         # communicate derivatives
         communicate(mb, ["dqdx", "dqdy", "dqdz"])
         for blk in mb:
