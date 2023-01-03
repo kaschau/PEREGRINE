@@ -16,14 +16,19 @@ def RHS(mb):
         mb.secondaryAdvFlux(blk)
         mb.applySecondaryAdvFlux(blk, 0.0)  # <-- 0.0 is for secondary flux
 
-        if mb.config["RHS"]["diffusion"]:
+    if mb.config["RHS"]["diffusion"]:
+        for blk in mb:
             # Apply viscous boundary conditions
             for face in blk.faces:
                 face.bcFunc(blk, face, mb.eos, mb.thtrdat, "preDqDxyz", mb.tme)
 
             # Update spatial derivatives
             mb.dqdxyz(blk)
-            communicate(mb, ["dqdx", "dqdy", "dqdz"])
+
+    if mb.config["RHS"]["diffusion"]:
+        # communicate derivatives
+        communicate(mb, ["dqdx", "dqdy", "dqdz"])
+        for blk in mb:
             # Apply spatial derivative boundary conditions
             for face in blk.faces:
                 face.bcFunc(blk, face, mb.eos, mb.thtrdat, "postDqDxyz", mb.tme)
@@ -35,6 +40,7 @@ def RHS(mb):
             mb.diffFlux(blk)
             mb.applyDiffFlux(blk, -1.0)  # <-- -1.0 is arbitrary, see applyFlux.cpp
 
+    for blk in mb:
         # Chemical source terms
         mb.expChem(
             blk,
