@@ -79,13 +79,7 @@ class solverFace(gridFace, face_):
 
         # MPI variables
         self.commRank = None
-
         self.orient = None
-        self.sliceS3 = None
-        self.sliceR3 = None
-        self.sliceS4 = None
-        self.sliceR4 = None
-
         self.tagS = None
         self.tagR = None
 
