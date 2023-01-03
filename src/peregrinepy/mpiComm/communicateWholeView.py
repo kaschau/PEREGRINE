@@ -12,7 +12,6 @@ def communicate(mb, varis):
         reqs = []
         # Post non-blocking recieves
         for blk in mb:
-            ndim = blk.array[var].ndim
             for face in blk.faces:
                 if face.neighbor is None:
                     continue
@@ -28,7 +27,6 @@ def communicate(mb, varis):
         # Post non-blocking sends
         for blk in mb:
             blk.updateHostView(var)
-            ndim = blk.array[var].ndim
             for face in blk.faces:
                 if face.neighbor is None:
                     continue
@@ -48,7 +46,6 @@ def communicate(mb, varis):
         # wait and assign
         reqs = iter(reqs)
         for blk in mb:
-            ndim = blk.array[var].ndim
             for face in blk.faces:
                 if face.neighbor is None:
                     continue
