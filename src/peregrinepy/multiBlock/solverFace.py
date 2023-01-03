@@ -79,6 +79,14 @@ class solverFace(gridFace, face_):
 
         # MPI variables
         self.commRank = None
+
+        self.ccSendAllSlices = None
+        self.ccRecvAllSlices = None
+        self.nodeSendSlices = None
+        self.nodeRecvSlices = None
+        self.ccSendFirstHaloSlice = None
+        self.ccRecvFirstHaloSlice = None
+
         self.orient = None
         self.tagS = None
         self.tagR = None
@@ -148,8 +156,8 @@ class solverFace(gridFace, face_):
         if self.nface == 1:
             self.nodeSendSlices = [s_[i, :, :] for i in smallFaceSendNodesSlices]
             self.ccSendAllSlices = [s_[i, :, :, :] for i in smallFaceSendCcAll]
-            nodeShape = (ng, nj + 2 * ng, nk + 2 * ng)
-            ccShape = (ng, nj + 2 * ng - 1, nk + 2 * ng - 1)
+            nodeShape = (nj + 2 * ng, nk + 2 * ng)
+            ccShape = (nj + 2 * ng - 1, nk + 2 * ng - 1)
             self.nodeRecvSlices = [s_[i, :, :] for i in smallFaceRecvNodesSlices]
             self.ccRecvAllSlices = [s_[i, :, :, :] for i in smallFaceRecvCcAll]
         elif self.nface == 2:
@@ -159,8 +167,8 @@ class solverFace(gridFace, face_):
             self.ccSendAllSlices = [
                 s_[ni + 2 * ng + i - 1, :, :, :] for i in largeFaceSendCcAll
             ]
-            nodeShape = (ng, nj + 2 * ng, nk + 2 * ng)
-            ccShape = (ng, nj + 2 * ng - 1, nk + 2 * ng - 1)
+            nodeShape = (nj + 2 * ng, nk + 2 * ng)
+            ccShape = (nj + 2 * ng - 1, nk + 2 * ng - 1)
             self.nodeRecvSlices = [
                 s_[ni + 2 * ng + i, :, :] for i in largeFaceRecvNodesSlices
             ]
@@ -170,8 +178,8 @@ class solverFace(gridFace, face_):
         elif self.nface == 3:
             self.nodeSendSlices = [s_[:, i, :] for i in smallFaceSendNodesSlices]
             self.ccSendAllSlices = [s_[:, i, :, :] for i in smallFaceSendCcAll]
-            nodeShape = (ng, ni + 2 * ng, nk + 2 * ng)
-            ccShape = (ng, ni + 2 * ng - 1, nk + 2 * ng - 1)
+            nodeShape = (ni + 2 * ng, nk + 2 * ng)
+            ccShape = (ni + 2 * ng - 1, nk + 2 * ng - 1)
             self.nodeRecvSlices = [s_[:, i, :] for i in smallFaceRecvNodesSlices]
             self.ccRecvAllSlices = [s_[:, i, :, :] for i in smallFaceRecvCcAll]
         elif self.nface == 4:
@@ -181,8 +189,8 @@ class solverFace(gridFace, face_):
             self.ccSendAllSlices = [
                 s_[:, nj + 2 * ng + i - 1, :, :] for i in largeFaceSendCcAll
             ]
-            nodeShape = (ng, ni + 2 * ng, nk + 2 * ng)
-            ccShape = (ng, ni + 2 * ng - 1, nk + 2 * ng - 1)
+            nodeShape = (ni + 2 * ng, nk + 2 * ng)
+            ccShape = (ni + 2 * ng - 1, nk + 2 * ng - 1)
             self.nodeRecvSlices = [
                 s_[:, nj + 2 * ng + i, :] for i in largeFaceRecvNodesSlices
             ]
@@ -192,8 +200,8 @@ class solverFace(gridFace, face_):
         elif self.nface == 5:
             self.nodeSendSlices = [s_[:, :, i] for i in smallFaceSendNodesSlices]
             self.ccSendAllSlices = [s_[:, :, i, :] for i in smallFaceSendCcAll]
-            nodeShape = (ng, ni + 2 * ng, nj + 2 * ng)
-            ccShape = (ng, ni + 2 * ng - 1, nj + 2 * ng - 1)
+            nodeShape = (ni + 2 * ng, nj + 2 * ng)
+            ccShape = (ni + 2 * ng - 1, nj + 2 * ng - 1)
             self.nodeRecvSlices = [s_[:, :, i] for i in smallFaceRecvNodesSlices]
             self.ccRecvAllSlices = [s_[:, :, i, :] for i in smallFaceRecvCcAll]
         elif self.nface == 6:
@@ -203,8 +211,8 @@ class solverFace(gridFace, face_):
             self.ccSendAllSlices = [
                 s_[:, :, nk + 2 * ng + i - 1, :] for i in largeFaceSendCcAll
             ]
-            nodeShape = (ng, ni + 2 * ng, nj + 2 * ng)
-            ccShape = (ng, ni + 2 * ng - 1, nj + 2 * ng - 1)
+            nodeShape = (ni + 2 * ng, nj + 2 * ng)
+            ccShape = (ni + 2 * ng - 1, nj + 2 * ng - 1)
             self.nodeRecvSlices = [
                 s_[:, :, nk + 2 * ng + i] for i in largeFaceRecvNodesSlices
             ]
@@ -237,7 +245,7 @@ class solverFace(gridFace, face_):
 
         # We send the data in the correct shape already
         # Node shape
-        temp = self.orient(np.empty(nodeShape[1::]))
+        temp = self.orient(np.empty(nodeShape))
         for var in ["x", "y", "z"]:
             sendName = "sendBuffer_" + var
             self.array[sendName] = np.ascontiguousarray(
@@ -248,13 +256,17 @@ class solverFace(gridFace, face_):
 
             # We recieve the data in the correct shape already
             recvName = "recvBuffer_" + var
-            self.array[recvName] = np.ascontiguousarray(np.empty(nodeShape))
+            self.array[recvName] = np.ascontiguousarray(
+                np.empty(tuple([ng]) + nodeShape)
+            )
             shape = self.array[recvName].shape
             createViewMirrorArray(self, recvName, shape)
 
             # We use temporary buffers for some storage
             tempRecvName = "tempRecvBuffer_" + var
-            self.array[tempRecvName] = np.ascontiguousarray(np.empty(nodeShape))
+            self.array[tempRecvName] = np.ascontiguousarray(
+                np.empty(tuple([ng]) + nodeShape)
+            )
             shape = self.array[tempRecvName].shape
             createViewMirrorArray(self, tempRecvName, shape)
 
@@ -272,7 +284,7 @@ class solverFace(gridFace, face_):
             else:
                 nE = ne
 
-            temp = self.orient(np.empty(ccShape[1::] + tuple([nE])))
+            temp = self.orient(np.empty(ccShape + tuple([nE])))
             sendName = "sendBuffer_" + var
             self.array[sendName] = np.ascontiguousarray(
                 np.empty(tuple([nLayers]) + temp.shape)
@@ -282,14 +294,16 @@ class solverFace(gridFace, face_):
 
             # We revieve the data in the correct shape already
             recvName = "recvBuffer_" + var
-            self.array[recvName] = np.ascontiguousarray(np.empty(ccShape + tuple([nE])))
+            self.array[recvName] = np.ascontiguousarray(
+                np.empty(tuple([nLayers]) + ccShape + tuple([nE]))
+            )
             shape = self.array[recvName].shape
             createViewMirrorArray(self, recvName, shape)
 
             # We use temporary buffers for some storage
             tempRecvName = "tempRecvBuffer_" + var
             self.array[tempRecvName] = np.ascontiguousarray(
-                np.empty(ccShape + tuple([nE]))
+                np.empty(tuple([nLayers]) + ccShape + tuple([nE]))
             )
             shape = self.array[tempRecvName].shape
             createViewMirrorArray(self, tempRecvName, shape)

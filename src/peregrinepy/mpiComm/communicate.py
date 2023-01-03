@@ -55,8 +55,7 @@ def communicate(mb, varis):
                 ssize = send.size
                 comm.Send([send, ssize, MPIDOUBLE], dest=face.commRank, tag=face.tagS)
 
-        # Post non-blocking sends
-        # wait and assign
+        # wait and update
         reqs = iter(reqs)
         for blk in mb:
             ndim = blk.array[var].ndim
