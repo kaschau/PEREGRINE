@@ -58,7 +58,6 @@ def communicate(mb, varis):
         # wait and update
         reqs = iter(reqs)
         for blk in mb:
-            ndim = blk.array[var].ndim
             for face in blk.faces:
                 if face.neighbor is None:
                     continue

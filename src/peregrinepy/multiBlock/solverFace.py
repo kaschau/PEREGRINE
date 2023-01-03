@@ -221,7 +221,7 @@ class solverFace(gridFace, face_):
             ]
 
         # We only need first halo slice for some variables (dqdxyz,phi)
-        # make sure we pick up the correct send face, this must be done
+        # make sure we pick up the correct send/recv face, this must be done
         # before the send faces are reversed!
         if self.nface in [1, 3, 5]:
             self.ccSendFirstHaloSlice = [self.ccSendAllSlices[0]]
