@@ -73,7 +73,7 @@ def communicate(mb, varis):
 
                 # Push back up the device
                 face.updateDeviceView(recvName)
-                # Get the indices of the send slices from the numpy slice object
+                # Get the indices of the recv slices from the numpy slice object
                 sliceIndxs = [s for f in sliceR for s in f if type(s) is int]
                 # Place the recv in the view
                 placeRecvBuffer(

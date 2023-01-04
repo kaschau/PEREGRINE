@@ -8,7 +8,7 @@ The ICEM **ascii** info.* grid file (i.e. info.dom*) must be present in same dir
 
 Example
 -------
-icem2raptor.py -topo <info.topo>
+icem2pg.py -topo <info.topo>
 
 Output will be a PEREGRINE compatible connectivity file 'conn.yaml' as well as hdf5 binary grid files.
 
