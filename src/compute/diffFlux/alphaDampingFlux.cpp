@@ -10,7 +10,7 @@ void alphaDampingFlux(block_ &b) {
   double const bulkVisc = 0.0;
 
   // damping parameter
-  double const alpha = 8.0 / 3.0;
+  double const alpha = 1.0;
 
   //-------------------------------------------------------------------------------------------|
   // i flux face range
@@ -42,16 +42,16 @@ void alphaDampingFlux(block_ &b) {
         double xcim1[3] = {b.ixc(i, j, k) - b.xc(i - 1, j, k),
                            b.iyc(i, j, k) - b.yc(i - 1, j, k),
                            b.izc(i, j, k) - b.zc(i - 1, j, k)};
-        double xci[3] = {b.xc(i, j, k) - b.ixc(i - 1, j, k),
-                         b.yc(i, j, k) - b.iyc(i - 1, j, k),
-                         b.zc(i, j, k) - b.izc(i - 1, j, k)};
+        double xci[3] = {b.ixc(i, j, k) - b.xc(i, j, k),
+                         b.iyc(i, j, k) - b.yc(i, j, k),
+                         b.izc(i, j, k) - b.zc(i, j, k)};
 
         double wDOTxc, wL, wR;
 
         // Face derivatives = consistent + damping
-        wDOTxc =
-            (b.dqdx(i, j, k, 1) * xcim1[0] + b.dqdy(i, j, k, 1) * xcim1[1] +
-             b.dqdz(i, j, k, 1) * xcim1[2]);
+        wDOTxc = (b.dqdx(i - 1, j, k, 1) * xcim1[0] +
+                  b.dqdy(i - 1, j, k, 1) * xcim1[1] +
+                  b.dqdz(i - 1, j, k, 1) * xcim1[2]);
         wL = b.q(i - 1, j, k, 1) + wDOTxc;
         wDOTxc = (b.dqdx(i, j, k, 1) * xci[0] + b.dqdy(i, j, k, 1) * xci[1] +
                   b.dqdz(i, j, k, 1) * xci[2]);
@@ -63,9 +63,9 @@ void alphaDampingFlux(block_ &b) {
         double dudz = 0.5 * (b.dqdz(i, j, k, 1) + b.dqdz(i - 1, j, k, 1)) +
                       damp[2] * (wR - wL);
 
-        wDOTxc =
-            (b.dqdx(i, j, k, 2) * xcim1[0] + b.dqdy(i, j, k, 2) * xcim1[1] +
-             b.dqdz(i, j, k, 2) * xcim1[2]);
+        wDOTxc = (b.dqdx(i - 1, j, k, 2) * xcim1[0] +
+                  b.dqdy(i - 1, j, k, 2) * xcim1[1] +
+                  b.dqdz(i - 1, j, k, 2) * xcim1[2]);
         wL = b.q(i - 1, j, k, 2) + wDOTxc;
         wDOTxc = (b.dqdx(i, j, k, 2) * xci[0] + b.dqdy(i, j, k, 2) * xci[1] +
                   b.dqdz(i, j, k, 2) * xci[2]);
@@ -77,9 +77,9 @@ void alphaDampingFlux(block_ &b) {
         double dvdz = 0.5 * (b.dqdz(i, j, k, 2) + b.dqdz(i - 1, j, k, 2)) +
                       damp[2] * (wR - wL);
 
-        wDOTxc =
-            (b.dqdx(i, j, k, 3) * xcim1[0] + b.dqdy(i, j, k, 3) * xcim1[1] +
-             b.dqdz(i, j, k, 3) * xcim1[2]);
+        wDOTxc = (b.dqdx(i - 1, j, k, 3) * xcim1[0] +
+                  b.dqdy(i - 1, j, k, 3) * xcim1[1] +
+                  b.dqdz(i - 1, j, k, 3) * xcim1[2]);
         wL = b.q(i - 1, j, k, 3) + wDOTxc;
         wDOTxc = (b.dqdx(i, j, k, 3) * xci[0] + b.dqdy(i, j, k, 3) * xci[1] +
                   b.dqdz(i, j, k, 3) * xci[2]);
@@ -119,9 +119,9 @@ void alphaDampingFlux(block_ &b) {
 
         // energy
         //   heat conduction
-        wDOTxc =
-            (b.dqdx(i, j, k, 4) * xcim1[0] + b.dqdy(i, j, k, 4) * xcim1[1] +
-             b.dqdz(i, j, k, 4) * xcim1[2]);
+        wDOTxc = (b.dqdx(i - 1, j, k, 4) * xcim1[0] +
+                  b.dqdy(i - 1, j, k, 4) * xcim1[1] +
+                  b.dqdz(i - 1, j, k, 4) * xcim1[2]);
         wL = b.q(i - 1, j, k, 4) + wDOTxc;
         wDOTxc = (b.dqdx(i, j, k, 4) * xci[0] + b.dqdy(i, j, k, 4) * xci[1] +
                   b.dqdz(i, j, k, 4) * xci[2]);
@@ -154,9 +154,9 @@ void alphaDampingFlux(block_ &b) {
         // Compute the species flux and correction term \sum(k=1,ns) Dk*gradYk
         for (int n = 0; n < b.ne - 5; n++) {
           Dk = 0.5 * (b.qt(i, j, k, 2 + n) + b.qt(i - 1, j, k, 2 + n));
-          wDOTxc = (b.dqdx(i, j, k, 5 + n) * xcim1[0] +
-                    b.dqdy(i, j, k, 5 + n) * xcim1[1] +
-                    b.dqdz(i, j, k, 5 + n) * xcim1[2]);
+          wDOTxc = (b.dqdx(i - 1, j, k, 5 + n) * xcim1[0] +
+                    b.dqdy(i - 1, j, k, 5 + n) * xcim1[1] +
+                    b.dqdz(i - 1, j, k, 5 + n) * xcim1[2]);
           wL = b.q(i - 1, j, k, 5 + n) + wDOTxc;
           wDOTxc = (b.dqdx(i, j, k, 5 + n) * xci[0] +
                     b.dqdy(i, j, k, 5 + n) * xci[1] +
@@ -215,18 +215,69 @@ void alphaDampingFlux(block_ &b) {
         // continuity
         b.jF(i, j, k, 0) = 0.0;
 
-        // Spatial derivative on face
-        double dudx = 0.5 * (b.dqdx(i, j, k, 1) + b.dqdx(i, j - 1, k, 1));
-        double dvdx = 0.5 * (b.dqdx(i, j, k, 2) + b.dqdx(i, j - 1, k, 2));
-        double dwdx = 0.5 * (b.dqdx(i, j, k, 3) + b.dqdx(i, j - 1, k, 3));
+        // Geometric terms
+        double e[3] = {b.xc(i, j, k) - b.xc(i, j - 1, k),
+                       b.yc(i, j, k) - b.yc(i, j - 1, k),
+                       b.zc(i, j, k) - b.zc(i, j - 1, k)};
+        double njk[3] = {b.jnx(i, j, k), b.jny(i, j, k), b.jnz(i, j, k)};
 
-        double dudy = 0.5 * (b.dqdy(i, j, k, 1) + b.dqdy(i, j - 1, k, 1));
-        double dvdy = 0.5 * (b.dqdy(i, j, k, 2) + b.dqdy(i, j - 1, k, 2));
-        double dwdy = 0.5 * (b.dqdy(i, j, k, 3) + b.dqdy(i, j - 1, k, 3));
+        double MAGeDOTn =
+            sqrt(pow(e[0] * njk[0], 2.0) + pow(e[1] * njk[1], 2.0) +
+                 pow(e[2] * njk[2], 2.0));
 
-        double dudz = 0.5 * (b.dqdz(i, j, k, 1) + b.dqdz(i, j - 1, k, 1));
-        double dvdz = 0.5 * (b.dqdz(i, j, k, 2) + b.dqdz(i, j - 1, k, 2));
-        double dwdz = 0.5 * (b.dqdz(i, j, k, 3) + b.dqdz(i, j - 1, k, 3));
+        double damp[3] = {alpha / MAGeDOTn * njk[0], alpha / MAGeDOTn * njk[1],
+                          alpha / MAGeDOTn * njk[2]};
+        double xcim1[3] = {b.jxc(i, j, k) - b.xc(i, j - 1, k),
+                           b.jyc(i, j, k) - b.yc(i, j - 1, k),
+                           b.jzc(i, j, k) - b.zc(i, j - 1, k)};
+        double xci[3] = {b.jxc(i, j, k) - b.xc(i, j, k),
+                         b.jyc(i, j, k) - b.yc(i, j, k),
+                         b.jzc(i, j, k) - b.zc(i, j, k)};
+
+        double wDOTxc, wL, wR;
+
+        // Face derivatives = consistent + damping
+        wDOTxc = (b.dqdx(i, j - 1, k, 1) * xcim1[0] +
+                  b.dqdy(i, j - 1, k, 1) * xcim1[1] +
+                  b.dqdz(i, j - 1, k, 1) * xcim1[2]);
+        wL = b.q(i, j - 1, k, 1) + wDOTxc;
+        wDOTxc = (b.dqdx(i, j, k, 1) * xci[0] + b.dqdy(i, j, k, 1) * xci[1] +
+                  b.dqdz(i, j, k, 1) * xci[2]);
+        wR = b.q(i, j, k, 1) + wDOTxc;
+        double dudx = 0.5 * (b.dqdx(i, j, k, 1) + b.dqdx(i, j - 1, k, 1)) +
+                      damp[0] * (wR - wL);
+        double dudy = 0.5 * (b.dqdy(i, j, k, 1) + b.dqdy(i, j - 1, k, 1)) +
+                      damp[1] * (wR - wL);
+        double dudz = 0.5 * (b.dqdz(i, j, k, 1) + b.dqdz(i, j - 1, k, 1)) +
+                      damp[2] * (wR - wL);
+
+        wDOTxc = (b.dqdx(i, j - 1, k, 2) * xcim1[0] +
+                  b.dqdy(i, j - 1, k, 2) * xcim1[1] +
+                  b.dqdz(i, j - 1, k, 2) * xcim1[2]);
+        wL = b.q(i, j - 1, k, 2) + wDOTxc;
+        wDOTxc = (b.dqdx(i, j, k, 2) * xci[0] + b.dqdy(i, j, k, 2) * xci[1] +
+                  b.dqdz(i, j, k, 2) * xci[2]);
+        wR = b.q(i, j, k, 2) + wDOTxc;
+        double dvdx = 0.5 * (b.dqdx(i, j, k, 2) + b.dqdx(i, j - 1, k, 2)) +
+                      damp[0] * (wR - wL);
+        double dvdy = 0.5 * (b.dqdy(i, j, k, 2) + b.dqdy(i, j - 1, k, 2)) +
+                      damp[1] * (wR - wL);
+        double dvdz = 0.5 * (b.dqdz(i, j, k, 2) + b.dqdz(i, j - 1, k, 2)) +
+                      damp[2] * (wR - wL);
+
+        wDOTxc = (b.dqdx(i, j - 1, k, 3) * xcim1[0] +
+                  b.dqdy(i, j - 1, k, 3) * xcim1[1] +
+                  b.dqdz(i, j - 1, k, 3) * xcim1[2]);
+        wL = b.q(i, j - 1, k, 3) + wDOTxc;
+        wDOTxc = (b.dqdx(i, j, k, 3) * xci[0] + b.dqdy(i, j, k, 3) * xci[1] +
+                  b.dqdz(i, j, k, 3) * xci[2]);
+        wR = b.q(i, j, k, 3) + wDOTxc;
+        double dwdx = 0.5 * (b.dqdx(i, j, k, 3) + b.dqdx(i, j - 1, k, 3)) +
+                      damp[0] * (wR - wL);
+        double dwdy = 0.5 * (b.dqdy(i, j, k, 3) + b.dqdy(i, j - 1, k, 3)) +
+                      damp[1] * (wR - wL);
+        double dwdz = 0.5 * (b.dqdz(i, j, k, 3) + b.dqdz(i, j - 1, k, 3)) +
+                      damp[2] * (wR - wL);
 
         double div = dudx + dvdy + dwdz;
 
@@ -256,9 +307,19 @@ void alphaDampingFlux(block_ &b) {
 
         // energy
         //   heat conduction
-        double dTdx = 0.5 * (b.dqdx(i, j, k, 4) + b.dqdx(i, j - 1, k, 4));
-        double dTdy = 0.5 * (b.dqdy(i, j, k, 4) + b.dqdy(i, j - 1, k, 4));
-        double dTdz = 0.5 * (b.dqdz(i, j, k, 4) + b.dqdz(i, j - 1, k, 4));
+        wDOTxc = (b.dqdx(i, j - 1, k, 4) * xcim1[0] +
+                  b.dqdy(i, j - 1, k, 4) * xcim1[1] +
+                  b.dqdz(i, j - 1, k, 4) * xcim1[2]);
+        wL = b.q(i, j - 1, k, 4) + wDOTxc;
+        wDOTxc = (b.dqdx(i, j, k, 4) * xci[0] + b.dqdy(i, j, k, 4) * xci[1] +
+                  b.dqdz(i, j, k, 4) * xci[2]);
+        wR = b.q(i, j, k, 4) + wDOTxc;
+        double dTdx = 0.5 * (b.dqdx(i, j, k, 4) + b.dqdx(i, j - 1, k, 4)) +
+                      damp[0] * (wR - wL);
+        double dTdy = 0.5 * (b.dqdy(i, j, k, 4) + b.dqdy(i, j - 1, k, 4)) +
+                      damp[1] * (wR - wL);
+        double dTdz = 0.5 * (b.dqdz(i, j, k, 4) + b.dqdz(i, j - 1, k, 4)) +
+                      damp[2] * (wR - wL);
 
         double q = -kappa * (dTdx * b.jsx(i, j, k) + dTdy * b.jsy(i, j, k) +
                              dTdz * b.jsz(i, j, k));
@@ -281,12 +342,23 @@ void alphaDampingFlux(block_ &b) {
         // Compute the species flux and correction term \sum(k=1,ns) Dk*gradYk
         for (int n = 0; n < b.ne - 5; n++) {
           Dk = 0.5 * (b.qt(i, j, k, 2 + n) + b.qt(i, j - 1, k, 2 + n));
+          wDOTxc = (b.dqdx(i, j - 1, k, 5 + n) * xcim1[0] +
+                    b.dqdy(i, j - 1, k, 5 + n) * xcim1[1] +
+                    b.dqdz(i, j - 1, k, 5 + n) * xcim1[2]);
+          wL = b.q(i, j - 1, k, 5 + n) + wDOTxc;
+          wDOTxc = (b.dqdx(i, j, k, 5 + n) * xci[0] +
+                    b.dqdy(i, j, k, 5 + n) * xci[1] +
+                    b.dqdz(i, j, k, 5 + n) * xci[2]);
+          wR = b.q(i, j, k, 5 + n) + wDOTxc;
           double dYdx =
-              0.5 * (b.dqdx(i, j, k, 5 + n) + b.dqdx(i, j - 1, k, 5 + n));
+              0.5 * (b.dqdx(i, j, k, 5 + n) + b.dqdx(i, j - 1, k, 5 + n)) +
+              damp[0] * (wR - wL);
           double dYdy =
-              0.5 * (b.dqdy(i, j, k, 5 + n) + b.dqdy(i, j - 1, k, 5 + n));
+              0.5 * (b.dqdy(i, j, k, 5 + n) + b.dqdy(i, j - 1, k, 5 + n)) +
+              damp[1] * (wR - wL);
           double dYdz =
-              0.5 * (b.dqdz(i, j, k, 5 + n) + b.dqdz(i, j - 1, k, 5 + n));
+              0.5 * (b.dqdz(i, j, k, 5 + n) + b.dqdz(i, j - 1, k, 5 + n)) +
+              damp[2] * (wR - wL);
 
           double gradYk = (dYdx * b.jsx(i, j, k) + dYdy * b.jsy(i, j, k) +
                            dYdz * b.jsz(i, j, k));
@@ -331,18 +403,69 @@ void alphaDampingFlux(block_ &b) {
         // continuity
         b.kF(i, j, k, 0) = 0.0;
 
-        // Spatial derivative on face
-        double dudx = 0.5 * (b.dqdx(i, j, k, 1) + b.dqdx(i, j, k - 1, 1));
-        double dvdx = 0.5 * (b.dqdx(i, j, k, 2) + b.dqdx(i, j, k - 1, 2));
-        double dwdx = 0.5 * (b.dqdx(i, j, k, 3) + b.dqdx(i, j, k - 1, 3));
+        // Geometric terms
+        double e[3] = {b.xc(i, j, k) - b.xc(i, j, k - 1),
+                       b.yc(i, j, k) - b.yc(i, j, k - 1),
+                       b.zc(i, j, k) - b.zc(i, j, k - 1)};
+        double njk[3] = {b.knx(i, j, k), b.kny(i, j, k), b.knz(i, j, k)};
 
-        double dudy = 0.5 * (b.dqdy(i, j, k, 1) + b.dqdy(i, j, k - 1, 1));
-        double dvdy = 0.5 * (b.dqdy(i, j, k, 2) + b.dqdy(i, j, k - 1, 2));
-        double dwdy = 0.5 * (b.dqdy(i, j, k, 3) + b.dqdy(i, j, k - 1, 3));
+        double MAGeDOTn =
+            sqrt(pow(e[0] * njk[0], 2.0) + pow(e[1] * njk[1], 2.0) +
+                 pow(e[2] * njk[2], 2.0));
 
-        double dudz = 0.5 * (b.dqdz(i, j, k, 1) + b.dqdz(i, j, k - 1, 1));
-        double dvdz = 0.5 * (b.dqdz(i, j, k, 2) + b.dqdz(i, j, k - 1, 2));
-        double dwdz = 0.5 * (b.dqdz(i, j, k, 3) + b.dqdz(i, j, k - 1, 3));
+        double damp[3] = {alpha / MAGeDOTn * njk[0], alpha / MAGeDOTn * njk[1],
+                          alpha / MAGeDOTn * njk[2]};
+        double xcim1[3] = {b.kxc(i, j, k) - b.xc(i, j, k - 1),
+                           b.kyc(i, j, k) - b.yc(i, j, k - 1),
+                           b.kzc(i, j, k) - b.zc(i, j, k - 1)};
+        double xci[3] = {b.kxc(i, j, k) - b.xc(i, j, k),
+                         b.kyc(i, j, k) - b.yc(i, j, k),
+                         b.kzc(i, j, k) - b.zc(i, j, k)};
+
+        double wDOTxc, wL, wR;
+
+        // Face derivatives = consistent + damping
+        wDOTxc = (b.dqdx(i, j, k - 1, 1) * xcim1[0] +
+                  b.dqdy(i, j, k - 1, 1) * xcim1[1] +
+                  b.dqdz(i, j, k - 1, 1) * xcim1[2]);
+        wL = b.q(i, j, k - 1, 1) + wDOTxc;
+        wDOTxc = (b.dqdx(i, j, k, 1) * xci[0] + b.dqdy(i, j, k, 1) * xci[1] +
+                  b.dqdz(i, j, k, 1) * xci[2]);
+        wR = b.q(i, j, k, 1) + wDOTxc;
+        double dudx = 0.5 * (b.dqdx(i, j, k, 1) + b.dqdx(i, j, k - 1, 1)) +
+                      damp[0] * (wR - wL);
+        double dudy = 0.5 * (b.dqdy(i, j, k, 1) + b.dqdy(i, j, k - 1, 1)) +
+                      damp[1] * (wR - wL);
+        double dudz = 0.5 * (b.dqdz(i, j, k, 1) + b.dqdz(i, j, k - 1, 1)) +
+                      damp[2] * (wR - wL);
+
+        wDOTxc = (b.dqdx(i, j, k - 1, 2) * xcim1[0] +
+                  b.dqdy(i, j, k - 1, 2) * xcim1[1] +
+                  b.dqdz(i, j, k - 1, 2) * xcim1[2]);
+        wL = b.q(i, j, k - 1, 2) + wDOTxc;
+        wDOTxc = (b.dqdx(i, j, k, 2) * xci[0] + b.dqdy(i, j, k, 2) * xci[1] +
+                  b.dqdz(i, j, k, 2) * xci[2]);
+        wR = b.q(i, j, k, 2) + wDOTxc;
+        double dvdx = 0.5 * (b.dqdx(i, j, k, 2) + b.dqdx(i, j, k - 1, 2)) +
+                      damp[0] * (wR - wL);
+        double dvdy = 0.5 * (b.dqdy(i, j, k, 2) + b.dqdy(i, j, k - 1, 2)) +
+                      damp[1] * (wR - wL);
+        double dvdz = 0.5 * (b.dqdz(i, j, k, 2) + b.dqdz(i, j, k - 1, 2)) +
+                      damp[2] * (wR - wL);
+
+        wDOTxc = (b.dqdx(i, j, k - 1, 3) * xcim1[0] +
+                  b.dqdy(i, j, k - 1, 3) * xcim1[1] +
+                  b.dqdz(i, j, k - 1, 3) * xcim1[2]);
+        wL = b.q(i, j, k - 1, 3) + wDOTxc;
+        wDOTxc = (b.dqdx(i, j, k, 3) * xci[0] + b.dqdy(i, j, k, 3) * xci[1] +
+                  b.dqdz(i, j, k, 3) * xci[2]);
+        wR = b.q(i, j, k, 3) + wDOTxc;
+        double dwdx = 0.5 * (b.dqdx(i, j, k, 3) + b.dqdx(i, j, k - 1, 3)) +
+                      damp[0] * (wR - wL);
+        double dwdy = 0.5 * (b.dqdy(i, j, k, 3) + b.dqdy(i, j, k - 1, 3)) +
+                      damp[1] * (wR - wL);
+        double dwdz = 0.5 * (b.dqdz(i, j, k, 3) + b.dqdz(i, j, k - 1, 3)) +
+                      damp[2] * (wR - wL);
 
         double div = dudx + dvdy + dwdz;
 
@@ -372,9 +495,19 @@ void alphaDampingFlux(block_ &b) {
 
         // energy
         //   heat conduction
-        double dTdx = 0.5 * (b.dqdx(i, j, k, 4) + b.dqdx(i, j, k - 1, 4));
-        double dTdy = 0.5 * (b.dqdy(i, j, k, 4) + b.dqdy(i, j, k - 1, 4));
-        double dTdz = 0.5 * (b.dqdz(i, j, k, 4) + b.dqdz(i, j, k - 1, 4));
+        wDOTxc = (b.dqdx(i, j, k - 1, 4) * xcim1[0] +
+                  b.dqdy(i, j, k - 1, 4) * xcim1[1] +
+                  b.dqdz(i, j, k - 1, 4) * xcim1[2]);
+        wL = b.q(i, j, k - 1, 4) + wDOTxc;
+        wDOTxc = (b.dqdx(i, j, k, 4) * xci[0] + b.dqdy(i, j, k, 4) * xci[1] +
+                  b.dqdz(i, j, k, 4) * xci[2]);
+        wR = b.q(i, j, k, 4) + wDOTxc;
+        double dTdx = 0.5 * (b.dqdx(i, j, k, 4) + b.dqdx(i, j, k - 1, 4)) +
+                      damp[0] * (wR - wL);
+        double dTdy = 0.5 * (b.dqdy(i, j, k, 4) + b.dqdy(i, j, k - 1, 4)) +
+                      damp[1] * (wR - wL);
+        double dTdz = 0.5 * (b.dqdz(i, j, k, 4) + b.dqdz(i, j, k - 1, 4)) +
+                      damp[2] * (wR - wL);
 
         double q = -kappa * (dTdx * b.ksx(i, j, k) + dTdy * b.ksy(i, j, k) +
                              dTdz * b.ksz(i, j, k));
@@ -397,12 +530,23 @@ void alphaDampingFlux(block_ &b) {
         // Compute the species flux and correction term \sum(k=1,ns) Dk*gradYk
         for (int n = 0; n < b.ne - 5; n++) {
           Dk = 0.5 * (b.qt(i, j, k, 2 + n) + b.qt(i, j, k - 1, 2 + n));
+          wDOTxc = (b.dqdx(i, j, k - 1, 5 + n) * xcim1[0] +
+                    b.dqdy(i, j, k - 1, 5 + n) * xcim1[1] +
+                    b.dqdz(i, j, k - 1, 5 + n) * xcim1[2]);
+          wL = b.q(i, j, k - 1, 5 + n) + wDOTxc;
+          wDOTxc = (b.dqdx(i, j, k, 5 + n) * xci[0] +
+                    b.dqdy(i, j, k, 5 + n) * xci[1] +
+                    b.dqdz(i, j, k, 5 + n) * xci[2]);
+          wR = b.q(i, j, k, 5 + n) + wDOTxc;
           double dYdx =
-              0.5 * (b.dqdx(i, j, k, 5 + n) + b.dqdx(i, j, k - 1, 5 + n));
+              0.5 * (b.dqdx(i, j, k, 5 + n) + b.dqdx(i, j, k - 1, 5 + n)) +
+              damp[0] * (wR - wL);
           double dYdy =
-              0.5 * (b.dqdy(i, j, k, 5 + n) + b.dqdy(i, j, k - 1, 5 + n));
+              0.5 * (b.dqdy(i, j, k, 5 + n) + b.dqdy(i, j, k - 1, 5 + n)) +
+              damp[1] * (wR - wL);
           double dYdz =
-              0.5 * (b.dqdz(i, j, k, 5 + n) + b.dqdz(i, j, k - 1, 5 + n));
+              0.5 * (b.dqdz(i, j, k, 5 + n) + b.dqdz(i, j, k - 1, 5 + n)) +
+              damp[2] * (wR - wL);
           double gradYk = (dYdx * b.ksx(i, j, k) + dYdy * b.ksy(i, j, k) +
                            dYdz * b.ksz(i, j, k));
           gradYns -= gradYk;
