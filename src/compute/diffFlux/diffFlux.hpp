@@ -6,5 +6,7 @@
 // ./diffFlux
 //    |------> diffusiveFlux
 void diffusiveFlux(block_ &b);
+//    |------> alphaDamping
+void alphaDampingFlux(block_ &b);
 
 #endif
