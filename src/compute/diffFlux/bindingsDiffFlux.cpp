@@ -11,4 +11,8 @@ void bindDiffFlux(py::module_ &m) {
   diffFlux.def("diffusiveFlux", &diffusiveFlux,
                "Compute centeral difference viscous fluxes. Order set by dqdx",
                py::arg("block_ object"));
+  //  |----> alphaDamping.cpp
+  diffFlux.def("alphaDampingFlux", &alphaDampingFlux,
+               "Evaluate face derivatices with alpha damping.",
+               py::arg("block_ object"));
 }

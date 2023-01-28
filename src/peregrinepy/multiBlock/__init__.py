@@ -111,7 +111,7 @@ def setRHS(cls, config):
                 raise pgConfigError("sgs", sgs)
         else:
             cls.sgs = null
-        cls.diffFlux = compute.diffFlux.diffusiveFlux
+        cls.diffFlux = compute.diffFlux.alphaDampingFlux
         cls.applyDiffFlux = compute.utils.applyFlux
 
     else:
