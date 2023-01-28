@@ -52,7 +52,7 @@ def setConsistify(cls, config):
         except AttributeError:
             raise pgConfigError("switchAdvFlux", switch)
 
-        cls.phiCommList += ["phi"]
+        cls.phiComm = True
 
 
 #########################################
