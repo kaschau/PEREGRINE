@@ -44,4 +44,5 @@ def consistify(mb, given="cons"):
         )
 
     # Communicate necessary halos
-    communicate(mb, mb.phiCommList)
+    if mb.phiComm:
+        communicate(mb, "phi")
