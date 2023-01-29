@@ -58,7 +58,6 @@ class solver(restart):
         self.phiComm = False
         self.eos = None
         self.trans = None
-        self.dqdxyz = None
 
         #########################################
         # RHS
@@ -71,6 +70,7 @@ class solver(restart):
         self.applySecondaryAdvFlux = None
         self.switch = None
 
+        self.dqdxyz = None
         self.diffFlux = None
         self.applyDiffFlux = None
         self.viscousSponge = None
