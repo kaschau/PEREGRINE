@@ -93,10 +93,10 @@ def test_adiabaticNoSlipWall(my_setup, adv, spdata):
         assert np.allclose(dpdx[s0_], -dpdx[face.s1_])
         assert np.allclose(dpdy[s0_], -dpdy[face.s1_])
         assert np.allclose(dpdz[s0_], -dpdz[face.s1_])
-        # extrapolate velocity gradient
-        assert np.allclose(dvelodx[s0_], 2.0 * dvelodx[face.s1_] - dvelodx[s2_])
-        assert np.allclose(dvelody[s0_], 2.0 * dvelody[face.s1_] - dvelody[s2_])
-        assert np.allclose(dvelodz[s0_], 2.0 * dvelodz[face.s1_] - dvelodz[s2_])
+        # neumann velocity gradient
+        assert np.allclose(dvelodx[s0_], dvelodx[face.s1_])
+        assert np.allclose(dvelody[s0_], dvelody[face.s1_])
+        assert np.allclose(dvelodz[s0_], dvelodz[face.s1_])
         # negate temp and species gradient (so gradient evaluates to zero on wall)
         assert np.allclose(dTNdx[s0_], -dTNdx[face.s1_])
         assert np.allclose(dTNdy[s0_], -dTNdy[face.s1_])
@@ -175,9 +175,12 @@ def test_adiabaticMovingWall(my_setup, adv, spdata):
     w = blk.array["q"][:, :, :, 3]
     TN = blk.array["q"][:, :, :, 4::]
 
-    dvelodx = blk.array["dqdx"][:, :, :, 0:4]
-    dvelody = blk.array["dqdy"][:, :, :, 0:4]
-    dvelodz = blk.array["dqdz"][:, :, :, 0:4]
+    dpdx = blk.array["dqdx"][:, :, :, 0]
+    dpdy = blk.array["dqdx"][:, :, :, 0]
+    dpdz = blk.array["dqdx"][:, :, :, 0]
+    dvelodx = blk.array["dqdx"][:, :, :, 1:4]
+    dvelody = blk.array["dqdy"][:, :, :, 1:4]
+    dvelodz = blk.array["dqdz"][:, :, :, 1:4]
 
     dTNdx = blk.array["dqdx"][:, :, :, 4::]
     dTNdy = blk.array["dqdy"][:, :, :, 4::]
@@ -235,10 +238,14 @@ def test_adiabaticMovingWall(my_setup, adv, spdata):
         blk.updateHostView(["dqdx", "dqdy", "dqdz"])
         s0_ = face.s0_[0]
         s2_ = face.s2_[0]
-        # extrapolate velocity gradient
-        assert np.allclose(dvelodx[s0_], 2.0 * dvelodx[face.s1_] - dvelodx[s2_])
-        assert np.allclose(dvelody[s0_], 2.0 * dvelody[face.s1_] - dvelody[s2_])
-        assert np.allclose(dvelodz[s0_], 2.0 * dvelodz[face.s1_] - dvelodz[s2_])
+        # negate presure gradient
+        assert np.allclose(dpdx[s0_], -dpdx[face.s1_])
+        assert np.allclose(dpdy[s0_], -dpdy[face.s1_])
+        assert np.allclose(dpdz[s0_], -dpdz[face.s1_])
+        # neumann velocity gradient
+        assert np.allclose(dvelodx[s0_], dvelodx[face.s1_])
+        assert np.allclose(dvelody[s0_], dvelody[face.s1_])
+        assert np.allclose(dvelodz[s0_], dvelodz[face.s1_])
 
         # negate temp and species gradient (so gradient evaluates to zero on wall)
         assert np.allclose(dTNdx[s0_], -dTNdx[face.s1_])
@@ -324,14 +331,14 @@ def test_isoTNoSlipWall(my_setup, adv, spdata):
         assert np.allclose(dpdx[s0_], -dpdx[face.s1_])
         assert np.allclose(dpdy[s0_], -dpdy[face.s1_])
         assert np.allclose(dpdz[s0_], -dpdz[face.s1_])
-        # extrapolate velocity gradient
-        assert np.allclose(dvelodx[s0_], 2.0 * dvelodx[face.s1_] - dvelodx[s2_])
-        assert np.allclose(dvelody[s0_], 2.0 * dvelody[face.s1_] - dvelody[s2_])
-        assert np.allclose(dvelodz[s0_], 2.0 * dvelodz[face.s1_] - dvelodz[s2_])
-        # extrap temp gradient
-        assert np.allclose(dTdx[s0_], 2.0 * dTdx[face.s1_] - dTdx[s2_])
-        assert np.allclose(dTdy[s0_], 2.0 * dTdy[face.s1_] - dTdy[s2_])
-        assert np.allclose(dTdz[s0_], 2.0 * dTdz[face.s1_] - dTdz[s2_])
+        # neumann velocity gradient
+        assert np.allclose(dvelodx[s0_], dvelodx[face.s1_])
+        assert np.allclose(dvelody[s0_], dvelody[face.s1_])
+        assert np.allclose(dvelodz[s0_], dvelodz[face.s1_])
+        # neumann temp gradient
+        assert np.allclose(dTdx[s0_], dTdx[face.s1_])
+        assert np.allclose(dTdy[s0_], dTdy[face.s1_])
+        assert np.allclose(dTdz[s0_], dTdz[face.s1_])
         # species gradient (so gradient evaluates to zero on wall)
         if blk.ns > 1:
             assert np.allclose(dYdx[s0_], -dYdx[face.s1_])
@@ -352,9 +359,12 @@ def test_isoTSlipWall(my_setup, adv, spdata):
     if blk.ns > 1:
         Y = blk.array["q"][:, :, :, 5::]
 
-    dvelodx = blk.array["dqdx"][:, :, :, 0:4]
-    dvelody = blk.array["dqdy"][:, :, :, 0:4]
-    dvelodz = blk.array["dqdz"][:, :, :, 0:4]
+    dpdx = blk.array["dqdx"][:, :, :, 0]
+    dpdy = blk.array["dqdy"][:, :, :, 0]
+    dpdz = blk.array["dqdz"][:, :, :, 0]
+    dvelodx = blk.array["dqdx"][:, :, :, 1:4]
+    dvelody = blk.array["dqdy"][:, :, :, 1:4]
+    dvelodz = blk.array["dqdz"][:, :, :, 1:4]
     dTdx = blk.array["dqdx"][:, :, :, 4]
     dTdy = blk.array["dqdy"][:, :, :, 4]
     dTdz = blk.array["dqdz"][:, :, :, 4]
@@ -406,15 +416,18 @@ def test_isoTSlipWall(my_setup, adv, spdata):
         blk.updateHostView(["dqdx", "dqdy", "dqdz"])
         s0_ = face.s0_[0]
         s2_ = face.s2_[0]
+        # neumann pressure gradient
+        assert np.allclose(dpdx[s0_], -dpdx[face.s1_])
+        assert np.allclose(dpdy[s0_], -dpdy[face.s1_])
+        assert np.allclose(dpdz[s0_], -dpdz[face.s1_])
         # slip wall so we neumann the velocity gradients
         assert np.allclose(dvelodx[s0_], -dvelodx[face.s1_])
         assert np.allclose(dvelody[s0_], -dvelody[face.s1_])
         assert np.allclose(dvelodz[s0_], -dvelodz[face.s1_])
-        # negate temp and species gradient (so gradient evaluates to zero on wall)
-        # extrap temp gradient
-        assert np.allclose(dTdx[s0_], 2.0 * dTdx[face.s1_] - dTdx[s2_])
-        assert np.allclose(dTdy[s0_], 2.0 * dTdy[face.s1_] - dTdy[s2_])
-        assert np.allclose(dTdz[s0_], 2.0 * dTdz[face.s1_] - dTdz[s2_])
+        # neumann temp gradient
+        assert np.allclose(dTdx[s0_], dTdx[face.s1_])
+        assert np.allclose(dTdy[s0_], dTdy[face.s1_])
+        assert np.allclose(dTdz[s0_], dTdz[face.s1_])
         # species gradient (so gradient evaluates to zero on wall)
         if blk.ns > 1:
             assert np.allclose(dYdx[s0_], -dYdx[face.s1_])
@@ -504,18 +517,19 @@ def test_isoTMovingWall(my_setup, adv, spdata):
         blk.updateHostView(["dqdx", "dqdy", "dqdz"])
         s0_ = face.s0_[0]
         s2_ = face.s2_[0]
-        # extrapolate velocity gradient, temp
+        # negate pressure
         assert np.allclose(dpdx[s0_], -dpdx[face.s1_])
         assert np.allclose(dpdy[s0_], -dpdy[face.s1_])
         assert np.allclose(dpdz[s0_], -dpdz[face.s1_])
 
-        assert np.allclose(dvelodx[s0_], 2.0 * dvelodx[face.s1_] - dvelodx[s2_])
-        assert np.allclose(dvelody[s0_], 2.0 * dvelody[face.s1_] - dvelody[s2_])
-        assert np.allclose(dvelodz[s0_], 2.0 * dvelodz[face.s1_] - dvelodz[s2_])
+        # neumann velocity gradient, temp
+        assert np.allclose(dvelodx[s0_], dvelodx[face.s1_])
+        assert np.allclose(dvelody[s0_], dvelody[face.s1_])
+        assert np.allclose(dvelodz[s0_], dvelodz[face.s1_])
 
-        assert np.allclose(dTdx[s0_], 2.0 * dTdx[face.s1_] - dTdx[s2_])
-        assert np.allclose(dTdy[s0_], 2.0 * dTdy[face.s1_] - dTdy[s2_])
-        assert np.allclose(dTdz[s0_], 2.0 * dTdz[face.s1_] - dTdz[s2_])
+        assert np.allclose(dTdx[s0_], dTdx[face.s1_])
+        assert np.allclose(dTdy[s0_], dTdy[face.s1_])
+        assert np.allclose(dTdz[s0_], dTdz[face.s1_])
         # negate species gradient (so gradient evaluates to zero on wall)
         if blk.ns > 1:
             assert np.allclose(dYdx[s0_], -dYdx[face.s1_])
