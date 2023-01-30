@@ -4,6 +4,14 @@
 #include "math.h"
 #include "thtrdat_.hpp"
 
+// References
+//
+// Robust numerical fluxes for unrealizable states
+//
+// Hiroaki Nishikawa
+// Journal of Computational Physics
+// 408 (2020)
+
 void alphaDampingFlux(block_ &b) {
 
   // Stokes hypothesis
