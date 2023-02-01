@@ -57,11 +57,8 @@ class dualTime:
             # variable set
             ##############################################
 
-            # store zeroth stage solution
-            for blk in self:
-                AEQB(blk.Q0, blk.q)
-
             # Stage 1
+            self.titme = self.tme
             RHS(self)
             for blk in self:
                 dQdt(blk, dt)
@@ -74,6 +71,7 @@ class dualTime:
             consistify(self, "prims")
 
             # Stage 2
+            self.titme = self.tme + dt
             RHS(self)
             for blk in self:
                 dQdt(blk, dt)
@@ -85,6 +83,7 @@ class dualTime:
             consistify(self, "prims")
 
             # Stage 3
+            self.titme = self.tme + dt / 2.0
             RHS(self)
             for blk in self:
                 dQdt(blk, dt)
@@ -115,6 +114,7 @@ class dualTime:
 
         self.nrt += 1
         self.tme += dt
+        self.titme = self.tme
 
     step.name = "dualTime"
     step.stepType = "dualTime"

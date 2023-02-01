@@ -20,7 +20,7 @@ def RHS(mb):
         for blk in mb:
             # Apply viscous boundary conditions
             for face in blk.faces:
-                face.bcFunc(blk, face, mb.eos, mb.thtrdat, "preDqDxyz", mb.tme)
+                face.bcFunc(blk, face, mb.eos, mb.thtrdat, "preDqDxyz", mb.titme)
 
             # Update spatial derivatives
             mb.dqdxyz(blk)
@@ -30,7 +30,7 @@ def RHS(mb):
         for blk in mb:
             # Apply spatial derivative boundary conditions
             for face in blk.faces:
-                face.bcFunc(blk, face, mb.eos, mb.thtrdat, "postDqDxyz", mb.tme)
+                face.bcFunc(blk, face, mb.eos, mb.thtrdat, "postDqDxyz", mb.titme)
 
             # Apply subgrid model (must be after dqdxyz)
             mb.sgs(blk)

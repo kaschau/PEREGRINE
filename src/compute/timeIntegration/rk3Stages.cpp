@@ -11,7 +11,9 @@ void rk3s1(block_ &b, const double &dt) {
   Kokkos::parallel_for(
       "rk3 stage 1", range_cc,
       KOKKOS_LAMBDA(const int i, const int j, const int k, const int l) {
-        b.Q(i, j, k, l) = b.Q0(i, j, k, l) + dt * b.dQ(i, j, k, l);
+        // store zeroth stage
+        b.Q0(i, j, k, l) = b.Q(i, j, k, l);
+        b.Q(i, j, k, l) += dt * b.dQ(i, j, k, l);
       });
 }
 

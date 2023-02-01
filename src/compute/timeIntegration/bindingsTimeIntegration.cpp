@@ -38,6 +38,15 @@ void bindTimeIntegration(py::module_ &m) {
                       py::arg("dt"));
   timeIntegration.def("rk3s3", &rk3s3, "rk3 stage 3", py::arg("block_"),
                       py::arg("dt"));
+  //  |----> rk34Stages.cpp
+  timeIntegration.def("rk34s1", &rk34s1, "rk34 stage 1", py::arg("block_"),
+                      py::arg("dt"));
+  timeIntegration.def("rk34s2", &rk34s2, "rk34 stage 2", py::arg("block_"),
+                      py::arg("dt"));
+  timeIntegration.def("rk34s3", &rk34s3, "rk34 stage 3", py::arg("block_"),
+                      py::arg("dt"));
+  timeIntegration.def("rk34s4", &rk34s4, "rk34 stage 4", py::arg("block_"),
+                      py::arg("dt"));
   //  |----> rk4Stages.cpp
   timeIntegration.def("rk4s1", &rk4s1, "rk4 stage 1", py::arg("block_"),
                       py::arg("dt"));

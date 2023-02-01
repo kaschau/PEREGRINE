@@ -18,6 +18,7 @@ class maccormack:
             AEQB(blk.Q0, blk.Q)
 
         # Predictor Stage
+        self.titme = self.tme
         RHS(self)
 
         for blk in self:
@@ -35,6 +36,7 @@ class maccormack:
 
         self.nrt += 1
         self.tme += dt
+        self.titme = self.tme
 
     step.name = "maccormack"
     step.stepType = "explicit"
