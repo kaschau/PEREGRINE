@@ -18,16 +18,46 @@ To generate compile_commands.json,
 ``` cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ../ ```
 
 
-# Arrays
+# Data Storage
 
-
-There are two means of manipulating data, on the python side as numpy arrays, and on the C++
-side via Kokkos arrays. Python side arrays are accessed by a dictionary attribute
+There are two means of manipulating data: (1) on the python side as numpy arrays and, (2) 
+on the C++ side via Kokkos Views. Numpy arrays are accessed by a dictionary attribute
 of the block class called "array", i.e.
 
-    blk.array["q"]
+    blk.array["q"][i,j,k,l]
 
-Gives access to the primitive variables.
+Gives access to the primitive variables. On the C++ side, the kokkos views are accesses
+as members of the same block class, i.e.
+
+    b.q(i,j,k,l)
+
+Note, the Kokkos Views are accessible from the python side, by accessing the block class
+method as in Kokkos, i.e.
+
+    blk.q
+
+However, you cannot access elements of the Kokkos view on the python side.
+
+## Data Residence
+
+Depending on if you are running a CPU or GPU simulation, the arrays live in different places.
+Obviously, the Kokkos views exist wherever your execution space is, CPU or GPU. But the python
+side numpy arrays in the ```blk.array``` dict are always on the host, so they are accessible
+within python. To facilitate this, we also create a dictionary of mirrors, i.e.
+
+    blk.mirror["q"]
+
+Which is a kokkos mirror view of the main kokkos view. This mirror view always exists on the CPU,
+and so the ```blk.array``` numpy arrays wrap around these mirror views. So to update the numpy 
+arrays from kokkos view data on the GPU, simply perform a deep_copy from the kokkos view to the 
+mirror view. Since the numpy array wraps the mirror view data, the numpy array will be updated
+with this deep_copy operation. If you are running a CPU case, all these arrays and views point
+to the same data.
+
+      CPU                     CPU                         CPU/GPU
+    array dict --> wraps ( mirror dict ) --> mirrors ( kokkos view )
+
+# Array Names
 
 | Name      | Variables          | Index   | Units        |
 |:---------:|--------------------|:-------:|--------------|
