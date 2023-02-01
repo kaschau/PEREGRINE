@@ -13,8 +13,7 @@ void rk34s1(block_ &b, const double &dt) {
       KOKKOS_LAMBDA(const int i, const int j, const int k, const int l) {
         // store zeroth stage
         b.Q0(i, j, k, l) = b.Q(i, j, k, l);
-        b.Q1(i, j, k, l) = b.Q(i, j, k, l) + 0.5 * dt * b.dQ(i, j, k, l);
-        b.Q(i, j, k, l) = b.Q1(i, j, k, l);
+        b.Q(i, j, k, l) = b.Q(i, j, k, l) + 0.5 * dt * b.dQ(i, j, k, l);
       });
 }
 
