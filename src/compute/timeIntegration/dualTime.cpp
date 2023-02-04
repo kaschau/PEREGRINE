@@ -116,7 +116,9 @@ void DTrk3s1(block_ &b) {
   Kokkos::parallel_for(
       "DTrk3 stage 1", range_cc,
       KOKKOS_LAMBDA(const int i, const int j, const int k, const int l) {
-        b.q(i, j, k, l) = b.Q0(i, j, k, l) + b.dtau(i, j, k) * b.dQ(i, j, k, l);
+        // store zeroth stage
+        b.Q0(i, j, k, l) = b.q(i, j, k, l);
+        b.q(i, j, k, l) += b.dtau(i, j, k) * b.dQ(i, j, k, l);
       });
 }
 
