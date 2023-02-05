@@ -180,7 +180,7 @@ def howManyNG(config):
     ng = max(ng, advFluxNG[sAdv])
 
     sub = config["RHS"]["subgrid"]
-    ng = max(ng, advFluxNF[sub])
+    ng = max(ng, subgridNG[sub])
 
     # Now check diffusion term order
     if config["RHS"]["diffusion"]:
