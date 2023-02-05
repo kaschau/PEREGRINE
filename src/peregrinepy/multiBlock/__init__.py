@@ -161,9 +161,12 @@ def howManyNG(config):
         "scalarDissipation": 2,
         None: 1,
     }
+
     subgridNG = {
-        "mixedScaleModel: 2",
+        "mixedScaleModel": 2,
+        None: 1,
     }
+
     diffOrderNG = {2: 1, 4: 2}
 
     ng = 1
@@ -177,7 +180,7 @@ def howManyNG(config):
     ng = max(ng, advFluxNG[sAdv])
 
     sub = config["RHS"]["subgrid"]
-    ng = max(ng, subgridNG[sub])
+    ng = max(ng, advFluxNF[sub])
 
     # Now check diffusion term order
     if config["RHS"]["diffusion"]:
