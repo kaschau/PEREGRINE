@@ -255,7 +255,6 @@ void adiabaticMovingWall(
     double dplus = plus;
     for (int g = 0; g < b.ng; g++) {
       s0 -= plus * g;
-      s2 += plus * g;
 
       threeDsubview q0 = getHaloSlice(b.q, face._nface, s0);
 
