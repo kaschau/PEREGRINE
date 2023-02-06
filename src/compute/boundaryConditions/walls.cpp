@@ -10,7 +10,8 @@
 //  slip walls. This is for computation of inviscid fluxes.
 //  Then we apply the viscous bcs ("preDqDxyz")and make no
 //  slip walls correct, so that velocity gradients will be correct
-//  on no slip wall faces.
+//  on no slip wall faces. After gradients ("postDqDxyz") we apply
+//  the velocity gradients in the halos to have desired effect.
 
 void adiabaticNoSlipWall(
     block_ &b, face_ &face,
@@ -45,10 +46,7 @@ void adiabaticNoSlipWall(
     double dplus = plus;
     for (int g = 0; g < b.ng; g++) {
       s0 -= plus * g;
-      s2 += plus * g;
-
       threeDsubview q0 = getHaloSlice(b.q, face._nface, s0);
-      threeDsubview q2 = getHaloSlice(b.q, face._nface, s2);
 
       Kokkos::parallel_for(
           "Adia no slip wall euler terms", range_face,
@@ -104,10 +102,6 @@ void adiabaticNoSlipWall(
     threeDsubview dqdx1 = getHaloSlice(b.dqdx, face._nface, s1);
     threeDsubview dqdy1 = getHaloSlice(b.dqdy, face._nface, s1);
     threeDsubview dqdz1 = getHaloSlice(b.dqdz, face._nface, s1);
-
-    threeDsubview dqdx2 = getHaloSlice(b.dqdx, face._nface, s2);
-    threeDsubview dqdy2 = getHaloSlice(b.dqdy, face._nface, s2);
-    threeDsubview dqdz2 = getHaloSlice(b.dqdz, face._nface, s2);
 
     MDRange2 range_face = MDRange2({0, 0}, {dqdx1.extent(0), dqdx1.extent(1)});
     Kokkos::parallel_for(
@@ -385,10 +379,8 @@ void isoTNoSlipWall(
     double dplus = plus;
     for (int g = 0; g < b.ng; g++) {
       s0 -= plus * g;
-      s2 += plus * g;
 
       threeDsubview q0 = getHaloSlice(b.q, face._nface, s0);
-      threeDsubview q2 = getHaloSlice(b.q, face._nface, s2);
 
       Kokkos::parallel_for(
           "isoT no slip wall euler terms", range_face,
@@ -420,10 +412,8 @@ void isoTNoSlipWall(
     MDRange2 range_face = MDRange2({0, 0}, {q1.extent(0), q1.extent(1)});
     for (int g = 0; g < b.ng; g++) {
       s0 -= plus * g;
-      s2 += plus * g;
 
       threeDsubview q0 = getHaloSlice(b.q, face._nface, s0);
-      threeDsubview q2 = getHaloSlice(b.q, face._nface, s2);
 
       Kokkos::parallel_for(
           "isoT no slip wall preDqDxyz terms", range_face,
