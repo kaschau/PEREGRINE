@@ -16,6 +16,18 @@ std::array<double, 3> CFLmax(const std::vector<block_> &mb) {
   double returnMaxR = 0.0;
 
   for (const block_ b : mb) {
+    double iMult = 1.0;
+    double jMult = 1.0;
+    double kMult = 1.0;
+    if (b.ni == 2) {
+      iMult = 0.0;
+    }
+    if (b.nj == 2) {
+      jMult = 0.0;
+    }
+    if (b.nk == 2) {
+      kMult = 0.0;
+    }
     MDRange3 range_cc({b.ng, b.ng, b.ng},
                       {b.ni + b.ng - 1, b.nj + b.ng - 1, b.nk + b.ng - 1});
     Kokkos::parallel_reduce(
@@ -53,21 +65,18 @@ std::array<double, 3> CFLmax(const std::vector<block_> &mb) {
 
           double &c = b.qh(i, j, k, 3);
 
-          if (b.ni > 2) {
-            CFLA = fmax(CFLA, c / dI);
-            CFLC = fmax(CFLC, uI / dI);
-            CFLR = fmax(CFLR, (uI + c) / dI);
-          }
-          if (b.nj > 2) {
-            CFLA = fmax(CFLA, c / dJ);
-            CFLC = fmax(CFLC, uJ / dJ);
-            CFLR = fmax(CFLR, (uJ + c) / dJ);
-          }
-          if (b.nk > 2) {
-            CFLA = fmax(CFLA, c / dK);
-            CFLC = fmax(CFLC, uK / dK);
-            CFLR = fmax(CFLR, (uK + c) / dK);
-          }
+          // i mult
+          CFLA = fmax(CFLA, iMult * c / dI);
+          CFLC = fmax(CFLC, iMult * uI / dI);
+          CFLR = fmax(CFLR, iMult * (uI + c) / dI);
+          // j mult
+          CFLA = fmax(CFLA, jMult * c / dJ);
+          CFLC = fmax(CFLC, jMult * uJ / dJ);
+          CFLR = fmax(CFLR, jMult * (uJ + c) / dJ);
+          // k mult
+          CFLA = fmax(CFLA, kMult * c / dK);
+          CFLC = fmax(CFLC, kMult * uK / dK);
+          CFLR = fmax(CFLR, kMult * (uK + c) / dK);
         },
         Kokkos::Max<double>(CFLmaxA), Kokkos::Max<double>(CFLmaxC),
         Kokkos::Max<double>(CFLmaxR));
