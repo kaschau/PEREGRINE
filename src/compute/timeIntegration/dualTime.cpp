@@ -37,6 +37,19 @@ void localDtau(block_ &b, const bool &viscous) {
   //-------------------------------------------------------------------------------------------|
   // Compute local pseudo time step
   //-------------------------------------------------------------------------------------------|
+  double iMult = 1.0;
+  double jMult = 1.0;
+  double kMult = 1.0;
+  if (b.ni == 2) {
+    iMult = Kokkos::Experimental::infinity<double>::value;
+  }
+  if (b.nj == 2) {
+    jMult = Kokkos::Experimental::infinity<double>::value;
+  }
+  if (b.nk == 2) {
+    kMult = Kokkos::Experimental::infinity<double>::value;
+  }
+
   MDRange3 range_cc({b.ng, b.ng, b.ng},
                     {b.ni + b.ng - 1, b.nj + b.ng - 1, b.nk + b.ng - 1});
   Kokkos::parallel_for(
@@ -76,31 +89,15 @@ void localDtau(block_ &b, const bool &viscous) {
         double pseudoCFL = 0.5;
         double pseudoVNN = 0.1;
 
-        double nu;
+        double dtau = Kokkos::Experimental::infinity<double>::value;
+        dtau = fmin(dtau, iMult * pseudoCFL * dI / (uI + c));
+        dtau = fmin(dtau, jMult * pseudoCFL * dJ / (uJ + c));
+        dtau = fmin(dtau, kMult * pseudoCFL * dK / (uK + c));
         if (viscous) {
-          nu = b.qt(i, j, k, 0) / b.Q(i, j, k, 0);
-        } else {
-          nu = 0.0;
-        }
-
-        double dtau = 1.0e16;
-        if (b.ni > 2) {
-          dtau = fmin(dtau, pseudoCFL * dI / (uI + c));
-          if (viscous) {
-            dtau = fmin(dtau, pseudoVNN * pow(dI, 2.0) / nu);
-          }
-        }
-        if (b.nj > 2) {
-          dtau = fmin(dtau, pseudoCFL * dJ / (uJ + c));
-          if (viscous) {
-            dtau = fmin(dtau, pseudoVNN * pow(dJ, 2.0) / nu);
-          }
-        }
-        if (b.nk > 2) {
-          dtau = fmin(dtau, pseudoCFL * dK / (uK + c));
-          if (viscous) {
-            dtau = fmin(dtau, pseudoVNN * pow(dK, 2.0) / nu);
-          }
+          double nu = b.qt(i, j, k, 0) / b.Q(i, j, k, 0);
+          dtau = fmin(dtau, iMult * pseudoVNN * pow(dI, 2.0) / nu);
+          dtau = fmin(dtau, jMult * pseudoVNN * pow(dJ, 2.0) / nu);
+          dtau = fmin(dtau, kMult * pseudoVNN * pow(dK, 2.0) / nu);
         }
 
         b.dtau(i, j, k) = dtau;
@@ -116,7 +113,9 @@ void DTrk3s1(block_ &b) {
   Kokkos::parallel_for(
       "DTrk3 stage 1", range_cc,
       KOKKOS_LAMBDA(const int i, const int j, const int k, const int l) {
-        b.q(i, j, k, l) = b.Q0(i, j, k, l) + b.dtau(i, j, k) * b.dQ(i, j, k, l);
+        // store zeroth stage
+        b.Q0(i, j, k, l) = b.q(i, j, k, l);
+        b.q(i, j, k, l) += b.dtau(i, j, k) * b.dQ(i, j, k, l);
       });
 }
 
@@ -255,6 +254,18 @@ void invertDQ(block_ &b, const double &dt, const thtrdat_ &th,
   // 1995
   // doi: 10.2514/3.12946
   //-------------------------------------------------------------------------------------------|
+  double iMult = 1.0;
+  double jMult = 1.0;
+  double kMult = 1.0;
+  if (b.ni == 2) {
+    iMult = Kokkos::Experimental::infinity<double>::value;
+  }
+  if (b.nj == 2) {
+    jMult = Kokkos::Experimental::infinity<double>::value;
+  }
+  if (b.nk == 2) {
+    kMult = Kokkos::Experimental::infinity<double>::value;
+  }
 
   MDRange3 range_cc({b.ng, b.ng, b.ng},
                     {b.ni + b.ng - 1, b.nj + b.ng - 1, b.nk + b.ng - 1});
@@ -406,15 +417,9 @@ void invertDQ(block_ &b, const double &dt, const thtrdat_ &th,
                            pow(b.kyc(i, j, k + 1) - b.kyc(i, j, k), 2.0) +
                            pow(b.kzc(i, j, k + 1) - b.kzc(i, j, k), 2.0));
           double nu = b.qt(i, j, k, 0) / b.Q(i, j, k, 0);
-          if (b.ni > 2) {
-            Ur = fmin(Ur, dI / nu);
-          }
-          if (b.nj > 2) {
-            Ur = fmin(Ur, dJ / nu);
-          }
-          if (b.nk > 2) {
-            Ur = fmin(Ur, dK / nu);
-          }
+          Ur = fmin(Ur, iMult * dI / nu);
+          Ur = fmin(Ur, jMult * dJ / nu);
+          Ur = fmin(Ur, kMult * dK / nu);
         }
 
         // Thetas (just rho_p for dQdq)

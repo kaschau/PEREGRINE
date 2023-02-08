@@ -45,6 +45,8 @@ class solver(restart):
         temp = [solverBlock(i, spNames, ng) for i in range(nblks)]
         super().__init__(nblks, spNames, temp)
 
+        # time integrator time
+        self.__titme = 0.0
         # Save the config file to the mb object
         self.config = None
         # Save the species data
@@ -85,6 +87,16 @@ class solver(restart):
         self.restartMetaData = None
         self.archiveMetaData = None
         self.extraMetaData = []
+
+    @property
+    def titme(self):
+        return self.__titme
+
+    @titme.setter
+    def titme(self, val):
+        self.__titme = val
+        for blk in self:
+            blk.titme = val
 
     def initSolverArrays(self, config):
         for blk in self:

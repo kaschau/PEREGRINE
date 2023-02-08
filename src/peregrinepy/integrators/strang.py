@@ -31,11 +31,9 @@ class strang:
         pass
 
     def non_stiff(self, dt):
-        # store zeroth stage solution
-        for blk in self:
-            AEQB(blk.Q0, blk.Q)
 
         # First Stage
+        self.titme = self.tme
         RHS(self)
 
         for blk in self:
@@ -44,6 +42,7 @@ class strang:
         consistify(self)
 
         # Second Stage
+        self.titme = self.tme + dt
         RHS(self)
 
         for blk in self:
@@ -52,6 +51,7 @@ class strang:
         consistify(self)
 
         # Third Stage
+        self.titme = self.tme + dt / 2.0
         RHS(self)
 
         for blk in self:
@@ -105,6 +105,7 @@ class strang:
         ###############################################################
         self.nrt += 1
         self.tme += dt
+        self.titme = self.tme + dt
 
     step.name = "strang"
     step.stepType = "split"

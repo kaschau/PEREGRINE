@@ -24,6 +24,11 @@ void rk2s2(block_ &b, const double &dt);
 void rk3s1(block_ &b, const double &dt);
 void rk3s2(block_ &b, const double &dt);
 void rk3s3(block_ &b, const double &dt);
+//    |------> rk34Stages.cpp
+void rk34s1(block_ &b, const double &dt);
+void rk34s2(block_ &b, const double &dt);
+void rk34s3(block_ &b, const double &dt);
+void rk34s4(block_ &b, const double &dt);
 //    |------> rk4Stages.cpp
 void rk4s1(block_ &b, const double &dt);
 void rk4s2(block_ &b, const double &dt);

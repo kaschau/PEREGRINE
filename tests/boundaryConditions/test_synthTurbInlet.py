@@ -130,7 +130,6 @@ def test_synthTurbInlet(my_setup):
     q = blk.array["q"][0, ng:-ng, ng:-ng, :]
     for tme in np.random.random(10):
         mb.tme = tme
-        print("nj,nk", blk.nj, blk.nk)
         face.bcFunc(blk, face, mb.eos, mb.thtrdat, "euler", mb.tme)
         blk.updateHostView(["q"])
 

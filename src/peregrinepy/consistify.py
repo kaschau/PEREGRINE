@@ -27,7 +27,7 @@ def consistify(mb, given="cons"):
 
         # Apply euler boundary conditions
         for face in blk.faces:
-            face.bcFunc(blk, face, mb.eos, mb.thtrdat, "euler", mb.tme)
+            face.bcFunc(blk, face, mb.eos, mb.thtrdat, "euler", mb.titme)
 
         # Update transport properties
         mb.trans(blk, mb.thtrdat, -1)
