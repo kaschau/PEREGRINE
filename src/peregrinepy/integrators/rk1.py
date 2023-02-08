@@ -12,6 +12,7 @@ class rk1:
 
     def step(self, dt):
 
+        self.titme = self.tme
         RHS(self)
 
         # add it to current solution
@@ -23,6 +24,7 @@ class rk1:
 
         self.nrt += 1
         self.tme += dt
+        self.titme = self.tme
 
     step.name = "rk1"
     step.stepType = "explicit"

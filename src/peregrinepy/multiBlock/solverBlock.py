@@ -221,6 +221,7 @@ class solverBlock(restartBlock, block_):
             "rk2": 1,
             "maccormack": 1,
             "rk3": 1,
+            "rk34": 1,
             "rk4": 4,
             "strang": 2,
             "dualTime": 2,

@@ -2,10 +2,11 @@ from abc import ABCMeta
 from ..RHS import RHS
 from ..consistify import consistify
 from ..compute.utils import AEQB
-from ..compute.timeIntegration import rk4s1, rk4s2, rk4s3, rk4s4
+from ..compute.timeIntegration import rk34s1, rk34s2, rk34s3, rk34s4
 
 
-class rk4:
+class rk34:
+
     __metaclass__ = ABCMeta
 
     def __init__(self):
@@ -13,43 +14,39 @@ class rk4:
 
     def step(self, dt):
 
-        # store zeroth stage solution
-        for blk in self:
-            AEQB(blk.Q0, blk.Q)
-
         # First Stage
         self.titme = self.tme
         RHS(self)
 
         for blk in self:
-            rk4s1(blk, dt)
+            rk34s1(blk, dt)
 
         consistify(self)
 
         # Second Stage
-        self.titme = self.tme + dt / 2
+        self.titme = self.tme + dt / 2.0
         RHS(self)
 
         for blk in self:
-            rk4s2(blk, dt)
+            rk34s2(blk, dt)
 
         consistify(self)
 
         # Third Stage
-        self.titme = self.tme + dt / 2
-        RHS(self)
-
-        for blk in self:
-            rk4s3(blk, dt)
-
-        consistify(self)
-
-        # Fourth Stage
         self.titme = self.tme + dt
         RHS(self)
 
         for blk in self:
-            rk4s4(blk, dt)
+            rk34s3(blk, dt)
+
+        consistify(self)
+
+        # Fourth Stage
+        self.titme = self.tme + dt / 2.0
+        RHS(self)
+
+        for blk in self:
+            rk34s4(blk, dt)
 
         consistify(self)
 
@@ -57,5 +54,5 @@ class rk4:
         self.tme += dt
         self.titme = self.tme
 
-    step.name = "rk4"
+    step.name = "rk34"
     step.stepType = "explicit"
