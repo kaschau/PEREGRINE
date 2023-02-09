@@ -47,7 +47,7 @@ class configFile(frozenDict):
 
         self["timeIntegration"] = frozenDict(
             {
-                "integrator": "rk4",
+                "integrator": "rk3",
                 "dt": 1e-3,
                 "variableTimeStep": False,
                 "maxDt": 1e-3,
