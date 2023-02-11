@@ -18,7 +18,7 @@ def simulate(configFilePath):
         string = " >>> ******************************** <<<\n"
         string += "              PEREGRINE CFD\n"
         string += " >>> ******************************** <<<\n"
-        string += "  Copyright (c) 2021-2022 Kyle A. Schau\n"
+        string += "  Copyright (c) 2021-2023 Kyle A. Schau\n"
         string += "           All rights reserved.\n"
         print(string)
 
