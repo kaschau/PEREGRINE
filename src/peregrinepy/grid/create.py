@@ -21,7 +21,7 @@ def cubicConnectivity(
     if i == 0:
         if periodicI:
             face.bcType = "periodicTransLow"
-            face.bcFam = "periodic"
+            face.bcFam = "periodic_I"
             face.neighbor = blkNum + (mbDims[0] - 1)
             face.orientation = "123"
         else:
@@ -38,7 +38,7 @@ def cubicConnectivity(
     if i == mbDims[0] - 1:
         if periodicI:
             face.bcType = "periodicTransHigh"
-            face.bcFam = "periodic"
+            face.bcFam = "periodic_I"
             face.neighbor = blkNum - (mbDims[0] - 1)
             face.orientation = "123"
         else:
@@ -56,7 +56,7 @@ def cubicConnectivity(
     if j == 0:
         if periodicJ:
             face.bcType = "periodicTransLow"
-            face.bcFam = "periodic"
+            face.bcFam = "periodic_J"
             face.neighbor = blkNum + mbDims[0] * (mbDims[1] - 1)
             face.orientation = "123"
         else:
@@ -73,7 +73,7 @@ def cubicConnectivity(
     if j == mbDims[1] - 1:
         if periodicJ:
             face.bcType = "periodicTransHigh"
-            face.bcFam = "periodic"
+            face.bcFam = "periodic_J"
             face.neighbor = blkNum - mbDims[0] * (mbDims[1] - 1)
             face.orientation = "123"
         else:
@@ -91,7 +91,7 @@ def cubicConnectivity(
     if k == 0:
         if periodicK:
             face.bcType = "periodicTransLow"
-            face.bcFam = "periodic"
+            face.bcFam = "periodic_K"
             face.neighbor = blkNum + mbDims[0] * mbDims[1] * (mbDims[2] - 1)
             face.orientation = "123"
         else:
@@ -108,7 +108,7 @@ def cubicConnectivity(
     if k == mbDims[2] - 1:
         if periodicK:
             face.bcType = "periodicTransHigh"
-            face.bcFam = "periodic"
+            face.bcFam = "periodic_K"
             face.neighbor = blkNum - mbDims[0] * mbDims[1] * (mbDims[2] - 1)
             face.orientation = "123"
         else:
