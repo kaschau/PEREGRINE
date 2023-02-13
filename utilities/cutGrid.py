@@ -408,6 +408,8 @@ if __name__ == "__main__":
                 ln.strip() for ln in f.readlines() if not ln.strip().startswith("#")
             ]
             for line in lines:
+                if line == "" or line.startswith("#"):
+                    continue
                 ln = [i.strip() for i in line.split(",")]
                 nblk = int(ln[0])
                 axis = ln[1]
