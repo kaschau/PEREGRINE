@@ -139,8 +139,9 @@ void supersonicExit(
       Kokkos::parallel_for(
           "Supersonic exit euler terms", range_face,
           KOKKOS_LAMBDA(const int i, const int j) {
-            // extrapolate pressure (keep it positive)
-            q0(i, j, 0) = fmax(0.0, 2.0 * q1(i, j, 0) - q2(i, j, 0));
+            // extrapolate pressure (keep it positive, and wave exiting)
+            q0(i, j, 0) =
+                fmin(fmax(0.0, 2.0 * q1(i, j, 0) - q2(i, j, 0)), q1(i, j, 0));
 
             // extrapolate velocity, unless reverse flow detected
             double uDotn = (q1(i, j, 1) * nx(i, j) + q1(i, j, 2) * ny(i, j) +
