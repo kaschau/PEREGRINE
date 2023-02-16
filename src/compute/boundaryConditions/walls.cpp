@@ -78,10 +78,8 @@ void adiabaticNoSlipWall(
     MDRange2 range_face = MDRange2({0, 0}, {q1.extent(0), q1.extent(1)});
     for (int g = 0; g < b.ng; g++) {
       s0 -= plus * g;
-      s2 += plus * g;
 
       threeDsubview q0 = getHaloSlice(b.q, face._nface, s0);
-      threeDsubview q2 = getHaloSlice(b.q, face._nface, s2);
 
       Kokkos::parallel_for(
           "Adia no slip wall preDqDxyz terms", range_face,
