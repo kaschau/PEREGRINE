@@ -21,7 +21,6 @@ pytestmark = pytest.mark.parametrize(
 
 
 def test_constantPressureSubsonicExit(my_setup, adv, spdata):
-
     mb = create("constantPressureSubsonicExit", adv, spdata)
     blk = mb[0]
 
@@ -100,7 +99,6 @@ def test_constantPressureSubsonicExit(my_setup, adv, spdata):
 
 
 def test_supersonicExit(my_setup, adv, spdata):
-
     mb = create("supersonicExit", adv, spdata)
     blk = mb[0]
 
@@ -140,7 +138,9 @@ def test_supersonicExit(my_setup, adv, spdata):
         revFlow = (uDotn < 0.0,)[0]
         for s0_, s2_ in zip(face.s0_, face.s2_):
             # extrapolate pressure
-            assert np.allclose(p[s0_], np.clip(2.0 * p[face.s1_] - p[s2_], 0.0, None))
+            assert np.allclose(
+                p[s0_], np.clip(2.0 * p[face.s1_] - p[s2_], 0.0, p[face.s1_])
+            )
             # extrapolate velocity
             assert np.allclose(
                 u[s0_][outFlow], 2.0 * u[face.s1_][outFlow] - u[s2_][outFlow]

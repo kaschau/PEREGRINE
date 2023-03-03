@@ -39,6 +39,8 @@ class topology(UserList):
         return [b.nblki for b in self]
 
     def getBlock(self, nblki):
+        if self[nblki].nblki == nblki:
+            return self[nblki]
         # Otherwise manually search for it
         for blk in self:
             if blk.nblki == nblki:
