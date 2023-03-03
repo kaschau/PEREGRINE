@@ -297,6 +297,7 @@ def performCutOperations(mb, cutOps):
     for nblki, axis, nCuts in cutOps:
         cutBlk = mb.getBlock(nblki)
         ogNx = getattr(cutBlk, f"n{axis}")
+        print(f"  Cutting Block {nblki}'s {axis} axis {nCuts} times.")
 
         for cut in range(nCuts):
             blocksToCut = cutPath(mb, nblki, axis)

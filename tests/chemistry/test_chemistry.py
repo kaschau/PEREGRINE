@@ -32,7 +32,6 @@ pytestmark = pytest.mark.parametrize(
 
 
 def test_chemistry(my_setup, thfile, ctfile, chmfile):
-
     config = pg.files.configFile()
 
     relpath = str(Path(__file__).parent)
@@ -82,8 +81,10 @@ def test_chemistry(my_setup, thfile, ctfile, chmfile):
     def print_diff(name, c, p):
         if np.abs(c - p) == 0.0:
             diff = 0.0
+        elif c == 0.0:
+            diff = p
         else:
-            diff = np.abs(c - p) / p * 100
+            diff = np.abs((c - p) / p) * 100
         print(f"{name:<6s}: {c:16.8e} | {p:16.8e} | {diff:16.15e}")
 
         return diff
@@ -108,4 +109,7 @@ def test_chemistry(my_setup, thfile, ctfile, chmfile):
         )
 
     passfail = np.all(np.array(pd) < 1e-10)
+    print("*****")
+    print(np.array(pd))
+    print("*****")
     assert passfail
