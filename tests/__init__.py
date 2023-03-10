@@ -1,1 +1,1 @@
-from . import chemistry, communication, eos, shock, transport, boundaryConditions
+from . import chemistry, communication, eos, transport, boundaryConditions
