@@ -90,24 +90,33 @@ void tpg(block_ &b, const thtrdat_ &th, const int &nface,
           // Update mixture properties
           h = 0.0;
           cp = 0.0;
-          for (int n = 0; n <= ns - 1; n++) {
-            int m = (T <= th.NASA7(n, 0)) ? 8 : 1;
+          // start scope of precomputed T**
+          {
+            double Tinv = 1.0 / T;
+            double To2 = T / 2.0;
+            double T2 = pow(T, 2);
+            double T3 = pow(T, 3);
+            double T4 = pow(T, 4);
+            double T2o3 = T2 / 3.0;
+            double T3o4 = T3 / 4.0;
+            double T4o5 = T4 / 5.0;
+            for (int n = 0; n <= ns - 1; n++) {
+              int m = (T <= th.NASA7(n, 0)) ? 8 : 1;
 
-            double cps = (th.NASA7(n, m + 0) + th.NASA7(n, m + 1) * T +
-                          th.NASA7(n, m + 2) * pow(T, 2.0) +
-                          th.NASA7(n, m + 3) * pow(T, 3.0) +
-                          th.NASA7(n, m + 4) * pow(T, 4.0)) *
-                         th.Ru / th.MW(n);
+              double cps = (th.NASA7(n, m + 0) + th.NASA7(n, m + 1) * T +
+                            th.NASA7(n, m + 2) * T2 + th.NASA7(n, m + 3) * T3 +
+                            th.NASA7(n, m + 4) * T4) *
+                           th.Ru / th.MW(n);
 
-            hi(n) = (th.NASA7(n, m + 0) + th.NASA7(n, m + 1) * T / 2.0 +
-                     th.NASA7(n, m + 2) * pow(T, 2.0) / 3.0 +
-                     th.NASA7(n, m + 3) * pow(T, 3.0) / 4.0 +
-                     th.NASA7(n, m + 4) * pow(T, 4.0) / 5.0 +
-                     th.NASA7(n, m + 5) / T) *
-                    T * th.Ru / th.MW(n);
+              hi(n) = (th.NASA7(n, m + 0) + th.NASA7(n, m + 1) * To2 +
+                       th.NASA7(n, m + 2) * T2o3 + th.NASA7(n, m + 3) * T3o4 +
+                       th.NASA7(n, m + 4) * T4o5 + th.NASA7(n, m + 5) * Tinv) *
+                      T * th.Ru / th.MW(n);
 
-            cp += cps * Y(n);
-            h += hi(n) * Y(n);
+              cp += cps * Y(n);
+              h += hi(n) * Y(n);
+            }
+            // end scope of precomputed T**
           }
 
           // Compute mixuture enthalpy
@@ -233,24 +242,35 @@ void tpg(block_ &b, const thtrdat_ &th, const int &nface,
           while ((abs(error) > tol) && (nitr < maxitr)) {
             h = 0.0;
             cp = 0.0;
-            for (int n = 0; n <= ns - 1; n++) {
-              int m = (T <= th.NASA7(n, 0)) ? 8 : 1;
+            // start scope of precomputed T**
+            {
+              double Tinv = 1.0 / T;
+              double To2 = T / 2.0;
+              double T2 = pow(T, 2);
+              double T3 = pow(T, 3);
+              double T4 = pow(T, 4);
+              double T2o3 = T2 / 3.0;
+              double T3o4 = T3 / 4.0;
+              double T4o5 = T4 / 5.0;
+              for (int n = 0; n <= ns - 1; n++) {
+                int m = (T <= th.NASA7(n, 0)) ? 8 : 1;
 
-              double cps = (th.NASA7(n, m + 0) + th.NASA7(n, m + 1) * T +
-                            th.NASA7(n, m + 2) * pow(T, 2.0) +
-                            th.NASA7(n, m + 3) * pow(T, 3.0) +
-                            th.NASA7(n, m + 4) * pow(T, 4.0)) *
-                           th.Ru / th.MW(n);
+                double cps =
+                    (th.NASA7(n, m + 0) + th.NASA7(n, m + 1) * T +
+                     th.NASA7(n, m + 2) * T2 + th.NASA7(n, m + 3) * T3 +
+                     th.NASA7(n, m + 4) * T4) *
+                    th.Ru / th.MW(n);
 
-              hi(n) = (th.NASA7(n, m + 0) + th.NASA7(n, m + 1) * T / 2.0 +
-                       th.NASA7(n, m + 2) * pow(T, 2.0) / 3.0 +
-                       th.NASA7(n, m + 3) * pow(T, 3.0) / 4.0 +
-                       th.NASA7(n, m + 4) * pow(T, 4.0) / 5.0 +
-                       th.NASA7(n, m + 5) / T) *
-                      T * th.Ru / th.MW(n);
+                hi(n) =
+                    (th.NASA7(n, m + 0) + th.NASA7(n, m + 1) * To2 +
+                     th.NASA7(n, m + 2) * T2o3 + th.NASA7(n, m + 3) * T3o4 +
+                     th.NASA7(n, m + 4) * T4o5 + th.NASA7(n, m + 5) * Tinv) *
+                    T * th.Ru / th.MW(n);
 
-              cp += cps * Y(n);
-              h += hi(n) * Y(n);
+                cp += cps * Y(n);
+                h += hi(n) * Y(n);
+              }
+              // end scope of precomputed T**
             }
 
             error = e - (h - Rmix * T);
