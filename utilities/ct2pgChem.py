@@ -48,18 +48,18 @@ def rateConstString(A, m, Ea):
     if m == 0.0 and Ea == 0.0:
         string = f"{A}"
     elif m == 0.0 and Ea != 0.0:
-        string = f"exp(log({A})-({Ea}/T))"
+        string = f"exp(log({A})-({Ea}*Tinv))"
     elif isinstance(m, float) and Ea == 0.0:
         string = f"exp(log({A}){ m:+}*logT)"
     elif isinstance(m, int) and Ea == 0.0:
         if m < 0:
-            string = f"{A}" + "".join("/T" for _ in range(m)) + ")"
+            string = f"{A}" + "".join("*Tinv" for _ in range(m)) + ")"
         elif m > 0:
             string = f"{A}" + "".join("*T" for _ in range(m)) + ""
         else:
             raise ValueError("Huh?")
     elif Ea != 0.0:
-        string = f"exp(log({A}){ m:+}*logT-({Ea}/T))"
+        string = f"exp(log({A}){ m:+}*logT-({Ea}*Tinv))"
     else:
         raise ValueError(f"Something is wrong here, m = {m}  Ea={Ea} ")
 
@@ -67,7 +67,6 @@ def rateConstString(A, m, Ea):
 
 
 def ct2pgChem(ctyaml, cpp):
-
     gas = ct.Solution(ctyaml)
     ns = gas.n_species
     nr = gas.n_reactions
@@ -176,9 +175,6 @@ def ct2pgChem(ctyaml, cpp):
         "\n"
         "  for (int nSub=0; nSub<nChemSubSteps; nSub++){\n"
         "\n"
-        "  double logT = log(T);\n"
-        "  double prefRuT = 101325.0/(th.Ru*T);\n"
-        "\n"
         "  // Compute nth species Y\n"
         f"  Y[{ns-1}] = 1.0;\n"
         "  double testSum = 0.0;\n"
@@ -241,38 +237,52 @@ def ct2pgChem(ctyaml, cpp):
         "  // Gibbs energy. --------------------------------------------- >\n"
         "  // ----------------------------------------------------------- >\n"
         "\n"
-        "  int m;\n"
         f"  double hi[{ns}];\n"
         f"  double gbs[{ns}];\n"
         f"  double cp = 0.0;\n"
+        "// start scope of precomputed T**\n"
+        "{\n"
+        "  double logT = log(T);\n"
+        "  double Tinv = 1.0/T;\n"
+        "  double To2 = T/2.0;\n"
+        "  double T2 = pow(T,2);\n"
+        "  double T3 = pow(T,3);\n"
+        "  double T4 = pow(T,4);\n"
+        "  double T2o2 = T2/2.0;\n"
+        "  double T3o3 = T3/3.0;\n"
+        "  double T4o4 = T4/4.0;\n"
+        "  double T2o3 = T2/3.0;\n"
+        "  double T3o4 = T3/4.0;\n"
+        "  double T4o5 = T4/5.0;\n"
         "\n"
         f"  for (int n=0; n<={ns-1}; n++)\n"
         "  {\n"
-        "    m = ( T <= th.NASA7(n,0) ) ? 8 : 1;\n"
-        "    double cps =(th.NASA7(n,m+0)            +\n"
-        "                 th.NASA7(n,m+1)*    T      +\n"
-        "                 th.NASA7(n,m+2)*pow(T,2.0) +\n"
-        "                 th.NASA7(n,m+3)*pow(T,3.0) +\n"
-        "                 th.NASA7(n,m+4)*pow(T,4.0) )*th.Ru/th.MW(n);\n"
+        "    int m = ( T <= th.NASA7(n,0) ) ? 8 : 1;\n"
+        "    double cps =(th.NASA7(n,m+0)    +\n"
+        "                 th.NASA7(n,m+1)*T  +\n"
+        "                 th.NASA7(n,m+2)*T2 +\n"
+        "                 th.NASA7(n,m+3)*T3 +\n"
+        "                 th.NASA7(n,m+4)*T4 )*th.Ru/th.MW(n);\n"
         "\n"
-        "    hi[n]      = th.NASA7(n,m+0)                  +\n"
-        "                 th.NASA7(n,m+1)*    T      / 2.0 +\n"
-        "                 th.NASA7(n,m+2)*pow(T,2.0) / 3.0 +\n"
-        "                 th.NASA7(n,m+3)*pow(T,3.0) / 4.0 +\n"
-        "                 th.NASA7(n,m+4)*pow(T,4.0) / 5.0 +\n"
-        "                 th.NASA7(n,m+5)/    T            ;\n"
+        "    hi[n]      = th.NASA7(n,m+0)      +\n"
+        "                 th.NASA7(n,m+1)*To2  +\n"
+        "                 th.NASA7(n,m+2)*T2o3 +\n"
+        "                 th.NASA7(n,m+3)*T3o4 +\n"
+        "                 th.NASA7(n,m+4)*T4o5 +\n"
+        "                 th.NASA7(n,m+5)*Tinv ;\n"
         "\n"
-        "    double scs = th.NASA7(n,m+0)*log(T)           +\n"
-        "                 th.NASA7(n,m+1)*    T            +\n"
-        "                 th.NASA7(n,m+2)*pow(T,2.0) / 2.0 +\n"
-        "                 th.NASA7(n,m+3)*pow(T,3.0) / 3.0 +\n"
-        "                 th.NASA7(n,m+4)*pow(T,4.0) / 4.0 +\n"
-        "                 th.NASA7(n,m+6)                  ;\n"
+        "    double scs = th.NASA7(n,m+0)*logT +\n"
+        "                 th.NASA7(n,m+1)*   T +\n"
+        "                 th.NASA7(n,m+2)*T2o2 +\n"
+        "                 th.NASA7(n,m+3)*T3o3 +\n"
+        "                 th.NASA7(n,m+4)*T4o4 +\n"
+        "                 th.NASA7(n,m+6)      ;\n"
         "\n"
         "    cp += cps  *Y[n];\n"
         "    gbs[n] = hi[n]-scs;\n"
         "  }\n"
-        "\n"
+        "// ends scope of precomputed T**\n"
+        "}\n"
     )
     pgMech.write(outString)
 
@@ -286,21 +296,25 @@ def ct2pgChem(ctyaml, cpp):
         "  // Forward, backward, net rates of progress. ----------------- >\n"
         "  // ----------------------------------------------------------- >\n"
         "\n"
-        "  double k_f, dG, K_c; \n\n"
     )
     pgMech.write(outString)
 
     outString = (
+        f"  double q[{nr}];\n\n"
+        "// start scope of these temp vars\n"
+        "{\n"
+        "  double k_f, dG, K_c; \n\n"
         "  double Fcent;\n"
         "  double pmod;\n"
         "  double Pr,k0;\n"
         "  double A,f1,F_pdr;\n"
         "  double C,N;\n"
-        "\n"
+        "  double q_f, q_b;\n"
+        "  double logT = log(T);\n"
+        "  double Tinv = 1.0/T;\n"
+        "  double prefRuT = 101325.0/(th.Ru*T);\n"
     )
-    pgMech.write(outString)
 
-    outString = "  double q_f, q_b;\n" + f"  double q[{nr}];\n\n"
     pgMech.write(outString)
 
     for i in range(nr):
@@ -369,7 +383,7 @@ def ct2pgChem(ctyaml, cpp):
                 pgMech.write(outString)
             elif tp[-1] != 0:  # Four Parameter Troe form
                 Tss = rate.falloff_coeffs[3]
-                outString = f"  Fcent = (1.0 - ({alpha}))*exp(-T/({Tsss})) + ({alpha}) *exp(-T/({Ts})) + exp(-({Tss})/T);\n"
+                outString = f"  Fcent = (1.0 - ({alpha}))*exp(-T/({Tsss})) + ({alpha}) *exp(-T/({Ts})) + exp(-({Tss})*Tinv);\n"
                 pgMech.write(outString)
 
             outString = (
@@ -427,6 +441,8 @@ def ct2pgChem(ctyaml, cpp):
         else:
             pgMech.write(f"  q[{i}] = q_f;\n\n")
 
+    pgMech.write("}\n")
+    pgMech.write("// ends scope of logT and prefRuT\n")
     # -------------------------------------------------------------------
     # SOURCE TERMS
     # -------------------------------------------------------------------
@@ -495,7 +511,6 @@ def ct2pgChem(ctyaml, cpp):
 
 
 if __name__ == "__main__":
-
     import argparse
 
     if float(ct.__version__[0:3]) < 3.0:
