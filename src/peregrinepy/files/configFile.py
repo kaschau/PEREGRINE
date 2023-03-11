@@ -177,3 +177,8 @@ class configFile(frozenDict):
                     False,
                     "\nYou turned on viscousSponge without solving for diffusion.",
                 )
+
+        # Chemistry checks
+        self["thermochem"]["nChemSubSteps"] = max(
+            1, self["thermochem"]["nChemSubSteps"]
+        )
