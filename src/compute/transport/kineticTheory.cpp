@@ -69,30 +69,30 @@ void kineticTheory(block_ &b, const thtrdat_ &th, const int &nface,
 
         // Update mixture properties
         // Mole fractions
-        double mass = 0.0;
-        for (int n = 0; n <= ns - 1; n++) {
-          mass += Y(n) / th.MW(n);
-        }
+        double MWmix = 0.0;
+        {
+          double mass = 0.0;
+          for (int n = 0; n <= ns - 1; n++) {
+            mass += Y(n) / th.MW(n);
+          }
 
-        // Mean molecular weight, mole fraction
-        double MWmix;
-        MWmix = 0.0;
-        for (int n = 0; n <= ns - 1; n++) {
-          X(n) = Y(n) / th.MW(n) / mass;
-          MWmix += X(n) * th.MW(n);
+          // Mean molecular weight, mole fraction
+          for (int n = 0; n <= ns - 1; n++) {
+            X(n) = Y(n) / th.MW(n) / mass;
+            MWmix += X(n) * th.MW(n);
+          }
         }
 
         // Evaluate all property polynomials
-        int indx;
         double logT = log(T);
         double sqrt_T = exp(0.5 * logT);
-
         for (int n = 0; n <= ns - 1; n++) {
           // Set to constant value first
           mu_sp(n) = th.muPoly(n, deg);
           kappa_sp(n) = th.kappaPoly(n, deg);
           for (int n2 = n; n2 <= ns - 1; n2++) {
-            indx = int(ns * (ns - 1) / 2 - (ns - n) * (ns - n - 1) / 2 + n2);
+            int indx =
+                int(ns * (ns - 1) / 2 - (ns - n) * (ns - n - 1) / 2 + n2);
             Dij(n, n2) = th.DijPoly(indx, deg);
           }
 
@@ -102,7 +102,8 @@ void kineticTheory(block_ &b, const thtrdat_ &th, const int &nface,
             kappa_sp(n) += th.kappaPoly(n, ply) * pow(logT, float(deg - ply));
 
             for (int n2 = n; n2 <= ns - 1; n2++) {
-              indx = int(ns * (ns - 1) / 2 - (ns - n) * (ns - n - 1) / 2 + n2);
+              int indx =
+                  int(ns * (ns - 1) / 2 - (ns - n) * (ns - n - 1) / 2 + n2);
               Dij(n, n2) += th.DijPoly(indx, ply) * pow(logT, float(deg - ply));
             }
           }
@@ -119,15 +120,14 @@ void kineticTheory(block_ &b, const thtrdat_ &th, const int &nface,
         // Now every species' property is computed, generate mixture values
 
         // viscosity mixture
-        double phi;
         double mu = 0.0;
         for (int n = 0; n <= ns - 1; n++) {
           double phitemp = 0.0;
           for (int n2 = 0; n2 <= ns - 1; n2++) {
-            phi = pow((1.0 +
-                       sqrt(mu_sp(n) / mu_sp(n2) * sqrt(th.MW(n2) / th.MW(n)))),
-                      2.0) /
-                  (sqrt(8.0) * sqrt(1 + th.MW(n) / th.MW(n2)));
+            double phi = pow((1.0 + sqrt(mu_sp(n) / mu_sp(n2) *
+                                         sqrt(th.MW(n2) / th.MW(n)))),
+                             2.0) /
+                         (sqrt(8.0) * sqrt(1 + th.MW(n) / th.MW(n2)));
             phitemp += phi * X(n2);
           }
           mu += mu_sp(n) * X(n) / phitemp;
@@ -135,20 +135,20 @@ void kineticTheory(block_ &b, const thtrdat_ &th, const int &nface,
 
         // thermal conductivity mixture
         double kappa = 0.0;
-
-        double sum1 = 0.0;
-        double sum2 = 0.0;
-        for (int n = 0; n <= ns - 1; n++) {
-          sum1 += X(n) * kappa_sp(n);
-          sum2 += X(n) / kappa_sp(n);
+        {
+          double sum1 = 0.0;
+          double sum2 = 0.0;
+          for (int n = 0; n <= ns - 1; n++) {
+            sum1 += X(n) * kappa_sp(n);
+            sum2 += X(n) / kappa_sp(n);
+          }
+          kappa = 0.5 * (sum1 + 1.0 / sum2);
         }
-        kappa = 0.5 * (sum1 + 1.0 / sum2);
 
         // mass diffusion coefficient mixture
-        double temp;
         for (int n = 0; n <= ns - 1; n++) {
-          sum1 = 0.0;
-          sum2 = 0.0;
+          double sum1 = 0.0;
+          double sum2 = 0.0;
           for (int n2 = 0; n2 <= ns - 1; n2++) {
             if (n == n2) {
               continue;
@@ -160,7 +160,7 @@ void kineticTheory(block_ &b, const thtrdat_ &th, const int &nface,
           sum1 *= p;
           // HACK must be a better way to give zero for sum2 when MWmix ==
           // th.MW(n)*X(n)
-          temp = p * X(n) / (MWmix - th.MW(n) * X(n));
+          double temp = p * X(n) / (MWmix - th.MW(n) * X(n));
           if (isinf(temp)) {
             D(n) = 0.0;
           } else {
