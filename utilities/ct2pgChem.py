@@ -72,13 +72,13 @@ def ct2pgChem(ctyaml, cpp):
     nr = gas.n_reactions
     rTBC = []  # list of all three body reactions
 
-    Ea_f = []
-    m_f = []
-    A_f = []
-    Ea_o = []
-    m_o = []
-    A_o = []
-    aij = []
+    Ea_f = np.zeros(nr)
+    m_f = np.zeros(nr)
+    A_f = np.zeros(nr)
+    Ea_o = np.zeros(nr)
+    m_o = np.zeros(nr)
+    A_o = np.zeros(nr)
+    aij = np.zeros((nr, ns))
     nu_f = gas.reactant_stoich_coeffs
     nu_b = gas.product_stoich_coeffs
 
@@ -89,34 +89,30 @@ def ct2pgChem(ctyaml, cpp):
         if r.reaction_type.startswith(
             tuple(["three-body", "falloff"])
         ):  # ThreeBodyReaction or FallOffReactions
-            rTBC.append(i)
-            efficiencies = []
             for j in range(ns):
-                efficiencies.append(r.third_body.efficiency(gas.species_names[j]))
-            aij.append(efficiencies)
+                aij[i, j] = r.third_body.efficiency(gas.species_names[j])
 
             if r.reaction_type.startswith("falloff"):
-                Ea_f.append(rate.high_rate.activation_energy / Ru)
-                m_f.append(rate.high_rate.temperature_exponent)
-                A_f.append(rate.high_rate.pre_exponential_factor)
-                Ea_o.append(rate.low_rate.activation_energy / Ru)
-                m_o.append(rate.low_rate.temperature_exponent)
-                A_o.append(rate.low_rate.pre_exponential_factor)
+                Ea_f[i] = rate.high_rate.activation_energy / Ru
+                m_f[i] = rate.high_rate.temperature_exponent
+                A_f[i] = rate.high_rate.pre_exponential_factor
+                Ea_o[i] = rate.low_rate.activation_energy / Ru
+                m_o[i] = rate.low_rate.temperature_exponent
+                A_o[i] = rate.low_rate.pre_exponential_factor
             else:  # three-body
-                Ea_f.append(rate.activation_energy / Ru)
-                m_f.append(rate.temperature_exponent)
-                A_f.append(rate.pre_exponential_factor)
-                Ea_o.append(0.0)
-                m_o.append(0.0)
-                A_o.append(0.0)
+                Ea_f[i] = rate.activation_energy / Ru
+                m_f[i] = rate.temperature_exponent
+                A_f[i] = rate.pre_exponential_factor
+                Ea_o[i] = 0.0
+                m_o[i] = 0.0
+                A_o[i] = 0.0
         elif r.reaction_type == "Arrhenius":
-            Ea_f.append(rate.activation_energy / Ru)
-            m_f.append(intOrFloat(rate.temperature_exponent))
-            A_f.append(rate.pre_exponential_factor)
+            Ea_f[i] = rate.activation_energy / Ru
+            m_f[i] = intOrFloat(rate.temperature_exponent)
+            A_f[i] = rate.pre_exponential_factor
         else:
             raise UnknownReactionType(r.reaction_type, i, r.equation)
 
-    nTBC = len(rTBC)  # number of third body collision reaction
     pgMech = open(cpp, "w")
 
     # --------------------------------
@@ -203,35 +199,6 @@ def ct2pgChem(ctyaml, cpp):
 
     pgMech.write(outString)
 
-    # -----------------------------------------------------------------------------
-    # Chaperone Efficiencies
-    # -----------------------------------------------------------------------------
-
-    outString = (
-        "  // ----------------------------------------------------------- >\n"
-        "  // Chaperon efficiencies. ------------------------------------ >\n"
-        "  // ----------------------------------------------------------- >\n"
-        "\n"
-        f"  double cTBC[{nTBC}];\n\n"
-    )
-    pgMech.write(outString)
-
-    # ThreeBodyReaction and FallOffReactions
-    for i in range(nTBC):
-        outString = []
-        for j in range(ns):
-            eff = aij[i][j]
-            if eff > 0.0:
-                if eff != 1.0:
-                    outString.append(f" + {eff}*cs[{j}]")
-                else:
-                    outString.append(f" + cs[{j}]")
-        outString[0] = outString[0].replace(" + ", "")
-        pgMech.write(f"  cTBC[{i}] = ")
-        for item in outString:
-            pgMech.write(item)
-        pgMech.write(";\n\n")
-
     outString = (
         "  // ----------------------------------------------------------- >\n"
         "  // Gibbs energy. --------------------------------------------- >\n"
@@ -303,7 +270,7 @@ def ct2pgChem(ctyaml, cpp):
         f"  double q[{nr}];\n\n"
         "// start scope of these temp vars\n"
         "{\n"
-        "  double k_f, dG, K_c; \n\n"
+        "  double cTBC, k_f, dG, K_c; \n\n"
         "  double Fcent;\n"
         "  double pmod;\n"
         "  double Pr,k0;\n"
@@ -355,18 +322,31 @@ def ct2pgChem(ctyaml, cpp):
         # -----------------------------------------------------------------------------
         r = gas.reactions()[i]
         rate = r.rate
-        if i in rTBC:
-            j = rTBC.index(i)
-        if r.reaction_type == "three-body-Arrhenius":  # ThreeBodyReaction
+        if np.sum(aij[i]) > 0.0:  # then this is a third body raction
             pgMech.write(f"  //  Three Body Reaction #{i}\n")
-            outString = f"  k_f *= cTBC[{j}];\n"
+            outString = []
+            for j in range(ns):
+                eff = aij[i][j]
+                if eff > 0.0:
+                    if eff != 1.0:
+                        outString.append(f" + {eff}*cs[{j}]")
+                    else:
+                        outString.append(f" + cs[{j}]")
+            outString[0] = outString[0].replace(" + ", "")
+            pgMech.write(f"  cTBC = ")
+            for item in outString:
+                pgMech.write(item)
+            pgMech.write(";\n")
+
+        if r.reaction_type == "three-body-Arrhenius":  # ThreeBodyReaction
+            outString = f"  k_f *= cTBC;\n"
             pgMech.write(outString)
         elif r.reaction_type == "falloff-Lindemann":
             pgMech.write(f"  //  Lindeman Reaction #{i}\n")
             pgMech.write("  Fcent = 1.0;\n")
-            pgMech.write("  k0 = " + rateConstString(A_o[j], m_o[j], Ea_o[j]) + ";\n")
+            pgMech.write("  k0 = " + rateConstString(A_o[i], m_o[i], Ea_o[i]) + ";\n")
             outString = (
-                f"  Pr = cTBC[{j}]*k0/k_f;\n"
+                f"  Pr = cTBC*k0/k_f;\n"
                 f"  pmod = Pr/(1.0 + Pr);\n"
                 f"  k_f *= pmod;\n"
             )
@@ -391,9 +371,9 @@ def ct2pgChem(ctyaml, cpp):
                 "  N =   0.75 - 1.27*log10(Fcent);\n"
             )
             pgMech.write(outString)
-            pgMech.write("  k0 = " + rateConstString(A_o[j], m_o[j], Ea_o[j]) + ";\n")
+            pgMech.write("  k0 = " + rateConstString(A_o[i], m_o[i], Ea_o[i]) + ";\n")
             outString = (
-                f"  Pr = cTBC[{j}]*k0/k_f;\n"
+                f"  Pr = cTBC*k0/k_f;\n"
                 "  A = log10(Pr) + C;\n"
                 "  f1 = A/(N - 0.14*A);\n"
                 "  F_pdr = pow(10.0,log10(Fcent)/(1.0+f1*f1));\n"

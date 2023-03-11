@@ -120,441 +120,6 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
           }
 
           // ----------------------------------------------------------- >
-          // Chaperon efficiencies. ------------------------------------ >
-          // ----------------------------------------------------------- >
-
-          double cTBC[50];
-
-          cTBC[0] = 2.4 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 15.4 * cs[5] +
-                    cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
-                    2.0 * cs[13] + 1.75 * cs[14] + 3.6 * cs[15] + cs[16] +
-                    cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
-                    cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
-                    cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
-                    cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
-                    cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
-                    cs[47] + 0.83 * cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
-
-          cTBC[1] = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
-                    cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
-                    2.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
-                    cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
-                    cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
-                    cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
-                    cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
-                    cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
-                    cs[47] + 0.7 * cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
-
-          cTBC[2] = 2.0 * cs[0] + cs[1] + cs[2] + 6.0 * cs[3] + cs[4] +
-                    6.0 * cs[5] + cs[6] + cs[7] + cs[8] + cs[9] + cs[10] +
-                    cs[11] + cs[12] + 2.0 * cs[13] + 1.5 * cs[14] +
-                    3.5 * cs[15] + cs[16] + cs[17] + cs[18] + cs[19] + cs[20] +
-                    cs[21] + cs[22] + cs[23] + cs[24] + cs[25] + 3.0 * cs[26] +
-                    cs[27] + cs[28] + cs[29] + cs[30] + cs[31] + cs[32] +
-                    cs[33] + cs[34] + cs[35] + cs[36] + cs[37] + cs[38] +
-                    cs[39] + cs[40] + cs[41] + cs[42] + cs[43] + cs[44] +
-                    cs[45] + cs[46] + cs[47] + 0.5 * cs[48] + cs[49] + cs[50] +
-                    cs[51] + cs[52];
-
-          cTBC[3] = cs[0] + cs[1] + cs[2] + cs[4] + cs[6] + cs[7] + cs[8] +
-                    cs[9] + cs[10] + cs[11] + cs[12] + cs[13] + 0.75 * cs[14] +
-                    1.5 * cs[15] + cs[16] + cs[17] + cs[18] + cs[19] + cs[20] +
-                    cs[21] + cs[22] + cs[23] + cs[24] + cs[25] + 1.5 * cs[26] +
-                    cs[27] + cs[28] + cs[29] + cs[30] + cs[31] + cs[32] +
-                    cs[33] + cs[34] + cs[35] + cs[36] + cs[37] + cs[38] +
-                    cs[39] + cs[40] + cs[41] + cs[42] + cs[43] + cs[44] +
-                    cs[45] + cs[46] + cs[49] + cs[50] + cs[51] + cs[52];
-
-          cTBC[4] = cs[3];
-
-          cTBC[5] = cs[5];
-
-          cTBC[6] = cs[47];
-
-          cTBC[7] = cs[48];
-
-          cTBC[8] = cs[1] + cs[2] + cs[3] + cs[4] + cs[6] + cs[7] + cs[8] +
-                    cs[9] + cs[10] + cs[11] + cs[12] + 2.0 * cs[13] + cs[14] +
-                    cs[16] + cs[17] + cs[18] + cs[19] + cs[20] + cs[21] +
-                    cs[22] + cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] +
-                    cs[28] + cs[29] + cs[30] + cs[31] + cs[32] + cs[33] +
-                    cs[34] + cs[35] + cs[36] + cs[37] + cs[38] + cs[39] +
-                    cs[40] + cs[41] + cs[42] + cs[43] + cs[44] + cs[45] +
-                    cs[46] + cs[47] + 0.63 * cs[48] + cs[49] + cs[50] + cs[51] +
-                    cs[52];
-
-          cTBC[9] = cs[0];
-
-          cTBC[10] = cs[5];
-
-          cTBC[11] = cs[15];
-
-          cTBC[12] = 0.73 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] +
-                     3.65 * cs[5] + cs[6] + cs[7] + cs[8] + cs[9] + cs[10] +
-                     cs[11] + cs[12] + 2.0 * cs[13] + cs[14] + cs[15] + cs[16] +
-                     cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
-                     cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
-                     cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
-                     cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
-                     cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
-                     cs[47] + 0.38 * cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
-
-          cTBC[13] = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
-                     cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
-                     2.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
-                     cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
-                     cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
-                     cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
-                     cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
-                     cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
-                     cs[47] + 0.7 * cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
-
-          cTBC[14] = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
-                     cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
-                     3.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
-                     cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
-                     cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
-                     cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
-                     cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
-                     cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
-                     cs[47] + 0.7 * cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
-
-          cTBC[15] = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
-                     cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
-                     2.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
-                     cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
-                     cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
-                     cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
-                     cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
-                     cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
-                     cs[47] + 0.7 * cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
-
-          cTBC[16] = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
-                     cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
-                     2.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
-                     cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
-                     cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
-                     cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
-                     cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
-                     cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
-                     cs[47] + cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
-
-          cTBC[17] = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
-                     cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
-                     2.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
-                     cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
-                     cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
-                     cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
-                     cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
-                     cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
-                     cs[47] + cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
-
-          cTBC[18] = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
-                     cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
-                     2.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
-                     cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
-                     cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
-                     cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
-                     cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
-                     cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
-                     cs[47] + cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
-
-          cTBC[19] = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
-                     cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
-                     2.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
-                     cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
-                     cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
-                     cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
-                     cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
-                     cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
-                     cs[47] + cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
-
-          cTBC[20] = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
-                     cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
-                     2.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
-                     cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
-                     cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
-                     cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
-                     cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
-                     cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
-                     cs[47] + 0.7 * cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
-
-          cTBC[21] = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
-                     cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
-                     2.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
-                     cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
-                     cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
-                     cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
-                     cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
-                     cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
-                     cs[47] + 0.7 * cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
-
-          cTBC[22] = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
-                     cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
-                     2.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
-                     cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
-                     cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
-                     cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
-                     cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
-                     cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
-                     cs[47] + 0.7 * cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
-
-          cTBC[23] = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
-                     cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
-                     2.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
-                     cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
-                     cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
-                     cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
-                     cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
-                     cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
-                     cs[47] + 0.7 * cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
-
-          cTBC[24] = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
-                     cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
-                     2.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
-                     cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
-                     cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
-                     cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
-                     cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
-                     cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
-                     cs[47] + 0.7 * cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
-
-          cTBC[25] = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
-                     cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
-                     2.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
-                     cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
-                     cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
-                     cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
-                     cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
-                     cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
-                     cs[47] + 0.7 * cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
-
-          cTBC[26] = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
-                     cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
-                     2.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
-                     cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
-                     cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
-                     cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
-                     cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
-                     cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
-                     cs[47] + 0.7 * cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
-
-          cTBC[27] = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
-                     cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
-                     2.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
-                     cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
-                     cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
-                     cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
-                     cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
-                     cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
-                     cs[47] + cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
-
-          cTBC[28] = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
-                     cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
-                     2.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
-                     cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
-                     cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
-                     cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
-                     cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
-                     cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
-                     cs[47] + 0.7 * cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
-
-          cTBC[29] = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
-                     cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
-                     2.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
-                     cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
-                     cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
-                     cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
-                     cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
-                     cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
-                     cs[47] + 0.7 * cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
-
-          cTBC[30] = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
-                     cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
-                     2.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
-                     cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
-                     cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
-                     cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
-                     cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
-                     cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
-                     cs[47] + cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
-
-          cTBC[31] = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
-                     cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
-                     2.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
-                     cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
-                     cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
-                     cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
-                     cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
-                     cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
-                     cs[47] + 0.7 * cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
-
-          cTBC[32] = cs[5];
-
-          cTBC[33] = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + cs[6] +
-                     cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
-                     2.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
-                     cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
-                     cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
-                     cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
-                     cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
-                     cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
-                     cs[47] + cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
-
-          cTBC[34] = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
-                     cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
-                     2.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
-                     cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
-                     cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
-                     cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
-                     cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
-                     cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
-                     cs[47] + 0.7 * cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
-
-          cTBC[35] = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
-                     cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
-                     2.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
-                     cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
-                     cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
-                     cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
-                     cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
-                     cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
-                     cs[47] + 0.625 * cs[48] + cs[49] + cs[50] + cs[51] +
-                     cs[52];
-
-          cTBC[36] = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
-                     cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
-                     2.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
-                     cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
-                     cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
-                     cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
-                     cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
-                     cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
-                     cs[47] + 0.7 * cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
-
-          cTBC[37] = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
-                     cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
-                     2.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
-                     cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
-                     cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
-                     cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
-                     cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
-                     cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
-                     cs[47] + 0.7 * cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
-
-          cTBC[38] = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
-                     cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
-                     2.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
-                     cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
-                     cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
-                     cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
-                     cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
-                     cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
-                     cs[47] + 0.7 * cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
-
-          cTBC[39] = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
-                     cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
-                     2.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
-                     cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
-                     cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
-                     cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
-                     cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
-                     cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
-                     cs[47] + 0.7 * cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
-
-          cTBC[40] = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
-                     cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
-                     2.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
-                     cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
-                     cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
-                     cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
-                     cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
-                     cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
-                     cs[47] + 0.7 * cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
-
-          cTBC[41] = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
-                     cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
-                     2.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
-                     cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
-                     cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
-                     cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
-                     cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
-                     cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
-                     cs[47] + 0.7 * cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
-
-          cTBC[42] = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
-                     cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
-                     2.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
-                     cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
-                     cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
-                     cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
-                     cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
-                     cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
-                     cs[47] + cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
-
-          cTBC[43] = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
-                     cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
-                     2.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
-                     cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
-                     cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
-                     cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
-                     cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
-                     cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
-                     cs[47] + 0.7 * cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
-
-          cTBC[44] = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
-                     cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
-                     2.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
-                     cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
-                     cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
-                     cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
-                     cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
-                     cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
-                     cs[47] + 0.7 * cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
-
-          cTBC[45] = cs[12];
-
-          cTBC[46] = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
-                     cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
-                     2.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
-                     cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
-                     cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
-                     cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
-                     cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
-                     cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
-                     cs[47] + 0.7 * cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
-
-          cTBC[47] = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
-                     cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
-                     2.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
-                     cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
-                     cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
-                     cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
-                     cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
-                     cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
-                     cs[47] + 0.7 * cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
-
-          cTBC[48] = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
-                     cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
-                     2.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
-                     cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
-                     cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
-                     cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
-                     cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
-                     cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
-                     cs[47] + 0.7 * cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
-
-          cTBC[49] = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
-                     cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
-                     2.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
-                     cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
-                     cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
-                     cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
-                     cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
-                     cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
-                     cs[47] + 0.7 * cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
-
-          // ----------------------------------------------------------- >
           // Gibbs energy. --------------------------------------------- >
           // ----------------------------------------------------------- >
 
@@ -607,7 +172,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
 
           // start scope of these temp vars
           {
-            double k_f, dG, K_c;
+            double cTBC, k_f, dG, K_c;
 
             double Fcent;
             double pmod;
@@ -623,7 +188,16 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             dG = -2.0 * gbs[2] + gbs[3];
             K_c = exp(-dG) / prefRuT;
             //  Three Body Reaction #0
-            k_f *= cTBC[0];
+            cTBC = 2.4 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 15.4 * cs[5] +
+                   cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
+                   2.0 * cs[13] + 1.75 * cs[14] + 3.6 * cs[15] + cs[16] +
+                   cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
+                   cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
+                   cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
+                   cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
+                   cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
+                   cs[47] + 0.83 * cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
+            k_f *= cTBC;
             q_f = k_f * pow(cs[2], 2.0);
             q_b = -k_f / K_c * cs[3];
             q[0] = q_f + q_b;
@@ -633,7 +207,16 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             dG = -gbs[1] - gbs[2] + gbs[4];
             K_c = exp(-dG) / prefRuT;
             //  Three Body Reaction #1
-            k_f *= cTBC[1];
+            cTBC = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
+                   cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
+                   2.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
+                   cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
+                   cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
+                   cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
+                   cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
+                   cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
+                   cs[47] + 0.7 * cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
+            k_f *= cTBC;
             q_f = k_f * cs[1] * cs[2];
             q_b = -k_f / K_c * cs[4];
             q[1] = q_f + q_b;
@@ -655,7 +238,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             q[3] = q_f + q_b;
 
             // Reaction #4
-            k_f = exp(log(9630.0) + 2 * logT - (2012.8781339950629 * Tinv));
+            k_f = exp(log(9630.0) + 2.0 * logT - (2012.8781339950629 * Tinv));
             dG = -gbs[2] + gbs[4] + gbs[6] - gbs[7];
             K_c = exp(-dG);
             q_f = k_f * cs[2] * cs[7];
@@ -715,10 +298,21 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             k_f = exp(log(18000000.000000004) - (1200.1785873945562 * Tinv));
             dG = -gbs[2] - gbs[14] + gbs[15];
             K_c = exp(-dG) / prefRuT;
+            //  Three Body Reaction #11
+            cTBC = 2.0 * cs[0] + cs[1] + cs[2] + 6.0 * cs[3] + cs[4] +
+                   6.0 * cs[5] + cs[6] + cs[7] + cs[8] + cs[9] + cs[10] +
+                   cs[11] + cs[12] + 2.0 * cs[13] + 1.5 * cs[14] +
+                   3.5 * cs[15] + cs[16] + cs[17] + cs[18] + cs[19] + cs[20] +
+                   cs[21] + cs[22] + cs[23] + cs[24] + cs[25] + 3.0 * cs[26] +
+                   cs[27] + cs[28] + cs[29] + cs[30] + cs[31] + cs[32] +
+                   cs[33] + cs[34] + cs[35] + cs[36] + cs[37] + cs[38] +
+                   cs[39] + cs[40] + cs[41] + cs[42] + cs[43] + cs[44] +
+                   cs[45] + cs[46] + cs[47] + 0.5 * cs[48] + cs[49] + cs[50] +
+                   cs[51] + cs[52];
             //  Lindeman Reaction #11
             Fcent = 1.0;
             k0 = exp(log(602000000.0000001) - (1509.6586004962971 * Tinv));
-            Pr = cTBC[2] * k0 / k_f;
+            Pr = cTBC * k0 / k_f;
             pmod = Pr / (1.0 + Pr);
             k_f *= pmod;
             q_f = k_f * cs[2] * cs[14];
@@ -792,7 +386,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             q[19] = q_f + q_b;
 
             // Reaction #20
-            k_f = exp(log(13500.000000000002) + 2 * logT -
+            k_f = exp(log(13500.000000000002) + 2.0 * logT -
                       (956.117113647655 * Tinv));
             dG = gbs[1] - gbs[2] - gbs[22] + gbs[27];
             K_c = exp(-dG);
@@ -810,7 +404,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             q[21] = q_f + q_b;
 
             // Reaction #22
-            k_f = exp(log(6940.000000000001) + 2 * logT -
+            k_f = exp(log(6940.000000000001) + 2.0 * logT -
                       (956.117113647655 * Tinv));
             dG = -gbs[2] + gbs[10] + gbs[14] - gbs[22];
             K_c = exp(-dG);
@@ -897,7 +491,15 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             dG = -gbs[1] - gbs[3] + gbs[6];
             K_c = exp(-dG) / prefRuT;
             //  Three Body Reaction #32
-            k_f *= cTBC[3];
+            cTBC = cs[0] + cs[1] + cs[2] + cs[4] + cs[6] + cs[7] + cs[8] +
+                   cs[9] + cs[10] + cs[11] + cs[12] + cs[13] + 0.75 * cs[14] +
+                   1.5 * cs[15] + cs[16] + cs[17] + cs[18] + cs[19] + cs[20] +
+                   cs[21] + cs[22] + cs[23] + cs[24] + cs[25] + 1.5 * cs[26] +
+                   cs[27] + cs[28] + cs[29] + cs[30] + cs[31] + cs[32] +
+                   cs[33] + cs[34] + cs[35] + cs[36] + cs[37] + cs[38] +
+                   cs[39] + cs[40] + cs[41] + cs[42] + cs[43] + cs[44] +
+                   cs[45] + cs[46] + cs[49] + cs[50] + cs[51] + cs[52];
+            k_f *= cTBC;
             q_f = k_f * cs[1] * cs[3];
             q_b = -k_f / K_c * cs[6];
             q[32] = q_f + q_b;
@@ -907,7 +509,8 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             dG = -gbs[1] - gbs[3] + gbs[6];
             K_c = exp(-dG) / prefRuT;
             //  Three Body Reaction #33
-            k_f *= cTBC[4];
+            cTBC = cs[3];
+            k_f *= cTBC;
             q_f = k_f * cs[1] * cs[3];
             q_b = -k_f / K_c * cs[6];
             q[33] = q_f + q_b;
@@ -917,7 +520,8 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             dG = -gbs[1] - gbs[3] + gbs[6];
             K_c = exp(-dG) / prefRuT;
             //  Three Body Reaction #34
-            k_f *= cTBC[5];
+            cTBC = cs[5];
+            k_f *= cTBC;
             q_f = k_f * cs[1] * cs[3];
             q_b = -k_f / K_c * cs[6];
             q[34] = q_f + q_b;
@@ -927,7 +531,8 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             dG = -gbs[1] - gbs[3] + gbs[6];
             K_c = exp(-dG) / prefRuT;
             //  Three Body Reaction #35
-            k_f *= cTBC[6];
+            cTBC = cs[47];
+            k_f *= cTBC;
             q_f = k_f * cs[1] * cs[3];
             q_b = -k_f / K_c * cs[6];
             q[35] = q_f + q_b;
@@ -937,7 +542,8 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             dG = -gbs[1] - gbs[3] + gbs[6];
             K_c = exp(-dG) / prefRuT;
             //  Three Body Reaction #36
-            k_f *= cTBC[7];
+            cTBC = cs[48];
+            k_f *= cTBC;
             q_f = k_f * cs[1] * cs[3];
             q_b = -k_f / K_c * cs[6];
             q[36] = q_f + q_b;
@@ -956,7 +562,16 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             dG = gbs[0] - 2.0 * gbs[1];
             K_c = exp(-dG) / prefRuT;
             //  Three Body Reaction #38
-            k_f *= cTBC[8];
+            cTBC = cs[1] + cs[2] + cs[3] + cs[4] + cs[6] + cs[7] + cs[8] +
+                   cs[9] + cs[10] + cs[11] + cs[12] + 2.0 * cs[13] + cs[14] +
+                   cs[16] + cs[17] + cs[18] + cs[19] + cs[20] + cs[21] +
+                   cs[22] + cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] +
+                   cs[28] + cs[29] + cs[30] + cs[31] + cs[32] + cs[33] +
+                   cs[34] + cs[35] + cs[36] + cs[37] + cs[38] + cs[39] +
+                   cs[40] + cs[41] + cs[42] + cs[43] + cs[44] + cs[45] +
+                   cs[46] + cs[47] + 0.63 * cs[48] + cs[49] + cs[50] + cs[51] +
+                   cs[52];
+            k_f *= cTBC;
             q_f = k_f * pow(cs[1], 2.0);
             q_b = -k_f / K_c * cs[0];
             q[38] = q_f + q_b;
@@ -966,7 +581,8 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             dG = gbs[0] - 2.0 * gbs[1];
             K_c = exp(-dG) / prefRuT;
             //  Three Body Reaction #39
-            k_f *= cTBC[9];
+            cTBC = cs[0];
+            k_f *= cTBC;
             q_f = k_f * pow(cs[1], 2.0);
             q_b = -k_f / K_c * cs[0];
             q[39] = q_f + q_b;
@@ -976,7 +592,8 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             dG = gbs[0] - 2.0 * gbs[1];
             K_c = exp(-dG) / prefRuT;
             //  Three Body Reaction #40
-            k_f *= cTBC[10];
+            cTBC = cs[5];
+            k_f *= cTBC;
             q_f = k_f * pow(cs[1], 2.0);
             q_b = -k_f / K_c * cs[0];
             q[40] = q_f + q_b;
@@ -986,7 +603,8 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             dG = gbs[0] - 2.0 * gbs[1];
             K_c = exp(-dG) / prefRuT;
             //  Three Body Reaction #41
-            k_f *= cTBC[11];
+            cTBC = cs[15];
+            k_f *= cTBC;
             q_f = k_f * pow(cs[1], 2.0);
             q_b = -k_f / K_c * cs[0];
             q[41] = q_f + q_b;
@@ -996,7 +614,16 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             dG = -gbs[1] - gbs[4] + gbs[5];
             K_c = exp(-dG) / prefRuT;
             //  Three Body Reaction #42
-            k_f *= cTBC[12];
+            cTBC = 0.73 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 3.65 * cs[5] +
+                   cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
+                   2.0 * cs[13] + cs[14] + cs[15] + cs[16] + cs[17] + cs[18] +
+                   cs[19] + cs[20] + cs[21] + cs[22] + cs[23] + cs[24] +
+                   cs[25] + 3.0 * cs[26] + cs[27] + cs[28] + cs[29] + cs[30] +
+                   cs[31] + cs[32] + cs[33] + cs[34] + cs[35] + cs[36] +
+                   cs[37] + cs[38] + cs[39] + cs[40] + cs[41] + cs[42] +
+                   cs[43] + cs[44] + cs[45] + cs[46] + cs[47] + 0.38 * cs[48] +
+                   cs[49] + cs[50] + cs[51] + cs[52];
+            k_f *= cTBC;
             q_f = k_f * cs[1] * cs[4];
             q_b = -k_f / K_c * cs[5];
             q[42] = q_f + q_b;
@@ -1026,7 +653,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             q[45] = q_f + q_b;
 
             // Reaction #46
-            k_f = exp(log(12100.000000000002) + 2 * logT -
+            k_f = exp(log(12100.000000000002) + 2.0 * logT -
                       (2616.741574193582 * Tinv));
             dG = gbs[0] - gbs[1] + gbs[6] - gbs[7];
             K_c = exp(-dG);
@@ -1054,6 +681,16 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             k_f = 600000000000.0001;
             dG = -gbs[1] - gbs[10] + gbs[12];
             K_c = exp(-dG) / prefRuT;
+            //  Three Body Reaction #49
+            cTBC = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
+                   cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
+                   2.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
+                   cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
+                   cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
+                   cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
+                   cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
+                   cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
+                   cs[47] + 0.7 * cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
             //  Troe Reaction #49
             Fcent = (1.0 - (0.562)) * exp(-T / (91.0)) +
                     (0.562) * exp(-T / (5836.0)) + exp(-(8552.0) * Tinv);
@@ -1061,7 +698,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             N = 0.75 - 1.27 * log10(Fcent);
             k0 = exp(log(1.0400000000000002e+20) - 2.76 * logT -
                      (805.1512535980252 * Tinv));
-            Pr = cTBC[13] * k0 / k_f;
+            Pr = cTBC * k0 / k_f;
             A = log10(Pr) + C;
             f1 = A / (N - 0.14 * A);
             F_pdr = pow(10.0, log10(Fcent) / (1.0 + f1 * f1));
@@ -1084,6 +721,16 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
                       (269.72566995533845 * Tinv));
             dG = -gbs[1] - gbs[12] + gbs[13];
             K_c = exp(-dG) / prefRuT;
+            //  Three Body Reaction #51
+            cTBC = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
+                   cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
+                   3.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
+                   cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
+                   cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
+                   cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
+                   cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
+                   cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
+                   cs[47] + 0.7 * cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
             //  Troe Reaction #51
             Fcent = (1.0 - (0.783)) * exp(-T / (74.0)) +
                     (0.783) * exp(-T / (2941.0)) + exp(-(6964.0) * Tinv);
@@ -1091,7 +738,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             N = 0.75 - 1.27 * log10(Fcent);
             k0 = exp(log(2.6200000000000006e+27) - 4.76 * logT -
                      (1227.8556617369884 * Tinv));
-            Pr = cTBC[14] * k0 / k_f;
+            Pr = cTBC * k0 / k_f;
             A = log10(Pr) + C;
             f1 = A / (N - 0.14 * A);
             F_pdr = pow(10.0, log10(Fcent) / (1.0 + f1 * f1));
@@ -1115,6 +762,16 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
                       (-130.8370787096791 * Tinv));
             dG = -gbs[1] - gbs[16] + gbs[17];
             K_c = exp(-dG) / prefRuT;
+            //  Three Body Reaction #53
+            cTBC = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
+                   cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
+                   2.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
+                   cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
+                   cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
+                   cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
+                   cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
+                   cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
+                   cs[47] + 0.7 * cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
             //  Troe Reaction #53
             Fcent = (1.0 - (0.7824)) * exp(-T / (271.0)) +
                     (0.7824) * exp(-T / (2755.0)) + exp(-(6570.0) * Tinv);
@@ -1122,7 +779,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             N = 0.75 - 1.27 * log10(Fcent);
             k0 = exp(log(2.4700000000000005e+18) - 2.57 * logT -
                      (213.86830173697544 * Tinv));
-            Pr = cTBC[15] * k0 / k_f;
+            Pr = cTBC * k0 / k_f;
             A = log10(Pr) + C;
             f1 = A / (N - 0.14 * A);
             F_pdr = pow(10.0, log10(Fcent) / (1.0 + f1 * f1));
@@ -1145,6 +802,16 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
                       (1811.5903205955567 * Tinv));
             dG = -gbs[1] - gbs[17] + gbs[18];
             K_c = exp(-dG) / prefRuT;
+            //  Three Body Reaction #55
+            cTBC = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
+                   cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
+                   2.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
+                   cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
+                   cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
+                   cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
+                   cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
+                   cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
+                   cs[47] + cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
             //  Troe Reaction #55
             Fcent = (1.0 - (0.7187)) * exp(-T / (103.00000000000001)) +
                     (0.7187) * exp(-T / (1291.0)) + exp(-(4160.0) * Tinv);
@@ -1152,7 +819,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             N = 0.75 - 1.27 * log10(Fcent);
             k0 = exp(log(1.2700000000000002e+26) - 4.82 * logT -
                      (3286.0235537469403 * Tinv));
-            Pr = cTBC[16] * k0 / k_f;
+            Pr = cTBC * k0 / k_f;
             A = log10(Pr) + C;
             f1 = A / (N - 0.14 * A);
             F_pdr = pow(10.0, log10(Fcent) / (1.0 + f1 * f1));
@@ -1167,6 +834,16 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
                       (1308.370787096791 * Tinv));
             dG = -gbs[1] - gbs[17] + gbs[19];
             K_c = exp(-dG) / prefRuT;
+            //  Three Body Reaction #56
+            cTBC = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
+                   cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
+                   2.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
+                   cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
+                   cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
+                   cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
+                   cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
+                   cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
+                   cs[47] + cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
             //  Troe Reaction #56
             Fcent = (1.0 - (0.758)) * exp(-T / (94.0)) +
                     (0.758) * exp(-T / (1555.0)) + exp(-(4200.0) * Tinv);
@@ -1174,7 +851,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             N = 0.75 - 1.27 * log10(Fcent);
             k0 = exp(log(2.2000000000000006e+24) - 4.8 * logT -
                      (2797.9006062531375 * Tinv));
-            Pr = cTBC[17] * k0 / k_f;
+            Pr = cTBC * k0 / k_f;
             A = log10(Pr) + C;
             f1 = A / (N - 0.14 * A);
             F_pdr = pow(10.0, log10(Fcent) / (1.0 + f1 * f1));
@@ -1198,6 +875,16 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
                       (43.27687988089385 * Tinv));
             dG = -gbs[1] - gbs[18] + gbs[20];
             K_c = exp(-dG) / prefRuT;
+            //  Three Body Reaction #58
+            cTBC = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
+                   cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
+                   2.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
+                   cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
+                   cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
+                   cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
+                   cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
+                   cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
+                   cs[47] + cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
             //  Troe Reaction #58
             Fcent = (1.0 - (0.6)) * exp(-T / (100.0)) +
                     (0.6) * exp(-T / (90000.0)) + exp(-(10000.0) * Tinv);
@@ -1205,7 +892,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             N = 0.75 - 1.27 * log10(Fcent);
             k0 = exp(log(4.360000000000001e+25) - 4.65 * logT -
                      (2556.35523017373 * Tinv));
-            Pr = cTBC[18] * k0 / k_f;
+            Pr = cTBC * k0 / k_f;
             A = log10(Pr) + C;
             f1 = A / (N - 0.14 * A);
             F_pdr = pow(10.0, log10(Fcent) / (1.0 + f1 * f1));
@@ -1246,6 +933,16 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
                       (25.160976674938286 * Tinv));
             dG = -gbs[1] - gbs[19] + gbs[20];
             K_c = exp(-dG) / prefRuT;
+            //  Three Body Reaction #62
+            cTBC = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
+                   cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
+                   2.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
+                   cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
+                   cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
+                   cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
+                   cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
+                   cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
+                   cs[47] + cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
             //  Troe Reaction #62
             Fcent = (1.0 - (0.7)) * exp(-T / (100.0)) +
                     (0.7) * exp(-T / (90000.0)) + exp(-(10000.0) * Tinv);
@@ -1253,7 +950,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             N = 0.75 - 1.27 * log10(Fcent);
             k0 = exp(log(4.660000000000001e+35) - 7.44 * logT -
                      (7085.331031662621 * Tinv));
-            Pr = cTBC[19] * k0 / k_f;
+            Pr = cTBC * k0 / k_f;
             A = log10(Pr) + C;
             f1 = A / (N - 0.14 * A);
             F_pdr = pow(10.0, log10(Fcent) / (1.0 + f1 * f1));
@@ -1320,6 +1017,16 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             k_f = exp(log(100000000000000.02) - 1.0 * logT);
             dG = -gbs[1] - gbs[21] + gbs[22];
             K_c = exp(-dG) / prefRuT;
+            //  Three Body Reaction #69
+            cTBC = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
+                   cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
+                   2.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
+                   cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
+                   cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
+                   cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
+                   cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
+                   cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
+                   cs[47] + 0.7 * cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
             //  Troe Reaction #69
             Fcent = (1.0 - (0.6464)) * exp(-T / (132.0)) +
                     (0.6464) * exp(-T / (1315.0)) + exp(-(5566.0) * Tinv);
@@ -1327,7 +1034,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             N = 0.75 - 1.27 * log10(Fcent);
             k0 = exp(log(3.750000000000001e+27) - 4.8 * logT -
                      (956.117113647655 * Tinv));
-            Pr = cTBC[20] * k0 / k_f;
+            Pr = cTBC * k0 / k_f;
             A = log10(Pr) + C;
             f1 = A / (N - 0.14 * A);
             F_pdr = pow(10.0, log10(Fcent) / (1.0 + f1 * f1));
@@ -1341,6 +1048,16 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             k_f = exp(log(5600000000.000001) - (1207.7268803970378 * Tinv));
             dG = -gbs[1] - gbs[22] + gbs[23];
             K_c = exp(-dG) / prefRuT;
+            //  Three Body Reaction #70
+            cTBC = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
+                   cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
+                   2.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
+                   cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
+                   cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
+                   cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
+                   cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
+                   cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
+                   cs[47] + 0.7 * cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
             //  Troe Reaction #70
             Fcent = (1.0 - (0.7507)) * exp(-T / (98.50000000000001)) +
                     (0.7507) * exp(-T / (1302.0)) + exp(-(4167.0) * Tinv);
@@ -1348,7 +1065,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             N = 0.75 - 1.27 * log10(Fcent);
             k0 = exp(log(3.8000000000000006e+34) - 7.27 * logT -
                      (3633.2450318610886 * Tinv));
-            Pr = cTBC[21] * k0 / k_f;
+            Pr = cTBC * k0 / k_f;
             A = log10(Pr) + C;
             f1 = A / (N - 0.14 * A);
             F_pdr = pow(10.0, log10(Fcent) / (1.0 + f1 * f1));
@@ -1363,6 +1080,16 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
                       (140.9014693796544 * Tinv));
             dG = -gbs[1] - gbs[23] + gbs[24];
             K_c = exp(-dG) / prefRuT;
+            //  Three Body Reaction #71
+            cTBC = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
+                   cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
+                   2.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
+                   cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
+                   cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
+                   cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
+                   cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
+                   cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
+                   cs[47] + 0.7 * cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
             //  Troe Reaction #71
             Fcent = (1.0 - (0.782)) * exp(-T / (207.49999999999997)) +
                     (0.782) * exp(-T / (2663.0)) + exp(-(6095.0) * Tinv);
@@ -1370,7 +1097,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             N = 0.75 - 1.27 * log10(Fcent);
             k0 = exp(log(1.4000000000000004e+24) - 3.86 * logT -
                      (1670.6888512159023 * Tinv));
-            Pr = cTBC[22] * k0 / k_f;
+            Pr = cTBC * k0 / k_f;
             A = log10(Pr) + C;
             f1 = A / (N - 0.14 * A);
             F_pdr = pow(10.0, log10(Fcent) / (1.0 + f1 * f1));
@@ -1393,6 +1120,16 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
                       (915.8595509677536 * Tinv));
             dG = -gbs[1] - gbs[24] + gbs[25];
             K_c = exp(-dG) / prefRuT;
+            //  Three Body Reaction #73
+            cTBC = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
+                   cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
+                   2.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
+                   cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
+                   cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
+                   cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
+                   cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
+                   cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
+                   cs[47] + 0.7 * cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
             //  Troe Reaction #73
             Fcent = (1.0 - (0.9753)) * exp(-T / (209.99999999999997)) +
                     (0.9753) * exp(-T / (983.9999999999999)) +
@@ -1401,7 +1138,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             N = 0.75 - 1.27 * log10(Fcent);
             k0 = exp(log(6.0000000000000005e+35) - 7.62 * logT -
                      (3507.440148486397 * Tinv));
-            Pr = cTBC[23] * k0 / k_f;
+            Pr = cTBC * k0 / k_f;
             A = log10(Pr) + C;
             f1 = A / (N - 0.14 * A);
             F_pdr = pow(10.0, log10(Fcent) / (1.0 + f1 * f1));
@@ -1425,6 +1162,16 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
                       (795.0868629280499 * Tinv));
             dG = -gbs[1] - gbs[25] + gbs[26];
             K_c = exp(-dG) / prefRuT;
+            //  Three Body Reaction #75
+            cTBC = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
+                   cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
+                   2.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
+                   cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
+                   cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
+                   cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
+                   cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
+                   cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
+                   cs[47] + 0.7 * cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
             //  Troe Reaction #75
             Fcent = (1.0 - (0.8422)) * exp(-T / (125.0)) +
                     (0.8422) * exp(-T / (2219.0)) + exp(-(6882.0) * Tinv);
@@ -1432,7 +1179,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             N = 0.75 - 1.27 * log10(Fcent);
             k0 = exp(log(1.9900000000000005e+35) - 7.08 * logT -
                      (3364.022581439249 * Tinv));
-            Pr = cTBC[24] * k0 / k_f;
+            Pr = cTBC * k0 / k_f;
             A = log10(Pr) + C;
             f1 = A / (N - 0.14 * A);
             F_pdr = pow(10.0, log10(Fcent) / (1.0 + f1 * f1));
@@ -1496,13 +1243,23 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
                       (40056.27486650175 * Tinv));
             dG = -gbs[0] - gbs[14] + gbs[17];
             K_c = exp(-dG) / prefRuT;
+            //  Three Body Reaction #82
+            cTBC = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
+                   cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
+                   2.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
+                   cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
+                   cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
+                   cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
+                   cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
+                   cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
+                   cs[47] + 0.7 * cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
             //  Troe Reaction #82
             Fcent = (1.0 - (0.932)) * exp(-T / (197.00000000000003)) +
                     (0.932) * exp(-T / (1540.0)) + exp(-(10300.0) * Tinv);
             C = -0.4 - 0.67 * log10(Fcent);
             N = 0.75 - 1.27 * log10(Fcent);
             k0 = exp(log(5.07e+21) - 3.42 * logT - (42446.56765062089 * Tinv));
-            Pr = cTBC[25] * k0 / k_f;
+            Pr = cTBC * k0 / k_f;
             A = log10(Pr) + C;
             f1 = A / (N - 0.14 * A);
             F_pdr = pow(10.0, log10(Fcent) / (1.0 + f1 * f1));
@@ -1525,6 +1282,16 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             k_f = exp(log(74000000000.00002) - 0.37 * logT);
             dG = -2.0 * gbs[4] + gbs[7];
             K_c = exp(-dG) / prefRuT;
+            //  Three Body Reaction #84
+            cTBC = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
+                   cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
+                   2.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
+                   cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
+                   cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
+                   cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
+                   cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
+                   cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
+                   cs[47] + 0.7 * cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
             //  Troe Reaction #84
             Fcent = (1.0 - (0.7346)) * exp(-T / (94.0)) +
                     (0.7346) * exp(-T / (1756.0)) + exp(-(5182.0) * Tinv);
@@ -1532,7 +1299,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             N = 0.75 - 1.27 * log10(Fcent);
             k0 = exp(log(2300000000000.0005) - 0.9 * logT -
                      (-855.4732069479018 * Tinv));
-            Pr = cTBC[26] * k0 / k_f;
+            Pr = cTBC * k0 / k_f;
             A = log10(Pr) + C;
             f1 = A / (N - 0.14 * A);
             F_pdr = pow(10.0, log10(Fcent) / (1.0 + f1 * f1));
@@ -1599,7 +1366,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             q[91] = q_f + q_b;
 
             // Reaction #92
-            k_f = exp(log(11300.000000000002) + 2 * logT -
+            k_f = exp(log(11300.000000000002) + 2.0 * logT -
                       (1509.6586004962971 * Tinv));
             dG = -gbs[4] + gbs[5] + gbs[9] - gbs[10];
             K_c = exp(-dG);
@@ -1620,6 +1387,16 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
                       (669.2819795533584 * Tinv));
             dG = -gbs[4] - gbs[12] + gbs[20];
             K_c = exp(-dG) / prefRuT;
+            //  Three Body Reaction #94
+            cTBC = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
+                   cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
+                   2.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
+                   cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
+                   cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
+                   cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
+                   cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
+                   cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
+                   cs[47] + cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
             //  Troe Reaction #94
             Fcent = (1.0 - (0.412)) * exp(-T / (195.0)) +
                     (0.412) * exp(-T / (5900.0)) + exp(-(6394.0) * Tinv);
@@ -1627,7 +1404,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             N = 0.75 - 1.27 * log10(Fcent);
             k0 = exp(log(4.000000000000001e+30) - 5.92 * logT -
                      (1580.1093351861243 * Tinv));
-            Pr = cTBC[27] * k0 / k_f;
+            Pr = cTBC * k0 / k_f;
             A = log10(Pr) + C;
             f1 = A / (N - 0.14 * A);
             F_pdr = pow(10.0, log10(Fcent) / (1.0 + f1 * f1));
@@ -1707,7 +1484,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             q[102] = q_f + q_b;
 
             // Reaction #103
-            k_f = exp(log(1440.0000000000002) + 2 * logT -
+            k_f = exp(log(1440.0000000000002) + 2.0 * logT -
                       (-422.70440813896323 * Tinv));
             dG = -gbs[4] + gbs[5] + gbs[18] - gbs[20];
             K_c = exp(-dG);
@@ -1716,7 +1493,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             q[103] = q_f + q_b;
 
             // Reaction #104
-            k_f = exp(log(6300.000000000001) + 2 * logT -
+            k_f = exp(log(6300.000000000001) + 2.0 * logT -
                       (754.8293002481486 * Tinv));
             dG = -gbs[4] + gbs[5] + gbs[19] - gbs[20];
             K_c = exp(-dG);
@@ -1751,7 +1528,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             q[107] = q_f + q_b;
 
             // Reaction #108
-            k_f = exp(log(33700.0) + 2 * logT - (7045.07346898272 * Tinv));
+            k_f = exp(log(33700.0) + 2.0 * logT - (7045.07346898272 * Tinv));
             dG = -gbs[4] + gbs[5] + gbs[21] - gbs[22];
             K_c = exp(-dG);
             q_f = k_f * cs[4] * cs[22];
@@ -1759,7 +1536,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             q[108] = q_f + q_b;
 
             // Reaction #109
-            k_f = exp(log(4.830000000000001e-07) + 4 * logT -
+            k_f = exp(log(4.830000000000001e-07) + 4.0 * logT -
                       (-1006.4390669975314 * Tinv));
             dG = -gbs[4] + gbs[12] + gbs[14] - gbs[22];
             K_c = exp(-dG);
@@ -1776,7 +1553,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             q[110] = q_f + q_b;
 
             // Reaction #111
-            k_f = exp(log(3600.0000000000005) + 2 * logT -
+            k_f = exp(log(3600.0000000000005) + 2.0 * logT -
                       (1258.0488337469144 * Tinv));
             dG = -gbs[4] + gbs[5] + gbs[23] - gbs[24];
             K_c = exp(-dG);
@@ -1850,7 +1627,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             q[119] = q_f + q_b;
 
             // Reaction #120
-            k_f = exp(log(5600.000000000001) + 2 * logT -
+            k_f = exp(log(5600.000000000001) + 2.0 * logT -
                       (6038.634401985189 * Tinv));
             dG = -gbs[6] + gbs[7] + gbs[16] - gbs[17];
             K_c = exp(-dG);
@@ -1934,6 +1711,16 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             k_f = 50000000000.00001;
             dG = -gbs[9] - gbs[14] + gbs[27];
             K_c = exp(-dG) / prefRuT;
+            //  Three Body Reaction #130
+            cTBC = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
+                   cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
+                   2.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
+                   cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
+                   cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
+                   cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
+                   cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
+                   cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
+                   cs[47] + 0.7 * cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
             //  Troe Reaction #130
             Fcent = (1.0 - (0.5757)) * exp(-T / (237.00000000000003)) +
                     (0.5757) * exp(-T / (1652.0)) + exp(-(5069.0) * Tinv);
@@ -1941,7 +1728,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             N = 0.75 - 1.27 * log10(Fcent);
             k0 = exp(log(2.6900000000000003e+22) - 3.74 * logT -
                      (974.2330168536105 * Tinv));
-            Pr = cTBC[28] * k0 / k_f;
+            Pr = cTBC * k0 / k_f;
             A = log10(Pr) + C;
             f1 = A / (N - 0.14 * A);
             F_pdr = pow(10.0, log10(Fcent) / (1.0 + f1 * f1));
@@ -1984,7 +1771,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             q[134] = q_f;
 
             // Reaction #135
-            k_f = exp(log(500.0000000000001) + 2 * logT -
+            k_f = exp(log(500.0000000000001) + 2.0 * logT -
                       (3638.277227196076 * Tinv));
             dG = -gbs[0] + gbs[1] - gbs[10] + gbs[12];
             K_c = exp(-dG);
@@ -2009,7 +1796,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             q[137] = q_f + q_b;
 
             // Reaction #138
-            k_f = exp(log(2460.0000000000005) + 2 * logT -
+            k_f = exp(log(2460.0000000000005) + 2.0 * logT -
                       (4161.6255420347925 * Tinv));
             dG = -gbs[10] + 2.0 * gbs[12] - gbs[13];
             K_c = exp(-dG);
@@ -2022,6 +1809,16 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
                       (2269.5200960794336 * Tinv));
             dG = -gbs[10] - gbs[14] + gbs[28];
             K_c = exp(-dG) / prefRuT;
+            //  Three Body Reaction #139
+            cTBC = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
+                   cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
+                   2.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
+                   cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
+                   cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
+                   cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
+                   cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
+                   cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
+                   cs[47] + 0.7 * cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
             //  Troe Reaction #139
             Fcent = (1.0 - (0.5907)) * exp(-T / (275.0)) +
                     (0.5907) * exp(-T / (1226.0)) + exp(-(5185.0) * Tinv);
@@ -2029,7 +1826,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             N = 0.75 - 1.27 * log10(Fcent);
             k0 = exp(log(2.6900000000000006e+27) - 5.11 * logT -
                      (3570.342590173743 * Tinv));
-            Pr = cTBC[29] * k0 / k_f;
+            Pr = cTBC * k0 / k_f;
             A = log10(Pr) + C;
             f1 = A / (N - 0.14 * A);
             F_pdr = pow(10.0, log10(Fcent) / (1.0 + f1 * f1));
@@ -2092,6 +1889,16 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
                       (576.1863658560868 * Tinv));
             dG = -gbs[5] - gbs[11] + gbs[20];
             K_c = exp(-dG) / prefRuT;
+            //  Three Body Reaction #146
+            cTBC = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
+                   cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
+                   2.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
+                   cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
+                   cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
+                   cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
+                   cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
+                   cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
+                   cs[47] + cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
             //  Troe Reaction #146
             Fcent = (1.0 - (0.6027)) * exp(-T / (208.0)) +
                     (0.6027) * exp(-T / (3921.9999999999995)) +
@@ -2099,7 +1906,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             C = -0.4 - 0.67 * log10(Fcent);
             N = 0.75 - 1.27 * log10(Fcent);
             k0 = exp(log(1.88e+32) - 6.36 * logT - (2536.226448833779 * Tinv));
-            Pr = cTBC[30] * k0 / k_f;
+            Pr = cTBC * k0 / k_f;
             A = log10(Pr) + C;
             f1 = A / (N - 0.14 * A);
             F_pdr = pow(10.0, log10(Fcent) / (1.0 + f1 * f1));
@@ -2195,6 +2002,16 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
                       (329.1055749081928 * Tinv));
             dG = -2.0 * gbs[12] + gbs[26];
             K_c = exp(-dG) / prefRuT;
+            //  Three Body Reaction #157
+            cTBC = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
+                   cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
+                   2.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
+                   cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
+                   cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
+                   cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
+                   cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
+                   cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
+                   cs[47] + 0.7 * cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
             //  Troe Reaction #157
             Fcent = (1.0 - (0.619)) * exp(-T / (73.2)) +
                     (0.619) * exp(-T / (1180.0)) + exp(-(9999.0) * Tinv);
@@ -2202,7 +2019,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             N = 0.75 - 1.27 * log10(Fcent);
             k0 = exp(log(3.400000000000001e+35) - 7.03 * logT -
                      (1389.892351523591 * Tinv));
-            Pr = cTBC[31] * k0 / k_f;
+            Pr = cTBC * k0 / k_f;
             A = log10(Pr) + C;
             f1 = A / (N - 0.14 * A);
             F_pdr = pow(10.0, log10(Fcent) / (1.0 + f1 * f1));
@@ -2257,7 +2074,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             q[162] = q_f + q_b;
 
             // Reaction #163
-            k_f = exp(log(227.00000000000003) + 2 * logT -
+            k_f = exp(log(227.00000000000003) + 2.0 * logT -
                       (4629.619708188645 * Tinv));
             dG = -gbs[12] + gbs[13] + gbs[23] - gbs[24];
             K_c = exp(-dG);
@@ -2280,7 +2097,8 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             dG = gbs[1] + gbs[14] - gbs[16];
             K_c = prefRuT * exp(-dG);
             //  Three Body Reaction #165
-            k_f *= cTBC[32];
+            cTBC = cs[5];
+            k_f *= cTBC;
             q_f = k_f * cs[16];
             q_b = -k_f / K_c * cs[1] * cs[14];
             q[165] = q_f + q_b;
@@ -2291,7 +2109,16 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             dG = gbs[1] + gbs[14] - gbs[16];
             K_c = prefRuT * exp(-dG);
             //  Three Body Reaction #166
-            k_f *= cTBC[33];
+            cTBC = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + cs[6] + cs[7] +
+                   cs[8] + cs[9] + cs[10] + cs[11] + cs[12] + 2.0 * cs[13] +
+                   1.5 * cs[14] + 2.0 * cs[15] + cs[16] + cs[17] + cs[18] +
+                   cs[19] + cs[20] + cs[21] + cs[22] + cs[23] + cs[24] +
+                   cs[25] + 3.0 * cs[26] + cs[27] + cs[28] + cs[29] + cs[30] +
+                   cs[31] + cs[32] + cs[33] + cs[34] + cs[35] + cs[36] +
+                   cs[37] + cs[38] + cs[39] + cs[40] + cs[41] + cs[42] +
+                   cs[43] + cs[44] + cs[45] + cs[46] + cs[47] + cs[48] +
+                   cs[49] + cs[50] + cs[51] + cs[52];
+            k_f *= cTBC;
             q_f = k_f * cs[16];
             q_b = -k_f / K_c * cs[1] * cs[14];
             q[166] = q_f + q_b;
@@ -2352,6 +2179,16 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
                       (43664.358921687905 * Tinv));
             dG = gbs[0] + gbs[22] - gbs[24];
             K_c = prefRuT * exp(-dG);
+            //  Three Body Reaction #173
+            cTBC = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
+                   cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
+                   2.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
+                   cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
+                   cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
+                   cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
+                   cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
+                   cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
+                   cs[47] + 0.7 * cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
             //  Troe Reaction #173
             Fcent = (1.0 - (0.7345)) * exp(-T / (180.0)) +
                     (0.7345) * exp(-T / (1035.0)) + exp(-(5417.0) * Tinv);
@@ -2359,7 +2196,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             N = 0.75 - 1.27 * log10(Fcent);
             k0 = exp(log(1.5800000000000006e+48) - 9.3 * logT -
                      (49214.870376179286 * Tinv));
-            Pr = cTBC[34] * k0 / k_f;
+            Pr = cTBC * k0 / k_f;
             A = log10(Pr) + C;
             f1 = A / (N - 0.14 * A);
             F_pdr = pow(10.0, log10(Fcent) / (1.0 + f1 * f1));
@@ -2402,7 +2239,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             q[177] = q_f + q_b;
 
             // Reaction #178
-            k_f = exp(log(9000000.000000002) + 1 * logT -
+            k_f = exp(log(9000000.000000002) + 1.0 * logT -
                       (3270.9269677419775 * Tinv));
             dG = gbs[2] - gbs[3] - gbs[30] + gbs[35];
             K_c = exp(-dG);
@@ -2454,10 +2291,20 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             k_f = exp(log(79100000000.0) - (28190.358266600855 * Tinv));
             dG = gbs[2] - gbs[37] + gbs[47];
             K_c = prefRuT * exp(-dG);
+            //  Three Body Reaction #184
+            cTBC = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
+                   cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
+                   2.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
+                   cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
+                   cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
+                   cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
+                   cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
+                   cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
+                   cs[47] + 0.625 * cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
             //  Lindeman Reaction #184
             Fcent = 1.0;
             k0 = exp(log(637000000000.0001) - (28502.35437737009 * Tinv));
-            Pr = cTBC[35] * k0 / k_f;
+            Pr = cTBC * k0 / k_f;
             pmod = Pr / (1.0 + Pr);
             k_f *= pmod;
             q_f = k_f * cs[37];
@@ -2477,7 +2324,16 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             dG = -gbs[2] - gbs[35] + gbs[36];
             K_c = exp(-dG) / prefRuT;
             //  Three Body Reaction #186
-            k_f *= cTBC[36];
+            cTBC = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
+                   cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
+                   2.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
+                   cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
+                   cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
+                   cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
+                   cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
+                   cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
+                   cs[47] + 0.7 * cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
+            k_f *= cTBC;
             q_f = k_f * cs[2] * cs[35];
             q_b = -k_f / K_c * cs[36];
             q[186] = q_f + q_b;
@@ -2531,7 +2387,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             q[192] = q_f + q_b;
 
             // Reaction #193
-            k_f = exp(log(461.00000000000006) + 2 * logT -
+            k_f = exp(log(461.00000000000006) + 2.0 * logT -
                       (3270.9269677419775 * Tinv));
             dG = gbs[2] - gbs[3] - gbs[31] + gbs[38];
             K_c = exp(-dG);
@@ -2627,7 +2483,16 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             dG = gbs[1] - gbs[34] + gbs[47];
             K_c = prefRuT * exp(-dG);
             //  Three Body Reaction #204
-            k_f *= cTBC[37];
+            cTBC = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
+                   cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
+                   2.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
+                   cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
+                   cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
+                   cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
+                   cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
+                   cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
+                   cs[47] + 0.7 * cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
+            k_f *= cTBC;
             q_f = k_f * cs[34];
             q_b = -k_f / K_c * cs[1] * cs[47];
             q[204] = q_f + q_b;
@@ -2686,7 +2551,16 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             dG = -gbs[1] - gbs[35] + gbs[38];
             K_c = exp(-dG) / prefRuT;
             //  Three Body Reaction #211
-            k_f *= cTBC[38];
+            cTBC = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
+                   cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
+                   2.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
+                   cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
+                   cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
+                   cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
+                   cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
+                   cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
+                   cs[47] + 0.7 * cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
+            k_f *= cTBC;
             q_f = k_f * cs[1] * cs[35];
             q_b = -k_f / K_c * cs[38];
             q[211] = q_f + q_b;
@@ -2811,7 +2685,16 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             dG = gbs[14] + gbs[30] - gbs[46];
             K_c = prefRuT * exp(-dG);
             //  Three Body Reaction #226
-            k_f *= cTBC[39];
+            cTBC = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
+                   cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
+                   2.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
+                   cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
+                   cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
+                   cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
+                   cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
+                   cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
+                   cs[47] + 0.7 * cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
+            k_f *= cTBC;
             q_f = k_f * cs[46];
             q_b = -k_f / K_c * cs[14] * cs[30];
             q[226] = q_f + q_b;
@@ -2826,7 +2709,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             q[227] = q_f + q_b;
 
             // Reaction #228
-            k_f = exp(log(3800000000000000.5) - 2 * logT -
+            k_f = exp(log(3800000000000000.5) - 2.0 * logT -
                       (402.5756267990126 * Tinv));
             dG = gbs[15] - gbs[35] - gbs[46] + gbs[47];
             K_c = exp(-dG);
@@ -2840,7 +2723,16 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             dG = gbs[1] + gbs[39] - gbs[40];
             K_c = prefRuT * exp(-dG);
             //  Three Body Reaction #229
-            k_f *= cTBC[40];
+            cTBC = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
+                   cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
+                   2.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
+                   cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
+                   cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
+                   cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
+                   cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
+                   cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
+                   cs[47] + 0.7 * cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
+            k_f *= cTBC;
             q_f = k_f * cs[40];
             q_b = -k_f / K_c * cs[1] * cs[39];
             q[229] = q_f + q_b;
@@ -2900,11 +2792,21 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             k_f = 33000000000.000004;
             dG = -gbs[1] - gbs[40] + gbs[41];
             K_c = exp(-dG) / prefRuT;
+            //  Three Body Reaction #236
+            cTBC = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
+                   cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
+                   2.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
+                   cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
+                   cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
+                   cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
+                   cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
+                   cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
+                   cs[47] + 0.7 * cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
             //  Lindeman Reaction #236
             Fcent = 1.0;
             k0 = exp(log(1.4000000000000003e+20) - 3.4 * logT -
                      (956.117113647655 * Tinv));
-            Pr = cTBC[41] * k0 / k_f;
+            Pr = cTBC * k0 / k_f;
             pmod = Pr / (1.0 + Pr);
             k_f *= pmod;
             q_f = k_f * cs[1] * cs[40];
@@ -2940,6 +2842,16 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             k_f = exp(log(3100000000.0000005) + 0.15 * logT);
             dG = -gbs[9] + gbs[42] - gbs[47];
             K_c = exp(-dG) / prefRuT;
+            //  Three Body Reaction #240
+            cTBC = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
+                   cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
+                   2.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
+                   cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
+                   cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
+                   cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
+                   cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
+                   cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
+                   cs[47] + cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
             //  Troe Reaction #240
             Fcent = (1.0 - (0.667)) * exp(-T / (235.0)) +
                     (0.667) * exp(-T / (2117.0)) + exp(-(4536.0) * Tinv);
@@ -2947,7 +2859,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             N = 0.75 - 1.27 * log10(Fcent);
             k0 = exp(log(1.3000000000000002e+19) - 3.16 * logT -
                      (372.38245478908664 * Tinv));
-            Pr = cTBC[42] * k0 / k_f;
+            Pr = cTBC * k0 / k_f;
             A = log10(Pr) + C;
             f1 = A / (N - 0.14 * A);
             F_pdr = pow(10.0, log10(Fcent) / (1.0 + f1 * f1));
@@ -3190,7 +3102,16 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             dG = gbs[14] + gbs[31] - gbs[45];
             K_c = prefRuT * exp(-dG);
             //  Three Body Reaction #268
-            k_f *= cTBC[43];
+            cTBC = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
+                   cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
+                   2.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
+                   cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
+                   cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
+                   cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
+                   cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
+                   cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
+                   cs[47] + 0.7 * cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
+            k_f *= cTBC;
             q_f = k_f * cs[45];
             q_b = -k_f / K_c * cs[14] * cs[31];
             q[268] = q_f + q_b;
@@ -3223,7 +3144,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             q[271] = q_f + q_b;
 
             // Reaction #272
-            k_f = exp(log(20000.000000000004) + 2 * logT -
+            k_f = exp(log(20000.000000000004) + 2.0 * logT -
                       (1006.4390669975314 * Tinv));
             dG = -gbs[44] + gbs[45];
             K_c = exp(-dG);
@@ -3363,6 +3284,16 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
                       (-186.19122739454332 * Tinv));
             dG = -gbs[0] - gbs[9] + gbs[12];
             K_c = exp(-dG) / prefRuT;
+            //  Three Body Reaction #288
+            cTBC = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
+                   cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
+                   2.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
+                   cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
+                   cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
+                   cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
+                   cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
+                   cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
+                   cs[47] + 0.7 * cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
             //  Troe Reaction #288
             Fcent = (1.0 - (0.578)) * exp(-T / (122.0)) +
                     (0.578) * exp(-T / (2535.0)) + exp(-(9365.0) * Tinv);
@@ -3370,7 +3301,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             N = 0.75 - 1.27 * log10(Fcent);
             k0 = exp(log(4.820000000000001e+19) - 2.8 * logT -
                      (296.8995247642718 * Tinv));
-            Pr = cTBC[44] * k0 / k_f;
+            Pr = cTBC * k0 / k_f;
             A = log10(Pr) + C;
             f1 = A / (N - 0.14 * A);
             F_pdr = pow(10.0, log10(Fcent) / (1.0 + f1 * f1));
@@ -3496,7 +3427,8 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             dG = gbs[13] + gbs[14] - gbs[52];
             K_c = prefRuT * exp(-dG);
             //  Three Body Reaction #302
-            k_f *= cTBC[45];
+            cTBC = cs[12];
+            k_f *= cTBC;
             q_f = k_f * cs[52];
             q_b = -k_f / K_c * cs[13] * cs[14];
             q[302] = q_f;
@@ -3506,6 +3438,16 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
                       (-883.1502812903339 * Tinv));
             dG = -gbs[1] - gbs[28] + gbs[51];
             K_c = exp(-dG) / prefRuT;
+            //  Three Body Reaction #303
+            cTBC = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
+                   cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
+                   2.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
+                   cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
+                   cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
+                   cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
+                   cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
+                   cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
+                   cs[47] + 0.7 * cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
             //  Troe Reaction #303
             Fcent = (1.0 - (0.465)) * exp(-T / (201.0)) +
                     (0.465) * exp(-T / (1772.9999999999998)) +
@@ -3514,7 +3456,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             N = 0.75 - 1.27 * log10(Fcent);
             k0 = exp(log(1.0120000000000002e+36) - 7.63 * logT -
                      (1939.4080821042432 * Tinv));
-            Pr = cTBC[46] * k0 / k_f;
+            Pr = cTBC * k0 / k_f;
             A = log10(Pr) + C;
             f1 = A / (N - 0.14 * A);
             F_pdr = pow(10.0, log10(Fcent) / (1.0 + f1 * f1));
@@ -3584,6 +3526,16 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             k_f = 9430000000.000002;
             dG = -gbs[12] - gbs[25] + gbs[50];
             K_c = exp(-dG) / prefRuT;
+            //  Three Body Reaction #311
+            cTBC = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
+                   cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
+                   2.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
+                   cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
+                   cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
+                   cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
+                   cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
+                   cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
+                   cs[47] + 0.7 * cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
             //  Troe Reaction #311
             Fcent = (1.0 - (0.1527)) * exp(-T / (291.0)) +
                     (0.1527) * exp(-T / (2742.0)) + exp(-(7748.0) * Tinv);
@@ -3591,7 +3543,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             N = 0.75 - 1.27 * log10(Fcent);
             k0 = exp(log(2.7100000000000003e+68) - 16.82 * logT -
                      (6574.563205161375 * Tinv));
-            Pr = cTBC[47] * k0 / k_f;
+            Pr = cTBC * k0 / k_f;
             A = log10(Pr) + C;
             f1 = A / (N - 0.14 * A);
             F_pdr = pow(10.0, log10(Fcent) / (1.0 + f1 * f1));
@@ -3651,6 +3603,16 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
                       (2868.3513409429647 * Tinv));
             dG = -gbs[12] - gbs[24] + gbs[49];
             K_c = exp(-dG) / prefRuT;
+            //  Three Body Reaction #317
+            cTBC = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
+                   cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
+                   2.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
+                   cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
+                   cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
+                   cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
+                   cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
+                   cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
+                   cs[47] + 0.7 * cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
             //  Troe Reaction #317
             Fcent = (1.0 - (0.1894)) * exp(-T / (277.0)) +
                     (0.1894) * exp(-T / (8748.0)) + exp(-(7891.0) * Tinv);
@@ -3658,7 +3620,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             N = 0.75 - 1.27 * log10(Fcent);
             k0 = exp(log(3.0000000000000007e+57) - 14.6 * logT -
                      (9143.498923672574 * Tinv));
-            Pr = cTBC[48] * k0 / k_f;
+            Pr = cTBC * k0 / k_f;
             A = log10(Pr) + C;
             f1 = A / (N - 0.14 * A);
             F_pdr = pow(10.0, log10(Fcent) / (1.0 + f1 * f1));
@@ -3680,6 +3642,16 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             k_f = 36130000000.00001;
             dG = -gbs[1] - gbs[49] + gbs[50];
             K_c = exp(-dG) / prefRuT;
+            //  Three Body Reaction #319
+            cTBC = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
+                   cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] +
+                   2.0 * cs[13] + 1.5 * cs[14] + 2.0 * cs[15] + cs[16] +
+                   cs[17] + cs[18] + cs[19] + cs[20] + cs[21] + cs[22] +
+                   cs[23] + cs[24] + cs[25] + 3.0 * cs[26] + cs[27] + cs[28] +
+                   cs[29] + cs[30] + cs[31] + cs[32] + cs[33] + cs[34] +
+                   cs[35] + cs[36] + cs[37] + cs[38] + cs[39] + cs[40] +
+                   cs[41] + cs[42] + cs[43] + cs[44] + cs[45] + cs[46] +
+                   cs[47] + 0.7 * cs[48] + cs[49] + cs[50] + cs[51] + cs[52];
             //  Troe Reaction #319
             Fcent = (1.0 - (0.315)) * exp(-T / (369.0)) +
                     (0.315) * exp(-T / (3284.9999999999995)) +
@@ -3688,7 +3660,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             N = 0.75 - 1.27 * log10(Fcent);
             k0 = exp(log(4.420000000000001e+55) - 13.545 * logT -
                      (5715.0642419454825 * Tinv));
-            Pr = cTBC[49] * k0 / k_f;
+            Pr = cTBC * k0 / k_f;
             A = log10(Pr) + C;
             f1 = A / (N - 0.14 * A);
             F_pdr = pow(10.0, log10(Fcent) / (1.0 + f1 * f1));

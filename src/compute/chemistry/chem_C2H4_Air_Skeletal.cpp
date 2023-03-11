@@ -103,225 +103,6 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
           }
 
           // ----------------------------------------------------------- >
-          // Chaperon efficiencies. ------------------------------------ >
-          // ----------------------------------------------------------- >
-
-          double cTBC[35];
-
-          cTBC[0] = cs[1] + cs[2] + cs[3] + cs[4] + cs[6] + cs[7] + cs[8] +
-                    cs[9] + cs[10] + cs[11] + 2.0 * cs[12] + cs[13] + cs[15] +
-                    cs[16] + cs[17] + 3.0 * cs[18] + cs[19] + cs[20] +
-                    3.0 * cs[21] + cs[22] + 3.0 * cs[23] + cs[24] + cs[25] +
-                    cs[26] + cs[27] + cs[28] + cs[29] + cs[30] + cs[31];
-
-          cTBC[1] = cs[0];
-
-          cTBC[2] = cs[5];
-
-          cTBC[3] = cs[14];
-
-          cTBC[4] = 0.73 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] +
-                    3.65 * cs[5] + cs[6] + cs[7] + cs[8] + cs[9] + cs[10] +
-                    cs[11] + 2.0 * cs[12] + cs[13] + cs[14] + cs[15] + cs[16] +
-                    cs[17] + 3.0 * cs[18] + cs[19] + cs[20] + 3.0 * cs[21] +
-                    cs[22] + 3.0 * cs[23] + cs[24] + cs[25] + cs[26] + cs[27] +
-                    cs[28] + cs[29] + cs[30] + cs[31];
-
-          cTBC[5] = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
-                    cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] +
-                    2.0 * cs[12] + 1.5 * cs[13] + 2.0 * cs[14] + cs[15] +
-                    cs[16] + cs[17] + 3.0 * cs[18] + cs[19] + cs[20] +
-                    3.0 * cs[21] + cs[22] + 3.0 * cs[23] + cs[24] + cs[25] +
-                    cs[26] + cs[27] + cs[28] + cs[29] + cs[30] + cs[31];
-
-          cTBC[6] = 2.4 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 15.4 * cs[5] +
-                    cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] +
-                    2.0 * cs[12] + 1.75 * cs[13] + 3.6 * cs[14] + cs[15] +
-                    cs[16] + cs[17] + 3.0 * cs[18] + cs[19] + cs[20] +
-                    3.0 * cs[21] + cs[22] + 3.0 * cs[23] + cs[24] + cs[25] +
-                    cs[26] + cs[27] + cs[28] + cs[29] + cs[30] + cs[31];
-
-          cTBC[7] = cs[0] + cs[1] + cs[2] + cs[4] + cs[6] + cs[7] + cs[8] +
-                    cs[9] + cs[10] + cs[11] + cs[12] + 0.75 * cs[13] +
-                    1.5 * cs[14] + cs[15] + cs[16] + cs[17] + 3.0 * cs[18] +
-                    cs[19] + cs[20] + 3.0 * cs[21] + cs[22] + 1.5 * cs[23] +
-                    cs[24] + cs[25] + cs[26] + cs[27] + cs[28] + cs[29] +
-                    cs[30];
-
-          cTBC[8] = cs[3];
-
-          cTBC[9] = cs[5];
-
-          cTBC[10] = cs[31];
-
-          cTBC[11] = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
-                     cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] +
-                     2.0 * cs[12] + 1.5 * cs[13] + 2.0 * cs[14] + cs[15] +
-                     cs[16] + cs[17] + 3.0 * cs[18] + cs[19] + cs[20] +
-                     3.0 * cs[21] + cs[22] + 3.0 * cs[23] + cs[24] + cs[25] +
-                     cs[26] + cs[27] + cs[28] + cs[29] + cs[30] + cs[31];
-
-          cTBC[12] = 2.0 * cs[0] + cs[1] + cs[2] + 6.0 * cs[3] + cs[4] +
-                     6.0 * cs[5] + cs[6] + cs[7] + cs[8] + cs[9] + cs[10] +
-                     cs[11] + 2.0 * cs[12] + 1.5 * cs[13] + 3.5 * cs[14] +
-                     cs[15] + cs[16] + cs[17] + 3.0 * cs[18] + cs[19] + cs[20] +
-                     3.0 * cs[21] + cs[22] + 3.0 * cs[23] + cs[24] + cs[25] +
-                     cs[26] + cs[27] + cs[28] + cs[29] + cs[30] + cs[31];
-
-          cTBC[13] = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
-                     cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] +
-                     2.0 * cs[12] + 1.5 * cs[13] + 2.0 * cs[14] + cs[15] +
-                     cs[16] + cs[17] + 3.0 * cs[18] + cs[19] + cs[20] +
-                     3.0 * cs[21] + cs[22] + 3.0 * cs[23] + cs[24] + cs[25] +
-                     cs[26] + cs[27] + cs[28] + cs[29] + cs[30] + cs[31];
-
-          cTBC[14] = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
-                     cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] +
-                     2.0 * cs[12] + 1.5 * cs[13] + 2.0 * cs[14] + cs[15] +
-                     cs[16] + cs[17] + 3.0 * cs[18] + cs[19] + cs[20] +
-                     3.0 * cs[21] + cs[22] + 3.0 * cs[23] + cs[24] + cs[25] +
-                     cs[26] + cs[27] + cs[28] + cs[29] + cs[30] + cs[31];
-
-          cTBC[15] = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
-                     cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] +
-                     2.0 * cs[12] + 1.5 * cs[13] + 2.0 * cs[14] + cs[15] +
-                     cs[16] + cs[17] + 3.0 * cs[18] + cs[19] + cs[20] +
-                     3.0 * cs[21] + cs[22] + 3.0 * cs[23] + cs[24] + cs[25] +
-                     cs[26] + cs[27] + cs[28] + cs[29] + cs[30] + cs[31];
-
-          cTBC[16] = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
-                     cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] +
-                     2.0 * cs[12] + 1.5 * cs[13] + 2.0 * cs[14] + cs[15] +
-                     cs[16] + cs[17] + 3.0 * cs[18] + cs[19] + cs[20] +
-                     3.0 * cs[21] + cs[22] + 3.0 * cs[23] + cs[24] + cs[25] +
-                     cs[26] + cs[27] + cs[28] + cs[29] + cs[30] + cs[31];
-
-          cTBC[17] = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
-                     cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] +
-                     2.0 * cs[12] + 1.5 * cs[13] + 2.0 * cs[14] + cs[15] +
-                     cs[16] + cs[17] + 3.0 * cs[18] + cs[19] + cs[20] +
-                     3.0 * cs[21] + cs[22] + 3.0 * cs[23] + cs[24] + cs[25] +
-                     cs[26] + cs[27] + cs[28] + cs[29] + cs[30] + cs[31];
-
-          cTBC[18] = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
-                     cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] +
-                     2.0 * cs[12] + 1.5 * cs[13] + 2.0 * cs[14] + cs[15] +
-                     cs[16] + cs[17] + 3.0 * cs[18] + cs[19] + cs[20] +
-                     3.0 * cs[21] + cs[22] + 3.0 * cs[23] + cs[24] + cs[25] +
-                     cs[26] + cs[27] + cs[28] + cs[29] + cs[30] + cs[31];
-
-          cTBC[19] = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
-                     cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] +
-                     2.0 * cs[12] + 1.5 * cs[13] + 2.0 * cs[14] + cs[15] +
-                     cs[16] + cs[17] + 3.0 * cs[18] + cs[19] + cs[20] +
-                     3.0 * cs[21] + cs[22] + 3.0 * cs[23] + cs[24] + cs[25] +
-                     cs[26] + cs[27] + cs[28] + cs[29] + cs[30] + cs[31];
-
-          cTBC[20] = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
-                     cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] +
-                     2.0 * cs[12] + 1.5 * cs[13] + 2.0 * cs[14] + cs[15] +
-                     cs[16] + cs[17] + 3.0 * cs[18] + cs[19] + cs[20] +
-                     3.0 * cs[21] + cs[22] + 3.0 * cs[23] + cs[24] + cs[25] +
-                     cs[26] + cs[27] + cs[28] + cs[29] + cs[30] + cs[31];
-
-          cTBC[21] = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
-                     cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] +
-                     2.0 * cs[12] + 1.5 * cs[13] + 2.0 * cs[14] + cs[15] +
-                     cs[16] + cs[17] + 3.0 * cs[18] + cs[19] + cs[20] +
-                     3.0 * cs[21] + cs[22] + 3.0 * cs[23] + cs[24] + cs[25] +
-                     cs[26] + cs[27] + cs[28] + cs[29] + cs[30] + cs[31];
-
-          cTBC[22] = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
-                     cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] +
-                     2.0 * cs[12] + 1.5 * cs[13] + 2.0 * cs[14] + cs[15] +
-                     cs[16] + cs[17] + 3.0 * cs[18] + cs[19] + cs[20] +
-                     3.0 * cs[21] + cs[22] + 3.0 * cs[23] + cs[24] + cs[25] +
-                     cs[26] + cs[27] + cs[28] + cs[29] + cs[30] + cs[31];
-
-          cTBC[23] = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
-                     cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] +
-                     2.0 * cs[12] + 1.5 * cs[13] + 2.0 * cs[14] + cs[15] +
-                     cs[16] + cs[17] + 2.5 * cs[18] + cs[19] + cs[20] +
-                     2.5 * cs[21] + cs[22] + 3.0 * cs[23] + cs[24] + cs[25] +
-                     cs[26] + cs[27] + cs[28] + cs[29] + cs[30] + cs[31];
-
-          cTBC[24] = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
-                     cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] +
-                     2.0 * cs[12] + 1.5 * cs[13] + 2.0 * cs[14] + cs[15] +
-                     cs[16] + cs[17] + 3.0 * cs[18] + cs[19] + cs[20] +
-                     3.0 * cs[21] + cs[22] + 3.0 * cs[23] + cs[24] + cs[25] +
-                     cs[26] + cs[27] + cs[28] + cs[29] + cs[30] + cs[31];
-
-          cTBC[25] = cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + cs[5] + cs[6] +
-                     cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] + cs[13] +
-                     cs[14] + cs[15] + cs[16] + cs[17] + cs[18] + cs[19] +
-                     cs[20] + cs[21] + cs[22] + cs[23] + cs[24] + cs[25] +
-                     cs[26] + cs[27] + cs[28] + cs[29] + cs[30] + cs[31];
-
-          cTBC[26] = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
-                     cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] +
-                     2.0 * cs[12] + 1.5 * cs[13] + 2.0 * cs[14] + cs[15] +
-                     cs[16] + cs[17] + 3.0 * cs[18] + cs[19] + cs[20] +
-                     3.0 * cs[21] + cs[22] + 3.0 * cs[23] + cs[24] + cs[25] +
-                     cs[26] + cs[27] + cs[28] + cs[29] + cs[30] + cs[31];
-
-          cTBC[27] = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
-                     cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] +
-                     2.0 * cs[12] + 1.5 * cs[13] + 2.0 * cs[14] + cs[15] +
-                     cs[16] + cs[17] + 3.0 * cs[18] + cs[19] + cs[20] +
-                     3.0 * cs[21] + cs[22] + 3.0 * cs[23] + cs[24] + cs[25] +
-                     cs[26] + cs[27] + cs[28] + cs[29] + cs[30] + cs[31];
-
-          cTBC[28] = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
-                     cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] +
-                     2.0 * cs[12] + 1.5 * cs[13] + 2.0 * cs[14] + cs[15] +
-                     cs[16] + cs[17] + 3.0 * cs[18] + cs[19] + cs[20] +
-                     3.0 * cs[21] + cs[22] + 3.0 * cs[23] + cs[24] + cs[25] +
-                     cs[26] + cs[27] + cs[28] + cs[29] + cs[30] + cs[31];
-
-          cTBC[29] = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
-                     cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] +
-                     2.0 * cs[12] + 1.5 * cs[13] + 2.0 * cs[14] + cs[15] +
-                     cs[16] + cs[17] + 3.0 * cs[18] + cs[19] + cs[20] +
-                     3.0 * cs[21] + cs[22] + 3.0 * cs[23] + cs[24] + cs[25] +
-                     cs[26] + cs[27] + cs[28] + cs[29] + cs[30] + cs[31];
-
-          cTBC[30] = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
-                     cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] +
-                     2.0 * cs[12] + 1.5 * cs[13] + 2.0 * cs[14] + cs[15] +
-                     cs[16] + cs[17] + 3.0 * cs[18] + cs[19] + cs[20] +
-                     3.0 * cs[21] + cs[22] + 3.0 * cs[23] + cs[24] + cs[25] +
-                     cs[26] + cs[27] + cs[28] + cs[29] + cs[30] + cs[31];
-
-          cTBC[31] = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
-                     cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] +
-                     2.0 * cs[12] + 1.5 * cs[13] + 2.0 * cs[14] + cs[15] +
-                     cs[16] + cs[17] + 3.0 * cs[18] + cs[19] + cs[20] +
-                     3.0 * cs[21] + cs[22] + 3.0 * cs[23] + cs[24] + cs[25] +
-                     cs[26] + cs[27] + cs[28] + cs[29] + cs[30] + cs[31];
-
-          cTBC[32] = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
-                     cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] +
-                     2.0 * cs[12] + 1.5 * cs[13] + 2.0 * cs[14] + cs[15] +
-                     cs[16] + cs[17] + 3.0 * cs[18] + cs[19] + cs[20] +
-                     3.0 * cs[21] + cs[22] + 3.0 * cs[23] + cs[24] + cs[25] +
-                     cs[26] + cs[27] + cs[28] + cs[29] + cs[30] + cs[31];
-
-          cTBC[33] = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
-                     cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] +
-                     2.0 * cs[12] + 1.5 * cs[13] + 2.0 * cs[14] + cs[15] +
-                     cs[16] + cs[17] + 3.0 * cs[18] + cs[19] + cs[20] +
-                     3.0 * cs[21] + cs[22] + 3.0 * cs[23] + cs[24] + cs[25] +
-                     cs[26] + cs[27] + cs[28] + cs[29] + cs[30] + cs[31];
-
-          cTBC[34] = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
-                     cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] +
-                     2.0 * cs[12] + 1.5 * cs[13] + 2.0 * cs[14] + cs[15] +
-                     cs[16] + cs[17] + cs[18] + cs[19] + cs[20] + cs[21] +
-                     cs[22] + 3.0 * cs[23] + cs[24] + cs[25] + cs[26] + cs[27] +
-                     cs[28] + cs[29] + cs[30] + cs[31];
-
-          // ----------------------------------------------------------- >
           // Gibbs energy. --------------------------------------------- >
           // ----------------------------------------------------------- >
 
@@ -374,7 +155,7 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
 
           // start scope of these temp vars
           {
-            double k_f, dG, K_c;
+            double cTBC, k_f, dG, K_c;
 
             double Fcent;
             double pmod;
@@ -424,7 +205,12 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             dG = gbs[0] - 2.0 * gbs[1];
             K_c = exp(-dG) / prefRuT;
             //  Three Body Reaction #4
-            k_f *= cTBC[0];
+            cTBC = cs[1] + cs[2] + cs[3] + cs[4] + cs[6] + cs[7] + cs[8] +
+                   cs[9] + cs[10] + cs[11] + 2.0 * cs[12] + cs[13] + cs[15] +
+                   cs[16] + cs[17] + 3.0 * cs[18] + cs[19] + cs[20] +
+                   3.0 * cs[21] + cs[22] + 3.0 * cs[23] + cs[24] + cs[25] +
+                   cs[26] + cs[27] + cs[28] + cs[29] + cs[30] + cs[31];
+            k_f *= cTBC;
             q_f = k_f * pow(cs[1], 2.0);
             q_b = -k_f / K_c * cs[0];
             q[4] = q_f + q_b;
@@ -434,7 +220,8 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             dG = gbs[0] - 2.0 * gbs[1];
             K_c = exp(-dG) / prefRuT;
             //  Three Body Reaction #5
-            k_f *= cTBC[1];
+            cTBC = cs[0];
+            k_f *= cTBC;
             q_f = k_f * pow(cs[1], 2.0);
             q_b = -k_f / K_c * cs[0];
             q[5] = q_f + q_b;
@@ -444,7 +231,8 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             dG = gbs[0] - 2.0 * gbs[1];
             K_c = exp(-dG) / prefRuT;
             //  Three Body Reaction #6
-            k_f *= cTBC[2];
+            cTBC = cs[5];
+            k_f *= cTBC;
             q_f = k_f * pow(cs[1], 2.0);
             q_b = -k_f / K_c * cs[0];
             q[6] = q_f + q_b;
@@ -454,7 +242,8 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             dG = gbs[0] - 2.0 * gbs[1];
             K_c = exp(-dG) / prefRuT;
             //  Three Body Reaction #7
-            k_f *= cTBC[3];
+            cTBC = cs[14];
+            k_f *= cTBC;
             q_f = k_f * pow(cs[1], 2.0);
             q_b = -k_f / K_c * cs[0];
             q[7] = q_f + q_b;
@@ -464,7 +253,13 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             dG = -gbs[1] - gbs[4] + gbs[5];
             K_c = exp(-dG) / prefRuT;
             //  Three Body Reaction #8
-            k_f *= cTBC[4];
+            cTBC = 0.73 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 3.65 * cs[5] +
+                   cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] +
+                   2.0 * cs[12] + cs[13] + cs[14] + cs[15] + cs[16] + cs[17] +
+                   3.0 * cs[18] + cs[19] + cs[20] + 3.0 * cs[21] + cs[22] +
+                   3.0 * cs[23] + cs[24] + cs[25] + cs[26] + cs[27] + cs[28] +
+                   cs[29] + cs[30] + cs[31];
+            k_f *= cTBC;
             q_f = k_f * cs[1] * cs[4];
             q_b = -k_f / K_c * cs[5];
             q[8] = q_f + q_b;
@@ -474,7 +269,13 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             dG = -gbs[1] - gbs[2] + gbs[4];
             K_c = exp(-dG) / prefRuT;
             //  Three Body Reaction #9
-            k_f *= cTBC[5];
+            cTBC = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
+                   cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] +
+                   2.0 * cs[12] + 1.5 * cs[13] + 2.0 * cs[14] + cs[15] +
+                   cs[16] + cs[17] + 3.0 * cs[18] + cs[19] + cs[20] +
+                   3.0 * cs[21] + cs[22] + 3.0 * cs[23] + cs[24] + cs[25] +
+                   cs[26] + cs[27] + cs[28] + cs[29] + cs[30] + cs[31];
+            k_f *= cTBC;
             q_f = k_f * cs[1] * cs[2];
             q_b = -k_f / K_c * cs[4];
             q[9] = q_f + q_b;
@@ -484,7 +285,13 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             dG = -2.0 * gbs[2] + gbs[3];
             K_c = exp(-dG) / prefRuT;
             //  Three Body Reaction #10
-            k_f *= cTBC[6];
+            cTBC = 2.4 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 15.4 * cs[5] +
+                   cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] +
+                   2.0 * cs[12] + 1.75 * cs[13] + 3.6 * cs[14] + cs[15] +
+                   cs[16] + cs[17] + 3.0 * cs[18] + cs[19] + cs[20] +
+                   3.0 * cs[21] + cs[22] + 3.0 * cs[23] + cs[24] + cs[25] +
+                   cs[26] + cs[27] + cs[28] + cs[29] + cs[30] + cs[31];
+            k_f *= cTBC;
             q_f = k_f * pow(cs[2], 2.0);
             q_b = -k_f / K_c * cs[3];
             q[10] = q_f + q_b;
@@ -494,7 +301,12 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             dG = -gbs[1] - gbs[3] + gbs[6];
             K_c = exp(-dG) / prefRuT;
             //  Three Body Reaction #11
-            k_f *= cTBC[7];
+            cTBC = cs[0] + cs[1] + cs[2] + cs[4] + cs[6] + cs[7] + cs[8] +
+                   cs[9] + cs[10] + cs[11] + cs[12] + 0.75 * cs[13] +
+                   1.5 * cs[14] + cs[15] + cs[16] + cs[17] + 3.0 * cs[18] +
+                   cs[19] + cs[20] + 3.0 * cs[21] + cs[22] + 1.5 * cs[23] +
+                   cs[24] + cs[25] + cs[26] + cs[27] + cs[28] + cs[29] + cs[30];
+            k_f *= cTBC;
             q_f = k_f * cs[1] * cs[3];
             q_b = -k_f / K_c * cs[6];
             q[11] = q_f + q_b;
@@ -504,7 +316,8 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             dG = -gbs[1] - gbs[3] + gbs[6];
             K_c = exp(-dG) / prefRuT;
             //  Three Body Reaction #12
-            k_f *= cTBC[8];
+            cTBC = cs[3];
+            k_f *= cTBC;
             q_f = k_f * cs[1] * cs[3];
             q_b = -k_f / K_c * cs[6];
             q[12] = q_f + q_b;
@@ -514,7 +327,8 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             dG = -gbs[1] - gbs[3] + gbs[6];
             K_c = exp(-dG) / prefRuT;
             //  Three Body Reaction #13
-            k_f *= cTBC[9];
+            cTBC = cs[5];
+            k_f *= cTBC;
             q_f = k_f * cs[1] * cs[3];
             q_b = -k_f / K_c * cs[6];
             q[13] = q_f + q_b;
@@ -524,7 +338,8 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             dG = -gbs[1] - gbs[3] + gbs[6];
             K_c = exp(-dG) / prefRuT;
             //  Three Body Reaction #14
-            k_f *= cTBC[10];
+            cTBC = cs[31];
+            k_f *= cTBC;
             q_f = k_f * cs[1] * cs[3];
             q_b = -k_f / K_c * cs[6];
             q[14] = q_f + q_b;
@@ -533,6 +348,13 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             k_f = exp(log(74000000000.00002) - 0.37 * logT);
             dG = -2.0 * gbs[4] + gbs[7];
             K_c = exp(-dG) / prefRuT;
+            //  Three Body Reaction #15
+            cTBC = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
+                   cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] +
+                   2.0 * cs[12] + 1.5 * cs[13] + 2.0 * cs[14] + cs[15] +
+                   cs[16] + cs[17] + 3.0 * cs[18] + cs[19] + cs[20] +
+                   3.0 * cs[21] + cs[22] + 3.0 * cs[23] + cs[24] + cs[25] +
+                   cs[26] + cs[27] + cs[28] + cs[29] + cs[30] + cs[31];
             //  Troe Reaction #15
             Fcent = (1.0 - (0.7346)) * exp(-T / (94.0)) +
                     (0.7346) * exp(-T / (1756.0)) + exp(-(5182.0) * Tinv);
@@ -540,7 +362,7 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             N = 0.75 - 1.27 * log10(Fcent);
             k0 = exp(log(2300000000000.0005) - 0.9 * logT -
                      (-855.4732069479018 * Tinv));
-            Pr = cTBC[11] * k0 / k_f;
+            Pr = cTBC * k0 / k_f;
             A = log10(Pr) + C;
             f1 = A / (N - 0.14 * A);
             F_pdr = pow(10.0, log10(Fcent) / (1.0 + f1 * f1));
@@ -607,7 +429,7 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             q[22] = q_f + q_b;
 
             // Reaction #23
-            k_f = exp(log(12100.000000000002) + 2 * logT -
+            k_f = exp(log(12100.000000000002) + 2.0 * logT -
                       (2616.741574193582 * Tinv));
             dG = gbs[0] - gbs[1] + gbs[6] - gbs[7];
             K_c = exp(-dG);
@@ -624,7 +446,7 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             q[24] = q_f + q_b;
 
             // Reaction #25
-            k_f = exp(log(9630.0) + 2 * logT - (2012.8781339950629 * Tinv));
+            k_f = exp(log(9630.0) + 2.0 * logT - (2012.8781339950629 * Tinv));
             dG = -gbs[2] + gbs[4] + gbs[6] - gbs[7];
             K_c = exp(-dG);
             q_f = k_f * cs[2] * cs[7];
@@ -652,7 +474,13 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             dG = -gbs[2] - gbs[13] + gbs[14];
             K_c = exp(-dG) / prefRuT;
             //  Three Body Reaction #28
-            k_f *= cTBC[12];
+            cTBC = 2.0 * cs[0] + cs[1] + cs[2] + 6.0 * cs[3] + cs[4] +
+                   6.0 * cs[5] + cs[6] + cs[7] + cs[8] + cs[9] + cs[10] +
+                   cs[11] + 2.0 * cs[12] + 1.5 * cs[13] + 3.5 * cs[14] +
+                   cs[15] + cs[16] + cs[17] + 3.0 * cs[18] + cs[19] + cs[20] +
+                   3.0 * cs[21] + cs[22] + 3.0 * cs[23] + cs[24] + cs[25] +
+                   cs[26] + cs[27] + cs[28] + cs[29] + cs[30] + cs[31];
+            k_f *= cTBC;
             q_f = k_f * cs[2] * cs[13];
             q_b = -k_f / K_c * cs[14];
             q[28] = q_f + q_b;
@@ -671,13 +499,20 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
                       (40056.27486650175 * Tinv));
             dG = -gbs[0] - gbs[13] + gbs[16];
             K_c = exp(-dG) / prefRuT;
+            //  Three Body Reaction #30
+            cTBC = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
+                   cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] +
+                   2.0 * cs[12] + 1.5 * cs[13] + 2.0 * cs[14] + cs[15] +
+                   cs[16] + cs[17] + 3.0 * cs[18] + cs[19] + cs[20] +
+                   3.0 * cs[21] + cs[22] + 3.0 * cs[23] + cs[24] + cs[25] +
+                   cs[26] + cs[27] + cs[28] + cs[29] + cs[30] + cs[31];
             //  Troe Reaction #30
             Fcent = (1.0 - (0.932)) * exp(-T / (197.00000000000003)) +
                     (0.932) * exp(-T / (1540.0)) + exp(-(10300.0) * Tinv);
             C = -0.4 - 0.67 * log10(Fcent);
             N = 0.75 - 1.27 * log10(Fcent);
             k0 = exp(log(5.07e+21) - 3.42 * logT - (42446.56765062089 * Tinv));
-            Pr = cTBC[13] * k0 / k_f;
+            Pr = cTBC * k0 / k_f;
             A = log10(Pr) + C;
             f1 = A / (N - 0.14 * A);
             F_pdr = pow(10.0, log10(Fcent) / (1.0 + f1 * f1));
@@ -748,6 +583,13 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             k_f = 50000000000.00001;
             dG = -gbs[8] - gbs[13] + gbs[24];
             K_c = exp(-dG) / prefRuT;
+            //  Three Body Reaction #38
+            cTBC = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
+                   cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] +
+                   2.0 * cs[12] + 1.5 * cs[13] + 2.0 * cs[14] + cs[15] +
+                   cs[16] + cs[17] + 3.0 * cs[18] + cs[19] + cs[20] +
+                   3.0 * cs[21] + cs[22] + 3.0 * cs[23] + cs[24] + cs[25] +
+                   cs[26] + cs[27] + cs[28] + cs[29] + cs[30] + cs[31];
             //  Troe Reaction #38
             Fcent = (1.0 - (0.5757)) * exp(-T / (237.00000000000003)) +
                     (0.5757) * exp(-T / (1652.0)) + exp(-(5069.0) * Tinv);
@@ -755,7 +597,7 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             N = 0.75 - 1.27 * log10(Fcent);
             k0 = exp(log(2.6900000000000003e+22) - 3.74 * logT -
                      (974.2330168536105 * Tinv));
-            Pr = cTBC[14] * k0 / k_f;
+            Pr = cTBC * k0 / k_f;
             A = log10(Pr) + C;
             f1 = A / (N - 0.14 * A);
             F_pdr = pow(10.0, log10(Fcent) / (1.0 + f1 * f1));
@@ -778,6 +620,13 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
                       (-130.8370787096791 * Tinv));
             dG = -gbs[1] - gbs[15] + gbs[16];
             K_c = exp(-dG) / prefRuT;
+            //  Three Body Reaction #40
+            cTBC = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
+                   cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] +
+                   2.0 * cs[12] + 1.5 * cs[13] + 2.0 * cs[14] + cs[15] +
+                   cs[16] + cs[17] + 3.0 * cs[18] + cs[19] + cs[20] +
+                   3.0 * cs[21] + cs[22] + 3.0 * cs[23] + cs[24] + cs[25] +
+                   cs[26] + cs[27] + cs[28] + cs[29] + cs[30] + cs[31];
             //  Troe Reaction #40
             Fcent = (1.0 - (0.7824)) * exp(-T / (271.0)) +
                     (0.7824) * exp(-T / (2755.0)) + exp(-(6570.0) * Tinv);
@@ -785,7 +634,7 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             N = 0.75 - 1.27 * log10(Fcent);
             k0 = exp(log(1.3500000000000003e+18) - 2.57 * logT -
                      (717.0878352357412 * Tinv));
-            Pr = cTBC[15] * k0 / k_f;
+            Pr = cTBC * k0 / k_f;
             A = log10(Pr) + C;
             f1 = A / (N - 0.14 * A);
             F_pdr = pow(10.0, log10(Fcent) / (1.0 + f1 * f1));
@@ -833,7 +682,13 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             dG = gbs[1] + gbs[13] - gbs[15];
             K_c = prefRuT * exp(-dG);
             //  Three Body Reaction #45
-            k_f *= cTBC[16];
+            cTBC = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
+                   cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] +
+                   2.0 * cs[12] + 1.5 * cs[13] + 2.0 * cs[14] + cs[15] +
+                   cs[16] + cs[17] + 3.0 * cs[18] + cs[19] + cs[20] +
+                   3.0 * cs[21] + cs[22] + 3.0 * cs[23] + cs[24] + cs[25] +
+                   cs[26] + cs[27] + cs[28] + cs[29] + cs[30] + cs[31];
+            k_f *= cTBC;
             q_f = k_f * cs[15];
             q_b = -k_f / K_c * cs[1] * cs[13];
             q[45] = q_f + q_b;
@@ -850,6 +705,13 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             k_f = exp(log(25000000000000.004) - 0.8 * logT);
             dG = -gbs[1] - gbs[9] + gbs[11];
             K_c = exp(-dG) / prefRuT;
+            //  Three Body Reaction #47
+            cTBC = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
+                   cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] +
+                   2.0 * cs[12] + 1.5 * cs[13] + 2.0 * cs[14] + cs[15] +
+                   cs[16] + cs[17] + 3.0 * cs[18] + cs[19] + cs[20] +
+                   3.0 * cs[21] + cs[22] + 3.0 * cs[23] + cs[24] + cs[25] +
+                   cs[26] + cs[27] + cs[28] + cs[29] + cs[30] + cs[31];
             //  Troe Reaction #47
             Fcent = (1.0 - (0.68)) * exp(-T / (78.0)) +
                     (0.68) * exp(-T / (1995.0)) + exp(-(5590.0) * Tinv);
@@ -857,7 +719,7 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             N = 0.75 - 1.27 * log10(Fcent);
             k0 = exp(log(3.2000000000000005e+21) - 3.14 * logT -
                      (618.9600262034819 * Tinv));
-            Pr = cTBC[17] * k0 / k_f;
+            Pr = cTBC * k0 / k_f;
             A = log10(Pr) + C;
             f1 = A / (N - 0.14 * A);
             F_pdr = pow(10.0, log10(Fcent) / (1.0 + f1 * f1));
@@ -868,7 +730,7 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             q[47] = q_f + q_b;
 
             // Reaction #48
-            k_f = exp(log(500.0000000000001) + 2 * logT -
+            k_f = exp(log(500.0000000000001) + 2.0 * logT -
                       (3638.277227196076 * Tinv));
             dG = -gbs[0] + gbs[1] - gbs[9] + gbs[11];
             K_c = exp(-dG);
@@ -909,7 +771,7 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             q[52] = q_f + q_b;
 
             // Reaction #53
-            k_f = exp(log(11300.000000000002) + 2 * logT -
+            k_f = exp(log(11300.000000000002) + 2.0 * logT -
                       (1509.6586004962971 * Tinv));
             dG = -gbs[4] + gbs[5] + gbs[8] - gbs[9];
             K_c = exp(-dG);
@@ -930,6 +792,13 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
                       (2269.5200960794336 * Tinv));
             dG = -gbs[9] - gbs[13] + gbs[25];
             K_c = exp(-dG) / prefRuT;
+            //  Three Body Reaction #55
+            cTBC = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
+                   cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] +
+                   2.0 * cs[12] + 1.5 * cs[13] + 2.0 * cs[14] + cs[15] +
+                   cs[16] + cs[17] + 3.0 * cs[18] + cs[19] + cs[20] +
+                   3.0 * cs[21] + cs[22] + 3.0 * cs[23] + cs[24] + cs[25] +
+                   cs[26] + cs[27] + cs[28] + cs[29] + cs[30] + cs[31];
             //  Troe Reaction #55
             Fcent = (1.0 - (0.5907)) * exp(-T / (275.0)) +
                     (0.5907) * exp(-T / (1226.0)) + exp(-(5185.0) * Tinv);
@@ -937,7 +806,7 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             N = 0.75 - 1.27 * log10(Fcent);
             k0 = exp(log(2.6900000000000006e+27) - 5.11 * logT -
                      (3570.342590173743 * Tinv));
-            Pr = cTBC[18] * k0 / k_f;
+            Pr = cTBC * k0 / k_f;
             A = log10(Pr) + C;
             f1 = A / (N - 0.14 * A);
             F_pdr = pow(10.0, log10(Fcent) / (1.0 + f1 * f1));
@@ -1064,6 +933,13 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
                       (1308.370787096791 * Tinv));
             dG = -gbs[1] - gbs[16] + gbs[17];
             K_c = exp(-dG) / prefRuT;
+            //  Three Body Reaction #70
+            cTBC = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
+                   cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] +
+                   2.0 * cs[12] + 1.5 * cs[13] + 2.0 * cs[14] + cs[15] +
+                   cs[16] + cs[17] + 3.0 * cs[18] + cs[19] + cs[20] +
+                   3.0 * cs[21] + cs[22] + 3.0 * cs[23] + cs[24] + cs[25] +
+                   cs[26] + cs[27] + cs[28] + cs[29] + cs[30] + cs[31];
             //  Troe Reaction #70
             Fcent = (1.0 - (0.758)) * exp(-T / (94.0)) +
                     (0.758) * exp(-T / (1555.0)) + exp(-(4200.0) * Tinv);
@@ -1071,7 +947,7 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             N = 0.75 - 1.27 * log10(Fcent);
             k0 = exp(log(2.2000000000000006e+24) - 4.8 * logT -
                      (2797.9006062531375 * Tinv));
-            Pr = cTBC[19] * k0 / k_f;
+            Pr = cTBC * k0 / k_f;
             A = log10(Pr) + C;
             f1 = A / (N - 0.14 * A);
             F_pdr = pow(10.0, log10(Fcent) / (1.0 + f1 * f1));
@@ -1136,6 +1012,13 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
                       (192.7330813300273 * Tinv));
             dG = -gbs[1] - gbs[11] + gbs[12];
             K_c = exp(-dG) / prefRuT;
+            //  Three Body Reaction #77
+            cTBC = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
+                   cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] +
+                   2.0 * cs[12] + 1.5 * cs[13] + 2.0 * cs[14] + cs[15] +
+                   cs[16] + cs[17] + 3.0 * cs[18] + cs[19] + cs[20] +
+                   3.0 * cs[21] + cs[22] + 3.0 * cs[23] + cs[24] + cs[25] +
+                   cs[26] + cs[27] + cs[28] + cs[29] + cs[30] + cs[31];
             //  Troe Reaction #77
             Fcent = (1.0 - (0.783)) * exp(-T / (74.0)) +
                     (0.783) * exp(-T / (2941.0)) + exp(-(6964.0) * Tinv);
@@ -1143,7 +1026,7 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             N = 0.75 - 1.27 * log10(Fcent);
             k0 = exp(log(2.4770000000000003e+27) - 4.76 * logT -
                      (1227.8556617369884 * Tinv));
-            Pr = cTBC[20] * k0 / k_f;
+            Pr = cTBC * k0 / k_f;
             A = log10(Pr) + C;
             f1 = A / (N - 0.14 * A);
             F_pdr = pow(10.0, log10(Fcent) / (1.0 + f1 * f1));
@@ -1239,6 +1122,13 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             k_f = 18000000000.000004;
             dG = -gbs[11] - gbs[15] + gbs[27];
             K_c = exp(-dG) / prefRuT;
+            //  Three Body Reaction #88
+            cTBC = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
+                   cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] +
+                   2.0 * cs[12] + 1.5 * cs[13] + 2.0 * cs[14] + cs[15] +
+                   cs[16] + cs[17] + 3.0 * cs[18] + cs[19] + cs[20] +
+                   3.0 * cs[21] + cs[22] + 3.0 * cs[23] + cs[24] + cs[25] +
+                   cs[26] + cs[27] + cs[28] + cs[29] + cs[30] + cs[31];
             //  Troe Reaction #88
             Fcent = (1.0 - (0.6173)) * exp(-T / (13.076000000000002)) +
                     (0.6173) * exp(-T / (2078.0)) + exp(-(5093.0) * Tinv);
@@ -1246,7 +1136,7 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             N = 0.75 - 1.27 * log10(Fcent);
             k0 = exp(log(2.2000000000000004e+42) - 9.588 * logT -
                      (2566.419620843705 * Tinv));
-            Pr = cTBC[21] * k0 / k_f;
+            Pr = cTBC * k0 / k_f;
             A = log10(Pr) + C;
             f1 = A / (N - 0.14 * A);
             F_pdr = pow(10.0, log10(Fcent) / (1.0 + f1 * f1));
@@ -1286,6 +1176,13 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
                       (311.99611076923475 * Tinv));
             dG = -2.0 * gbs[11] + gbs[23];
             K_c = exp(-dG) / prefRuT;
+            //  Three Body Reaction #92
+            cTBC = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
+                   cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] +
+                   2.0 * cs[12] + 1.5 * cs[13] + 2.0 * cs[14] + cs[15] +
+                   cs[16] + cs[17] + 3.0 * cs[18] + cs[19] + cs[20] +
+                   3.0 * cs[21] + cs[22] + 3.0 * cs[23] + cs[24] + cs[25] +
+                   cs[26] + cs[27] + cs[28] + cs[29] + cs[30] + cs[31];
             //  Troe Reaction #92
             Fcent = (1.0 - (0.5325)) * exp(-T / (151.0)) +
                     (0.5325) * exp(-T / (1038.0)) + exp(-(4970.0) * Tinv);
@@ -1293,7 +1190,7 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             N = 0.75 - 1.27 * log10(Fcent);
             k0 = exp(log(1.7700000000000004e+44) - 9.67 * logT -
                      (3130.025498362323 * Tinv));
-            Pr = cTBC[22] * k0 / k_f;
+            Pr = cTBC * k0 / k_f;
             A = log10(Pr) + C;
             f1 = A / (N - 0.14 * A);
             F_pdr = pow(10.0, log10(Fcent) / (1.0 + f1 * f1));
@@ -1405,7 +1302,7 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             q[104] = q_f + q_b;
 
             // Reaction #105
-            k_f = exp(log(2460.0000000000005) + 2 * logT -
+            k_f = exp(log(2460.0000000000005) + 2.0 * logT -
                       (4161.6255420347925 * Tinv));
             dG = -gbs[9] + 2.0 * gbs[11] - gbs[12];
             K_c = exp(-dG);
@@ -1474,11 +1371,18 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
                       (25538.391325062363 * Tinv));
             dG = -gbs[18] + gbs[19];
             K_c = exp(-dG);
+            //  Three Body Reaction #113
+            cTBC = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
+                   cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] +
+                   2.0 * cs[12] + 1.5 * cs[13] + 2.0 * cs[14] + cs[15] +
+                   cs[16] + cs[17] + 2.5 * cs[18] + cs[19] + cs[20] +
+                   2.5 * cs[21] + cs[22] + 3.0 * cs[23] + cs[24] + cs[25] +
+                   cs[26] + cs[27] + cs[28] + cs[29] + cs[30] + cs[31];
             //  Lindeman Reaction #113
             Fcent = 1.0;
             k0 = exp(log(2450000000000.0005) - 0.64 * logT -
                      (25010.010814888657 * Tinv));
-            Pr = cTBC[23] * k0 / k_f;
+            Pr = cTBC * k0 / k_f;
             pmod = Pr / (1.0 + Pr);
             k_f *= pmod;
             q_f = k_f * cs[18];
@@ -1490,13 +1394,20 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
                       (18643.387985359645 * Tinv));
             dG = gbs[1] + gbs[18] - gbs[20];
             K_c = prefRuT * exp(-dG);
+            //  Three Body Reaction #114
+            cTBC = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
+                   cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] +
+                   2.0 * cs[12] + 1.5 * cs[13] + 2.0 * cs[14] + cs[15] +
+                   cs[16] + cs[17] + 3.0 * cs[18] + cs[19] + cs[20] +
+                   3.0 * cs[21] + cs[22] + 3.0 * cs[23] + cs[24] + cs[25] +
+                   cs[26] + cs[27] + cs[28] + cs[29] + cs[30] + cs[31];
             //  Troe Reaction #114
             Fcent = (1.0 - (1.9816)) * exp(-T / (5383.7)) +
                     (1.9816) * exp(-T / (4.2932)) + exp(-(-0.0795) * Tinv);
             C = -0.4 - 0.67 * log10(Fcent);
             N = 0.75 - 1.27 * log10(Fcent);
             k0 = exp(log(2.565e+24) - 3.4 * logT - (18014.615178252938 * Tinv));
-            Pr = cTBC[24] * k0 / k_f;
+            Pr = cTBC * k0 / k_f;
             A = log10(Pr) + C;
             f1 = A / (N - 0.14 * A);
             F_pdr = pow(10.0, log10(Fcent) / (1.0 + f1 * f1));
@@ -1507,7 +1418,7 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             q[114] = q_f + q_b;
 
             // Reaction #115
-            k_f = exp(log(16320.000000000004) + 2 * logT -
+            k_f = exp(log(16320.000000000004) + 2.0 * logT -
                       (956.117113647655 * Tinv));
             dG = gbs[1] - gbs[2] - gbs[18] + gbs[24];
             K_c = exp(-dG);
@@ -1516,7 +1427,7 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             q[115] = q_f + q_b;
 
             // Reaction #116
-            k_f = exp(log(4080.000000000001) + 2 * logT -
+            k_f = exp(log(4080.000000000001) + 2.0 * logT -
                       (956.117113647655 * Tinv));
             dG = -gbs[2] + gbs[9] + gbs[13] - gbs[18];
             K_c = exp(-dG);
@@ -1534,7 +1445,7 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             q[117] = q_f + q_b;
 
             // Reaction #118
-            k_f = exp(log(4.830000000000001e-07) + 4 * logT -
+            k_f = exp(log(4.830000000000001e-07) + 4.0 * logT -
                       (-1006.4390669975314 * Tinv));
             dG = -gbs[4] + gbs[11] + gbs[13] - gbs[18];
             K_c = exp(-dG);
@@ -1543,7 +1454,7 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             q[118] = q_f + q_b;
 
             // Reaction #119
-            k_f = exp(log(10000.000000000002) + 2 * logT -
+            k_f = exp(log(10000.000000000002) + 2.0 * logT -
                       (3019.3172009925943 * Tinv));
             dG = gbs[13] - gbs[15] - gbs[18] + gbs[20];
             K_c = exp(-dG);
@@ -1557,7 +1468,12 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             dG = -gbs[11] - gbs[18] + gbs[28];
             K_c = exp(-dG) / prefRuT;
             //  Three Body Reaction #120
-            k_f *= cTBC[25];
+            cTBC = cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + cs[5] + cs[6] +
+                   cs[7] + cs[8] + cs[9] + cs[10] + cs[11] + cs[12] + cs[13] +
+                   cs[14] + cs[15] + cs[16] + cs[17] + cs[18] + cs[19] +
+                   cs[20] + cs[21] + cs[22] + cs[23] + cs[24] + cs[25] +
+                   cs[26] + cs[27] + cs[28] + cs[29] + cs[30] + cs[31];
+            k_f *= cTBC;
             q_f = k_f * cs[11] * cs[18];
             q_b = -k_f / K_c * cs[28];
             q[120] = q_f + q_b;
@@ -1599,6 +1515,13 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
                       (4277.366034739509 * Tinv));
             dG = -gbs[1] - gbs[25] + gbs[26];
             K_c = exp(-dG) / prefRuT;
+            //  Three Body Reaction #125
+            cTBC = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
+                   cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] +
+                   2.0 * cs[12] + 1.5 * cs[13] + 2.0 * cs[14] + cs[15] +
+                   cs[16] + cs[17] + 3.0 * cs[18] + cs[19] + cs[20] +
+                   3.0 * cs[21] + cs[22] + 3.0 * cs[23] + cs[24] + cs[25] +
+                   cs[26] + cs[27] + cs[28] + cs[29] + cs[30] + cs[31];
             //  Troe Reaction #125
             Fcent = (1.0 - (0.337)) * exp(-T / (1707.0)) +
                     (0.337) * exp(-T / (3200.0)) + exp(-(4131.0) * Tinv);
@@ -1606,7 +1529,7 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             N = 0.75 - 1.27 * log10(Fcent);
             k0 = exp(log(3.8000000000000014e+35) - 7.64 * logT -
                      (5988.312448635313 * Tinv));
-            Pr = cTBC[26] * k0 / k_f;
+            Pr = cTBC * k0 / k_f;
             A = log10(Pr) + C;
             f1 = A / (N - 0.14 * A);
             F_pdr = pow(10.0, log10(Fcent) / (1.0 + f1 * f1));
@@ -1662,6 +1585,13 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
                       (140.9014693796544 * Tinv));
             dG = -gbs[1] - gbs[20] + gbs[21];
             K_c = exp(-dG) / prefRuT;
+            //  Three Body Reaction #131
+            cTBC = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
+                   cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] +
+                   2.0 * cs[12] + 1.5 * cs[13] + 2.0 * cs[14] + cs[15] +
+                   cs[16] + cs[17] + 3.0 * cs[18] + cs[19] + cs[20] +
+                   3.0 * cs[21] + cs[22] + 3.0 * cs[23] + cs[24] + cs[25] +
+                   cs[26] + cs[27] + cs[28] + cs[29] + cs[30] + cs[31];
             //  Troe Reaction #131
             Fcent = (1.0 - (0.782)) * exp(-T / (207.49999999999997)) +
                     (0.782) * exp(-T / (2663.0)) + exp(-(6095.0) * Tinv);
@@ -1669,7 +1599,7 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             N = 0.75 - 1.27 * log10(Fcent);
             k0 = exp(log(1.4000000000000004e+24) - 3.86 * logT -
                      (1670.6888512159023 * Tinv));
-            Pr = cTBC[27] * k0 / k_f;
+            Pr = cTBC * k0 / k_f;
             A = log10(Pr) + C;
             f1 = A / (N - 0.14 * A);
             F_pdr = pow(10.0, log10(Fcent) / (1.0 + f1 * f1));
@@ -1782,6 +1712,13 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             k_f = 25000000000.000004;
             dG = -gbs[11] - gbs[20] + gbs[29];
             K_c = exp(-dG) / prefRuT;
+            //  Three Body Reaction #144
+            cTBC = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
+                   cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] +
+                   2.0 * cs[12] + 1.5 * cs[13] + 2.0 * cs[14] + cs[15] +
+                   cs[16] + cs[17] + 3.0 * cs[18] + cs[19] + cs[20] +
+                   3.0 * cs[21] + cs[22] + 3.0 * cs[23] + cs[24] + cs[25] +
+                   cs[26] + cs[27] + cs[28] + cs[29] + cs[30] + cs[31];
             //  Troe Reaction #144
             Fcent = (1.0 - (0.175)) * exp(-T / (1340.6)) +
                     (0.175) * exp(-T / (60000.0)) + exp(-(10139.8) * Tinv);
@@ -1789,7 +1726,7 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             N = 0.75 - 1.27 * log10(Fcent);
             k0 = exp(log(4.2700000000000004e+52) - 11.94 * logT -
                      (4916.354198376241 * Tinv));
-            Pr = cTBC[28] * k0 / k_f;
+            Pr = cTBC * k0 / k_f;
             A = log10(Pr) + C;
             f1 = A / (N - 0.14 * A);
             F_pdr = pow(10.0, log10(Fcent) / (1.0 + f1 * f1));
@@ -1821,6 +1758,13 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             k_f = 100000000000.00002;
             dG = -gbs[1] - gbs[26] + gbs[27];
             K_c = exp(-dG) / prefRuT;
+            //  Three Body Reaction #147
+            cTBC = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
+                   cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] +
+                   2.0 * cs[12] + 1.5 * cs[13] + 2.0 * cs[14] + cs[15] +
+                   cs[16] + cs[17] + 3.0 * cs[18] + cs[19] + cs[20] +
+                   3.0 * cs[21] + cs[22] + 3.0 * cs[23] + cs[24] + cs[25] +
+                   cs[26] + cs[27] + cs[28] + cs[29] + cs[30] + cs[31];
             //  Troe Reaction #147
             Fcent = (1.0 - (0.55)) * exp(-T / (8900.0)) +
                     (0.55) * exp(-T / (4350.0)) + exp(-(7244.0) * Tinv);
@@ -1828,7 +1772,7 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             N = 0.75 - 1.27 * log10(Fcent);
             k0 = exp(log(5.200000000000002e+33) - 7.297 * logT -
                      (2365.131807444199 * Tinv));
-            Pr = cTBC[29] * k0 / k_f;
+            Pr = cTBC * k0 / k_f;
             A = log10(Pr) + C;
             f1 = A / (N - 0.14 * A);
             F_pdr = pow(10.0, log10(Fcent) / (1.0 + f1 * f1));
@@ -1891,6 +1835,13 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
                       (44670.79798868544 * Tinv));
             dG = gbs[0] + gbs[19] - gbs[21];
             K_c = prefRuT * exp(-dG);
+            //  Three Body Reaction #154
+            cTBC = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
+                   cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] +
+                   2.0 * cs[12] + 1.5 * cs[13] + 2.0 * cs[14] + cs[15] +
+                   cs[16] + cs[17] + 3.0 * cs[18] + cs[19] + cs[20] +
+                   3.0 * cs[21] + cs[22] + 3.0 * cs[23] + cs[24] + cs[25] +
+                   cs[26] + cs[27] + cs[28] + cs[29] + cs[30] + cs[31];
             //  Troe Reaction #154
             Fcent = (1.0 - (0.7345)) * exp(-T / (180.0)) +
                     (0.7345) * exp(-T / (1035.0)) + exp(-(5417.0) * Tinv);
@@ -1898,7 +1849,7 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             N = 0.75 - 1.27 * log10(Fcent);
             k0 = exp(log(7.000000000000001e+47) - 9.31 * logT -
                      (50251.50261518675 * Tinv));
-            Pr = cTBC[30] * k0 / k_f;
+            Pr = cTBC * k0 / k_f;
             A = log10(Pr) + C;
             f1 = A / (N - 0.14 * A);
             F_pdr = pow(10.0, log10(Fcent) / (1.0 + f1 * f1));
@@ -1913,6 +1864,13 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
                       (915.8595509677536 * Tinv));
             dG = -gbs[1] - gbs[21] + gbs[22];
             K_c = exp(-dG) / prefRuT;
+            //  Three Body Reaction #155
+            cTBC = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
+                   cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] +
+                   2.0 * cs[12] + 1.5 * cs[13] + 2.0 * cs[14] + cs[15] +
+                   cs[16] + cs[17] + 3.0 * cs[18] + cs[19] + cs[20] +
+                   3.0 * cs[21] + cs[22] + 3.0 * cs[23] + cs[24] + cs[25] +
+                   cs[26] + cs[27] + cs[28] + cs[29] + cs[30] + cs[31];
             //  Troe Reaction #155
             Fcent = (1.0 - (0.9753)) * exp(-T / (209.99999999999997)) +
                     (0.9753) * exp(-T / (983.9999999999999)) +
@@ -1921,7 +1879,7 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             N = 0.75 - 1.27 * log10(Fcent);
             k0 = exp(log(1.2000000000000001e+36) - 7.62 * logT -
                      (3507.440148486397 * Tinv));
-            Pr = cTBC[31] * k0 / k_f;
+            Pr = cTBC * k0 / k_f;
             A = log10(Pr) + C;
             f1 = A / (N - 0.14 * A);
             F_pdr = pow(10.0, log10(Fcent) / (1.0 + f1 * f1));
@@ -1968,7 +1926,7 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             q[159] = q_f + q_b;
 
             // Reaction #160
-            k_f = exp(log(3600.0000000000005) + 2 * logT -
+            k_f = exp(log(3600.0000000000005) + 2.0 * logT -
                       (1258.0488337469144 * Tinv));
             dG = -gbs[4] + gbs[5] + gbs[20] - gbs[21];
             K_c = exp(-dG);
@@ -1993,7 +1951,7 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             q[162] = q_f + q_b;
 
             // Reaction #163
-            k_f = exp(log(10000.000000000002) + 2 * logT -
+            k_f = exp(log(10000.000000000002) + 2.0 * logT -
                       (4025.7562679901257 * Tinv));
             dG = gbs[13] - gbs[15] - gbs[21] + gbs[22];
             K_c = exp(-dG);
@@ -2026,7 +1984,7 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             q[166] = q_f + q_b;
 
             // Reaction #167
-            k_f = exp(log(227.00000000000003) + 2 * logT -
+            k_f = exp(log(227.00000000000003) + 2.0 * logT -
                       (4629.619708188645 * Tinv));
             dG = -gbs[11] + gbs[12] + gbs[20] - gbs[21];
             K_c = exp(-dG);
@@ -2047,6 +2005,13 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
                       (795.0868629280499 * Tinv));
             dG = -gbs[1] - gbs[22] + gbs[23];
             K_c = exp(-dG) / prefRuT;
+            //  Three Body Reaction #169
+            cTBC = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
+                   cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] +
+                   2.0 * cs[12] + 1.5 * cs[13] + 2.0 * cs[14] + cs[15] +
+                   cs[16] + cs[17] + 3.0 * cs[18] + cs[19] + cs[20] +
+                   3.0 * cs[21] + cs[22] + 3.0 * cs[23] + cs[24] + cs[25] +
+                   cs[26] + cs[27] + cs[28] + cs[29] + cs[30] + cs[31];
             //  Troe Reaction #169
             Fcent = (1.0 - (0.8422)) * exp(-T / (125.0)) +
                     (0.8422) * exp(-T / (2219.0)) + exp(-(6882.0) * Tinv);
@@ -2054,7 +2019,7 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             N = 0.75 - 1.27 * log10(Fcent);
             k0 = exp(log(1.9900000000000005e+35) - 7.08 * logT -
                      (3364.022581439249 * Tinv));
-            Pr = cTBC[32] * k0 / k_f;
+            Pr = cTBC * k0 / k_f;
             A = log10(Pr) + C;
             f1 = A / (N - 0.14 * A);
             F_pdr = pow(10.0, log10(Fcent) / (1.0 + f1 * f1));
@@ -2184,6 +2149,13 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             k_f = 200000000000.00003;
             dG = -gbs[1] - gbs[28] + gbs[29];
             K_c = exp(-dG) / prefRuT;
+            //  Three Body Reaction #184
+            cTBC = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
+                   cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] +
+                   2.0 * cs[12] + 1.5 * cs[13] + 2.0 * cs[14] + cs[15] +
+                   cs[16] + cs[17] + 3.0 * cs[18] + cs[19] + cs[20] +
+                   3.0 * cs[21] + cs[22] + 3.0 * cs[23] + cs[24] + cs[25] +
+                   cs[26] + cs[27] + cs[28] + cs[29] + cs[30] + cs[31];
             //  Troe Reaction #184
             Fcent = (1.0 - (0.02)) * exp(-T / (1096.6)) +
                     (0.02) * exp(-T / (1096.6)) + exp(-(6859.5) * Tinv);
@@ -2191,7 +2163,7 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             N = 0.75 - 1.27 * log10(Fcent);
             k0 = exp(log(1.3300000000000002e+54) - 12.0 * logT -
                      (3003.113532013934 * Tinv));
-            Pr = cTBC[33] * k0 / k_f;
+            Pr = cTBC * k0 / k_f;
             A = log10(Pr) + C;
             f1 = A / (N - 0.14 * A);
             F_pdr = pow(10.0, log10(Fcent) / (1.0 + f1 * f1));
@@ -2237,6 +2209,13 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             k_f = exp(log(13300000000.000002) - (1640.8479328794253 * Tinv));
             dG = -gbs[1] - gbs[29] + gbs[30];
             K_c = exp(-dG) / prefRuT;
+            //  Three Body Reaction #189
+            cTBC = 2.0 * cs[0] + cs[1] + cs[2] + cs[3] + cs[4] + 6.0 * cs[5] +
+                   cs[6] + cs[7] + cs[8] + cs[9] + cs[10] + cs[11] +
+                   2.0 * cs[12] + 1.5 * cs[13] + 2.0 * cs[14] + cs[15] +
+                   cs[16] + cs[17] + cs[18] + cs[19] + cs[20] + cs[21] +
+                   cs[22] + 3.0 * cs[23] + cs[24] + cs[25] + cs[26] + cs[27] +
+                   cs[28] + cs[29] + cs[30] + cs[31];
             //  Troe Reaction #189
             Fcent = (1.0 - (1.0)) * exp(-T / (1000.0)) +
                     (1.0) * exp(-T / (1310.0)) + exp(-(48097.0) * Tinv);
@@ -2244,7 +2223,7 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             N = 0.75 - 1.27 * log10(Fcent);
             k0 = exp(log(6.260000000000001e+32) - 6.66 * logT -
                      (3522.53673449136 * Tinv));
-            Pr = cTBC[34] * k0 / k_f;
+            Pr = cTBC * k0 / k_f;
             A = log10(Pr) + C;
             f1 = A / (N - 0.14 * A);
             F_pdr = pow(10.0, log10(Fcent) / (1.0 + f1 * f1));
@@ -2300,7 +2279,7 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             q[194] = q_f + q_b;
 
             // Reaction #195
-            k_f = exp(log(3100.0000000000005) + 2 * logT -
+            k_f = exp(log(3100.0000000000005) + 2.0 * logT -
                       (-149.9594209826322 * Tinv));
             dG = -gbs[4] + gbs[5] + gbs[28] - gbs[29];
             K_c = exp(-dG);
