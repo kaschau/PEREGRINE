@@ -61,23 +61,24 @@ void kineticTheoryUnityLewis(block_ &b, const thtrdat_ &th, const int &nface,
 
         // Update mixture properties
         // Mole fractions
-        double mass = 0.0;
-        for (int n = 0; n <= ns - 1; n++) {
-          mass += Y(n) / th.MW(n);
-        }
-
-        // Mean molecular weight, mole fraction
         double MWmix;
-        MWmix = 0.0;
-        for (int n = 0; n <= ns - 1; n++) {
-          X(n) = Y(n) / th.MW(n) / mass;
-          MWmix += X(n) * th.MW(n);
+        {
+          double mass = 0.0;
+          for (int n = 0; n <= ns - 1; n++) {
+            mass += Y(n) / th.MW(n);
+          }
+
+          // Mean molecular weight, mole fraction
+          MWmix = 0.0;
+          for (int n = 0; n <= ns - 1; n++) {
+            X(n) = Y(n) / th.MW(n) / mass;
+            MWmix += X(n) * th.MW(n);
+          }
         }
 
         // Evaluate all property polynomials
         double logT = log(T);
         double sqrt_T = exp(0.5 * logT);
-
         for (int n = 0; n <= ns - 1; n++) {
           // Set to constant value first
           mu_sp(n) = th.muPoly(n, deg);
@@ -97,15 +98,14 @@ void kineticTheoryUnityLewis(block_ &b, const thtrdat_ &th, const int &nface,
         // Now every species' property is computed, generate mixture values
 
         // viscosity mixture
-        double phi;
         double mu = 0.0;
         for (int n = 0; n <= ns - 1; n++) {
           double phitemp = 0.0;
           for (int n2 = 0; n2 <= ns - 1; n2++) {
-            phi = pow((1.0 +
-                       sqrt(mu_sp(n) / mu_sp(n2) * sqrt(th.MW(n2) / th.MW(n)))),
-                      2.0) /
-                  (sqrt(8.0) * sqrt(1 + th.MW(n) / th.MW(n2)));
+            double phi = pow((1.0 + sqrt(mu_sp(n) / mu_sp(n2) *
+                                         sqrt(th.MW(n2) / th.MW(n)))),
+                             2.0) /
+                         (sqrt(8.0) * sqrt(1 + th.MW(n) / th.MW(n2)));
             phitemp += phi * X(n2);
           }
           mu += mu_sp(n) * X(n) / phitemp;
@@ -113,14 +113,15 @@ void kineticTheoryUnityLewis(block_ &b, const thtrdat_ &th, const int &nface,
 
         // thermal conductivity mixture
         double kappa = 0.0;
-
-        double sum1 = 0.0;
-        double sum2 = 0.0;
-        for (int n = 0; n <= ns - 1; n++) {
-          sum1 += X(n) * kappa_sp(n);
-          sum2 += X(n) / kappa_sp(n);
+        {
+          double sum1 = 0.0;
+          double sum2 = 0.0;
+          for (int n = 0; n <= ns - 1; n++) {
+            sum1 += X(n) * kappa_sp(n);
+            sum2 += X(n) / kappa_sp(n);
+          }
+          kappa = 0.5 * (sum1 + 1.0 / sum2);
         }
-        kappa = 0.5 * (sum1 + 1.0 / sum2);
 
         // Set values of new properties
         // viscocity

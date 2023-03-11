@@ -38,7 +38,6 @@ void constantProps(block_ &b, const thtrdat_ &th, const int &nface,
         double Y(ns);
         double X(ns);
 #endif
-        double MWmix;
 
         // Compute nth species Y
         Y(ns - 1) = 1.0;
@@ -50,45 +49,48 @@ void constantProps(block_ &b, const thtrdat_ &th, const int &nface,
 
         // Update mixture properties
         // Mole fractions
-        double mass = 0.0;
-        for (int n = 0; n <= ns - 1; n++) {
-          mass += Y(n) / th.MW(n);
-        }
-        for (int n = 0; n <= ns - 1; n++) {
-          X(n) = Y(n) / th.MW(n) / mass;
+        {
+          double mass = 0.0;
+          for (int n = 0; n <= ns - 1; n++) {
+            mass += Y(n) / th.MW(n);
+          }
+          for (int n = 0; n <= ns - 1; n++) {
+            X(n) = Y(n) / th.MW(n) / mass;
+          }
         }
         // Mean molecular weight
-        MWmix = 0.0;
-        for (int n = 0; n <= ns - 1; n++) {
-          MWmix += X(n) * th.MW(n);
+        {
+          double MWmix = 0.0;
+          for (int n = 0; n <= ns - 1; n++) {
+            MWmix += X(n) * th.MW(n);
+          }
         }
 
         // viscosity mixture
-        double phi;
         double mu = 0.0;
-        double phitemp;
         for (int n = 0; n <= ns - 1; n++) {
-          phitemp = 0.0;
+          double phitemp = 0.0;
           for (int n2 = 0; n2 <= ns - 1; n2++) {
-            phi = pow((1.0 + sqrt(th.mu0(n) / th.mu0(n2) *
-                                  sqrt(th.MW(n2) / th.MW(n)))),
-                      2.0) /
-                  (sqrt(8.0) * sqrt(1 + th.MW(n) / th.MW(n2)));
+            double phi = pow((1.0 + sqrt(th.mu0(n) / th.mu0(n2) *
+                                         sqrt(th.MW(n2) / th.MW(n)))),
+                             2.0) /
+                         (sqrt(8.0) * sqrt(1 + th.MW(n) / th.MW(n2)));
             phitemp += phi * X(n2);
           }
           mu += th.mu0(n) * X(n) / phitemp;
         }
 
         // thermal conductivity mixture
-        double kappa = 0.0;
-
-        double sum1 = 0.0;
-        double sum2 = 0.0;
-        for (int n = 0; n <= ns - 1; n++) {
-          sum1 += X(n) * th.kappa0(n);
-          sum2 += X(n) / th.kappa0(n);
+        double kappa;
+        {
+          double sum1 = 0.0;
+          double sum2 = 0.0;
+          for (int n = 0; n <= ns - 1; n++) {
+            sum1 += X(n) * th.kappa0(n);
+            sum2 += X(n) / th.kappa0(n);
+          }
+          kappa = 0.5 * (sum1 + 1.0 / sum2);
         }
-        kappa = 0.5 * (sum1 + 1.0 / sum2);
 
         // Set values of new properties
         // viscocity
