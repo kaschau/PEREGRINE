@@ -2991,6 +2991,9 @@ void chem_C2H4_Air_Red22(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
         // Compute d(rhoYi)/dt based on where we end up
         // Add source terms to RHS
         for (int n = 0; n < 21; n++) {
+          if (Kokkos::isnan(dYdt[n])) {
+            dYdt[n] = 0.0;
+          }
           b.dQ(i, j, k, 5 + n) = dYdt[n];
         }
 

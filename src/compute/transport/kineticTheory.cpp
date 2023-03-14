@@ -161,7 +161,7 @@ void kineticTheory(block_ &b, const thtrdat_ &th, const int &nface,
           // HACK must be a better way to give zero for sum2 when MWmix ==
           // th.MW(n)*X(n)
           double temp = p * X(n) / (MWmix - th.MW(n) * X(n));
-          if (isinf(temp)) {
+          if (Kokkos::isinf(temp)) {
             D(n) = 0.0;
           } else {
             sum2 *= temp;
