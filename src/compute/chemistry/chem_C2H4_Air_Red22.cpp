@@ -3048,7 +3048,7 @@ void chem_C2H4_Air_Red22(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
           dYdt[20] *= th.MW(20) * 1000.0;
 
           for (int n = 0; n < 21; n++) {
-            if (Kokkos::isnan(dYdt[n])) {
+            if (Kokkos::isfinite(dYdt[n]) == false) {
               dYdt[n] = 0.0;
             }
           }
