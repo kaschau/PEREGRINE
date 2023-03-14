@@ -133,7 +133,7 @@ void chem_C2H4_Air_Red22(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
         double TN4 = TN3 * T;
         double TN5 = TN4 * T;
         // HACK: IS THIS RIGHT FOR PATM?
-        double prefRuT = 101325.0 / (8.31451e7 * T);
+        double prefRuT = 1013250.0 / (8.31451e7 * T);
 
         double SMH[31];
         if (T > 1000.0) {
