@@ -350,18 +350,38 @@ void stagnationSubsonicInlet(
     threeDsubview Q1 = getHaloSlice(b.Q, face._nface, s1);
     threeDsubview qh1 = getHaloSlice(b.qh, face._nface, s1);
     twoDsubview nx, ny, nz;
-    if (face._nface == 1 || face._nface == 2) {
+
+    switch (face._nface) {
+    case 1:
       nx = getHaloSlice(b.inx, face._nface, s1);
       ny = getHaloSlice(b.iny, face._nface, s1);
       nz = getHaloSlice(b.inz, face._nface, s1);
-    } else if (face._nface == 3 || face._nface == 4) {
+      break;
+    case 2:
+      nx = getHaloSlice(b.inx, face._nface, s0);
+      ny = getHaloSlice(b.iny, face._nface, s0);
+      nz = getHaloSlice(b.inz, face._nface, s0);
+      break;
+    case 3:
       nx = getHaloSlice(b.jnx, face._nface, s1);
       ny = getHaloSlice(b.jny, face._nface, s1);
       nz = getHaloSlice(b.jnz, face._nface, s1);
-    } else if (face._nface == 5 || face._nface == 6) {
+      break;
+    case 4:
+      nx = getHaloSlice(b.jnx, face._nface, s0);
+      ny = getHaloSlice(b.jny, face._nface, s0);
+      nz = getHaloSlice(b.jnz, face._nface, s0);
+      break;
+    case 5:
       nx = getHaloSlice(b.knx, face._nface, s1);
       ny = getHaloSlice(b.kny, face._nface, s1);
       nz = getHaloSlice(b.knz, face._nface, s1);
+      break;
+    case 6:
+      nx = getHaloSlice(b.knx, face._nface, s0);
+      ny = getHaloSlice(b.kny, face._nface, s0);
+      nz = getHaloSlice(b.knz, face._nface, s0);
+      break;
     }
 
     MDRange2 range_face = MDRange2({0, 0}, {q1.extent(0), q1.extent(1)});

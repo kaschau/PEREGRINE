@@ -17,8 +17,15 @@ def create(bc, adv, spdata):
         lengths=[1, 1, 1],
     )
 
-    mb.initSolverArrays(config)
+    # perturb the ineterio points a bit
+    for blk in mb:
+        i = blk.ng + 1
+        size = blk.array["x"][i:-i, i:-i, i:-i].shape
+        blk.array["x"][i:-i, i:-i, i:-i] += np.random.uniform(-1, 1, size) * 0.02
+        blk.array["y"][i:-i, i:-i, i:-i] += np.random.uniform(-1, 1, size) * 0.02
+        blk.array["z"][i:-i, i:-i, i:-i] += np.random.uniform(-1, 1, size) * 0.02
 
+    mb.initSolverArrays(config)
     mb.generateHalo()
     mb.computeMetrics(config["RHS"]["diffOrder"])
 
