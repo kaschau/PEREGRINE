@@ -20,7 +20,6 @@ class pgConfigError(Exception):
 # Consistify
 #########################################
 def setConsistify(cls, config):
-
     # EOS
     eos = config["thermochem"]["eos"]
     try:
@@ -149,7 +148,6 @@ def setRHS(cls, config):
 
 
 def howManyNG(config):
-
     advFluxNG = {
         "secondOrderKEEP": 1,
         "centralDifference": 1,
@@ -192,7 +190,6 @@ def howManyNG(config):
 
 
 def generateMultiBlockSolver(nblks, config, myblocks=None):
-
     # Get the time integrator from config file
     ti = config["timeIntegration"]["integrator"]
     tic = getIntegrator(ti)

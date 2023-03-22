@@ -3,7 +3,6 @@ from .mpiComm import communicate
 
 
 def RHS(mb):
-
     for blk in mb:
         # Zero out dQ array
         utils.dQzero(blk)

@@ -21,7 +21,6 @@ pytestmark = pytest.mark.parametrize(
 
 
 def test_adiabaticNoSlipWall(my_setup, adv, spdata):
-
     mb = create("adiabaticNoSlipWall", adv, spdata)
     blk = mb[0]
 
@@ -104,7 +103,6 @@ def test_adiabaticNoSlipWall(my_setup, adv, spdata):
 
 
 def test_adiabaticSlipWall(my_setup, adv, spdata):
-
     mb = create("adiabaticSlipWall", adv, spdata)
     blk = mb[0]
 
@@ -165,7 +163,6 @@ def test_adiabaticSlipWall(my_setup, adv, spdata):
 
 
 def test_adiabaticMovingWall(my_setup, adv, spdata):
-
     mb = create("adiabaticMovingWall", adv, spdata)
     blk = mb[0]
 
@@ -254,7 +251,6 @@ def test_adiabaticMovingWall(my_setup, adv, spdata):
 
 
 def test_isoTNoSlipWall(my_setup, adv, spdata):
-
     mb = create("isoTNoSlipWall", adv, spdata)
     blk = mb[0]
 
@@ -347,7 +343,6 @@ def test_isoTNoSlipWall(my_setup, adv, spdata):
 
 
 def test_isoTSlipWall(my_setup, adv, spdata):
-
     mb = create("isoTSlipWall", adv, spdata)
     blk = mb[0]
 
@@ -436,7 +431,6 @@ def test_isoTSlipWall(my_setup, adv, spdata):
 
 
 def test_isoTMovingWall(my_setup, adv, spdata):
-
     mb = create("isoTMovingWall", adv, spdata)
     blk = mb[0]
 

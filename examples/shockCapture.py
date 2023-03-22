@@ -90,7 +90,6 @@ def prefun(p, test, side):
 
 
 def pStar(test):
-
     uL = test.uL
     uR = test.uR
 
@@ -198,7 +197,6 @@ def sample(test, pM, uM, s):
 
 
 def solve(test, npts=250):
-
     uL = test.uL
     uR = test.uR
     cL, cR = test.cL, test.cR
@@ -232,7 +230,6 @@ def solve(test, npts=250):
 
 class state:
     def __init__(self, test, gamma, R):
-
         self.name = str(test)
 
         if test == 0:
@@ -334,7 +331,6 @@ class state:
 
 
 def simulate(testnum, index="i"):
-
     nx = 201
     config = pg.files.configFile()
     config["thermochem"]["spdata"] = ["DB"]

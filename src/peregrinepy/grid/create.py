@@ -14,7 +14,6 @@ import numpy as np
 def cubicConnectivity(
     blk, mbDims, blkNum, i, j, k, periodicI=False, periodicJ=False, periodicK=False
 ):
-
     # i faces
     # face 1
     face = blk.getFace(1)
@@ -122,7 +121,6 @@ def cubicConnectivity(
 
 
 def cube(blk, origin, lengths, dimensions):
-
     """Function to populate the coordinate arrays of a provided peregrinepy.block in the shape of a cube with prescribed location, extents, and discretization.
     If the input multiBlock object is a restart block the shape and size of the flow data arrays are also updated.
 
@@ -181,7 +179,6 @@ def multiBlockCube(
     dimsPerBlock=[10, 10, 10],
     periodic=[False, False, False],
 ):
-
     """Function to populate the coordinate arrays of a peregrinepy.multiBlock.grid (or one of its descendants) in the shape of a cube
        with prescribed location, extents, and discretization split into as manj  blocks as mb.nblks. Will also update
        connectivity of interblock faces. If the input multiBlock object is a restart block the shape and size of the flow
@@ -277,7 +274,6 @@ def multiBlockCube(
 
 
 def annulus(blk, p1, p2, p3, sweep, thickness, dimensions):
-
     """Function to populate the coordinate arrays of a provided peregrinepy.grid.grid_block in the shape of an annulus with prescribed location, extents, and discretization.
     If the input multiBlock object is a restart block the shape and size of the flow data arrays are also updated.
 
@@ -370,7 +366,6 @@ def annulus(blk, p1, p2, p3, sweep, thickness, dimensions):
     p = pts - p1
     shape = blk.array["x"][s_i][:, :, 0].shape
     for k in range(1, blk.nk):
-
         # See http://paulbourke.net/geometry/rotate/
         theta = k * dtheta * np.pi / 180.0
         ct = np.cos(theta)
@@ -408,7 +403,6 @@ def multiBlockAnnulus(
     dimsPerBlock=[10, 10, 10],
     periodic=False,
 ):
-
     """
     Function to populate the coordinate arrays of a peregrinepy.multiBlock.grid (or one of its descendants) in the shape
        of an annulus with prescribed location, extents, and discretization split into as manj blocks as mb.nblks.
@@ -488,7 +482,6 @@ def multiBlockAnnulus(
     dtheta = sweep / mbDims[2]
 
     for k in range(int(mbDims[2])):
-
         # See http://paulbourke.net/geometry/rotate/
         theta = k * dtheta * np.pi / 180.0
         ct = np.cos(theta)
@@ -515,7 +508,6 @@ def multiBlockAnnulus(
 
         for j in range(int(mbDims[1])):
             for i in range(int(mbDims[0])):
-
                 blkNum = k * mbDims[1] * mbDims[0] + j * mbDims[0] + i
                 blk = mb[blkNum]
 
@@ -530,7 +522,6 @@ def multiBlockAnnulus(
 
                 # Update the k faces if necessary
                 if connect:
-
                     if k == 0:
                         face = blk.getFace(5)
                         if float(sweep) == 360.0:

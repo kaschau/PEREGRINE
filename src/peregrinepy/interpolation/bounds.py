@@ -16,7 +16,6 @@ from ..misc import progressBar
 
 
 def ptsInBlkBounds(blk, testPts):
-
     """
     Takes a block, defines a cube from the extent of that block, and test to see if
     any of the supplied test points are inside that cube.

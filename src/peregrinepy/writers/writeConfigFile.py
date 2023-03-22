@@ -13,7 +13,6 @@ class myDumper(yaml.SafeDumper):
 
 
 def writeConfigFile(config, filePath="./"):
-
     """This function write a PEREGRINE input file dtms.inp from a peregrinepy.files.inputFile object
 
     Parameters

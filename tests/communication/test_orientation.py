@@ -98,7 +98,6 @@ class TestOrientation:
     # Test for all positive i aligned orientations
     ##############################################
     def test_123(self, my_setup, adv, spdata):
-
         tb = twoblock123(adv, spdata)
         blk0 = tb.mb[0]
         blk1 = tb.mb[1]
@@ -149,7 +148,6 @@ class TestOrientation:
         assert False not in passfail
 
     def test_135(self, my_setup, adv, spdata):
-
         tb = twoblock123(adv, spdata)
         blk0 = tb.mb[0]
         blk1 = tb.mb[1]

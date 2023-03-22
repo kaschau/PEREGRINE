@@ -6,14 +6,12 @@ from ..compute.timeIntegration import rk34s1, rk34s2, rk34s3, rk34s4
 
 
 class rk34:
-
     __metaclass__ = ABCMeta
 
     def __init__(self):
         pass
 
     def step(self, dt):
-
         # First Stage
         self.titme = self.tme
         RHS(self)

@@ -25,7 +25,6 @@ T1 = 300.0
 
 
 def simulate():
-
     config = pg.files.configFile()
     config["RHS"]["diffusion"] = False
     config["RHS"]["primaryAdvFlux"] = "rusanov"

@@ -28,7 +28,6 @@ class topologyBlock:
     blockType = "topology"
 
     def __init__(self, nblki):
-
         self.nblki = nblki
 
         self.faces = []

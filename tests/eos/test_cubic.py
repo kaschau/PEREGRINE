@@ -10,7 +10,6 @@ def print_diff(name, c, p):
 
 
 def test_cubic(my_setup):
-
     config = pg.files.configFile()
     config["thermochem"]["spdata"] = ["O2", "N2", "CO2", "CH4"]
     config["thermochem"]["eos"] = "cubic"

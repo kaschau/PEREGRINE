@@ -219,7 +219,6 @@ while go:
 go = True
 
 for blk in mb:
-
     gpBlkFile.seek(blockStart)
     blkShape = tuple([int(b) for b in gpBlkFile.readline().strip().split()])
 

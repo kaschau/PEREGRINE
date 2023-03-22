@@ -12,7 +12,6 @@ class rk2:
         pass
 
     def step(self, dt):
-
         # Stage 1
         self.titme = self.tme
         RHS(self)

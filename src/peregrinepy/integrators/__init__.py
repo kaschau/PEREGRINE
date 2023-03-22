@@ -9,7 +9,6 @@ from .dualTime import dualTime
 
 
 def getIntegrator(ti):
-
     if ti == "rk1":
         return rk1
     elif ti == "rk2":

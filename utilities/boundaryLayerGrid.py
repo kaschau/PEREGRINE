@@ -83,7 +83,6 @@ def growToDy(startDy, endDy, gr):
 
 
 if __name__ == "__main__":
-
     parser = argparse.ArgumentParser(
         description="Utility to create a boundary layer grid."
     )

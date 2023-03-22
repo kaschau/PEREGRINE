@@ -165,7 +165,6 @@ def parallelWriteRestart(
     metaData,
     path="./",
 ):
-
     comm, rank, size = getCommRankSize()
 
     if metaData.precision == "double":
@@ -275,7 +274,6 @@ def parallelWriteArbitraryArray(
     metaData,
     path="./",
 ):
-
     comm, rank, size = getCommRankSize()
 
     if metaData.precision == "double":

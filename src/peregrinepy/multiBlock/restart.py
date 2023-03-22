@@ -22,7 +22,6 @@ class restart(grid):
     mbType = "restart"
 
     def __init__(self, nblks, spNames, ls=None):
-
         if ls is None:
             temp = [restartBlock(i, spNames) for i in range(nblks)]
             super().__init__(nblks, temp)

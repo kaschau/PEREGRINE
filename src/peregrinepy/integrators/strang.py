@@ -31,7 +31,6 @@ class strang:
         pass
 
     def non_stiff(self, dt):
-
         # First Stage
         self.titme = self.tme
         RHS(self)
@@ -60,7 +59,6 @@ class strang:
         consistify(self)
 
     def step(self, dt):
-
         ###############################################################
         # Take a half step in time for non-stiff operator
         ###############################################################

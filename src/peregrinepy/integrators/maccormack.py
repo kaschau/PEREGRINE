@@ -12,7 +12,6 @@ class maccormack:
         pass
 
     def step(self, dt):
-
         # store zeroth stage solution
         for blk in self:
             AEQB(blk.Q0, blk.Q)

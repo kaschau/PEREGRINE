@@ -7,7 +7,6 @@ from paraview.vtk.util import numpy_support
 
 class catalystCoprocessor:
     def __init__(self, mb):
-
         bridge.initialize()
         # Add the coproc script
         fileName = mb.config["coprocess"]["catalystFile"]
@@ -107,7 +106,6 @@ class catalystCoprocessor:
         grid.GetCellData().AddArray(vtkArray)
 
     def __call__(self, mb):
-
         self.dataDescription.SetTimeData(mb.tme, mb.nrt)
 
         if not self._coProcessor.RequestDataDescription(self.dataDescription):

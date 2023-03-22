@@ -4,7 +4,6 @@ import numpy as np
 
 
 def getCommRankSize():
-
     comm = MPI.COMM_WORLD
     rank = comm.rank
     size = comm.size
@@ -13,7 +12,6 @@ def getCommRankSize():
 
 
 def getNumCells(mb):
-
     comm, rank, size = getCommRankSize()
 
     nCells = np.array([0], dtype=np.int32)
@@ -26,7 +24,6 @@ def getNumCells(mb):
 
 
 def getLoadEfficiency(mb):
-
     comm, rank, size = getCommRankSize()
 
     myCells = np.array([0], dtype=np.int32)
@@ -50,7 +47,6 @@ def getLoadEfficiency(mb):
 
 
 def getDtMaxCFL(mb):
-
     comm, rank, size = getCommRankSize()
 
     cfl = np.array(CFLmax(mb), dtype=np.float64)
@@ -66,7 +62,6 @@ def getDtMaxCFL(mb):
 
 
 def checkForNan(mb):
-
     comm, rank, size = getCommRankSize()
 
     abort = np.array([0], np.int32)

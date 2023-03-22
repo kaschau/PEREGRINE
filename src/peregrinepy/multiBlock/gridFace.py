@@ -5,7 +5,6 @@ from .topologyFace import topologyFace
 
 
 class gridFace(topologyFace):
-
     faceType = "grid"
 
     def __init__(self, nface):
@@ -71,7 +70,6 @@ class gridFace(topologyFace):
 
     @property
     def neighborNface(self):
-
         nface = self.nface
         orientation = self.orientation
 
@@ -96,7 +94,6 @@ class gridFace(topologyFace):
 
     @property
     def neighborOrientation(self):
-
         orientation = self.orientation
 
         dirToOrientIndexMapping = {1: 0, 2: 1, 3: 2, 4: 0, 5: 1, 6: 2}

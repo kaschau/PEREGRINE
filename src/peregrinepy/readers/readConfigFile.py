@@ -3,7 +3,6 @@ from ..files import configFile
 
 
 def readConfigFile(filePath="./peregrine.yaml", parallel=False):
-
     if not parallel:
         rank = 0
         with open(filePath, "r") as connFile:

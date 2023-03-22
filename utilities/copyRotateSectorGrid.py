@@ -16,7 +16,6 @@ from lxml import etree
 
 
 if __name__ == "__main__":
-
     parser = argparse.ArgumentParser(description="Interpolate from one grid to another")
     parser.add_argument(
         "-from",
@@ -162,7 +161,6 @@ if __name__ == "__main__":
 
             # transfer connectivity
             for toFace, fromFace in zip(rotBlk.faces, fromBlk.faces):
-
                 # treat boundary faces
                 if fromFace.neighbor is None:
                     toFace.bcFam = fromFace.bcFam

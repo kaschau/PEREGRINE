@@ -1,5 +1,4 @@
 def readBlocksForProcs(pathToFile="./Input", parallel=False):
-
     fileName = f"{pathToFile}/blocksForProcs.inp"
     if not parallel:
         try:

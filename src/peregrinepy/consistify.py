@@ -2,7 +2,6 @@ from .mpiComm import communicate
 
 
 def consistify(mb, given="cons"):
-
     # We assume that the interior of the blocks have a
     # conservative Q variable field. We update the
     # interior primatives, apply boundary conditions,

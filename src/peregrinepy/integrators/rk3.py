@@ -18,7 +18,6 @@ class rk3:
         pass
 
     def step(self, dt):
-
         # First Stage
         self.titme = self.tme
         RHS(self)

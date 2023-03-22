@@ -47,7 +47,6 @@ class gridMetaData:
         et.write(saveFile, pretty_print=True, encoding="UTF-8", xml_declaration=True)
 
     def addBlockElem(self, nblki, ni, nj, nk, ng):
-
         blockElem = deepcopy(self.blockTemplate)
         blockElem.set("Name", f"B{nblki:06d}")
         topo = blockElem.find("Topology")
@@ -122,7 +121,6 @@ class restartMetaData(gridMetaData):
         self.dataItemTemplate.text = "resultFile location:/results/"
 
     def addBlockElem(self, nblki, ni, nj, nk, ng):
-
         blockElem = deepcopy(self.blockTemplate)
         blockElem.set("Name", f"B{nblki:06d}")
         topo = blockElem.find("Topology")
@@ -162,7 +160,6 @@ class restartMetaData(gridMetaData):
                 return f"q.{nblki:06d}.h5"
 
     def addScalarToBlockElem(self, blockElem, varName, nrt, nblki, ni, nj, nk, ng):
-
         attributeElem = deepcopy(self.scalarAttributeTemplate)
         attributeElem.set("Name", varName)
 
@@ -176,7 +173,6 @@ class restartMetaData(gridMetaData):
     def addVectorToBlockElem(
         self, blockElem, vectorName, varNames, nrt, nblki, ni, nj, nk, ng
     ):
-
         attributeElem = deepcopy(self.vectorAttributeTemplate)
         attributeElem.set("Name", vectorName)
         functionElem = attributeElem.find("DataItem")

@@ -5,7 +5,6 @@ from ..compute.utils import extractSendBuffer, placeRecvBuffer
 
 
 def communicate(mb, varis):
-
     if type(varis) is not list:
         varis = [varis]
     comm, rank, size = getCommRankSize()
