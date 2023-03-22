@@ -37,7 +37,6 @@ needToTranspose = {
 
 
 def extractFace(blk, nface):
-
     faceSliceMapping = {
         1: {"i": 0, "j": slice(None), "k": slice(None)},
         2: {"i": -1, "j": slice(None), "k": slice(None)},
@@ -57,11 +56,9 @@ def extractFace(blk, nface):
 
 
 def verify(mb):
-
     warn = False
     for blk in mb:
         for face in blk.faces:
-
             nface = face.nface
             neighbor = face.neighbor
             bc = face.bcType
@@ -272,18 +269,26 @@ if __name__ == "__main__":
         help="""If your grid has periodics, we need the periodic data from bcFams.""",
         type=str,
     )
+    parser.add_argument(
+        "--not-lumped",
+        action="store_false",
+        dest="isNotLumped",
+        help="""If your grid is not lumped.""",
+    )
 
     args = parser.parse_args()
 
     gp = args.gridPath
     cp = args.connPath
     bcFamPath = args.bcFamPath
+    lump = args.isNotLumped
     tree = etree.parse(f"{gp}/g.xmf")
     nblks = len(tree.getroot().find("Domain").find("Grid"))
     assert nblks > 0
     mb = pg.multiBlock.grid(nblks)
 
-    pg.readers.readGrid(mb, gp)
+    print(lump)
+    pg.readers.readGrid(mb, gp, lump=lump)
     pg.readers.readConnectivity(mb, cp)
     try:
         pg.readers.readBcs(mb, bcFamPath)
