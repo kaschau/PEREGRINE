@@ -9,7 +9,6 @@ from pathlib import Path
 
 
 def test_cpg(my_setup):
-
     relpath = str(Path(__file__).parent)
     ctfile = relpath + "/ct_test_cpg.yaml"
     thfile = relpath + "/thtr_ct_test_cpg.yaml"

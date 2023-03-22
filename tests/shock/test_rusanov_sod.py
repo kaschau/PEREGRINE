@@ -4,7 +4,6 @@ from pathlib import Path
 
 
 def test_rusanov_sod(my_setup):
-
     # Left State
     pL = 1.0
     TL = 0.0035529237601776465

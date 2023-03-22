@@ -22,7 +22,6 @@ np.seterr(all="raise")
 
 
 def simulate():
-
     config = pg.files.configFile()
     config.validateConfig()
 

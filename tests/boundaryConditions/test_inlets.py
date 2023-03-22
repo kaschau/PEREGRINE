@@ -21,7 +21,6 @@ pytestmark = pytest.mark.parametrize(
 
 
 def test_constantVelocitySubsonicInlet(my_setup, adv, spdata):
-
     mb = create("constantVelocitySubsonicInlet", adv, spdata)
     blk = mb[0]
 
@@ -66,7 +65,6 @@ def test_constantVelocitySubsonicInlet(my_setup, adv, spdata):
 
 
 def test_supersonicInlet(my_setup, adv, spdata):
-
     mb = create("supersonicInlet", adv, spdata)
     blk = mb[0]
 
@@ -111,7 +109,6 @@ def test_supersonicInlet(my_setup, adv, spdata):
 
 
 def test_constantMassFluxSubsonicInlet(my_setup, adv, spdata):
-
     # NOTE: fourth order not working for constant mdot
     if adv == "fourthOrderKEEP":
         return
@@ -123,7 +120,6 @@ def test_constantMassFluxSubsonicInlet(my_setup, adv, spdata):
     p = blk.array["q"][:, :, :, 0]
     T = blk.array["q"][:, :, :, 4]
     for face in blk.faces:
-
         face.bcFunc(blk, face, mb.eos, mb.thtrdat, "euler", mb.tme)
         mb.primaryAdvFlux(blk)
         blk.updateHostView(["q", "Q"])

@@ -21,7 +21,6 @@ np.seterr(all="raise")
 
 
 def simulate():
-
     config = pg.files.configFile()
     config.validateConfig()
 
@@ -81,7 +80,6 @@ def simulate():
     t = []
     tEnd = 120.0 / M0
     while mb.tme < tEnd:
-
         if mb.nrt % 50 == 0:
             pg.misc.progressBar(mb.tme, tEnd)
             blk.updateHostView("q")
@@ -132,7 +130,6 @@ def simulate():
 
 
 if __name__ == "__main__":
-
     try:
         kokkos.initialize()
         simulate()

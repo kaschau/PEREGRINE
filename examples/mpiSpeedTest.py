@@ -16,7 +16,6 @@ np.seterr(all="raise")
 
 
 def simulate():
-
     config = pg.files.configFile()
     config["RHS"]["diffusion"] = True
     config["RHS"]["shockHandling"] = "artificialDissipation"
@@ -79,7 +78,6 @@ periodic:
 
 
 if __name__ == "__main__":
-
     try:
         simulate()
 

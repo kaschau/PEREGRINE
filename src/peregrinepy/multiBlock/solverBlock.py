@@ -256,7 +256,6 @@ class solverBlock(restartBlock, block_):
         createViewMirrorArray(self, ["phi"], phiShape)
 
     def setBlockCommunication(self):
-
         for face in self.faces:
             if face.neighbor is None:
                 continue

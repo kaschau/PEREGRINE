@@ -10,7 +10,6 @@ s_ = np.s_
 
 
 class solverFace(gridFace, face_):
-
     faceType = "solver"
 
     def __init__(self, nface, ng):
@@ -103,7 +102,6 @@ class solverFace(gridFace, face_):
         createViewMirrorArray(self, "periodicRotMatrixDown", (3, 3))
 
     def _setBcFunc(self):
-
         bcType = self.bcType
         if bcType == "b0" or bcType.startswith("periodicTrans"):
             self.bcFunc = null
@@ -272,7 +270,6 @@ class solverFace(gridFace, face_):
 
         # Cell Center, ne vars
         for var in ["q", "Q", "dqdx", "dqdy", "dqdz", "phi"]:
-
             # Only "q" and "Q" need ALL ghost layers
             if var in ["q", "Q"]:
                 nLayers = ng

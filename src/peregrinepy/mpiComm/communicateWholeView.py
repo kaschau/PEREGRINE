@@ -4,7 +4,6 @@ from mpi4py.MPI import Request
 
 
 def communicate(mb, varis):
-
     varis = list(varis)
     comm, rank, size = getCommRankSize()
 

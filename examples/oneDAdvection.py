@@ -19,7 +19,6 @@ import matplotlib.pyplot as plt
 
 
 def simulate(index="i"):
-
     config = pg.files.configFile()
     config["RHS"]["diffusion"] = False
     config.validateConfig()
@@ -82,7 +81,6 @@ def simulate(index="i"):
     dt = 0.1 * 0.025
     tEnd = 11.0
     while mb.tme < tEnd:
-
         if mb.nrt % 50 == 0:
             pg.misc.progressBar(mb.tme, tEnd)
 

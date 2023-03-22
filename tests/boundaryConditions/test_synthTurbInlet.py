@@ -8,7 +8,6 @@ from scipy import interpolate as itrp
 
 
 def test_synthTurbInlet(my_setup):
-
     seminp = {}
     seminp["domainType"] = "channel"
     seminp["Uo"] = 4.519722

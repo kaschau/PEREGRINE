@@ -38,7 +38,6 @@ def analyzeLoad(procSizes, procGroups):
 
 
 def allBlocksAssigned(mb, procGroups):
-
     for nblki in mb.blockList:
         found = False
         for group in procGroups:
@@ -185,7 +184,6 @@ if __name__ == "__main__":
         tbaLoads = sizesL_S[numProcs::]
 
         for assignProc, assignSize in zip(tbaProcs, tbaLoads):
-
             ncellWeight = 0.9
             nBlocksWeight = 1.0 - ncellWeight
             normLoad = procLoad / np.max(procLoad)

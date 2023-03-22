@@ -87,7 +87,6 @@ if __name__ == "__main__":
 
 
 def simulate():
-
     config = pg.files.configFile()
     config["RHS"]["diffusion"] = True
     config["thermochem"]["spdata"] = ["Air"]
@@ -176,7 +175,6 @@ def simulate():
     dt = 1.44e-6
     mb.coproc(mb, mb.nrt)
     while mb.nrt < 100:
-
         pg.misc.progressBar(mb.nrt, 100)
         mb.step(dt)
         mb.coproc(mb, mb.nrt)
@@ -187,7 +185,6 @@ def simulate():
 
 
 if __name__ == "__main__":
-
     try:
         kokkos.initialize()
         simulate()

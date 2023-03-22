@@ -171,7 +171,6 @@ def getPointsTagsFromInput(inp):
 
 
 def generateTracePoints(mb, points, tags):
-
     indexes = np.zeros((points.shape[0], 4), dtype=int)
     tags = np.array(tags)
 

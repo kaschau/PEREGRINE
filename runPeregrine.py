@@ -12,7 +12,6 @@ np.seterr(all="raise")
 
 
 def simulate(configFilePath):
-
     comm, rank, size = pg.mpiComm.mpiUtils.getCommRankSize()
     if rank == 0:
         string = " >>> ******************************** <<<\n"

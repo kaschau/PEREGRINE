@@ -30,7 +30,6 @@ class TestPeriodics:
         pass
 
     def test_rotationalPeriodics(self, my_setup, adv, spdata):
-
         config = pg.files.configFile()
         config["RHS"]["primaryAdvFlux"] = adv
         config["RHS"]["diffusion"] = True

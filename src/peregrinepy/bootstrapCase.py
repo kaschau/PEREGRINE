@@ -2,7 +2,6 @@ import peregrinepy as pg
 
 
 def bootstrapCase(config):
-
     comm, rank, size = pg.mpiComm.mpiUtils.getCommRankSize()
     ################################################################
     # First we determine what bocks we are responsible for

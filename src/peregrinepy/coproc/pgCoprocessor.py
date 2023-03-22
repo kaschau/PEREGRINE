@@ -3,7 +3,6 @@ from peregrinepy.misc import null
 
 class coprocessor:
     def __init__(self, mb):
-
         config = mb.config
         # Trace points
         if config["coprocess"]["trace"]:
@@ -25,7 +24,6 @@ class coprocessor:
             self.catalyst = null
 
     def __call__(self, mb, nrt):
-
         if mb.nrt % mb.config["coprocess"]["niterTrace"] == 0:
             self.trace(mb)
 

@@ -4,7 +4,6 @@ s_ = np.s_
 
 
 def generateHalo(blk):
-
     assert blk.blockType == "solver", "Only solver blocks can generate halos."
 
     ni = blk.ni

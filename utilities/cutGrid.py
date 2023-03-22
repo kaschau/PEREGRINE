@@ -37,7 +37,6 @@ def extractCorners(mb, incompleteBlocks, foundFaces):
         return corners
 
     for index, nblki in enumerate(incompleteBlocks):
-
         blk = mb.getBlock(nblki)
         for var in corners:
             corners[var].append([])
@@ -152,7 +151,6 @@ def findInteriorNeighbor(mb, incompleteBlocks, foundFaces):
 
 
 def cutBlock(mb, nblki, cutAxis, cutIndex, incompleteBlocks, foundFaces):
-
     oldBlk = mb.getBlock(nblki)
 
     # Make sure we arent trying to split at an index greater than the number of grid points
@@ -251,7 +249,6 @@ def cutBlock(mb, nblki, cutAxis, cutIndex, incompleteBlocks, foundFaces):
 
 
 def cutPath(mb, nblki, cutAxis):
-
     axisMap = {"i": 0, "j": 1, "k": 2}
     orientationMap = {"1": "i", "2": "j", "3": "k", "4": "i", "5": "j", "6": "k"}
 
@@ -421,7 +418,6 @@ if __name__ == "__main__":
         performCutOperations(mb, cutOperations)
 
     elif maxBlockSize > 0:
-
         results = analyzeGrid(mb)
         print(f"  ... max block size {results['maxCells']}")
         maxCells = results["maxCells"]

@@ -8,7 +8,6 @@ import numpy as np
 
 
 def test_constantProps(my_setup):
-
     config = pg.files.configFile()
     config["thermochem"]["spdata"] = ["Air"]
     config["thermochem"]["eos"] = "cpg"

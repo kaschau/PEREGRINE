@@ -135,7 +135,6 @@ class thtrdat(thtrdat_):
                 createViewMirrorArray(self, ["DijPoly"], shape)
 
             elif config["thermochem"]["trans"] == "constantProps":
-
                 self.array["mu0"] = completeSpecies("mu0", usersp, refsp)
                 shape = [ns]
                 createViewMirrorArray(self, ["mu0"], shape)

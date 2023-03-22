@@ -31,7 +31,6 @@ import os
 
 
 if __name__ == "__main__":
-
     parser = argparse.ArgumentParser(description="Interpolate from one grid to another")
     parser.add_argument(
         "-from",

@@ -4,7 +4,6 @@ from ..compute import KokkosLocation
 
 
 def createViewMirrorArray(obj, names, shape):
-
     if type(names) != list:
         names = [names]
 

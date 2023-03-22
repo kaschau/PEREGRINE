@@ -31,7 +31,6 @@ class tracePointsCoprocessor:
         # To specify the points and a second numpy array of strings to specify the
         # tags
         with open(f"{mb.config['io']['inputDir']}/tracePoints.npy", "rb") as f:
-
             points = np.load(f)
             tags = np.load(f)
 
@@ -76,7 +75,6 @@ class tracePointsCoprocessor:
                         f.write(strings)
 
     def __call__(self, mb):
-
         # TODO: this may be a redundant copy
         for nblki in list(set([trc.nblki for trc in self.traces])):
             blk = mb.getBlock(nblki)

@@ -89,7 +89,6 @@ factor = conversion[args.units]
 if args.fmt == "tns3dmb":
     fileName = "tns3dmb.dat"
     with FortranFile(fileName, "r") as f90:
-
         nblks = f90.read_ints(dtype=np.int32)[0]
         mb = pg.multiBlock.grid(nblks)
 

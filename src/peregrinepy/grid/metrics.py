@@ -121,9 +121,6 @@ def metrics(blk, fdOrder, xcOnly=False):
     blk.array["iny"][:] = blk.array["isy"] / blk.array["iS"]
     blk.array["inz"][:] = blk.array["isz"] / blk.array["iS"]
 
-    for aa in ["inx", "iny", "inz"]:
-        print(np.mean(blk.array[aa]), aa)
-
     if blk.blockType == "solver" and blk._isInitialized:
         for var in [
             "ixc",
@@ -184,9 +181,6 @@ def metrics(blk, fdOrder, xcOnly=False):
     blk.array["jny"][:] = blk.array["jsy"] / blk.array["jS"]
     blk.array["jnz"][:] = blk.array["jsz"] / blk.array["jS"]
 
-    for aa in ["jnx", "jny", "jnz"]:
-        print(np.mean(blk.array[aa]), aa)
-
     if blk.blockType == "solver" and blk._isInitialized:
         for var in [
             "jxc",
@@ -246,9 +240,6 @@ def metrics(blk, fdOrder, xcOnly=False):
     blk.array["knx"][:] = blk.array["ksx"] / blk.array["kS"]
     blk.array["kny"][:] = blk.array["ksy"] / blk.array["kS"]
     blk.array["knz"][:] = blk.array["ksz"] / blk.array["kS"]
-
-    for aa in ["knx", "kny", "knz"]:
-        print(np.mean(blk.array[aa]), aa)
 
     if blk.blockType == "solver" and blk._isInitialized:
         for var in [

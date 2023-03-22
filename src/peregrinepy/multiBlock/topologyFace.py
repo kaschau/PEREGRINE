@@ -2,7 +2,6 @@ import numpy as np
 
 
 class topologyFace:
-
     faceType = "topology"
 
     def __init__(self, nface):
@@ -110,7 +109,6 @@ class topologyFace:
 
     @property
     def neighborNface(self):
-
         nface = self.nface
         orientation = self.orientation
 
@@ -135,7 +133,6 @@ class topologyFace:
 
     @property
     def neighborOrientation(self):
-
         orientation = self.orientation
 
         dirToOrientIndexMapping = {1: 0, 2: 1, 3: 2, 4: 0, 5: 1, 6: 2}

@@ -36,7 +36,6 @@ def print_diff(name, c, p):
 
 
 def test_tpg(my_setup, ctfile, thfile):
-
     relpath = str(Path(__file__).parent)
     ct.add_directory(relpath + "/../../src/peregrinepy/thermoTransport/database/source")
     gas = ct.Solution(ctfile)

@@ -13,7 +13,6 @@ import matplotlib.pyplot as plt
 
 
 def simulate():
-
     config = pg.files.configFile()
     config["RHS"]["diffusion"] = True
     config["thermochem"]["eos"] = "cubic"

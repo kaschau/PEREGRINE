@@ -11,7 +11,6 @@ class rk1:
         pass
 
     def step(self, dt):
-
         self.titme = self.tme
         RHS(self)
 

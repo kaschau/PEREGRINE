@@ -46,7 +46,6 @@ class dualTime:
         # At this point we assume that Qn and Qnm1 are appropriately populated
         # Inner time loop integrating in pseudo time
         for nrtDT in range(20):
-
             # Determine dtau
             for blk in self:
                 localDtau(blk, self.config["RHS"]["diffusion"])
