@@ -1,8 +1,30 @@
 import numpy as np
 
+# The i,j,k block coordinate directions are \Xi (E), \Eta (N), and \Zeta (C)
+#
+#                  2  o--------------------------o  3
+#                     |\                         |\
+#                     | \                        | \
+#                     |  \                       |  \
+#                     |   \                      |   \
+#                     |    \ 6                   |    \
+#                     |     o--------------------|---- o 7
+#                     |     |                    |     |
+#                     |     |                    |     |
+#                     |     |                    |     |
+#                     |     |                    |     |
+#   ^ j,N          1  o-----|--------------------o  4  |
+#   |                  \    |                     \    |
+#   |                   \   |                      \   |
+#   |                    \  |                       \  |
+#   o-----> i,E           \ |                        \ |
+#    \                     \|                         \|
+#     \                     o------------------------- o
+#      v  k,C             5                              8
+#
+
 
 def metrics(blk, fdOrder, xcOnly=False):
-
     x = blk.array["x"]
     y = blk.array["y"]
     z = blk.array["z"]
@@ -53,6 +75,7 @@ def metrics(blk, fdOrder, xcOnly=False):
     # A lot of times we only want cell centers.
     if xcOnly:
         return
+
     # ----------------------------------------------------------------------------
     # i face centers, area, normal vectors
     # ----------------------------------------------------------------------------
@@ -66,20 +89,27 @@ def metrics(blk, fdOrder, xcOnly=False):
         z[:, 0:-1, 0:-1] + z[:, 0:-1, 1::] + z[:, 1::, 0:-1] + z[:, 1::, 1::]
     )
 
-    blk.array["isx"][:] = 0.5 * (
-        (y[:, 1::, 1::] - y[:, 0:-1, 0:-1]) * (z[:, 0:-1, 1::] - z[:, 1::, 0:-1])
-        - (z[:, 1::, 1::] - z[:, 0:-1, 0:-1]) * (y[:, 0:-1, 1::] - y[:, 1::, 0:-1])
-    )
-
-    blk.array["isy"][:] = 0.5 * (
-        (z[:, 1::, 1::] - z[:, 0:-1, 0:-1]) * (x[:, 0:-1, 1::] - x[:, 1::, 0:-1])
-        - (x[:, 1::, 1::] - x[:, 0:-1, 0:-1]) * (z[:, 0:-1, 1::] - z[:, 1::, 0:-1])
-    )
-
-    blk.array["isz"][:] = 0.5 * (
-        (x[:, 1::, 1::] - x[:, 0:-1, 0:-1]) * (y[:, 0:-1, 1::] - y[:, 1::, 0:-1])
-        - (y[:, 1::, 1::] - y[:, 0:-1, 0:-1]) * (x[:, 0:-1, 1::] - x[:, 1::, 0:-1])
-    )
+    S1265 = np.zeros(list(blk.array["isx"][:].shape) + [3])
+    vectorX1 = np.zeros(S1265.shape)
+    vectorX1[:, :, :, 0] = x[:, 0:-1, 0:-1]
+    vectorX1[:, :, :, 1] = y[:, 0:-1, 0:-1]
+    vectorX1[:, :, :, 2] = z[:, 0:-1, 0:-1]
+    vectorX2 = np.zeros(S1265.shape)
+    vectorX2[:, :, :, 0] = x[:, 1::, 0:-1]
+    vectorX2[:, :, :, 1] = y[:, 1::, 0:-1]
+    vectorX2[:, :, :, 2] = z[:, 1::, 0:-1]
+    vectorX5 = np.zeros(S1265.shape)
+    vectorX5[:, :, :, 0] = x[:, 0:-1, 1::]
+    vectorX5[:, :, :, 1] = y[:, 0:-1, 1::]
+    vectorX5[:, :, :, 2] = z[:, 0:-1, 1::]
+    vectorX6 = np.zeros(S1265.shape)
+    vectorX6[:, :, :, 0] = x[:, 1::, 1::]
+    vectorX6[:, :, :, 1] = y[:, 1::, 1::]
+    vectorX6[:, :, :, 2] = z[:, 1::, 1::]
+    S1265 = 0.5 * np.cross(vectorX2 - vectorX5, vectorX6 - vectorX1)
+    blk.array["isx"][:] = np.dot(S1265, np.array([1.0, 0.0, 0.0]))
+    blk.array["isy"][:] = np.dot(S1265, np.array([0.0, 1.0, 0.0]))
+    blk.array["isz"][:] = np.dot(S1265, np.array([0.0, 0.0, 1.0]))
 
     blk.array["iS"][:] = np.sqrt(
         blk.array["isx"] ** 2 + blk.array["isy"] ** 2 + blk.array["isz"] ** 2
@@ -90,6 +120,9 @@ def metrics(blk, fdOrder, xcOnly=False):
     blk.array["inx"][:] = blk.array["isx"] / blk.array["iS"]
     blk.array["iny"][:] = blk.array["isy"] / blk.array["iS"]
     blk.array["inz"][:] = blk.array["isz"] / blk.array["iS"]
+
+    for aa in ["inx", "iny", "inz"]:
+        print(np.mean(blk.array[aa]), aa)
 
     if blk.blockType == "solver" and blk._isInitialized:
         for var in [
@@ -119,20 +152,27 @@ def metrics(blk, fdOrder, xcOnly=False):
         z[0:-1, :, 0:-1] + z[0:-1, :, 1::] + z[1::, :, 0:-1] + z[1::, :, 1::]
     )
 
-    blk.array["jsx"][:] = 0.5 * (
-        (y[1::, :, 1::] - y[0:-1, :, 0:-1]) * (z[1::, :, 0:-1] - z[0:-1, :, 1::])
-        - (z[1::, :, 1::] - z[0:-1, :, 0:-1]) * (y[1::, :, 0:-1] - y[0:-1, :, 1::])
-    )
-
-    blk.array["jsy"][:] = 0.5 * (
-        (z[1::, :, 1::] - z[0:-1, :, 0:-1]) * (x[1::, :, 0:-1] - x[0:-1, :, 1::])
-        - (x[1::, :, 1::] - x[0:-1, :, 0:-1]) * (z[1::, :, 0:-1] - z[0:-1, :, 1::])
-    )
-
-    blk.array["jsz"][:] = 0.5 * (
-        (x[1::, :, 1::] - x[0:-1, :, 0:-1]) * (y[1::, :, 0:-1] - y[0:-1, :, 1::])
-        - (y[1::, :, 1::] - y[0:-1, :, 0:-1]) * (x[1::, :, 0:-1] - x[0:-1, :, 1::])
-    )
+    S1584 = np.zeros(list(blk.array["jsx"][:].shape) + [3])
+    vectorX1 = np.zeros(S1584.shape)
+    vectorX1[:, :, :, 0] = x[0:-1, :, 0:-1]
+    vectorX1[:, :, :, 1] = y[0:-1, :, 0:-1]
+    vectorX1[:, :, :, 2] = z[0:-1, :, 0:-1]
+    vectorX4 = np.zeros(S1584.shape)
+    vectorX4[:, :, :, 0] = x[1::, :, 0:-1]
+    vectorX4[:, :, :, 1] = y[1::, :, 0:-1]
+    vectorX4[:, :, :, 2] = z[1::, :, 0:-1]
+    vectorX5 = np.zeros(S1584.shape)
+    vectorX5[:, :, :, 0] = x[0:-1, :, 1::]
+    vectorX5[:, :, :, 1] = y[0:-1, :, 1::]
+    vectorX5[:, :, :, 2] = z[0:-1, :, 1::]
+    vectorX8 = np.zeros(S1584.shape)
+    vectorX8[:, :, :, 0] = x[1::, :, 1::]
+    vectorX8[:, :, :, 1] = y[1::, :, 1::]
+    vectorX8[:, :, :, 2] = z[1::, :, 1::]
+    S1584 = 0.5 * np.cross(vectorX5 - vectorX4, vectorX8 - vectorX1)
+    blk.array["jsx"][:] = np.dot(S1584, np.array([1.0, 0.0, 0.0]))
+    blk.array["jsy"][:] = np.dot(S1584, np.array([0.0, 1.0, 0.0]))
+    blk.array["jsz"][:] = np.dot(S1584, np.array([0.0, 0.0, 1.0]))
 
     blk.array["jS"][:] = np.sqrt(
         blk.array["jsx"] ** 2 + blk.array["jsy"] ** 2 + blk.array["jsz"] ** 2
@@ -143,6 +183,9 @@ def metrics(blk, fdOrder, xcOnly=False):
     blk.array["jnx"][:] = blk.array["jsx"] / blk.array["jS"]
     blk.array["jny"][:] = blk.array["jsy"] / blk.array["jS"]
     blk.array["jnz"][:] = blk.array["jsz"] / blk.array["jS"]
+
+    for aa in ["jnx", "jny", "jnz"]:
+        print(np.mean(blk.array[aa]), aa)
 
     if blk.blockType == "solver" and blk._isInitialized:
         for var in [
@@ -172,20 +215,27 @@ def metrics(blk, fdOrder, xcOnly=False):
         z[0:-1, 0:-1, :] + z[0:-1, 1::, :] + z[1::, 0:-1, :] + z[1::, 1::, :]
     )
 
-    blk.array["ksx"][:] = 0.5 * (
-        (y[1::, 1::, :] - y[0:-1, 0:-1, :]) * (z[0:-1, 1::, :] - z[1::, 0:-1, :])
-        - (z[1::, 1::, :] - z[0:-1, 0:-1, :]) * (y[0:-1, 1::, :] - y[1::, 0:-1, :])
-    )
-
-    blk.array["ksy"][:] = 0.5 * (
-        (z[1::, 1::, :] - z[0:-1, 0:-1, :]) * (x[0:-1, 1::, :] - x[1::, 0:-1, :])
-        - (x[1::, 1::, :] - x[0:-1, 0:-1, :]) * (z[0:-1, 1::, :] - z[1::, 0:-1, :])
-    )
-
-    blk.array["ksz"][:] = 0.5 * (
-        (x[1::, 1::, :] - x[0:-1, 0:-1, :]) * (y[0:-1, 1::, :] - y[1::, 0:-1, :])
-        - (y[1::, 1::, :] - y[0:-1, 0:-1, :]) * (x[0:-1, 1::, :] - x[1::, 0:-1, :])
-    )
+    S1432 = np.zeros(list(blk.array["ksx"][:].shape) + [3])
+    vectorX1 = np.zeros(S1432.shape)
+    vectorX1[:, :, :, 0] = x[0:-1, 0:-1, :]
+    vectorX1[:, :, :, 1] = y[0:-1, 0:-1, :]
+    vectorX1[:, :, :, 2] = z[0:-1, 0:-1, :]
+    vectorX2 = np.zeros(S1432.shape)
+    vectorX2[:, :, :, 0] = x[0:-1, 1::, :]
+    vectorX2[:, :, :, 1] = y[0:-1, 1::, :]
+    vectorX2[:, :, :, 2] = z[0:-1, 1::, :]
+    vectorX3 = np.zeros(S1432.shape)
+    vectorX3[:, :, :, 0] = x[1::, 1::, :]
+    vectorX3[:, :, :, 1] = y[1::, 1::, :]
+    vectorX3[:, :, :, 2] = z[1::, 1::, :]
+    vectorX4 = np.zeros(S1432.shape)
+    vectorX4[:, :, :, 0] = x[1::, 0:-1, :]
+    vectorX4[:, :, :, 1] = y[1::, 0:-1, :]
+    vectorX4[:, :, :, 2] = z[1::, 0:-1, :]
+    S1432 = 0.5 * np.cross(vectorX4 - vectorX2, vectorX3 - vectorX1)
+    blk.array["ksx"][:] = np.dot(S1432, np.array([1.0, 0.0, 0.0]))
+    blk.array["ksy"][:] = np.dot(S1432, np.array([0.0, 1.0, 0.0]))
+    blk.array["ksz"][:] = np.dot(S1432, np.array([0.0, 0.0, 1.0]))
 
     blk.array["kS"][:] = np.sqrt(
         blk.array["ksx"] ** 2 + blk.array["ksy"] ** 2 + blk.array["ksz"] ** 2
@@ -196,6 +246,9 @@ def metrics(blk, fdOrder, xcOnly=False):
     blk.array["knx"][:] = blk.array["ksx"] / blk.array["kS"]
     blk.array["kny"][:] = blk.array["ksy"] / blk.array["kS"]
     blk.array["knz"][:] = blk.array["ksz"] / blk.array["kS"]
+
+    for aa in ["knx", "kny", "knz"]:
+        print(np.mean(blk.array[aa]), aa)
 
     if blk.blockType == "solver" and blk._isInitialized:
         for var in [
@@ -246,31 +299,9 @@ def metrics(blk, fdOrder, xcOnly=False):
     # ----------------------------------------------------------------------------
     # Cell center transformation metrics (ferda FD diffusion operator)
     # ----------------------------------------------------------------------------
-    # The i,j,k block coordinate directions are \Xi (E), \Eta (N), and \Zeta (C)
-    #
-    #                  2  o--------------------------o  3
-    #                     |\                         |\
-    #                     | \                        | \
-    #                     |  \                       |  \
-    #                     |   \                      |   \
-    #                     |    \ 6                   |    \
-    #                     |     o--------------------|---- o 7
-    #                     |     |                    |     |
-    #                     |     |                    |     |
-    #                     |     |                    |     |
-    #                     |     |                    |     |
-    #   ^ j,N          1  o-----|--------------------o  4  |
-    #   |                  \    |                     \    |
-    #   |                   \   |                      \   |
-    #   |                    \  |                       \  |
-    #   o-----> i,E           \ |                        \ |
-    #    \                     \|                         \|
-    #     \                     o------------------------- o
-    #      v  k,C             5                              8
-    #
 
     if fdOrder == 2:
-        # cell corner
+        # cell corners
         x1 = x[0:-1, 0:-1, 0:-1]
         x2 = x[0:-1, 1::, 0:-1]
         x3 = x[1::, 1::, 0:-1]
