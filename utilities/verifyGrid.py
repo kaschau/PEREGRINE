@@ -287,7 +287,6 @@ if __name__ == "__main__":
     assert nblks > 0
     mb = pg.multiBlock.grid(nblks)
 
-    print(lump)
     pg.readers.readGrid(mb, gp, lump=lump)
     pg.readers.readConnectivity(mb, cp)
     try:
