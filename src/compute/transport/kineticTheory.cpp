@@ -84,36 +84,40 @@ void kineticTheory(block_ &b, const thtrdat_ &th, const int &nface,
         }
 
         // Evaluate all property polynomials
-        double logT = log(T);
-        double sqrt_T = exp(0.5 * logT);
+        const double logT = log(T);
+        const double sqrt_T = exp(0.5 * logT);
+        double logT_n[deg];
+        for (int ply = 0; ply < deg; ply++) {
+          logT_n[ply] = pow(logT, float(deg - ply));
+        }
         for (int n = 0; n <= ns - 1; n++) {
           // Set to constant value first
           mu_sp(n) = th.muPoly(n, deg);
           kappa_sp(n) = th.kappaPoly(n, deg);
           for (int n2 = n; n2 <= ns - 1; n2++) {
-            int indx =
-                int(ns * (ns - 1) / 2 - (ns - n) * (ns - n - 1) / 2 + n2);
+            int indx = ns * (ns - 1) / 2 - (ns - n) * (ns - n - 1) / 2 + n2;
             Dij(n, n2) = th.DijPoly(indx, deg);
           }
 
           // Evaluate polynomial
           for (int ply = 0; ply < deg; ply++) {
-            mu_sp(n) += th.muPoly(n, ply) * pow(logT, float(deg - ply));
-            kappa_sp(n) += th.kappaPoly(n, ply) * pow(logT, float(deg - ply));
+            mu_sp(n) += th.muPoly(n, ply) * logT_n[ply];
+            kappa_sp(n) += th.kappaPoly(n, ply) * logT_n[ply];
 
             for (int n2 = n; n2 <= ns - 1; n2++) {
-              int indx =
-                  int(ns * (ns - 1) / 2 - (ns - n) * (ns - n - 1) / 2 + n2);
-              Dij(n, n2) += th.DijPoly(indx, ply) * pow(logT, float(deg - ply));
+              int indx = ns * (ns - 1) / 2 - (ns - n) * (ns - n - 1) / 2 + n2;
+              Dij(n, n2) += th.DijPoly(indx, ply) * logT_n[ply];
             }
           }
 
           // Set to the correct dimensions
           mu_sp(n) = sqrt_T * mu_sp(n);
           kappa_sp(n) = sqrt_T * kappa_sp(n);
+          const double T_3o2 = pow(T, 1.5);
           for (int n2 = n; n2 <= ns - 1; n2++) {
-            Dij(n, n2) = pow(T, 1.5) * Dij(n, n2);
-            Dij(n2, n) = Dij(n, n2);
+            double temp = T_3o2 * Dij(n, n2);
+            Dij(n, n2) = temp;
+            Dij(n2, n) = temp;
           }
         }
 

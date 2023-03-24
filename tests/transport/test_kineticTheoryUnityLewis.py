@@ -21,6 +21,10 @@ pytestmark = pytest.mark.parametrize(
             "GRI30.yaml",
             "thtr_GRI30.yaml",
         ),
+        (
+            "C2H4_Air_Skeletal.yaml",
+            "thtr_C2H4_Air_Skeletal.yaml",
+        ),
     ],
 )
 

@@ -77,8 +77,12 @@ void kineticTheoryUnityLewis(block_ &b, const thtrdat_ &th, const int &nface,
         }
 
         // Evaluate all property polynomials
-        double logT = log(T);
-        double sqrt_T = exp(0.5 * logT);
+        const double logT = log(T);
+        const double sqrt_T = exp(0.5 * logT);
+        double logT_n[deg];
+        for (int ply = 0; ply < deg; ply++) {
+          logT_n[ply] = pow(logT, float(deg - ply));
+        }
         for (int n = 0; n <= ns - 1; n++) {
           // Set to constant value first
           mu_sp(n) = th.muPoly(n, deg);
@@ -86,8 +90,8 @@ void kineticTheoryUnityLewis(block_ &b, const thtrdat_ &th, const int &nface,
 
           // Evaluate polynomial
           for (int ply = 0; ply < deg; ply++) {
-            mu_sp(n) += th.muPoly(n, ply) * pow(logT, float(deg - ply));
-            kappa_sp(n) += th.kappaPoly(n, ply) * pow(logT, float(deg - ply));
+            mu_sp(n) += th.muPoly(n, ply) * logT_n[ply];
+            kappa_sp(n) += th.kappaPoly(n, ply) * logT_n[ply];
           }
 
           // Set to the correct dimensions
