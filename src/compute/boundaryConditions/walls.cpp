@@ -63,7 +63,6 @@ void adiabaticNoSlipWall(
     }
 
     MDRange2 range_face = MDRange2({0, 0}, {q1.extent(0), q1.extent(1)});
-    double dplus = plus;
     for (int g = 0; g < b.ng; g++) {
       s0 -= plus * g;
       threeDsubview q0 = getHaloSlice(b.q, face._nface, s0);
@@ -75,12 +74,11 @@ void adiabaticNoSlipWall(
             q0(i, j, 0) = q1(i, j, 0);
 
             // mirror velo on wall
-            double uDotn = (q1(i, j, 1) * nx(i, j) + q1(i, j, 2) * ny(i, j) +
-                            q1(i, j, 3) * nz(i, j)) *
-                           dplus;
-            q0(i, j, 1) = q1(i, j, 1) - 2.0 * uDotn * nx(i, j) * dplus;
-            q0(i, j, 2) = q1(i, j, 2) - 2.0 * uDotn * ny(i, j) * dplus;
-            q0(i, j, 3) = q1(i, j, 3) - 2.0 * uDotn * nz(i, j) * dplus;
+            double uDotn = q1(i, j, 1) * nx(i, j) + q1(i, j, 2) * ny(i, j) +
+                           q1(i, j, 3) * nz(i, j);
+            q0(i, j, 1) = q1(i, j, 1) - 2.0 * uDotn * nx(i, j);
+            q0(i, j, 2) = q1(i, j, 2) - 2.0 * uDotn * ny(i, j);
+            q0(i, j, 3) = q1(i, j, 3) - 2.0 * uDotn * nz(i, j);
 
             // match temperature
             q0(i, j, 4) = q1(i, j, 4);
@@ -206,7 +204,6 @@ void adiabaticSlipWall(
     }
 
     MDRange2 range_face = MDRange2({0, 0}, {q1.extent(0), q1.extent(1)});
-    double dplus = plus;
     for (int g = 0; g < b.ng; g++) {
       s0 -= plus * g;
 
@@ -219,12 +216,11 @@ void adiabaticSlipWall(
             q0(i, j, 0) = q1(i, j, 0);
 
             // mirror velo on wall
-            double uDotn = (q1(i, j, 1) * nx(i, j) + q1(i, j, 2) * ny(i, j) +
-                            q1(i, j, 3) * nz(i, j)) *
-                           dplus;
-            q0(i, j, 1) = q1(i, j, 1) - 2.0 * uDotn * nx(i, j) * dplus;
-            q0(i, j, 2) = q1(i, j, 2) - 2.0 * uDotn * ny(i, j) * dplus;
-            q0(i, j, 3) = q1(i, j, 3) - 2.0 * uDotn * nz(i, j) * dplus;
+            double uDotn = q1(i, j, 1) * nx(i, j) + q1(i, j, 2) * ny(i, j) +
+                           q1(i, j, 3) * nz(i, j);
+            q0(i, j, 1) = q1(i, j, 1) - 2.0 * uDotn * nx(i, j);
+            q0(i, j, 2) = q1(i, j, 2) - 2.0 * uDotn * ny(i, j);
+            q0(i, j, 3) = q1(i, j, 3) - 2.0 * uDotn * nz(i, j);
 
             // match temperature
             q0(i, j, 4) = q1(i, j, 4);
@@ -310,7 +306,6 @@ void adiabaticMovingWall(
     }
 
     MDRange2 range_face = MDRange2({0, 0}, {q1.extent(0), q1.extent(1)});
-    double dplus = plus;
     for (int g = 0; g < b.ng; g++) {
       s0 -= plus * g;
 
@@ -323,12 +318,11 @@ void adiabaticMovingWall(
             q0(i, j, 0) = q1(i, j, 0);
 
             // mirror velo on wall
-            double uDotn = (q1(i, j, 1) * nx(i, j) + q1(i, j, 2) * ny(i, j) +
-                            q1(i, j, 3) * nz(i, j)) *
-                           dplus;
-            q0(i, j, 1) = q1(i, j, 1) - 2.0 * uDotn * nx(i, j) * dplus;
-            q0(i, j, 2) = q1(i, j, 2) - 2.0 * uDotn * ny(i, j) * dplus;
-            q0(i, j, 3) = q1(i, j, 3) - 2.0 * uDotn * nz(i, j) * dplus;
+            double uDotn = q1(i, j, 1) * nx(i, j) + q1(i, j, 2) * ny(i, j) +
+                           q1(i, j, 3) * nz(i, j);
+            q0(i, j, 1) = q1(i, j, 1) - 2.0 * uDotn * nx(i, j);
+            q0(i, j, 2) = q1(i, j, 2) - 2.0 * uDotn * ny(i, j);
+            q0(i, j, 3) = q1(i, j, 3) - 2.0 * uDotn * nz(i, j);
 
             // match temperature
             q0(i, j, 4) = q1(i, j, 4);
@@ -452,7 +446,6 @@ void isoTNoSlipWall(
     }
 
     MDRange2 range_face = MDRange2({0, 0}, {q1.extent(0), q1.extent(1)});
-    double dplus = plus;
     for (int g = 0; g < b.ng; g++) {
       s0 -= plus * g;
 
@@ -465,12 +458,11 @@ void isoTNoSlipWall(
             q0(i, j, 0) = q1(i, j, 0);
 
             // mirror velo on wall
-            double uDotn = (q1(i, j, 1) * nx(i, j) + q1(i, j, 2) * ny(i, j) +
-                            q1(i, j, 3) * nz(i, j)) *
-                           dplus;
-            q0(i, j, 1) = q1(i, j, 1) - 2.0 * uDotn * nx(i, j) * dplus;
-            q0(i, j, 2) = q1(i, j, 2) - 2.0 * uDotn * ny(i, j) * dplus;
-            q0(i, j, 3) = q1(i, j, 3) - 2.0 * uDotn * nz(i, j) * dplus;
+            double uDotn = q1(i, j, 1) * nx(i, j) + q1(i, j, 2) * ny(i, j) +
+                           q1(i, j, 3) * nz(i, j);
+            q0(i, j, 1) = q1(i, j, 1) - 2.0 * uDotn * nx(i, j);
+            q0(i, j, 2) = q1(i, j, 2) - 2.0 * uDotn * ny(i, j);
+            q0(i, j, 3) = q1(i, j, 3) - 2.0 * uDotn * nz(i, j);
 
             // set temperature
             q0(i, j, 4) = face.qBcVals(i, j, 4);
@@ -594,7 +586,6 @@ void isoTSlipWall(
     }
 
     MDRange2 range_face = MDRange2({0, 0}, {q1.extent(0), q1.extent(1)});
-    double dplus = plus;
     for (int g = 0; g < b.ng; g++) {
       s0 -= plus * g;
 
@@ -607,12 +598,11 @@ void isoTSlipWall(
             q0(i, j, 0) = q1(i, j, 0);
 
             // flip velo on wall
-            double uDotn = (q1(i, j, 1) * nx(i, j) + q1(i, j, 2) * ny(i, j) +
-                            q1(i, j, 3) * nz(i, j)) *
-                           dplus;
-            q0(i, j, 1) = q1(i, j, 1) - 2.0 * uDotn * nx(i, j) * dplus;
-            q0(i, j, 2) = q1(i, j, 2) - 2.0 * uDotn * ny(i, j) * dplus;
-            q0(i, j, 3) = q1(i, j, 3) - 2.0 * uDotn * nz(i, j) * dplus;
+            double uDotn = q1(i, j, 1) * nx(i, j) + q1(i, j, 2) * ny(i, j) +
+                           q1(i, j, 3) * nz(i, j);
+            q0(i, j, 1) = q1(i, j, 1) - 2.0 * uDotn * nx(i, j);
+            q0(i, j, 2) = q1(i, j, 2) - 2.0 * uDotn * ny(i, j);
+            q0(i, j, 3) = q1(i, j, 3) - 2.0 * uDotn * nz(i, j);
 
             // set temperature
             q0(i, j, 4) = face.qBcVals(i, j, 4);
@@ -720,7 +710,6 @@ void isoTMovingWall(
     }
 
     MDRange2 range_face = MDRange2({0, 0}, {q1.extent(0), q1.extent(1)});
-    double dplus = plus;
     for (int g = 0; g < b.ng; g++) {
       s0 -= plus * g;
 
@@ -733,12 +722,11 @@ void isoTMovingWall(
             q0(i, j, 0) = q1(i, j, 0);
 
             // mirror velo on wall
-            double uDotn = (q1(i, j, 1) * nx(i, j) + q1(i, j, 2) * ny(i, j) +
-                            q1(i, j, 3) * nz(i, j)) *
-                           dplus;
-            q0(i, j, 1) = q1(i, j, 1) - 2.0 * uDotn * nx(i, j) * dplus;
-            q0(i, j, 2) = q1(i, j, 2) - 2.0 * uDotn * ny(i, j) * dplus;
-            q0(i, j, 3) = q1(i, j, 3) - 2.0 * uDotn * nz(i, j) * dplus;
+            double uDotn = q1(i, j, 1) * nx(i, j) + q1(i, j, 2) * ny(i, j) +
+                           q1(i, j, 3) * nz(i, j);
+            q0(i, j, 1) = q1(i, j, 1) - 2.0 * uDotn * nx(i, j);
+            q0(i, j, 2) = q1(i, j, 2) - 2.0 * uDotn * ny(i, j);
+            q0(i, j, 3) = q1(i, j, 3) - 2.0 * uDotn * nz(i, j);
 
             // set temperature
             q0(i, j, 4) = face.qBcVals(i, j, 4);

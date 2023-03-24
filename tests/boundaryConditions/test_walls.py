@@ -56,24 +56,15 @@ def test_adiabaticNoSlipWall(my_setup, adv, spdata):
             ny = blk.array["kny"][face.s1_]
             nz = blk.array["knz"][face.s1_]
 
-        if nface in [1, 3, 5]:
-            plus = 1.0
-        else:
-            plus = -1.0
-
         face.bcFunc(blk, face, mb.eos, mb.thtrdat, "euler", mb.tme)
         blk.updateHostView(["q"])
         for s0_ in face.s0_:
             assert np.allclose(p[s0_], p[face.s1_])
-            uDotn = (
-                u[face.s1_] * nx * plus
-                + v[face.s1_] * ny * plus
-                + w[face.s1_] * nz * plus
-            )
+            uDotn = u[face.s1_] * nx + v[face.s1_] * ny + w[face.s1_] * nz
 
-            assert np.allclose(u[s0_], u[face.s1_] - 2.0 * uDotn * plus * nx)
-            assert np.allclose(v[s0_], v[face.s1_] - 2.0 * uDotn * plus * ny)
-            assert np.allclose(w[s0_], w[face.s1_] - 2.0 * uDotn * plus * nz)
+            assert np.allclose(u[s0_], u[face.s1_] - 2.0 * uDotn * nx)
+            assert np.allclose(v[s0_], v[face.s1_] - 2.0 * uDotn * ny)
+            assert np.allclose(w[s0_], w[face.s1_] - 2.0 * uDotn * nz)
             assert np.allclose(TN[s0_], TN[face.s1_])
 
         face.bcFunc(blk, face, mb.eos, mb.thtrdat, "preDqDxyz", mb.tme)
@@ -131,25 +122,16 @@ def test_adiabaticSlipWall(my_setup, adv, spdata):
             ny = blk.array["kny"][face.s1_]
             nz = blk.array["knz"][face.s1_]
 
-        if nface in [1, 3, 5]:
-            plus = 1.0
-        else:
-            plus = -1.0
-
         face.bcFunc(blk, face, mb.eos, mb.thtrdat, "euler", mb.tme)
         blk.updateHostView(["q"])
         for s0_ in face.s0_:
             assert np.allclose(p[s0_], p[face.s1_])
 
-            uDotn = (
-                u[face.s1_] * nx * plus
-                + v[face.s1_] * ny * plus
-                + w[face.s1_] * nz * plus
-            )
+            uDotn = u[face.s1_] * nx + v[face.s1_] * ny + w[face.s1_] * nz
 
-            assert np.allclose(u[s0_], u[face.s1_] - 2.0 * uDotn * plus * nx)
-            assert np.allclose(v[s0_], v[face.s1_] - 2.0 * uDotn * plus * ny)
-            assert np.allclose(w[s0_], w[face.s1_] - 2.0 * uDotn * plus * nz)
+            assert np.allclose(u[s0_], u[face.s1_] - 2.0 * uDotn * nx)
+            assert np.allclose(v[s0_], v[face.s1_] - 2.0 * uDotn * ny)
+            assert np.allclose(w[s0_], w[face.s1_] - 2.0 * uDotn * nz)
 
             assert np.allclose(TN[s0_], TN[face.s1_])
 
@@ -198,23 +180,15 @@ def test_adiabaticMovingWall(my_setup, adv, spdata):
             ny = blk.array["kny"][face.s1_]
             nz = blk.array["knz"][face.s1_]
 
-        if nface in [1, 3, 5]:
-            plus = 1.0
-        else:
-            plus = -1.0
         face.bcFunc(blk, face, mb.eos, mb.thtrdat, "euler", mb.tme)
         blk.updateHostView(["q"])
         for s0_ in face.s0_:
             assert np.allclose(p[s0_], p[face.s1_])
-            uDotn = (
-                u[face.s1_] * nx * plus
-                + v[face.s1_] * ny * plus
-                + w[face.s1_] * nz * plus
-            )
+            uDotn = u[face.s1_] * nx + v[face.s1_] * ny + w[face.s1_] * nz
 
-            assert np.allclose(u[s0_], u[face.s1_] - 2.0 * uDotn * plus * nx)
-            assert np.allclose(v[s0_], v[face.s1_] - 2.0 * uDotn * plus * ny)
-            assert np.allclose(w[s0_], w[face.s1_] - 2.0 * uDotn * plus * nz)
+            assert np.allclose(u[s0_], u[face.s1_] - 2.0 * uDotn * nx)
+            assert np.allclose(v[s0_], v[face.s1_] - 2.0 * uDotn * ny)
+            assert np.allclose(w[s0_], w[face.s1_] - 2.0 * uDotn * nz)
 
             assert np.allclose(TN[s0_], TN[face.s1_])
 
@@ -291,23 +265,15 @@ def test_isoTNoSlipWall(my_setup, adv, spdata):
             ny = blk.array["kny"][face.s1_]
             nz = blk.array["knz"][face.s1_]
 
-        if nface in [1, 3, 5]:
-            plus = 1.0
-        else:
-            plus = -1.0
         face.bcFunc(blk, face, mb.eos, mb.thtrdat, "euler", mb.tme)
         blk.updateHostView(["q"])
         for s0_ in face.s0_:
             assert np.allclose(p[s0_], p[face.s1_])
-            uDotn = (
-                u[face.s1_] * nx * plus
-                + v[face.s1_] * ny * plus
-                + w[face.s1_] * nz * plus
-            )
+            uDotn = u[face.s1_] * nx + v[face.s1_] * ny + w[face.s1_] * nz
 
-            assert np.allclose(u[s0_], u[face.s1_] - 2.0 * uDotn * plus * nx)
-            assert np.allclose(v[s0_], v[face.s1_] - 2.0 * uDotn * plus * ny)
-            assert np.allclose(w[s0_], w[face.s1_] - 2.0 * uDotn * plus * nz)
+            assert np.allclose(u[s0_], u[face.s1_] - 2.0 * uDotn * nx)
+            assert np.allclose(v[s0_], v[face.s1_] - 2.0 * uDotn * ny)
+            assert np.allclose(w[s0_], w[face.s1_] - 2.0 * uDotn * nz)
             assert np.allclose(T[s0_], face.array["qBcVals"][:, :, 4])
             if blk.ns > 1:
                 assert np.allclose(Y[s0_], Y[face.s1_])
@@ -383,25 +349,16 @@ def test_isoTSlipWall(my_setup, adv, spdata):
             ny = blk.array["kny"][face.s1_]
             nz = blk.array["knz"][face.s1_]
 
-        if nface in [1, 3, 5]:
-            plus = 1.0
-        else:
-            plus = -1.0
-
         face.bcFunc(blk, face, mb.eos, mb.thtrdat, "euler", mb.tme)
         blk.updateHostView(["q"])
         for s0_ in face.s0_:
             assert np.allclose(p[s0_], p[face.s1_])
 
-            uDotn = (
-                u[face.s1_] * nx * plus
-                + v[face.s1_] * ny * plus
-                + w[face.s1_] * nz * plus
-            )
+            uDotn = u[face.s1_] * nx + v[face.s1_] * ny + w[face.s1_] * nz
 
-            assert np.allclose(u[s0_], u[face.s1_] - 2.0 * uDotn * plus * nx)
-            assert np.allclose(v[s0_], v[face.s1_] - 2.0 * uDotn * plus * ny)
-            assert np.allclose(w[s0_], w[face.s1_] - 2.0 * uDotn * plus * nz)
+            assert np.allclose(u[s0_], u[face.s1_] - 2.0 * uDotn * nx)
+            assert np.allclose(v[s0_], v[face.s1_] - 2.0 * uDotn * ny)
+            assert np.allclose(w[s0_], w[face.s1_] - 2.0 * uDotn * nz)
 
             assert np.allclose(T[s0_], face.array["qBcVals"][:, :, 4])
             if blk.ns > 1:
@@ -471,24 +428,16 @@ def test_isoTMovingWall(my_setup, adv, spdata):
             ny = blk.array["kny"][face.s1_]
             nz = blk.array["knz"][face.s1_]
 
-        if nface in [1, 3, 5]:
-            plus = 1.0
-        else:
-            plus = -1.0
         face.bcFunc(blk, face, mb.eos, mb.thtrdat, "euler", mb.tme)
         blk.updateHostView(["q"])
         for s0_ in face.s0_:
             assert np.allclose(p[s0_], p[face.s1_])
 
-            uDotn = (
-                u[face.s1_] * nx * plus
-                + v[face.s1_] * ny * plus
-                + w[face.s1_] * nz * plus
-            )
+            uDotn = u[face.s1_] * nx + v[face.s1_] * ny + w[face.s1_] * nz
 
-            assert np.allclose(u[s0_], u[face.s1_] - 2.0 * uDotn * plus * nx)
-            assert np.allclose(v[s0_], v[face.s1_] - 2.0 * uDotn * plus * ny)
-            assert np.allclose(w[s0_], w[face.s1_] - 2.0 * uDotn * plus * nz)
+            assert np.allclose(u[s0_], u[face.s1_] - 2.0 * uDotn * nx)
+            assert np.allclose(v[s0_], v[face.s1_] - 2.0 * uDotn * ny)
+            assert np.allclose(w[s0_], w[face.s1_] - 2.0 * uDotn * nz)
 
             assert np.allclose(T[s0_], face.array["qBcVals"][:, :, 4])
             if blk.ns > 1:
