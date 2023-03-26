@@ -23,7 +23,9 @@ To generate compile_commands.json,
 There are two means of manipulating data: 
 
 1) on the python side as numpy arrays and, 
-2) on the C++ side via Kokkos Views. Numpy arrays are accessed by a dictionary attribute
+2) on the C++ side via Kokkos Views. 
+
+Numpy arrays are accessed by a dictionary attribute
 of the block class called "array", i.e.
 
     blk.array["q"][i,j,k,l]
