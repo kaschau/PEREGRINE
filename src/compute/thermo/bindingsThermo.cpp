@@ -1,58 +1,57 @@
 #include "thermo.hpp"
 #include "thtrdat_.hpp"
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
+#include <nanobind/nanobind.h>
 
-namespace py = pybind11;
+namespace nb = nanobind;
 
-void bindThermo(py::module_ &m) {
+void bindThermo(nb::module_ &m) {
   // ./thermo
-  py::module thermo = m.def_submodule("thermo", "thermo module");
+  nb::module_ thermo = m.def_submodule("thermo", "thermo module");
   //  |----> cpg.cpp
   thermo.def(
       "cpg", &cpg, "Update primatives or conservatives with cpg assumption",
-      py::arg("block_ object"), py::arg("thtrdat_ object"), py::arg("nface"),
-      py::arg("given"), py::arg("i") = 0, py::arg("j") = 0, py::arg("k") = 0);
+      nb::arg("block_ object"), nb::arg("thtrdat_ object"), nb::arg("nface"),
+      nb::arg("given"), nb::arg("i") = 0, nb::arg("j") = 0, nb::arg("k") = 0);
   //  |----> tpg.cpp
   thermo.def(
       "tpg", &tpg, "Update primatives or conservatives with tpg assumption",
-      py::arg("block_ object"), py::arg("thtrdat_ object"), py::arg("nface"),
-      py::arg("given"), py::arg("i") = 0, py::arg("j") = 0, py::arg("k") = 0);
+      nb::arg("block_ object"), nb::arg("thtrdat_ object"), nb::arg("nface"),
+      nb::arg("given"), nb::arg("i") = 0, nb::arg("j") = 0, nb::arg("k") = 0);
   //  |----> cubic.cpp
   thermo.def(
       "cubic", &cubic, "Update primatives or conservatives with cubic EOS",
-      py::arg("block_ object"), py::arg("thtrdat_ object"), py::arg("nface"),
-      py::arg("given"), py::arg("i") = 0, py::arg("j") = 0, py::arg("k") = 0);
+      nb::arg("block_ object"), nb::arg("thtrdat_ object"), nb::arg("nface"),
+      nb::arg("given"), nb::arg("i") = 0, nb::arg("j") = 0, nb::arg("k") = 0);
 
   ////////////////////////////////////////////////////////////////////////////////
   ///////////////////  C++ Parent thtrdat_ class
   ////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////
 
-  py::class_<thtrdat_>(thermo, "thtrdat_", py::dynamic_attr())
-      .def(py::init<>())
+  nb::class_<thtrdat_>(thermo, "thtrdat_", nb::dynamic_attr())
+      .def(nb::init<>())
 
-      .def_readwrite("ns", &thtrdat_::ns)
-      .def_readonly("Ru", &thtrdat_::Ru)
+      .def_rw("ns", &thtrdat_::ns)
+      .def_ro("Ru", &thtrdat_::Ru)
 
-      .def_readwrite("MW", &thtrdat_::MW)
+      .def_rw("MW", &thtrdat_::MW)
 
-      .def_readwrite("NASA7", &thtrdat_::NASA7)
+      .def_rw("NASA7", &thtrdat_::NASA7)
 
-      .def_readwrite("muPoly", &thtrdat_::muPoly)
-      .def_readwrite("kappaPoly", &thtrdat_::kappaPoly)
-      .def_readwrite("DijPoly", &thtrdat_::DijPoly)
+      .def_rw("muPoly", &thtrdat_::muPoly)
+      .def_rw("kappaPoly", &thtrdat_::kappaPoly)
+      .def_rw("DijPoly", &thtrdat_::DijPoly)
 
-      .def_readwrite("cp0", &thtrdat_::cp0)
-      .def_readwrite("mu0", &thtrdat_::mu0)
-      .def_readwrite("kappa0", &thtrdat_::kappa0)
+      .def_rw("cp0", &thtrdat_::cp0)
+      .def_rw("mu0", &thtrdat_::mu0)
+      .def_rw("kappa0", &thtrdat_::kappa0)
 
-      .def_readwrite("Tcrit", &thtrdat_::Tcrit)
-      .def_readwrite("pcrit", &thtrdat_::pcrit)
-      .def_readwrite("Vcrit", &thtrdat_::Vcrit)
-      .def_readwrite("acentric", &thtrdat_::acentric)
+      .def_rw("Tcrit", &thtrdat_::Tcrit)
+      .def_rw("pcrit", &thtrdat_::pcrit)
+      .def_rw("Vcrit", &thtrdat_::Vcrit)
+      .def_rw("acentric", &thtrdat_::acentric)
 
-      .def_readwrite("chungA", &thtrdat_::chungA)
-      .def_readwrite("chungB", &thtrdat_::chungB)
-      .def_readwrite("redDipole", &thtrdat_::redDipole);
+      .def_rw("chungA", &thtrdat_::chungA)
+      .def_rw("chungB", &thtrdat_::chungB)
+      .def_rw("redDipole", &thtrdat_::redDipole);
 }

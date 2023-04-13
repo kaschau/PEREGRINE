@@ -87,9 +87,12 @@ include_directories(${PROJECT_SOURCE_DIR}/src/compute
 
 
 #Make the bindings for python import
-add_subdirectory(lib/pybind11)
-pybind11_add_module(compute ${compute_src} ${PROJECT_SOURCE_DIR}/src/bindings.cpp)
+Find_Package(Python 3.8 COMPONENTS Interpreter Development.Module REQUIRED)
+add_subdirectory(lib/nanobind)
+nanobind_add_module(compute ${compute_src} ${PROJECT_SOURCE_DIR}/src/bindings.cpp)
 
 #Link to Kokkos
 Find_Package(Kokkos REQUIRED)
 target_link_libraries(compute PUBLIC Kokkos::kokkos)
+
+set_property(TARGET compute PROPERTY CXX_STANDARD 17)

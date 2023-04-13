@@ -1,87 +1,86 @@
 #include "boundaryConditions.hpp"
-#include <pybind11/functional.h>
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
+#include <nanobind/nanobind.h>
+#include <nanobind/stl/function.h>
 
-namespace py = pybind11;
+namespace nb = nanobind;
 
-void bindBoundaryConditions(py::module_ &m) {
+void bindBoundaryConditions(nb::module_ &m) {
   // ./boundaryConditions
-  py::module bcs = m.def_submodule("bcs", "boundary conditions module");
+  nb::module_ bcs = m.def_submodule("bcs", "boundary conditions module");
 
   //  |----> inlets.cpp
-  py::module inlets =
+  nb::module_ inlets =
       bcs.def_submodule("inlets", "inlet boundary conditions module");
   inlets.def("constantVelocitySubsonicInlet", &constantVelocitySubsonicInlet,
-             "Const velo subsonic inlet", py::arg("block_ object"),
-             py::arg("face_ object"), py::arg("eos pointer"),
-             py::arg("thtrdat_ object"), py::arg("terms"), py::arg("tme"));
+             "Const velo subsonic inlet", nb::arg("block_ object"),
+             nb::arg("face_ object"), nb::arg("eos pointer"),
+             nb::arg("thtrdat_ object"), nb::arg("terms"), nb::arg("tme"));
   inlets.def("cubicSplineSubsonicInlet", &cubicSplineSubsonicInlet,
-             "Cubic spline subsonic inlet", py::arg("block_ object"),
-             py::arg("face_ object"), py::arg("eos pointer"),
-             py::arg("thtrdat_ object"), py::arg("terms"), py::arg("tme"));
+             "Cubic spline subsonic inlet", nb::arg("block_ object"),
+             nb::arg("face_ object"), nb::arg("eos pointer"),
+             nb::arg("thtrdat_ object"), nb::arg("terms"), nb::arg("tme"));
   inlets.def("supersonicInlet", &supersonicInlet, "Supersonic inlet",
-             py::arg("block_ object"), py::arg("face_ object"),
-             py::arg("eos pointer"), py::arg("thtrdat_ object"),
-             py::arg("terms"), py::arg("tme"));
+             nb::arg("block_ object"), nb::arg("face_ object"),
+             nb::arg("eos pointer"), nb::arg("thtrdat_ object"),
+             nb::arg("terms"), nb::arg("tme"));
   inlets.def("constantMassFluxSubsonicInlet", &constantMassFluxSubsonicInlet,
-             "Const mass flux subsonic inlet", py::arg("block_ object"),
-             py::arg("face_ object"), py::arg("eos pointer"),
-             py::arg("thtrdat_ object"), py::arg("terms"), py::arg("tme"));
+             "Const mass flux subsonic inlet", nb::arg("block_ object"),
+             nb::arg("face_ object"), nb::arg("eos pointer"),
+             nb::arg("thtrdat_ object"), nb::arg("terms"), nb::arg("tme"));
   inlets.def("stagnationSubsonicInlet", &stagnationSubsonicInlet,
-             "Stagnation subsonic inlet", py::arg("block_ object"),
-             py::arg("face_ object"), py::arg("eos pointer"),
-             py::arg("thtrdat_ object"), py::arg("terms"), py::arg("tme"));
+             "Stagnation subsonic inlet", nb::arg("block_ object"),
+             nb::arg("face_ object"), nb::arg("eos pointer"),
+             nb::arg("thtrdat_ object"), nb::arg("terms"), nb::arg("tme"));
 
   //  |----> walls.cpp
-  py::module walls =
+  nb::module_ walls =
       bcs.def_submodule("walls", "walls boundary conditions module");
   walls.def("adiabaticNoSlipWall", &adiabaticNoSlipWall,
-            "Adiabatic no slip wall", py::arg("block_ object"),
-            py::arg("face_ object"), py::arg("eos pointer"),
-            py::arg("thtrdat_ object"), py::arg("terms"), py::arg("tme"));
+            "Adiabatic no slip wall", nb::arg("block_ object"),
+            nb::arg("face_ object"), nb::arg("eos pointer"),
+            nb::arg("thtrdat_ object"), nb::arg("terms"), nb::arg("tme"));
   walls.def("adiabaticSlipWall", &adiabaticSlipWall, "Adiabatic slip wall",
-            py::arg("block_ object"), py::arg("face_ object"),
-            py::arg("eos pointer"), py::arg("thtrdat_ object"),
-            py::arg("terms"), py::arg("tme"));
+            nb::arg("block_ object"), nb::arg("face_ object"),
+            nb::arg("eos pointer"), nb::arg("thtrdat_ object"),
+            nb::arg("terms"), nb::arg("tme"));
   walls.def("adiabaticMovingWall", &adiabaticMovingWall,
-            "Adiabatic moving wall", py::arg("block_ object"),
-            py::arg("face_ object"), py::arg("eos pointer"),
-            py::arg("thtrdat_ object"), py::arg("terms"), py::arg("tme"));
+            "Adiabatic moving wall", nb::arg("block_ object"),
+            nb::arg("face_ object"), nb::arg("eos pointer"),
+            nb::arg("thtrdat_ object"), nb::arg("terms"), nb::arg("tme"));
   walls.def("isoTNoSlipWall", &isoTNoSlipWall, "IsoT no slip wall",
-            py::arg("block_ object"), py::arg("face_ object"),
-            py::arg("eos pointer"), py::arg("thtrdat_ object"),
-            py::arg("terms"), py::arg("tme"));
+            nb::arg("block_ object"), nb::arg("face_ object"),
+            nb::arg("eos pointer"), nb::arg("thtrdat_ object"),
+            nb::arg("terms"), nb::arg("tme"));
   walls.def("isoTSlipWall", &isoTSlipWall, "IsoT slip wall",
-            py::arg("block_ object"), py::arg("face_ object"),
-            py::arg("eos pointer"), py::arg("thtrdat_ object"),
-            py::arg("terms"), py::arg("tme"));
+            nb::arg("block_ object"), nb::arg("face_ object"),
+            nb::arg("eos pointer"), nb::arg("thtrdat_ object"),
+            nb::arg("terms"), nb::arg("tme"));
   walls.def("isoTMovingWall", &isoTMovingWall, "Iso thermal moving wall",
-            py::arg("block_ object"), py::arg("face_ object"),
-            py::arg("eos pointer"), py::arg("thtrdat_ object"),
-            py::arg("terms"), py::arg("tme"));
+            nb::arg("block_ object"), nb::arg("face_ object"),
+            nb::arg("eos pointer"), nb::arg("thtrdat_ object"),
+            nb::arg("terms"), nb::arg("tme"));
 
   //  |----> exits.cpp
-  py::module exits =
+  nb::module_ exits =
       bcs.def_submodule("exits", "exit boundary conditions module");
   exits.def("constantPressureSubsonicExit", &constantPressureSubsonicExit,
-            "Const pressure subsonic exit", py::arg("block_ object"),
-            py::arg("face_ object"), py::arg("eos pointer"),
-            py::arg("thtrdat_ object"), py::arg("terms"), py::arg("tme"));
+            "Const pressure subsonic exit", nb::arg("block_ object"),
+            nb::arg("face_ object"), nb::arg("eos pointer"),
+            nb::arg("thtrdat_ object"), nb::arg("terms"), nb::arg("tme"));
   exits.def("supersonicExit", &supersonicExit, "Supersonic exit",
-            py::arg("block_ object"), py::arg("face_ object"),
-            py::arg("eos pointer"), py::arg("thtrdat_ object"),
-            py::arg("terms"), py::arg("tme"));
+            nb::arg("block_ object"), nb::arg("face_ object"),
+            nb::arg("eos pointer"), nb::arg("thtrdat_ object"),
+            nb::arg("terms"), nb::arg("tme"));
 
   //  |----> periodics.cpp
-  py::module periodics =
+  nb::module_ periodics =
       bcs.def_submodule("periodics", "periodics boundary conditions module");
   periodics.def("periodicRotHigh", &periodicRotHigh,
-                "High rotational periodic face", py::arg("block_ object"),
-                py::arg("face_ object"), py::arg("eos pointer"),
-                py::arg("thtrdat_ object"), py::arg("terms"), py::arg("tme"));
+                "High rotational periodic face", nb::arg("block_ object"),
+                nb::arg("face_ object"), nb::arg("eos pointer"),
+                nb::arg("thtrdat_ object"), nb::arg("terms"), nb::arg("tme"));
   periodics.def("periodicRotLow", &periodicRotLow,
-                "Low rotational periodic face", py::arg("block_ object"),
-                py::arg("face_ object"), py::arg("eos pointer"),
-                py::arg("thtrdat_ object"), py::arg("terms"), py::arg("tme"));
+                "Low rotational periodic face", nb::arg("block_ object"),
+                nb::arg("face_ object"), nb::arg("eos pointer"),
+                nb::arg("thtrdat_ object"), nb::arg("terms"), nb::arg("tme"));
 }

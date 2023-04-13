@@ -1,18 +1,17 @@
 #include "diffFlux.hpp"
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
+#include <nanobind/nanobind.h>
 
-namespace py = pybind11;
+namespace nb = nanobind;
 
-void bindDiffFlux(py::module_ &m) {
+void bindDiffFlux(nb::module_ &m) {
   // ./diffFlux
-  py::module diffFlux = m.def_submodule("diffFlux", "diffusive flux module");
+  nb::module_ diffFlux = m.def_submodule("diffFlux", "diffusive flux module");
   //  |----> diffusiveFlux.cpp
   diffFlux.def("diffusiveFlux", &diffusiveFlux,
                "Compute centeral difference viscous fluxes. Order set by dqdx",
-               py::arg("block_ object"));
+               nb::arg("block_ object"));
   //  |----> alphaDamping.cpp
   diffFlux.def("alphaDampingFlux", &alphaDampingFlux,
                "Evaluate face derivatices with alpha damping.",
-               py::arg("block_ object"));
+               nb::arg("block_ object"));
 }
