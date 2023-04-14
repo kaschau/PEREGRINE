@@ -8,12 +8,10 @@
 using execSpace = Kokkos::Cuda;
 using viewSpace = Kokkos::CudaSpace;
 using layout = Kokkos::LayoutLeft;
-static const std::string KokkosLocation = "Cuda";
 #elif defined(KOKKOS_ENABLE_HIP)
 using execSpace = Kokkos::Experimental::HIP;
 using viewSpace = Kokkos::Experimental::HIPSpace;
 using layout = Kokkos::LayoutLeft;
-static const std::string KokkosLocation = "HIP";
 #elif defined(KOKKOS_ENABLE_OPENMPTARGET)
 using execSpace = Kokkos::OpenMPTarget;
 using viewSpace = Kokkos::OpenMPTargetSpace;
@@ -22,12 +20,10 @@ using layout = Kokkos::LayoutLeft;
 using execSpace = Kokkos::OpenMP;
 using viewSpace = Kokkos::HostSpace;
 using layout = Kokkos::LayoutRight;
-static const std::string KokkosLocation = "OpenMP";
 #elif defined(KOKKOS_ENABLE_SERIAL)
 using execSpace = Kokkos::Serial;
 using viewSpace = Kokkos::HostSpace;
 using layout = Kokkos::LayoutRight;
-static const std::string KokkosLocation = "Serial";
 #endif
 
 using defaultViewHooks = Kokkos::Experimental::DefaultViewHooks;

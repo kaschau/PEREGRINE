@@ -28,7 +28,6 @@ void bindKokkos(nb::module_ &);
 
 NB_MODULE(compute, m) {
   m.doc() = "Module to expose compute units written in C++ with Kokkos";
-  m.attr("KokkosLocation") = "Serial";
 
   bindAdvFlux(m);
   bindBoundaryConditions(m);
