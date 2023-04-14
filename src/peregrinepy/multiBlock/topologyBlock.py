@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from .topologyFace import topologyFace
+from ..compute import block_
 
 """ topologyBlock.py
 
@@ -14,7 +15,7 @@ composition can be comprised of.
 """
 
 
-class topologyBlock:
+class topologyBlock(block_):
     """topologyBlock object is the most basic object a peregrinepy.multiBlock
     (or one of its descendants) can be.
 
@@ -28,6 +29,11 @@ class topologyBlock:
     blockType = "topology"
 
     def __init__(self, nblki):
+        # The c++ stuff must be instantiated first,
+        # so that inhereted python side
+        # attributes are assigned values, not defined
+        # in the upstream __init__s
+        block_.__init__(self)
         self.nblki = nblki
 
         self.faces = []

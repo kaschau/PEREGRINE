@@ -4,6 +4,7 @@
 #include "face_.hpp"
 #include "kokkosTypes.hpp"
 #include <nanobind/nanobind.h>
+#include <nanobind/stl/string.h>
 
 namespace nb = nanobind;
 
@@ -23,10 +24,11 @@ void bindThermo(nb::module_ &);
 void bindTransport(nb::module_ &);
 void bindTimeIntegration(nb::module_ &);
 void bindUtils(nb::module_ &);
+void bindKokkos(nb::module_ &);
 
 NB_MODULE(compute, m) {
   m.doc() = "Module to expose compute units written in C++ with Kokkos";
-  m.attr("KokkosLocation") = &KokkosLocation;
+  m.attr("KokkosLocation") = "Serial";
 
   bindAdvFlux(m);
   bindBoundaryConditions(m);
@@ -38,6 +40,7 @@ NB_MODULE(compute, m) {
   bindTransport(m);
   bindTimeIntegration(m);
   bindUtils(m);
+  bindKokkos(m);
 
   ////////////////////////////////////////////////////////////////////////////////
   ///////////////////  C++ Parent block_ class

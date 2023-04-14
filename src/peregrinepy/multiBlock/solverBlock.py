@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-import kokkos
-from ..compute import block_
+from ..compute import pgkokkos
 from .restartBlock import restartBlock
 from .solverFace import solverFace
 from ..misc import createViewMirrorArray
@@ -17,7 +16,7 @@ that a multiBlock datasets (see multiBlock.py) can be composed of.
 """
 
 
-class solverBlock(restartBlock, block_):
+class solverBlock(restartBlock):
     """
 
     Attributes
@@ -28,19 +27,12 @@ class solverBlock(restartBlock, block_):
     blockType = "solver"
 
     def __init__(self, nblki, spNames, ng):
-        # The c++ stuff must be instantiated first,
-        # so that inhereted python side
-        # attributes are assigned values, not defined
-        # in the upstream __init__s
-        block_.__init__(self)
-
+        super().__init__(nblki, spNames)
         # Flag to determine if a block's solver arrays are
         # initialized or not
         self._isInitialized = False
 
         self.ng = ng
-
-        restartBlock.__init__(self, nblki, spNames)
 
         for fn in [1, 2, 3, 4, 5, 6]:
             self.faces.append(solverFace(fn, self.ng))
@@ -266,10 +258,10 @@ class solverBlock(restartBlock, block_):
         if type(vars) == str:
             vars = [vars]
         for var in vars:
-            kokkos.deep_copy(getattr(self, var), self.mirror[var])
+            pgkokkos.deep_copy(getattr(self, var), self.mirror[var])
 
     def updateHostView(self, vars):
         if type(vars) == str:
             vars = [vars]
         for var in vars:
-            kokkos.deep_copy(self.mirror[var], getattr(self, var))
+            pgkokkos.deep_copy(self.mirror[var], getattr(self, var))

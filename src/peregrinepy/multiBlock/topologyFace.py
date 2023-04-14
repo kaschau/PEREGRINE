@@ -1,10 +1,12 @@
 import numpy as np
+from ..compute import face_
 
 
-class topologyFace:
+class topologyFace(face_):
     faceType = "topology"
 
     def __init__(self, nface):
+        face_.__init__(self)
         assert 1 <= nface <= 6, "nface must be between (1,6)"
 
         self._nface = nface

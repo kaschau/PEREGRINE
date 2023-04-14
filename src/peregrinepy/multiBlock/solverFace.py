@@ -1,7 +1,7 @@
 import numpy as np
-from kokkos import deep_copy
+from ..compute.pgkokkos import deep_copy
 
-from ..compute import bcs, face_
+from ..compute import bcs
 from ..misc import createViewMirrorArray, frozenDict, null
 from .gridFace import gridFace
 from .topologyFace import topologyFace
@@ -9,12 +9,11 @@ from .topologyFace import topologyFace
 s_ = np.s_
 
 
-class solverFace(gridFace, face_):
+class solverFace(gridFace):
     faceType = "solver"
 
     def __init__(self, nface, ng):
-        face_.__init__(self)
-        gridFace.__init__(self, nface)
+        super().__init__(nface)
         assert 1 <= nface <= 6, "nface must be between (1,6)"
 
         self._ng = ng

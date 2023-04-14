@@ -1,6 +1,7 @@
 #include "thermo.hpp"
 #include "thtrdat_.hpp"
 #include <nanobind/nanobind.h>
+#include <nanobind/stl/string.h>
 
 namespace nb = nanobind;
 

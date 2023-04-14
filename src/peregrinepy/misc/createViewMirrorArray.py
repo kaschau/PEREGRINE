@@ -1,35 +1,24 @@
-import kokkos
 import numpy as np
-from ..compute import KokkosLocation
+from ..compute import pgkokkos
 
 
 def createViewMirrorArray(obj, names, shape):
     if type(names) != list:
         names = [names]
 
-    if KokkosLocation in ["OpenMP", "Serial", "Default"]:
-        kokkosSpace = kokkos.HostSpace
-        kokkosLayout = kokkos.LayoutRight
-    elif KokkosLocation in ["Cuda"]:
-        kokkosSpace = kokkos.CudaSpace
-        kokkosLayout = kokkos.LayoutLeft
-    else:
-        raise ValueError("What space?")
+    view = getattr(pgkokkos, f"array{len(shape)}")
+    mirror = getattr(pgkokkos, f"mirror{len(shape)}")
 
     for name in names:
         setattr(
             obj,
             name,
-            kokkos.array(
+            view(
                 name,
-                shape=shape,
-                layout=kokkosLayout,
-                dtype=kokkos.double,
-                space=kokkosSpace,
-                dynamic=False,
+                *shape,
             ),
         )
-        obj.mirror[name] = kokkos.create_mirror_view(getattr(obj, name), copy=False)
+        obj.mirror[name] = mirror(getattr(obj, name))
         if obj.array[name] is None:
             obj.array[name] = np.array(obj.mirror[name], copy=False)
         else:
@@ -41,4 +30,4 @@ def createViewMirrorArray(obj, names, shape):
             obj.array[name] = None
             obj.array[name] = np.array(obj.mirror[name], copy=False)
             obj.array[name][:] = temp[:]
-            kokkos.deep_copy(getattr(obj, name), obj.mirror[name])
+            pgkokkos.deep_copy(getattr(obj, name), obj.mirror[name])
