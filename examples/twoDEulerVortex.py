@@ -12,7 +12,7 @@ Should reproduce figure 3 depending on resolution setting.
 """
 
 from mpi4py import MPI
-import kokkos
+from peregrinepy.compute import pgkokkos
 import peregrinepy as pg
 import numpy as np
 from time import perf_counter
@@ -137,9 +137,9 @@ def simulate():
 
 if __name__ == "__main__":
     try:
-        kokkos.initialize()
+        pgkokkos.initialize()
         simulate()
-        kokkos.finalize()
+        pgkokkos.finalize()
 
     except Exception as e:
         import sys
