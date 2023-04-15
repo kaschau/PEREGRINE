@@ -65,6 +65,8 @@ class gridFace(topologyFace):
         rotDown[2, 1] = uz * uy * (1 - ct) + ux * st
         rotDown[2, 2] = ct + uz**2 * (1 - ct)
 
+        # if we are a solver face, these will be turned into
+        # views/mirrors after this
         self.array["periodicRotMatrixUp"] = rotUp
         self.array["periodicRotMatrixDown"] = rotDown
 

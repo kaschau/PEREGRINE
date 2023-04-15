@@ -16,7 +16,7 @@ for more.
 """
 
 from mpi4py import MPI
-import kokkos
+
 import peregrinepy as pg
 import numpy as np
 import matplotlib.pyplot as plt
@@ -521,11 +521,11 @@ def simulate(testnum, index="i"):
 
 if __name__ == "__main__":
     try:
-        kokkos.initialize()
+        pg.compute.pgkokkos.initialize()
         testnum = 5
         index = "i"
         simulate(testnum, index)
-        kokkos.finalize()
+        pg.compute.pgkokkos.finalize()
 
     except Exception as e:
         import sys

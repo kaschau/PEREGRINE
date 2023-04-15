@@ -6,7 +6,7 @@ Couette Flow with top wall moving at 5m/s
 """
 
 from mpi4py import MPI
-import kokkos
+
 import peregrinepy as pg
 import numpy as np
 import matplotlib.pyplot as plt
@@ -236,9 +236,9 @@ if __name__ == "__main__":
     try:
         index = "j"
         velo = "+z"
-        kokkos.initialize()
+        pg.compute.pgkokkos.initialize()
         simulate(index, velo)
-        kokkos.finalize()
+        pg.compute.pgkokkos.finalize()
 
     except Exception as e:
         import sys

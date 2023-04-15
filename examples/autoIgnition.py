@@ -6,7 +6,6 @@ Auto ignition flame calculation.
 """
 
 from mpi4py import MPI
-import kokkos
 import peregrinepy as pg
 import cantera as ct
 import matplotlib.pyplot as plt
@@ -14,7 +13,6 @@ from pathlib import Path
 
 
 def simulate():
-
     relpath = str(Path(__file__).parent)
     ct.add_directory(relpath + "/../src/peregrinepy/thermoTransport/database/source")
 
@@ -77,7 +75,6 @@ def simulate():
     print(mb)
     print("Time   PEREGRINE  CANTERA")
     while mb.tme < 0.05:
-
         if mb.nrt % niterout == 0:
             pgT.append(blk.array["q"][ng, ng, ng, 4])
             pgO2.append(blk.array["q"][ng, ng, ng, 7])
@@ -104,9 +101,9 @@ def simulate():
 
 if __name__ == "__main__":
     try:
-        kokkos.initialize()
+        pg.compute.pgkokkos.initialize()
         simulate()
-        kokkos.finalize()
+        pg.compute.pgkokkos.finalize()
 
     except Exception as e:
         import sys
