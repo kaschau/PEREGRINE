@@ -35,8 +35,7 @@ def prep_constantVelocitySubsonicInlet(blk, face, valueDict):
 
 
 def prep_cubicSplineSubsonicInlet(blk, face, valueDict):
-    from ..compute.pgkokkos import hostView5
-    from ..misc import createViewMirrorArray
+    from ..compute.pgkokkos import hostView5, view4
 
     # set the temperature and species values
     face.array["qBcVals"][:, :, 4] = valueDict["T"]
@@ -79,13 +78,10 @@ def prep_cubicSplineSubsonicInlet(blk, face, valueDict):
             alphas[:, :, :, -g - 1, m] = alphas[:, :, :, -ng - 1, m]
 
     # create the device space interval alphas (ones we are
-    # actually using at any given time)
+    # actually using at any given time) (dont need the mirror or
+    # array as all that is done on c++ side)
     shape = tuple([4]) + face.array["qBcVals"].shape[0:2] + tuple([3])
-    createViewMirrorArray(
-        face,
-        "intervalAlphas",
-        shape,
-    )
+    face.intervalAlphas = view4("intervalAlphas", *shape)
 
 
 def prep_supersonicInlet(blk, face, valueDict):
