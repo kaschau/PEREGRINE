@@ -24,6 +24,7 @@ void bindThermo(py::module_ &);
 void bindTransport(py::module_ &);
 void bindTimeIntegration(py::module_ &);
 void bindUtils(py::module_ &);
+void bindKokkos(py::module_ &);
 
 PYBIND11_MODULE(compute, m) {
   m.doc() = "Module to expose compute units written in C++ with Kokkos";
@@ -39,6 +40,7 @@ PYBIND11_MODULE(compute, m) {
   bindTransport(m);
   bindTimeIntegration(m);
   bindUtils(m);
+  bindKokkos(m);
 
   ////////////////////////////////////////////////////////////////////////////////
   ///////////////////  C++ Parent block_ class
