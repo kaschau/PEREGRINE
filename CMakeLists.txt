@@ -94,3 +94,4 @@ pybind11_add_module(compute ${compute_src} ${PROJECT_SOURCE_DIR}/src/bindings.cp
 #Link to Kokkos
 Find_Package(Kokkos REQUIRED)
 target_link_libraries(compute PUBLIC Kokkos::kokkos)
+set_property(TARGET compute PROPERTY CXX_STANDARD 17)
