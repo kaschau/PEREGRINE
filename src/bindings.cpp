@@ -27,8 +27,8 @@ void bindUtils(py::module_ &);
 void bindKokkos(py::module_ &);
 
 PYBIND11_MODULE(compute, m) {
-  m.doc() = "Module to expose compute units written in C++ with Kokkos";
-  m.attr("KokkosLocation") = &KokkosLocation;
+  m.doc() = "Module to expose compute units written in C++ with Kokkos, as "
+            "well as view/mirror/array exchange.";
 
   bindAdvFlux(m);
   bindBoundaryConditions(m);
