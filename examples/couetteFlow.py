@@ -44,7 +44,7 @@ def simulate(index, velo):
         assert ("y" in velo) or ("x" in velo)
 
     config = pg.files.configFile()
-    config["timeIntegration"]["dt"] = 10 * 2.0e-5 / nx
+    config["timeIntegration"]["dt"] = 10 * 1.0e-5 / nx
     config["RHS"]["diffusion"] = True
     config["thermochem"]["trans"] = "constantProps"
     config["thermochem"]["spdata"] = ["Air"]

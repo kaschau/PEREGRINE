@@ -26,23 +26,16 @@ using viewSpace = Kokkos::HostSpace;
 using layout = Kokkos::LayoutRight;
 #endif
 
-using defaultViewHooks = Kokkos::Experimental::DefaultViewHooks;
 // define some shorthand for the Kokkos views and Range Policies
-using oneDview = Kokkos::View<double *, layout, viewSpace, defaultViewHooks>;
-using oneDsubview =
-    Kokkos::View<double *, Kokkos::LayoutStride, viewSpace, defaultViewHooks>;
-using twoDview = Kokkos::View<double **, layout, viewSpace, defaultViewHooks>;
-using twoDviewInt = Kokkos::View<int **, layout, viewSpace, defaultViewHooks>;
-using twoDsubview =
-    Kokkos::View<double **, Kokkos::LayoutStride, viewSpace, defaultViewHooks>;
-using threeDview =
-    Kokkos::View<double ***, layout, viewSpace, defaultViewHooks>;
-using threeDsubview =
-    Kokkos::View<double ***, Kokkos::LayoutStride, viewSpace, defaultViewHooks>;
-using fourDview =
-    Kokkos::View<double ****, layout, viewSpace, defaultViewHooks>;
-using fiveDview =
-    Kokkos::View<double *****, layout, viewSpace, defaultViewHooks>;
+using oneDview = Kokkos::View<double *, layout, viewSpace>;
+using oneDsubview = Kokkos::View<double *, Kokkos::LayoutStride, viewSpace>;
+using twoDview = Kokkos::View<double **, layout, viewSpace>;
+using twoDviewInt = Kokkos::View<int **, layout, viewSpace>;
+using twoDsubview = Kokkos::View<double **, Kokkos::LayoutStride, viewSpace>;
+using threeDview = Kokkos::View<double ***, layout, viewSpace>;
+using threeDsubview = Kokkos::View<double ***, Kokkos::LayoutStride, viewSpace>;
+using fourDview = Kokkos::View<double ****, layout, viewSpace>;
+using fiveDview = Kokkos::View<double *****, layout, viewSpace>;
 using MDRange1 = Kokkos::MDRangePolicy<execSpace, Kokkos::Rank<1>>;
 using MDRange2 = Kokkos::MDRangePolicy<execSpace, Kokkos::Rank<2>>;
 using MDRange3 = Kokkos::MDRangePolicy<execSpace, Kokkos::Rank<3>>;
@@ -53,6 +46,6 @@ using MDRange5 = Kokkos::MDRangePolicy<execSpace, Kokkos::Rank<5>>;
 using hostSpace = Kokkos::HostSpace;
 using fourDviewHostsubview =
     Kokkos::View<double ****, Kokkos::LayoutStride, hostSpace>;
-using fiveDviewHost = Kokkos::View<double *****, Kokkos::LayoutRight, hostSpace,
-                                   defaultViewHooks>;
+using fiveDviewHost =
+    Kokkos::View<double *****, Kokkos::LayoutRight, hostSpace>;
 #endif
