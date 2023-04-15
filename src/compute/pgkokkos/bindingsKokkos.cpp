@@ -4,42 +4,6 @@
 
 namespace py = pybind11;
 
-void initialize() { Kokkos::initialize(); }
-
-void finalize() { Kokkos::finalize(); }
-
-void deep_copy(oneDview &dest, oneDview::HostMirror &src) {
-  Kokkos::deep_copy(dest, src);
-}
-
-void deep_copy(twoDview &dest, twoDview::HostMirror &src) {
-  Kokkos::deep_copy(dest, src);
-}
-
-void deep_copy(threeDview &dest, threeDview::HostMirror &src) {
-  Kokkos::deep_copy(dest, src);
-}
-
-void deep_copy(fourDview &dest, fourDview::HostMirror &src) {
-  Kokkos::deep_copy(dest, src);
-}
-
-void deep_copy(oneDview::HostMirror &dest, oneDview &src) {
-  Kokkos::deep_copy(dest, src);
-}
-
-void deep_copy(twoDview::HostMirror &dest, twoDview &src) {
-  Kokkos::deep_copy(dest, src);
-}
-
-void deep_copy(threeDview::HostMirror &dest, threeDview &src) {
-  Kokkos::deep_copy(dest, src);
-}
-
-void deep_copy(fourDview::HostMirror &dest, fourDview &src) {
-  Kokkos::deep_copy(dest, src);
-}
-
 void bindKokkos(py::module_ &m) {
   // ./utils
   py::module_ pgkokkos = m.def_submodule("pgkokkos", "pgkokkos module");
@@ -161,41 +125,58 @@ void bindKokkos(py::module_ &m) {
         );
       });
 
-  pgkokkos.def("initialize", &initialize);
-  pgkokkos.def("finalize", &finalize);
-  pgkokkos.def(
-      "deep_copy",
-      py::overload_cast<oneDview &, oneDview::HostMirror &>(&deep_copy),
-      "deep_copy_one", py::arg("dest"), py::arg("src"));
-  pgkokkos.def(
-      "deep_copy",
-      py::overload_cast<oneDview::HostMirror &, oneDview &>(&deep_copy),
-      "deep_copy_one", py::arg("dest"), py::arg("src"));
+  pgkokkos.def("initialize", []() { Kokkos::initialize(); });
+  pgkokkos.def("finalize", []() { Kokkos::finalize(); });
 
   pgkokkos.def(
       "deep_copy",
-      py::overload_cast<twoDview &, twoDview::HostMirror &>(&deep_copy),
-      "deep_copy_two", py::arg("dest"), py::arg("src"));
+      [](oneDview &dest, oneDview::HostMirror &src) {
+        Kokkos::deep_copy(dest, src);
+      },
+      "deep_copy_oneHD", py::arg("dest"), py::arg("src"));
   pgkokkos.def(
       "deep_copy",
-      py::overload_cast<twoDview::HostMirror &, twoDview &>(&deep_copy),
-      "deep_copy_two", py::arg("dest"), py::arg("src"));
+      [](oneDview::HostMirror &dest, oneDview &src) {
+        Kokkos::deep_copy(dest, src);
+      },
+      "deep_copy_oneDH", py::arg("dest"), py::arg("src"));
 
   pgkokkos.def(
       "deep_copy",
-      py::overload_cast<threeDview &, threeDview::HostMirror &>(&deep_copy),
-      "deep_copy_three", py::arg("dest"), py::arg("src"));
+      [](twoDview &dest, twoDview::HostMirror &src) {
+        Kokkos::deep_copy(dest, src);
+      },
+      "deep_copy_twoHD", py::arg("dest"), py::arg("src"));
   pgkokkos.def(
       "deep_copy",
-      py::overload_cast<threeDview::HostMirror &, threeDview &>(&deep_copy),
-      "deep_copy_three", py::arg("dest"), py::arg("src"));
+      [](twoDview::HostMirror &dest, twoDview &src) {
+        Kokkos::deep_copy(dest, src);
+      },
+      "deep_copy_twoDH", py::arg("dest"), py::arg("src"));
 
   pgkokkos.def(
       "deep_copy",
-      py::overload_cast<fourDview &, fourDview::HostMirror &>(&deep_copy),
-      "deep_copy_four", py::arg("dest"), py::arg("src"));
+      [](threeDview &dest, threeDview::HostMirror &src) {
+        Kokkos::deep_copy(dest, src);
+      },
+      "deep_copy_threeHD", py::arg("dest"), py::arg("src"));
   pgkokkos.def(
       "deep_copy",
-      py::overload_cast<fourDview::HostMirror &, fourDview &>(&deep_copy),
-      "deep_copy_four", py::arg("dest"), py::arg("src"));
+      [](threeDview::HostMirror &dest, threeDview &src) {
+        Kokkos::deep_copy(dest, src);
+      },
+      "deep_copy_threeDH", py::arg("dest"), py::arg("src"));
+
+  pgkokkos.def(
+      "deep_copy",
+      [](fourDview &dest, fourDview::HostMirror &src) {
+        Kokkos::deep_copy(dest, src);
+      },
+      "deep_copy_fourHD", py::arg("dest"), py::arg("src"));
+  pgkokkos.def(
+      "deep_copy",
+      [](fourDview::HostMirror &dest, fourDview &src) {
+        Kokkos::deep_copy(dest, src);
+      },
+      "deep_copy_fourDH", py::arg("dest"), py::arg("src"));
 }
