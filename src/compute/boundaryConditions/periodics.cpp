@@ -4,6 +4,7 @@
 #include "face_.hpp"
 #include "kokkosTypes.hpp"
 #include "thtrdat_.hpp"
+#include <string.h>
 
 void periodicRotHigh(
     block_ &b, face_ &face,

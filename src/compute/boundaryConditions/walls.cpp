@@ -4,6 +4,7 @@
 #include "face_.hpp"
 #include "kokkosTypes.hpp"
 #include "thtrdat_.hpp"
+#include <string.h>
 
 // Strategy for wall halo velocities:
 //  For euler boundary conditions, we make all walls

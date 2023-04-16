@@ -3,6 +3,7 @@
 
 #include "block_.hpp"
 #include "thtrdat_.hpp"
+#include <string.h>
 
 // ./thermo
 //    |------> cpg

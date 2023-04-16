@@ -4,6 +4,7 @@
 #include "block_.hpp"
 #include "face_.hpp"
 #include "thtrdat_.hpp"
+#include <string.h>
 
 // ./boundaryConditions
 //    |------> inlets
