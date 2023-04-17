@@ -22,51 +22,40 @@ void adiabaticNoSlipWall(
   // Apply BC to face, slice by slice.
   //-------------------------------------------------------------------------------------------|
   const int ng = b.ng;
-  int s0, s1, s2, plus;
-  setHaloSlices(s0, s1, s2, plus, b.ni, b.nj, b.nk, ng, face._nface);
+  int firstHaloIdx, firstInteriorCellIdx, blockFaceIdx, plus;
+  getFaceSliceIdxs(firstHaloIdx, firstInteriorCellIdx, blockFaceIdx, plus, b.ni,
+                   b.nj, b.nk, ng, face._nface);
 
   if (terms.compare("euler") == 0) {
 
-    threeDsubview q1 = getHaloSlice(b.q, face._nface, s1);
+    threeDsubview q1 = getFaceSlice(b.q, face._nface, firstInteriorCellIdx);
     twoDsubview nx, ny, nz;
 
     switch (face._nface) {
     case 1:
-      nx = getHaloSlice(b.inx, face._nface, s1);
-      ny = getHaloSlice(b.iny, face._nface, s1);
-      nz = getHaloSlice(b.inz, face._nface, s1);
-      break;
     case 2:
-      nx = getHaloSlice(b.inx, face._nface, s0);
-      ny = getHaloSlice(b.iny, face._nface, s0);
-      nz = getHaloSlice(b.inz, face._nface, s0);
+      nx = getFaceSlice(b.inx, face._nface, blockFaceIdx);
+      ny = getFaceSlice(b.iny, face._nface, blockFaceIdx);
+      nz = getFaceSlice(b.inz, face._nface, blockFaceIdx);
       break;
     case 3:
-      nx = getHaloSlice(b.jnx, face._nface, s1);
-      ny = getHaloSlice(b.jny, face._nface, s1);
-      nz = getHaloSlice(b.jnz, face._nface, s1);
-      break;
     case 4:
-      nx = getHaloSlice(b.jnx, face._nface, s0);
-      ny = getHaloSlice(b.jny, face._nface, s0);
-      nz = getHaloSlice(b.jnz, face._nface, s0);
+      nx = getFaceSlice(b.jnx, face._nface, blockFaceIdx);
+      ny = getFaceSlice(b.jny, face._nface, blockFaceIdx);
+      nz = getFaceSlice(b.jnz, face._nface, blockFaceIdx);
       break;
     case 5:
-      nx = getHaloSlice(b.knx, face._nface, s1);
-      ny = getHaloSlice(b.kny, face._nface, s1);
-      nz = getHaloSlice(b.knz, face._nface, s1);
-      break;
     case 6:
-      nx = getHaloSlice(b.knx, face._nface, s0);
-      ny = getHaloSlice(b.kny, face._nface, s0);
-      nz = getHaloSlice(b.knz, face._nface, s0);
+      nx = getFaceSlice(b.knx, face._nface, blockFaceIdx);
+      ny = getFaceSlice(b.kny, face._nface, blockFaceIdx);
+      nz = getFaceSlice(b.knz, face._nface, blockFaceIdx);
       break;
     }
 
     MDRange2 range_face = MDRange2({0, 0}, {q1.extent(0), q1.extent(1)});
     for (int g = 0; g < b.ng; g++) {
-      s0 -= plus * g;
-      threeDsubview q0 = getHaloSlice(b.q, face._nface, s0);
+      firstHaloIdx -= plus * g;
+      threeDsubview q0 = getFaceSlice(b.q, face._nface, firstHaloIdx);
 
       Kokkos::parallel_for(
           "Adia no slip wall euler terms", range_face,
@@ -93,12 +82,12 @@ void adiabaticNoSlipWall(
 
   } else if (terms.compare("preDqDxyz") == 0) {
 
-    threeDsubview q1 = getHaloSlice(b.q, face._nface, s1);
+    threeDsubview q1 = getFaceSlice(b.q, face._nface, firstInteriorCellIdx);
     MDRange2 range_face = MDRange2({0, 0}, {q1.extent(0), q1.extent(1)});
     for (int g = 0; g < b.ng; g++) {
-      s0 -= plus * g;
+      firstHaloIdx -= plus * g;
 
-      threeDsubview q0 = getHaloSlice(b.q, face._nface, s0);
+      threeDsubview q0 = getFaceSlice(b.q, face._nface, firstHaloIdx);
 
       Kokkos::parallel_for(
           "Adia no slip wall preDqDxyz terms", range_face,
@@ -112,13 +101,16 @@ void adiabaticNoSlipWall(
   } else if (terms.compare("postDqDxyz") == 0) {
 
     // Only applied to first halo slice
-    threeDsubview dqdx0 = getHaloSlice(b.dqdx, face._nface, s0);
-    threeDsubview dqdy0 = getHaloSlice(b.dqdy, face._nface, s0);
-    threeDsubview dqdz0 = getHaloSlice(b.dqdz, face._nface, s0);
+    threeDsubview dqdx0 = getFaceSlice(b.dqdx, face._nface, firstHaloIdx);
+    threeDsubview dqdy0 = getFaceSlice(b.dqdy, face._nface, firstHaloIdx);
+    threeDsubview dqdz0 = getFaceSlice(b.dqdz, face._nface, firstHaloIdx);
 
-    threeDsubview dqdx1 = getHaloSlice(b.dqdx, face._nface, s1);
-    threeDsubview dqdy1 = getHaloSlice(b.dqdy, face._nface, s1);
-    threeDsubview dqdz1 = getHaloSlice(b.dqdz, face._nface, s1);
+    threeDsubview dqdx1 =
+        getFaceSlice(b.dqdx, face._nface, firstInteriorCellIdx);
+    threeDsubview dqdy1 =
+        getFaceSlice(b.dqdy, face._nface, firstInteriorCellIdx);
+    threeDsubview dqdz1 =
+        getFaceSlice(b.dqdz, face._nface, firstInteriorCellIdx);
 
     MDRange2 range_face = MDRange2({0, 0}, {dqdx1.extent(0), dqdx1.extent(1)});
     Kokkos::parallel_for(
@@ -163,52 +155,40 @@ void adiabaticSlipWall(
   // Apply BC to face, slice by slice.
   //-------------------------------------------------------------------------------------------|
   const int ng = b.ng;
-  int s0, s1, s2, plus;
-  setHaloSlices(s0, s1, s2, plus, b.ni, b.nj, b.nk, ng, face._nface);
+  int firstHaloIdx, firstInteriorCellIdx, blockFaceIdx, plus;
+  getFaceSliceIdxs(firstHaloIdx, firstInteriorCellIdx, blockFaceIdx, plus, b.ni,
+                   b.nj, b.nk, ng, face._nface);
 
   if (terms.compare("euler") == 0) {
 
-    threeDsubview q1 = getHaloSlice(b.q, face._nface, s1);
+    threeDsubview q1 = getFaceSlice(b.q, face._nface, firstInteriorCellIdx);
     twoDsubview nx, ny, nz;
-
     switch (face._nface) {
     case 1:
-      nx = getHaloSlice(b.inx, face._nface, s1);
-      ny = getHaloSlice(b.iny, face._nface, s1);
-      nz = getHaloSlice(b.inz, face._nface, s1);
-      break;
     case 2:
-      nx = getHaloSlice(b.inx, face._nface, s0);
-      ny = getHaloSlice(b.iny, face._nface, s0);
-      nz = getHaloSlice(b.inz, face._nface, s0);
+      nx = getFaceSlice(b.inx, face._nface, blockFaceIdx);
+      ny = getFaceSlice(b.iny, face._nface, blockFaceIdx);
+      nz = getFaceSlice(b.inz, face._nface, blockFaceIdx);
       break;
     case 3:
-      nx = getHaloSlice(b.jnx, face._nface, s1);
-      ny = getHaloSlice(b.jny, face._nface, s1);
-      nz = getHaloSlice(b.jnz, face._nface, s1);
-      break;
     case 4:
-      nx = getHaloSlice(b.jnx, face._nface, s0);
-      ny = getHaloSlice(b.jny, face._nface, s0);
-      nz = getHaloSlice(b.jnz, face._nface, s0);
+      nx = getFaceSlice(b.jnx, face._nface, blockFaceIdx);
+      ny = getFaceSlice(b.jny, face._nface, blockFaceIdx);
+      nz = getFaceSlice(b.jnz, face._nface, blockFaceIdx);
       break;
     case 5:
-      nx = getHaloSlice(b.knx, face._nface, s1);
-      ny = getHaloSlice(b.kny, face._nface, s1);
-      nz = getHaloSlice(b.knz, face._nface, s1);
-      break;
     case 6:
-      nx = getHaloSlice(b.knx, face._nface, s0);
-      ny = getHaloSlice(b.kny, face._nface, s0);
-      nz = getHaloSlice(b.knz, face._nface, s0);
+      nx = getFaceSlice(b.knx, face._nface, blockFaceIdx);
+      ny = getFaceSlice(b.kny, face._nface, blockFaceIdx);
+      nz = getFaceSlice(b.knz, face._nface, blockFaceIdx);
       break;
     }
 
     MDRange2 range_face = MDRange2({0, 0}, {q1.extent(0), q1.extent(1)});
     for (int g = 0; g < b.ng; g++) {
-      s0 -= plus * g;
+      firstHaloIdx -= plus * g;
 
-      threeDsubview q0 = getHaloSlice(b.q, face._nface, s0);
+      threeDsubview q0 = getFaceSlice(b.q, face._nface, firstHaloIdx);
 
       Kokkos::parallel_for(
           "Adia slip wall euler terms", range_face,
@@ -235,13 +215,16 @@ void adiabaticSlipWall(
   } else if (terms.compare("postDqDxyz") == 0) {
 
     // Only applied to first halo slice
-    threeDsubview dqdx0 = getHaloSlice(b.dqdx, face._nface, s0);
-    threeDsubview dqdy0 = getHaloSlice(b.dqdy, face._nface, s0);
-    threeDsubview dqdz0 = getHaloSlice(b.dqdz, face._nface, s0);
+    threeDsubview dqdx0 = getFaceSlice(b.dqdx, face._nface, firstHaloIdx);
+    threeDsubview dqdy0 = getFaceSlice(b.dqdy, face._nface, firstHaloIdx);
+    threeDsubview dqdz0 = getFaceSlice(b.dqdz, face._nface, firstHaloIdx);
 
-    threeDsubview dqdx1 = getHaloSlice(b.dqdx, face._nface, s1);
-    threeDsubview dqdy1 = getHaloSlice(b.dqdy, face._nface, s1);
-    threeDsubview dqdz1 = getHaloSlice(b.dqdz, face._nface, s1);
+    threeDsubview dqdx1 =
+        getFaceSlice(b.dqdx, face._nface, firstInteriorCellIdx);
+    threeDsubview dqdy1 =
+        getFaceSlice(b.dqdy, face._nface, firstInteriorCellIdx);
+    threeDsubview dqdz1 =
+        getFaceSlice(b.dqdz, face._nface, firstInteriorCellIdx);
 
     MDRange3 range_face =
         MDRange3({0, 0, 0}, {static_cast<long>(dqdx1.extent(0)),
@@ -265,52 +248,40 @@ void adiabaticMovingWall(
   // Apply BC to face, slice by slice.
   //-------------------------------------------------------------------------------------------|
   const int ng = b.ng;
-  int s0, s1, s2, plus;
-  setHaloSlices(s0, s1, s2, plus, b.ni, b.nj, b.nk, ng, face._nface);
+  int firstHaloIdx, firstInteriorCellIdx, blockFaceIdx, plus;
+  getFaceSliceIdxs(firstHaloIdx, firstInteriorCellIdx, blockFaceIdx, plus, b.ni,
+                   b.nj, b.nk, ng, face._nface);
 
   if (terms.compare("euler") == 0) {
 
-    threeDsubview q1 = getHaloSlice(b.q, face._nface, s1);
+    threeDsubview q1 = getFaceSlice(b.q, face._nface, firstInteriorCellIdx);
     twoDsubview nx, ny, nz;
-
     switch (face._nface) {
     case 1:
-      nx = getHaloSlice(b.inx, face._nface, s1);
-      ny = getHaloSlice(b.iny, face._nface, s1);
-      nz = getHaloSlice(b.inz, face._nface, s1);
-      break;
     case 2:
-      nx = getHaloSlice(b.inx, face._nface, s0);
-      ny = getHaloSlice(b.iny, face._nface, s0);
-      nz = getHaloSlice(b.inz, face._nface, s0);
+      nx = getFaceSlice(b.inx, face._nface, blockFaceIdx);
+      ny = getFaceSlice(b.iny, face._nface, blockFaceIdx);
+      nz = getFaceSlice(b.inz, face._nface, blockFaceIdx);
       break;
     case 3:
-      nx = getHaloSlice(b.jnx, face._nface, s1);
-      ny = getHaloSlice(b.jny, face._nface, s1);
-      nz = getHaloSlice(b.jnz, face._nface, s1);
-      break;
     case 4:
-      nx = getHaloSlice(b.jnx, face._nface, s0);
-      ny = getHaloSlice(b.jny, face._nface, s0);
-      nz = getHaloSlice(b.jnz, face._nface, s0);
+      nx = getFaceSlice(b.jnx, face._nface, blockFaceIdx);
+      ny = getFaceSlice(b.jny, face._nface, blockFaceIdx);
+      nz = getFaceSlice(b.jnz, face._nface, blockFaceIdx);
       break;
     case 5:
-      nx = getHaloSlice(b.knx, face._nface, s1);
-      ny = getHaloSlice(b.kny, face._nface, s1);
-      nz = getHaloSlice(b.knz, face._nface, s1);
-      break;
     case 6:
-      nx = getHaloSlice(b.knx, face._nface, s0);
-      ny = getHaloSlice(b.kny, face._nface, s0);
-      nz = getHaloSlice(b.knz, face._nface, s0);
+      nx = getFaceSlice(b.knx, face._nface, blockFaceIdx);
+      ny = getFaceSlice(b.kny, face._nface, blockFaceIdx);
+      nz = getFaceSlice(b.knz, face._nface, blockFaceIdx);
       break;
     }
 
     MDRange2 range_face = MDRange2({0, 0}, {q1.extent(0), q1.extent(1)});
     for (int g = 0; g < b.ng; g++) {
-      s0 -= plus * g;
+      firstHaloIdx -= plus * g;
 
-      threeDsubview q0 = getHaloSlice(b.q, face._nface, s0);
+      threeDsubview q0 = getFaceSlice(b.q, face._nface, firstHaloIdx);
 
       Kokkos::parallel_for(
           "Adia moving wall euler terms", range_face,
@@ -337,12 +308,12 @@ void adiabaticMovingWall(
 
   } else if (terms.compare("preDqDxyz") == 0) {
 
-    threeDsubview q1 = getHaloSlice(b.q, face._nface, s1);
+    threeDsubview q1 = getFaceSlice(b.q, face._nface, firstInteriorCellIdx);
     MDRange2 range_face = MDRange2({0, 0}, {q1.extent(0), q1.extent(1)});
     for (int g = 0; g < b.ng; g++) {
-      s0 -= plus * g;
+      firstHaloIdx -= plus * g;
 
-      threeDsubview q0 = getHaloSlice(b.q, face._nface, s0);
+      threeDsubview q0 = getFaceSlice(b.q, face._nface, firstHaloIdx);
       Kokkos::parallel_for(
           "Adia moving wall preDqDxyz terms", range_face,
           KOKKOS_LAMBDA(const int i, const int j) {
@@ -354,13 +325,16 @@ void adiabaticMovingWall(
     }
   } else if (terms.compare("postDqDxyz") == 0) {
 
-    threeDsubview dqdx0 = getHaloSlice(b.dqdx, face._nface, s0);
-    threeDsubview dqdy0 = getHaloSlice(b.dqdy, face._nface, s0);
-    threeDsubview dqdz0 = getHaloSlice(b.dqdz, face._nface, s0);
+    threeDsubview dqdx0 = getFaceSlice(b.dqdx, face._nface, firstHaloIdx);
+    threeDsubview dqdy0 = getFaceSlice(b.dqdy, face._nface, firstHaloIdx);
+    threeDsubview dqdz0 = getFaceSlice(b.dqdz, face._nface, firstHaloIdx);
 
-    threeDsubview dqdx1 = getHaloSlice(b.dqdx, face._nface, s1);
-    threeDsubview dqdy1 = getHaloSlice(b.dqdy, face._nface, s1);
-    threeDsubview dqdz1 = getHaloSlice(b.dqdz, face._nface, s1);
+    threeDsubview dqdx1 =
+        getFaceSlice(b.dqdx, face._nface, firstInteriorCellIdx);
+    threeDsubview dqdy1 =
+        getFaceSlice(b.dqdy, face._nface, firstInteriorCellIdx);
+    threeDsubview dqdz1 =
+        getFaceSlice(b.dqdz, face._nface, firstInteriorCellIdx);
 
     MDRange2 range_face = MDRange2({0, 0}, {dqdx1.extent(0), dqdx1.extent(1)});
     Kokkos::parallel_for(
@@ -405,52 +379,40 @@ void isoTNoSlipWall(
   // Apply BC to face, slice by slice.
   //-------------------------------------------------------------------------------------------|
   const int ng = b.ng;
-  int s0, s1, s2, plus;
-  setHaloSlices(s0, s1, s2, plus, b.ni, b.nj, b.nk, ng, face._nface);
+  int firstHaloIdx, firstInteriorCellIdx, blockFaceIdx, plus;
+  getFaceSliceIdxs(firstHaloIdx, firstInteriorCellIdx, blockFaceIdx, plus, b.ni,
+                   b.nj, b.nk, ng, face._nface);
 
   if (terms.compare("euler") == 0) {
 
-    threeDsubview q1 = getHaloSlice(b.q, face._nface, s1);
+    threeDsubview q1 = getFaceSlice(b.q, face._nface, firstInteriorCellIdx);
     twoDsubview nx, ny, nz;
-
     switch (face._nface) {
     case 1:
-      nx = getHaloSlice(b.inx, face._nface, s1);
-      ny = getHaloSlice(b.iny, face._nface, s1);
-      nz = getHaloSlice(b.inz, face._nface, s1);
-      break;
     case 2:
-      nx = getHaloSlice(b.inx, face._nface, s0);
-      ny = getHaloSlice(b.iny, face._nface, s0);
-      nz = getHaloSlice(b.inz, face._nface, s0);
+      nx = getFaceSlice(b.inx, face._nface, blockFaceIdx);
+      ny = getFaceSlice(b.iny, face._nface, blockFaceIdx);
+      nz = getFaceSlice(b.inz, face._nface, blockFaceIdx);
       break;
     case 3:
-      nx = getHaloSlice(b.jnx, face._nface, s1);
-      ny = getHaloSlice(b.jny, face._nface, s1);
-      nz = getHaloSlice(b.jnz, face._nface, s1);
-      break;
     case 4:
-      nx = getHaloSlice(b.jnx, face._nface, s0);
-      ny = getHaloSlice(b.jny, face._nface, s0);
-      nz = getHaloSlice(b.jnz, face._nface, s0);
+      nx = getFaceSlice(b.jnx, face._nface, blockFaceIdx);
+      ny = getFaceSlice(b.jny, face._nface, blockFaceIdx);
+      nz = getFaceSlice(b.jnz, face._nface, blockFaceIdx);
       break;
     case 5:
-      nx = getHaloSlice(b.knx, face._nface, s1);
-      ny = getHaloSlice(b.kny, face._nface, s1);
-      nz = getHaloSlice(b.knz, face._nface, s1);
-      break;
     case 6:
-      nx = getHaloSlice(b.knx, face._nface, s0);
-      ny = getHaloSlice(b.kny, face._nface, s0);
-      nz = getHaloSlice(b.knz, face._nface, s0);
+      nx = getFaceSlice(b.knx, face._nface, blockFaceIdx);
+      ny = getFaceSlice(b.kny, face._nface, blockFaceIdx);
+      nz = getFaceSlice(b.knz, face._nface, blockFaceIdx);
       break;
     }
 
     MDRange2 range_face = MDRange2({0, 0}, {q1.extent(0), q1.extent(1)});
     for (int g = 0; g < b.ng; g++) {
-      s0 -= plus * g;
+      firstHaloIdx -= plus * g;
 
-      threeDsubview q0 = getHaloSlice(b.q, face._nface, s0);
+      threeDsubview q0 = getFaceSlice(b.q, face._nface, firstHaloIdx);
 
       Kokkos::parallel_for(
           "isoT no slip wall euler terms", range_face,
@@ -477,12 +439,12 @@ void isoTNoSlipWall(
 
   } else if (terms.compare("preDqDxyz") == 0) {
 
-    threeDsubview q1 = getHaloSlice(b.q, face._nface, s1);
+    threeDsubview q1 = getFaceSlice(b.q, face._nface, firstInteriorCellIdx);
     MDRange2 range_face = MDRange2({0, 0}, {q1.extent(0), q1.extent(1)});
     for (int g = 0; g < b.ng; g++) {
-      s0 -= plus * g;
+      firstHaloIdx -= plus * g;
 
-      threeDsubview q0 = getHaloSlice(b.q, face._nface, s0);
+      threeDsubview q0 = getFaceSlice(b.q, face._nface, firstHaloIdx);
 
       Kokkos::parallel_for(
           "isoT no slip wall preDqDxyz terms", range_face,
@@ -495,13 +457,16 @@ void isoTNoSlipWall(
     }
   } else if (terms.compare("postDqDxyz") == 0) {
 
-    threeDsubview dqdx0 = getHaloSlice(b.dqdx, face._nface, s0);
-    threeDsubview dqdy0 = getHaloSlice(b.dqdy, face._nface, s0);
-    threeDsubview dqdz0 = getHaloSlice(b.dqdz, face._nface, s0);
+    threeDsubview dqdx0 = getFaceSlice(b.dqdx, face._nface, firstHaloIdx);
+    threeDsubview dqdy0 = getFaceSlice(b.dqdy, face._nface, firstHaloIdx);
+    threeDsubview dqdz0 = getFaceSlice(b.dqdz, face._nface, firstHaloIdx);
 
-    threeDsubview dqdx1 = getHaloSlice(b.dqdx, face._nface, s1);
-    threeDsubview dqdy1 = getHaloSlice(b.dqdy, face._nface, s1);
-    threeDsubview dqdz1 = getHaloSlice(b.dqdz, face._nface, s1);
+    threeDsubview dqdx1 =
+        getFaceSlice(b.dqdx, face._nface, firstInteriorCellIdx);
+    threeDsubview dqdy1 =
+        getFaceSlice(b.dqdy, face._nface, firstInteriorCellIdx);
+    threeDsubview dqdz1 =
+        getFaceSlice(b.dqdz, face._nface, firstInteriorCellIdx);
 
     MDRange2 range_face = MDRange2({0, 0}, {dqdx1.extent(0), dqdx1.extent(1)});
     Kokkos::parallel_for(
@@ -545,52 +510,40 @@ void isoTSlipWall(
   // Apply BC to face, slice by slice.
   //-------------------------------------------------------------------------------------------|
   const int ng = b.ng;
-  int s0, s1, s2, plus;
-  setHaloSlices(s0, s1, s2, plus, b.ni, b.nj, b.nk, ng, face._nface);
+  int firstHaloIdx, firstInteriorCellIdx, blockFaceIdx, plus;
+  getFaceSliceIdxs(firstHaloIdx, firstInteriorCellIdx, blockFaceIdx, plus, b.ni,
+                   b.nj, b.nk, ng, face._nface);
 
   if (terms.compare("euler") == 0) {
 
-    threeDsubview q1 = getHaloSlice(b.q, face._nface, s1);
+    threeDsubview q1 = getFaceSlice(b.q, face._nface, firstInteriorCellIdx);
     twoDsubview nx, ny, nz;
-
     switch (face._nface) {
     case 1:
-      nx = getHaloSlice(b.inx, face._nface, s1);
-      ny = getHaloSlice(b.iny, face._nface, s1);
-      nz = getHaloSlice(b.inz, face._nface, s1);
-      break;
     case 2:
-      nx = getHaloSlice(b.inx, face._nface, s0);
-      ny = getHaloSlice(b.iny, face._nface, s0);
-      nz = getHaloSlice(b.inz, face._nface, s0);
+      nx = getFaceSlice(b.inx, face._nface, blockFaceIdx);
+      ny = getFaceSlice(b.iny, face._nface, blockFaceIdx);
+      nz = getFaceSlice(b.inz, face._nface, blockFaceIdx);
       break;
     case 3:
-      nx = getHaloSlice(b.jnx, face._nface, s1);
-      ny = getHaloSlice(b.jny, face._nface, s1);
-      nz = getHaloSlice(b.jnz, face._nface, s1);
-      break;
     case 4:
-      nx = getHaloSlice(b.jnx, face._nface, s0);
-      ny = getHaloSlice(b.jny, face._nface, s0);
-      nz = getHaloSlice(b.jnz, face._nface, s0);
+      nx = getFaceSlice(b.jnx, face._nface, blockFaceIdx);
+      ny = getFaceSlice(b.jny, face._nface, blockFaceIdx);
+      nz = getFaceSlice(b.jnz, face._nface, blockFaceIdx);
       break;
     case 5:
-      nx = getHaloSlice(b.knx, face._nface, s1);
-      ny = getHaloSlice(b.kny, face._nface, s1);
-      nz = getHaloSlice(b.knz, face._nface, s1);
-      break;
     case 6:
-      nx = getHaloSlice(b.knx, face._nface, s0);
-      ny = getHaloSlice(b.kny, face._nface, s0);
-      nz = getHaloSlice(b.knz, face._nface, s0);
+      nx = getFaceSlice(b.knx, face._nface, blockFaceIdx);
+      ny = getFaceSlice(b.kny, face._nface, blockFaceIdx);
+      nz = getFaceSlice(b.knz, face._nface, blockFaceIdx);
       break;
     }
 
     MDRange2 range_face = MDRange2({0, 0}, {q1.extent(0), q1.extent(1)});
     for (int g = 0; g < b.ng; g++) {
-      s0 -= plus * g;
+      firstHaloIdx -= plus * g;
 
-      threeDsubview q0 = getHaloSlice(b.q, face._nface, s0);
+      threeDsubview q0 = getFaceSlice(b.q, face._nface, firstHaloIdx);
 
       Kokkos::parallel_for(
           "isoT slip wall euler terms", range_face,
@@ -617,13 +570,16 @@ void isoTSlipWall(
 
   } else if (terms.compare("postDqDxyz") == 0) {
 
-    threeDsubview dqdx0 = getHaloSlice(b.dqdx, face._nface, s0);
-    threeDsubview dqdy0 = getHaloSlice(b.dqdy, face._nface, s0);
-    threeDsubview dqdz0 = getHaloSlice(b.dqdz, face._nface, s0);
+    threeDsubview dqdx0 = getFaceSlice(b.dqdx, face._nface, firstHaloIdx);
+    threeDsubview dqdy0 = getFaceSlice(b.dqdy, face._nface, firstHaloIdx);
+    threeDsubview dqdz0 = getFaceSlice(b.dqdz, face._nface, firstHaloIdx);
 
-    threeDsubview dqdx1 = getHaloSlice(b.dqdx, face._nface, s1);
-    threeDsubview dqdy1 = getHaloSlice(b.dqdy, face._nface, s1);
-    threeDsubview dqdz1 = getHaloSlice(b.dqdz, face._nface, s1);
+    threeDsubview dqdx1 =
+        getFaceSlice(b.dqdx, face._nface, firstInteriorCellIdx);
+    threeDsubview dqdy1 =
+        getFaceSlice(b.dqdy, face._nface, firstInteriorCellIdx);
+    threeDsubview dqdz1 =
+        getFaceSlice(b.dqdz, face._nface, firstInteriorCellIdx);
 
     MDRange2 range_face = MDRange2({0, 0}, {dqdx1.extent(0), dqdx1.extent(1)});
     Kokkos::parallel_for(
@@ -669,52 +625,40 @@ void isoTMovingWall(
   // Apply BC to face, slice by slice.
   //-------------------------------------------------------------------------------------------|
   const int ng = b.ng;
-  int s0, s1, s2, plus;
-  setHaloSlices(s0, s1, s2, plus, b.ni, b.nj, b.nk, ng, face._nface);
+  int firstHaloIdx, firstInteriorCellIdx, blockFaceIdx, plus;
+  getFaceSliceIdxs(firstHaloIdx, firstInteriorCellIdx, blockFaceIdx, plus, b.ni,
+                   b.nj, b.nk, ng, face._nface);
 
   if (terms.compare("euler") == 0) {
 
-    threeDsubview q1 = getHaloSlice(b.q, face._nface, s1);
+    threeDsubview q1 = getFaceSlice(b.q, face._nface, firstInteriorCellIdx);
     twoDsubview nx, ny, nz;
-
     switch (face._nface) {
     case 1:
-      nx = getHaloSlice(b.inx, face._nface, s1);
-      ny = getHaloSlice(b.iny, face._nface, s1);
-      nz = getHaloSlice(b.inz, face._nface, s1);
-      break;
     case 2:
-      nx = getHaloSlice(b.inx, face._nface, s0);
-      ny = getHaloSlice(b.iny, face._nface, s0);
-      nz = getHaloSlice(b.inz, face._nface, s0);
+      nx = getFaceSlice(b.inx, face._nface, blockFaceIdx);
+      ny = getFaceSlice(b.iny, face._nface, blockFaceIdx);
+      nz = getFaceSlice(b.inz, face._nface, blockFaceIdx);
       break;
     case 3:
-      nx = getHaloSlice(b.jnx, face._nface, s1);
-      ny = getHaloSlice(b.jny, face._nface, s1);
-      nz = getHaloSlice(b.jnz, face._nface, s1);
-      break;
     case 4:
-      nx = getHaloSlice(b.jnx, face._nface, s0);
-      ny = getHaloSlice(b.jny, face._nface, s0);
-      nz = getHaloSlice(b.jnz, face._nface, s0);
+      nx = getFaceSlice(b.jnx, face._nface, blockFaceIdx);
+      ny = getFaceSlice(b.jny, face._nface, blockFaceIdx);
+      nz = getFaceSlice(b.jnz, face._nface, blockFaceIdx);
       break;
     case 5:
-      nx = getHaloSlice(b.knx, face._nface, s1);
-      ny = getHaloSlice(b.kny, face._nface, s1);
-      nz = getHaloSlice(b.knz, face._nface, s1);
-      break;
     case 6:
-      nx = getHaloSlice(b.knx, face._nface, s0);
-      ny = getHaloSlice(b.kny, face._nface, s0);
-      nz = getHaloSlice(b.knz, face._nface, s0);
+      nx = getFaceSlice(b.knx, face._nface, blockFaceIdx);
+      ny = getFaceSlice(b.kny, face._nface, blockFaceIdx);
+      nz = getFaceSlice(b.knz, face._nface, blockFaceIdx);
       break;
     }
 
     MDRange2 range_face = MDRange2({0, 0}, {q1.extent(0), q1.extent(1)});
     for (int g = 0; g < b.ng; g++) {
-      s0 -= plus * g;
+      firstHaloIdx -= plus * g;
 
-      threeDsubview q0 = getHaloSlice(b.q, face._nface, s0);
+      threeDsubview q0 = getFaceSlice(b.q, face._nface, firstHaloIdx);
 
       Kokkos::parallel_for(
           "Iso T moving wall euler terms", range_face,
@@ -741,12 +685,12 @@ void isoTMovingWall(
 
   } else if (terms.compare("preDqDxyz") == 0) {
 
-    threeDsubview q1 = getHaloSlice(b.q, face._nface, s1);
+    threeDsubview q1 = getFaceSlice(b.q, face._nface, firstInteriorCellIdx);
     MDRange2 range_face = MDRange2({0, 0}, {q1.extent(0), q1.extent(1)});
     for (int g = 0; g < b.ng; g++) {
-      s0 -= plus * g;
+      firstHaloIdx -= plus * g;
 
-      threeDsubview q0 = getHaloSlice(b.q, face._nface, s0);
+      threeDsubview q0 = getFaceSlice(b.q, face._nface, firstHaloIdx);
 
       Kokkos::parallel_for(
           "Iso T moving wall preDqDxyz terms", range_face,
@@ -759,13 +703,16 @@ void isoTMovingWall(
     }
   } else if (terms.compare("postDqDxyz") == 0) {
 
-    threeDsubview dqdx0 = getHaloSlice(b.dqdx, face._nface, s0);
-    threeDsubview dqdy0 = getHaloSlice(b.dqdy, face._nface, s0);
-    threeDsubview dqdz0 = getHaloSlice(b.dqdz, face._nface, s0);
+    threeDsubview dqdx0 = getFaceSlice(b.dqdx, face._nface, firstHaloIdx);
+    threeDsubview dqdy0 = getFaceSlice(b.dqdy, face._nface, firstHaloIdx);
+    threeDsubview dqdz0 = getFaceSlice(b.dqdz, face._nface, firstHaloIdx);
 
-    threeDsubview dqdx1 = getHaloSlice(b.dqdx, face._nface, s1);
-    threeDsubview dqdy1 = getHaloSlice(b.dqdy, face._nface, s1);
-    threeDsubview dqdz1 = getHaloSlice(b.dqdz, face._nface, s1);
+    threeDsubview dqdx1 =
+        getFaceSlice(b.dqdx, face._nface, firstInteriorCellIdx);
+    threeDsubview dqdy1 =
+        getFaceSlice(b.dqdy, face._nface, firstInteriorCellIdx);
+    threeDsubview dqdz1 =
+        getFaceSlice(b.dqdz, face._nface, firstInteriorCellIdx);
 
     MDRange2 range_face = MDRange2({0, 0}, {dqdx1.extent(0), dqdx1.extent(1)});
     Kokkos::parallel_for(
