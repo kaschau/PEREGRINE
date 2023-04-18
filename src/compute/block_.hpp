@@ -37,7 +37,7 @@ struct block_ {
   threeDview ksx, ksy, ksz, kS, knx, kny, knz;
 
   // Cons,Prim Arrays
-  fourDview Q, q, dQ;
+  fourDview Q, q, dQ, s, ds;
   // Spatial derivative of prim array
   fourDview dqdx, dqdy, dqdz;
   // thermo,trans arrays
@@ -47,6 +47,7 @@ struct block_ {
 
   // Time integration stages
   fourDview Q0, Q1, Q2, Q3;
+  fourDview s0, s1, s2, s3;
   fourDview Qn, Qnm1;
   threeDview dtau;
 

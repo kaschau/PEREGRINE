@@ -22,5 +22,7 @@ void hllc(block_ &b);
 void muscl2hllc(block_ &b);
 //    |------> muscl2rusanov
 void muscl2rusanov(block_ &b);
+//    |------> KEEPdissipation
+void KEEPdissipation(block_ &b);
 
 #endif

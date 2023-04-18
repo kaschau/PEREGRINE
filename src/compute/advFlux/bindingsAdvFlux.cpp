@@ -42,4 +42,8 @@ void bindAdvFlux(py::module_ &m) {
       "muscl2rusanov", &muscl2rusanov,
       "Compute first order euler fluxes via 2nd order MUSCL with rusanov flux",
       py::arg("block_ object"));
+  //  |----> KEEPdissipation.cpp
+  advFlux.def("KEEPdissipation", &KEEPdissipation,
+              "Compute scalar dissipation I invented all by myself",
+              py::arg("block_ object"));
 }

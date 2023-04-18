@@ -131,6 +131,8 @@ PYBIND11_MODULE(compute, m) {
       .def_readwrite("Q", &block_::Q)
       .def_readwrite("q", &block_::q)
       .def_readwrite("dQ", &block_::dQ)
+      .def_readwrite("s", &block_::s)
+      .def_readwrite("ds", &block_::ds)
 
       // Spatial derivative of prim array
       .def_readwrite("dqdx", &block_::dqdx)
@@ -152,6 +154,10 @@ PYBIND11_MODULE(compute, m) {
       .def_readwrite("Qn", &block_::Qn)
       .def_readwrite("Qnm1", &block_::Qnm1)
       .def_readwrite("dtau", &block_::dtau)
+      .def_readwrite("s0", &block_::s0)
+      .def_readwrite("s1", &block_::s1)
+      .def_readwrite("s2", &block_::s2)
+      .def_readwrite("s3", &block_::s3)
 
       // Flux Arrays
       .def_readwrite("iF", &block_::iF)

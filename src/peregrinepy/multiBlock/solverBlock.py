@@ -51,7 +51,7 @@ class solverBlock(restartBlock, block_):
         # Solution Variables
         #######################################################################
         # Conserved variables
-        for d in ["Q", "dQ"]:
+        for d in ["Q", "dQ", "s", "ds"]:
             self.array[f"{d}"] = None
             self.mirror[f"{d}"] = None
         # Spatial derivative of primative array
@@ -76,6 +76,10 @@ class solverBlock(restartBlock, block_):
             self.mirror[f"{d}"] = None
         # Face flux switches
         for d in ["phi"]:
+            self.array[f"{d}"] = None
+            self.mirror[f"{d}"] = None
+        # entropy
+        for d in ["s0", "s1", "s2", "s3"]:
             self.array[f"{d}"] = None
             self.mirror[f"{d}"] = None
 
@@ -170,7 +174,7 @@ class solverBlock(restartBlock, block_):
         # ------------------------------------------------------------------- #
         #       Conservative, Primative, dQ
         # ------------------------------------------------------------------- #
-        createViewMirrorArray(self, ["Q", "q", "dQ"], cQshape)
+        createViewMirrorArray(self, ["Q", "q", "dQ", "s", "ds"], cQshape)
 
         # ------------------------------------------------------------------- #
         #       Spatial derivative of primative array
@@ -228,6 +232,10 @@ class solverBlock(restartBlock, block_):
         }
         names = [
             f"Q{i}" for i in range(nstorage[config["timeIntegration"]["integrator"]])
+        ]
+        createViewMirrorArray(self, names, cQshape)
+        names = [
+            f"s{i}" for i in range(nstorage[config["timeIntegration"]["integrator"]])
         ]
         createViewMirrorArray(self, names, cQshape)
         if config["timeIntegration"]["integrator"] == "dualTime":
