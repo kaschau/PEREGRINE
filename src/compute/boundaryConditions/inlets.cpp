@@ -4,6 +4,7 @@
 #include "face_.hpp"
 #include "kokkosTypes.hpp"
 #include "thtrdat_.hpp"
+#include <string.h>
 
 void constantVelocitySubsonicInlet(
     block_ &b, face_ &face,
@@ -13,20 +14,22 @@ void constantVelocitySubsonicInlet(
   // Apply BC to face, slice by slice.
   //-------------------------------------------------------------------------------------------|
   const int ng = b.ng;
-  int s0, s1, s2, plus;
-  setHaloSlices(s0, s1, s2, plus, b.ni, b.nj, b.nk, ng, face._nface);
+  int firstHaloIdx, firstInteriorCellIdx, blockFaceIdx, plus;
+  getFaceSliceIdxs(firstHaloIdx, firstInteriorCellIdx, blockFaceIdx, plus, b.ni,
+                   b.nj, b.nk, ng, face._nface);
+  int secondInteriorCellIdx = firstInteriorCellIdx + plus;
 
   if (terms.compare("euler") == 0) {
 
-    threeDsubview q1 = getHaloSlice(b.q, face._nface, s1);
+    threeDsubview q1 = getFaceSlice(b.q, face._nface, firstInteriorCellIdx);
     MDRange2 range_face = MDRange2({0, 0}, {q1.extent(0), q1.extent(1)});
 
     for (int g = 0; g < b.ng; g++) {
-      s0 -= plus * g;
-      s2 += plus * g;
+      firstHaloIdx -= plus * g;
+      secondInteriorCellIdx += plus * g;
 
-      threeDsubview q0 = getHaloSlice(b.q, face._nface, s0);
-      threeDsubview q2 = getHaloSlice(b.q, face._nface, s2);
+      threeDsubview q0 = getFaceSlice(b.q, face._nface, firstHaloIdx);
+      threeDsubview q2 = getFaceSlice(b.q, face._nface, secondInteriorCellIdx);
 
       Kokkos::parallel_for(
           "Constant velocity subsonic inlet euler terms", range_face,
@@ -52,13 +55,16 @@ void constantVelocitySubsonicInlet(
   } else if (terms.compare("postDqDxyz") == 0) {
 
     // Only applied to first halo slice
-    threeDsubview dqdx1 = getHaloSlice(b.dqdx, face._nface, s1);
-    threeDsubview dqdy1 = getHaloSlice(b.dqdy, face._nface, s1);
-    threeDsubview dqdz1 = getHaloSlice(b.dqdz, face._nface, s1);
+    threeDsubview dqdx1 =
+        getFaceSlice(b.dqdx, face._nface, firstInteriorCellIdx);
+    threeDsubview dqdy1 =
+        getFaceSlice(b.dqdy, face._nface, firstInteriorCellIdx);
+    threeDsubview dqdz1 =
+        getFaceSlice(b.dqdz, face._nface, firstInteriorCellIdx);
 
-    threeDsubview dqdx0 = getHaloSlice(b.dqdx, face._nface, s0);
-    threeDsubview dqdy0 = getHaloSlice(b.dqdy, face._nface, s0);
-    threeDsubview dqdz0 = getHaloSlice(b.dqdz, face._nface, s0);
+    threeDsubview dqdx0 = getFaceSlice(b.dqdx, face._nface, firstHaloIdx);
+    threeDsubview dqdy0 = getFaceSlice(b.dqdy, face._nface, firstHaloIdx);
+    threeDsubview dqdz0 = getFaceSlice(b.dqdz, face._nface, firstHaloIdx);
 
     MDRange3 range_face =
         MDRange3({0, 0, 0}, {static_cast<long>(dqdx1.extent(0)),
@@ -156,22 +162,24 @@ void supersonicInlet(
   // Apply BC to face, slice by slice.
   //-------------------------------------------------------------------------------------------|
   const int ng = b.ng;
-  int s0, s1, s2, plus;
-  setHaloSlices(s0, s1, s2, plus, b.ni, b.nj, b.nk, ng, face._nface);
+  int firstHaloIdx, firstInteriorCellIdx, blockFaceIdx, plus;
+  getFaceSliceIdxs(firstHaloIdx, firstInteriorCellIdx, blockFaceIdx, plus, b.ni,
+                   b.nj, b.nk, ng, face._nface);
+  int secondInteriorCellIdx = firstInteriorCellIdx + plus;
 
   if (terms.compare("euler") == 0) {
 
-    threeDsubview q1 = getHaloSlice(b.q, face._nface, s1);
+    threeDsubview q1 = getFaceSlice(b.q, face._nface, firstInteriorCellIdx);
     MDRange3 range_face =
         MDRange3({0, 0, 0}, {static_cast<int>(q1.extent(0)),
                              static_cast<int>(q1.extent(1)), b.ne});
 
     for (int g = 0; g < b.ng; g++) {
-      s0 -= plus * g;
-      s2 += plus * g;
+      firstHaloIdx -= plus * g;
+      secondInteriorCellIdx += plus * g;
 
-      threeDsubview q0 = getHaloSlice(b.q, face._nface, s0);
-      threeDsubview q2 = getHaloSlice(b.q, face._nface, s2);
+      threeDsubview q0 = getFaceSlice(b.q, face._nface, firstHaloIdx);
+      threeDsubview q2 = getFaceSlice(b.q, face._nface, secondInteriorCellIdx);
 
       Kokkos::parallel_for(
           "Supersonic inlet euler terms", range_face,
@@ -184,13 +192,16 @@ void supersonicInlet(
   } else if (terms.compare("postDqDxyz") == 0) {
 
     // Only applied to first halo slice
-    threeDsubview dqdx1 = getHaloSlice(b.dqdx, face._nface, s1);
-    threeDsubview dqdy1 = getHaloSlice(b.dqdy, face._nface, s1);
-    threeDsubview dqdz1 = getHaloSlice(b.dqdz, face._nface, s1);
+    threeDsubview dqdx1 =
+        getFaceSlice(b.dqdx, face._nface, firstInteriorCellIdx);
+    threeDsubview dqdy1 =
+        getFaceSlice(b.dqdy, face._nface, firstInteriorCellIdx);
+    threeDsubview dqdz1 =
+        getFaceSlice(b.dqdz, face._nface, firstInteriorCellIdx);
 
-    threeDsubview dqdx0 = getHaloSlice(b.dqdx, face._nface, s0);
-    threeDsubview dqdy0 = getHaloSlice(b.dqdy, face._nface, s0);
-    threeDsubview dqdz0 = getHaloSlice(b.dqdz, face._nface, s0);
+    threeDsubview dqdx0 = getFaceSlice(b.dqdx, face._nface, firstHaloIdx);
+    threeDsubview dqdy0 = getFaceSlice(b.dqdy, face._nface, firstHaloIdx);
+    threeDsubview dqdz0 = getFaceSlice(b.dqdz, face._nface, firstHaloIdx);
 
     MDRange3 range_face =
         MDRange3({0, 0, 0}, {static_cast<long>(dqdx1.extent(0)),
@@ -214,20 +225,22 @@ void constantMassFluxSubsonicInlet(
   // Apply BC to face, slice by slice.
   //-------------------------------------------------------------------------------------------|
   const int ng = b.ng;
-  int s0, s1, s2, plus;
-  setHaloSlices(s0, s1, s2, plus, b.ni, b.nj, b.nk, ng, face._nface);
+  int firstHaloIdx, firstInteriorCellIdx, blockFaceIdx, plus;
+  getFaceSliceIdxs(firstHaloIdx, firstInteriorCellIdx, blockFaceIdx, plus, b.ni,
+                   b.nj, b.nk, ng, face._nface);
+  int secondInteriorCellIdx = firstInteriorCellIdx + plus;
 
   if (terms.compare("euler") == 0) {
 
-    threeDsubview q1 = getHaloSlice(b.q, face._nface, s1);
+    threeDsubview q1 = getFaceSlice(b.q, face._nface, firstInteriorCellIdx);
     MDRange2 range_face = MDRange2({0, 0}, {q1.extent(0), q1.extent(1)});
 
     for (int g = 0; g < b.ng; g++) {
-      s0 -= plus * g;
-      s2 += plus * g;
+      firstHaloIdx -= plus * g;
+      secondInteriorCellIdx += plus * g;
 
-      threeDsubview q0 = getHaloSlice(b.q, face._nface, s0);
-      threeDsubview q2 = getHaloSlice(b.q, face._nface, s2);
+      threeDsubview q0 = getFaceSlice(b.q, face._nface, firstHaloIdx);
+      threeDsubview q2 = getFaceSlice(b.q, face._nface, secondInteriorCellIdx);
 
       Kokkos::parallel_for(
           "Constant mass flux subsonic inlet euler terms", range_face,
@@ -254,22 +267,24 @@ void constantMassFluxSubsonicInlet(
     // We now have a valid density value
     // set momentums, and velocities to match the desired mass flux
     // NOTE: We have to be careful with the indexing to accomodate fourth
-    // order. In particular, we cannot just use s1 for all the
-    // extrapolations so we have to make s2 start with s1 then increment
+    // order. In particular, we cannot just use firstInteriorCellIdx for all the
+    // extrapolations so we have to make blockFaceIdx start with
+    // firstInteriorCellIdx then increment
 
-    // Reset first slice indicies, and make s2 start at s1
-    s0 += plus * (ng - 1);
-    s2 -= plus * (ng - 1);
-    s2 -= plus;
+    // Reset first slice indicies, and make blockFaceIdx start at
+    // firstInteriorCellIdx
+    firstHaloIdx += plus * (ng - 1);
+    secondInteriorCellIdx -= plus * (ng - 1);
+    secondInteriorCellIdx -= plus;
 
     for (int g = 0; g < b.ng; g++) {
-      s0 -= plus * g;
-      s2 += plus * g;
+      firstHaloIdx -= plus * g;
+      secondInteriorCellIdx += plus * g;
 
-      threeDsubview q0 = getHaloSlice(b.q, face._nface, s0);
-      threeDsubview q2 = getHaloSlice(b.q, face._nface, s2);
-      threeDsubview Q0 = getHaloSlice(b.Q, face._nface, s0);
-      threeDsubview Q2 = getHaloSlice(b.Q, face._nface, s2);
+      threeDsubview q0 = getFaceSlice(b.q, face._nface, firstHaloIdx);
+      threeDsubview q2 = getFaceSlice(b.q, face._nface, secondInteriorCellIdx);
+      threeDsubview Q0 = getFaceSlice(b.Q, face._nface, firstHaloIdx);
+      threeDsubview Q2 = getFaceSlice(b.Q, face._nface, secondInteriorCellIdx);
 
       Kokkos::parallel_for(
           "Constant mass flux subsonic inlet euler terms", range_face,
@@ -307,13 +322,16 @@ void constantMassFluxSubsonicInlet(
   } else if (terms.compare("postDqDxyz") == 0) {
 
     // Only applied to first halo slice
-    threeDsubview dqdx1 = getHaloSlice(b.dqdx, face._nface, s1);
-    threeDsubview dqdy1 = getHaloSlice(b.dqdy, face._nface, s1);
-    threeDsubview dqdz1 = getHaloSlice(b.dqdz, face._nface, s1);
+    threeDsubview dqdx1 =
+        getFaceSlice(b.dqdx, face._nface, firstInteriorCellIdx);
+    threeDsubview dqdy1 =
+        getFaceSlice(b.dqdy, face._nface, firstInteriorCellIdx);
+    threeDsubview dqdz1 =
+        getFaceSlice(b.dqdz, face._nface, firstInteriorCellIdx);
 
-    threeDsubview dqdx0 = getHaloSlice(b.dqdx, face._nface, s0);
-    threeDsubview dqdy0 = getHaloSlice(b.dqdy, face._nface, s0);
-    threeDsubview dqdz0 = getHaloSlice(b.dqdz, face._nface, s0);
+    threeDsubview dqdx0 = getFaceSlice(b.dqdx, face._nface, firstHaloIdx);
+    threeDsubview dqdy0 = getFaceSlice(b.dqdy, face._nface, firstHaloIdx);
+    threeDsubview dqdz0 = getFaceSlice(b.dqdz, face._nface, firstHaloIdx);
 
     MDRange3 range_face =
         MDRange3({0, 0, 0}, {static_cast<long>(dqdx1.extent(0)),
@@ -341,57 +359,27 @@ void stagnationSubsonicInlet(
   // Apply BC to face, slice by slice.
   //-------------------------------------------------------------------------------------------|
   const int ng = b.ng;
-  int s0, s1, s2, plus;
-  setHaloSlices(s0, s1, s2, plus, b.ni, b.nj, b.nk, ng, face._nface);
+  int firstHaloIdx, firstInteriorCellIdx, blockFaceIdx, plus;
+  getFaceSliceIdxs(firstHaloIdx, firstInteriorCellIdx, blockFaceIdx, plus, b.ni,
+                   b.nj, b.nk, ng, face._nface);
 
   if (terms.compare("euler") == 0) {
 
-    threeDsubview q1 = getHaloSlice(b.q, face._nface, s1);
-    threeDsubview Q1 = getHaloSlice(b.Q, face._nface, s1);
-    threeDsubview qh1 = getHaloSlice(b.qh, face._nface, s1);
+    threeDsubview q1 = getFaceSlice(b.q, face._nface, firstInteriorCellIdx);
+    threeDsubview Q1 = getFaceSlice(b.Q, face._nface, firstInteriorCellIdx);
+    threeDsubview qh1 = getFaceSlice(b.qh, face._nface, firstInteriorCellIdx);
     twoDsubview nx, ny, nz;
 
-    switch (face._nface) {
-    case 1:
-      nx = getHaloSlice(b.inx, face._nface, s1);
-      ny = getHaloSlice(b.iny, face._nface, s1);
-      nz = getHaloSlice(b.inz, face._nface, s1);
-      break;
-    case 2:
-      nx = getHaloSlice(b.inx, face._nface, s0);
-      ny = getHaloSlice(b.iny, face._nface, s0);
-      nz = getHaloSlice(b.inz, face._nface, s0);
-      break;
-    case 3:
-      nx = getHaloSlice(b.jnx, face._nface, s1);
-      ny = getHaloSlice(b.jny, face._nface, s1);
-      nz = getHaloSlice(b.jnz, face._nface, s1);
-      break;
-    case 4:
-      nx = getHaloSlice(b.jnx, face._nface, s0);
-      ny = getHaloSlice(b.jny, face._nface, s0);
-      nz = getHaloSlice(b.jnz, face._nface, s0);
-      break;
-    case 5:
-      nx = getHaloSlice(b.knx, face._nface, s1);
-      ny = getHaloSlice(b.kny, face._nface, s1);
-      nz = getHaloSlice(b.knz, face._nface, s1);
-      break;
-    case 6:
-      nx = getHaloSlice(b.knx, face._nface, s0);
-      ny = getHaloSlice(b.kny, face._nface, s0);
-      nz = getHaloSlice(b.knz, face._nface, s0);
-      break;
-    }
+    nx = getFaceSlice(b.inx, face._nface, blockFaceIdx);
+    ny = getFaceSlice(b.iny, face._nface, blockFaceIdx);
+    nz = getFaceSlice(b.inz, face._nface, blockFaceIdx);
 
     MDRange2 range_face = MDRange2({0, 0}, {q1.extent(0), q1.extent(1)});
 
     for (int g = 0; g < b.ng; g++) {
-      s0 -= plus * g;
-      s2 += plus * g;
 
-      threeDsubview q0 = getHaloSlice(b.q, face._nface, s0);
-      threeDsubview q2 = getHaloSlice(b.q, face._nface, s2);
+      firstHaloIdx -= plus * g;
+      threeDsubview q0 = getFaceSlice(b.q, face._nface, firstHaloIdx);
 
       Kokkos::parallel_for(
           "Constant velocity subsonic inlet euler terms", range_face,
@@ -448,13 +436,16 @@ void stagnationSubsonicInlet(
   } else if (terms.compare("postDqDxyz") == 0) {
 
     // Only applied to first halo slice
-    threeDsubview dqdx1 = getHaloSlice(b.dqdx, face._nface, s1);
-    threeDsubview dqdy1 = getHaloSlice(b.dqdy, face._nface, s1);
-    threeDsubview dqdz1 = getHaloSlice(b.dqdz, face._nface, s1);
+    threeDsubview dqdx1 =
+        getFaceSlice(b.dqdx, face._nface, firstInteriorCellIdx);
+    threeDsubview dqdy1 =
+        getFaceSlice(b.dqdy, face._nface, firstInteriorCellIdx);
+    threeDsubview dqdz1 =
+        getFaceSlice(b.dqdz, face._nface, firstInteriorCellIdx);
 
-    threeDsubview dqdx0 = getHaloSlice(b.dqdx, face._nface, s0);
-    threeDsubview dqdy0 = getHaloSlice(b.dqdy, face._nface, s0);
-    threeDsubview dqdz0 = getHaloSlice(b.dqdz, face._nface, s0);
+    threeDsubview dqdx0 = getFaceSlice(b.dqdx, face._nface, firstHaloIdx);
+    threeDsubview dqdy0 = getFaceSlice(b.dqdy, face._nface, firstHaloIdx);
+    threeDsubview dqdz0 = getFaceSlice(b.dqdz, face._nface, firstHaloIdx);
 
     MDRange3 range_face =
         MDRange3({0, 0, 0}, {static_cast<long>(dqdx1.extent(0)),

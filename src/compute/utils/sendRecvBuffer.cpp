@@ -12,7 +12,7 @@ void extractSendBuffer(threeDview &view, threeDview &buffer, face_ &face,
   for (int g = 0; g < nLayer; g++) {
     int s = slices[g];
 
-    twoDsubview viewSlice = getHaloSlice(view, nface, s);
+    twoDsubview viewSlice = getFaceSlice(view, nface, s);
     twoDsubview bufferSlice =
         Kokkos::subview(buffer, g, Kokkos::ALL, Kokkos::ALL);
 
@@ -29,7 +29,7 @@ void extractSendBuffer(fourDview &view, fourDview &buffer, face_ &face,
   for (int g = 0; g < nLayer; g++) {
     int s = slices[g];
 
-    threeDsubview viewSlice = getHaloSlice(view, nface, s);
+    threeDsubview viewSlice = getFaceSlice(view, nface, s);
     threeDsubview bufferSlice =
         Kokkos::subview(buffer, g, Kokkos::ALL, Kokkos::ALL, Kokkos::ALL);
 
@@ -46,7 +46,7 @@ void placeRecvBuffer(threeDview &view, threeDview &buffer, face_ &face,
   for (int g = 0; g < nLayer; g++) {
     int s = slices[g];
 
-    twoDsubview viewSlice = getHaloSlice(view, nface, s);
+    twoDsubview viewSlice = getFaceSlice(view, nface, s);
     twoDsubview bufferSlice =
         Kokkos::subview(buffer, g, Kokkos::ALL, Kokkos::ALL);
 
@@ -63,7 +63,7 @@ void placeRecvBuffer(fourDview &view, fourDview &buffer, face_ &face,
   for (int g = 0; g < nLayer; g++) {
     int s = slices[g];
 
-    threeDsubview viewSlice = getHaloSlice(view, nface, s);
+    threeDsubview viewSlice = getFaceSlice(view, nface, s);
     threeDsubview bufferSlice =
         Kokkos::subview(buffer, g, Kokkos::ALL, Kokkos::ALL, Kokkos::ALL);
 

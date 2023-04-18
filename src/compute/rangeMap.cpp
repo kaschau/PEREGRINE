@@ -62,7 +62,34 @@ MDRange3 getRange3(const block_ &b, const int &nface, const int &indxI /*=0*/,
   return range;
 }
 
-threeDsubview getHaloSlice(const fourDview &view, const int &nface,
+twoDsubview getFaceSlice(const threeDview &view, const int &nface,
+                         const int &slice) {
+
+  twoDsubview subview;
+  switch (nface) {
+  case 1:
+  case 2:
+    // face 1,2 halo
+    subview = Kokkos::subview(view, slice, Kokkos::ALL, Kokkos::ALL);
+    break;
+  case 3:
+  case 4:
+    // face 3,4 face slices
+    subview = Kokkos::subview(view, Kokkos::ALL, slice, Kokkos::ALL);
+    break;
+  case 5:
+  case 6:
+    // face 5,6 face slices
+    subview = Kokkos::subview(view, Kokkos::ALL, Kokkos::ALL, slice);
+    break;
+  default:
+    throw std::invalid_argument(" <-- Unknown argument to getFaceSlice");
+  }
+
+  return subview;
+}
+
+threeDsubview getFaceSlice(const fourDview &view, const int &nface,
                            const int &slice) {
 
   threeDsubview subview;
@@ -86,69 +113,43 @@ threeDsubview getHaloSlice(const fourDview &view, const int &nface,
         Kokkos::subview(view, Kokkos::ALL, Kokkos::ALL, slice, Kokkos::ALL);
     break;
   default:
-    throw std::invalid_argument(" <-- Unknown argument to getHaloSlice");
+    throw std::invalid_argument(" <-- Unknown argument to getFaceSlice");
   }
 
   return subview;
 }
 
-twoDsubview getHaloSlice(const threeDview &view, const int &nface,
-                         const int &slice) {
-
-  twoDsubview subview;
-  switch (nface) {
-  case 1:
-  case 2:
-    // face 1,2 halo
-    subview = Kokkos::subview(view, slice, Kokkos::ALL, Kokkos::ALL);
-    break;
-  case 3:
-  case 4:
-    // face 3,4 face slices
-    subview = Kokkos::subview(view, Kokkos::ALL, slice, Kokkos::ALL);
-    break;
-  case 5:
-  case 6:
-    // face 5,6 face slices
-    subview = Kokkos::subview(view, Kokkos::ALL, Kokkos::ALL, slice);
-    break;
-  default:
-    throw std::invalid_argument(" <-- Unknown argument to getHaloSlice");
-  }
-
-  return subview;
-}
-
-void setHaloSlices(int &s0, int &s1, int &s2, int &plus, const int &ni,
-                   const int &nj, const int &nk, const int &ng,
-                   const int &nface) {
+void getFaceSliceIdxs(int &firstHaloIdx, int &firstInteriorCellIdx,
+                      int &blockFaceIdx, int &plus, const int &ni,
+                      const int &nj, const int &nk, const int &ng,
+                      const int &nface) {
   // For low faces (1,3,5) plus = 1, i.e. inward normal for the face. For high
   // faces (2,4,6) plus = -1, i.e. inward normal for the face.
   switch (nface) {
   case 1:
   case 3:
   case 5:
-    s0 = ng - 1;
-    s1 = ng;
-    s2 = ng + 1;
+    firstHaloIdx = ng - 1;
+    firstInteriorCellIdx = ng;
+    blockFaceIdx = ng;
     plus = 1;
     break;
   case 2:
-    s0 = ni + ng - 1;
-    s1 = ni + ng - 2;
-    s2 = ni + ng - 3;
+    firstHaloIdx = ni + ng - 1;
+    firstInteriorCellIdx = ni + ng - 2;
+    blockFaceIdx = ni + ng - 1;
     plus = -1;
     break;
   case 4:
-    s0 = nj + ng - 1;
-    s1 = nj + ng - 2;
-    s2 = nj + ng - 3;
+    firstHaloIdx = nj + ng - 1;
+    firstInteriorCellIdx = nj + ng - 2;
+    blockFaceIdx = nj + ng - 1;
     plus = -1;
     break;
   case 6:
-    s0 = nk + ng - 1;
-    s1 = nk + ng - 2;
-    s2 = nk + ng - 3;
+    firstHaloIdx = nk + ng - 1;
+    firstInteriorCellIdx = nk + ng - 2;
+    blockFaceIdx = nk + ng - 1;
     plus = -1;
     break;
   default:

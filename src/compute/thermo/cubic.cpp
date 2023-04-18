@@ -5,6 +5,7 @@
 #include "thtrdat_.hpp"
 #include <math.h>
 #include <stdexcept>
+#include <string.h>
 
 // References
 //

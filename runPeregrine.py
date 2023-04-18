@@ -3,7 +3,6 @@ import sys
 from mpi4py import MPI
 from time import perf_counter
 
-import kokkos
 import numpy as np
 
 import peregrinepy as pg
@@ -135,9 +134,9 @@ def simulate(configFilePath):
 if __name__ == "__main__":
     configFilePath = sys.argv[1]
     try:
-        kokkos.initialize()
+        pg.compute.pgkokkos.initialize()
         simulate(configFilePath)
-        kokkos.finalize()
+        pg.compute.pgkokkos.finalize()
 
     except Exception as e:
         import sys

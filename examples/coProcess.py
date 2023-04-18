@@ -6,7 +6,7 @@ run with 2 mpi processes!!!!!!
 """
 
 from mpi4py import MPI
-import kokkos
+
 import peregrinepy as pg
 import numpy as np
 import os
@@ -186,9 +186,9 @@ def simulate():
 
 if __name__ == "__main__":
     try:
-        kokkos.initialize()
+        pg.compute.pgkokkos.initialize()
         simulate()
-        kokkos.finalize()
+        pg.compute.pgkokkos.finalize()
 
     except Exception as e:
         import sys

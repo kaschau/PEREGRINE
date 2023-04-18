@@ -4,6 +4,7 @@
 #include "face_.hpp"
 #include "kokkosTypes.hpp"
 #include "thtrdat_.hpp"
+#include <string.h>
 
 void periodicRotHigh(
     block_ &b, face_ &face,
@@ -13,18 +14,19 @@ void periodicRotHigh(
   // Apply BC to face, slice by slice.
   //-------------------------------------------------------------------------------------------|
   const int ng = b.ng;
-  int s0, s1, s2, plus;
-  setHaloSlices(s0, s1, s2, plus, b.ni, b.nj, b.nk, ng, face._nface);
+  int firstHaloIdx, firstInteriorCellIdx, blockFaceIdx, plus;
+  getFaceSliceIdxs(firstHaloIdx, firstInteriorCellIdx, blockFaceIdx, plus, b.ni,
+                   b.nj, b.nk, ng, face._nface);
 
   if (terms.compare("euler") == 0) {
 
-    threeDsubview q1 = getHaloSlice(b.q, face._nface, s1);
+    threeDsubview q1 = getFaceSlice(b.q, face._nface, firstInteriorCellIdx);
     MDRange2 range_face = MDRange2({0, 0}, {q1.extent(0), q1.extent(1)});
     for (int g = 0; g < b.ng; g++) {
-      s0 -= plus * g;
+      firstHaloIdx -= plus * g;
 
-      threeDsubview q0 = getHaloSlice(b.q, face._nface, s0);
-      threeDsubview Q0 = getHaloSlice(b.Q, face._nface, s0);
+      threeDsubview q0 = getFaceSlice(b.q, face._nface, firstHaloIdx);
+      threeDsubview Q0 = getFaceSlice(b.Q, face._nface, firstHaloIdx);
 
       Kokkos::parallel_for(
           "Rotate periodic euler terms", range_face,
@@ -57,10 +59,11 @@ void periodicRotHigh(
     }
   } else if (terms.compare("postDqDxyz") == 0) {
 
-    threeDsubview dqdx1 = getHaloSlice(b.dqdx, face._nface, s1);
-    threeDsubview dqdx0 = getHaloSlice(b.dqdx, face._nface, s0);
-    threeDsubview dqdy0 = getHaloSlice(b.dqdy, face._nface, s0);
-    threeDsubview dqdz0 = getHaloSlice(b.dqdz, face._nface, s0);
+    threeDsubview dqdx1 =
+        getFaceSlice(b.dqdx, face._nface, firstInteriorCellIdx);
+    threeDsubview dqdx0 = getFaceSlice(b.dqdx, face._nface, firstHaloIdx);
+    threeDsubview dqdy0 = getFaceSlice(b.dqdy, face._nface, firstHaloIdx);
+    threeDsubview dqdz0 = getFaceSlice(b.dqdz, face._nface, firstHaloIdx);
 
     MDRange3 range_face =
         MDRange3({0, 0, 0}, {static_cast<long>(dqdx1.extent(0)),
@@ -98,18 +101,19 @@ void periodicRotLow(
   // Apply BC to face, slice by slice.
   //-------------------------------------------------------------------------------------------|
   const int ng = b.ng;
-  int s0, s1, s2, plus;
-  setHaloSlices(s0, s1, s2, plus, b.ni, b.nj, b.nk, ng, face._nface);
+  int firstHaloIdx, firstInteriorCellIdx, blockFaceIdx, plus;
+  getFaceSliceIdxs(firstHaloIdx, firstInteriorCellIdx, blockFaceIdx, plus, b.ni,
+                   b.nj, b.nk, ng, face._nface);
 
   if (terms.compare("euler") == 0) {
 
-    threeDsubview q1 = getHaloSlice(b.q, face._nface, s1);
+    threeDsubview q1 = getFaceSlice(b.q, face._nface, firstInteriorCellIdx);
     MDRange2 range_face = MDRange2({0, 0}, {q1.extent(0), q1.extent(1)});
     for (int g = 0; g < b.ng; g++) {
-      s0 -= plus * g;
+      firstHaloIdx -= plus * g;
 
-      threeDsubview q0 = getHaloSlice(b.q, face._nface, s0);
-      threeDsubview Q0 = getHaloSlice(b.Q, face._nface, s0);
+      threeDsubview q0 = getFaceSlice(b.q, face._nface, firstHaloIdx);
+      threeDsubview Q0 = getFaceSlice(b.Q, face._nface, firstHaloIdx);
 
       Kokkos::parallel_for(
           "Rotate periodic euler terms", range_face,
@@ -142,10 +146,11 @@ void periodicRotLow(
     }
   } else if (terms.compare("postDqDxyz") == 0) {
 
-    threeDsubview dqdx1 = getHaloSlice(b.dqdx, face._nface, s1);
-    threeDsubview dqdx0 = getHaloSlice(b.dqdx, face._nface, s0);
-    threeDsubview dqdy0 = getHaloSlice(b.dqdy, face._nface, s0);
-    threeDsubview dqdz0 = getHaloSlice(b.dqdz, face._nface, s0);
+    threeDsubview dqdx1 =
+        getFaceSlice(b.dqdx, face._nface, firstInteriorCellIdx);
+    threeDsubview dqdx0 = getFaceSlice(b.dqdx, face._nface, firstHaloIdx);
+    threeDsubview dqdy0 = getFaceSlice(b.dqdy, face._nface, firstHaloIdx);
+    threeDsubview dqdz0 = getFaceSlice(b.dqdz, face._nface, firstHaloIdx);
 
     MDRange3 range_face =
         MDRange3({0, 0, 0}, {static_cast<long>(dqdx1.extent(0)),

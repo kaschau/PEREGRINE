@@ -1,7 +1,7 @@
 import numpy as np
-from kokkos import deep_copy
 
 from ..compute import bcs, face_
+from ..compute.pgkokkos import deep_copy
 from ..misc import createViewMirrorArray, frozenDict, null
 from .gridFace import gridFace
 from .topologyFace import topologyFace
@@ -65,10 +65,12 @@ class solverFace(gridFace, face_):
 
         self.array["qBcVals"] = None
         self.array["QBcVals"] = None
+        self.array["intervalAlphas"] = None
         self.mirror["qBcVals"] = None
         self.mirror["QBcVals"] = None
         self.mirror["periodicRotMatrixUp"] = None
         self.mirror["periodicRotMatrixDown"] = None
+        self.mirror["intervalAlphas"] = None
 
         self.array._freeze()
         self.mirror._freeze()

@@ -35,8 +35,7 @@ def prep_constantVelocitySubsonicInlet(blk, face, valueDict):
 
 
 def prep_cubicSplineSubsonicInlet(blk, face, valueDict):
-    import kokkos
-    from ..compute import KokkosLocation
+    from ..compute.pgkokkos import hostView5, view4
 
     # set the temperature and species values
     face.array["qBcVals"][:, :, 4] = valueDict["T"]
@@ -54,15 +53,6 @@ def prep_cubicSplineSubsonicInlet(blk, face, valueDict):
         av = np.load(f)
         aw = np.load(f)
 
-    if KokkosLocation in ["OpenMP", "Serial", "Default"]:
-        kokkosSpace = kokkos.HostSpace
-        kokkosLayout = kokkos.LayoutRight
-    elif KokkosLocation in ["Cuda"]:
-        kokkosSpace = kokkos.CudaSpace
-        kokkosLayout = kokkos.LayoutLeft
-    else:
-        raise ValueError("What space?")
-
     # ALWAYS ON THE HOST
     shape = (
         tuple([4])
@@ -70,28 +60,13 @@ def prep_cubicSplineSubsonicInlet(blk, face, valueDict):
         + face.array["qBcVals"].shape[0:2]
         + tuple([3])
     )
-    face.cubicSplineAlphas = kokkos.array(
+    face.cubicSplineAlphas = hostView5(
         "cubicSplineAlphas",
-        shape=shape,
-        layout=kokkos.LayoutRight,
-        dtype=kokkos.double,
-        space=kokkos.HostSpace,
-        dynamic=False,
+        *shape,
     )
-
-    shape = tuple([4]) + face.array["qBcVals"].shape[0:2] + tuple([3])
-    face.intervalAlphas = kokkos.array(
-        "intervalAlphas",
-        shape=shape,
-        layout=kokkosLayout,
-        dtype=kokkos.double,
-        space=kokkosSpace,
-        dynamic=False,
-    )
-
-    alphas = np.array(face.cubicSplineAlphas, copy=False)
 
     ng = blk.ng
+    alphas = np.array(face.cubicSplineAlphas, copy=False)
     alphas[:, :, ng:-ng, ng:-ng, 0] = au[:]
     alphas[:, :, ng:-ng, ng:-ng, 1] = av[:]
     alphas[:, :, ng:-ng, ng:-ng, 2] = aw[:]
@@ -101,6 +76,12 @@ def prep_cubicSplineSubsonicInlet(blk, face, valueDict):
             alphas[:, :, -g - 1, :, m] = alphas[:, :, -ng - 1, :, m]
             alphas[:, :, :, g, m] = alphas[:, :, :, ng, m]
             alphas[:, :, :, -g - 1, m] = alphas[:, :, :, -ng - 1, m]
+
+    # create the device space interval alphas (ones we are
+    # actually using at any given time) (dont need the mirror or
+    # array as all that is done on c++ side)
+    shape = tuple([4]) + face.array["qBcVals"].shape[0:2] + tuple([3])
+    face.intervalAlphas = view4("intervalAlphas", *shape)
 
 
 def prep_supersonicInlet(blk, face, valueDict):
