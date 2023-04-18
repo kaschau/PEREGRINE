@@ -157,6 +157,7 @@ def howManyNG(config):
         "muscl2hllc": 2,
         "muscl2rusanov": 2,
         "scalarDissipation": 2,
+        "KEEPdissipation": 1,
         None: 1,
     }
 

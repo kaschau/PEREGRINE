@@ -17,7 +17,7 @@ void KEEPdissipation(block_ &b) {
       "Scalar Dissipation i face conv fluxes", range_i,
       KOKKOS_LAMBDA(const int i, const int j, const int k) {
         const double eps2 =
-            kappa2 * fmax(b.phi(i, j, k, 0), b.phi(i - 1, j, k, 0));
+            fmin(1.0, kappa2 * fmax(b.phi(i, j, k, 0), b.phi(i - 1, j, k, 0)));
 
         // Compute face normal volume flux vector
         const double uf = 0.5 * (b.q(i, j, k, 1) + b.q(i - 1, j, k, 1));
@@ -35,46 +35,32 @@ void KEEPdissipation(block_ &b) {
         rho2 = b.Q(i, j, k, 0) - b.Q(i - 1, j, k, 0);
 
         // Continuity dissipation
-        b.iF(i, j, k, 0) = a * (eps2 * rho2);
+        double Dc = (a * eps2) * rho2;
+        b.iF(i, j, k, 0) = Dc;
 
         // u momentum dissipation
-        double u2, u4;
-        u2 = b.Q(i, j, k, 1) - b.Q(i - 1, j, k, 1);
-        u4 = b.Q(i + 1, j, k, 1) - 3.0 * b.Q(i, j, k, 1) +
-             3.0 * b.Q(i - 1, j, k, 1) - b.Q(i - 2, j, k, 1);
-
-        b.iF(i, j, k, 1) = a * (eps2 * u2 - eps4 * u4);
+        b.iF(i, j, k, 1) = Dc * 0.5 * (b.q(i, j, k, 1) + b.q(i - 1, j, k, 1));
 
         // v momentum dissipation
-        double v2, v4;
-        v2 = b.Q(i, j, k, 2) - b.Q(i - 1, j, k, 2);
-        v4 = b.Q(i + 1, j, k, 2) - 3.0 * b.Q(i, j, k, 2) +
-             3.0 * b.Q(i - 1, j, k, 2) - b.Q(i - 2, j, k, 2);
-
-        b.iF(i, j, k, 2) = a * (eps2 * v2 - eps4 * v4);
+        b.iF(i, j, k, 2) = Dc * 0.5 * (b.q(i, j, k, 2) + b.q(i - 1, j, k, 2));
 
         // w momentum dissipation
-        double w2, w4;
-        w2 = b.Q(i, j, k, 3) - b.Q(i - 1, j, k, 3);
-        w4 = b.Q(i + 1, j, k, 3) - 3.0 * b.Q(i, j, k, 3) +
-             3.0 * b.Q(i - 1, j, k, 3) - b.Q(i - 2, j, k, 3);
+        b.iF(i, j, k, 3) = Dc * 0.5 * (b.q(i, j, k, 3) + b.q(i - 1, j, k, 3));
 
-        b.iF(i, j, k, 3) = a * (eps2 * w2 - eps4 * w4);
+        // kinetic energy dissipation
+        b.iF(i, j, k, 4) = Dc * 0.5 *
+                           (b.q(i, j, k, 1) * b.q(i - 1, j, k, 1) +
+                            b.q(i, j, k, 2) * b.q(i - 1, j, k, 2) +
+                            b.q(i, j, k, 3) * b.q(i - 1, j, k, 3));
 
-        // total energy dissipation
-        double e2, e4;
-        e2 = b.Q(i, j, k, 4) - b.Q(i - 1, j, k, 4);
-        e4 = b.Q(i + 1, j, k, 4) - 3.0 * b.Q(i, j, k, 4) +
-             3.0 * b.Q(i - 1, j, k, 4) - b.Q(i - 2, j, k, 4);
+        // TODO internal energy dissipation
+        double e2 = b.qh(i, j, k, 4) - b.qh(i - 1, j, k, 4);
+        b.iF(i, j, k, 4) += a * eps2 * e2;
 
-        b.iF(i, j, k, 4) = a * (eps2 * e2 - eps4 * e4);
-
-        // Species
+        // TODO Species???
         for (int n = 0; n < b.ne - 5; n++) {
-          double Y2, Y4;
-          Y2 = b.Q(i, j, k, 5 + n) - b.Q(i - 1, j, k, 5 + n);
-          Y4 = b.Q(i + 1, j, k, 5 + n) - 3.0 * b.Q(i, j, k, 5 + n) +
-               3.0 * b.Q(i - 1, j, k, 5 + n) - b.Q(i - 2, j, k, 5 + n);
-          b.iF(i, j, k, 5 + n) = a * (eps2 * Y2 - eps4 * Y4);
+          b.iF(i, j, k, 5 + n) =
+              Dc * 0.5 * b.Q(i, j, k, 5 + n) + b.Q(i - 1, j, k, 5 + n);
         }
       });
+}

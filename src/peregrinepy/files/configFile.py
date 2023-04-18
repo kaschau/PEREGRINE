@@ -140,7 +140,8 @@ class configFile(frozenDict):
             )
 
         if shock == "artificialDissipation" and secondaryAdvFlux not in [
-            "scalarDissipation"
+            "scalarDissipation",
+            "KEEPdissipation",
         ]:
             raise pgConfigError(shock, secondaryAdvFlux)
         if shock == "hybrid" and secondaryAdvFlux in ["scalarDissipation"]:
