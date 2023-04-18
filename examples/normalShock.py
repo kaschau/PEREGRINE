@@ -8,7 +8,7 @@ Generate 1D normal shock
 
 from mpi4py import MPI
 
-import kokkos
+
 import matplotlib.pyplot as plt
 import numpy as np
 import peregrinepy as pg
@@ -159,9 +159,9 @@ def simulate():
 
 if __name__ == "__main__":
     try:
-        kokkos.initialize()
+        pg.compute.pgkokkos.initialize()
         simulate()
-        kokkos.finalize()
+        pg.compute.pgkokkos.finalize()
 
     except Exception as e:
         import sys

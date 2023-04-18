@@ -1,8 +1,8 @@
 from pathlib import Path
 
 import yaml
-from kokkos import deep_copy
 
+from ..compute.pgkokkos import deep_copy
 from ..compute.thermo import thtrdat_
 from ..misc import createViewMirrorArray, frozenDict
 from .completeSpecies import completeSpecies

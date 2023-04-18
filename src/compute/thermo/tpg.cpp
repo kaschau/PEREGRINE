@@ -5,6 +5,7 @@
 #include "thtrdat_.hpp"
 #include <math.h>
 #include <stdexcept>
+#include <string.h>
 
 void tpg(block_ &b, const thtrdat_ &th, const int &nface,
          const std::string &given, const int &indxI /*=0*/,

@@ -109,6 +109,10 @@ def test_synthTurbInlet(my_setup):
     fv = itrp.CubicSpline(t, vp, bc_type=bc, axis=0)
     fw = itrp.CubicSpline(t, wp, bc_type=bc, axis=0)
 
+    try:
+        shutil.rmtree("./Input")
+    except FileNotFoundError:
+        pass
     os.makedirs("Input")
     os.makedirs("Input/inletAlphas")
     with open("./Input/inletAlphas/alphas_0_1.npy", "wb") as f:

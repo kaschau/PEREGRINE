@@ -18,7 +18,7 @@ Will reproduce test case from section 6.2
 """
 
 from mpi4py import MPI
-import kokkos
+
 import peregrinepy as pg
 import numpy as np
 import matplotlib.pyplot as plt
@@ -165,9 +165,9 @@ def simulate():
 
 if __name__ == "__main__":
     try:
-        kokkos.initialize()
+        pg.compute.pgkokkos.initialize()
         simulate()
-        kokkos.finalize()
+        pg.compute.pgkokkos.finalize()
 
     except Exception as e:
         import sys

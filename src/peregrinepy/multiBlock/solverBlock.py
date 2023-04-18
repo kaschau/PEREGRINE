@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-import kokkos
 from ..compute import block_
+from ..compute.pgkokkos import deep_copy
 from .restartBlock import restartBlock
 from .solverFace import solverFace
 from ..misc import createViewMirrorArray
@@ -266,10 +266,10 @@ class solverBlock(restartBlock, block_):
         if type(vars) == str:
             vars = [vars]
         for var in vars:
-            kokkos.deep_copy(getattr(self, var), self.mirror[var])
+            deep_copy(getattr(self, var), self.mirror[var])
 
     def updateHostView(self, vars):
         if type(vars) == str:
             vars = [vars]
         for var in vars:
-            kokkos.deep_copy(self.mirror[var], getattr(self, var))
+            deep_copy(self.mirror[var], getattr(self, var))
