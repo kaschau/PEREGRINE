@@ -15,9 +15,9 @@ def consistify(mb, given="cons"):
 
     # First communicate conservatives
     if given == "cons":
-        communicate(mb, ["Q"])
+        communicate(mb, ["Q", "s"])
     elif given == "prims":
-        communicate(mb, ["q"])
+        communicate(mb, ["q", "s"])
 
     # Now update derived arrays for ENTIRE block,
     #  even exterior halos.

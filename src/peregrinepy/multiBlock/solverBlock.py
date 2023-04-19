@@ -74,6 +74,10 @@ class solverBlock(restartBlock, block_):
         for d in ["iF", "jF", "kF"]:
             self.array[f"{d}"] = None
             self.mirror[f"{d}"] = None
+        # Face fluxes
+        for d in ["siF", "sjF", "skF"]:
+            self.array[f"{d}"] = None
+            self.mirror[f"{d}"] = None
         # Face flux switches
         for d in ["phi"]:
             self.array[f"{d}"] = None
@@ -174,7 +178,8 @@ class solverBlock(restartBlock, block_):
         # ------------------------------------------------------------------- #
         #       Conservative, Primative, dQ
         # ------------------------------------------------------------------- #
-        createViewMirrorArray(self, ["Q", "q", "dQ", "s", "ds"], cQshape)
+        createViewMirrorArray(self, ["Q", "q", "dQ"], cQshape)
+        createViewMirrorArray(self, ["s", "ds"], cQshape[0:-1])
 
         # ------------------------------------------------------------------- #
         #       Spatial derivative of primative array
@@ -237,7 +242,8 @@ class solverBlock(restartBlock, block_):
         names = [
             f"s{i}" for i in range(nstorage[config["timeIntegration"]["integrator"]])
         ]
-        createViewMirrorArray(self, names, cQshape)
+        createViewMirrorArray(self, names, cQshape[0:-1])
+
         if config["timeIntegration"]["integrator"] == "dualTime":
             createViewMirrorArray(self, ["Qn", "Qnm1"], cQshape)
             createViewMirrorArray(self, ["dtau"], ccshape)
@@ -249,6 +255,13 @@ class solverBlock(restartBlock, block_):
             (ifQshape, ["iF"]),
             (jfQshape, ["jF"]),
             (kfQshape, ["kF"]),
+        ):
+            createViewMirrorArray(self, names, shape)
+
+        for shape, names in (
+            (ifQshape[0:-1], ["siF"]),
+            (jfQshape[0:-1], ["sjF"]),
+            (kfQshape[0:-1], ["skF"]),
         ):
             createViewMirrorArray(self, names, shape)
 

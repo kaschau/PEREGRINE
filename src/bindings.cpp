@@ -163,6 +163,9 @@ PYBIND11_MODULE(compute, m) {
       .def_readwrite("iF", &block_::iF)
       .def_readwrite("jF", &block_::jF)
       .def_readwrite("kF", &block_::kF)
+      .def_readwrite("siF", &block_::siF)
+      .def_readwrite("sjF", &block_::sjF)
+      .def_readwrite("skF", &block_::skF)
 
       // Switch
       .def_readwrite("phi", &block_::phi);
@@ -184,6 +187,7 @@ PYBIND11_MODULE(compute, m) {
       .def_readwrite("sendBuffer_dqdy", &face_::sendBuffer_dqdy)
       .def_readwrite("sendBuffer_dqdz", &face_::sendBuffer_dqdz)
       .def_readwrite("sendBuffer_phi", &face_::sendBuffer_phi)
+      .def_readwrite("sendBuffer_s", &face_::sendBuffer_s)
 
       .def_readwrite("recvBuffer_x", &face_::recvBuffer_x)
       .def_readwrite("recvBuffer_y", &face_::recvBuffer_y)
@@ -194,6 +198,7 @@ PYBIND11_MODULE(compute, m) {
       .def_readwrite("recvBuffer_dqdy", &face_::recvBuffer_dqdy)
       .def_readwrite("recvBuffer_dqdz", &face_::recvBuffer_dqdz)
       .def_readwrite("recvBuffer_phi", &face_::recvBuffer_phi)
+      .def_readwrite("recvBuffer_s", &face_::recvBuffer_s)
 
       .def_readwrite("tempRecvBuffer_x", &face_::tempRecvBuffer_x)
       .def_readwrite("tempRecvBuffer_y", &face_::tempRecvBuffer_y)
@@ -204,6 +209,7 @@ PYBIND11_MODULE(compute, m) {
       .def_readwrite("tempRecvBuffer_dqdy", &face_::tempRecvBuffer_dqdy)
       .def_readwrite("tempRecvBuffer_dqdz", &face_::tempRecvBuffer_dqdz)
       .def_readwrite("tempRecvBuffer_phi", &face_::tempRecvBuffer_phi)
+      .def_readwrite("tempRecvBuffer_s", &face_::tempRecvBuffer_s)
 
       .def_readwrite("periodicRotMatrixUp", &face_::periodicRotMatrixUp)
       .def_readwrite("periodicRotMatrixDown", &face_::periodicRotMatrixDown)

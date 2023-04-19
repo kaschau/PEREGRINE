@@ -22,6 +22,19 @@ void applyFlux(block_ &b, double[]) {
                              b.kF(i, j, k + 1, l)) /
                             b.J(i, j, k);
       });
+  MDRange3 range_cc3({b.ng, b.ng, b.ng},
+                     {b.ni + b.ng - 1, b.nj + b.ng - 1, b.nk + b.ng - 1});
+  Kokkos::parallel_for(
+      "Apply current fluxes to RHS", range_cc3,
+      KOKKOS_LAMBDA(const int i, const int j, const int k) {
+        // Add fluxes to RHS
+        b.ds(i, j, k) +=
+            (b.siF(i, j, k) + b.sjF(i, j, k) + b.skF(i, j, k)) / b.J(i, j, k);
+
+        b.ds(i, j, k) -=
+            (b.siF(i + 1, j, k) + b.sjF(i, j + 1, k) + b.skF(i, j, k + 1)) /
+            b.J(i, j, k);
+      });
 }
 
 void applyHybridFlux(block_ &b, const double &primary) {

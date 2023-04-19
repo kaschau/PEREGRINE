@@ -20,16 +20,19 @@ struct face_ {
   fourDview sendBuffer_q, sendBuffer_Q;
   fourDview sendBuffer_dqdx, sendBuffer_dqdy, sendBuffer_dqdz;
   fourDview sendBuffer_phi;
+  threeDview sendBuffer_s;
   // recv
   threeDview recvBuffer_x, recvBuffer_y, recvBuffer_z;
   fourDview recvBuffer_q, recvBuffer_Q;
   fourDview recvBuffer_dqdx, recvBuffer_dqdy, recvBuffer_dqdz;
   fourDview recvBuffer_phi;
+  threeDview recvBuffer_s;
   // temps
   threeDview tempRecvBuffer_x, tempRecvBuffer_y, tempRecvBuffer_z;
   fourDview tempRecvBuffer_q, tempRecvBuffer_Q;
   fourDview tempRecvBuffer_dqdx, tempRecvBuffer_dqdy, tempRecvBuffer_dqdz;
   fourDview tempRecvBuffer_phi;
+  threeDview tempRecvBuffer_s;
 
   // For cubic spline inlets
   fiveDviewHost cubicSplineAlphas;

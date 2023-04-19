@@ -55,12 +55,21 @@ void KEEPdissipation(block_ &b) {
 
         // TODO internal energy dissipation
         double e2 = b.qh(i, j, k, 4) - b.qh(i - 1, j, k, 4);
-        b.iF(i, j, k, 4) += a * eps2 * e2;
+        double De = a * eps2 * e2;
+        b.iF(i, j, k, 4) += De;
 
         // TODO Species???
         for (int n = 0; n < b.ne - 5; n++) {
           b.iF(i, j, k, 5 + n) =
               Dc * 0.5 * b.Q(i, j, k, 5 + n) + b.Q(i - 1, j, k, 5 + n);
         }
+
+        double &p = b.q(i, j, k, 0);
+        double &T = b.q(i, j, k, 4);
+        double &rho = b.Q(i, j, k, 0);
+        double &gamma = b.qh(i, j, k, 0);
+        double &e = b.qh(i, j, k, 4);
+        b.siF(i, j, k) =
+            (log(p * pow(rho, -gamma)) - e * p / (T * rho)) * Dc + De;
       });
 }

@@ -33,7 +33,7 @@ def communicate(mb, varis):
 
                 send = face.array["sendBuffer_" + var]
                 recvName = "tempRecvBuffer_" + var
-                if var in ["Q", "q"]:
+                if var in ["Q", "q", "s"]:
                     sliceS = face.ccSendAllSlices
                 elif var in ["dqdx", "dqdy", "dqdz", "phi"]:
                     sliceS = face.ccSendFirstHaloSlice
@@ -64,7 +64,7 @@ def communicate(mb, varis):
                 Request.Wait(reqs.__next__())
 
                 recvName = "recvBuffer_" + var
-                if var in ["Q", "q"]:
+                if var in ["Q", "q", "s"]:
                     sliceR = face.ccRecvAllSlices
                 elif var in ["dqdx", "dqdy", "dqdz", "phi"]:
                     sliceR = face.ccRecvFirstHaloSlice
