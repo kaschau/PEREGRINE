@@ -64,6 +64,8 @@ def simulate(index="i"):
 
     ng = blk.ng
     R = 287.002507
+    cp = 1000.0
+    gamma = cp / (cp - R)
     ccArray = {"i": "xc", "j": "yc", "k": "zc"}
     uIndex = {"i": 1, "j": 2, "k": 3}
     blk.array["q"][:, :, :, 0] = 1.0
@@ -78,11 +80,34 @@ def simulate(index="i"):
     mb.eos(blk, mb.thtrdat, 0, "prims")
     pg.consistify(mb)
 
-    dt = 0.1 * 0.025
+    # entropy stuff
+    blk.array["s"][:] = blk.array["Q"][:, :, :, 0] * np.log(
+        blk.array["q"][:, :, :, 0] * blk.array["Q"][:, :, :, 0] ** (-gamma)
+    )
+    blk.updateDeviceView(["s"])
+    pg.consistify(mb)
+
+    sDerived = []
+    sEvolved = []
+    t = []
+    dt = 0.1 * 0.0025
     tEnd = 11.0
     while mb.tme < tEnd:
         if mb.nrt % 50 == 0:
             pg.misc.progressBar(mb.tme, tEnd)
+
+        if mb.nrt % 10 == 0:
+            dS = np.sum(
+                blk.array["Q"][ng:-ng, ng:-ng, ng:-ng, 0]
+                * np.log(
+                    blk.array["q"][ng:-ng, ng:-ng, ng:-ng, 0]
+                    * blk.array["Q"][ng:-ng, ng:-ng, ng:-ng, 0] ** (-gamma)
+                )
+            )
+            sDerived.append(dS)
+            eS = np.sum(blk.array["s"][ng:-ng, ng:-ng, ng:-ng])
+            sEvolved.append(eS)
+            t.append(mb.tme)
 
         mb.step(dt)
 
@@ -95,6 +120,8 @@ def simulate(index="i"):
     rho = blk.array["Q"][s_][:, 0]
     p = blk.array["q"][s_][:, 0]
     u = blk.array["q"][s_][:, uIndex[index]]
+    sd = rho * np.log(p * rho**-gamma)
+    se = blk.array["s"][s_]
     ax1.plot(x, rho, color="g", label="rho", linewidth=0.5)
     ax1.plot(x, p, color="r", label="p", linewidth=0.5)
     ax1.plot(x, u, color="k", label="u", linewidth=0.5)
@@ -109,11 +136,26 @@ def simulate(index="i"):
     )
     ax1.legend()
     plt.show()
+    plt.clf()
+    # entropy
+    plt.plot(x, sd, color="k", label="sd", linewidth=0.5)
+    plt.plot(x, se, color="r", label="se", linewidth=0.5)
+    plt.legend()
+    plt.show()
+    plt.clf()
+    plt.plot(t, (-(sDerived - sDerived[0])) / sDerived[0], label="Derived")
+    plt.scatter(
+        t, (-(sEvolved - sEvolved[0])) / sEvolved[0], marker="o", label="Evolved"
+    )
+    plt.legend()
+    plt.title(r"$\Delta(\rho s) / (\rho_0 s_0)$")
+    plt.show()
     plt.close()
 
 
 if __name__ == "__main__":
     try:
+        # a = pg.compute.pgkokkos.ScopeGuard()
         pg.compute.pgkokkos.initialize()
         simulate("i")
         pg.compute.pgkokkos.finalize()
