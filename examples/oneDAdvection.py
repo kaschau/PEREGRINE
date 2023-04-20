@@ -20,6 +20,9 @@ import matplotlib.pyplot as plt
 
 def simulate(index="i"):
     config = pg.files.configFile()
+    config["RHS"]["shockHandling"] = "artificialDissipation"
+    config["RHS"]["secondaryAdvFlux"] = "KEEPdissipation"
+    config["RHS"]["switchAdvFlux"] = "vanLeer"
     config["RHS"]["diffusion"] = False
     config.validateConfig()
     mb = pg.multiBlock.generateMultiBlockSolver(1, config)
@@ -90,7 +93,7 @@ def simulate(index="i"):
     sDerived = []
     sEvolved = []
     t = []
-    dt = 0.1 * 0.0025
+    dt = 0.1 * 0.025
     tEnd = 11.0
     while mb.tme < tEnd:
         if mb.nrt % 50 == 0:
@@ -143,10 +146,8 @@ def simulate(index="i"):
     plt.legend()
     plt.show()
     plt.clf()
-    plt.plot(t, (-(sDerived - sDerived[0])) / sDerived[0], label="Derived")
-    plt.scatter(
-        t, (-(sEvolved - sEvolved[0])) / sEvolved[0], marker="o", label="Evolved"
-    )
+    plt.plot(t, sDerived, label="Derived")
+    plt.scatter(t, sEvolved, marker="o", label="Evolved")
     plt.legend()
     plt.title(r"$\Delta(\rho s) / (\rho_0 s_0)$")
     plt.show()
@@ -155,10 +156,10 @@ def simulate(index="i"):
 
 if __name__ == "__main__":
     try:
-        # a = pg.compute.pgkokkos.ScopeGuard()
-        pg.compute.pgkokkos.initialize()
+        a = pg.compute.pgkokkos.ScopeGuard()
+        # pg.compute.pgkokkos.initialize()
         simulate("i")
-        pg.compute.pgkokkos.finalize()
+        # pg.compute.pgkokkos.finalize()
 
     except Exception as e:
         import sys

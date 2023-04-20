@@ -16,8 +16,8 @@ void KEEPdissipation(block_ &b) {
   Kokkos::parallel_for(
       "Scalar Dissipation i face conv fluxes", range_i,
       KOKKOS_LAMBDA(const int i, const int j, const int k) {
-        const double eps2 =
-            fmin(1.0, kappa2 * fmax(b.phi(i, j, k, 0), b.phi(i - 1, j, k, 0)));
+        const double eps2 = kappa2;
+        // fmin(1.0, kappa2 * fmax(b.phi(i, j, k, 0), b.phi(i - 1, j, k, 0)));
 
         // Compute face normal volume flux vector
         const double uf = 0.5 * (b.q(i, j, k, 1) + b.q(i - 1, j, k, 1));
@@ -69,7 +69,8 @@ void KEEPdissipation(block_ &b) {
         double &rho = b.Q(i, j, k, 0);
         double &gamma = b.qh(i, j, k, 0);
         double &e = b.qh(i, j, k, 4);
-        b.siF(i, j, k) =
-            (log(p * pow(rho, -gamma)) - e * p / (T * rho)) * Dc + De;
+        double s2 = b.s(i, j, k) - b.s(i - 1, j, k);
+        // b.siF(i, j, k) = (b.s(i, j, k) - e * p / (T * rho)) * Dc + De;
+        b.siF(i, j, k) = a * eps2 * s2;
       });
 }
