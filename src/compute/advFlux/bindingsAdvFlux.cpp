@@ -11,6 +11,10 @@ void bindAdvFlux(py::module_ &m) {
   advFlux.def("secondOrderKEEP", &secondOrderKEEP,
               "Compute centeral difference euler fluxes via second order KEEP",
               py::arg("block_ object"));
+  //  |----> myKEEP.cpp
+  advFlux.def("myKEEP", &myKEEP,
+              "Compute centeral difference euler fluxes via second order KEEP",
+              py::arg("block_ object"));
   //  |----> centeredDifference.cpp
   advFlux.def("centralDifference", &centralDifference,
               "Compute central difference euler fluxes",

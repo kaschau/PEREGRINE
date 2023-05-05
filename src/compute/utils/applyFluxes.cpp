@@ -28,12 +28,41 @@ void applyFlux(block_ &b, double[]) {
       "Apply current fluxes to RHS", range_cc3,
       KOKKOS_LAMBDA(const int i, const int j, const int k) {
         // Add fluxes to RHS
+        double s = b.s(i, j, k) / b.Q(i, j, k, 0);
+        double &u = b.q(i, j, k, 1);
+        double &v = b.q(i, j, k, 2);
+        double &w = b.q(i, j, k, 3);
+        double h = b.qh(i, j, k, 2) / b.Q(i, j, k, 0);
+        double &T = b.q(i, j, k, 4);
+        double v0 = s + (-h + 0.5 * (pow(u, 2) + pow(v, 2) + pow(w, 2))) / T;
+        double v1 = -u / T;
+        double v2 = -v / T;
+        double v3 = -w / T;
+        double v4 = 1.0 / T;
         b.ds(i, j, k) +=
-            (b.siF(i, j, k) + b.sjF(i, j, k) + b.skF(i, j, k)) / b.J(i, j, k);
-
-        b.ds(i, j, k) -=
-            (b.siF(i + 1, j, k) + b.sjF(i, j + 1, k) + b.skF(i, j, k + 1)) /
+            ((b.iF(i, j, k, 0) + b.jF(i, j, k, 0) + b.kF(i, j, k, 0)) * v0 +
+             (b.iF(i, j, k, 1) + b.jF(i, j, k, 1) + b.kF(i, j, k, 1)) * v1 +
+             (b.iF(i, j, k, 2) + b.jF(i, j, k, 2) + b.kF(i, j, k, 2)) * v2 +
+             (b.iF(i, j, k, 3) + b.jF(i, j, k, 3) + b.kF(i, j, k, 3)) * v3 +
+             (b.iF(i, j, k, 4) + b.jF(i, j, k, 4) + b.kF(i, j, k, 4)) * v4) /
             b.J(i, j, k);
+
+        b.ds(i, j, k) -= ((b.iF(i + 1, j, k, 0) + b.jF(i, j + 1, k, 0) +
+                           b.kF(i, j, k + 1, 0)) *
+                              v0 +
+                          (b.iF(i + 1, j, k, 1) + b.jF(i, j + 1, k, 1) +
+                           b.kF(i, j, k + 1, 1)) *
+                              v1 +
+                          (b.iF(i + 1, j, k, 2) + b.jF(i, j + 1, k, 2) +
+                           b.kF(i, j, k + 1, 2)) *
+                              v2 +
+                          (b.iF(i + 1, j, k, 3) + b.jF(i, j + 1, k, 3) +
+                           b.kF(i, j, k + 1, 3)) *
+                              v3 +
+                          (b.iF(i + 1, j, k, 4) + b.jF(i, j + 1, k, 4) +
+                           b.kF(i, j, k + 1, 4)) *
+                              v4) /
+                         b.J(i, j, k);
       });
 }
 
@@ -99,11 +128,40 @@ void applyDissipationFlux(block_ &b, double[]) {
       "Apply dissipaiton fluxes to RHS", range_cc3,
       KOKKOS_LAMBDA(const int i, const int j, const int k) {
         // Add fluxes to RHS
+        double s = b.s(i, j, k) / b.Q(i, j, k, 0);
+        double &u = b.q(i, j, k, 1);
+        double &v = b.q(i, j, k, 2);
+        double &w = b.q(i, j, k, 3);
+        double h = b.qh(i, j, k, 2) / b.Q(i, j, k, 0);
+        double &T = b.q(i, j, k, 4);
+        double v0 = s + (-h + 0.5 * (pow(u, 2) + pow(v, 2) + pow(w, 2))) / T;
+        double v1 = -u / T;
+        double v2 = -v / T;
+        double v3 = -w / T;
+        double v4 = 1.0 / T;
         b.ds(i, j, k) -=
-            (b.siF(i, j, k) + b.sjF(i, j, k) + b.skF(i, j, k)) / b.J(i, j, k);
-
-        b.ds(i, j, k) +=
-            (b.siF(i + 1, j, k) + b.sjF(i, j + 1, k) + b.skF(i, j, k + 1)) /
+            ((b.iF(i, j, k, 0) + b.jF(i, j, k, 0) + b.kF(i, j, k, 0)) * v0 +
+             (b.iF(i, j, k, 1) + b.jF(i, j, k, 1) + b.kF(i, j, k, 1)) * v1 +
+             (b.iF(i, j, k, 2) + b.jF(i, j, k, 2) + b.kF(i, j, k, 2)) * v2 +
+             (b.iF(i, j, k, 3) + b.jF(i, j, k, 3) + b.kF(i, j, k, 3)) * v3 +
+             (b.iF(i, j, k, 4) + b.jF(i, j, k, 4) + b.kF(i, j, k, 4)) * v4) /
             b.J(i, j, k);
+
+        b.ds(i, j, k) += ((b.iF(i + 1, j, k, 0) + b.jF(i, j + 1, k, 0) +
+                           b.kF(i, j, k + 1, 0)) *
+                              v0 +
+                          (b.iF(i + 1, j, k, 1) + b.jF(i, j + 1, k, 1) +
+                           b.kF(i, j, k + 1, 1)) *
+                              v1 +
+                          (b.iF(i + 1, j, k, 2) + b.jF(i, j + 1, k, 2) +
+                           b.kF(i, j, k + 1, 2)) *
+                              v2 +
+                          (b.iF(i + 1, j, k, 3) + b.jF(i, j + 1, k, 3) +
+                           b.kF(i, j, k + 1, 3)) *
+                              v3 +
+                          (b.iF(i + 1, j, k, 4) + b.jF(i, j + 1, k, 4) +
+                           b.kF(i, j, k + 1, 4)) *
+                              v4) /
+                         b.J(i, j, k);
       });
 }

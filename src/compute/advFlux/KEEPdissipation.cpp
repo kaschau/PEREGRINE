@@ -64,13 +64,7 @@ void KEEPdissipation(block_ &b) {
               Dc * 0.5 * b.Q(i, j, k, 5 + n) + b.Q(i - 1, j, k, 5 + n);
         }
 
-        double &p = b.q(i, j, k, 0);
-        double &T = b.q(i, j, k, 4);
-        double &rho = b.Q(i, j, k, 0);
-        double &gamma = b.qh(i, j, k, 0);
-        double &e = b.qh(i, j, k, 4);
-        double s2 = b.s(i, j, k) - b.s(i - 1, j, k);
-        // b.siF(i, j, k) = (b.s(i, j, k) - e * p / (T * rho)) * Dc + De;
-        b.siF(i, j, k) = a * eps2 * s2;
+        // double s2 = b.s(i, j, k) - b.s(i - 1, j, k);
+        // b.siF(i, j, k) = a * eps2 * s2;
       });
 }

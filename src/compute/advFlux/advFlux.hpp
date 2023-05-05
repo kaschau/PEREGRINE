@@ -6,6 +6,8 @@
 // ./advFlux
 //    |------> secondOrderKEEP
 void secondOrderKEEP(block_ &b);
+//    |------> myKEEP
+void myKEEP(block_ &b);
 //    |------> centralDifference
 void centralDifference(block_ &b);
 //    |------> fourthOrderKEEP
