@@ -59,7 +59,7 @@ void chem_C2H4_Air_Red22(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
   Kokkos::parallel_for(
       "Compute chemical source terms", range,
       KOKKOS_LAMBDA(const int i, const int j, const int k) {
-        double p = b.q(i, j, k, 0);
+        double p = b.q(i, j, k, 0) * 10.0; // convert to dynes/cm^2
         double T = b.q(i, j, k, 4);
         double &rho = b.Q(i, j, k, 0);
         double Y[22];
