@@ -1127,9 +1127,9 @@ void chem_C2H4_Air_Red22(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             RB[26] = RB[26] * cs[5] * cs[6];
             RF[27] = RF[27] * cs[4] * cs[7];
             RB[27] = RB[27] * cs[5] * cs[6];
-            CTB = CTOT + cs[0] + 5e0 * cs[3] + 5e0 * cs[5] +
-                  cs[9] * 5e-1 * cs[10] + 2.5e0 * cs[11] + 2e0 * cs[15] +
-                  2e0 * cs[13] + 2e0 * cs[14];
+            CTB = CTOT + cs[0] + 5e0 * cs[3] + 5e0 * cs[5] + cs[9] +
+                  5e-1 * cs[10] + 2.5e0 * cs[11] + 2e0 * cs[15] + 2e0 * cs[13] +
+                  2e0 * cs[14];
             RF[28] = RF[28] * CTB * cs[2] * cs[10];
             RB[28] = RB[28] * CTB * cs[11];
             RF[29] = RF[29] * cs[4] * cs[10];
@@ -1212,7 +1212,7 @@ void chem_C2H4_Air_Red22(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             RB[43] = RB[43] * cs[1] * cs[11];
             RF[44] = RF[44] * cs[4];
             RB[44] = RB[44] * cs[5] * cs[10];
-            CTB = CTOT + cs[0] + 5e0 * cs[5] + cs[9] + 5e-1 * cs[10] * cs[11] +
+            CTB = CTOT + cs[0] + 5e0 * cs[5] + cs[9] + 5e-1 * cs[10] + cs[11] +
                   2e0 * cs[15] + 2e0 * cs[13] + 2e0 * cs[14];
             RF[45] = RF[45] * CTB;
             RB[45] = RB[45] * CTB * cs[1] * cs[10];
@@ -1361,7 +1361,7 @@ void chem_C2H4_Air_Red22(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             RB[86] = RB[86] * cs[1];
             RF[87] = RF[87] * cs[8];
             RB[87] = RB[87] * cs[9] * cs[10];
-            CTB = CTOT + cs[0] + 5e0 * cs[5] + cs[9] + 5e-1 * cs[10] * cs[11] +
+            CTB = CTOT + cs[0] + 5e0 * cs[5] + cs[9] + 5e-1 * cs[10] + cs[11] +
                   2e0 * cs[15] + 2e0 * cs[13] + 2e0 * cs[14];
             RKLOW = exp(1.11312542e2 - 9.588e0 * logT - 2.566405e3 * Tinv);
             PR = RKLOW * CTB / RF[88];
@@ -3040,9 +3040,9 @@ void chem_C2H4_Air_Red22(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
           dYdt[0] *= th.MW(0) * 1000.0;
           dYdt[1] *= th.MW(1) * 1000.0;
           dYdt[2] *= th.MW(2) * 1000.0;
-          dYdt[3] *= th.MW(2) * 1000.0;
-          dYdt[4] *= th.MW(3) * 1000.0;
-          dYdt[5] *= th.MW(4) * 1000.0;
+          dYdt[3] *= th.MW(3) * 1000.0;
+          dYdt[4] *= th.MW(4) * 1000.0;
+          dYdt[5] *= th.MW(5) * 1000.0;
           dYdt[6] *= th.MW(6) * 1000.0;
           dYdt[7] *= th.MW(7) * 1000.0;
           dYdt[8] *= th.MW(8) * 1000.0;
