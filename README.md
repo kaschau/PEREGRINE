@@ -78,9 +78,9 @@ to the same data.
 | **qh**    | **Thermo**         |         |              |
 |           | gamma              | 0       | []           |
 |           | cp                 | 1       | J/kg.K       |
-|           | enthalpy           | 2       | J            |
+|           | enthalpy           | 2       | J/m^3        |
 |           | c                  | 3       | m/s          |
-|           | internal energy    | 4       | J            |
+|           | internal energy    | 4       | J/m^3        |
 |           | species enthalpy\* | 5..5+ns | J/kg         |
 | **qt**    | **Transport**      |         |              |
 |           | mu                 | 0       | Pa.s         |
