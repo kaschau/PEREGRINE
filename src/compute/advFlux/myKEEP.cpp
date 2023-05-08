@@ -45,26 +45,52 @@ void myKEEP(block_ &b) {
         b.iF(i, j, k, 3) = rho * wf * U + pf * b.isz(i, j, k);
 
         // Total energy (rhoE+ p)*Ui)
-        double e;
-        double em;
-
-        e = b.qh(i, j, k, 4);
-        em = b.qh(i - 1, j, k, 4);
-
-        b.iF(i, j, k, 4) =
-            ((0.5 * (e + em) + rho * 0.5 *
-                                   (b.q(i, j, k, 1) * b.q(i - 1, j, k, 1) +
-                                    b.q(i, j, k, 2) * b.q(i - 1, j, k, 2) +
-                                    b.q(i, j, k, 3) * b.q(i - 1, j, k, 3)))) *
-            U;
-
-        b.iF(i, j, k, 4) +=
+        double Kj = (rho * 0.5 *
+                     (b.q(i, j, k, 1) * b.q(i - 1, j, k, 1) +
+                      b.q(i, j, k, 2) * b.q(i - 1, j, k, 2) +
+                      b.q(i, j, k, 3) * b.q(i - 1, j, k, 3))) *
+                    U;
+        double IIj =
             0.5 * (b.q(i - 1, j, k, 0) * (b.q(i, j, k, 1) * b.isx(i, j, k) +
                                           b.q(i, j, k, 2) * b.isy(i, j, k) +
                                           b.q(i, j, k, 3) * b.isz(i, j, k)) +
                    b.q(i, j, k, 0) * (b.q(i - 1, j, k, 1) * b.isx(i, j, k) +
                                       b.q(i - 1, j, k, 2) * b.isy(i, j, k) +
                                       b.q(i - 1, j, k, 3) * b.isz(i, j, k)));
+
+        // solve for internal energy flux
+        double cv = b.qh(i, j, k, 1) / b.qh(i, j, k, 0);
+        double &T = b.q(i, j, k, 4);
+        double &rhoj = b.Q(i, j, k, 0);
+        double R = b.qh(i, j, k, 1) - cv;
+        double &h = b.qh(i, j, k, 2);
+        double &u = b.q(i, j, k, 1);
+        double &v = b.q(i, j, k, 2);
+        double &w = b.q(i, j, k, 3);
+
+        double cvm = b.qh(i - 1, j, k, 1) / b.qh(i - 1, j, k, 0);
+        double &Tm = b.q(i - 1, j, k, 4);
+        double &rhojm = b.Q(i - 1, j, k, 0);
+        double Rm = b.qh(i - 1, j, k, 1) - cv;
+
+        double s = cv * log(T) - R * log(rhoj);
+        double sm = cvm * log(Tm) - Rm * log(rhojm);
+
+        double v0 = s + (-h + 0.5 * (pow(u, 2) + pow(v, 2) + pow(w, 2))) / T;
+        double v1 = -u / T;
+        double v2 = -v / T;
+        double v3 = -w / T;
+        double v4 = 1.0 / T;
+
+        double Fs = rho * U * 0.5 * (s + sm);
+
+        double Ij = (Fs - v0 * b.iF(i, j, k, 0) - v1 * b.iF(i, j, k, 1) -
+                     v2 * b.iF(i, j, k, 2) - v3 * b.iF(i, j, k, 3)) /
+                        v4 -
+                    Kj - IIj;
+
+        b.iF(i, j, k, 4) = Ij + Kj + IIj;
+
         // Species
         for (int n = 0; n < b.ne - 5; n++) {
           b.iF(i, j, k, 5 + n) =

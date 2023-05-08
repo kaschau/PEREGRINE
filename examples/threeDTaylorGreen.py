@@ -50,7 +50,7 @@ def simulate():
     mb.computeMetrics(config["RHS"]["diffOrder"])
 
     R = 287.002507
-    cp = 1000.0
+    cp = 1002.838449439523
     cv = cp - R
     M0 = 0.4
     rho0 = 1.0
@@ -67,18 +67,31 @@ def simulate():
         * np.sin(blk.array["yc"])
         * np.cos(blk.array["zc"])
     )
+    blk.array["q"][:, :, :, 3] = 0.0
     blk.array["q"][:, :, :, 4] = blk.array["q"][:, :, :, 0] / (R * rho0)
 
     blk.updateDeviceView(["q"])
     mb.eos(blk, mb.thtrdat, 0, "prims")
     pg.consistify(mb)
 
+    # entropy stuff
+    s = cp / gamma * np.log(blk.array["q"][ng:-ng, ng:-ng, ng:-ng, 4]) - R * np.log(
+        blk.array["Q"][ng:-ng, ng:-ng, ng:-ng, 0]
+    )
+    blk.array["s"][ng:-ng, ng:-ng, ng:-ng] = (
+        blk.array["Q"][ng:-ng, ng:-ng, ng:-ng, 0] * s
+    )
+    blk.updateDeviceView(["s"])
+    pg.consistify(mb)
+
     dt = 0.1 * 2 * np.pi / 64
     ke = []
     e = []
     s = []
+    sev = []
     t = []
     tEnd = 120.0 / M0
+    print(mb)
     while mb.tme < tEnd:
         if mb.nrt % 50 == 0:
             pg.misc.progressBar(mb.tme, tEnd)
@@ -101,25 +114,32 @@ def simulate():
 
             rS = np.sum(
                 blk.array["Q"][ng:-ng, ng:-ng, ng:-ng, 0]
-                * np.log10(
+                * np.log(
                     blk.array["q"][ng:-ng, ng:-ng, ng:-ng, 0]
                     * blk.array["Q"][ng:-ng, ng:-ng, ng:-ng, 0] ** (-gamma)
                 )
             )
 
+            rSev = np.sum(
+                blk.array["Q"][ng:-ng, ng:-ng, ng:-ng, 0]
+                * blk.array["s"][ng:-ng, ng:-ng, ng:-ng]
+            )
             ke.append(rke)
             e.append(re)
             s.append(rS)
+            sev.append(rSev)
             t.append(mb.tme * M0)
 
         mb.step(dt)
 
+    print(sev)
     plt.plot(t, ke / ke[0])
     plt.ylim([0, 2.4])
     plt.title(r"$\rho k / (\rho k)_{0}$")
     plt.savefig("ke.png")
     plt.clf()
-    plt.plot(t, (-(s - s[0])) / s[0])
+    plt.plot(t, (-(s - s[0])) / s[0], label="Recon")
+    plt.plot(t, (-(sev - sev[0])) / sev[0], label=r"\partial{\rho s}/\partial{t}")
     plt.ylim([-3e-2, 1e-2])
     plt.title(r"$\Delta(\rho s) / (\rho_0 s_0)$")
     plt.savefig("entropy.png")
@@ -127,6 +147,9 @@ def simulate():
     plt.plot(t, e / e[0])
     plt.savefig("e.png")
     plt.clf()
+    with open("entropy.npy", "wb") as f:
+        np.save(f, np.array(s))
+        np.save(f, np.array(sev))
 
 
 if __name__ == "__main__":
