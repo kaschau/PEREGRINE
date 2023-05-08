@@ -120,10 +120,7 @@ def simulate():
                 )
             )
 
-            rSev = np.sum(
-                blk.array["Q"][ng:-ng, ng:-ng, ng:-ng, 0]
-                * blk.array["s"][ng:-ng, ng:-ng, ng:-ng]
-            )
+            rSev = np.sum(blk.array["s"][ng:-ng, ng:-ng, ng:-ng])
             ke.append(rke)
             e.append(re)
             s.append(rS)
