@@ -135,7 +135,7 @@ def simulate():
     plt.savefig("ke.png")
     plt.clf()
     plt.plot(t, (-(s - s[0])) / s[0], label="Recon")
-    plt.plot(t, (-(sev - sev[0])) / sev[0], label=r"\partial{\rho s}/\partial{t}")
+    plt.plot(t, (-(sev - sev[0])) / sev[0], label=r"$\partial{\rho s}/\partial{t}$")
     plt.legend()
     plt.ylim([-3e-2, 1e-2])
     plt.title(r"$\Delta(\rho s) / (\rho_0 s_0)$")
