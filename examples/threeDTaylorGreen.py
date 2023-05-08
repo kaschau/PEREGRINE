@@ -132,7 +132,6 @@ def simulate():
 
         mb.step(dt)
 
-    print(sev)
     plt.plot(t, ke / ke[0])
     plt.ylim([0, 2.4])
     plt.title(r"$\rho k / (\rho k)_{0}$")
