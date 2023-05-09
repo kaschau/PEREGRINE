@@ -45,12 +45,13 @@ void myKEEP(block_ &b) {
         b.iF(i, j, k, 3) = rho * wf * U + pf * b.isz(i, j, k);
 
         // Total energy (rhoE+ p)*Ui)
-        double Kj = (rho * 0.5 *
-                     (b.q(i, j, k, 1) * b.q(i - 1, j, k, 1) +
-                      b.q(i, j, k, 2) * b.q(i - 1, j, k, 2) +
-                      b.q(i, j, k, 3) * b.q(i - 1, j, k, 3))) *
+        double Kj = rho * 0.5 *
+                    (b.q(i, j, k, 1) * b.q(i - 1, j, k, 1) +
+                     b.q(i, j, k, 2) * b.q(i - 1, j, k, 2) +
+                     b.q(i, j, k, 3) * b.q(i - 1, j, k, 3)) *
                     U;
-        double IIj =
+
+        double Pj =
             0.5 * (b.q(i - 1, j, k, 0) * (b.q(i, j, k, 1) * b.isx(i, j, k) +
                                           b.q(i, j, k, 2) * b.isy(i, j, k) +
                                           b.q(i, j, k, 3) * b.isz(i, j, k)) +
@@ -63,7 +64,7 @@ void myKEEP(block_ &b) {
         double &T = b.q(i, j, k, 4);
         double &rhoj = b.Q(i, j, k, 0);
         double R = b.qh(i, j, k, 1) - cv;
-        double &h = b.qh(i, j, k, 2);
+        double h = b.qh(i, j, k, 2) / rhoj;
         double &u = b.q(i, j, k, 1);
         double &v = b.q(i, j, k, 2);
         double &w = b.q(i, j, k, 3);
@@ -71,7 +72,8 @@ void myKEEP(block_ &b) {
         double cvm = b.qh(i - 1, j, k, 1) / b.qh(i - 1, j, k, 0);
         double &Tm = b.q(i - 1, j, k, 4);
         double &rhojm = b.Q(i - 1, j, k, 0);
-        double Rm = b.qh(i - 1, j, k, 1) - cv;
+        double Rm = b.qh(i - 1, j, k, 1) - cvm;
+        double &um = b.q(i - 1, j, k, 1);
 
         double s = cv * log(T) - R * log(rhoj);
         double sm = cvm * log(Tm) - Rm * log(rhojm);
@@ -87,9 +89,20 @@ void myKEEP(block_ &b) {
         double Ij = (Fs - v0 * b.iF(i, j, k, 0) - v1 * b.iF(i, j, k, 1) -
                      v2 * b.iF(i, j, k, 2) - v3 * b.iF(i, j, k, 3)) /
                         v4 -
-                    Kj - IIj;
+                    Kj - Pj;
 
-        b.iF(i, j, k, 4) = Ij + Kj + IIj;
+        // double &Cj = b.iF(i, j, k, 0);
+        // double Ij =
+        //     (0.5 * (sm - s) * T + h) * Cj +
+        //     0.5 * (b.q(i, j, k, 0) * ((b.q(i, j, k, 1) * b.isx(i, j, k) +
+        //                                b.q(i, j, k, 2) * b.isy(i, j, k) +
+        //                                b.q(i, j, k, 3) * b.isz(i, j, k)) -
+        //                               (b.q(i - 1, j, k, 1) * b.isx(i, j, k) +
+        //                                b.q(i - 1, j, k, 2) * b.isy(i, j, k) +
+        //                                b.q(i - 1, j, k, 3) * b.isz(i, j,
+        //                                k))));
+
+        b.iF(i, j, k, 4) = Ij + Kj + Pj;
 
         // Species
         for (int n = 0; n < b.ne - 5; n++) {
