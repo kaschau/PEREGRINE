@@ -26,7 +26,7 @@ def getEntropy(g, mb, s0, dsdt):
         s += np.sum(rho * (cv * np.log(T) - R * np.log(rho)))
 
     residual = s - s0 - g * dsdt
-    print(f"{s-s0 = }, {g*dsdt = }, {residual = }, {g = }")
+    # print(f"{s-s0 = }, {g*dsdt = }, {residual = }, {g = }")
 
     return residual
 
@@ -109,7 +109,7 @@ class rrk3:
         )
 
         self.gSol = g.root
-        print(f"{self.gSol = }")
+        # print(f"{self.gSol = }")
 
         # update new state after gamma is found
         for blk in self:
