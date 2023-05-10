@@ -24,7 +24,8 @@ save = False
 
 def simulate(index="i"):
     config = pg.files.configFile()
-    # config["RHS"]["primaryAdvFlux"] = "centralDifference"
+    config["timeIntegration"]["integrator"] = "rk4"
+    config["RHS"]["primaryAdvFlux"] = "myKEEP"
     # config["RHS"]["shockHandling"] = "artificialDissipation"
     # config["RHS"]["secondaryAdvFlux"] = "scalarDissipation"
     # config["RHS"]["switchAdvFlux"] = "jamesonPressure"
@@ -99,9 +100,17 @@ def simulate(index="i"):
     sDerived = []
     sEvolved = []
     t = []
-    dt = 0.1 * 0.025
-    tEnd = 11.0
+    dx = 1.0 / (nx - 1.0)
+    CFL = 0.001
+    lam = np.sqrt(gamma * R * np.max(initial_T))
+    dt = CFL * dx / lam
+    tEnd = 0.1
     while mb.tme < tEnd:
+        abort = pg.mpiComm.mpiUtils.checkForNan(mb)
+        if abort > 0:
+            print("Nan")
+            break
+
         if mb.nrt % 50 == 0:
             pg.misc.progressBar(mb.tme, tEnd)
 

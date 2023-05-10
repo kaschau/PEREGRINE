@@ -73,7 +73,6 @@ void myKEEP(block_ &b) {
         double &Tm = b.q(i - 1, j, k, 4);
         double &rhojm = b.Q(i - 1, j, k, 0);
         double Rm = b.qh(i - 1, j, k, 1) - cvm;
-        double &um = b.q(i - 1, j, k, 1);
 
         double s = cv * log(T) - R * log(rhoj);
         double sm = cvm * log(Tm) - Rm * log(rhojm);
