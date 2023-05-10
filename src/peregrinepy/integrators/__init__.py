@@ -2,6 +2,7 @@ from .rk1 import rk1
 from .rk2 import rk2
 from .maccormack import maccormack
 from .rk3 import rk3
+from .rrk3 import rrk3
 from .rk34 import rk34
 from .rk4 import rk4
 from .strang import strang
@@ -17,6 +18,8 @@ def getIntegrator(ti):
         return maccormack
     elif ti == "rk3":
         return rk3
+    elif ti == "rrk3":
+        return rrk3
     elif ti == "rk34":
         return rk34
     elif ti == "rk4":
