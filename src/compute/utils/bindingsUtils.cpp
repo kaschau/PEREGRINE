@@ -40,9 +40,16 @@ void bindUtils(py::module_ &m) {
             py::arg("x double"), py::arg("B view"));
   utils.def("AEQxB", &AEQxB, "A = x*B", py::arg("A view"), py::arg("x double"),
             py::arg("B view"));
-  utils.def("CEQxApyB", &CEQxApyB, "C = x*A + y*B", py::arg("C view"),
-            py::arg("x double"), py::arg("A view"), py::arg("y double"),
-            py::arg("B view"));
+  utils.def("CEQxApyB",
+            py::overload_cast<fourDview &, const double &, const fourDview &,
+                              const double &, const fourDview &>(&CEQxApyB),
+            "C = x*A + y*B", py::arg("C view"), py::arg("x double"),
+            py::arg("A view"), py::arg("y double"), py::arg("B view"));
+  utils.def("CEQxApyB",
+            py::overload_cast<threeDview &, const double &, const threeDview &,
+                              const double &, const threeDview &>(&CEQxApyB),
+            "C = x*A + y*B", py::arg("C view"), py::arg("x double"),
+            py::arg("A view"), py::arg("y double"), py::arg("B view"));
   //    |------> cfl
   utils.def("CFLmax", &CFLmax,
             "Find max acoustic, convective, spectral radius CFL factors c/dx",
@@ -79,4 +86,12 @@ void bindUtils(py::module_ &m) {
   utils.def("viscousSponge", &viscousSponge, "Compute viscous multiplier",
             py::arg("block_"), py::arg("origin"), py::arg("ending"),
             py::arg("mult"));
+  //    |------> computeEntropy
+  utils.def("computeEntropy", &computeEntropy,
+            "Find max acoustic, convective, spectral radius CFL factors c/dx",
+            py::arg("mb object"));
+  //    |------> sumEntropy
+  utils.def("sumEntropy", &sumEntropy,
+            "Find max acoustic, convective, spectral radius CFL factors c/dx",
+            py::arg("mb object"));
 }

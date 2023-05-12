@@ -25,6 +25,8 @@ void ApEQxB(fourDview &A, const double &x, fourDview &B);
 void AEQxB(fourDview &A, const double &x, fourDview &B);
 void CEQxApyB(fourDview &C, const double &x, const fourDview &A,
               const double &y, const fourDview &B);
+void CEQxApyB(threeDview &C, const double &x, const threeDview &A,
+              const double &y, const threeDview &B);
 std::array<double, 3> CFLmax(const std::vector<block_> &mb);
 int checkNan(const std::vector<block_> &mb);
 
@@ -42,4 +44,6 @@ void placeRecvBuffer(fourDview &view, fourDview &buffer, face_ &face,
 void viscousSponge(block_ &b, const std::array<double, 3> &origin,
                    const std::array<double, 3> &ending, double mult);
 
+double computeEntropy(const std::vector<block_> &mb);
+double sumEntropy(const std::vector<block_> &mb);
 #endif

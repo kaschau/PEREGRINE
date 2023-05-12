@@ -1,10 +1,12 @@
 from abc import ABCMeta
-from ..RHS import RHS
-from ..consistify import consistify
-from ..compute.utils import AEQB
-from ..compute.timeIntegration import rk3s1, rk3s2, rk3s3
+
 import numpy as np
 from scipy.optimize import root_scalar
+
+from ..compute.timeIntegration import rk3s1, rk3s2, rk3s3
+from ..compute.utils import sumEntropy, computeEntropy, CEQxApyB
+from ..consistify import consistify
+from ..RHS import RHS
 
 
 def getEntropy(g, mb, s0, dsdt):
@@ -15,15 +17,7 @@ def getEntropy(g, mb, s0, dsdt):
         mb.eos(blk, mb.thtrdat, -1, "cons")
 
     # compute new total entropy
-    s = 0.0
-    for blk in mb:
-        cp = blk.array["qh"][blk.ng : -blk.ng, blk.ng : -blk.ng, blk.ng : -blk.ng, 1]
-        gamma = blk.array["qh"][blk.ng : -blk.ng, blk.ng : -blk.ng, blk.ng : -blk.ng, 0]
-        T = blk.array["q"][blk.ng : -blk.ng, blk.ng : -blk.ng, blk.ng : -blk.ng, 4]
-        rho = blk.array["Q"][blk.ng : -blk.ng, blk.ng : -blk.ng, blk.ng : -blk.ng, 0]
-        cv = cp / gamma
-        R = cp - cv
-        s += np.sum(rho * (cv * np.log(T) - R * np.log(rho)))
+    s = computeEntropy(mb)
 
     residual = s - s0 - g * dsdt
     # print(f"{s-s0 = }, {g*dsdt = }, {residual = }, {g = }")
@@ -48,21 +42,7 @@ class rrk3:
 
     def step(self, dt):
         # before we do anything, we need total entropy at un
-        s0 = 0.0
-        for blk in self:
-            cp = blk.array["qh"][
-                blk.ng : -blk.ng, blk.ng : -blk.ng, blk.ng : -blk.ng, 1
-            ]
-            gamma = blk.array["qh"][
-                blk.ng : -blk.ng, blk.ng : -blk.ng, blk.ng : -blk.ng, 0
-            ]
-            T = blk.array["q"][blk.ng : -blk.ng, blk.ng : -blk.ng, blk.ng : -blk.ng, 4]
-            rho = blk.array["Q"][
-                blk.ng : -blk.ng, blk.ng : -blk.ng, blk.ng : -blk.ng, 0
-            ]
-            cv = cp / gamma
-            R = cp - cv
-            s0 += np.sum(rho * (cv * np.log(T) - R * np.log(rho)))
+        s0 = computeEntropy(self)
 
         # First Stage
         self.titme = self.tme
@@ -90,11 +70,9 @@ class rrk3:
         for blk in self:
             rk3s3(blk, dt)
             # use Q1,s1 to store \delta t \sum bi*fi
-            blk.array["Q1"][:] = blk.array["Q"] - blk.array["Q0"]
-            blk.array["s1"][:] = blk.array["s"] - blk.array["s0"]
-            dsdt += np.sum(
-                blk.array["s1"][blk.ng : -blk.ng, blk.ng : -blk.ng, blk.ng : -blk.ng]
-            )
+            CEQxApyB(blk.Q1, 1.0, blk.Q, -1.0, blk.Q0)
+            CEQxApyB(blk.s1, 1.0, blk.s, -1.0, blk.s0)
+        dsdt = sumEntropy(self)
 
         # now compute gamma
         g = root_scalar(

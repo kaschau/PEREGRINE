@@ -79,3 +79,18 @@ void CEQxApyB(fourDview &C, const double &x, const fourDview &A,
         C(i, j, k, l) = x * A(i, j, k, l) + y * B(i, j, k, l);
       });
 }
+
+void CEQxApyB(threeDview &C, const double &x, const threeDview &A,
+              const double &y, const threeDview &B) {
+  //-------------------------------------------------------------------------------------------|
+  // C = Ax + By
+  //-------------------------------------------------------------------------------------------|
+  int indxI = A.extent(0);
+  int indxJ = A.extent(1);
+  int indxK = A.extent(2);
+  MDRange3 range({0, 0, 0}, {indxI, indxJ, indxK});
+  Kokkos::parallel_for(
+      "CEQxApyB", range, KOKKOS_LAMBDA(const int i, const int j, const int k) {
+        C(i, j, k) = x * A(i, j, k) + y * B(i, j, k);
+      });
+}
