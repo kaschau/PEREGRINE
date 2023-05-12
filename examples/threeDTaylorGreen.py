@@ -114,9 +114,9 @@ def simulate():
 
             rS = np.sum(
                 blk.array["Q"][ng:-ng, ng:-ng, ng:-ng, 0]
-                * np.log(
-                    blk.array["q"][ng:-ng, ng:-ng, ng:-ng, 0]
-                    * blk.array["Q"][ng:-ng, ng:-ng, ng:-ng, 0] ** (-gamma)
+                * (
+                    cp / gamma * np.log(blk.array["q"][ng:-ng, ng:-ng, ng:-ng, 4])
+                    - R * np.log(blk.array["Q"][ng:-ng, ng:-ng, ng:-ng, 0])
                 )
             )
 
