@@ -159,6 +159,7 @@ def howManyNG(config):
         "scalarDissipation": 2,
         "KEEPdissipation": 1,
         "myKEEP": 1,
+        "roeEC": 1,
         None: 1,
     }
 

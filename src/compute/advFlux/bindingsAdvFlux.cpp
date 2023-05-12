@@ -15,6 +15,10 @@ void bindAdvFlux(py::module_ &m) {
   advFlux.def("myKEEP", &myKEEP,
               "Compute centeral difference euler fluxes via second order KEEP",
               py::arg("block_ object"));
+  //  |----> rhoEC.cpp
+  advFlux.def("roeEC", &roeEC,
+              "Compute centeral difference euler fluxes via second order KEEP",
+              py::arg("block_ object"));
   //  |----> centeredDifference.cpp
   advFlux.def("centralDifference", &centralDifference,
               "Compute central difference euler fluxes",
