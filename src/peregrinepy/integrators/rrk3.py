@@ -12,7 +12,7 @@ from ..RHS import RHS
 def getEntropy(g, mb, s0, dsdt):
     # update state based on gamma
     for blk in mb:
-        blk.array["Q"][:] = blk.array["Q0"] + g * blk.array["Q1"]
+        CEQxApyB(blk.Q, 1.0, blk.Q0, g, blk.Q1)
         # update primatives
         mb.eos(blk, mb.thtrdat, -1, "cons")
 
