@@ -91,8 +91,8 @@ class rrk3:
 
         # update new state after gamma is found
         for blk in self:
-            blk.array["Q"][:] = blk.array["Q0"] + self.gSol * blk.array["Q1"]
-            blk.array["s"][:] = blk.array["s0"] + self.gSol * blk.array["s1"]
+            CEQxApyB(blk.Q, 1.0, blk.Q0, self.gSol, blk.Q1)
+            CEQxApyB(blk.s, 1.0, blk.s0, self.gSol, blk.s1)
 
         consistify(self)
 
