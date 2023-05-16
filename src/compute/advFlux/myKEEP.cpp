@@ -60,35 +60,59 @@ void myKEEP(block_ &b) {
                                       b.q(i - 1, j, k, 3) * b.isz(i, j, k)));
 
         // solve for internal energy flux
-        double cv = b.qh(i, j, k, 1) / b.qh(i, j, k, 0);
-        double &T = b.q(i, j, k, 4);
-        double &rhoj = b.Q(i, j, k, 0);
-        double R = b.qh(i, j, k, 1) - cv;
-        double h = b.qh(i, j, k, 2) / rhoj;
-        double &u = b.q(i, j, k, 1);
-        double &v = b.q(i, j, k, 2);
-        double &w = b.q(i, j, k, 3);
+        double cvR = b.qh(i, j, k, 1) / b.qh(i, j, k, 0);
+        double &TR = b.q(i, j, k, 4);
+        double &pR = b.q(i, j, k, 0);
+        double &rhoR = b.Q(i, j, k, 0);
+        double RR = b.qh(i, j, k, 1) - cvR;
+        double hR = b.qh(i, j, k, 2) / rhoR;
+        double &uR = b.q(i, j, k, 1);
+        double &vR = b.q(i, j, k, 2);
+        double &wR = b.q(i, j, k, 3);
+        double sR = cvR * log(TR) - RR * log(rhoR);
 
-        double cvm = b.qh(i - 1, j, k, 1) / b.qh(i - 1, j, k, 0);
-        double &Tm = b.q(i - 1, j, k, 4);
-        double &rhojm = b.Q(i - 1, j, k, 0);
-        double Rm = b.qh(i - 1, j, k, 1) - cvm;
+        double v0R =
+            sR + (-hR + 0.5 * (pow(uR, 2) + pow(vR, 2) + pow(wR, 2))) / TR;
+        double v1R = -uR / TR;
+        double v2R = -vR / TR;
+        double v3R = -wR / TR;
+        double v4R = 1.0 / TR;
 
-        double s = cv * log(T) - R * log(rhoj);
-        double sm = cvm * log(Tm) - Rm * log(rhojm);
+        // left
+        double cvL = b.qh(i - 1, j, k, 1) / b.qh(i - 1, j, k, 0);
+        double &TL = b.q(i - 1, j, k, 4);
+        double &pL = b.q(i - 1, j, k, 0);
+        double &rhoL = b.Q(i - 1, j, k, 0);
+        double RL = b.qh(i - 1, j, k, 1) - cvL;
+        double hL = b.qh(i - 1, j, k, 2) / rhoL;
+        double &uL = b.q(i - 1, j, k, 1);
+        double &vL = b.q(i - 1, j, k, 2);
+        double &wL = b.q(i - 1, j, k, 3);
+        double sL = cvL * log(TL) - RL * log(rhoL);
 
-        double v0 = s + (-h + 0.5 * (pow(u, 2) + pow(v, 2) + pow(w, 2))) / T;
-        double v1 = -u / T;
-        double v2 = -v / T;
-        double v3 = -w / T;
-        double v4 = 1.0 / T;
+        double v0L =
+            sL + (-hL + 0.5 * (pow(uL, 2) + pow(vL, 2) + pow(wL, 2))) / TL;
+        double v1L = -uL / TL;
+        double v2L = -vL / TL;
+        double v3L = -wL / TL;
+        double v4L = 1.0 / TL;
 
-        double Fs = rho * U * 0.5 * (s + sm);
+        double Fs = rho * U * 0.5 * (sR + sL);
 
-        double Ij = (Fs - v0 * b.iF(i, j, k, 0) - v1 * b.iF(i, j, k, 1) -
-                     v2 * b.iF(i, j, k, 2) - v3 * b.iF(i, j, k, 3)) /
-                        v4 -
-                    Kj - Pj;
+        double phiR = -pR * uR / TR * b.iS(i, j, k);
+        double phiL = -pL * uL / TL * b.iS(i, j, k);
+
+        double PHI = 0.5 * (phiR + phiL);
+        double V0 = 0.5 * (v0R + v0L);
+        double V1 = 0.5 * (v1R + v1L);
+        double V2 = 0.5 * (v2R + v2L);
+        double V3 = 0.5 * (v3R + v3L);
+        double V4 = 0.5 * (v4R + v4L);
+
+        double Ij = (Fs + PHI - V0 * b.iF(i, j, k, 0) - V1 * b.iF(i, j, k, 1) -
+                     V2 * b.iF(i, j, k, 2) - V3 * b.iF(i, j, k, 3)) /
+                        V4 -
+                    Pj - Kj;
 
         // double &Cj = b.iF(i, j, k, 0);
         // double Ij =
