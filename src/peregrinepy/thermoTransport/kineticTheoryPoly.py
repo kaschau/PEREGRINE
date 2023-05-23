@@ -222,17 +222,25 @@ def kineticTheoryPoly(usersp, refsp, eos):
     sqrtTs = np.sqrt(Ts)
 
     # We fit the visc pol'y to the sqrtT as visc is proportional to sqrtT
+    # we also reverse the numpy poly'l so lowest order is first
     visc = visc / sqrtTs[:, None]
     w = 1.0 / (visc**2)
-    muPoly = np.array(
-        [list(np.polyfit(logTs, visc[:, k], deg=deg, w=w[:, k])) for k in range(ns)]
+    muPoly = np.flip(
+        np.array(
+            [list(np.polyfit(logTs, visc[:, k], deg=deg, w=w[:, k])) for k in range(ns)]
+        ),
+        -1,
     )
 
     # We fit the cond pol'y to the sqrtT as cond is proportional to sqrtT
+    # we also reverse the numpy poly'l so lowest order is first
     cond = cond / np.sqrt(Ts[:, None])
     w = 1.0 / (cond**2)
-    kappaPoly = np.array(
-        [list(np.polyfit(logTs, cond[:, k], deg=deg, w=w[:, k])) for k in range(ns)]
+    kappaPoly = np.flip(
+        np.array(
+            [list(np.polyfit(logTs, cond[:, k], deg=deg, w=w[:, k])) for k in range(ns)]
+        ),
+        -1,
     )
 
     Dij = []
@@ -242,6 +250,6 @@ def kineticTheoryPoly(usersp, refsp, eos):
         for j in range(k, ns):
             Dij.append(list(np.polyfit(logTs, diff[:, k, j], deg=deg, w=w[:, k, j])))
 
-    DijPoly = np.array(Dij)
+    DijPoly = np.flip(np.array(Dij), -1)
 
     return muPoly, kappaPoly, DijPoly
