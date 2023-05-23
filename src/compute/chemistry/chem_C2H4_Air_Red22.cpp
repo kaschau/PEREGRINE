@@ -49,8 +49,6 @@ void chem_C2H4_Air_Red22(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
                          const int &nChemSubSteps /*=1*/,
                          const double &dt /*=1.0*/) {
 
-  // THIS DOES NOT WORK WITH CHEMICAL SUB STEPS!!!!!
-
   // --------------------------------------------------------------|
   // cc range
   // --------------------------------------------------------------|

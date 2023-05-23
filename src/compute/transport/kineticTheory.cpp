@@ -56,8 +56,11 @@ void kineticTheory(block_ &b, const thtrdat_ &th, const int &nface,
         double mu_sp(ns);
         double kappa_sp(ns);
         double Dij(ns, ns);
-        double D(ns);
+        double D(ns) = {0.0};
 #endif
+
+        // check for pure fluid
+        int pure = -1;
 
         // Compute nth species Y
         Y(ns - 1) = 1.0;
@@ -79,6 +82,9 @@ void kineticTheory(block_ &b, const thtrdat_ &th, const int &nface,
           // Mean molecular weight, mole fraction
           for (int n = 0; n <= ns - 1; n++) {
             X(n) = Y(n) / th.MW(n) / mass;
+            if (X(n) == 1.0) {
+              pure = n;
+            }
             MWmix += X(n) * th.MW(n);
           }
         }
@@ -86,21 +92,14 @@ void kineticTheory(block_ &b, const thtrdat_ &th, const int &nface,
         // Evaluate all property polynomials
         const double logT = log(T);
         const double sqrt_T = exp(0.5 * logT);
-        double logT_n[deg];
-        for (int ply = 0; ply < deg; ply++) {
-          logT_n[ply] = pow(logT, float(deg - ply));
+        double logT_n[deg + 1];
+        logT_n[0] = 1.0;
+        for (int ply = 1; ply <= deg; ply++) {
+          logT_n[ply] = logT * logT_n[ply - 1];
         }
         for (int n = 0; n <= ns - 1; n++) {
-          // Set to constant value first
-          mu_sp(n) = th.muPoly(n, deg);
-          kappa_sp(n) = th.kappaPoly(n, deg);
-          for (int n2 = n; n2 <= ns - 1; n2++) {
-            int indx = ns * (ns - 1) / 2 - (ns - n) * (ns - n - 1) / 2 + n2;
-            Dij(n, n2) = th.DijPoly(indx, deg);
-          }
-
           // Evaluate polynomial
-          for (int ply = 0; ply < deg; ply++) {
+          for (int ply = 0; ply <= deg; ply++) {
             mu_sp(n) += th.muPoly(n, ply) * logT_n[ply];
             kappa_sp(n) += th.kappaPoly(n, ply) * logT_n[ply];
 
@@ -131,7 +130,7 @@ void kineticTheory(block_ &b, const thtrdat_ &th, const int &nface,
             double phi = pow((1.0 + sqrt(mu_sp(n) / mu_sp(n2) *
                                          sqrt(th.MW(n2) / th.MW(n)))),
                              2.0) /
-                         (sqrt(8.0) * sqrt(1 + th.MW(n) / th.MW(n2)));
+                         (sqrt(8.0) * sqrt(1.0 + th.MW(n) / th.MW(n2)));
             phitemp += phi * X(n2);
           }
           mu += mu_sp(n) * X(n) / phitemp;
@@ -150,25 +149,20 @@ void kineticTheory(block_ &b, const thtrdat_ &th, const int &nface,
         }
 
         // mass diffusion coefficient mixture
-        for (int n = 0; n <= ns - 1; n++) {
-          double sum1 = 0.0;
-          double sum2 = 0.0;
-          for (int n2 = 0; n2 <= ns - 1; n2++) {
-            if (n == n2) {
-              continue;
+        if (pure == -1) {
+          for (int n = 0; n <= ns - 1; n++) {
+            double sum1 = 0.0;
+            double sum2 = 0.0;
+            for (int n2 = 0; n2 <= ns - 1; n2++) {
+              if (n == n2) {
+                continue;
+              }
+              sum1 += X(n2) / Dij(n, n2);
+              sum2 += X(n2) * th.MW(n2) / Dij(n, n2);
             }
-            sum1 += X(n2) / Dij(n, n2);
-            sum2 += X(n2) * th.MW(n2) / Dij(n, n2);
-          }
-          // Account for pressure
-          sum1 *= p;
-          // HACK must be a better way to give zero for sum2 when MWmix ==
-          // th.MW(n)*X(n)
-          double temp = p * X(n) / (MWmix - th.MW(n) * X(n));
-          if (Kokkos::isinf(temp)) {
-            D(n) = 0.0;
-          } else {
-            sum2 *= temp;
+            // Account for pressure
+            sum1 *= p;
+            sum2 *= p * X(n) / (MWmix - th.MW(n) * X(n));
             D(n) = 1.0 / (sum1 + sum2);
           }
         }
