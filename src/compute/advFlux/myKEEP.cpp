@@ -97,8 +97,6 @@ void myKEEP(block_ &b) {
         double v3L = -wL / TL;
         double v4L = 1.0 / TL;
 
-        double Fs = rho * U * 0.5 * (sR + sL);
-
         double phiR = -pR * uR / TR * b.iS(i, j, k);
         double phiL = -pL * uL / TL * b.iS(i, j, k);
 
@@ -109,21 +107,29 @@ void myKEEP(block_ &b) {
         double V3 = 0.5 * (v3R + v3L);
         double V4 = 0.5 * (v4R + v4L);
 
+        // This comes from Eq. 4.5c of Tamdor, but there are consequences to the
+        // form of G_v+1/2 (Fs_m+1/2)
+        // If we use the cubic form
+        //
+        double Fs = rho * U * 0.5 * (sR + sL);
+        //
+        // Then we actually match the KEEPep scheme almost float for float,
+        // so close that there has to be an equality between them.
+        //
+        // Whereas if we use either the quadratic or divergent forms
+        // double Fs = 0.5 * (rhoR * sR + rhoL * sL) * U;
+        // double Fs = 0.5 * (rhoR * uR * sR + rhoL * uL * sL) * b.iS(i, j, k);
+        //
+        // Then we are substantially different from the KEEPep scheme. In fact
+        // the original KEEP scheme, none of the forms of Fs results in the same
+        // answer. However, when we use the quadratic and divergent forms
+        // We match exactly with v.\delF/delx evolution, where as for the cubic
+        // form of Fs, we do not match v.\delF/\delx. wtf.
+
         double Ij = (Fs + PHI - V0 * b.iF(i, j, k, 0) - V1 * b.iF(i, j, k, 1) -
                      V2 * b.iF(i, j, k, 2) - V3 * b.iF(i, j, k, 3)) /
                         V4 -
                     Pj - Kj;
-
-        // double &Cj = b.iF(i, j, k, 0);
-        // double Ij =
-        //     (0.5 * (sm - s) * T + h) * Cj +
-        //     0.5 * (b.q(i, j, k, 0) * ((b.q(i, j, k, 1) * b.isx(i, j, k) +
-        //                                b.q(i, j, k, 2) * b.isy(i, j, k) +
-        //                                b.q(i, j, k, 3) * b.isz(i, j, k)) -
-        //                               (b.q(i - 1, j, k, 1) * b.isx(i, j, k) +
-        //                                b.q(i - 1, j, k, 2) * b.isy(i, j, k) +
-        //                                b.q(i - 1, j, k, 3) * b.isz(i, j,
-        //                                k))));
 
         b.iF(i, j, k, 4) = Ij + Kj + Pj;
 
