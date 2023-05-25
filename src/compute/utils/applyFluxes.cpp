@@ -28,12 +28,19 @@ void applyFlux(block_ &b, double[]) {
       "Apply current fluxes to RHS", range_cc3,
       KOKKOS_LAMBDA(const int i, const int j, const int k) {
         // Add fluxes to RHS
-        double s = b.s(i, j, k) / b.Q(i, j, k, 0);
+        double cv = b.qh(i, j, k, 1) / b.qh(i, j, k, 0);
+        double &T = b.q(i, j, k, 4);
+        double &rho = b.Q(i, j, k, 0);
+        double R = b.qh(i, j, k, 1) - cv;
+        // THIS IS CRITICAL
+        // s MUST be derived, not used from the variable b.s/b.Q in order
+        // for us to get zero entropy generation in entropy from this
+        // evolution equation.
+        double s = cv * log(T) - R * log(rho);
         double &u = b.q(i, j, k, 1);
         double &v = b.q(i, j, k, 2);
         double &w = b.q(i, j, k, 3);
         double h = b.qh(i, j, k, 2) / b.Q(i, j, k, 0);
-        double &T = b.q(i, j, k, 4);
         double v0 = s + (-h + 0.5 * (pow(u, 2) + pow(v, 2) + pow(w, 2))) / T;
         double v1 = -u / T;
         double v2 = -v / T;
