@@ -180,26 +180,94 @@ void myKEEP(block_ &b) {
         b.jF(i, j, k, 3) = rho * wf * V + pf * b.jsz(i, j, k);
 
         // Total energy (rhoE+P)*Vj)
-        double e;
-        double em;
+        double Kj = rho * 0.5 *
+                    (b.q(i, j, k, 1) * b.q(i, j - 1, k, 1) +
+                     b.q(i, j, k, 2) * b.q(i, j - 1, k, 2) +
+                     b.q(i, j, k, 3) * b.q(i, j - 1, k, 3)) *
+                    V;
 
-        e = b.qh(i, j, k, 4);
-        em = b.qh(i, j - 1, k, 4);
-
-        b.jF(i, j, k, 4) =
-            ((0.5 * (e + em) + rho * 0.5 *
-                                   (b.q(i, j, k, 1) * b.q(i, j - 1, k, 1) +
-                                    b.q(i, j, k, 2) * b.q(i, j - 1, k, 2) +
-                                    b.q(i, j, k, 3) * b.q(i, j - 1, k, 3)))) *
-            V;
-
-        b.jF(i, j, k, 4) +=
+        double Pj =
             0.5 * (b.q(i, j - 1, k, 0) * (b.q(i, j, k, 1) * b.jsx(i, j, k) +
                                           b.q(i, j, k, 2) * b.jsy(i, j, k) +
                                           b.q(i, j, k, 3) * b.jsz(i, j, k)) +
                    b.q(i, j, k, 0) * (b.q(i, j - 1, k, 1) * b.jsx(i, j, k) +
                                       b.q(i, j - 1, k, 2) * b.jsy(i, j, k) +
                                       b.q(i, j - 1, k, 3) * b.jsz(i, j, k)));
+
+        // solve for internal energy flux
+        double cvR = b.qh(i, j, k, 1) / b.qh(i, j, k, 0);
+        double &TR = b.q(i, j, k, 4);
+        double &pR = b.q(i, j, k, 0);
+        double &rhoR = b.Q(i, j, k, 0);
+        double RR = b.qh(i, j, k, 1) - cvR;
+        double hR = b.qh(i, j, k, 2) / rhoR;
+        double &uR = b.q(i, j, k, 1);
+        double &vR = b.q(i, j, k, 2);
+        double &wR = b.q(i, j, k, 3);
+        double sR = cvR * log(TR) - RR * log(rhoR);
+
+        double v0R =
+            sR + (-hR + 0.5 * (pow(uR, 2) + pow(vR, 2) + pow(wR, 2))) / TR;
+        double v1R = -uR / TR;
+        double v2R = -vR / TR;
+        double v3R = -wR / TR;
+        double v4R = 1.0 / TR;
+
+        // left
+        double cvL = b.qh(i, j - 1, k, 1) / b.qh(i, j - 1, k, 0);
+        double &TL = b.q(i, j - 1, k, 4);
+        double &pL = b.q(i, j - 1, k, 0);
+        double &rhoL = b.Q(i, j - 1, k, 0);
+        double RL = b.qh(i, j - 1, k, 1) - cvL;
+        double hL = b.qh(i, j - 1, k, 2) / rhoL;
+        double &uL = b.q(i, j - 1, k, 1);
+        double &vL = b.q(i, j - 1, k, 2);
+        double &wL = b.q(i, j - 1, k, 3);
+        double sL = cvL * log(TL) - RL * log(rhoL);
+
+        double v0L =
+            sL + (-hL + 0.5 * (pow(uL, 2) + pow(vL, 2) + pow(wL, 2))) / TL;
+        double v1L = -uL / TL;
+        double v2L = -vL / TL;
+        double v3L = -wL / TL;
+        double v4L = 1.0 / TL;
+
+        double phiR = -pR * uR / TR * b.jS(i, j, k);
+        double phiL = -pL * uL / TL * b.jS(i, j, k);
+
+        double PHI = 0.5 * (phiR + phiL);
+        double V0 = 0.5 * (v0R + v0L);
+        double V1 = 0.5 * (v1R + v1L);
+        double V2 = 0.5 * (v2R + v2L);
+        double V3 = 0.5 * (v3R + v3L);
+        double V4 = 0.5 * (v4R + v4L);
+
+        // This comes from Eq. 4.5c of Tamdor, but there are consequences to the
+        // form of G_v+1/2 (Fs_m+1/2)
+        // If we use the cubic form
+        //
+        double Fs = rho * V * 0.5 * (sR + sL);
+        //
+        // Then we actually match the KEEPep scheme almost float for float,
+        // so close that there has to be an equality between them.
+        //
+        // Whereas if we use either the quadratic or divergent forms
+        // double Fs = 0.5 * (rhoR * sR + rhoL * sL) * U;
+        // double Fs = 0.5 * (rhoR * uR * sR + rhoL * uL * sL) * b.iS(i, j, k);
+        //
+        // Then we are substantially different from the KEEPep scheme. In fact
+        // the original KEEP scheme, none of the forms of Fs results in the same
+        // answer. However, when we use the quadratic and divergent forms
+        // We match exactly with v.\delF/delx evolution, where as for the cubic
+        // form of Fs, we do not match v.\delF/\delx. wtf.
+
+        double Ij = (Fs + PHI - V0 * b.jF(i, j, k, 0) - V1 * b.jF(i, j, k, 1) -
+                     V2 * b.jF(i, j, k, 2) - V3 * b.jF(i, j, k, 3)) /
+                        V4 -
+                    Pj - Kj;
+
+        b.jF(i, j, k, 4) = Ij + Kj + Pj;
+
         // Species
         for (int n = 0; n < b.ne - 5; n++) {
           b.jF(i, j, k, 5 + n) =
@@ -246,26 +314,93 @@ void myKEEP(block_ &b) {
         b.kF(i, j, k, 3) = rho * wf * W + pf * b.ksz(i, j, k);
 
         // Total energy (rhoE+P)*Wk)
-        double e;
-        double em;
+        double Kj = rho * 0.5 *
+                    (b.q(i, j, k, 1) * b.q(i, j, k - 1, 1) +
+                     b.q(i, j, k, 2) * b.q(i, j, k - 1, 2) +
+                     b.q(i, j, k, 3) * b.q(i, j, k - 1, 3)) *
+                    W;
 
-        e = b.qh(i, j, k, 4);
-        em = b.qh(i, j, k - 1, 4);
-
-        b.kF(i, j, k, 4) =
-            ((0.5 * (e + em) + rho * 0.5 *
-                                   (b.q(i, j, k, 1) * b.q(i, j, k - 1, 1) +
-                                    b.q(i, j, k, 2) * b.q(i, j, k - 1, 2) +
-                                    b.q(i, j, k, 3) * b.q(i, j, k - 1, 3)))) *
-            W;
-
-        b.kF(i, j, k, 4) +=
+        double Pj =
             0.5 * (b.q(i, j, k - 1, 0) * (b.q(i, j, k, 1) * b.ksx(i, j, k) +
                                           b.q(i, j, k, 2) * b.ksy(i, j, k) +
                                           b.q(i, j, k, 3) * b.ksz(i, j, k)) +
                    b.q(i, j, k, 0) * (b.q(i, j, k - 1, 1) * b.ksx(i, j, k) +
                                       b.q(i, j, k - 1, 2) * b.ksy(i, j, k) +
                                       b.q(i, j, k - 1, 3) * b.ksz(i, j, k)));
+
+        // solve for internal energy flux
+        double cvR = b.qh(i, j, k, 1) / b.qh(i, j, k, 0);
+        double &TR = b.q(i, j, k, 4);
+        double &pR = b.q(i, j, k, 0);
+        double &rhoR = b.Q(i, j, k, 0);
+        double RR = b.qh(i, j, k, 1) - cvR;
+        double hR = b.qh(i, j, k, 2) / rhoR;
+        double &uR = b.q(i, j, k, 1);
+        double &vR = b.q(i, j, k, 2);
+        double &wR = b.q(i, j, k, 3);
+        double sR = cvR * log(TR) - RR * log(rhoR);
+
+        double v0R =
+            sR + (-hR + 0.5 * (pow(uR, 2) + pow(vR, 2) + pow(wR, 2))) / TR;
+        double v1R = -uR / TR;
+        double v2R = -vR / TR;
+        double v3R = -wR / TR;
+        double v4R = 1.0 / TR;
+
+        // left
+        double cvL = b.qh(i, j, k - 1, 1) / b.qh(i, j, k - 1, 0);
+        double &TL = b.q(i, j, k - 1, 4);
+        double &pL = b.q(i, j, k - 1, 0);
+        double &rhoL = b.Q(i, j, k - 1, 0);
+        double RL = b.qh(i, j, k - 1, 1) - cvL;
+        double hL = b.qh(i, j, k - 1, 2) / rhoL;
+        double &uL = b.q(i, j, k - 1, 1);
+        double &vL = b.q(i, j, k - 1, 2);
+        double &wL = b.q(i, j, k - 1, 3);
+        double sL = cvL * log(TL) - RL * log(rhoL);
+
+        double v0L =
+            sL + (-hL + 0.5 * (pow(uL, 2) + pow(vL, 2) + pow(wL, 2))) / TL;
+        double v1L = -uL / TL;
+        double v2L = -vL / TL;
+        double v3L = -wL / TL;
+        double v4L = 1.0 / TL;
+
+        double phiR = -pR * uR / TR * b.kS(i, j, k);
+        double phiL = -pL * uL / TL * b.kS(i, j, k);
+
+        double PHI = 0.5 * (phiR + phiL);
+        double V0 = 0.5 * (v0R + v0L);
+        double V1 = 0.5 * (v1R + v1L);
+        double V2 = 0.5 * (v2R + v2L);
+        double V3 = 0.5 * (v3R + v3L);
+        double V4 = 0.5 * (v4R + v4L);
+
+        // This comes from Eq. 4.5c of Tamdor, but there are consequences to the
+        // form of G_v+1/2 (Fs_m+1/2)
+        // If we use the cubic form
+        //
+        double Fs = rho * W * 0.5 * (sR + sL);
+        //
+        // Then we actually match the KEEPep scheme almost float for float,
+        // so close that there has to be an equality between them.
+        //
+        // Whereas if we use either the quadratic or divergent forms
+        // double Fs = 0.5 * (rhoR * sR + rhoL * sL) * U;
+        // double Fs = 0.5 * (rhoR * uR * sR + rhoL * uL * sL) * b.iS(i, j, k);
+        //
+        // Then we are substantially different from the KEEPep scheme. In fact
+        // the original KEEP scheme, none of the forms of Fs results in the same
+        // answer. However, when we use the quadratic and divergent forms
+        // We match exactly with v.\delF/delx evolution, where as for the cubic
+        // form of Fs, we do not match v.\delF/\delx. wtf.
+
+        double Ij = (Fs + PHI - V0 * b.kF(i, j, k, 0) - V1 * b.kF(i, j, k, 1) -
+                     V2 * b.kF(i, j, k, 2) - V3 * b.kF(i, j, k, 3)) /
+                        V4 -
+                    Pj - Kj;
+
+        b.kF(i, j, k, 4) = Ij + Kj + Pj;
         // Species
         for (int n = 0; n < b.ne - 5; n++) {
           b.kF(i, j, k, 5 + n) =
