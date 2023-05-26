@@ -97,10 +97,6 @@ void myKEEP(block_ &b) {
         double v3L = -wL / TL;
         double v4L = 1.0 / TL;
 
-        double phiR = -pR * uR / TR * b.iS(i, j, k);
-        double phiL = -pL * uL / TL * b.iS(i, j, k);
-
-        double PHI = 0.5 * (phiR + phiL);
         double V0 = 0.5 * (v0R + v0L);
         double V1 = 0.5 * (v1R + v1L);
         double V2 = 0.5 * (v2R + v2L);
@@ -126,7 +122,7 @@ void myKEEP(block_ &b) {
         // We match exactly with v.\delF/delx evolution, where as for the cubic
         // form of Fs, we do not match v.\delF/\delx. wtf.
 
-        double Ij = (Fs + PHI - V0 * b.iF(i, j, k, 0) - V1 * b.iF(i, j, k, 1) -
+        double Ij = (Fs - V0 * b.iF(i, j, k, 0) - V1 * b.iF(i, j, k, 1) -
                      V2 * b.iF(i, j, k, 2) - V3 * b.iF(i, j, k, 3)) /
                         V4 -
                     Pj - Kj;
@@ -232,10 +228,6 @@ void myKEEP(block_ &b) {
         double v3L = -wL / TL;
         double v4L = 1.0 / TL;
 
-        double phiR = -pR * uR / TR * b.jS(i, j, k);
-        double phiL = -pL * uL / TL * b.jS(i, j, k);
-
-        double PHI = 0.5 * (phiR + phiL);
         double V0 = 0.5 * (v0R + v0L);
         double V1 = 0.5 * (v1R + v1L);
         double V2 = 0.5 * (v2R + v2L);
@@ -261,7 +253,7 @@ void myKEEP(block_ &b) {
         // We match exactly with v.\delF/delx evolution, where as for the cubic
         // form of Fs, we do not match v.\delF/\delx. wtf.
 
-        double Ij = (Fs + PHI - V0 * b.jF(i, j, k, 0) - V1 * b.jF(i, j, k, 1) -
+        double Ij = (Fs - V0 * b.jF(i, j, k, 0) - V1 * b.jF(i, j, k, 1) -
                      V2 * b.jF(i, j, k, 2) - V3 * b.jF(i, j, k, 3)) /
                         V4 -
                     Pj - Kj;
@@ -366,10 +358,6 @@ void myKEEP(block_ &b) {
         double v3L = -wL / TL;
         double v4L = 1.0 / TL;
 
-        double phiR = -pR * uR / TR * b.kS(i, j, k);
-        double phiL = -pL * uL / TL * b.kS(i, j, k);
-
-        double PHI = 0.5 * (phiR + phiL);
         double V0 = 0.5 * (v0R + v0L);
         double V1 = 0.5 * (v1R + v1L);
         double V2 = 0.5 * (v2R + v2L);
@@ -395,7 +383,7 @@ void myKEEP(block_ &b) {
         // We match exactly with v.\delF/delx evolution, where as for the cubic
         // form of Fs, we do not match v.\delF/\delx. wtf.
 
-        double Ij = (Fs + PHI - V0 * b.kF(i, j, k, 0) - V1 * b.kF(i, j, k, 1) -
+        double Ij = (Fs - V0 * b.kF(i, j, k, 0) - V1 * b.kF(i, j, k, 1) -
                      V2 * b.kF(i, j, k, 2) - V3 * b.kF(i, j, k, 3)) /
                         V4 -
                     Pj - Kj;
