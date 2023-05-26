@@ -62,7 +62,6 @@ void myKEEP(block_ &b) {
         // solve for internal energy flux
         double cvR = b.qh(i, j, k, 1) / b.qh(i, j, k, 0);
         double &TR = b.q(i, j, k, 4);
-        double &pR = b.q(i, j, k, 0);
         double &rhoR = b.Q(i, j, k, 0);
         double RR = b.qh(i, j, k, 1) - cvR;
         double hR = b.qh(i, j, k, 2) / rhoR;
@@ -81,7 +80,6 @@ void myKEEP(block_ &b) {
         // left
         double cvL = b.qh(i - 1, j, k, 1) / b.qh(i - 1, j, k, 0);
         double &TL = b.q(i - 1, j, k, 4);
-        double &pL = b.q(i - 1, j, k, 0);
         double &rhoL = b.Q(i - 1, j, k, 0);
         double RL = b.qh(i - 1, j, k, 1) - cvL;
         double hL = b.qh(i - 1, j, k, 2) / rhoL;
@@ -193,7 +191,6 @@ void myKEEP(block_ &b) {
         // solve for internal energy flux
         double cvR = b.qh(i, j, k, 1) / b.qh(i, j, k, 0);
         double &TR = b.q(i, j, k, 4);
-        double &pR = b.q(i, j, k, 0);
         double &rhoR = b.Q(i, j, k, 0);
         double RR = b.qh(i, j, k, 1) - cvR;
         double hR = b.qh(i, j, k, 2) / rhoR;
@@ -212,7 +209,6 @@ void myKEEP(block_ &b) {
         // left
         double cvL = b.qh(i, j - 1, k, 1) / b.qh(i, j - 1, k, 0);
         double &TL = b.q(i, j - 1, k, 4);
-        double &pL = b.q(i, j - 1, k, 0);
         double &rhoL = b.Q(i, j - 1, k, 0);
         double RL = b.qh(i, j - 1, k, 1) - cvL;
         double hL = b.qh(i, j - 1, k, 2) / rhoL;
@@ -323,7 +319,6 @@ void myKEEP(block_ &b) {
         // solve for internal energy flux
         double cvR = b.qh(i, j, k, 1) / b.qh(i, j, k, 0);
         double &TR = b.q(i, j, k, 4);
-        double &pR = b.q(i, j, k, 0);
         double &rhoR = b.Q(i, j, k, 0);
         double RR = b.qh(i, j, k, 1) - cvR;
         double hR = b.qh(i, j, k, 2) / rhoR;
@@ -342,7 +337,6 @@ void myKEEP(block_ &b) {
         // left
         double cvL = b.qh(i, j, k - 1, 1) / b.qh(i, j, k - 1, 0);
         double &TL = b.q(i, j, k - 1, 4);
-        double &pL = b.q(i, j, k - 1, 0);
         double &rhoL = b.Q(i, j, k - 1, 0);
         double RL = b.qh(i, j, k - 1, 1) - cvL;
         double hL = b.qh(i, j, k - 1, 2) / rhoL;
