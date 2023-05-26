@@ -240,8 +240,7 @@ void myKEEP(block_ &b) {
         // so close that there has to be an equality between them.
         //
         // Whereas if we use either the quadratic or divergent forms
-        // double Fs = 0.5 * (rhoR * sR + rhoL * sL) * U;
-        // double Fs = 0.5 * (rhoR * uR * sR + rhoL * uL * sL) * b.iS(i, j, k);
+        // double Fs = 0.5 * (rhoR * sR + rhoL * sL) * V;
         //
         // Then we are substantially different from the KEEPep scheme. In fact
         // the original KEEP scheme, none of the forms of Fs results in the same
@@ -368,8 +367,7 @@ void myKEEP(block_ &b) {
         // so close that there has to be an equality between them.
         //
         // Whereas if we use either the quadratic or divergent forms
-        // double Fs = 0.5 * (rhoR * sR + rhoL * sL) * U;
-        // double Fs = 0.5 * (rhoR * uR * sR + rhoL * uL * sL) * b.iS(i, j, k);
+        // double Fs = 0.5 * (rhoR * sR + rhoL * sL) * W;
         //
         // Then we are substantially different from the KEEPep scheme. In fact
         // the original KEEP scheme, none of the forms of Fs results in the same
