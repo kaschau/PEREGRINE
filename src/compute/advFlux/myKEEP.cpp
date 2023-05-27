@@ -69,6 +69,9 @@ void myKEEP(block_ &b) {
         double &vR = b.q(i, j, k, 2);
         double &wR = b.q(i, j, k, 3);
         double sR = cvR * log(TR) - RR * log(rhoR);
+        double phiR =
+            -RR * rhoR *
+            (uR * b.isx(i, j, k) + vR * b.isy(i, j, k) + wR * b.isz(i, j, k));
 
         double v0R =
             sR + (-hR + 0.5 * (pow(uR, 2) + pow(vR, 2) + pow(wR, 2))) / TR;
@@ -87,6 +90,9 @@ void myKEEP(block_ &b) {
         double &vL = b.q(i - 1, j, k, 2);
         double &wL = b.q(i - 1, j, k, 3);
         double sL = cvL * log(TL) - RL * log(rhoL);
+        double phiL =
+            -RL * rhoL *
+            (uL * b.isx(i, j, k) + vL * b.isy(i, j, k) + wL * b.isz(i, j, k));
 
         double v0L =
             sL + (-hL + 0.5 * (pow(uL, 2) + pow(vL, 2) + pow(wL, 2))) / TL;
@@ -100,6 +106,7 @@ void myKEEP(block_ &b) {
         double V2 = 0.5 * (v2R + v2L);
         double V3 = 0.5 * (v3R + v3L);
         double V4 = 0.5 * (v4R + v4L);
+        double PHI = 0.5 * (phiR + phiL);
 
         // This comes from Eq. 4.5c of Tamdor, but there are consequences to the
         // form of G_v+1/2 (Fs_m+1/2)
@@ -120,7 +127,7 @@ void myKEEP(block_ &b) {
         // We match exactly with v.\delF/delx evolution, where as for the cubic
         // form of Fs, we do not match v.\delF/\delx. wtf.
 
-        double Ij = (Fs - V0 * b.iF(i, j, k, 0) - V1 * b.iF(i, j, k, 1) -
+        double Ij = (Fs + PHI - V0 * b.iF(i, j, k, 0) - V1 * b.iF(i, j, k, 1) -
                      V2 * b.iF(i, j, k, 2) - V3 * b.iF(i, j, k, 3)) /
                         V4 -
                     Pj - Kj;
@@ -198,6 +205,9 @@ void myKEEP(block_ &b) {
         double &vR = b.q(i, j, k, 2);
         double &wR = b.q(i, j, k, 3);
         double sR = cvR * log(TR) - RR * log(rhoR);
+        double phiR =
+            -RR * rhoR *
+            (uR * b.jsx(i, j, k) + vR * b.jsy(i, j, k) + wR * b.jsz(i, j, k));
 
         double v0R =
             sR + (-hR + 0.5 * (pow(uR, 2) + pow(vR, 2) + pow(wR, 2))) / TR;
@@ -216,6 +226,9 @@ void myKEEP(block_ &b) {
         double &vL = b.q(i, j - 1, k, 2);
         double &wL = b.q(i, j - 1, k, 3);
         double sL = cvL * log(TL) - RL * log(rhoL);
+        double phiL =
+            -RL * rhoL *
+            (uL * b.jsx(i, j, k) + vL * b.jsy(i, j, k) + wL * b.jsz(i, j, k));
 
         double v0L =
             sL + (-hL + 0.5 * (pow(uL, 2) + pow(vL, 2) + pow(wL, 2))) / TL;
@@ -229,6 +242,7 @@ void myKEEP(block_ &b) {
         double V2 = 0.5 * (v2R + v2L);
         double V3 = 0.5 * (v3R + v3L);
         double V4 = 0.5 * (v4R + v4L);
+        double PHI = 0.5 * (phiR + phiL);
 
         // This comes from Eq. 4.5c of Tamdor, but there are consequences to the
         // form of G_v+1/2 (Fs_m+1/2)
@@ -248,7 +262,7 @@ void myKEEP(block_ &b) {
         // We match exactly with v.\delF/delx evolution, where as for the cubic
         // form of Fs, we do not match v.\delF/\delx. wtf.
 
-        double Ij = (Fs - V0 * b.jF(i, j, k, 0) - V1 * b.jF(i, j, k, 1) -
+        double Ij = (Fs + PHI - V0 * b.jF(i, j, k, 0) - V1 * b.jF(i, j, k, 1) -
                      V2 * b.jF(i, j, k, 2) - V3 * b.jF(i, j, k, 3)) /
                         V4 -
                     Pj - Kj;
@@ -325,6 +339,9 @@ void myKEEP(block_ &b) {
         double &vR = b.q(i, j, k, 2);
         double &wR = b.q(i, j, k, 3);
         double sR = cvR * log(TR) - RR * log(rhoR);
+        double phiR =
+            -RR * rhoR *
+            (uR * b.ksx(i, j, k) + vR * b.ksy(i, j, k) + wR * b.ksz(i, j, k));
 
         double v0R =
             sR + (-hR + 0.5 * (pow(uR, 2) + pow(vR, 2) + pow(wR, 2))) / TR;
@@ -343,6 +360,9 @@ void myKEEP(block_ &b) {
         double &vL = b.q(i, j, k - 1, 2);
         double &wL = b.q(i, j, k - 1, 3);
         double sL = cvL * log(TL) - RL * log(rhoL);
+        double phiL =
+            -RL * rhoL *
+            (uL * b.ksx(i, j, k) + vL * b.ksy(i, j, k) + wL * b.ksz(i, j, k));
 
         double v0L =
             sL + (-hL + 0.5 * (pow(uL, 2) + pow(vL, 2) + pow(wL, 2))) / TL;
@@ -356,6 +376,7 @@ void myKEEP(block_ &b) {
         double V2 = 0.5 * (v2R + v2L);
         double V3 = 0.5 * (v3R + v3L);
         double V4 = 0.5 * (v4R + v4L);
+        double PHI = 0.5 * (phiR + phiL);
 
         // This comes from Eq. 4.5c of Tamdor, but there are consequences to the
         // form of G_v+1/2 (Fs_m+1/2)
@@ -375,7 +396,7 @@ void myKEEP(block_ &b) {
         // We match exactly with v.\delF/delx evolution, where as for the cubic
         // form of Fs, we do not match v.\delF/\delx. wtf.
 
-        double Ij = (Fs - V0 * b.kF(i, j, k, 0) - V1 * b.kF(i, j, k, 1) -
+        double Ij = (Fs + PHI - V0 * b.kF(i, j, k, 0) - V1 * b.kF(i, j, k, 1) -
                      V2 * b.kF(i, j, k, 2) - V3 * b.kF(i, j, k, 3)) /
                         V4 -
                     Pj - Kj;
