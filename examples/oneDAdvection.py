@@ -116,14 +116,14 @@ def simulate(index="i"):
 
         if mb.nrt % 10 == 0:
             dS = np.sum(
-                blk.array["Q"][ng:-ng, ng, ng, 0]
+                blk.array["Q"][ng:-ng, ng:-ng, ng:-ng, 0]
                 * (
-                    cp / gamma * np.log(blk.array["q"][ng:-ng, ng, ng, 4])
-                    - R * np.log(blk.array["Q"][ng:-ng, ng, ng, 0])
+                    cp / gamma * np.log(blk.array["q"][ng:-ng, ng:-ng, ng:-ng, 4])
+                    - R * np.log(blk.array["Q"][ng:-ng, ng:-ng, ng:-ng, 0])
                 )
             )
             sDerived.append(dS)
-            eS = np.sum(blk.array["s"][ng:-ng, ng, ng])
+            eS = np.sum(blk.array["s"][ng:-ng, ng:-ng, ng:-ng])
             sEvolved.append(eS)
             t.append(mb.tme)
 
