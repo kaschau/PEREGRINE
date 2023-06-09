@@ -233,6 +233,7 @@ class solverBlock(restartBlock, block_):
             "rrk3": 2,
             "rk34": 1,
             "rk4": 4,
+            "rrk4": 4,
             "strang": 2,
             "dualTime": 2,
         }

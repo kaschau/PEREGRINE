@@ -5,6 +5,7 @@ from .rk3 import rk3
 from .rrk3 import rrk3
 from .rk34 import rk34
 from .rk4 import rk4
+from .rrk4 import rrk4
 from .strang import strang
 from .dualTime import dualTime
 
@@ -24,6 +25,8 @@ def getIntegrator(ti):
         return rk34
     elif ti == "rk4":
         return rk4
+    elif ti == "rrk4":
+        return rrk4
     elif ti == "strang":
         return strang
     elif ti == "dualTime":
