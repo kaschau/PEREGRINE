@@ -8,7 +8,7 @@ def RHS(mb):
         utils.dQzero(blk)
 
         # Primary advective fluxes
-        mb.primaryAdvFlux(blk)
+        mb.primaryAdvFlux(blk, mb.thtrdat)
         mb.applyPrimaryAdvFlux(blk, 1.0)  # <-- 1.0 is for primary flux
 
         # Secondary advective fluxes

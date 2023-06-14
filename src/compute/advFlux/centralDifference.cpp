@@ -3,7 +3,7 @@
 #include "kokkosTypes.hpp"
 #include "thtrdat_.hpp"
 
-void centralDifference(block_ &b) {
+void centralDifference(block_ &b, const thtrdat_ &th) {
 
   //-------------------------------------------------------------------------------------------|
   // i flux face range

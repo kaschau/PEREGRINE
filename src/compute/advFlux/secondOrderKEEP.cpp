@@ -3,7 +3,7 @@
 #include "kokkosTypes.hpp"
 #include "thtrdat_.hpp"
 
-void secondOrderKEEP(block_ &b) {
+void secondOrderKEEP(block_ &b, const thtrdat_ &th) {
 
   //-------------------------------------------------------------------------------------------|
   // i flux face range

@@ -2,16 +2,17 @@
 #define __advFlux_H__
 
 #include "block_.hpp"
+#include "thtrdat_.hpp"
 
 // ./advFlux
 //    |------> secondOrderKEEP
-void secondOrderKEEP(block_ &b);
+void secondOrderKEEP(block_ &b, const thtrdat_ &th);
 //    |------> myKEEP
-void myKEEP(block_ &b);
+void myKEEP(block_ &b, const thtrdat_ &th);
 //    |------> roeEC
-void roeEC(block_ &b);
+void roeEC(block_ &b, const thtrdat_ &th);
 //    |------> centralDifference
-void centralDifference(block_ &b);
+void centralDifference(block_ &b, const thtrdat_ &th);
 //    |------> fourthOrderKEEP
 void fourthOrderKEEP(block_ &b);
 //    |------> scalarDissipation
