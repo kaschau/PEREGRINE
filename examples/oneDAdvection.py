@@ -26,7 +26,7 @@ def simulate(index="i"):
     config = pg.files.configFile()
     config["timeIntegration"]["integrator"] = "rk4"
     config["RHS"]["primaryAdvFlux"] = "myKEEP"
-    CFL = 0.5
+    CFL = 0.1
     # config["RHS"]["shockHandling"] = "artificialDissipation"
     # config["RHS"]["secondaryAdvFlux"] = "scalarDissipation"
     # config["RHS"]["switchAdvFlux"] = "jamesonPressure"
@@ -165,16 +165,15 @@ def simulate(index="i"):
     ax1.legend()
     # fig.savefig("oneDAdvKEEPpe.png")
     plt.show()
-    plt.clf()
 
     # entropy space
+    fig, ax1 = plt.subplots(figsize=(5, 3.5))
     ax1.plot(x, sd, color="k", label="Recon")
     ax1.plot(x, se, color="r", label=r"$\partial{\rho s}/\partial{t}$")
     ax1.set_ylabel(r"$\rho s \quad [ c_{v}\ln (T) - R \ln (\rho) ]$")
     ax1.set_xlabel(r"$x$")
     ax1.legend()
-    # plt.show()
-    plt.clf()
+    plt.show()
 
     # entropy total
     fig, ax1 = plt.subplots(figsize=(5, 3.5))
@@ -195,7 +194,6 @@ def simulate(index="i"):
     ax1.set_xlim([0, 11])
     # plt.savefig("CentralsEvo.png")
     plt.show()
-    plt.close()
 
 
 if __name__ == "__main__":
