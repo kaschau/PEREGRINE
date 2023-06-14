@@ -26,6 +26,7 @@ def simulate(index="i"):
     config = pg.files.configFile()
     config["timeIntegration"]["integrator"] = "rk4"
     config["RHS"]["primaryAdvFlux"] = "myKEEP"
+    CFL = 0.5
     # config["RHS"]["shockHandling"] = "artificialDissipation"
     # config["RHS"]["secondaryAdvFlux"] = "scalarDissipation"
     # config["RHS"]["switchAdvFlux"] = "jamesonPressure"
@@ -33,6 +34,7 @@ def simulate(index="i"):
     config.validateConfig()
     mb = pg.multiBlock.generateMultiBlockSolver(1, config)
     print(mb)
+    print(f"{CFL = }")
 
     rot = {"i": 0, "j": 1, "k": 2}
 
@@ -101,10 +103,11 @@ def simulate(index="i"):
     sEvolved = []
     t = []
     dx = 1.0 / (nx - 1.0)
-    CFL = 0.001
-    lam = np.sqrt(gamma * R * np.max(initial_T))
+    lam = np.sqrt(np.max(gamma * R * blk.array["q"][:, :, :, 4])) + np.max(
+        blk.array["q"][:, :, :, uIndex[index]]
+    )
     dt = CFL * dx / lam
-    tEnd = 0.1
+    tEnd = 11.0
     while mb.tme < tEnd:
         abort = pg.mpiComm.mpiUtils.checkForNan(mb)
         if abort > 0:
@@ -130,9 +133,7 @@ def simulate(index="i"):
         mb.step(dt)
 
     blk.updateHostView(["q", "Q"])
-    fig, ax1 = plt.subplots()
-    ax1.set_title("1D Advection Results")
-    ax1.set_xlabel(r"x")
+
     s_ = rotate(np.s_[ng:-ng, ng, ng], index)
     x = blk.array[ccArray[index]][s_]
     rho = blk.array["Q"][s_][:, 0]
@@ -141,50 +142,58 @@ def simulate(index="i"):
     T = blk.array["q"][s_][:, 4]
     sd = rho * (cp / gamma * np.log(T) - R * np.log(rho))
     se = blk.array["s"][s_]
-    ax1.plot(x, rho, color="g", label="rho")
-    ax1.plot(x, p, color="r", label="p")
-    ax1.plot(x, u, color="k", label="u")
+
+    # with open("data.npy", "wb") as f:
+    #     np.save(f, t)
+    #     np.save(f, sDerived)
+    #     np.save(f, sEvolved)
+
+    fig, ax1 = plt.subplots(figsize=(5, 3.5))
+    # ax1.set_title("1D Advection Results")
+    ax1.set_xlabel(r"$x$")
+    ax1.plot(x, rho, color="g", label=r"$\rho$")
+    ax1.plot(x, p, color="r", label="$p$")
+    ax1.plot(x, u, color="k", label="$u$")
     ax1.scatter(
         x,
         initial_rho[ng:-ng, ng:-ng, ng:-ng],
         marker="o",
         facecolor="w",
         edgecolor="b",
-        label="exact",
+        label=r"$\rho_{\text{exact}}$",
     )
     ax1.legend()
-    if save:
-        fig.savefig("solution_NoDiss.png")
+    # fig.savefig("oneDAdvKEEPpe.png")
     plt.show()
     plt.clf()
 
     # entropy space
-    plt.plot(x, sd, color="k", label="Recon")
-    plt.plot(x, se, color="r", label=r"$\partial{\rho s}/\partial{t}$")
-    plt.ylabel(r"$\rho s \quad [ c_{v}\ln (T) - R \ln (\rho) ]$")
-    plt.xlabel(r"x")
-    plt.legend()
-    if save:
-        plt.savefig("spatial_entropy_NoDiss.png")
-    plt.show()
+    ax1.plot(x, sd, color="k", label="Recon")
+    ax1.plot(x, se, color="r", label=r"$\partial{\rho s}/\partial{t}$")
+    ax1.set_ylabel(r"$\rho s \quad [ c_{v}\ln (T) - R \ln (\rho) ]$")
+    ax1.set_xlabel(r"$x$")
+    ax1.legend()
+    # plt.show()
     plt.clf()
 
     # entropy total
-    plt.plot(t, (sDerived[0] - sDerived) / sDerived[0], label="Recon")
-    plt.scatter(
+    fig, ax1 = plt.subplots(figsize=(5, 3.5))
+    ax1.plot(
         t,
-        (sEvolved[0] - sEvolved) / sEvolved[0],
+        (sEvolved - sEvolved[0]) / sEvolved[0],
         c="orange",
         marker="o",
         label=r"$\partial{\rho s}/\partial{t}$",
-        # s=1.0,
+        markevery=0.05,
     )
-    plt.legend()
-    plt.ylabel(r"$\Delta(\rho s) / {(\rho s)}_0$")
-    plt.xlabel(r"$x$")
-    # plt.ylim((-0.002, 0.015))
-    if save:
-        plt.savefig("total_entropy_NoDiss.png")
+    ax1.plot(
+        t, (sDerived - sDerived[0]) / sDerived[0], label=r"$s=c_{v}\log(T)-R\log(\rho)$"
+    )
+    ax1.set_ylabel(r"$\Delta(\rho s) / {(\rho s)}_0$")
+    ax1.set_xlabel(r"$t$")
+    ax1.legend()
+    ax1.set_xlim([0, 11])
+    # plt.savefig("CentralsEvo.png")
     plt.show()
     plt.close()
 
