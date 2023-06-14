@@ -63,22 +63,56 @@ void myKEEP(block_ &b, const thtrdat_ &th) {
                                       b.q(i - 1, j, k, 2) * b.isy(i, j, k) +
                                       b.q(i - 1, j, k, 3) * b.isz(i, j, k)));
 
-        double gk[ns];
         // solve for internal energy flux
+        double gk[ns];
+        double YR[ns];
+        double YL[ns];
+        // Compute nth species Y
+        YR[ns - 1] = 1.0;
+        YL[ns - 1] = 1.0;
+        double testSumR = 0.0;
+        double testSumL = 0.0;
+        for (int n = 0; n < ns - 1; n++) {
+          b.q(i, j, k, 5 + n) = fmax(fmin(b.q(i, j, k, 5 + n), 1.0), 0.0);
+          b.q(i - 1, j, k, 5 + n) =
+              fmax(fmin(b.q(i - 1, j, k, 5 + n), 1.0), 0.0);
+          YR[n] = b.q(i, j, k, 5 + n);
+          YL[n] = b.q(i - 1, j, k, 5 + n);
+          YR[ns - 1] -= YR[n];
+          YL[ns - 1] -= YL[n];
+          testSumR += YR[n];
+          testSumL += YL[n];
+        }
+
+        // Renormalize if necessary
+        if (testSumR > 1.0) {
+          YR[ns - 1] = 0.0;
+          for (int n = 0; n < ns - 1; n++) {
+            YR[n] /= testSumR;
+          }
+        }
+        // Renormalize if necessary
+        if (testSumL > 1.0) {
+          YL[ns - 1] = 0.0;
+          for (int n = 0; n < ns - 1; n++) {
+            YL[n] /= testSumL;
+          }
+        }
+
         // right state
-        double vR[5 + ns - 1];
-        double &TR = b.q(i, j, k, 4);
         double cvR = b.qh(i, j, k, 1) / b.qh(i, j, k, 0);
+        double &TR = b.q(i, j, k, 4);
+        double &rhoR = b.Q(i, j, k, 0);
         double RR = b.qh(i, j, k, 1) - cvR;
         double &ur = b.q(i, j, k, 1);
         double &vr = b.q(i, j, k, 2);
         double &wr = b.q(i, j, k, 3);
-        double &rhoR = b.Q(i, j, k, 0);
         double sR = 0.0;
         double phiR =
             -RR * rhoR *
             (ur * b.isx(i, j, k) + vr * b.isy(i, j, k) + wr * b.isz(i, j, k));
 
+        double vR[5 + ns - 1];
         vR[1] = -ur / TR;
         vR[2] = -vr / TR;
         vR[3] = -wr / TR;
@@ -87,31 +121,32 @@ void myKEEP(block_ &b, const thtrdat_ &th) {
           double cpk = th.cp0(n);
           double Rk = th.Ru / th.MW(n);
           double cvk = cpk - Rk;
-          double sk = cvk * log(TR) - Rk * log(rhoR);
+          double sk = cvk * log(TR) - Rk * log(YR[n] * rhoR);
           double hk = b.qh(i, j, k, 5 + n);
           gk[n] = hk - sk * TR;
           sR += sk;
         }
+
         vR[0] =
             (-gk[ns - 1] + 0.5 * (pow(ur, 2) + pow(vr, 2) + pow(wr, 2))) / TR;
         for (int n = 0; n < b.ne - 5; n++) {
-          vR[5 + n] = -(gk[n] - gk[ns - 1]);
+          vR[5 + n] = -(gk[n] - gk[ns - 1]) / TR;
         }
 
         // left
-        double vL[5 + ns - 1];
-        double &TL = b.q(i - 1, j, k, 4);
         double cvL = b.qh(i - 1, j, k, 1) / b.qh(i - 1, j, k, 0);
+        double &TL = b.q(i - 1, j, k, 4);
+        double &rhoL = b.Q(i - 1, j, k, 0);
         double RL = b.qh(i - 1, j, k, 1) - cvL;
         double &ul = b.q(i - 1, j, k, 1);
         double &vl = b.q(i - 1, j, k, 2);
         double &wl = b.q(i - 1, j, k, 3);
-        double &rhoL = b.Q(i - 1, j, k, 0);
         double sL = 0.0;
         double phiL =
             -RL * rhoL *
             (ul * b.isx(i, j, k) + vl * b.isy(i, j, k) + wl * b.isz(i, j, k));
 
+        double vL[5 + ns - 1];
         vL[1] = -ul / TL;
         vL[2] = -vl / TL;
         vL[3] = -wl / TL;
@@ -120,15 +155,16 @@ void myKEEP(block_ &b, const thtrdat_ &th) {
           double cpk = th.cp0(n);
           double Rk = th.Ru / th.MW(n);
           double cvk = cpk - Rk;
-          double sk = cvk * log(TL) - Rk * log(rhoL);
+          double sk = cvk * log(TL) - Rk * log(YL[n] * rhoL);
           double hk = b.qh(i - 1, j, k, 5 + n);
           gk[n] = hk - sk * TL;
-          sR += sk;
+          sL += sk;
         }
+
         vL[0] =
             (-gk[ns - 1] + 0.5 * (pow(ul, 2) + pow(vl, 2) + pow(wl, 2))) / TL;
         for (int n = 0; n < b.ne - 5; n++) {
-          vL[5 + n] = -(gk[n] - gk[ns - 1]);
+          vL[5 + n] = -(gk[n] - gk[ns - 1]) / TL;
         }
 
         double V[5 + ns - 1];
@@ -148,7 +184,7 @@ void myKEEP(block_ &b, const thtrdat_ &th) {
         //
         // Whereas if we use either the quadratic or divergent forms
         // double Fs = 0.5 * (rhoR * sR + rhoL * sL) * U;
-        // double Fs = 0.5 * (rhoR * uR * sR + rhoL * uL * sL) * b.iS(i, j, k);
+        // double Fs = 0.5 * (rhoR * ur * sR + rhoL * ul * sL) * b.iS(i, j, k);
         //
         // Then we are substantially different from the KEEPep scheme. In fact
         // the original KEEP scheme, none of the forms of Fs results in the same
@@ -165,8 +201,8 @@ void myKEEP(block_ &b, const thtrdat_ &th) {
         double Ij = Fs + PHI - V[0] * b.iF(i, j, k, 0) -
                     V[1] * b.iF(i, j, k, 1) - V[2] * b.iF(i, j, k, 2) -
                     V[3] * b.iF(i, j, k, 3);
-        for (int n = 5; n < b.ne; n++) {
-          Ij -= V[n] * b.iF(i, j, k, n);
+        for (int n = 0; n < b.ne - 5; n++) {
+          Ij -= V[5 + n] * b.iF(i, j, k, 5 + n);
         }
         Ij /= V[4];
         Ij -= (Kj + Pj);
