@@ -123,9 +123,9 @@ void myKEEP(block_ &b, const thtrdat_ &th) {
             double cpk = th.cp0(n);
             double Rk = th.Ru / th.MW(n);
             double cvk = cpk - Rk;
-            skR[n] = cvk * log(TR) - Rk * log(YR[n] * rhoR);
-            double hk = b.qh(i, j, k, 5 + n);
-            gk[n] = (hk - skR[n] * TR);
+            skR[n] = cvk * log(TR) - Rk * log(rhoR);
+            double hk = cpk * TR;
+            gk[n] = hk - skR[n] * TR;
           }
         }
 
@@ -164,9 +164,9 @@ void myKEEP(block_ &b, const thtrdat_ &th) {
             double cpk = th.cp0(n);
             double Rk = th.Ru / th.MW(n);
             double cvk = cpk - Rk;
-            skL[n] = cvk * log(TL) - Rk * log(YL[n] * rhoL);
-            double hk = b.qh(i - 1, j, k, 5 + n);
-            gk[n] = (hk - skL[n] * TL);
+            skL[n] = cvk * log(TL) - Rk * log(rhoL);
+            double hk = cpk * TL;
+            gk[n] = hk - skL[n] * TL;
           }
         }
 
@@ -216,7 +216,7 @@ void myKEEP(block_ &b, const thtrdat_ &th) {
         // Then we need Species
         for (int n = 0; n < ns - 1; n++) {
           b.iF(i, j, k, 5 + n) =
-              0.5 * (b.Q(i, j, k, 5 + n) + b.Q(i - 1, j, k, 5 + n)) * U;
+              0.5 * (b.q(i, j, k, 5 + n) + b.q(i - 1, j, k, 5 + n)) * rho * U;
           Ij -= V[5 + n] * b.iF(i, j, k, 5 + n);
         }
         Ij /= V[4];
