@@ -124,7 +124,7 @@ void myKEEP(block_ &b, const thtrdat_ &th) {
             double Rk = th.Ru / th.MW(n);
             double cvk = cpk - Rk;
             skR[n] = cvk * log(TR) - Rk * log(rhoR);
-            double hk = cpk * TR;
+            double hk = b.qh(i, j, k, 5 + n);
             gk[n] = hk - skR[n] * TR;
           }
         }
@@ -165,7 +165,7 @@ void myKEEP(block_ &b, const thtrdat_ &th) {
             double Rk = th.Ru / th.MW(n);
             double cvk = cpk - Rk;
             skL[n] = cvk * log(TL) - Rk * log(rhoL);
-            double hk = cpk * TL;
+            double hk = b.qh(i - 1, j, k, 5 + n);
             gk[n] = hk - skL[n] * TL;
           }
         }
