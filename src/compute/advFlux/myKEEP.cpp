@@ -149,9 +149,12 @@ void myKEEP(block_ &b, const thtrdat_ &th) {
         vL[2] = -vl / TL;
         vL[3] = -wl / TL;
         vL[4] = 1.0 / TL;
-        double V[b.ne];
-        for (int n = 0; n < ns - 1; n++) {
+        for (int n = 0; n < b.ne - 5; n++) {
           vL[5 + n] = -(gk[n] - gk[ns - 1]) / TL;
+        }
+
+        double V[b.ne];
+        for (int n = 0; n < b.ne; n++) {
           V[n] = 0.5 * (vR[n] + vL[n]);
         }
         double PHI = 0.5 * (phiR + phiL);
