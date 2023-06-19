@@ -22,16 +22,18 @@ plt.style.use("~/.config/matplotlib/stylelib/whitePresentation.mplstyle")
 save = False
 
 
+def sk(cp, T, R, rho, Y):
+    s = np.where(Y < 1e-16, 0.0, (cp - R) * np.log(T) - R * np.log(rho * Y))
+    return s
+
+
 def simulate(index="i"):
     config = pg.files.configFile()
-    config["timeIntegration"]["integrator"] = "rk3"
+    config["timeIntegration"]["integrator"] = "rk4"
     config["RHS"]["primaryAdvFlux"] = "myKEEP"
-    CFL = 0.5
+    CFL = 0.1
     gammaRatio = 1.0  # gammaA/gammaB
     config["thermochem"]["spdata"] = ["A", "B"]
-    # config["RHS"]["shockHandling"] = "artificialDissipation"
-    # config["RHS"]["secondaryAdvFlux"] = "scalarDissipation"
-    # config["RHS"]["switchAdvFlux"] = "jamesonPressure"
     config["RHS"]["diffusion"] = False
     config.validateConfig()
     mb = pg.multiBlock.generateMultiBlockSolver(1, config)
@@ -95,10 +97,13 @@ def simulate(index="i"):
     # species A
     blk.array["q"][:, :, :, 5] = 0.5 + 0.5 * np.sin(2 * np.pi * xc)
     YA = blk.array["q"][:, :, :, 5]
+    assert np.min(YA) > 0.0
+    assert np.max(YA) < 1.0
     YB = 1.0 - YA
     cp = YA * cpA + YB * cpB
     R = RA * YA + RB * YB
     gamma = cp / (cp - R)
+    # initial_rho = 2.0 * np.ones(xc.shape)
     initial_rho = 2.0 + np.sin(2 * np.pi * xc)
     initial_T = 1.0 / (R * initial_rho)
     blk.array["q"][:, :, :, 4] = initial_T
@@ -109,10 +114,9 @@ def simulate(index="i"):
     pg.consistify(mb)
 
     # entropy stuff
-    s = cp / gamma * np.log(blk.array["q"][:, :, :, 4]) - R * np.log(
-        blk.array["Q"][:, :, :, 0]
-    )
-    blk.array["s"][:] = blk.array["Q"][:, :, :, 0] * s
+    sA = sk(cpA, initial_T, RA, initial_rho, YA)
+    sB = sk(cpB, initial_T, RB, initial_rho, YB)
+    blk.array["s"][:] = initial_rho * YA * sA + initial_rho * YB * sB
     blk.updateDeviceView(["s"])
     pg.consistify(mb)
 
@@ -138,16 +142,11 @@ def simulate(index="i"):
             blk.updateHostView(["q", "Q"])
             YA = blk.array["q"][ng:-ng, ng:-ng, ng:-ng, 5]
             YB = 1.0 - blk.array["q"][ng:-ng, ng:-ng, ng:-ng, 5]
-            cp = YA * cpA + YB * cpB
-            R = RA * YA + RB * YB
-            gamma = cp / (cp - R)
-            dS = np.sum(
-                blk.array["Q"][ng:-ng, ng:-ng, ng:-ng, 0]
-                * (
-                    cp / gamma * np.log(blk.array["q"][ng:-ng, ng:-ng, ng:-ng, 4])
-                    - R * np.log(blk.array["Q"][ng:-ng, ng:-ng, ng:-ng, 0])
-                )
-            )
+            T = blk.array["q"][ng:-ng, ng:-ng, ng:-ng, 4]
+            rho = blk.array["Q"][ng:-ng, ng:-ng, ng:-ng, 0]
+            sA = sk(cpA, T, RA, rho, YA)
+            sB = sk(cpB, T, RB, rho, YB)
+            dS = np.sum(rho * YA * sA + rho * YB * sB)
             sDerived.append(dS)
             eS = np.sum(blk.array["s"][ng:-ng, ng:-ng, ng:-ng])
             sEvolved.append(eS)
@@ -158,17 +157,16 @@ def simulate(index="i"):
     blk.updateHostView(["q", "Q"])
 
     s_ = rotate(np.s_[ng:-ng, ng, ng], index)
-    YA = blk.array["q"][s_][:, 5]
-    YB = 1.0 - YA
-    cp = YA * cpA + YB * cpB
-    R = RA * YA + RB * YB
-    gamma = cp / (cp - R)
     x = blk.array[ccArray[index]][s_]
     rho = blk.array["Q"][s_][:, 0]
     p = blk.array["q"][s_][:, 0]
     u = blk.array["q"][s_][:, uIndex[index]]
     T = blk.array["q"][s_][:, 4]
-    sD = rho * (cp / gamma * np.log(T) - R * np.log(rho))
+    YA = blk.array["q"][s_][:, 5]
+    YB = 1.0 - YA
+    sA = sk(cpA, T, RA, rho, YA)
+    sB = sk(cpB, T, RB, rho, YB)
+    sd = rho * YA * sA + rho * YB * sB
     se = blk.array["s"][s_]
 
     # with open("data.npy", "wb") as f:
@@ -194,38 +192,37 @@ def simulate(index="i"):
     ax1.legend()
     # fig.savefig("oneDAdvKEEPpe.png")
     plt.show()
-    plt.clf()
 
+    # entropy space
+    fig, ax1 = plt.subplots(figsize=(5, 3.5))
+    ax1.plot(x, sd, color="k", label="Recon")
+    ax1.plot(x, se, color="r", label=r"$\partial{\rho s}/\partial{t}$")
+    ax1.set_ylabel(r"$\sum \rho Y_k(c_{v,k}\ln(T) - R_{k} \ln (\rho Y_{k}))$")
+    ax1.set_xlabel(r"$x$")
+    ax1.legend()
+    plt.show()
 
-#     # entropy space
-#     ax1.plot(x, sd, color="k", label="Recon")
-#     ax1.plot(x, se, color="r", label=r"$\partial{\rho s}/\partial{t}$")
-#     ax1.set_ylabel(r"$\rho s \quad [ c_{v}\ln (T) - R \ln (\rho) ]$")
-#     ax1.set_xlabel(r"$x$")
-#     ax1.legend()
-#     #plt.show()
-#     plt.clf()
-#
-#     # entropy total
-#     fig, ax1 = plt.subplots(figsize=(5, 3.5))
-#     ax1.plot(
-#         t,
-#         (sEvolved - sEvolved[0]) / sEvolved[0],
-#         c="orange",
-#         marker="o",
-#         label=r"$\partial{\rho s}/\partial{t}$",
-#         markevery=0.05,
-#     )
-#     ax1.plot(
-#         t, (sDerived - sDerived[0]) / sDerived[0], label=r"$s=c_{v}\log(T)-R\log(\rho)$"
-#     )
-#     ax1.set_ylabel(r"$\Delta(\rho s) / {(\rho s)}_0$")
-#     ax1.set_xlabel(r"$t$")
-#     ax1.legend()
-#     ax1.set_xlim([0, 11])
-#     # plt.savefig("CentralsEvo.png")
-#     plt.show()
-#     plt.close()
+    # entropy total
+    fig, ax1 = plt.subplots(figsize=(5, 3.5))
+    ax1.plot(
+        t,
+        (sEvolved - sEvolved[0]) / sEvolved[0],
+        c="orange",
+        marker="o",
+        label=r"$\partial{\rho s}/\partial{t}$",
+        markevery=0.05,
+    )
+    ax1.plot(
+        t,
+        (sDerived - sDerived[0]) / sDerived[0],
+        label=r"$\rho s=\sum \rho Y_{k} s_{k}$",
+    )
+    ax1.set_ylabel(r"$\Delta(\rho s) / {(\rho s)}_0$")
+    ax1.set_xlabel(r"$t$")
+    ax1.legend()
+    ax1.set_xlim([0, 11])
+    # plt.savefig("CentralsEvo.png")
+    plt.show()
 
 
 if __name__ == "__main__":
