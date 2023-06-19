@@ -9,11 +9,11 @@ def RHS(mb):
 
         # Primary advective fluxes
         mb.primaryAdvFlux(blk, mb.thtrdat)
-        mb.applyPrimaryAdvFlux(blk, 1.0)  # <-- 1.0 is for primary flux
+        mb.applyPrimaryAdvFlux(blk, mb.thtrdat, 1.0)  # <-- 1.0 is for primary flux
 
         # Secondary advective fluxes
         mb.secondaryAdvFlux(blk)
-        mb.applySecondaryAdvFlux(blk, 0.0)  # <-- 0.0 is for secondary flux
+        mb.applySecondaryAdvFlux(blk, mb.thtrdat, 0.0)  # <-- 0.0 is for secondary flux
 
     if mb.config["RHS"]["diffusion"]:
         for blk in mb:

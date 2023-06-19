@@ -2,8 +2,13 @@
 #include "block_.hpp"
 #include "kokkosTypes.hpp"
 #include "math.h"
+#include "thtrdat_.hpp"
 
-void applyFlux(block_ &b, double[]) {
+#ifdef NSCOMPILE
+#define ns NS
+#endif
+
+void applyFlux(block_ &b, thtrdat_ &th, double[]) {
 
   //-------------------------------------------------------------------------------------------|
   // Apply fluxes to cc range
@@ -27,53 +32,54 @@ void applyFlux(block_ &b, double[]) {
   Kokkos::parallel_for(
       "Apply current fluxes to RHS", range_cc3,
       KOKKOS_LAMBDA(const int i, const int j, const int k) {
+        // Compute nth species Y
+        double Y[ns];
+        Y[ns - 1] = 1.0;
+        for (int n = 0; n < ns - 1; n++) {
+          Y[n] = b.q(i, j, k, 5 + n);
+          Y[ns - 1] -= Y[n];
+        }
         // Add fluxes to RHS
-        double cv = b.qh(i, j, k, 1) / b.qh(i, j, k, 0);
         double &T = b.q(i, j, k, 4);
         double &rho = b.Q(i, j, k, 0);
-        double R = b.qh(i, j, k, 1) - cv;
-        // THIS IS CRITICAL
-        // s MUST be derived, not used from the variable b.s/b.Q in order
-        // for us to get zero entropy generation in entropy from this
-        // evolution equation.
-        double s = cv * log(T) - R * log(rho);
         double &u = b.q(i, j, k, 1);
         double &v = b.q(i, j, k, 2);
         double &w = b.q(i, j, k, 3);
-        double h = b.qh(i, j, k, 2) / b.Q(i, j, k, 0);
-        double v0 = s + (-h + 0.5 * (pow(u, 2) + pow(v, 2) + pow(w, 2))) / T;
-        double v1 = -u / T;
-        double v2 = -v / T;
-        double v3 = -w / T;
-        double v4 = 1.0 / T;
-        b.ds(i, j, k) +=
-            ((b.iF(i, j, k, 0) + b.jF(i, j, k, 0) + b.kF(i, j, k, 0)) * v0 +
-             (b.iF(i, j, k, 1) + b.jF(i, j, k, 1) + b.kF(i, j, k, 1)) * v1 +
-             (b.iF(i, j, k, 2) + b.jF(i, j, k, 2) + b.kF(i, j, k, 2)) * v2 +
-             (b.iF(i, j, k, 3) + b.jF(i, j, k, 3) + b.kF(i, j, k, 3)) * v3 +
-             (b.iF(i, j, k, 4) + b.jF(i, j, k, 4) + b.kF(i, j, k, 4)) * v4) /
-            b.J(i, j, k);
+        double gk[ns];
+        for (int n = 0; n < ns; n++) {
+          if (Y[n] == 0.0) {
+            gk[n] = 0.0;
+          } else {
+            double cpk = th.cp0(n);
+            double Rk = th.Ru / th.MW(n);
+            double cvk = cpk - Rk;
+            double sk = cvk * log(T) - Rk * log(rho * Y[n]);
+            double hk = b.qh(i, j, k, 5 + n);
+            gk[n] = hk - sk * T;
+          }
+        }
+        double V[5 + ns - 1];
+        V[0] = (-gk[ns - 1] + 0.5 * (pow(u, 2) + pow(v, 2) + pow(w, 2))) / T;
+        V[1] = -u / T;
+        V[2] = -v / T;
+        V[3] = -w / T;
+        V[4] = 1.0 / T;
+        for (int n = 0; n < ns; n++) {
+          V[5 + n] = -(gk[n] - gk[ns - 1]) / T;
+        }
+        for (int l = 0; l < b.ne; l++) {
+          b.ds(i, j, k) +=
+              (b.iF(i, j, k, l) + b.jF(i, j, k, l) + b.kF(i, j, k, l)) * V[l];
 
-        b.ds(i, j, k) -= ((b.iF(i + 1, j, k, 0) + b.jF(i, j + 1, k, 0) +
-                           b.kF(i, j, k + 1, 0)) *
-                              v0 +
-                          (b.iF(i + 1, j, k, 1) + b.jF(i, j + 1, k, 1) +
-                           b.kF(i, j, k + 1, 1)) *
-                              v1 +
-                          (b.iF(i + 1, j, k, 2) + b.jF(i, j + 1, k, 2) +
-                           b.kF(i, j, k + 1, 2)) *
-                              v2 +
-                          (b.iF(i + 1, j, k, 3) + b.jF(i, j + 1, k, 3) +
-                           b.kF(i, j, k + 1, 3)) *
-                              v3 +
-                          (b.iF(i + 1, j, k, 4) + b.jF(i, j + 1, k, 4) +
-                           b.kF(i, j, k + 1, 4)) *
-                              v4) /
-                         b.J(i, j, k);
+          b.ds(i, j, k) -= (b.iF(i + 1, j, k, l) + b.jF(i, j + 1, k, l) +
+                            b.kF(i, j, k + 1, l)) *
+                           V[l];
+        }
+        b.ds(i, j, k) /= b.J(i, j, k);
       });
 }
 
-void applyHybridFlux(block_ &b, const double &primary) {
+void applyHybridFlux(block_ &b, thtrdat_ &th, const double &primary) {
 
   //-------------------------------------------------------------------------------------------|
   // Apply fluxes to cc range
@@ -110,7 +116,7 @@ void applyHybridFlux(block_ &b, const double &primary) {
       });
 }
 
-void applyDissipationFlux(block_ &b, double[]) {
+void applyDissipationFlux(block_ &b, thtrdat_ &th, double[]) {
 
   //-------------------------------------------------------------------------------------------|
   // Apply fluxes to cc range

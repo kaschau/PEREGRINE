@@ -4,12 +4,13 @@
 #include "Kokkos_Core.hpp"
 #include "block_.hpp"
 #include "compute.hpp"
+#include "thtrdat_.hpp"
 
 // ./utils
 //    |------> applyFluxes
-void applyFlux(block_ &b, double[]);
-void applyHybridFlux(block_ &b, const double &primary);
-void applyDissipationFlux(block_ &b, double[]);
+void applyFlux(block_ &b, thtrdat_ &th, double[]);
+void applyHybridFlux(block_ &b, thtrdat_ &th, const double &primary);
+void applyDissipationFlux(block_ &b, thtrdat_ &th, double[]);
 //    |------> dQzero
 void dQzero(block_ &b);
 //    |------> dq2FD

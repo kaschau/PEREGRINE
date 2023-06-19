@@ -1,3 +1,4 @@
+#include "thtrdat_.hpp"
 #include "utils.hpp"
 #include <kokkosTypes.hpp>
 #include <pybind11/pybind11.h>
@@ -10,12 +11,12 @@ void bindUtils(py::module_ &m) {
   py::module utils = m.def_submodule("utils", "utility module");
   //  |----> applyFluxes.cpp
   utils.def("applyFlux", &applyFlux, "Apply flux directly",
-            py::arg("block_ object"), py::arg(""));
+            py::arg("block_ object"), py::arg(""), py::arg(""));
   utils.def("applyHybridFlux", &applyHybridFlux, "Blend flux with another",
-            py::arg("block_ object"), py::arg("primary"));
+            py::arg("block_ object"), py::arg(""), py::arg("primary"));
   utils.def("applyDissipationFlux", &applyDissipationFlux,
             "Apply artificial dissipation flux", py::arg("block_ object"),
-            py::arg(""));
+            py::arg(""), py::arg(""));
   //  |----> dQzero.cpp
   utils.def("dQzero", &dQzero, "Zero out dQ array", py::arg("block_ object"));
   //  |----> dq2FD.cpp
