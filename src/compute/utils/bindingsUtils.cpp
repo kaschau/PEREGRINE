@@ -90,7 +90,7 @@ void bindUtils(py::module_ &m) {
   //    |------> computeEntropy
   utils.def("computeEntropy", &computeEntropy,
             "Find max acoustic, convective, spectral radius CFL factors c/dx",
-            py::arg("mb object"));
+            py::arg("mb object"), py::arg("mb object"));
   //    |------> sumEntropy
   utils.def("sumEntropy", &sumEntropy,
             "Find max acoustic, convective, spectral radius CFL factors c/dx",

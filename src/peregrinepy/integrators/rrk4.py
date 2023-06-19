@@ -17,7 +17,7 @@ def getEntropy(g, mb, s0, dsdt):
         mb.eos(blk, mb.thtrdat, -1, "cons")
 
     # compute new total entropy
-    s = computeEntropy(mb)
+    s = computeEntropy(mb, mb.thtrdat)
 
     residual = s - s0 - g * dsdt
     # print(f"{s-s0 = }, {g*dsdt = }, {residual = }, {g = }")
@@ -36,7 +36,7 @@ class rrk4:
 
     def step(self, dt):
         # before we do anything, we need total entropy at un
-        s0 = computeEntropy(self)
+        s0 = computeEntropy(self, self.thtrdat)
 
         # store zeroth stage solution
         for blk in self:

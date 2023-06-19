@@ -45,6 +45,6 @@ void placeRecvBuffer(fourDview &view, fourDview &buffer, face_ &face,
 void viscousSponge(block_ &b, const std::array<double, 3> &origin,
                    const std::array<double, 3> &ending, double mult);
 
-double computeEntropy(const std::vector<block_> &mb);
+double computeEntropy(const std::vector<block_> &mb, thtrdat_ &th);
 double sumEntropy(const std::vector<block_> &mb);
 #endif
