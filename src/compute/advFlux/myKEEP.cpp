@@ -104,14 +104,14 @@ void myKEEP(block_ &b, const thtrdat_ &th) {
           }
         }
 
-        double vR[5 + ns - 1];
+        double vR[b.ne];
         vR[0] =
             (-gk[ns - 1] + 0.5 * (pow(ur, 2) + pow(vr, 2) + pow(wr, 2))) / TR;
         vR[1] = -ur / TR;
         vR[2] = -vr / TR;
         vR[3] = -wr / TR;
         vR[4] = 1.0 / TR;
-        for (int n = 0; n < ns; n++) {
+        for (int n = 0; n < ns - 1; n++) {
           vR[5 + n] = -(gk[n] - gk[ns - 1]) / TR;
         }
 
@@ -149,7 +149,7 @@ void myKEEP(block_ &b, const thtrdat_ &th) {
         vL[2] = -vl / TL;
         vL[3] = -wl / TL;
         vL[4] = 1.0 / TL;
-        for (int n = 0; n < b.ne - 5; n++) {
+        for (int n = 0; n < ns - 1; n++) {
           vL[5 + n] = -(gk[n] - gk[ns - 1]) / TL;
         }
 

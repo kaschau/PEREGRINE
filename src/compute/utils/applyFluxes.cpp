@@ -58,13 +58,13 @@ void applyFlux(block_ &b, thtrdat_ &th, double[]) {
             gk[n] = hk - sk * T;
           }
         }
-        double V[5 + ns - 1];
+        double V[b.ne];
         V[0] = (-gk[ns - 1] + 0.5 * (pow(u, 2) + pow(v, 2) + pow(w, 2))) / T;
         V[1] = -u / T;
         V[2] = -v / T;
         V[3] = -w / T;
         V[4] = 1.0 / T;
-        for (int n = 0; n < ns; n++) {
+        for (int n = 0; n < ns - 1; n++) {
           V[5 + n] = -(gk[n] - gk[ns - 1]) / T;
         }
         for (int l = 0; l < b.ne; l++) {
