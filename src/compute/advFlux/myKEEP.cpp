@@ -159,28 +159,11 @@ void myKEEP(block_ &b, const thtrdat_ &th) {
         }
         double PHI = 0.5 * (phiR + phiL);
 
-        // This comes from Eq. 4.5c of Tamdor, but there are consequences to the
-        // form of G_v+1/2 (Fs_m+1/2)
-        // If we use the cubic form
-        //
         double Fs = 0.0;
         for (int n = 0; n < ns; n++) {
           Fs += 0.5 * (rhoR * YR[n] + rhoL * YL[n]) * 0.5 * (skR[n] + skL[n]);
         }
         Fs *= U;
-        //
-        // Then we actually match the KEEPep scheme almost float for float,
-        // so close that there has to be an equality between them.
-        //
-        // Whereas if we use either the quadratic or divergent forms
-        // double Fs = 0.5 * (rhoR * sR + rhoL * sL) * U;
-        // double Fs = 0.5 * (rhoR * ur * sR + rhoL * ul * sL) * b.iS(i, j, k);
-        //
-        // Then we are substantially different from the KEEPep scheme. In fact
-        // the original KEEP scheme, none of the forms of Fs results in the same
-        // answer. However, when we use the quadratic and divergent forms
-        // We match exactly with v.\delF/delx evolution, where as for the cubic
-        // form of Fs, we do not match v.\delF/\delx. wtf.
         double Ij = Fs + PHI - V[0] * b.iF(i, j, k, 0) -
                     V[1] * b.iF(i, j, k, 1) - V[2] * b.iF(i, j, k, 2) -
                     V[3] * b.iF(i, j, k, 3);
@@ -252,84 +235,120 @@ void myKEEP(block_ &b, const thtrdat_ &th) {
                                       b.q(i, j - 1, k, 3) * b.jsz(i, j, k)));
 
         // solve for internal energy flux
+        double gk[ns];
+        double YR[ns];
+        double YL[ns];
+        // Compute nth species Y
+        YR[ns - 1] = 1.0;
+        YL[ns - 1] = 1.0;
+        for (int n = 0; n < ns - 1; n++) {
+          YR[n] = b.q(i, j, k, 5 + n);
+          YL[n] = b.q(i, j - 1, k, 5 + n);
+          YR[ns - 1] -= YR[n];
+          YL[ns - 1] -= YL[n];
+        }
+
+        // right state
         double cvR = b.qh(i, j, k, 1) / b.qh(i, j, k, 0);
         double &TR = b.q(i, j, k, 4);
         double &rhoR = b.Q(i, j, k, 0);
         double RR = b.qh(i, j, k, 1) - cvR;
-        double hR = b.qh(i, j, k, 2) / rhoR;
-        double &uR = b.q(i, j, k, 1);
-        double &vR = b.q(i, j, k, 2);
-        double &wR = b.q(i, j, k, 3);
-        double sR = cvR * log(TR) - RR * log(rhoR);
+        double &ur = b.q(i, j, k, 1);
+        double &vr = b.q(i, j, k, 2);
+        double &wr = b.q(i, j, k, 3);
         double phiR =
             -RR * rhoR *
-            (uR * b.jsx(i, j, k) + vR * b.jsy(i, j, k) + wR * b.jsz(i, j, k));
+            (ur * b.jsx(i, j, k) + vr * b.jsy(i, j, k) + wr * b.jsz(i, j, k));
 
-        double v0R =
-            sR + (-hR + 0.5 * (pow(uR, 2) + pow(vR, 2) + pow(wR, 2))) / TR;
-        double v1R = -uR / TR;
-        double v2R = -vR / TR;
-        double v3R = -wR / TR;
-        double v4R = 1.0 / TR;
+        double skR[ns];
+        for (int n = 0; n < ns; n++) {
+          if (YR[n] == 0.0) {
+            skR[n] = 0.0;
+            gk[n] = 0.0;
+          } else {
+            double cpk = th.cp0(n);
+            double Rk = th.Ru / th.MW(n);
+            double cvk = cpk - Rk;
+            skR[n] = cvk * log(TR) - Rk * log(rhoR * YR[n]);
+            double hk = b.qh(i, j, k, 5 + n);
+            gk[n] = hk - skR[n] * TR;
+          }
+        }
+
+        double vR[b.ne];
+        vR[0] =
+            (-gk[ns - 1] + 0.5 * (pow(ur, 2) + pow(vr, 2) + pow(wr, 2))) / TR;
+        vR[1] = -ur / TR;
+        vR[2] = -vr / TR;
+        vR[3] = -wr / TR;
+        vR[4] = 1.0 / TR;
+        for (int n = 0; n < ns - 1; n++) {
+          vR[5 + n] = -(gk[n] - gk[ns - 1]) / TR;
+        }
 
         // left
         double cvL = b.qh(i, j - 1, k, 1) / b.qh(i, j - 1, k, 0);
         double &TL = b.q(i, j - 1, k, 4);
         double &rhoL = b.Q(i, j - 1, k, 0);
         double RL = b.qh(i, j - 1, k, 1) - cvL;
-        double hL = b.qh(i, j - 1, k, 2) / rhoL;
-        double &uL = b.q(i, j - 1, k, 1);
-        double &vL = b.q(i, j - 1, k, 2);
-        double &wL = b.q(i, j - 1, k, 3);
-        double sL = cvL * log(TL) - RL * log(rhoL);
+        double &ul = b.q(i, j - 1, k, 1);
+        double &vl = b.q(i, j - 1, k, 2);
+        double &wl = b.q(i, j - 1, k, 3);
         double phiL =
             -RL * rhoL *
-            (uL * b.jsx(i, j, k) + vL * b.jsy(i, j, k) + wL * b.jsz(i, j, k));
+            (ul * b.jsx(i, j, k) + vl * b.jsy(i, j, k) + wl * b.jsz(i, j, k));
 
-        double v0L =
-            sL + (-hL + 0.5 * (pow(uL, 2) + pow(vL, 2) + pow(wL, 2))) / TL;
-        double v1L = -uL / TL;
-        double v2L = -vL / TL;
-        double v3L = -wL / TL;
-        double v4L = 1.0 / TL;
+        double skL[ns];
+        for (int n = 0; n < ns; n++) {
+          if (YL[n] == 0.0) {
+            skL[n] = 0.0;
+            gk[n] = 0.0;
+          } else {
+            double cpk = th.cp0(n);
+            double Rk = th.Ru / th.MW(n);
+            double cvk = cpk - Rk;
+            skL[n] = cvk * log(TL) - Rk * log(rhoL * YL[n]);
+            double hk = b.qh(i, j - 1, k, 5 + n);
+            gk[n] = hk - skL[n] * TL;
+          }
+        }
 
-        double V0 = 0.5 * (v0R + v0L);
-        double V1 = 0.5 * (v1R + v1L);
-        double V2 = 0.5 * (v2R + v2L);
-        double V3 = 0.5 * (v3R + v3L);
-        double V4 = 0.5 * (v4R + v4L);
+        double vL[b.ne];
+        vL[0] =
+            (-gk[ns - 1] + 0.5 * (pow(ul, 2) + pow(vl, 2) + pow(wl, 2))) / TL;
+        vL[1] = -ul / TL;
+        vL[2] = -vl / TL;
+        vL[3] = -wl / TL;
+        vL[4] = 1.0 / TL;
+        for (int n = 0; n < ns - 1; n++) {
+          vL[5 + n] = -(gk[n] - gk[ns - 1]) / TL;
+        }
+
+        double Vj[b.ne];
+        for (int n = 0; n < b.ne; n++) {
+          Vj[n] = 0.5 * (vR[n] + vL[n]);
+        }
         double PHI = 0.5 * (phiR + phiL);
 
-        // This comes from Eq. 4.5c of Tamdor, but there are consequences to the
-        // form of G_v+1/2 (Fs_m+1/2)
-        // If we use the cubic form
-        //
-        double Fs = rho * V * 0.5 * (sR + sL);
-        //
-        // Then we actually match the KEEPep scheme almost float for float,
-        // so close that there has to be an equality between them.
-        //
-        // Whereas if we use either the quadratic or divergent forms
-        // double Fs = 0.5 * (rhoR * sR + rhoL * sL) * V;
-        //
-        // Then we are substantially different from the KEEPep scheme. In fact
-        // the original KEEP scheme, none of the forms of Fs results in the same
-        // answer. However, when we use the quadratic and divergent forms
-        // We match exactly with v.\delF/delx evolution, where as for the cubic
-        // form of Fs, we do not match v.\delF/\delx. wtf.
+        double Fs = 0.0;
+        for (int n = 0; n < ns; n++) {
+          Fs += 0.5 * (rhoR * YR[n] + rhoL * YL[n]) * 0.5 * (skR[n] + skL[n]);
+        }
+        Fs *= V;
+        double Ij = Fs + PHI - Vj[0] * b.jF(i, j, k, 0) -
+                    Vj[1] * b.jF(i, j, k, 1) - Vj[2] * b.jF(i, j, k, 2) -
+                    Vj[3] * b.jF(i, j, k, 3);
 
-        double Ij = (Fs + PHI - V0 * b.jF(i, j, k, 0) - V1 * b.jF(i, j, k, 1) -
-                     V2 * b.jF(i, j, k, 2) - V3 * b.jF(i, j, k, 3)) /
-                        V4 -
-                    Pj - Kj;
+        // Then we need Species
+        for (int n = 0; n < ns - 1; n++) {
+          b.jF(i, j, k, 5 + n) =
+              0.5 * (b.q(i, j, k, 5 + n) + b.q(i, j - 1, k, 5 + n)) * rho * V;
+          Ij -= Vj[5 + n] * b.jF(i, j, k, 5 + n);
+        }
+        Ij /= Vj[4];
+        Ij -= (Kj + Pj);
 
         b.jF(i, j, k, 4) = Ij + Kj + Pj;
-
-        // Species
-        for (int n = 0; n < b.ne - 5; n++) {
-          b.jF(i, j, k, 5 + n) =
-              0.5 * (b.Q(i, j, k, 5 + n) + b.Q(i, j - 1, k, 5 + n)) * V;
-        }
       });
 
   //-------------------------------------------------------------------------------------------|
@@ -384,84 +403,120 @@ void myKEEP(block_ &b, const thtrdat_ &th) {
                    b.q(i, j, k, 0) * (b.q(i, j, k - 1, 1) * b.ksx(i, j, k) +
                                       b.q(i, j, k - 1, 2) * b.ksy(i, j, k) +
                                       b.q(i, j, k - 1, 3) * b.ksz(i, j, k)));
-
         // solve for internal energy flux
+        double gk[ns];
+        double YR[ns];
+        double YL[ns];
+        // Compute nth species Y
+        YR[ns - 1] = 1.0;
+        YL[ns - 1] = 1.0;
+        for (int n = 0; n < ns - 1; n++) {
+          YR[n] = b.q(i, j, k, 5 + n);
+          YL[n] = b.q(i, j, k - 1, 5 + n);
+          YR[ns - 1] -= YR[n];
+          YL[ns - 1] -= YL[n];
+        }
+
+        // right state
         double cvR = b.qh(i, j, k, 1) / b.qh(i, j, k, 0);
         double &TR = b.q(i, j, k, 4);
         double &rhoR = b.Q(i, j, k, 0);
         double RR = b.qh(i, j, k, 1) - cvR;
-        double hR = b.qh(i, j, k, 2) / rhoR;
-        double &uR = b.q(i, j, k, 1);
-        double &vR = b.q(i, j, k, 2);
-        double &wR = b.q(i, j, k, 3);
-        double sR = cvR * log(TR) - RR * log(rhoR);
+        double &ur = b.q(i, j, k, 1);
+        double &vr = b.q(i, j, k, 2);
+        double &wr = b.q(i, j, k, 3);
         double phiR =
             -RR * rhoR *
-            (uR * b.ksx(i, j, k) + vR * b.ksy(i, j, k) + wR * b.ksz(i, j, k));
+            (ur * b.ksx(i, j, k) + vr * b.ksy(i, j, k) + wr * b.ksz(i, j, k));
 
-        double v0R =
-            sR + (-hR + 0.5 * (pow(uR, 2) + pow(vR, 2) + pow(wR, 2))) / TR;
-        double v1R = -uR / TR;
-        double v2R = -vR / TR;
-        double v3R = -wR / TR;
-        double v4R = 1.0 / TR;
+        double skR[ns];
+        for (int n = 0; n < ns; n++) {
+          if (YR[n] == 0.0) {
+            skR[n] = 0.0;
+            gk[n] = 0.0;
+          } else {
+            double cpk = th.cp0(n);
+            double Rk = th.Ru / th.MW(n);
+            double cvk = cpk - Rk;
+            skR[n] = cvk * log(TR) - Rk * log(rhoR * YR[n]);
+            double hk = b.qh(i, j, k, 5 + n);
+            gk[n] = hk - skR[n] * TR;
+          }
+        }
+
+        double vR[b.ne];
+        vR[0] =
+            (-gk[ns - 1] + 0.5 * (pow(ur, 2) + pow(vr, 2) + pow(wr, 2))) / TR;
+        vR[1] = -ur / TR;
+        vR[2] = -vr / TR;
+        vR[3] = -wr / TR;
+        vR[4] = 1.0 / TR;
+        for (int n = 0; n < ns - 1; n++) {
+          vR[5 + n] = -(gk[n] - gk[ns - 1]) / TR;
+        }
 
         // left
         double cvL = b.qh(i, j, k - 1, 1) / b.qh(i, j, k - 1, 0);
         double &TL = b.q(i, j, k - 1, 4);
         double &rhoL = b.Q(i, j, k - 1, 0);
         double RL = b.qh(i, j, k - 1, 1) - cvL;
-        double hL = b.qh(i, j, k - 1, 2) / rhoL;
-        double &uL = b.q(i, j, k - 1, 1);
-        double &vL = b.q(i, j, k - 1, 2);
-        double &wL = b.q(i, j, k - 1, 3);
-        double sL = cvL * log(TL) - RL * log(rhoL);
+        double &ul = b.q(i, j, k - 1, 1);
+        double &vl = b.q(i, j, k - 1, 2);
+        double &wl = b.q(i, j, k - 1, 3);
         double phiL =
             -RL * rhoL *
-            (uL * b.ksx(i, j, k) + vL * b.ksy(i, j, k) + wL * b.ksz(i, j, k));
+            (ul * b.ksx(i, j, k) + vl * b.ksy(i, j, k) + wl * b.ksz(i, j, k));
 
-        double v0L =
-            sL + (-hL + 0.5 * (pow(uL, 2) + pow(vL, 2) + pow(wL, 2))) / TL;
-        double v1L = -uL / TL;
-        double v2L = -vL / TL;
-        double v3L = -wL / TL;
-        double v4L = 1.0 / TL;
+        double skL[ns];
+        for (int n = 0; n < ns; n++) {
+          if (YL[n] == 0.0) {
+            skL[n] = 0.0;
+            gk[n] = 0.0;
+          } else {
+            double cpk = th.cp0(n);
+            double Rk = th.Ru / th.MW(n);
+            double cvk = cpk - Rk;
+            skL[n] = cvk * log(TL) - Rk * log(rhoL * YL[n]);
+            double hk = b.qh(i, j, k - 1, 5 + n);
+            gk[n] = hk - skL[n] * TL;
+          }
+        }
 
-        double V0 = 0.5 * (v0R + v0L);
-        double V1 = 0.5 * (v1R + v1L);
-        double V2 = 0.5 * (v2R + v2L);
-        double V3 = 0.5 * (v3R + v3L);
-        double V4 = 0.5 * (v4R + v4L);
+        double vL[b.ne];
+        vL[0] =
+            (-gk[ns - 1] + 0.5 * (pow(ul, 2) + pow(vl, 2) + pow(wl, 2))) / TL;
+        vL[1] = -ul / TL;
+        vL[2] = -vl / TL;
+        vL[3] = -wl / TL;
+        vL[4] = 1.0 / TL;
+        for (int n = 0; n < ns - 1; n++) {
+          vL[5 + n] = -(gk[n] - gk[ns - 1]) / TL;
+        }
+
+        double V[b.ne];
+        for (int n = 0; n < b.ne; n++) {
+          V[n] = 0.5 * (vR[n] + vL[n]);
+        }
         double PHI = 0.5 * (phiR + phiL);
 
-        // This comes from Eq. 4.5c of Tamdor, but there are consequences to the
-        // form of G_v+1/2 (Fs_m+1/2)
-        // If we use the cubic form
-        //
-        double Fs = rho * W * 0.5 * (sR + sL);
-        //
-        // Then we actually match the KEEPep scheme almost float for float,
-        // so close that there has to be an equality between them.
-        //
-        // Whereas if we use either the quadratic or divergent forms
-        // double Fs = 0.5 * (rhoR * sR + rhoL * sL) * W;
-        //
-        // Then we are substantially different from the KEEPep scheme. In fact
-        // the original KEEP scheme, none of the forms of Fs results in the same
-        // answer. However, when we use the quadratic and divergent forms
-        // We match exactly with v.\delF/delx evolution, where as for the cubic
-        // form of Fs, we do not match v.\delF/\delx. wtf.
+        double Fs = 0.0;
+        for (int n = 0; n < ns; n++) {
+          Fs += 0.5 * (rhoR * YR[n] + rhoL * YL[n]) * 0.5 * (skR[n] + skL[n]);
+        }
+        Fs *= W;
+        double Ij = Fs + PHI - V[0] * b.kF(i, j, k, 0) -
+                    V[1] * b.kF(i, j, k, 1) - V[2] * b.kF(i, j, k, 2) -
+                    V[3] * b.kF(i, j, k, 3);
 
-        double Ij = (Fs + PHI - V0 * b.kF(i, j, k, 0) - V1 * b.kF(i, j, k, 1) -
-                     V2 * b.kF(i, j, k, 2) - V3 * b.kF(i, j, k, 3)) /
-                        V4 -
-                    Pj - Kj;
+        // Then we need Species
+        for (int n = 0; n < ns - 1; n++) {
+          b.kF(i, j, k, 5 + n) =
+              0.5 * (b.q(i, j, k, 5 + n) + b.q(i, j, k - 1, 5 + n)) * rho * W;
+          Ij -= V[5 + n] * b.kF(i, j, k, 5 + n);
+        }
+        Ij /= V[4];
+        Ij -= (Kj + Pj);
 
         b.kF(i, j, k, 4) = Ij + Kj + Pj;
-        // Species
-        for (int n = 0; n < b.ne - 5; n++) {
-          b.kF(i, j, k, 5 + n) =
-              0.5 * (b.Q(i, j, k, 5 + n) + b.Q(i, j, k - 1, 5 + n)) * W;
-        }
       });
 }
