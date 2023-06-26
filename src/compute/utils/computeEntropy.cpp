@@ -38,7 +38,8 @@ double computeEntropy(const std::vector<block_> &mb, thtrdat_ &th) {
               double cpk = th.cp0(n);
               double Rk = th.Ru / th.MW(n);
               double cvk = cpk - Rk;
-              s += rho * Y[n] * (cvk * log(T) - Rk * log(rho * Y[n]));
+              s += rho * Y[n] * (cvk * log(T) - Rk * log(rho * Y[n])) *
+                   b.J(i, j, k);
             }
           }
         },
@@ -63,7 +64,7 @@ double sumEntropy(const std::vector<block_> &mb) {
     Kokkos::parallel_reduce(
         "compute entropy", range_cc,
         KOKKOS_LAMBDA(const int i, const int j, const int k, double &s) {
-          s += b.s1(i, j, k);
+          s += b.s1(i, j, k) * b.J(i, j, k);
         },
         Kokkos::Sum<double>(tempS));
     returnS += tempS;
