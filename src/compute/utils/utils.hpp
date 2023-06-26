@@ -47,4 +47,5 @@ void viscousSponge(block_ &b, const std::array<double, 3> &origin,
 
 double computeEntropy(const std::vector<block_> &mb, thtrdat_ &th);
 double sumEntropy(const std::vector<block_> &mb);
+void entropy(block_ &b, thtrdat_ &th);
 #endif

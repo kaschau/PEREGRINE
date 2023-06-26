@@ -72,3 +72,33 @@ double sumEntropy(const std::vector<block_> &mb) {
 
   return returnS;
 }
+
+void entropy(block_ &b, thtrdat_ &th) {
+
+  MDRange3 range_cc({b.ng, b.ng, b.ng},
+                    {b.ni + b.ng - 1, b.nj + b.ng - 1, b.nk + b.ng - 1});
+  Kokkos::parallel_for(
+      "compute entropy", range_cc,
+      KOKKOS_LAMBDA(const int i, const int j, const int k) {
+        // Find max convective CFL
+        double Y[ns];
+        Y[ns - 1] = 1.0;
+        for (int n = 0; n < ns - 1; n++) {
+          Y[n] = b.q(i, j, k, 5 + n);
+          Y[ns - 1] -= Y[n];
+        }
+        double &T = b.q(i, j, k, 4);
+        double &rho = b.Q(i, j, k, 0);
+        b.s(i, j, k) = 0.0;
+        for (int n = 0; n < ns; n++) {
+          if (Y[n] == 0.0) {
+            continue;
+          } else {
+            double cpk = th.cp0(n);
+            double Rk = th.Ru / th.MW(n);
+            double cvk = cpk - Rk;
+            b.s(i, j, k) += rho * Y[n] * (cvk * log(T) - Rk * log(rho * Y[n]));
+          }
+        }
+      });
+}

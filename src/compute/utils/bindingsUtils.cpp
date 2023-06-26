@@ -1,3 +1,4 @@
+#include "block_.hpp"
 #include "thtrdat_.hpp"
 #include "utils.hpp"
 #include <kokkosTypes.hpp>
@@ -95,4 +96,8 @@ void bindUtils(py::module_ &m) {
   utils.def("sumEntropy", &sumEntropy,
             "Find max acoustic, convective, spectral radius CFL factors c/dx",
             py::arg("mb object"));
+  //    |------> etropy
+  utils.def("entropy", &entropy,
+            "Find max acoustic, convective, spectral radius CFL factors c/dx",
+            py::arg("block object"), py::arg("thtrdat"));
 }
