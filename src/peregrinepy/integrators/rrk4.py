@@ -1,4 +1,5 @@
 from abc import ABCMeta
+from mpi4py import MPI
 
 import numpy as np
 from scipy.optimize import root_scalar
@@ -7,6 +8,7 @@ from ..compute.timeIntegration import rk4s1, rk4s2, rk4s3, rk4s4
 from ..compute.utils import sumEntropy, computeEntropy, CEQxApyB, AEQB
 from ..consistify import consistify
 from ..RHS import RHS
+from ..mpiComm.mpiUtils import getCommRankSize
 
 
 def getEntropy(g, mb, s0, dsdt):
@@ -17,9 +19,11 @@ def getEntropy(g, mb, s0, dsdt):
         mb.eos(blk, mb.thtrdat, -1, "cons")
 
     # compute new total entropy
-    s = computeEntropy(mb, mb.thtrdat)
+    s = np.array([computeEntropy(mb, mb.thtrdat)])
+    comm, rank, size = getCommRankSize()
+    comm.Allreduce(MPI.IN_PLACE, s, op=MPI.SUM)
 
-    residual = s - s0 - g * dsdt
+    residual = s[0] - s0 - g * dsdt
     # print(f"{s-s0 = }, {g*dsdt = }, {residual = }, {g = }")
 
     return residual
@@ -36,7 +40,9 @@ class rrk4:
 
     def step(self, dt):
         # before we do anything, we need total entropy at un
-        s0 = computeEntropy(self, self.thtrdat)
+        comm, rank, size = getCommRankSize()
+        s0 = np.array([computeEntropy(self, self.thtrdat)])
+        comm.Allreduce(MPI.IN_PLACE, s0, op=MPI.SUM)
 
         # store zeroth stage solution
         for blk in self:
@@ -79,12 +85,14 @@ class rrk4:
             # use Q1,s1 to store \delta t \sum bi*fi
             CEQxApyB(blk.Q1, 1.0, blk.Q, -1.0, blk.Q0)
             CEQxApyB(blk.s1, 1.0, blk.s, -1.0, blk.s0)
-        dsdt = sumEntropy(self)
+
+        dsdt = np.array([sumEntropy(self)])
+        comm.Allreduce(MPI.IN_PLACE, dsdt, op=MPI.SUM)
 
         # now compute gamma
         g = root_scalar(
             getEntropy,
-            args=(self, s0, dsdt),
+            args=(self, s0[0], dsdt[0]),
             method="bisect",
             xtol=2.22e-13,
             bracket=[0.9, 1.1],
