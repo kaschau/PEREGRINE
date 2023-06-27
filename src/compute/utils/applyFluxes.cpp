@@ -75,6 +75,11 @@ void applyFlux(block_ &b, thtrdat_ &th, double[]) {
                             b.kF(i, j, k + 1, l)) *
                            V[l];
         }
+        // b.ds(i, j, k) += (b.siF(i, j, k) + b.sjF(i, j, k) + b.skF(i, j, k));
+
+        // b.ds(i, j, k) -=
+        //     (b.siF(i + 1, j, k) + b.sjF(i, j + 1, k) + b.skF(i, j, k + 1));
+
         b.ds(i, j, k) /= b.J(i, j, k);
       });
 }

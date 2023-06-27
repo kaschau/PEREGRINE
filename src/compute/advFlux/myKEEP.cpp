@@ -91,17 +91,16 @@ void myKEEP(block_ &b, const thtrdat_ &th) {
 
         double skR[ns];
         for (int n = 0; n < ns; n++) {
+          double cpk = th.cp0(n);
+          double Rk = th.Ru / th.MW(n);
+          double cvk = cpk - Rk;
+          double hk = b.qh(i, j, k, 5 + n);
           if (YR[n] == 0.0) {
             skR[n] = 0.0;
-            gk[n] = 0.0;
           } else {
-            double cpk = th.cp0(n);
-            double Rk = th.Ru / th.MW(n);
-            double cvk = cpk - Rk;
             skR[n] = cvk * log(TR) - Rk * log(rhoR * YR[n]);
-            double hk = b.qh(i, j, k, 5 + n);
-            gk[n] = hk - skR[n] * TR;
           }
+          gk[n] = hk - skR[n] * TR;
         }
 
         double vR[b.ne];
@@ -129,17 +128,16 @@ void myKEEP(block_ &b, const thtrdat_ &th) {
 
         double skL[ns];
         for (int n = 0; n < ns; n++) {
+          double cpk = th.cp0(n);
+          double Rk = th.Ru / th.MW(n);
+          double cvk = cpk - Rk;
+          double hk = b.qh(i - 1, j, k, 5 + n);
           if (YL[n] == 0.0) {
             skL[n] = 0.0;
-            gk[n] = 0.0;
           } else {
-            double cpk = th.cp0(n);
-            double Rk = th.Ru / th.MW(n);
-            double cvk = cpk - Rk;
             skL[n] = cvk * log(TL) - Rk * log(rhoL * YL[n]);
-            double hk = b.qh(i - 1, j, k, 5 + n);
-            gk[n] = hk - skL[n] * TL;
           }
+          gk[n] = hk - skL[n] * TL;
         }
 
         double vL[b.ne];
@@ -161,9 +159,9 @@ void myKEEP(block_ &b, const thtrdat_ &th) {
 
         double Fs = 0.0;
         for (int n = 0; n < ns; n++) {
-          Fs += 0.5 * (rhoR * YR[n] + rhoL * YL[n]) * 0.5 * (skR[n] + skL[n]);
+          Fs += 0.5 * (YR[n] + YL[n]) * 0.5 * (skR[n] + skL[n]);
         }
-        Fs *= U;
+        Fs *= rho * U;
         double Ij = Fs + PHI - V[0] * b.iF(i, j, k, 0) -
                     V[1] * b.iF(i, j, k, 1) - V[2] * b.iF(i, j, k, 2) -
                     V[3] * b.iF(i, j, k, 3);
@@ -178,6 +176,7 @@ void myKEEP(block_ &b, const thtrdat_ &th) {
         Ij -= (Kj + Pj);
 
         b.iF(i, j, k, 4) = Ij + Kj + Pj;
+        // b.siF(i, j, k) = Fs;
       });
 
   //-------------------------------------------------------------------------------------------|
