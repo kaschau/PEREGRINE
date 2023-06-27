@@ -27,12 +27,17 @@ def sk(cp, T, R, rho, Y):
     return s
 
 
+scheme = "secondOrderKEEP"
+wavSpec = True
+wavRho = True
+gammaRatio = 1.0  # gammaA/gammaB
+CFL = 0.1
+
+
 def simulate(index="i"):
     config = pg.files.configFile()
     config["timeIntegration"]["integrator"] = "rk4"
-    config["RHS"]["primaryAdvFlux"] = "myKEEP"
-    CFL = 0.1
-    gammaRatio = 1.0  # gammaA/gammaB
+    config["RHS"]["primaryAdvFlux"] = scheme
     config["thermochem"]["spdata"] = ["A", "B"]
     config["RHS"]["diffusion"] = False
     config.validateConfig()
@@ -95,16 +100,21 @@ def simulate(index="i"):
     # u
     blk.array["q"][:, :, :, uIndex[index]] = 1.0
     # species A
-    blk.array["q"][:, :, :, 5] = 0.5 + 0.5 * np.sin(2 * np.pi * xc)
+    if wavSpec:
+        blk.array["q"][:, :, :, 5] = 0.5 + 0.5 * np.sin(2 * np.pi * xc)
+    else:
+        blk.array["q"][:, :, :, 5] = 0.2
     YA = blk.array["q"][:, :, :, 5]
-    assert np.min(YA) > 0.0
-    assert np.max(YA) < 1.0
+    assert np.min(YA) >= 0.0
+    assert np.max(YA) <= 1.0
     YB = 1.0 - YA
     cp = YA * cpA + YB * cpB
     R = RA * YA + RB * YB
     gamma = cp / (cp - R)
-    # initial_rho = 2.0 * np.ones(xc.shape)
-    initial_rho = 2.0 + np.sin(2 * np.pi * xc)
+    if wavRho:
+        initial_rho = 2.0 + np.sin(2 * np.pi * xc)
+    else:
+        initial_rho = 2.0 * np.ones(xc.shape)
     initial_T = 1.0 / (R * initial_rho)
     blk.array["q"][:, :, :, 4] = initial_T
 
@@ -118,6 +128,8 @@ def simulate(index="i"):
     sB = sk(cpB, initial_T, RB, initial_rho, YB)
     blk.array["s"][:] = initial_rho * YA * sA + initial_rho * YB * sB
     blk.updateDeviceView(["s"])
+    for blk in mb:
+        pg.compute.utils.entropy(blk, mb.thtrdat)
     pg.consistify(mb)
 
     sDerived = []
@@ -169,10 +181,10 @@ def simulate(index="i"):
     sd = rho * YA * sA + rho * YB * sB
     se = blk.array["s"][s_]
 
-    # with open("data.npy", "wb") as f:
-    #     np.save(f, t)
-    #     np.save(f, sDerived)
-    #     np.save(f, sEvolved)
+    with open("data.npy", "wb") as f:
+        np.save(f, t)
+        np.save(f, sDerived)
+        np.save(f, sEvolved)
 
     fig, ax1 = plt.subplots(figsize=(5, 3.5))
     # ax1.set_title("1D Advection Results")
@@ -214,7 +226,7 @@ def simulate(index="i"):
     )
     ax1.plot(
         t,
-        (sDerived - sDerived[0]) / sDerived[0],
+        (sDerived - sEvolved[0]) / sEvolved[0],
         label=r"$\rho s=\sum \rho Y_{k} s_{k}$",
     )
     ax1.set_ylabel(r"$\Delta(\rho s) / {(\rho s)}_0$")
