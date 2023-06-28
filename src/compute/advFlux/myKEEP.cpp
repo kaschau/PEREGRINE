@@ -91,16 +91,17 @@ void myKEEP(block_ &b, const thtrdat_ &th) {
 
         double skR[ns];
         for (int n = 0; n < ns; n++) {
-          double cpk = th.cp0(n);
-          double Rk = th.Ru / th.MW(n);
-          double cvk = cpk - Rk;
-          double hk = b.qh(i, j, k, 5 + n);
           if (YR[n] == 0.0) {
             skR[n] = 0.0;
+            gk[n] = 0.0;
           } else {
+            double cpk = th.cp0(n);
+            double Rk = th.Ru / th.MW(n);
+            double cvk = cpk - Rk;
+            double hk = b.qh(i, j, k, 5 + n);
             skR[n] = cvk * log(TR) - Rk * log(rhoR * YR[n]);
+            gk[n] = hk - skR[n] * TR;
           }
-          gk[n] = hk - skR[n] * TR;
         }
 
         double vR[b.ne];
@@ -128,16 +129,17 @@ void myKEEP(block_ &b, const thtrdat_ &th) {
 
         double skL[ns];
         for (int n = 0; n < ns; n++) {
-          double cpk = th.cp0(n);
-          double Rk = th.Ru / th.MW(n);
-          double cvk = cpk - Rk;
-          double hk = b.qh(i - 1, j, k, 5 + n);
           if (YL[n] == 0.0) {
             skL[n] = 0.0;
+            gk[n] = 0.0;
           } else {
+            double cpk = th.cp0(n);
+            double Rk = th.Ru / th.MW(n);
+            double cvk = cpk - Rk;
+            double hk = b.qh(i - 1, j, k, 5 + n);
             skL[n] = cvk * log(TL) - Rk * log(rhoL * YL[n]);
+            gk[n] = hk - skL[n] * TL;
           }
-          gk[n] = hk - skL[n] * TL;
         }
 
         double vL[b.ne];
