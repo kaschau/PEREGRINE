@@ -68,7 +68,7 @@ void secondOrderKEEP(block_ &b, const thtrdat_ &th) {
         // Species
         for (int n = 0; n < b.ne - 5; n++) {
           b.iF(i, j, k, 5 + n) =
-              0.5 * (b.Q(i, j, k, 5 + n) + b.Q(i - 1, j, k, 5 + n)) * U;
+              0.5 * (b.q(i, j, k, 5 + n) + b.q(i - 1, j, k, 5 + n)) * rho * U;
         }
       });
 
