@@ -23,11 +23,13 @@ save = False
 
 
 def sk(cp, T, R, rho, Y):
-    s = np.where(Y < 1e-16, 0.0, (cp - R) * np.log(T) - R * np.log(rho * Y))
+    a = np.where(Y > 0.0)
+    s = np.zeros(T.shape)
+    s[a] = (cp - R) * np.log(T[a]) - R * np.log(rho[a] * Y[a])
     return s
 
 
-scheme = "secondOrderKEEP"
+scheme = "myKEEP"
 wavSpec = True
 wavRho = True
 gammaRatio = 1.0  # gammaA/gammaB
