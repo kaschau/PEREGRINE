@@ -128,7 +128,7 @@ def simulate(index="i"):
     # entropy stuff
     sA = sk(cpA, initial_T, RA, initial_rho, YA)
     sB = sk(cpB, initial_T, RB, initial_rho, YB)
-    blk.array["s"][:] = initial_rho * YA * sA + initial_rho * YB * sB
+    blk.array["s"][:] = initial_rho * (YA * sA + YB * sB)
     blk.updateDeviceView(["s"])
     for blk in mb:
         pg.compute.utils.entropy(blk, mb.thtrdat)
@@ -160,7 +160,7 @@ def simulate(index="i"):
             rho = blk.array["Q"][ng:-ng, ng:-ng, ng:-ng, 0]
             sA = sk(cpA, T, RA, rho, YA)
             sB = sk(cpB, T, RB, rho, YB)
-            dS = np.sum(rho * YA * sA + rho * YB * sB)
+            dS = np.sum(rho * (YA * sA + YB * sB))
             sDerived.append(dS)
             eS = np.sum(blk.array["s"][ng:-ng, ng:-ng, ng:-ng])
             sEvolved.append(eS)
