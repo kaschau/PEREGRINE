@@ -44,10 +44,6 @@ class rrk4:
         s0 = np.array([computeEntropy(self, self.thtrdat)])
         comm.Allreduce(MPI.IN_PLACE, s0, op=MPI.SUM)
 
-        # store zeroth stage solution
-        for blk in self:
-            AEQB(blk.Q0, blk.Q)
-
         # First Stage
         self.titme = self.tme
         RHS(self)
