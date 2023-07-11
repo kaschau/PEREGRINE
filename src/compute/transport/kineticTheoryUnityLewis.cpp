@@ -47,8 +47,8 @@ void kineticTheoryUnityLewis(block_ &b, const thtrdat_ &th, const int &nface,
 #ifdef NSCOMPILE
         double Y(ns);
         double X(ns);
-        double mu_sp(ns);
-        double kappa_sp(ns);
+        double mu_sp(ns) = {};
+        double kappa_sp(ns) = {};
 #endif
 
         // Compute nth species Y
@@ -92,8 +92,8 @@ void kineticTheoryUnityLewis(block_ &b, const thtrdat_ &th, const int &nface,
           }
 
           // Set to the correct dimensions
-          mu_sp(n) = sqrt_T * mu_sp(n);
-          kappa_sp(n) = sqrt_T * kappa_sp(n);
+          mu_sp(n) *= sqrt_T;
+          kappa_sp(n) *= sqrt_T;
         }
 
         // Now every species' property is computed, generate mixture values
