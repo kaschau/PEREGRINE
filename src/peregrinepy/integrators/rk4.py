@@ -12,10 +12,6 @@ class rk4:
         pass
 
     def step(self, dt):
-        # store zeroth stage solution
-        for blk in self:
-            AEQB(blk.Q0, blk.Q)
-
         # First Stage
         self.titme = self.tme
         RHS(self)
