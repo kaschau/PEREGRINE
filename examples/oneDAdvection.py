@@ -25,7 +25,8 @@ save = False
 def simulate(index="i"):
     config = pg.files.configFile()
     config["timeIntegration"]["integrator"] = "rk4"
-    config["RHS"]["primaryAdvFlux"] = "myKEEP"
+    fname = "ROEECsEvo.png"
+    config["RHS"]["primaryAdvFlux"] = "roeEC"
     # config["RHS"]["shockHandling"] = "artificialDissipation"
     # config["RHS"]["secondaryAdvFlux"] = "scalarDissipation"
     # config["RHS"]["switchAdvFlux"] = "jamesonPressure"
@@ -101,10 +102,10 @@ def simulate(index="i"):
     sEvolved = []
     t = []
     dx = 1.0 / (nx - 1.0)
-    CFL = 0.001
+    CFL = 0.1
     lam = np.sqrt(gamma * R * np.max(initial_T))
-    dt = CFL * dx / lam
-    tEnd = 0.1
+    dt = CFL * dx
+    tEnd = 11.0
     while mb.tme < tEnd:
         abort = pg.mpiComm.mpiUtils.checkForNan(mb)
         if abort > 0:
@@ -170,21 +171,27 @@ def simulate(index="i"):
     plt.clf()
 
     # entropy total
-    plt.plot(t, (sDerived[0] - sDerived) / sDerived[0], label="Recon")
-    plt.scatter(
+    fig, ax = plt.subplots(figsize=(5, 3.5))
+    ax.set_xlim([0, 11])
+    ax.plot(
         t,
-        (sEvolved[0] - sEvolved) / sEvolved[0],
+        (sEvolved - sDerived[0]) / abs(sDerived[0]),
         c="orange",
-        marker="o",
         label=r"$\partial{\rho s}/\partial{t}$",
+        marker="o",
+        markevery=25,
         # s=1.0,
     )
-    plt.legend()
-    plt.ylabel(r"$\Delta(\rho s) / {(\rho s)}_0$")
-    plt.xlabel(r"$x$")
-    # plt.ylim((-0.002, 0.015))
-    if save:
-        plt.savefig("total_entropy_NoDiss.png")
+    ax.plot(
+        t,
+        (sDerived - sDerived[0]) / abs(sDerived[0]),
+        label=r"$s = c_{v}\ln \left(T\right) - R \ln \left( \rho \right)$",
+    )
+
+    ax.legend()
+    ax.set_ylabel(r"$\Delta(\rho s) / \left|\left(\rho s\right)_0\right|$")
+    ax.set_xlabel(r"$t$")
+    plt.savefig(fname)
     plt.show()
     plt.close()
 
