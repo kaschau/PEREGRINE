@@ -220,7 +220,7 @@ def simulate(index="i"):
     fig, ax1 = plt.subplots(figsize=(5, 3.5))
     ax1.plot(
         t,
-        (sEvolved - sEvolved[0]) / sEvolved[0],
+        (sEvolved - sEvolved[0]) / abs(sEvolved[0]),
         c="orange",
         marker="o",
         label=r"$\partial{\rho s}/\partial{t}$",
@@ -228,7 +228,7 @@ def simulate(index="i"):
     )
     ax1.plot(
         t,
-        (sDerived - sEvolved[0]) / sEvolved[0],
+        (sDerived - sEvolved[0]) / abs(sEvolved[0]),
         label=r"$\rho s=\sum \rho Y_{k} s_{k}$",
     )
     ax1.set_ylabel(r"$\Delta(\rho s) / {(\rho s)}_0$")
