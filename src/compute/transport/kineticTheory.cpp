@@ -56,10 +56,12 @@ void kineticTheory(block_ &b, const thtrdat_ &th, const int &nface,
         double mu_sp(ns) = {};
         double kappa_sp(ns) = {};
         double Dij(ns, ns) = {};
-        double D(ns);
+        double D(ns) = {};
 #endif
 
-        // check for pure fluid
+        // check for pure fluid, this int will represent
+        // the index of the species array in which we
+        // have a pure fluid.
         int pure = -1;
 
         // Compute nth species Y
