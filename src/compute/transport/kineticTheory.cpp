@@ -53,10 +53,10 @@ void kineticTheory(block_ &b, const thtrdat_ &th, const int &nface,
 #ifdef NSCOMPILE
         double Y(ns);
         double X(ns);
-        double mu_sp(ns);
-        double kappa_sp(ns);
-        double Dij(ns, ns);
-        double D(ns) = {0.0};
+        double mu_sp(ns) = {};
+        double kappa_sp(ns) = {};
+        double Dij(ns, ns) = {};
+        double D(ns);
 #endif
 
         // check for pure fluid
@@ -110,13 +110,12 @@ void kineticTheory(block_ &b, const thtrdat_ &th, const int &nface,
           }
 
           // Set to the correct dimensions
-          mu_sp(n) = sqrt_T * mu_sp(n);
-          kappa_sp(n) = sqrt_T * kappa_sp(n);
+          mu_sp(n) *= sqrt_T;
+          kappa_sp(n) *= sqrt_T;
           const double T_3o2 = pow(T, 1.5);
           for (int n2 = n; n2 <= ns - 1; n2++) {
-            double temp = T_3o2 * Dij(n, n2);
-            Dij(n, n2) = temp;
-            Dij(n2, n) = temp;
+            Dij(n, n2) *= T_3o2;
+            Dij(n2, n) = Dij(n, n2);
           }
         }
 
