@@ -13,50 +13,43 @@ void centralDifference(block_ &b) {
   Kokkos::parallel_for(
       "2nd order central difference i face conv fluxes", range_i,
       KOKKOS_LAMBDA(const int i, const int j, const int k) {
-        double U;
-        double uf, rhouf;
-        double vf, rhovf;
-        double wf, rhowf;
-        double pf;
-
         // Compute face normal volume flux vector
-        uf = 0.5 * (b.q(i, j, k, 1) + b.q(i - 1, j, k, 1));
-        vf = 0.5 * (b.q(i, j, k, 2) + b.q(i - 1, j, k, 2));
-        wf = 0.5 * (b.q(i, j, k, 3) + b.q(i - 1, j, k, 3));
+        double uR = b.q(i, j, k, 1);
+        double uL = b.q(i - 1, j, k, 1);
 
-        U = b.isx(i, j, k) * uf + b.isy(i, j, k) * vf + b.isz(i, j, k) * wf;
+        double rhouR = b.Q(i, j, k, 1);
+        double rhouL = b.Q(i - 1, j, k, 1);
 
-        pf = 0.5 * (b.q(i, j, k, 0) + b.q(i - 1, j, k, 0));
+        double a = b.isx(i, j, k);
 
-        rhouf = 0.5 * (b.Q(i, j, k, 1) + b.Q(i - 1, j, k, 1));
-        rhovf = 0.5 * (b.Q(i, j, k, 2) + b.Q(i - 1, j, k, 2));
-        rhowf = 0.5 * (b.Q(i, j, k, 3) + b.Q(i - 1, j, k, 3));
+        double pR = b.q(i, j, k, 0);
+        double pL = b.q(i - 1, j, k, 0);
 
         // Compute fluxes
-        double rho;
-        rho = 0.5 * (b.Q(i, j, k, 0) + b.Q(i - 1, j, k, 0));
 
         // Continuity rho*Ui
-        b.iF(i, j, k, 0) = rho * U;
+        b.iF(i, j, k, 0) = 0.5 * (rhouR + rhouL) * a;
 
         // x momentum rho*u*Ui+ p*Ax
-        b.iF(i, j, k, 1) = rhouf * U + pf * b.isx(i, j, k);
+        b.iF(i, j, k, 1) = 0.5 * ((rhouR * uR + pR) + (rhouL * uL + pL)) * a;
 
         // y momentum rho*v*Ui+ p*Ay
-        b.iF(i, j, k, 2) = rhovf * U + pf * b.isy(i, j, k);
+        b.iF(i, j, k, 2) = 0.0;
 
         // w momentum rho*w*Ui+ p*Az
-        b.iF(i, j, k, 3) = rhowf * U + pf * b.isz(i, j, k);
+        b.iF(i, j, k, 3) = 0.0;
 
         // Total energy (rhoE+ p)*Ui)
-        double rhoE = 0.5 * (b.Q(i, j, k, 4) + b.Q(i - 1, j, k, 4));
+        double rhoER = b.Q(i, j, k, 4);
+        double rhoEL = b.Q(i - 1, j, k, 4);
 
-        b.iF(i, j, k, 4) = (rhoE + pf) * U;
+        b.iF(i, j, k, 4) = 0.5 * ((rhoER + pR) * uR + (rhoEL + pL) * uL) * a;
 
         // Species
         for (int n = 0; n < b.ne - 5; n++) {
           b.iF(i, j, k, 5 + n) =
-              0.5 * (b.Q(i, j, k, 5 + n) + b.Q(i - 1, j, k, 5 + n)) * U;
+              0.5 * (b.Q(i, j, k, 5 + n) * uR + b.Q(i - 1, j, k, 5 + n) * uL) *
+              a;
         }
       });
 
