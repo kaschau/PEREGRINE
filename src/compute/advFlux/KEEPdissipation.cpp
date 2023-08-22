@@ -58,8 +58,8 @@ void KEEPdissipation(block_ &b) {
 
         // ke dissipation
         double Dk = -0.5 *
-                        (pow(b.q(i, j, k, 1), 2.0) + pow(b.q(i, j, k, 1), 2.0) +
-                         pow(b.q(i, j, k, 1), 2.0)) *
+                        (pow(b.q(i, j, k, 1), 2.0) + pow(b.q(i, j, k, 2), 2.0) +
+                         pow(b.q(i, j, k, 3), 2.0)) *
                         Dc +
                     b.q(i, j, k, 1) * Dmu + b.q(i, j, k, 2) * Dmv +
                     b.q(i, j, k, 3) * Dmw;
