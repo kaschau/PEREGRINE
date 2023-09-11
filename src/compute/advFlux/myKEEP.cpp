@@ -65,6 +65,7 @@ void myKEEP(block_ &b) {
         double &rhoR = b.Q(i, j, k, 0);
         double RR = b.qh(i, j, k, 1) - cvR;
         double hR = b.qh(i, j, k, 2) / rhoR;
+        double eR = b.qh(i, j, k, 4);
         double &uR = b.q(i, j, k, 1);
         double &vR = b.q(i, j, k, 2);
         double &wR = b.q(i, j, k, 3);
@@ -86,6 +87,7 @@ void myKEEP(block_ &b) {
         double &rhoL = b.Q(i - 1, j, k, 0);
         double RL = b.qh(i - 1, j, k, 1) - cvL;
         double hL = b.qh(i - 1, j, k, 2) / rhoL;
+        double eL = b.qh(i - 1, j, k, 4);
         double &uL = b.q(i - 1, j, k, 1);
         double &vL = b.q(i - 1, j, k, 2);
         double &wL = b.q(i - 1, j, k, 3);
@@ -131,6 +133,7 @@ void myKEEP(block_ &b) {
                      V2 * b.iF(i, j, k, 2) - V3 * b.iF(i, j, k, 3)) /
                         V4 -
                     Pj - Kj;
+        Ij = (eL * TR + eR * TL) / (TL + TR) * U;
 
         b.iF(i, j, k, 4) = Ij + Kj + Pj;
 
@@ -201,6 +204,7 @@ void myKEEP(block_ &b) {
         double &rhoR = b.Q(i, j, k, 0);
         double RR = b.qh(i, j, k, 1) - cvR;
         double hR = b.qh(i, j, k, 2) / rhoR;
+        double eR = b.qh(i, j, k, 4);
         double &uR = b.q(i, j, k, 1);
         double &vR = b.q(i, j, k, 2);
         double &wR = b.q(i, j, k, 3);
@@ -222,6 +226,7 @@ void myKEEP(block_ &b) {
         double &rhoL = b.Q(i, j - 1, k, 0);
         double RL = b.qh(i, j - 1, k, 1) - cvL;
         double hL = b.qh(i, j - 1, k, 2) / rhoL;
+        double eL = b.qh(i, j - 1, k, 4);
         double &uL = b.q(i, j - 1, k, 1);
         double &vL = b.q(i, j - 1, k, 2);
         double &wL = b.q(i, j - 1, k, 3);
@@ -266,6 +271,8 @@ void myKEEP(block_ &b) {
                      V2 * b.jF(i, j, k, 2) - V3 * b.jF(i, j, k, 3)) /
                         V4 -
                     Pj - Kj;
+
+        Ij = (eL * TR + eR * TL) / (TL + TR) * V;
 
         b.jF(i, j, k, 4) = Ij + Kj + Pj;
 
@@ -335,6 +342,7 @@ void myKEEP(block_ &b) {
         double &rhoR = b.Q(i, j, k, 0);
         double RR = b.qh(i, j, k, 1) - cvR;
         double hR = b.qh(i, j, k, 2) / rhoR;
+        double eR = b.qh(i, j, k, 4);
         double &uR = b.q(i, j, k, 1);
         double &vR = b.q(i, j, k, 2);
         double &wR = b.q(i, j, k, 3);
@@ -356,6 +364,7 @@ void myKEEP(block_ &b) {
         double &rhoL = b.Q(i, j, k - 1, 0);
         double RL = b.qh(i, j, k - 1, 1) - cvL;
         double hL = b.qh(i, j, k - 1, 2) / rhoL;
+        double eL = b.qh(i, j, k - 1, 4);
         double &uL = b.q(i, j, k - 1, 1);
         double &vL = b.q(i, j, k - 1, 2);
         double &wL = b.q(i, j, k - 1, 3);
@@ -400,6 +409,8 @@ void myKEEP(block_ &b) {
                      V2 * b.kF(i, j, k, 2) - V3 * b.kF(i, j, k, 3)) /
                         V4 -
                     Pj - Kj;
+
+        Ij = (eL * TR + eR * TL) / (TL + TR) * W;
 
         b.kF(i, j, k, 4) = Ij + Kj + Pj;
         // Species
