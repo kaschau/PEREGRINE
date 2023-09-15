@@ -333,9 +333,9 @@ void myKEEP(block_ &b, const thtrdat_ &th) {
 
         double Fs = 0.0;
         for (int n = 0; n < ns; n++) {
-          Fs += 0.5 * (rhoR * YR[n] + rhoL * YL[n]) * 0.5 * (skR[n] + skL[n]);
+          Fs += 0.5 * (YR[n] + YL[n]) * 0.5 * (skR[n] + skL[n]);
         }
-        Fs *= V;
+        Fs *= rho * V;
         double Ij = Fs + PHI - Vj[0] * b.jF(i, j, k, 0) -
                     Vj[1] * b.jF(i, j, k, 1) - Vj[2] * b.jF(i, j, k, 2) -
                     Vj[3] * b.jF(i, j, k, 3);
@@ -502,9 +502,9 @@ void myKEEP(block_ &b, const thtrdat_ &th) {
 
         double Fs = 0.0;
         for (int n = 0; n < ns; n++) {
-          Fs += 0.5 * (rhoR * YR[n] + rhoL * YL[n]) * 0.5 * (skR[n] + skL[n]);
+          Fs += 0.5 * (YR[n] + YL[n]) * 0.5 * (skR[n] + skL[n]);
         }
-        Fs *= W;
+        Fs *= rho * W;
         double Ij = Fs + PHI - V[0] * b.kF(i, j, k, 0) -
                     V[1] * b.kF(i, j, k, 1) - V[2] * b.kF(i, j, k, 2) -
                     V[3] * b.kF(i, j, k, 3);
