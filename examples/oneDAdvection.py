@@ -26,10 +26,7 @@ def simulate(index="i"):
     config = pg.files.configFile()
     config["timeIntegration"]["integrator"] = "rk4"
     config["RHS"]["primaryAdvFlux"] = "myKEEP"
-    config["thermochem"]["eos"] = "tpg"
-    config["thermochem"]["spdata"] = [
-        "N2",
-    ]
+    config["thermochem"]["eos"] = "cpg"
     config["RHS"]["diffusion"] = False
     config.validateConfig()
     mb = pg.multiBlock.generateMultiBlockSolver(1, config)
