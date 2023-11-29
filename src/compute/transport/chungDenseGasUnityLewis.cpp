@@ -73,7 +73,6 @@ void chungDenseGasUnityLewis(block_ &b, const thtrdat_ &th, const int &nface,
 
         // Update mixture properties
         // Mole fractions
-        double MWmix = 0.0;
         {
           double mass = 0.0;
           for (int n = 0; n <= ns - 1; n++) {
@@ -82,7 +81,6 @@ void chungDenseGasUnityLewis(block_ &b, const thtrdat_ &th, const int &nface,
           // Mean molecular weight, mole fraction
           for (int n = 0; n <= ns - 1; n++) {
             X(n) = Y(n) / th.MW(n) / mass;
-            MWmix += X(n) * th.MW(n);
           }
         }
 

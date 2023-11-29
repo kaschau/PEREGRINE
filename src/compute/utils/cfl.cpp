@@ -15,7 +15,7 @@ std::array<double, 3> CFLmax(const std::vector<block_> &mb) {
   double returnMaxC = 0.0;
   double returnMaxR = 0.0;
 
-  for (const block_ b : mb) {
+  for (const block_ &b : mb) {
     double iMult = 1.0;
     double jMult = 1.0;
     double kMult = 1.0;

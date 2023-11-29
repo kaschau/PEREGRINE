@@ -12,7 +12,7 @@ int checkNan(const std::vector<block_> &mb) {
   int allFinite;
   int foundNan = 0; // <-- foundNan ends up as q when nans are detected
 
-  for (const block_ b : mb) {
+  for (const block_ &b : mb) {
     MDRange4 range_cc({b.ng, b.ng, b.ng, 0}, {b.ni + b.ng - 1, b.nj + b.ng - 1,
                                               b.nk + b.ng - 1, b.ne});
     Kokkos::parallel_reduce(

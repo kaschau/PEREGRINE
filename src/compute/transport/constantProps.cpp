@@ -58,13 +58,6 @@ void constantProps(block_ &b, const thtrdat_ &th, const int &nface,
             X(n) = Y(n) / th.MW(n) / mass;
           }
         }
-        // Mean molecular weight
-        {
-          double MWmix = 0.0;
-          for (int n = 0; n <= ns - 1; n++) {
-            MWmix += X(n) * th.MW(n);
-          }
-        }
 
         // viscosity mixture
         double mu = 0.0;

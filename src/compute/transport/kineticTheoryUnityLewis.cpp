@@ -59,23 +59,6 @@ void kineticTheoryUnityLewis(block_ &b, const thtrdat_ &th, const int &nface,
         }
         Y(ns - 1) = fmax(0.0, Y(ns - 1));
 
-        // Update mixture properties
-        // Mole fractions
-        double MWmix;
-        {
-          double mass = 0.0;
-          for (int n = 0; n <= ns - 1; n++) {
-            mass += Y(n) / th.MW(n);
-          }
-
-          // Mean molecular weight, mole fraction
-          MWmix = 0.0;
-          for (int n = 0; n <= ns - 1; n++) {
-            X(n) = Y(n) / th.MW(n) / mass;
-            MWmix += X(n) * th.MW(n);
-          }
-        }
-
         // Evaluate all property polynomials
         const double logT = log(T);
         const double sqrt_T = exp(0.5 * logT);

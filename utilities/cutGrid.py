@@ -433,7 +433,7 @@ if __name__ == "__main__":
                     while trialNcells > maxBlockSize:
                         trialNsplits[a] += 1
                         # How many times do we need to cut this axis before block size is less than maxBlockSize?
-                        trialNcells = np.product(nis / trialNsplits)
+                        trialNcells = np.prod(nis / trialNsplits)
                         if trialNsplits[a] >= nis[a]:
                             raise ValueError(
                                 "I have to split the largest block to single cell sizes to meet your requested maxBlockSize. Are you sure thats a reasonable block size?"
