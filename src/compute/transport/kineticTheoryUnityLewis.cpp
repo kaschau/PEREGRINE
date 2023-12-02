@@ -61,7 +61,6 @@ void kineticTheoryUnityLewis(block_ &b, const thtrdat_ &th, const int &nface,
 
         // Update mixture properties
         // Mole fractions
-        double MWmix;
         {
           double mass = 0.0;
           for (int n = 0; n <= ns - 1; n++) {
