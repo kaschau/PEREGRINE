@@ -109,7 +109,4 @@ def test_chemistry(my_setup, thfile, ctfile, chmfile):
         )
 
     passfail = np.all(np.array(pd) < 1e-10)
-    print("*****")
-    print(np.array(pd))
-    print("*****")
     assert passfail
