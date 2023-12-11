@@ -7,10 +7,15 @@ namespace py = pybind11;
 void bindAdvFlux(py::module_ &m) {
   // ./advFlux
   py::module advFlux = m.def_submodule("advFlux", "advective flux module");
-  //  |----> secondOrderKEEP.cpp
-  advFlux.def("secondOrderKEEP", &secondOrderKEEP,
+  //  |----> KEEP.cpp
+  advFlux.def("KEEP", &KEEP,
               "Compute centeral difference euler fluxes via second order KEEP",
               py::arg("block_ object"));
+  //  |----> KEEPpe.cpp
+  advFlux.def(
+      "KEEPpe", &KEEPpe,
+      "Compute centeral difference euler fluxes via second order KEEPpe",
+      py::arg("block_ object"));
   //  |----> centeredDifference.cpp
   advFlux.def("centralDifference", &centralDifference,
               "Compute central difference euler fluxes",

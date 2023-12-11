@@ -13,7 +13,7 @@ pytestmark = pytest.mark.parametrize(
     "adv,spdata",
     list(
         itertools.product(
-            ("secondOrderKEEP", "fourthOrderKEEP"),
+            ("KEEPpe", "fourthOrderKEEP"),
             (["Air"], "thtr_CH4_O2_Stanford_Skeletal.yaml"),
         )
     ),

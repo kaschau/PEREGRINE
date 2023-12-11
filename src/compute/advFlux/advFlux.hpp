@@ -4,8 +4,10 @@
 #include "block_.hpp"
 
 // ./advFlux
-//    |------> secondOrderKEEP
-void secondOrderKEEP(block_ &b);
+//    |------> KEEP
+void KEEP(block_ &b);
+//    |------> KEEPpe
+void KEEPpe(block_ &b);
 //    |------> centralDifference
 void centralDifference(block_ &b);
 //    |------> fourthOrderKEEP

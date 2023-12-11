@@ -17,7 +17,7 @@ class twoblock123:
         self.config["RHS"]["secondaryAdvFlux"] = "rusanov"
 
         self.config["RHS"]["diffusion"] = True
-        if adv == "secondOrderKEEP":
+        if adv == "KEEPpe":
             self.config["RHS"]["diffOrder"] = 2
         elif adv == "fourthOrderKEEP":
             self.config["RHS"]["diffOrder"] = 4
@@ -78,7 +78,7 @@ pytestmark = pytest.mark.parametrize(
     "adv,spdata",
     list(
         itertools.product(
-            ("secondOrderKEEP", "fourthOrderKEEP"),
+            ("KEEPpe", "fourthOrderKEEP"),
             (["Air"], "thtr_CH4_O2_Stanford_Skeletal.yaml"),
         )
     ),

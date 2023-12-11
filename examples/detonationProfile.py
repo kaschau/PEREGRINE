@@ -28,7 +28,7 @@ def simulate():
     config = pg.files.configFile()
     config["RHS"]["diffusion"] = False
     config["RHS"]["shockHandling"] = "artificialDissipation"
-    config["RHS"]["primaryAdvFlux"] = "secondOrderKEEP"
+    config["RHS"]["primaryAdvFlux"] = "KEEPpe"
     config["RHS"]["secondaryAdvFlux"] = "scalarDissipation"
     config["RHS"]["switchAdvFlux"] = "vanLeer"
     config["timeIntegration"]["integrator"] = "rk3"

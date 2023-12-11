@@ -149,7 +149,8 @@ def setRHS(cls, config):
 
 def howManyNG(config):
     advFluxNG = {
-        "secondOrderKEEP": 1,
+        "KEEP": 1,
+        "KEEPpe": 1,
         "centralDifference": 1,
         "fourthOrderKEEP": 2,
         "hllc": 1,
