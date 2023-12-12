@@ -140,6 +140,14 @@ def setRHS(cls, config):
             try:
                 cls.expChem = null
                 cls.impChem = getattr(compute.chemistry, mech)
+                if config["thermochem"]["nChemSubSteps"] > 1:
+                    import warnings
+
+                    warnings.warn(
+                        "WARNING: nChemSubSteps > 1 with implicit chemistry. This has no effect.",
+                        RuntimeWarning,
+                    )
+                    config["thermochem"]["nChemSubSteps"] = 1
             except AttributeError:
                 raise pgConfigError("mechanism", mech)
     else:
