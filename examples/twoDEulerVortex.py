@@ -70,6 +70,7 @@ def simulate():
 
     mb.unifyGrid()
     mb.computeMetrics(config["RHS"]["diffOrder"])
+    print(mb)
 
     Rc = 1.0
     rhoInf = 1.0
