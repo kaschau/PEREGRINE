@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from ast import Import
 import mpi4py.rc
 
 mpi4py.rc.initialize = False
@@ -19,3 +20,10 @@ from . import thermoTransport
 from . import coproc
 
 from . import interpolation
+
+from . import files
+
+try:
+    from . import compute
+except ImportError:
+    pass
