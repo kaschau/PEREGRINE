@@ -5,8 +5,11 @@ An attempt at a superfast Python/C++ Multi-Physics CFD code using Kokkos for per
 
 # Installation
 
+For editable installation:
 
-``` setup.py install ```
+``` pip install -e . ```
+
+Note, installation with pip is hard coded to Debug mode. I can't figure out how to make that an option.
 
 Or just set PYTHONPATH to point to /path/to/PEREGRINE/src/peregrinepy
 followed by manual install
