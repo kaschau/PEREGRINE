@@ -2,8 +2,8 @@
 
 <p align="center">
     <picture>
-      <source media="(prefers-color-scheme: dark)" width="1024" srcset="https://github.com/kaschau/PEREGRINE/docs/images/pgSplash.jpg">
-      <img alt="peregrine logo" width="1024" src="https://github.com/kaschau/PEREGRINE/docs/images/pgSplash.jpg">
+      <source media="(prefers-color-scheme: dark)" width="1024" srcset="https://github.com/kaschau/PEREGRINE/docs/images/pgSplash.png">
+      <img alt="peregrine logo" width="1024" src="https://github.com/kaschau/PEREGRINE/docs/images/pgSplash.png">
     </picture>
 </p>
 
