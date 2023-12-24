@@ -123,6 +123,17 @@ Parallel I/O can be achieved with a parallel capable h5py installation.
     
 ``` $HDF5_DIR ``` must point to a parallel enabled HDF5 installation. Parallel I/O is only applicable when running simulations with ```config["io"]["lumpIO"]=true```.
 
+## Attribution
+Please use the following BibTex to cite PEREGRINE in scientific writing:
+```
+@misc{PEREGRINE,
+   author = {Kyle A. Schau},
+   year = {2021},
+   note = {https://github.com/kaschau/PEREGRINE},
+   title = {PEREGRINE: Accessible, Performant, Portable Multiphysics CFD}
+}
+```
+
 ## License
 
 PEREGRINE is released under the New BSD License (see the LICENSE file for details).
