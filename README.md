@@ -1,4 +1,4 @@
-# PEREGRINE: Accessible, Performance, Portable Multiphysics CFD
+# PEREGRINE: Accessible, Performant, Portable Multiphysics CFD
 
 <p align="center">
     <picture>
