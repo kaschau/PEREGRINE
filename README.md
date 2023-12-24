@@ -1,7 +1,11 @@
-# PEREGRINE
+# PEREGRINE: Accessible, Performance, Portable Multiphysics CFD
 
-An attempt at a superfast Python/C++ Multi-Physics CFD code using Kokkos for performance portability. 
-
+<p align="center">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" width="1024" srcset="https://github.com/kaschau/PEREGRINE/docs/images/pgSplash.jpg">
+      <img alt="peregrine logo" width="1024" src="https://github.com/kaschau/PEREGRINE/docs/images/pgSplash.jpg">
+    </picture>
+</p>
 
 # Installation
 
