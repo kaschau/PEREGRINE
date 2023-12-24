@@ -2,5 +2,5 @@
 
 Home of the future docs.
 
--[Code Structire](./codeStructure.md)
--[Boundary Conditions](./boundaryConditions.md)
+* [Code Structure](./codeStructure.md)
+* [Boundary Conditions](./boundaryConditions.md)
