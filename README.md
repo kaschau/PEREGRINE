@@ -22,7 +22,7 @@ Note, installation with pip is hard coded to Debug mode. I can't figure out how 
 
 For development, it is better to set the environment variable `PYTHONPATH` to point to `/path/to/PEREGRINE/src/peregrinepy` followed by manual installation of the compute module:
 
-```cd /path/to/PEREGRINE; mkdir build; cd build; ccmake ../```
+```cd /path/to/PEREGRINE; mkdir build; cd build; ccmake ../; make -j install```
 
 You must also install [Kokkos](https://www.github.com/kokkos/kokkos) and set the environment variable `Kokkos_DIR=/path/to/kokkos/install`. The Kokkos installation controls the Host/Device + Serial/Parallel execution parameters, there are no settings for the python installation.
 
