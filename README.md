@@ -2,15 +2,15 @@
 
 <p align="center">
     <picture>
-      <source media="(prefers-color-scheme: dark)" width="800" srcset="https://github.com/kaschau/PEREGRINE/blob/main/docs/images/pgSplashD.jpg">
-      <source media="(prefers-color-scheme: light)" width="800" srcset="https://github.com/kaschau/PEREGRINE/blob/main/docs/images/pgSplashL.jpg">
-      <img alt="peregrine logo" width="800" src="https://github.com/kaschau/PEREGRINE/blob/main/docs/images/pgSplashL.jpg">
+      <source media="(prefers-color-scheme: dark)" width="800" srcset="https://github.com/kaschau/PEREGRINE/blob/main/docs/images/pgSplashD2.jpg">
+      <source media="(prefers-color-scheme: light)" width="800" srcset="https://github.com/kaschau/PEREGRINE/blob/main/docs/images/pgSplashL2.jpg">
+      <img alt="peregrine logo" width="800" src="https://github.com/kaschau/PEREGRINE/blob/main/docs/images/pgSplashL2.jpg">
     </picture>
 </p>
 
 # About
 
-PEREGRINE is a multiblock, structured-grid multiphysics, finite volume, 3D CFD solver. The main novelty of PEREGRINE is its implementation in [Python](https://www.python.org) for ease of development and use of [Kokkos](https://www.github.com/kokkos/kokkos) for performance portability. If you are unfamiliar with Kokkos, do a little digging, it is a great project with a healthy community and helpful developers. The TLDR; on Kokkos is: Kokkos is a C++ library (not a C++ language extension) that exposes useful abstractions for data management (i.e. multidimensional arrays) and kernel execution from CPU-Serial to GPU-Parallel. This allows a single source, multiple architecture, approach in PEREGRINE. In other words, you can run a case with PEREGRINE on your laptop, then without changing a single line of source code, run the same case on a AMD GPU based super computer.
+PEREGRINE is a multiblock, structured-grid multiphysics, finite volume, 3D CFD solver. The main novelty of PEREGRINE is its implementation in [Python](https://www.python.org) for ease of development and use of [Kokkos](https://www.github.com/kokkos/kokkos) for performance portability. If you are unfamiliar with Kokkos, do a little digging, it is a great project with a healthy community and helpful developers. The TLDR; Kokkos is a C++ library (not a C++ language extension) that exposes useful abstractions for data management (i.e. multidimensional arrays) and kernel execution from CPU-Serial to GPU-Parallel. This allows a single source, multiple architecture, approach in PEREGRINE. In other words, you can run a case with PEREGRINE on your laptop, then without changing a single line of source code, run the same case on a AMD GPU based super computer.
 
 # Installation
 
