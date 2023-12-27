@@ -1,6 +1,12 @@
 from .compute import utils
 from .mpiComm import communicate
 
+"""
+The right hand side of a peregrine case. Starts from dQ/dt=0 and
+progressively flux differences based on the RHS attribute methods
+set for the multiBlock solver.
+"""
+
 
 def RHS(mb):
     for blk in mb:

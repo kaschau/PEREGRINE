@@ -54,7 +54,7 @@ def test_kineticTheoryUnityLewis(my_setup, ctfile, thfile):
     blk = mb[0]
 
     mb.generateHalo()
-    mb.computeMetrics(config["RHS"]["diffOrder"])
+    mb.computeMetrics()
 
     gas.TPY = T, p, Y
     blk.array["q"][:, :, :, 0] = p

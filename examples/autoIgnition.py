@@ -54,7 +54,7 @@ def simulate():
 
     mb.unifyGrid()
 
-    mb.computeMetrics(config["RHS"]["diffOrder"])
+    mb.computeMetrics()
 
     blk.array["q"][:, :, :, 0] = gas.P
     blk.array["q"][:, :, :, 4] = gas.T

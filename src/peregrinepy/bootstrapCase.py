@@ -1,5 +1,15 @@
 import peregrinepy as pg
 
+"""
+This function is used for directory based peregrine cases (non-script cases).
+
+The function will start with a config object
+(see PEREGRINE/src/peregrinepy/files/config.py),
+which is basically a dictionary, and build a multiBlock solver case based on
+what is in the input config, as well as reading files from the directory
+structure of the peregrine case.
+"""
+
 
 def bootstrapCase(config):
     comm, rank, size = pg.mpiComm.mpiUtils.getCommRankSize()
@@ -44,6 +54,8 @@ def bootstrapCase(config):
         comm.Abort()
 
     myblocks = blocksForProcs[rank]
+    # Generate the multiBlock solver object for each MPI process, given the number of
+    # blocks each process is responsible for
     mb = pg.multiBlock.generateMultiBlockSolver(len(myblocks), config, myblocks)
     comm.Barrier()
     if rank == 0:
@@ -113,7 +125,7 @@ def bootstrapCase(config):
     mb.initSolverArrays(config)
 
     ################################################################
-    # Read in periodic boundary condition info
+    # Read in any periodic boundary condition info
     ################################################################
     pg.readers.readBcs(mb, config["io"]["inputDir"], justPeriodic=True)
 
@@ -121,13 +133,13 @@ def bootstrapCase(config):
     # Unify the grid via halo construction, compute metrics
     ################################################################
     mb.unifyGrid()
-    mb.computeMetrics(config["RHS"]["diffOrder"])
+    mb.computeMetrics()
     comm.Barrier()
     if rank == 0:
         print("Unified grid.")
 
     ################################################################
-    # Read in boundary conditions
+    # Read in all non-periodic boundary conditions
     ################################################################
     pg.readers.readBcs(mb, config["io"]["inputDir"], justPeriodic=False)
     comm.Barrier()

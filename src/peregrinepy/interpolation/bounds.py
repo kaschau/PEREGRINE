@@ -242,8 +242,8 @@ def findBounds(mbTo, mbFrom, verboseSearch):
        numbers of all the blocks from mbFrom that each block in mbTo reside in, spatially.
     """
 
-    mbFrom.computeMetrics(fdOrder=2, xcOnly=True)
-    mbTo.computeMetrics(fdOrder=2, xcOnly=True)
+    mbFrom.computeMetrics(xcOnly=True)
+    mbTo.computeMetrics(xcOnly=True)
 
     boundingBlocks = []
     nblks = mbTo.nblks

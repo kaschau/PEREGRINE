@@ -107,7 +107,6 @@ class solver(restart):
         string += f"  Equation of State: {self.eos.__name__}\n"
         if self.config["RHS"]["diffusion"]:
             string += f"  Transport Equation: {self.trans.__name__}\n"
-            string += f"  Spatial derivatives estimated with {self.config['RHS']['diffOrder']} order\n"
         else:
             string += "  Diffusion terms not solved for\n"
         string += f"  Subgrid Model: {self.sgs.__name__}\n"

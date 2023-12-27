@@ -47,7 +47,7 @@ def test_synthTurbInlet(my_setup):
     mb.initSolverArrays(config)
 
     mb.generateHalo()
-    mb.computeMetrics(config["RHS"]["diffOrder"])
+    mb.computeMetrics()
 
     blk = mb[0]
     face = blk.getFace(1)

@@ -86,7 +86,7 @@ def simulate():
 
     mb.setBlockCommunication()
     mb.unifyGrid()
-    mb.computeMetrics(config["RHS"]["diffOrder"])
+    mb.computeMetrics()
 
     # Set upstream state
     q[ng:-ng, ng:-ng, ng:-ng, 0] = p1

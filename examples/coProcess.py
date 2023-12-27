@@ -159,7 +159,7 @@ def simulate():
 
     mb.initSolverArrays(config)
     mb.generateHalo()
-    mb.computeMetrics(config["RHS"]["diffOrder"])
+    mb.computeMetrics()
 
     blk.array["q"][:, :, :, 0] = 101325.0
     blk.array["q"][:, :, :, 1] = 10.0

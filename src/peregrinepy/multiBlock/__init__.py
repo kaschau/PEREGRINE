@@ -111,11 +111,7 @@ def setRHS(cls, config):
 
     # spatial derivatives, subgrid mode, diffusive fluxes
     if config["RHS"]["diffusion"]:
-        dqO = config["RHS"]["diffOrder"]
-        try:
-            cls.dqdxyz = getattr(compute.utils, f"dq{dqO}FD")
-        except AttributeError:
-            raise pgConfigError("diffOrder", f"dq{dqO}FD")
+        cls.dqdxyz = getattr(compute.utils, f"dq2FD")
 
         # Subgrid models
         if config["RHS"]["subgrid"] is not None:
@@ -195,8 +191,6 @@ def howManyNG(config):
         None: 1,
     }
 
-    diffOrderNG = {2: 1, 4: 2}
-
     ng = 1
 
     # First check primary advective flux
@@ -209,11 +203,6 @@ def howManyNG(config):
 
     sub = config["RHS"]["subgrid"]
     ng = max(ng, subgridNG[sub])
-
-    # Now check diffusion term order
-    if config["RHS"]["diffusion"]:
-        dO = config["RHS"]["diffOrder"]
-        ng = max(ng, diffOrderNG[dO])
 
     return ng
 

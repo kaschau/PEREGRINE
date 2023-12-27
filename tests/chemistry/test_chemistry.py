@@ -60,7 +60,7 @@ def test_chemistry(my_setup, thfile, ctfile, chmfile):
     blk = mb[0]
 
     mb.generateHalo()
-    mb.computeMetrics(config["RHS"]["diffOrder"])
+    mb.computeMetrics()
 
     blk.array["q"][:, :, :, 0] = p
     blk.array["q"][:, :, :, 4] = T

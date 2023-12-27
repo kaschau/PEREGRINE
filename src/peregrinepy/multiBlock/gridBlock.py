@@ -147,8 +147,8 @@ class gridBlock(topologyBlock):
         ]:
             self.array[name] = np.zeros((shape))
 
-    def computeMetrics(self, fdOrder, xcOnly=False):
-        metrics(self, fdOrder, xcOnly)
+    def computeMetrics(self, xcOnly=False):
+        metrics(self, xcOnly)
 
     def generateHalo(self):
         generateHalo(self)
