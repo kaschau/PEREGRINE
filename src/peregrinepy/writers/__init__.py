@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from . import parallelWriter
 from .writeGrid import writeGrid
 from .writeRestart import writeRestart

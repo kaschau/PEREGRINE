@@ -1,23 +1,10 @@
-# -*- coding: utf-8 -*-
-
-""" grid.py
-
-Authors:
-
-Kyle Schau
-
-
-This module holds the peregrinepy.multiBlock object class that inherits from
-python lists to create a list of peregrine.block object with added functionality and attributes
-
-"""
-
 from .topology import topology
 from .gridBlock import gridBlock
 
 
 class grid(topology):
-    """A list of peregrinepy.multiBlock.gridBlock objects. Inherits from peregrinepy.multiBlock.topology"""
+    """A list of peregrinepy.multiBlock.grid objects.
+    Inherits from peregrinepy.multiBlock.topology"""
 
     mbType = "grid"
 

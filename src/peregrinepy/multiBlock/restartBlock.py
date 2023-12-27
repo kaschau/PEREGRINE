@@ -1,15 +1,3 @@
-# -*- coding: utf-8 -*-
-
-""" restartBlock.py
-
-Authors:
-
-Kyle Schau
-
-This module defines a restart_block object that is used to compose a peregrinepy.multiBlock.restart (see multiBlock.py).
-
-"""
-
 import numpy as np
 from .gridBlock import gridBlock
 
@@ -47,7 +35,6 @@ class restartBlock(gridBlock):
         #########################################################
         # Primative Variables
         #########################################################
-        # Conserved variables
         for d in ["q"]:
             self.array[f"{d}"] = None
             self.mirror[f"{d}"] = None

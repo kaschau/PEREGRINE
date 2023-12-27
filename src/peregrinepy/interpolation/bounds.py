@@ -1,15 +1,3 @@
-# -*- coding: utf-8 -*-
-
-""" bounds.py
-
-Authors:
-
-Kyle Schau
-
-This module contains function related to bounding in an interpolation procedure.
-
-"""
-
 from scipy import spatial
 import numpy as np
 from ..misc import progressBar

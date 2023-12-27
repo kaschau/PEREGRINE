@@ -109,6 +109,7 @@ class topologyFace:
 
     @property
     def neighborNface(self):
+        """Get the face number or our neighbor's face we share."""
         nface = self.nface
         orientation = self.orientation
 

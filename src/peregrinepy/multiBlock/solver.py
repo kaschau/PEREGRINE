@@ -1,24 +1,11 @@
-# -*- coding: utf-8 -*-
-
-""" multiBlock.py
-
-Authors:
-
-Kyle Schau
-
-
-This module holds the peregrinepy.multiBlock object class that inherits from
-python lists to create a list of peregrine.block object with added functionality and attributes
-
-"""
-
 from .restart import restart
 from .solverBlock import solverBlock
 from ..grid import unifySolverGrid
 
 
 class solver(restart):
-    """A list of peregrinepy.restart.restart_block objects. Inherits from peregrinepy.multiBlock.grid"""
+    """A list of peregrinepy.multiBlock.solver.
+    Inherits from peregrinepy.multiBlock.restart"""
 
     __slots__ = (
         "config",
@@ -46,7 +33,7 @@ class solver(restart):
         super().__init__(nblks, spNames, temp)
 
         # time integrator time
-        self.__titme = 0.0
+        self._titme = 0.0
         # Save the config file to the mb object
         self.config = None
         # Save the species data
@@ -90,11 +77,11 @@ class solver(restart):
 
     @property
     def titme(self):
-        return self.__titme
+        return self._titme
 
     @titme.setter
     def titme(self, val):
-        self.__titme = val
+        self._titme = val
         for blk in self:
             blk.titme = val
 

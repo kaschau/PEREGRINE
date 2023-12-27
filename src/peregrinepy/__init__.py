@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from ast import Import
 import mpi4py.rc
 

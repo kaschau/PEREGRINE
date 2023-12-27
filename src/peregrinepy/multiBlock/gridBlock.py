@@ -1,16 +1,3 @@
-# -*- coding: utf-8 -*-
-
-""" gridBlock.py
-
-Authors:
-
-Kyle Schau
-
-This module defines a gridBlock object that is used to
-compose a peregrinepy.multiBlock.grid (or one of its descendants)
-
-"""
-
 import numpy as np
 from .topologyBlock import topologyBlock
 from ..misc import frozenDict

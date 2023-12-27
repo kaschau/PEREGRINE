@@ -1,17 +1,3 @@
-# -*- coding: utf-8 -*-
-
-""" blocksToBlock.py
-
-Authors:
-
-Kyle Schau
-
-This module contains a function that will interpolate a list of
-blocks :blksFrom: onto a single block :blkTo:.
-
-"""
-
-
 import numpy as np
 from scipy import interpolate
 
