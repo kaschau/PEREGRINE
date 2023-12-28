@@ -70,8 +70,6 @@ def readGrid(mb, path="./", lump=True, justNi=False):
         if mb.mbType in ["grid", "restart"]:
             progressBar(blk.nblki + 1, len(mb), f"Reading in gridBlock {blk.nblki}")
 
-        if blk.blockType in ["restart", "solver"]:
-            blk.initRestartArrays()
         if not lump:
             gf.close()
 

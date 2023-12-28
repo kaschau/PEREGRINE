@@ -29,7 +29,6 @@ def readBcs(mb, pathToFile, justPeriodic=False):
 
     """
 
-    # only the zeroth block reads in the file
     try:
         with open(f"{pathToFile}/bcFams.yaml", "r") as connFile:
             bcsIn = yaml.load(connFile, Loader=yaml.FullLoader)
