@@ -69,7 +69,7 @@ def ptsInBlkBounds(blk, testPts):
         ]
     )
 
-    # In case the block is very curvilinear, we will ad the midpoints of the edges of the block to make
+    # In case the block is very curvilinear, we will add the midpoints of the edges of the block to make
     # the test geometry better match the shape of the block.
     if blk.ni > 4:
         indx = int(blk.ni / 2)

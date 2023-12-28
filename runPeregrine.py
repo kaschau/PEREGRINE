@@ -115,7 +115,7 @@ def simulate(configFilePath):
                     break
 
         # CoProcess
-        mb.coproc(mb, mb.nrt)
+        mb.coproc(mb)
 
     # Finalize coprocessor
     mb.coproc.finalize()

@@ -173,11 +173,11 @@ def simulate():
     if rank == 0:
         print(mb)
     dt = 1.44e-6
-    mb.coproc(mb, mb.nrt)
+    mb.coproc(mb)
     while mb.nrt < 100:
         pg.misc.progressBar(mb.nrt, 100)
         mb.step(dt)
-        mb.coproc(mb, mb.nrt)
+        mb.coproc(mb)
 
     mb.coproc.finalize()
     if rank == 0:

@@ -75,6 +75,10 @@ class tracePointsCoprocessor:
                         f.write(strings)
 
     def __call__(self, mb):
+        # Check if we need to get trace data or not
+        if mb.nrt % mb.config["coprocess"]["niterTrace"] != 0:
+            return
+
         # TODO: this may be a redundant copy
         for nblki in list(set([trc.nblki for trc in self.traces])):
             blk = mb.getBlock(nblki)
