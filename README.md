@@ -8,11 +8,11 @@
     </picture>
 </p>
 
-# About
+## About
 
 PEREGRINE is a second order, multiblock, structured-grid multiphysics, finite volume, 3D CFD solver. The main novelty of PEREGRINE is its implementation in [Python](https://www.python.org) for ease of development and use of [Kokkos](https://www.github.com/kokkos/kokkos) for performance portability. If you are unfamiliar with Kokkos, do a little digging, it is a great project with a healthy community and helpful developers. The TLDR; Kokkos is a C++ library (not a C++ language extension) that exposes useful abstractions for data management (i.e. multidimensional arrays) and kernel execution from CPU-Serial to GPU-Parallel. This allows a single source, multiple architecture, approach in PEREGRINE. In other words, you can run a case with PEREGRINE on your laptop, then without changing a single line of source code, run the same case on a AMD GPU based super computer. PEREGRINE is massively parallel inter-node via MPI communication.
 
-# Installation
+## Installation
 
 You must first install [Kokkos](https://www.github.com/kokkos/kokkos) and set the environment variable `Kokkos_DIR=/path/to/kokkos/install`. The Kokkos installation controls the Host/Device + Serial/Parallel execution parameters, there are no settings for the python installation.
 
@@ -32,11 +32,11 @@ To generate compile_commands.json,
 
 ``` cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ../ ```
 
-# Documentation
+## Documentation
 
 See the documentation [here](./docs/documentation.md).
 
-# Profiling GPU via NVTX
+## Profiling GPU via NVTX
 Download and install the libraries found at [here](https://github.com/kokkos/kokkos-tools). At runtime, ensure the environment variable
 
     $ export KOKKOS_PROFILE_LIBRARY=/path/to/kokkos-tools/kp_nvprof_connector.so
@@ -45,11 +45,11 @@ is set. Finally, run the simulation with nsys enabling cuda,nvtx trace options.
 
     jsrun -p 1 -g 1 nsys profile -o outPutName --trace cuda,nvtx  -f true --stats=false python -m mpi4py pgScript.py
 
-# Performance
+## Performance
 
 PEREGRINE is pretty fast by default. However, when running a simulation with multiple chemical species, it is recommended to turn on `PEREGRINE_NSCOMPILE` in cmake, and then specify the value of `numSpecies`. This will hard code `ns` at compile time, and gives a considerable performance improvement for EOS/transport calculations.
 
-# Parallel I/O 
+## Parallel I/O 
 
 Parallel I/O can be achieved with a parallel capable h5py installation. 
 
@@ -60,7 +60,7 @@ Parallel I/O can be achieved with a parallel capable h5py installation.
     
 `$HDF5_DIR` must point to a parallel enabled HDF5 installation. Parallel I/O is only applicable when running simulations with `config["io"]["lumpIO"]=true`.
 
-# Attribution
+## Attribution
 
 Please use the following BibTex to cite PEREGRINE in scientific writing:
 
@@ -73,7 +73,7 @@ Please use the following BibTex to cite PEREGRINE in scientific writing:
 }
 ```
 
-# License
+## License
 
 PEREGRINE is released under the New BSD License (see the LICENSE file for details).
 Documentation is made available under a Creative Commons Attribution 4.0
