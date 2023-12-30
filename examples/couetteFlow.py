@@ -140,7 +140,7 @@ def simulate(index, velo):
     mb.setBlockCommunication()
 
     mb.unifyGrid()
-    mb.computeMetrics(config["RHS"]["diffOrder"])
+    mb.computeMetrics()
 
     ng = blk.ng
     blk.array["q"][:, :, :, 0] = 101325.0

@@ -277,7 +277,7 @@ class solverFace(gridFace, face_):
                 nLayers = ng
             else:
                 nLayers = 1
-            # phi only uses 3 last exis elements not ne
+            # phi only uses 3 last axis elements not ne
             if var in ["phi"]:
                 nE = 3
             else:
@@ -307,7 +307,7 @@ class solverFace(gridFace, face_):
             shape = self.array[tempRecvName].shape
             createViewMirrorArray(self, tempRecvName, shape)
 
-        # Unique tags.
+        # Unique tags
         self.tagR = int(nblki * 6 + self.nface)
         self.tagS = int(self.neighbor * 6 + self.neighborNface)
 

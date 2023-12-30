@@ -391,7 +391,7 @@ def simulate(testnum, index="i"):
 
     mb.setBlockCommunication()
     mb.unifyGrid()
-    mb.computeMetrics(fdOrder=2)
+    mb.computeMetrics()
 
     ccArray = {"i": "xc", "j": "yc", "k": "zc"}
     uIndex = {"i": 1, "j": 2, "k": 3}

@@ -1,23 +1,10 @@
-# -*- coding: utf-8 -*-
-
-""" topology.py
-
-Authors:
-
-Kyle Schau
-
-
-This module holds the peregrinepy.multiBlock object class that inherits from
-python lists to create a list of peregrine.block object with added functionality and attributes
-
-"""
-
 from collections import UserList
 from .topologyBlock import topologyBlock
 
 
 class topology(UserList):
-    """A list of peregrinepy.block objects"""
+    """A list of peregrinepy.multiBlock.topology block.
+    Inherits from python UserList"""
 
     mbType = "topology"
 
@@ -48,7 +35,7 @@ class topology(UserList):
 
     def appendBlock(self):
         if self.mbType in ["restart", "solver"]:
-            raise TypeError("Cannot append restart of solver multiBlocks.")
+            raise TypeError("Cannot append restart or solver multiBlocks.")
         maxNblki = 0
         for blk in self:
             maxNblki = blk.nblki if blk.nblki > maxNblki else maxNblki

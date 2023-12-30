@@ -17,10 +17,6 @@ class twoblock123:
         self.config["RHS"]["secondaryAdvFlux"] = "rusanov"
 
         self.config["RHS"]["diffusion"] = True
-        if adv == "KEEPpe":
-            self.config["RHS"]["diffOrder"] = 2
-        elif adv == "fourthOrderKEEP":
-            self.config["RHS"]["diffOrder"] = 4
 
         self.config["thermochem"]["spdata"] = spdata
         self.mb = pg.multiBlock.generateMultiBlockSolver(2, self.config)
@@ -34,7 +30,7 @@ class twoblock123:
 
         self.mb.initSolverArrays(self.config)
         self.mb.generateHalo()
-        self.mb.computeMetrics(self.config["RHS"]["diffOrder"])
+        self.mb.computeMetrics()
 
         blk0 = self.mb[0]
         blk1 = self.mb[1]

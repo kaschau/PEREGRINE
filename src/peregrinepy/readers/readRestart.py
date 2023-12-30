@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import numpy as np
 import h5py
 from ..misc import progressBar
@@ -7,22 +5,30 @@ from ..misc import progressBar
 
 def readRestart(mb, path="./", nrt=0, animate=True, lump=True):
     """This function reads in all the HDF5 grid files in :path:
-    and adds the coordinate data to a supplied peregrinepy.multiBlock.grid
+    and adds the coordinate data to a supplied peregrinepy.multiBlock.restart
     object (or one of its descendants)
 
     Parameters
     ----------
 
-    mb : peregrinepy.multiBlock.grid (or a descendant)
+    mb : peregrinepy.multiBlock.restart (or a descendant)
 
     path : str
         Path to find all the HDF5 grid files to be read in
+
+    animate : bool
+        Whether we are appending nrt to the file name.
+
+    lump : bool
+        Whether we are reading a lumped file or not.
 
     Returns
     -------
     None
 
     """
+
+    # If we are lumping, open the file here
     if lump:
         if animate:
             fileName = f"{path}/q.{nrt:08d}.h5"
@@ -31,6 +37,9 @@ def readRestart(mb, path="./", nrt=0, animate=True, lump=True):
         qf = h5py.File(fileName, "r")
 
     for blk in mb:
+        # Create the "q" array
+        blk.initRestartArrays()
+
         variables = ["p", "u", "v", "w", "T"] + blk.speciesNames[0:-1]
         if blk.blockType == "solver":
             ng = blk.ng
@@ -39,6 +48,7 @@ def readRestart(mb, path="./", nrt=0, animate=True, lump=True):
             ng = 0
             readS = np.s_[:, :, :]
 
+        # If we are NOT lumping, open the file here
         if not lump:
             if animate:
                 fileName = f"{path}/q.{nrt:08d}.{blk.nblki:06d}.h5"
@@ -59,7 +69,7 @@ def readRestart(mb, path="./", nrt=0, animate=True, lump=True):
                 if blk.nblki == 0:
                     print(f"Warning, {var} not found in restart. Leaving as is.")
 
-        if mb.mbType in ["grid", "restart"]:
+        if mb.mbType == "restart":
             progressBar(blk.nblki + 1, len(mb), f"Reading in restartBlock {blk.nblki}")
         if not lump:
             qf.close()

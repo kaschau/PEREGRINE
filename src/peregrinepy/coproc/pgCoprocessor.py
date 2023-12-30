@@ -23,10 +23,8 @@ class coprocessor:
         else:
             self.catalyst = null
 
-    def __call__(self, mb, nrt):
-        if mb.nrt % mb.config["coprocess"]["niterTrace"] == 0:
-            self.trace(mb)
-
+    def __call__(self, mb):
+        self.trace(mb)
         self.catalyst(mb)
 
     def finalize(self):

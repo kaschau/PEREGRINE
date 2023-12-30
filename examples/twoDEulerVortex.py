@@ -69,7 +69,7 @@ def simulate():
     mb.setBlockCommunication()
 
     mb.unifyGrid()
-    mb.computeMetrics(config["RHS"]["diffOrder"])
+    mb.computeMetrics()
     print(mb)
 
     Rc = 1.0

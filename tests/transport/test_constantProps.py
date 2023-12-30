@@ -23,7 +23,7 @@ def test_constantProps(my_setup):
     blk = mb[0]
 
     mb.generateHalo()
-    mb.computeMetrics(config["RHS"]["diffOrder"])
+    mb.computeMetrics()
 
     p = np.random.uniform(low=10000, high=1000000)
     T = np.random.uniform(low=200, high=3500)

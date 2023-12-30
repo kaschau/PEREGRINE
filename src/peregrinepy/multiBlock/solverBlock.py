@@ -1,30 +1,11 @@
-# -*- coding: utf-8 -*-
 from ..compute import block_
 from ..compute.pgkokkos import deep_copy
 from .restartBlock import restartBlock
 from .solverFace import solverFace
 from ..misc import createViewMirrorArray
 
-""" block.py
-
-Authors:
-
-Kyle Schau
-
-This module defines the top block class. This object is the most basic object
-that a multiBlock datasets (see multiBlock.py) can be composed of.
-
-"""
-
 
 class solverBlock(restartBlock, block_):
-    """
-
-    Attributes
-    ---------
-
-    """
-
     blockType = "solver"
 
     def __init__(self, nblki, spNames, ng):

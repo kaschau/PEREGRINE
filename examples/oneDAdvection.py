@@ -60,7 +60,7 @@ def simulate(index="i"):
 
     mb.setBlockCommunication()
     mb.unifyGrid()
-    mb.computeMetrics(config["RHS"]["diffOrder"])
+    mb.computeMetrics()
 
     ng = blk.ng
     R = 287.002507

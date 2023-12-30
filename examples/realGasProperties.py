@@ -36,7 +36,7 @@ def simulate():
 
     mb.unifyGrid()
 
-    mb.computeMetrics(config["RHS"]["diffOrder"])
+    mb.computeMetrics()
 
     ps = np.linspace(25, 35, 3)
     Ts = np.linspace(600, 1600, 100)

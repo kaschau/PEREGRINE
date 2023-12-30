@@ -47,7 +47,7 @@ def simulate():
     mb.setBlockCommunication()
 
     mb.unifyGrid()
-    mb.computeMetrics(config["RHS"]["diffOrder"])
+    mb.computeMetrics()
 
     R = 287.002507
     cp = 1000.0

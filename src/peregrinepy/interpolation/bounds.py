@@ -1,15 +1,3 @@
-# -*- coding: utf-8 -*-
-
-""" bounds.py
-
-Authors:
-
-Kyle Schau
-
-This module contains function related to bounding in an interpolation procedure.
-
-"""
-
 from scipy import spatial
 import numpy as np
 from ..misc import progressBar
@@ -81,7 +69,7 @@ def ptsInBlkBounds(blk, testPts):
         ]
     )
 
-    # In case the block is very curvilinear, we will ad the midpoints of the edges of the block to make
+    # In case the block is very curvilinear, we will add the midpoints of the edges of the block to make
     # the test geometry better match the shape of the block.
     if blk.ni > 4:
         indx = int(blk.ni / 2)
@@ -254,8 +242,8 @@ def findBounds(mbTo, mbFrom, verboseSearch):
        numbers of all the blocks from mbFrom that each block in mbTo reside in, spatially.
     """
 
-    mbFrom.computeMetrics(fdOrder=2, xcOnly=True)
-    mbTo.computeMetrics(fdOrder=2, xcOnly=True)
+    mbFrom.computeMetrics(xcOnly=True)
+    mbTo.computeMetrics(xcOnly=True)
 
     boundingBlocks = []
     nblks = mbTo.nblks

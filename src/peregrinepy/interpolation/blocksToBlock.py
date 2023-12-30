@@ -1,17 +1,3 @@
-# -*- coding: utf-8 -*-
-
-""" blocksToBlock.py
-
-Authors:
-
-Kyle Schau
-
-This module contains a function that will interpolate a list of
-blocks :blksFrom: onto a single block :blkTo:.
-
-"""
-
-
 import numpy as np
 from scipy import interpolate
 
@@ -48,9 +34,9 @@ def blocksToBlock(blksFrom, blkTo, function="nearest", smooth=0.5):
         Updates attributes of parameter blkTo.
     """
     for blk in blksFrom:
-        blk.computeMetrics(fdOrder=2, xcOnly=True)
+        blk.computeMetrics(xcOnly=True)
 
-    blkTo.computeMetrics(fdOrder=2, xcOnly=True)
+    blkTo.computeMetrics(xcOnly=True)
 
     # qv interpolation
     blkFromX = np.concatenate(tuple([blk.array["xc"].ravel() for blk in blksFrom]))
