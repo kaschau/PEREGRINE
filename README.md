@@ -2,9 +2,9 @@
 
 <p align="center">
     <picture>
-      <source media="(prefers-color-scheme: dark)" width="800" srcset="https://github.com/kaschau/PEREGRINE/blob/main/docs/images/pgSplashD2.jpg">
-      <source media="(prefers-color-scheme: light)" width="800" srcset="https://github.com/kaschau/PEREGRINE/blob/main/docs/images/pgSplashL2.jpg">
-      <img alt="peregrine logo" width="800" src="https://github.com/kaschau/PEREGRINE/blob/main/docs/images/pgSplashL2.jpg">
+      <source media="(prefers-color-scheme: dark)" width="800" srcset="docs/images/pgSplashD2.jpg">
+      <source media="(prefers-color-scheme: light)" width="800" srcset="docs/images/pgSplashL2.jpg">
+      <img alt="peregrine logo" width="800" src="docs/images/pgSplashL2.jpg">
     </picture>
 </p>
 
