@@ -75,7 +75,7 @@ pytestmark = pytest.mark.parametrize(
     list(
         itertools.product(
             ("KEEPpe", "fourthOrderKEEP"),
-            (["Air"], "thtr_CH4_O2_Stanford_Skeletal.yaml"),
+            (["Air"], "thtr_CH4_O2_FFCMY.yaml"),
         )
     ),
 )

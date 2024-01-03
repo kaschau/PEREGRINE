@@ -18,9 +18,9 @@ pytestmark = pytest.mark.parametrize(
             "chem_C2H4_Air_Skeletal",
         ),
         (
-            "CH4_O2_Stanford_Skeletal.yaml",
-            "thtr_CH4_O2_Stanford_Skeletal.yaml",
-            "chem_CH4_O2_Stanford_Skeletal",
+            "CH4_O2_FFCMY.yaml",
+            "thtr_CH4_O2_FFCMY.yaml",
+            "chem_CH4_O2_FFCMY",
         ),
         (
             "GRI30.yaml",

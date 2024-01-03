@@ -18,7 +18,7 @@ def simulate():
 
     # Cantera stuff
     T, p = 1100.0, 101325
-    gas = ct.Solution("CH4_O2_Stanford_Skeletal.yaml")
+    gas = ct.Solution("CH4_O2_FFCMY.yaml")
     # set the gas state
     gas.TP = T, p
     phi = 1.0
@@ -31,10 +31,10 @@ def simulate():
     config["RHS"]["diffusion"] = False
     config["timeIntegration"]["integrator"] = "rk4"
     config["thermochem"]["chemistry"] = True
-    config["thermochem"]["mechanism"] = "chem_CH4_O2_Stanford_Skeletal"
+    config["thermochem"]["mechanism"] = "chem_CH4_O2_FFCMY"
     config["thermochem"]["nChemSubSteps"] = 10
     config["thermochem"]["eos"] = "tpg"
-    config["thermochem"]["spdata"] = "thtr_CH4_O2_Stanford_Skeletal.yaml"
+    config["thermochem"]["spdata"] = "thtr_CH4_O2_FFCMY.yaml"
     config.validateConfig()
     mb = pg.multiBlock.generateMultiBlockSolver(1, config)
     pg.grid.create.multiBlockCube(
