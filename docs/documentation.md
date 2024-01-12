@@ -9,7 +9,7 @@ PEREGRINE can run in both a scriptable mode for simple cases, or executable mode
 
 Coprocessing with ParaView is amazing, but takes effort to make it work well in my experience. It seems they have cleaned it up a lot from back in the day. To start download and install Paraview from source. I have tested up to 5.11 and it works well for me. To make coprocessing work, you need to compile paraview in catalyst mode. With cmake, pass the argument:
 
->>> ccmake -DPARAVIEW_BUILD_EDITION:STRING=CATALYST /path/to/ParaView_src/
+> ccmake -DPARAVIEW_BUILD_EDITION:STRING=CATALYST /path/to/ParaView_src/
 
 Assume you are installing it in `/path/to/paraview`.
 
