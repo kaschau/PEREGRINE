@@ -86,7 +86,7 @@ void kineticTheory(block_ &b, const thtrdat_ &th, const int &nface,
             X(n) = Y(n) / th.MW(n) / mass;
             if (X(n) == 1.0) {
               pure = n;
-              break
+              break;
             }
             MWmix += X(n) * th.MW(n);
           }
