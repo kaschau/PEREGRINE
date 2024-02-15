@@ -84,11 +84,11 @@ void kineticTheory(block_ &b, const thtrdat_ &th, const int &nface,
           // Mean molecular weight, mole fraction
           for (int n = 0; n <= ns - 1; n++) {
             X(n) = Y(n) / th.MW(n) / mass;
+            MWmix += X(n) * th.MW(n);
             if (X(n) == 1.0) {
               pure = n;
               break;
             }
-            MWmix += X(n) * th.MW(n);
           }
         }
 
