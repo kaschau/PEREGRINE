@@ -8,8 +8,8 @@
 void KEEP(block_ &b);
 //    |------> KEEPpe
 void KEEPpe(block_ &b);
-//    |------> KEEPes
-void KEEPes(block_ &b);
+//    |------> KEPaEC
+void KEPaEC(block_ &b);
 //    |------> centralDifference
 void centralDifference(block_ &b);
 //    |------> fourthOrderKEEP

@@ -3,7 +3,7 @@
 #include "kokkosTypes.hpp"
 #include "thtrdat_.hpp"
 
-void KEEPes(block_ &b) {
+void KEPaEC(block_ &b) {
 
   //-------------------------------------------------------------------------------------------|
   // i flux face range
