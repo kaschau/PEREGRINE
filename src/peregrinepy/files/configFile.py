@@ -52,7 +52,7 @@ class configFile(frozenDict):
         self["RHS"] = frozenDict(
             {
                 "shockHandling": None,
-                "primaryAdvFlux": "KEEPes",
+                "primaryAdvFlux": "KEPaEC",
                 "secondaryAdvFlux": None,
                 "switchAdvFlux": None,
                 "diffusion": False,
