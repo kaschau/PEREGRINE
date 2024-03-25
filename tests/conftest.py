@@ -1,9 +1,11 @@
+from peregrinepy.compute import pgkokkos
+import pytest
+
 import mpi4py.rc
 
 mpi4py.rc.finalize = False
 mpi4py.rc.initialize = False
-from peregrinepy.compute import pgkokkos
-import pytest
+
 from mpi4py import MPI
 
 

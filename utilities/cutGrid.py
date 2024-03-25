@@ -2,10 +2,6 @@
 """
 A utility to cut up a peregrine grid into smaller blocks.
 
-Current limitations: Right now we are relying on dot products to find periodic faces.
-This means that we can only handle translational periodicity, and the periodic faces
-must be planes.
-
 """
 
 import numpy as np
@@ -317,7 +313,6 @@ def performCutOperations(mb, cutOps):
 
 if __name__ == "__main__":
     import argparse
-    import os
 
     parser = argparse.ArgumentParser(
         description="Cut a grid arbitrary number of times along arbitrary axis",

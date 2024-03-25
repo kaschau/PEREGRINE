@@ -26,7 +26,7 @@ def completeSpecies(key, usersp, refsp):
                 raise KeyError(
                     f"You want to use species {sp}, but did not provide a {key}, and it is not in the PEREGRINE species database."
                 )
-    if type(prop[0]) == str:
+    if isinstance(prop[0], str):
         return prop
     else:
         return np.array(prop, dtype=np.float64)
