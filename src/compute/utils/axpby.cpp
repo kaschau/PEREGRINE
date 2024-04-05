@@ -1,5 +1,5 @@
-#include "Kokkos_Core.hpp"
 #include "kokkosTypes.hpp"
+#include <Kokkos_Core.hpp>
 
 void AEQConst(fourDview &A, const double &Const) {
   //-------------------------------------------------------------------------------------------|

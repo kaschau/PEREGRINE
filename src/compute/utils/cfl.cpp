@@ -1,9 +1,9 @@
-#include "Kokkos_Core.hpp"
 #include "array"
 #include "block_.hpp"
 #include "kokkosTypes.hpp"
 #include "math.h"
 #include "vector"
+#include <Kokkos_Core.hpp>
 
 std::array<double, 3> CFLmax(const std::vector<block_> &mb) {
 

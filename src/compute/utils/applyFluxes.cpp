@@ -1,7 +1,7 @@
-#include "Kokkos_Core.hpp"
 #include "block_.hpp"
 #include "kokkosTypes.hpp"
 #include "math.h"
+#include <Kokkos_Core.hpp>
 
 void applyFlux(block_ &b, double[]) {
 

@@ -1,8 +1,8 @@
-#include "Kokkos_Core.hpp"
 #include "block_.hpp"
 #include "compute.hpp"
 #include "face_.hpp"
 #include "kokkosTypes.hpp"
+#include <Kokkos_Core.hpp>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 

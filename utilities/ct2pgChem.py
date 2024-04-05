@@ -131,11 +131,11 @@ def ct2pgChem(ctyaml, cpp):
     )
 
     outString = (
-        '#include "Kokkos_Core.hpp"\n'
         '#include "kokkosTypes.hpp"\n'
         '#include "block_.hpp"\n'
         '#include "thtrdat_.hpp"\n'
         '#include "compute.hpp"\n'
+        "#include <Kokkos_Core.hpp>\n"
         "#include <math.h>\n"
         "\n"
         f"void {cpp.replace('.cpp','')}(block_ &b,\n"

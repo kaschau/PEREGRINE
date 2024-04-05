@@ -1,10 +1,10 @@
-#include "Kokkos_Core.hpp"
 #include "array"
 #include "block_.hpp"
 #include "kokkosTypes.hpp"
 #include "math.h"
 #include "thtrdat_.hpp"
 #include "vector"
+#include <Kokkos_Core.hpp>
 
 //---------------------------------------------------------------------------------------------|
 //

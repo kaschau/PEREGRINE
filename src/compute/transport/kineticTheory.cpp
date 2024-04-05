@@ -1,8 +1,8 @@
-#include "Kokkos_Core.hpp"
 #include "block_.hpp"
 #include "compute.hpp"
 #include "kokkosTypes.hpp"
 #include "thtrdat_.hpp"
+#include <Kokkos_Core.hpp>
 #include <math.h>
 
 void kineticTheory(block_ &b, const thtrdat_ &th, const int &nface,

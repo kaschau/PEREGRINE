@@ -27,11 +27,11 @@
 // 38 reactions.
 // ========================================================== //
 
-#include "Kokkos_Core.hpp"
 #include "block_.hpp"
 #include "compute.hpp"
 #include "kokkosTypes.hpp"
 #include "thtrdat_.hpp"
+#include <Kokkos_Core.hpp>
 #include <math.h>
 
 void chem_CH4_O2_FFCMY(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,

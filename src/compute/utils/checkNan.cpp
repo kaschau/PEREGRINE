@@ -1,7 +1,7 @@
-#include "Kokkos_Core.hpp"
 #include "block_.hpp"
 #include "kokkosTypes.hpp"
 #include "vector"
+#include <Kokkos_Core.hpp>
 #include <math.h>
 
 int checkNan(const std::vector<block_> &mb) {

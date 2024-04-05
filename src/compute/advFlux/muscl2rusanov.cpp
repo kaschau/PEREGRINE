@@ -1,8 +1,8 @@
-#include "Kokkos_Core.hpp"
 #include "block_.hpp"
 #include "kokkosTypes.hpp"
 #include "math.h"
 #include "thtrdat_.hpp"
+#include <Kokkos_Core.hpp>
 
 // Compute the flux at a face using 2nd order MUSCL reconstruction with rusanov
 // flux at face

@@ -1,7 +1,7 @@
-#include "Kokkos_Core.hpp"
 #include "block_.hpp"
 #include "kokkosTypes.hpp"
 #include "thtrdat_.hpp"
+#include <Kokkos_Core.hpp>
 
 void fourthOrderKEEP(block_ &b) {
 

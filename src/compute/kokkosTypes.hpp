@@ -1,7 +1,7 @@
 #ifndef __kokkosTypes_H__
 #define __kokkosTypes_H__
 
-#include "Kokkos_Core.hpp"
+#include <Kokkos_Core.hpp>
 
 // Define the execution and storage space
 #if defined(KOKKOS_ENABLE_CUDA)
