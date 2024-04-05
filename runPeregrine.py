@@ -1,6 +1,6 @@
 #!/usr/bin/env -S python -m mpi4py
 import sys
-from mpi4py import MPI
+from mpi4py import MPI  # noqa: F401
 from time import perf_counter
 
 import numpy as np

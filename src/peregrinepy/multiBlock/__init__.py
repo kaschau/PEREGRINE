@@ -1,6 +1,3 @@
-from .topology import topology
-from .grid import grid
-from .restart import restart
 from .solver import solver
 
 from ..integrators import getIntegrator
@@ -111,7 +108,7 @@ def setRHS(cls, config):
 
     # spatial derivatives, subgrid mode, diffusive fluxes
     if config["RHS"]["diffusion"]:
-        cls.dqdxyz = getattr(compute.utils, f"dq2FD")
+        cls.dqdxyz = getattr(compute.utils, "dq2FD")
 
         # Subgrid models
         if config["RHS"]["subgrid"] is not None:

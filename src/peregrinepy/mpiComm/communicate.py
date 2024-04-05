@@ -5,7 +5,7 @@ from ..compute.utils import extractSendBuffer, placeRecvBuffer
 
 
 def communicate(mb, varis):
-    if type(varis) is not list:
+    if not isinstance(varis, list):
         varis = [varis]
     comm, rank, size = getCommRankSize()
 
@@ -41,7 +41,7 @@ def communicate(mb, varis):
                     sliceS = face.nodeSendSlices
 
                 # Get the indices of the send slices from the numpy slice object
-                sliceIndxs = [s for f in sliceS for s in f if type(s) is int]
+                sliceIndxs = [s for f in sliceS for s in f if isinstance(s, int)]
                 # populate the temp recv array with the unoriented send data, since its
                 # the correct size and shape
                 extractSendBuffer(
@@ -74,7 +74,7 @@ def communicate(mb, varis):
                 # Push back up the device
                 face.updateDeviceView(recvName)
                 # Get the indices of the recv slices from the numpy slice object
-                sliceIndxs = [s for f in sliceR for s in f if type(s) is int]
+                sliceIndxs = [s for f in sliceR for s in f if isinstance(s, int)]
                 # Place the recv in the view
                 placeRecvBuffer(
                     getattr(blk, var), getattr(face, recvName), face, sliceIndxs

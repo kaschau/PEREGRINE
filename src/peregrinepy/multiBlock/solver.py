@@ -27,7 +27,7 @@ class solver(restart):
     mbType = "solver"
 
     def __init__(self, nblks, spNames, ng):
-        assert type(spNames) is list, f"spNames must me a list not {type(spNames)}"
+        assert isinstance(spNames, list), f"spNames must me a list not {type(spNames)}"
 
         temp = [solverBlock(i, spNames, ng) for i in range(nblks)]
         super().__init__(nblks, spNames, temp)

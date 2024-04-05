@@ -6,7 +6,7 @@ import mpi4py.rc
 mpi4py.rc.finalize = False
 mpi4py.rc.initialize = False
 
-from mpi4py import MPI
+from mpi4py import MPI  # noqa: E402
 
 
 @pytest.fixture(scope="session")

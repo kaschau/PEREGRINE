@@ -8,7 +8,7 @@ def readConfigFile(filePath="./peregrine.yaml", parallel=False):
         with open(filePath, "r") as connFile:
             connIn = yaml.load(connFile, Loader=yaml.FullLoader)
     else:
-        from mpi4py import MPI
+        from mpi4py import MPI  # noqa: F401
         from ..mpiComm.mpiUtils import getCommRankSize
 
         comm, rank, size = getCommRankSize()

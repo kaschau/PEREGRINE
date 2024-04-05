@@ -22,7 +22,7 @@ class topologyFace:
 
     @nface.setter
     def nface(self, value):
-        assert type(value) is int, f"nface must be an integer not {type(value)}"
+        assert isinstance(value, int), f"nface must be an integer not {type(value)}"
         assert 1 <= value <= 6, "nface must be between (1,6)"
         self._nface = value
 

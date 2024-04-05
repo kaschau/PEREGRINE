@@ -6,7 +6,7 @@ Generate 1D detonation profile
 
 """
 
-from mpi4py import MPI
+from mpi4py import MPI  # noqa: F401
 from pathlib import Path
 
 import cantera as ct

@@ -3,7 +3,6 @@ from ..RHS import RHS
 from ..consistify import consistify
 from scipy.integrate import ode
 from itertools import product
-from ..compute.utils import AEQB
 from ..compute.timeIntegration import rk3s1, rk3s2, rk3s3
 
 

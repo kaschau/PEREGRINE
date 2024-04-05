@@ -17,7 +17,7 @@ Will reproduce test case from section 6.2
 
 """
 
-from mpi4py import MPI
+from mpi4py import MPI  # noqa: F401
 
 import peregrinepy as pg
 import numpy as np

@@ -6,7 +6,7 @@ Generate 1D normal shock
 
 """
 
-from mpi4py import MPI
+from mpi4py import MPI  # noqa: F401
 
 
 import matplotlib.pyplot as plt

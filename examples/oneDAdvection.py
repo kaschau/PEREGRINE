@@ -11,7 +11,7 @@ Should reproduce results in Fig. 1 for the KEEP scheme (blue line)
 
 """
 
-from mpi4py import MPI
+from mpi4py import MPI  # noqa: F401
 
 import peregrinepy as pg
 import numpy as np

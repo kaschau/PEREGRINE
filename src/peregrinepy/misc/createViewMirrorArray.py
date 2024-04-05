@@ -23,7 +23,7 @@ def createViewMirrorArray(obj, names, shape):
 
     """
 
-    if type(names) != list:
+    if not isinstance(names, list):
         names = [names]
 
     view = getattr(pgkokkos, f"view{len(shape)}")

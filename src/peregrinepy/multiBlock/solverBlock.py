@@ -244,13 +244,13 @@ class solverBlock(restartBlock, block_):
             face._setCommBuffers(self.ni, self.nj, self.nk, self.ne, self.nblki)
 
     def updateDeviceView(self, vars):
-        if type(vars) == str:
+        if isinstance(vars, str):
             vars = [vars]
         for var in vars:
             deep_copy(getattr(self, var), self.mirror[var])
 
     def updateHostView(self, vars):
-        if type(vars) == str:
+        if isinstance(vars, str):
             vars = [vars]
         for var in vars:
             deep_copy(self.mirror[var], getattr(self, var))

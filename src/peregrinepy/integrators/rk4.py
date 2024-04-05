@@ -1,7 +1,6 @@
 from abc import ABCMeta
 from ..RHS import RHS
 from ..consistify import consistify
-from ..compute.utils import AEQB
 from ..compute.timeIntegration import rk4s1, rk4s2, rk4s3, rk4s4
 
 
