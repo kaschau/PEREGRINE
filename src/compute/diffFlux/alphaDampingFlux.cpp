@@ -12,7 +12,12 @@
 // Journal of Computational Physics
 // 408 (2020)
 
-void alphaDampingFlux(block_ &b) {
+static void computeFlux(const block_ &b, fourDview &F, const threeDview &isx,
+                        const threeDview &isy, const threeDview &isz,
+                        const threeDview &inx, const threeDview &iny,
+                        const threeDview &inz, const threeDview &ixc,
+                        const threeDview &iyc, const threeDview &izc,
+                        const int iMod, const int jMod, const int kMod) {
 
   // Stokes hypothesis
   double const bulkVisc = 0.0;
@@ -20,26 +25,28 @@ void alphaDampingFlux(block_ &b) {
   // damping parameter
   double const alpha = 1.0;
 
-  //-------------------------------------------------------------------------------------------|
-  // i flux face range
-  //-------------------------------------------------------------------------------------------|
-  MDRange3 range_i({b.ng, b.ng, b.ng},
-                   {b.ni + b.ng, b.nj + b.ng - 1, b.nk + b.ng - 1});
+  // face flux range
+  MDRange3 range(
+      {b.ng, b.ng, b.ng},
+      {b.ni + b.ng - 1 + iMod, b.nj + b.ng - 1 + jMod, b.nk + b.ng - 1 + kMod});
+
   Kokkos::parallel_for(
-      "i face visc fluxes", range_i,
+      "face visc fluxes", range,
       KOKKOS_LAMBDA(const int i, const int j, const int k) {
-        double mu = 0.5 * (b.qt(i, j, k, 0) + b.qt(i - 1, j, k, 0));
-        double kappa = 0.5 * (b.qt(i, j, k, 1) + b.qt(i - 1, j, k, 1));
+        double mu =
+            0.5 * (b.qt(i, j, k, 0) + b.qt(i - iMod, j - jMod, k - kMod, 0));
+        double kappa =
+            0.5 * (b.qt(i, j, k, 1) + b.qt(i - iMod, j - jMod, k - kMod, 1));
         double lambda = bulkVisc - 2.0 / 3.0 * mu;
 
         // continuity
-        b.iF(i, j, k, 0) = 0.0;
+        F(i, j, k, 0) = 0.0;
 
         // Geometric terms
-        double e[3] = {b.xc(i, j, k) - b.xc(i - 1, j, k),
-                       b.yc(i, j, k) - b.yc(i - 1, j, k),
-                       b.zc(i, j, k) - b.zc(i - 1, j, k)};
-        double njk[3] = {b.inx(i, j, k), b.iny(i, j, k), b.inz(i, j, k)};
+        double e[3] = {b.xc(i, j, k) - b.xc(i - iMod, j - jMod, k - kMod),
+                       b.yc(i, j, k) - b.yc(i - iMod, j - jMod, k - kMod),
+                       b.zc(i, j, k) - b.zc(i - iMod, j - jMod, k - kMod)};
+        double njk[3] = {inx(i, j, k), iny(i, j, k), inz(i, j, k)};
 
         double MAGeDOTn =
             sqrt(pow(e[0] * njk[0], 2.0) + pow(e[1] * njk[1], 2.0) +
@@ -47,56 +54,63 @@ void alphaDampingFlux(block_ &b) {
 
         double damp[3] = {alpha / MAGeDOTn * njk[0], alpha / MAGeDOTn * njk[1],
                           alpha / MAGeDOTn * njk[2]};
-        double xcim1[3] = {b.ixc(i, j, k) - b.xc(i - 1, j, k),
-                           b.iyc(i, j, k) - b.yc(i - 1, j, k),
-                           b.izc(i, j, k) - b.zc(i - 1, j, k)};
-        double xci[3] = {b.ixc(i, j, k) - b.xc(i, j, k),
-                         b.iyc(i, j, k) - b.yc(i, j, k),
-                         b.izc(i, j, k) - b.zc(i, j, k)};
-
-        double wDOTxc, wL, wR;
+        double xcim1[3] = {ixc(i, j, k) - b.xc(i - iMod, j - jMod, k - kMod),
+                           iyc(i, j, k) - b.yc(i - iMod, j - jMod, k - kMod),
+                           izc(i, j, k) - b.zc(i - iMod, j - jMod, k - kMod)};
+        double xci[3] = {ixc(i, j, k) - b.xc(i, j, k),
+                         iyc(i, j, k) - b.yc(i, j, k),
+                         izc(i, j, k) - b.zc(i, j, k)};
 
         // Face derivatives = consistent + damping
-        wDOTxc = (b.dqdx(i - 1, j, k, 1) * xcim1[0] +
-                  b.dqdy(i - 1, j, k, 1) * xcim1[1] +
-                  b.dqdz(i - 1, j, k, 1) * xcim1[2]);
-        wL = b.q(i - 1, j, k, 1) + wDOTxc;
+        double wDOTxc = (b.dqdx(i - iMod, j - jMod, k - kMod, 1) * xcim1[0] +
+                         b.dqdy(i - iMod, j - jMod, k - kMod, 1) * xcim1[1] +
+                         b.dqdz(i - iMod, j - jMod, k - kMod, 1) * xcim1[2]);
+        double wL = b.q(i - iMod, j - jMod, k - kMod, 1) + wDOTxc;
         wDOTxc = (b.dqdx(i, j, k, 1) * xci[0] + b.dqdy(i, j, k, 1) * xci[1] +
                   b.dqdz(i, j, k, 1) * xci[2]);
-        wR = b.q(i, j, k, 1) + wDOTxc;
-        double dudx = 0.5 * (b.dqdx(i, j, k, 1) + b.dqdx(i - 1, j, k, 1)) +
+        double wR = b.q(i, j, k, 1) + wDOTxc;
+        double dudx = 0.5 * (b.dqdx(i, j, k, 1) +
+                             b.dqdx(i - iMod, j - jMod, k - kMod, 1)) +
                       damp[0] * (wR - wL);
-        double dudy = 0.5 * (b.dqdy(i, j, k, 1) + b.dqdy(i - 1, j, k, 1)) +
+        double dudy = 0.5 * (b.dqdy(i, j, k, 1) +
+                             b.dqdy(i - iMod, j - jMod, k - kMod, 1)) +
                       damp[1] * (wR - wL);
-        double dudz = 0.5 * (b.dqdz(i, j, k, 1) + b.dqdz(i - 1, j, k, 1)) +
+        double dudz = 0.5 * (b.dqdz(i, j, k, 1) +
+                             b.dqdz(i - iMod, j - jMod, k - kMod, 1)) +
                       damp[2] * (wR - wL);
 
-        wDOTxc = (b.dqdx(i - 1, j, k, 2) * xcim1[0] +
-                  b.dqdy(i - 1, j, k, 2) * xcim1[1] +
-                  b.dqdz(i - 1, j, k, 2) * xcim1[2]);
-        wL = b.q(i - 1, j, k, 2) + wDOTxc;
+        wDOTxc = (b.dqdx(i - iMod, j - jMod, k - kMod, 2) * xcim1[0] +
+                  b.dqdy(i - iMod, j - jMod, k - kMod, 2) * xcim1[1] +
+                  b.dqdz(i - iMod, j - jMod, k - kMod, 2) * xcim1[2]);
+        wL = b.q(i - iMod, j - jMod, k - kMod, 2) + wDOTxc;
         wDOTxc = (b.dqdx(i, j, k, 2) * xci[0] + b.dqdy(i, j, k, 2) * xci[1] +
                   b.dqdz(i, j, k, 2) * xci[2]);
         wR = b.q(i, j, k, 2) + wDOTxc;
-        double dvdx = 0.5 * (b.dqdx(i, j, k, 2) + b.dqdx(i - 1, j, k, 2)) +
+        double dvdx = 0.5 * (b.dqdx(i, j, k, 2) +
+                             b.dqdx(i - iMod, j - jMod, k - kMod, 2)) +
                       damp[0] * (wR - wL);
-        double dvdy = 0.5 * (b.dqdy(i, j, k, 2) + b.dqdy(i - 1, j, k, 2)) +
+        double dvdy = 0.5 * (b.dqdy(i, j, k, 2) +
+                             b.dqdy(i - iMod, j - jMod, k - kMod, 2)) +
                       damp[1] * (wR - wL);
-        double dvdz = 0.5 * (b.dqdz(i, j, k, 2) + b.dqdz(i - 1, j, k, 2)) +
+        double dvdz = 0.5 * (b.dqdz(i, j, k, 2) +
+                             b.dqdz(i - iMod, j - jMod, k - kMod, 2)) +
                       damp[2] * (wR - wL);
 
-        wDOTxc = (b.dqdx(i - 1, j, k, 3) * xcim1[0] +
-                  b.dqdy(i - 1, j, k, 3) * xcim1[1] +
-                  b.dqdz(i - 1, j, k, 3) * xcim1[2]);
-        wL = b.q(i - 1, j, k, 3) + wDOTxc;
+        wDOTxc = (b.dqdx(i - iMod, j - jMod, k - kMod, 3) * xcim1[0] +
+                  b.dqdy(i - iMod, j - jMod, k - kMod, 3) * xcim1[1] +
+                  b.dqdz(i - iMod, j - jMod, k - kMod, 3) * xcim1[2]);
+        wL = b.q(i - iMod, j - jMod, k - kMod, 3) + wDOTxc;
         wDOTxc = (b.dqdx(i, j, k, 3) * xci[0] + b.dqdy(i, j, k, 3) * xci[1] +
                   b.dqdz(i, j, k, 3) * xci[2]);
         wR = b.q(i, j, k, 3) + wDOTxc;
-        double dwdx = 0.5 * (b.dqdx(i, j, k, 3) + b.dqdx(i - 1, j, k, 3)) +
+        double dwdx = 0.5 * (b.dqdx(i, j, k, 3) +
+                             b.dqdx(i - iMod, j - jMod, k - kMod, 3)) +
                       damp[0] * (wR - wL);
-        double dwdy = 0.5 * (b.dqdy(i, j, k, 3) + b.dqdy(i - 1, j, k, 3)) +
+        double dwdy = 0.5 * (b.dqdy(i, j, k, 3) +
+                             b.dqdy(i - iMod, j - jMod, k - kMod, 3)) +
                       damp[1] * (wR - wL);
-        double dwdz = 0.5 * (b.dqdz(i, j, k, 3) + b.dqdz(i - 1, j, k, 3)) +
+        double dwdz = 0.5 * (b.dqdz(i, j, k, 3) +
+                             b.dqdz(i - iMod, j - jMod, k - kMod, 3)) +
                       damp[2] * (wR - wL);
 
         double div = dudx + dvdy + dwdz;
@@ -106,480 +120,125 @@ void alphaDampingFlux(block_ &b) {
         double txy = -mu * (dvdx + dudy);
         double txz = -mu * (dwdx + dudz);
 
-        b.iF(i, j, k, 1) =
-            txx * b.isx(i, j, k) + txy * b.isy(i, j, k) + txz * b.isz(i, j, k);
+        F(i, j, k, 1) =
+            txx * isx(i, j, k) + txy * isy(i, j, k) + txz * isz(i, j, k);
 
         // y momentum
         double &tyx = txy;
         double tyy = -2.0 * mu * dvdy - lambda * div;
         double tyz = -mu * (dwdy + dvdz);
 
-        b.iF(i, j, k, 2) =
-            tyx * b.isx(i, j, k) + tyy * b.isy(i, j, k) + tyz * b.isz(i, j, k);
+        F(i, j, k, 2) =
+            tyx * isx(i, j, k) + tyy * isy(i, j, k) + tyz * isz(i, j, k);
 
         // z momentum
         double &tzx = txz;
         double &tzy = tyz;
         double tzz = -2.0 * mu * dwdz - lambda * div;
 
-        b.iF(i, j, k, 3) =
-            tzx * b.isx(i, j, k) + tzy * b.isy(i, j, k) + tzz * b.isz(i, j, k);
+        F(i, j, k, 3) =
+            tzx * isx(i, j, k) + tzy * isy(i, j, k) + tzz * isz(i, j, k);
 
         // energy
         //   heat conduction
-        wDOTxc = (b.dqdx(i - 1, j, k, 4) * xcim1[0] +
-                  b.dqdy(i - 1, j, k, 4) * xcim1[1] +
-                  b.dqdz(i - 1, j, k, 4) * xcim1[2]);
-        wL = b.q(i - 1, j, k, 4) + wDOTxc;
+        wDOTxc = (b.dqdx(i - iMod, j - jMod, k - kMod, 4) * xcim1[0] +
+                  b.dqdy(i - iMod, j - jMod, k - kMod, 4) * xcim1[1] +
+                  b.dqdz(i - iMod, j - jMod, k - kMod, 4) * xcim1[2]);
+        wL = b.q(i - iMod, j - jMod, k - kMod, 4) + wDOTxc;
         wDOTxc = (b.dqdx(i, j, k, 4) * xci[0] + b.dqdy(i, j, k, 4) * xci[1] +
                   b.dqdz(i, j, k, 4) * xci[2]);
         wR = b.q(i, j, k, 4) + wDOTxc;
-        double dTdx = 0.5 * (b.dqdx(i, j, k, 4) + b.dqdx(i - 1, j, k, 4)) +
+        double dTdx = 0.5 * (b.dqdx(i, j, k, 4) +
+                             b.dqdx(i - iMod, j - jMod, k - kMod, 4)) +
                       damp[0] * (wR - wL);
-        double dTdy = 0.5 * (b.dqdy(i, j, k, 4) + b.dqdy(i - 1, j, k, 4)) +
+        double dTdy = 0.5 * (b.dqdy(i, j, k, 4) +
+                             b.dqdy(i - iMod, j - jMod, k - kMod, 4)) +
                       damp[1] * (wR - wL);
-        double dTdz = 0.5 * (b.dqdz(i, j, k, 4) + b.dqdz(i - 1, j, k, 4)) +
+        double dTdz = 0.5 * (b.dqdz(i, j, k, 4) +
+                             b.dqdz(i - iMod, j - jMod, k - kMod, 4)) +
                       damp[2] * (wR - wL);
 
-        double q = -kappa * (dTdx * b.isx(i, j, k) + dTdy * b.isy(i, j, k) +
-                             dTdz * b.isz(i, j, k));
+        double q = -kappa * (dTdx * isx(i, j, k) + dTdy * isy(i, j, k) +
+                             dTdz * isz(i, j, k));
 
         // flow work
         // Compute face normal volume flux vector
-        double uf = 0.5 * (b.q(i, j, k, 1) + b.q(i - 1, j, k, 1));
-        double vf = 0.5 * (b.q(i, j, k, 2) + b.q(i - 1, j, k, 2));
-        double wf = 0.5 * (b.q(i, j, k, 3) + b.q(i - 1, j, k, 3));
+        double uf =
+            0.5 * (b.q(i, j, k, 1) + b.q(i - iMod, j - jMod, k - kMod, 1));
+        double vf =
+            0.5 * (b.q(i, j, k, 2) + b.q(i - iMod, j - jMod, k - kMod, 2));
+        double wf =
+            0.5 * (b.q(i, j, k, 3) + b.q(i - iMod, j - jMod, k - kMod, 3));
 
-        b.iF(i, j, k, 4) = -(uf * txx + vf * txy + wf * txz) * b.isx(i, j, k) -
-                           (uf * tyx + vf * tyy + wf * tyz) * b.isy(i, j, k) -
-                           (uf * tzx + vf * tzy + wf * tzz) * b.isz(i, j, k) +
-                           q;
+        F(i, j, k, 4) = -(uf * txx + vf * txy + wf * txz) * isx(i, j, k) -
+                        (uf * tyx + vf * tyy + wf * tyz) * isy(i, j, k) -
+                        (uf * tzx + vf * tzy + wf * tzz) * isz(i, j, k) + q;
 
         // Species
         double Dk, Vc = 0.0;
         double gradYns = 0.0;
-        double rho = 0.5 * (b.Q(i, j, k, 0) + b.Q(i - 1, j, k, 0));
+        double rho =
+            0.5 * (b.Q(i, j, k, 0) + b.Q(i - iMod, j - jMod, k - kMod, 0));
         // Compute the species flux and correction term \sum(k=1,ns) Dk*gradYk
         for (int n = 0; n < b.ne - 5; n++) {
-          Dk = 0.5 * (b.qt(i, j, k, 2 + n) + b.qt(i - 1, j, k, 2 + n));
-          wDOTxc = (b.dqdx(i - 1, j, k, 5 + n) * xcim1[0] +
-                    b.dqdy(i - 1, j, k, 5 + n) * xcim1[1] +
-                    b.dqdz(i - 1, j, k, 5 + n) * xcim1[2]);
-          wL = b.q(i - 1, j, k, 5 + n) + wDOTxc;
+          Dk = 0.5 * (b.qt(i, j, k, 2 + n) +
+                      b.qt(i - iMod, j - jMod, k - kMod, 2 + n));
+          wDOTxc = (b.dqdx(i - iMod, j - jMod, k - kMod, 5 + n) * xcim1[0] +
+                    b.dqdy(i - iMod, j - jMod, k - kMod, 5 + n) * xcim1[1] +
+                    b.dqdz(i - iMod, j - jMod, k - kMod, 5 + n) * xcim1[2]);
+          wL = b.q(i - iMod, j - jMod, k - kMod, 5 + n) + wDOTxc;
           wDOTxc = (b.dqdx(i, j, k, 5 + n) * xci[0] +
                     b.dqdy(i, j, k, 5 + n) * xci[1] +
                     b.dqdz(i, j, k, 5 + n) * xci[2]);
           wR = b.q(i, j, k, 5 + n) + wDOTxc;
-          double dYdx =
-              0.5 * (b.dqdx(i, j, k, 5 + n) + b.dqdx(i - 1, j, k, 5 + n)) +
-              damp[0] * (wR - wL);
-          double dYdy =
-              0.5 * (b.dqdy(i, j, k, 5 + n) + b.dqdy(i - 1, j, k, 5 + n)) +
-              damp[1] * (wR - wL);
-          double dYdz =
-              0.5 * (b.dqdz(i, j, k, 5 + n) + b.dqdz(i - 1, j, k, 5 + n)) +
-              damp[2] * (wR - wL);
+          double dYdx = 0.5 * (b.dqdx(i, j, k, 5 + n) +
+                               b.dqdx(i - iMod, j - jMod, k - kMod, 5 + n)) +
+                        damp[0] * (wR - wL);
+          double dYdy = 0.5 * (b.dqdy(i, j, k, 5 + n) +
+                               b.dqdy(i - iMod, j - jMod, k - kMod, 5 + n)) +
+                        damp[1] * (wR - wL);
+          double dYdz = 0.5 * (b.dqdz(i, j, k, 5 + n) +
+                               b.dqdz(i - iMod, j - jMod, k - kMod, 5 + n)) +
+                        damp[2] * (wR - wL);
 
-          double gradYk = (dYdx * b.isx(i, j, k) + dYdy * b.isy(i, j, k) +
-                           dYdz * b.isz(i, j, k));
+          double gradYk =
+              (dYdx * isx(i, j, k) + dYdy * isy(i, j, k) + dYdz * isz(i, j, k));
           gradYns -= gradYk;
           Vc += Dk * gradYk;
-          b.iF(i, j, k, 5 + n) = -rho * Dk * gradYk;
+          F(i, j, k, 5 + n) = -rho * Dk * gradYk;
         }
         // Apply n=ns species to correction
-        Dk = 0.5 *
-             (b.qt(i, j, k, 2 + b.ne - 5) + b.qt(i - 1, j, k, 2 + b.ne - 5));
+        Dk = 0.5 * (b.qt(i, j, k, 2 + b.ne - 5) +
+                    b.qt(i - iMod, j - jMod, k - kMod, 2 + b.ne - 5));
         Vc += Dk * gradYns;
 
         // Apply correction and species thermal flux
         double Yk, hk;
         double Yns = 1.0;
         for (int n = 0; n < b.ne - 5; n++) {
-          Yk = 0.5 * (b.q(i, j, k, 5 + n) + b.q(i - 1, j, k, 5 + n));
+          Yk = 0.5 *
+               (b.q(i, j, k, 5 + n) + b.q(i - iMod, j - jMod, k - kMod, 5 + n));
           Yns -= Yk;
-          b.iF(i, j, k, 5 + n) += Yk * rho * Vc;
+          F(i, j, k, 5 + n) += Yk * rho * Vc;
           // Species thermal diffusion
-          hk = 0.5 * (b.qh(i, j, k, 5 + n) + b.qh(i - 1, j, k, 5 + n));
-          b.iF(i, j, k, 4) += b.iF(i, j, k, 5 + n) * hk;
+          hk = 0.5 * (b.qh(i, j, k, 5 + n) +
+                      b.qh(i - iMod, j - jMod, k - kMod, 5 + n));
+          F(i, j, k, 4) += F(i, j, k, 5 + n) * hk;
         }
         // Apply the n=ns species to thermal diffusion
         Yns = fmax(Yns, 0.0);
-        hk = 0.5 * (b.qh(i, j, k, b.ne) + b.qh(i - 1, j, k, b.ne));
-        b.iF(i, j, k, 4) += (-rho * Dk * gradYns + Yns * rho * Vc) * hk;
+        hk = 0.5 *
+             (b.qh(i, j, k, b.ne) + b.qh(i - iMod, j - jMod, k - kMod, b.ne));
+        F(i, j, k, 4) += (-rho * Dk * gradYns + Yns * rho * Vc) * hk;
       });
+}
 
-  //-------------------------------------------------------------------------------------------|
-  // j flux face range
-  //-------------------------------------------------------------------------------------------|
-  MDRange3 range_j({b.ng, b.ng, b.ng},
-                   {b.ni + b.ng - 1, b.nj + b.ng, b.nk + b.ng - 1});
-  Kokkos::parallel_for(
-      "j face visc fluxes", range_j,
-      KOKKOS_LAMBDA(const int i, const int j, const int k) {
-        double mu = 0.5 * (b.qt(i, j, k, 0) + b.qt(i, j - 1, k, 0));
-        double kappa = 0.5 * (b.qt(i, j, k, 1) + b.qt(i, j - 1, k, 1));
-        double lambda = bulkVisc - 2.0 / 3.0 * mu;
+void alphaDampingFlux(block_ &b) {
 
-        // continuity
-        b.jF(i, j, k, 0) = 0.0;
-
-        // Geometric terms
-        double e[3] = {b.xc(i, j, k) - b.xc(i, j - 1, k),
-                       b.yc(i, j, k) - b.yc(i, j - 1, k),
-                       b.zc(i, j, k) - b.zc(i, j - 1, k)};
-        double njk[3] = {b.jnx(i, j, k), b.jny(i, j, k), b.jnz(i, j, k)};
-
-        double MAGeDOTn =
-            sqrt(pow(e[0] * njk[0], 2.0) + pow(e[1] * njk[1], 2.0) +
-                 pow(e[2] * njk[2], 2.0));
-
-        double damp[3] = {alpha / MAGeDOTn * njk[0], alpha / MAGeDOTn * njk[1],
-                          alpha / MAGeDOTn * njk[2]};
-        double xcim1[3] = {b.jxc(i, j, k) - b.xc(i, j - 1, k),
-                           b.jyc(i, j, k) - b.yc(i, j - 1, k),
-                           b.jzc(i, j, k) - b.zc(i, j - 1, k)};
-        double xci[3] = {b.jxc(i, j, k) - b.xc(i, j, k),
-                         b.jyc(i, j, k) - b.yc(i, j, k),
-                         b.jzc(i, j, k) - b.zc(i, j, k)};
-
-        double wDOTxc, wL, wR;
-
-        // Face derivatives = consistent + damping
-        wDOTxc = (b.dqdx(i, j - 1, k, 1) * xcim1[0] +
-                  b.dqdy(i, j - 1, k, 1) * xcim1[1] +
-                  b.dqdz(i, j - 1, k, 1) * xcim1[2]);
-        wL = b.q(i, j - 1, k, 1) + wDOTxc;
-        wDOTxc = (b.dqdx(i, j, k, 1) * xci[0] + b.dqdy(i, j, k, 1) * xci[1] +
-                  b.dqdz(i, j, k, 1) * xci[2]);
-        wR = b.q(i, j, k, 1) + wDOTxc;
-        double dudx = 0.5 * (b.dqdx(i, j, k, 1) + b.dqdx(i, j - 1, k, 1)) +
-                      damp[0] * (wR - wL);
-        double dudy = 0.5 * (b.dqdy(i, j, k, 1) + b.dqdy(i, j - 1, k, 1)) +
-                      damp[1] * (wR - wL);
-        double dudz = 0.5 * (b.dqdz(i, j, k, 1) + b.dqdz(i, j - 1, k, 1)) +
-                      damp[2] * (wR - wL);
-
-        wDOTxc = (b.dqdx(i, j - 1, k, 2) * xcim1[0] +
-                  b.dqdy(i, j - 1, k, 2) * xcim1[1] +
-                  b.dqdz(i, j - 1, k, 2) * xcim1[2]);
-        wL = b.q(i, j - 1, k, 2) + wDOTxc;
-        wDOTxc = (b.dqdx(i, j, k, 2) * xci[0] + b.dqdy(i, j, k, 2) * xci[1] +
-                  b.dqdz(i, j, k, 2) * xci[2]);
-        wR = b.q(i, j, k, 2) + wDOTxc;
-        double dvdx = 0.5 * (b.dqdx(i, j, k, 2) + b.dqdx(i, j - 1, k, 2)) +
-                      damp[0] * (wR - wL);
-        double dvdy = 0.5 * (b.dqdy(i, j, k, 2) + b.dqdy(i, j - 1, k, 2)) +
-                      damp[1] * (wR - wL);
-        double dvdz = 0.5 * (b.dqdz(i, j, k, 2) + b.dqdz(i, j - 1, k, 2)) +
-                      damp[2] * (wR - wL);
-
-        wDOTxc = (b.dqdx(i, j - 1, k, 3) * xcim1[0] +
-                  b.dqdy(i, j - 1, k, 3) * xcim1[1] +
-                  b.dqdz(i, j - 1, k, 3) * xcim1[2]);
-        wL = b.q(i, j - 1, k, 3) + wDOTxc;
-        wDOTxc = (b.dqdx(i, j, k, 3) * xci[0] + b.dqdy(i, j, k, 3) * xci[1] +
-                  b.dqdz(i, j, k, 3) * xci[2]);
-        wR = b.q(i, j, k, 3) + wDOTxc;
-        double dwdx = 0.5 * (b.dqdx(i, j, k, 3) + b.dqdx(i, j - 1, k, 3)) +
-                      damp[0] * (wR - wL);
-        double dwdy = 0.5 * (b.dqdy(i, j, k, 3) + b.dqdy(i, j - 1, k, 3)) +
-                      damp[1] * (wR - wL);
-        double dwdz = 0.5 * (b.dqdz(i, j, k, 3) + b.dqdz(i, j - 1, k, 3)) +
-                      damp[2] * (wR - wL);
-
-        double div = dudx + dvdy + dwdz;
-
-        // x momentum
-        double txx = -2.0 * mu * dudx - lambda * div;
-        double txy = -mu * (dvdx + dudy);
-        double txz = -mu * (dwdx + dudz);
-
-        b.jF(i, j, k, 1) =
-            txx * b.jsx(i, j, k) + txy * b.jsy(i, j, k) + txz * b.jsz(i, j, k);
-
-        // y momentum
-        double &tyx = txy;
-        double tyy = -2.0 * mu * dvdy - lambda * div;
-        double tyz = -mu * (dwdy + dvdz);
-
-        b.jF(i, j, k, 2) =
-            tyx * b.jsx(i, j, k) + tyy * b.jsy(i, j, k) + tyz * b.jsz(i, j, k);
-
-        // z momentum
-        double &tzx = txz;
-        double &tzy = tyz;
-        double tzz = -2.0 * mu * dwdz - lambda * div;
-
-        b.jF(i, j, k, 3) =
-            tzx * b.jsx(i, j, k) + tzy * b.jsy(i, j, k) + tzz * b.jsz(i, j, k);
-
-        // energy
-        //   heat conduction
-        wDOTxc = (b.dqdx(i, j - 1, k, 4) * xcim1[0] +
-                  b.dqdy(i, j - 1, k, 4) * xcim1[1] +
-                  b.dqdz(i, j - 1, k, 4) * xcim1[2]);
-        wL = b.q(i, j - 1, k, 4) + wDOTxc;
-        wDOTxc = (b.dqdx(i, j, k, 4) * xci[0] + b.dqdy(i, j, k, 4) * xci[1] +
-                  b.dqdz(i, j, k, 4) * xci[2]);
-        wR = b.q(i, j, k, 4) + wDOTxc;
-        double dTdx = 0.5 * (b.dqdx(i, j, k, 4) + b.dqdx(i, j - 1, k, 4)) +
-                      damp[0] * (wR - wL);
-        double dTdy = 0.5 * (b.dqdy(i, j, k, 4) + b.dqdy(i, j - 1, k, 4)) +
-                      damp[1] * (wR - wL);
-        double dTdz = 0.5 * (b.dqdz(i, j, k, 4) + b.dqdz(i, j - 1, k, 4)) +
-                      damp[2] * (wR - wL);
-
-        double q = -kappa * (dTdx * b.jsx(i, j, k) + dTdy * b.jsy(i, j, k) +
-                             dTdz * b.jsz(i, j, k));
-
-        // flow work
-        // Compute face normal volume flux vector
-        double uf = 0.5 * (b.q(i, j, k, 1) + b.q(i, j - 1, k, 1));
-        double vf = 0.5 * (b.q(i, j, k, 2) + b.q(i, j - 1, k, 2));
-        double wf = 0.5 * (b.q(i, j, k, 3) + b.q(i, j - 1, k, 3));
-
-        b.jF(i, j, k, 4) = -(uf * txx + vf * txy + wf * txz) * b.jsx(i, j, k) -
-                           (uf * tyx + vf * tyy + wf * tyz) * b.jsy(i, j, k) -
-                           (uf * tzx + vf * tzy + wf * tzz) * b.jsz(i, j, k) +
-                           q;
-
-        // Species
-        double Dk, Vc = 0.0;
-        double gradYns = 0.0;
-        double rho = 0.5 * (b.Q(i, j, k, 0) + b.Q(i, j - 1, k, 0));
-        // Compute the species flux and correction term \sum(k=1,ns) Dk*gradYk
-        for (int n = 0; n < b.ne - 5; n++) {
-          Dk = 0.5 * (b.qt(i, j, k, 2 + n) + b.qt(i, j - 1, k, 2 + n));
-          wDOTxc = (b.dqdx(i, j - 1, k, 5 + n) * xcim1[0] +
-                    b.dqdy(i, j - 1, k, 5 + n) * xcim1[1] +
-                    b.dqdz(i, j - 1, k, 5 + n) * xcim1[2]);
-          wL = b.q(i, j - 1, k, 5 + n) + wDOTxc;
-          wDOTxc = (b.dqdx(i, j, k, 5 + n) * xci[0] +
-                    b.dqdy(i, j, k, 5 + n) * xci[1] +
-                    b.dqdz(i, j, k, 5 + n) * xci[2]);
-          wR = b.q(i, j, k, 5 + n) + wDOTxc;
-          double dYdx =
-              0.5 * (b.dqdx(i, j, k, 5 + n) + b.dqdx(i, j - 1, k, 5 + n)) +
-              damp[0] * (wR - wL);
-          double dYdy =
-              0.5 * (b.dqdy(i, j, k, 5 + n) + b.dqdy(i, j - 1, k, 5 + n)) +
-              damp[1] * (wR - wL);
-          double dYdz =
-              0.5 * (b.dqdz(i, j, k, 5 + n) + b.dqdz(i, j - 1, k, 5 + n)) +
-              damp[2] * (wR - wL);
-
-          double gradYk = (dYdx * b.jsx(i, j, k) + dYdy * b.jsy(i, j, k) +
-                           dYdz * b.jsz(i, j, k));
-          gradYns -= gradYk;
-          Vc += Dk * gradYk;
-          b.jF(i, j, k, 5 + n) = -rho * Dk * gradYk;
-        }
-        // Apply n=ns species to correction
-        Dk = 0.5 *
-             (b.qt(i, j, k, 2 + b.ne - 5) + b.qt(i, j - 1, k, 2 + b.ne - 5));
-        Vc += Dk * gradYns;
-
-        // Apply correction and species thermal flux
-        double Yk, hk;
-        double Yns = 1.0;
-        for (int n = 0; n < b.ne - 5; n++) {
-          Yk = 0.5 * (b.q(i, j, k, 5 + n) + b.q(i, j - 1, k, 5 + n));
-          Yns -= Yk;
-          b.jF(i, j, k, 5 + n) += Yk * rho * Vc;
-          // Species thermal diffusion
-          hk = 0.5 * (b.qh(i, j, k, 5 + n) + b.qh(i, j - 1, k, 5 + n));
-          b.jF(i, j, k, 4) += b.jF(i, j, k, 5 + n) * hk;
-        }
-        // Apply the n=ns species to thermal diffusion
-        Yns = fmax(Yns, 0.0);
-        hk = 0.5 * (b.qh(i, j, k, b.ne) + b.qh(i, j - 1, k, b.ne));
-        b.jF(i, j, k, 4) += (-rho * Dk * gradYns + Yns * rho * Vc) * hk;
-      });
-
-  //-------------------------------------------------------------------------------------------|
-  // k flux face range
-  //-------------------------------------------------------------------------------------------|
-  MDRange3 range_k({b.ng, b.ng, b.ng},
-                   {b.ni + b.ng - 1, b.nj + b.ng - 1, b.nk + b.ng});
-  Kokkos::parallel_for(
-      "k face visc fluxes", range_k,
-      KOKKOS_LAMBDA(const int i, const int j, const int k) {
-        double mu = 0.5 * (b.qt(i, j, k, 0) + b.qt(i, j, k - 1, 0));
-        double kappa = 0.5 * (b.qt(i, j, k, 1) + b.qt(i, j, k - 1, 1));
-        double lambda = bulkVisc - 2.0 / 3.0 * mu;
-
-        // continuity
-        b.kF(i, j, k, 0) = 0.0;
-
-        // Geometric terms
-        double e[3] = {b.xc(i, j, k) - b.xc(i, j, k - 1),
-                       b.yc(i, j, k) - b.yc(i, j, k - 1),
-                       b.zc(i, j, k) - b.zc(i, j, k - 1)};
-        double njk[3] = {b.knx(i, j, k), b.kny(i, j, k), b.knz(i, j, k)};
-
-        double MAGeDOTn =
-            sqrt(pow(e[0] * njk[0], 2.0) + pow(e[1] * njk[1], 2.0) +
-                 pow(e[2] * njk[2], 2.0));
-
-        double damp[3] = {alpha / MAGeDOTn * njk[0], alpha / MAGeDOTn * njk[1],
-                          alpha / MAGeDOTn * njk[2]};
-        double xcim1[3] = {b.kxc(i, j, k) - b.xc(i, j, k - 1),
-                           b.kyc(i, j, k) - b.yc(i, j, k - 1),
-                           b.kzc(i, j, k) - b.zc(i, j, k - 1)};
-        double xci[3] = {b.kxc(i, j, k) - b.xc(i, j, k),
-                         b.kyc(i, j, k) - b.yc(i, j, k),
-                         b.kzc(i, j, k) - b.zc(i, j, k)};
-
-        double wDOTxc, wL, wR;
-
-        // Face derivatives = consistent + damping
-        wDOTxc = (b.dqdx(i, j, k - 1, 1) * xcim1[0] +
-                  b.dqdy(i, j, k - 1, 1) * xcim1[1] +
-                  b.dqdz(i, j, k - 1, 1) * xcim1[2]);
-        wL = b.q(i, j, k - 1, 1) + wDOTxc;
-        wDOTxc = (b.dqdx(i, j, k, 1) * xci[0] + b.dqdy(i, j, k, 1) * xci[1] +
-                  b.dqdz(i, j, k, 1) * xci[2]);
-        wR = b.q(i, j, k, 1) + wDOTxc;
-        double dudx = 0.5 * (b.dqdx(i, j, k, 1) + b.dqdx(i, j, k - 1, 1)) +
-                      damp[0] * (wR - wL);
-        double dudy = 0.5 * (b.dqdy(i, j, k, 1) + b.dqdy(i, j, k - 1, 1)) +
-                      damp[1] * (wR - wL);
-        double dudz = 0.5 * (b.dqdz(i, j, k, 1) + b.dqdz(i, j, k - 1, 1)) +
-                      damp[2] * (wR - wL);
-
-        wDOTxc = (b.dqdx(i, j, k - 1, 2) * xcim1[0] +
-                  b.dqdy(i, j, k - 1, 2) * xcim1[1] +
-                  b.dqdz(i, j, k - 1, 2) * xcim1[2]);
-        wL = b.q(i, j, k - 1, 2) + wDOTxc;
-        wDOTxc = (b.dqdx(i, j, k, 2) * xci[0] + b.dqdy(i, j, k, 2) * xci[1] +
-                  b.dqdz(i, j, k, 2) * xci[2]);
-        wR = b.q(i, j, k, 2) + wDOTxc;
-        double dvdx = 0.5 * (b.dqdx(i, j, k, 2) + b.dqdx(i, j, k - 1, 2)) +
-                      damp[0] * (wR - wL);
-        double dvdy = 0.5 * (b.dqdy(i, j, k, 2) + b.dqdy(i, j, k - 1, 2)) +
-                      damp[1] * (wR - wL);
-        double dvdz = 0.5 * (b.dqdz(i, j, k, 2) + b.dqdz(i, j, k - 1, 2)) +
-                      damp[2] * (wR - wL);
-
-        wDOTxc = (b.dqdx(i, j, k - 1, 3) * xcim1[0] +
-                  b.dqdy(i, j, k - 1, 3) * xcim1[1] +
-                  b.dqdz(i, j, k - 1, 3) * xcim1[2]);
-        wL = b.q(i, j, k - 1, 3) + wDOTxc;
-        wDOTxc = (b.dqdx(i, j, k, 3) * xci[0] + b.dqdy(i, j, k, 3) * xci[1] +
-                  b.dqdz(i, j, k, 3) * xci[2]);
-        wR = b.q(i, j, k, 3) + wDOTxc;
-        double dwdx = 0.5 * (b.dqdx(i, j, k, 3) + b.dqdx(i, j, k - 1, 3)) +
-                      damp[0] * (wR - wL);
-        double dwdy = 0.5 * (b.dqdy(i, j, k, 3) + b.dqdy(i, j, k - 1, 3)) +
-                      damp[1] * (wR - wL);
-        double dwdz = 0.5 * (b.dqdz(i, j, k, 3) + b.dqdz(i, j, k - 1, 3)) +
-                      damp[2] * (wR - wL);
-
-        double div = dudx + dvdy + dwdz;
-
-        // x momentum
-        double txx = -2.0 * mu * dudx - lambda * div;
-        double txy = -mu * (dvdx + dudy);
-        double txz = -mu * (dwdx + dudz);
-
-        b.kF(i, j, k, 1) =
-            txx * b.ksx(i, j, k) + txy * b.ksy(i, j, k) + txz * b.ksz(i, j, k);
-
-        // y momentum
-        double &tyx = txy;
-        double tyy = -2.0 * mu * dvdy - lambda * div;
-        double tyz = -mu * (dwdy + dvdz);
-
-        b.kF(i, j, k, 2) =
-            tyx * b.ksx(i, j, k) + tyy * b.ksy(i, j, k) + tyz * b.ksz(i, j, k);
-
-        // z momentum
-        double &tzx = txz;
-        double &tzy = tyz;
-        double tzz = -2.0 * mu * dwdz - lambda * div;
-
-        b.kF(i, j, k, 3) =
-            tzx * b.ksx(i, j, k) + tzy * b.ksy(i, j, k) + tzz * b.ksz(i, j, k);
-
-        // energy
-        //   heat conduction
-        wDOTxc = (b.dqdx(i, j, k - 1, 4) * xcim1[0] +
-                  b.dqdy(i, j, k - 1, 4) * xcim1[1] +
-                  b.dqdz(i, j, k - 1, 4) * xcim1[2]);
-        wL = b.q(i, j, k - 1, 4) + wDOTxc;
-        wDOTxc = (b.dqdx(i, j, k, 4) * xci[0] + b.dqdy(i, j, k, 4) * xci[1] +
-                  b.dqdz(i, j, k, 4) * xci[2]);
-        wR = b.q(i, j, k, 4) + wDOTxc;
-        double dTdx = 0.5 * (b.dqdx(i, j, k, 4) + b.dqdx(i, j, k - 1, 4)) +
-                      damp[0] * (wR - wL);
-        double dTdy = 0.5 * (b.dqdy(i, j, k, 4) + b.dqdy(i, j, k - 1, 4)) +
-                      damp[1] * (wR - wL);
-        double dTdz = 0.5 * (b.dqdz(i, j, k, 4) + b.dqdz(i, j, k - 1, 4)) +
-                      damp[2] * (wR - wL);
-
-        double q = -kappa * (dTdx * b.ksx(i, j, k) + dTdy * b.ksy(i, j, k) +
-                             dTdz * b.ksz(i, j, k));
-
-        // flow work
-        // Compute face normal volume flux vector
-        double uf = 0.5 * (b.q(i, j, k, 1) + b.q(i, j, k - 1, 1));
-        double vf = 0.5 * (b.q(i, j, k, 2) + b.q(i, j, k - 1, 2));
-        double wf = 0.5 * (b.q(i, j, k, 3) + b.q(i, j, k - 1, 3));
-
-        b.kF(i, j, k, 4) = -(uf * txx + vf * txy + wf * txz) * b.ksx(i, j, k) -
-                           (uf * tyx + vf * tyy + wf * tyz) * b.ksy(i, j, k) -
-                           (uf * tzx + vf * tzy + wf * tzz) * b.ksz(i, j, k) +
-                           q;
-
-        // Species
-        double Dk, Vc = 0.0;
-        double gradYns = 0.0;
-        double rho = 0.5 * (b.Q(i, j, k, 0) + b.Q(i, j, k - 1, 0));
-        // Compute the species flux and correction term \sum(k=1,ns) Dk*gradYk
-        for (int n = 0; n < b.ne - 5; n++) {
-          Dk = 0.5 * (b.qt(i, j, k, 2 + n) + b.qt(i, j, k - 1, 2 + n));
-          wDOTxc = (b.dqdx(i, j, k - 1, 5 + n) * xcim1[0] +
-                    b.dqdy(i, j, k - 1, 5 + n) * xcim1[1] +
-                    b.dqdz(i, j, k - 1, 5 + n) * xcim1[2]);
-          wL = b.q(i, j, k - 1, 5 + n) + wDOTxc;
-          wDOTxc = (b.dqdx(i, j, k, 5 + n) * xci[0] +
-                    b.dqdy(i, j, k, 5 + n) * xci[1] +
-                    b.dqdz(i, j, k, 5 + n) * xci[2]);
-          wR = b.q(i, j, k, 5 + n) + wDOTxc;
-          double dYdx =
-              0.5 * (b.dqdx(i, j, k, 5 + n) + b.dqdx(i, j, k - 1, 5 + n)) +
-              damp[0] * (wR - wL);
-          double dYdy =
-              0.5 * (b.dqdy(i, j, k, 5 + n) + b.dqdy(i, j, k - 1, 5 + n)) +
-              damp[1] * (wR - wL);
-          double dYdz =
-              0.5 * (b.dqdz(i, j, k, 5 + n) + b.dqdz(i, j, k - 1, 5 + n)) +
-              damp[2] * (wR - wL);
-          double gradYk = (dYdx * b.ksx(i, j, k) + dYdy * b.ksy(i, j, k) +
-                           dYdz * b.ksz(i, j, k));
-          gradYns -= gradYk;
-          Vc += Dk * gradYk;
-          b.kF(i, j, k, 5 + n) = -rho * Dk * gradYk;
-        }
-        // Apply n=ns species to correction
-        Dk = 0.5 *
-             (b.qt(i, j, k, 2 + b.ne - 5) + b.qt(i, j, k - 1, 2 + b.ne - 5));
-        Vc += Dk * gradYns;
-
-        // Apply correction and species thermal flux
-        double Yk, hk;
-        double Yns = 1.0;
-        for (int n = 0; n < b.ne - 5; n++) {
-          Yk = 0.5 * (b.q(i, j, k, 5 + n) + b.q(i, j, k - 1, 5 + n));
-          Yns -= Yk;
-          b.kF(i, j, k, 5 + n) += Yk * rho * Vc;
-          // Species thermal diffusion
-          hk = 0.5 * (b.qh(i, j, k, 5 + n) + b.qh(i, j, k - 1, 5 + n));
-          b.kF(i, j, k, 4) += b.kF(i, j, k, 5 + n) * hk;
-        }
-        // Apply the n=ns species to thermal diffusion
-        Yns = fmax(Yns, 0.0);
-        hk = 0.5 * (b.qh(i, j, k, b.ne) + b.qh(i, j, k - 1, b.ne));
-        b.kF(i, j, k, 4) += (-rho * Dk * gradYns + Yns * rho * Vc) * hk;
-      });
+  computeFlux(b, b.iF, b.isx, b.isy, b.isz, b.inx, b.iny, b.inz, b.ixc, b.iyc,
+              b.izc, 1, 0, 0);
+  computeFlux(b, b.jF, b.jsx, b.jsy, b.jsz, b.jnx, b.jny, b.jnz, b.jxc, b.jyc,
+              b.jzc, 0, 1, 0);
+  computeFlux(b, b.kF, b.ksx, b.ksy, b.ksz, b.knx, b.kny, b.knz, b.kxc, b.kyc,
+              b.kzc, 0, 0, 1);
 }

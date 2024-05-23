@@ -20,6 +20,7 @@ import matplotlib.pyplot as plt
 
 def simulate(index="i"):
     config = pg.files.configFile()
+    config["RHS"]["primaryAdvFlux"] = "KEPaEC"
     config["RHS"]["diffusion"] = False
     config.validateConfig()
     mb = pg.multiBlock.generateMultiBlockSolver(1, config)
