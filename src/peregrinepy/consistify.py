@@ -1,26 +1,29 @@
 from .mpiComm import communicate
 
+"""
+This function unifies the interior and halo cell data
+such that interior data fields are thermodynamically
+consistent, the halos match with neighbring blocks,
+and the boundary conditions are set. Basically, make it
+so we can compute the RHS values with up to date data.
+"""
+
 
 def consistify(mb, given="cons"):
-    # We assume that the interior of the blocks have a
-    # conservative Q variable field. We update the
-    # interior primatives, apply boundary conditions,
-    # update halo values as needed, then communicate
-    # everything.
-    #
-    # Update all pointwise solution arrays, except for
-    # derivatives. This routine prepares the block for
-    # RHS advective calculations (so inviscid boundary
-    # conditions)
+    # We start with either conserved Q (given="cons"), or we
+    # start with primative q (given="prims"). Then go from one
+    # to the other, and then make the rest of pointwise arrays
+    # thermodynamically consistent, fill in halos, and apply
+    # boundary conditions.
 
-    # First communicate conservatives
+    # First communicate conservatives/primatives
     if given == "cons":
         communicate(mb, ["Q", "s"])
     elif given == "prims":
         communicate(mb, ["q", "s"])
 
     # Now update derived arrays for ENTIRE block,
-    #  even exterior halos.
+    # even exterior halos.
     for blk in mb:
         mb.eos(blk, mb.thtrdat, -1, given)
 

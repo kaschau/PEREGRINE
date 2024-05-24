@@ -11,7 +11,7 @@ def readBlocksForProcs(pathToFile="./Input", parallel=False):
         except FileNotFoundError:
             return None
     else:
-        from mpi4py import MPI
+        from mpi4py import MPI  # noqa: F401
         from ..mpiComm.mpiUtils import getCommRankSize
 
         try:

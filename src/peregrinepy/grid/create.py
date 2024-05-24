@@ -211,12 +211,12 @@ def multiBlockCube(
 
     """
 
-    if np.product(mbDims) != mb.nblks:
+    if np.prod(mbDims) != mb.nblks:
         raise ValueError(
             "Warning, multiBlock dimensions does not equal number of blocks!"
         )
 
-    mb.totalBlocks = np.product(mbDims)
+    mb.totalBlocks = np.prod(mbDims)
 
     blk_origins_x = np.linspace(origin[0], origin[0] + lengths[0], mbDims[0] + 1)
     blk_origins_y = np.linspace(origin[1], origin[1] + lengths[1], mbDims[1] + 1)
@@ -453,11 +453,11 @@ def multiBlockAnnulus(
 
     """
 
-    if np.product(mbDims) != mb.nblks:
+    if np.prod(mbDims) != mb.nblks:
         raise ValueError(
             "Error: multiBlock dimensions does not equal number of blocks!"
         )
-    mb.totalBlocks = np.product(mbDims)
+    mb.totalBlocks = np.prod(mbDims)
 
     p1 = np.array([0.0, 0.0, 0.0])  # All periodic axes go through origin!!!
     p2 = np.array(p2)

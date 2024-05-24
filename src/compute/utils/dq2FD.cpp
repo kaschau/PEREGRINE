@@ -1,7 +1,7 @@
-#include "Kokkos_Core.hpp"
 #include "block_.hpp"
 #include "compute.hpp"
 #include "kokkosTypes.hpp"
+#include <Kokkos_Core.hpp>
 
 void dq2FD(block_ &b) {
 

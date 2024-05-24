@@ -1,9 +1,9 @@
 #ifndef __utils_H__
 #define __utils_H__
 
-#include "Kokkos_Core.hpp"
 #include "block_.hpp"
 #include "compute.hpp"
+#include <Kokkos_Core.hpp>
 
 // ./utils
 //    |------> applyFluxes

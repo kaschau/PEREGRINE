@@ -1,12 +1,7 @@
-import mpi4py.rc
 import itertools
 import peregrinepy as pg
 import numpy as np
 import pytest
-
-mpi4py.rc.finalize = False
-mpi4py.rc.initialize = False
-from mpi4py import MPI
 
 
 class twoblock123:
@@ -17,10 +12,6 @@ class twoblock123:
         self.config["RHS"]["secondaryAdvFlux"] = "rusanov"
 
         self.config["RHS"]["diffusion"] = True
-        if adv == "secondOrderKEEP":
-            self.config["RHS"]["diffOrder"] = 2
-        elif adv == "fourthOrderKEEP":
-            self.config["RHS"]["diffOrder"] = 4
 
         self.config["thermochem"]["spdata"] = spdata
         self.mb = pg.multiBlock.generateMultiBlockSolver(2, self.config)
@@ -34,7 +25,7 @@ class twoblock123:
 
         self.mb.initSolverArrays(self.config)
         self.mb.generateHalo()
-        self.mb.computeMetrics(self.config["RHS"]["diffOrder"])
+        self.mb.computeMetrics()
 
         blk0 = self.mb[0]
         blk1 = self.mb[1]
@@ -78,8 +69,8 @@ pytestmark = pytest.mark.parametrize(
     "adv,spdata",
     list(
         itertools.product(
-            ("secondOrderKEEP", "fourthOrderKEEP"),
-            (["Air"], "thtr_CH4_O2_Stanford_Skeletal.yaml"),
+            ("KEEPpe", "fourthOrderKEEP"),
+            (["Air"], "thtr_CH4_O2_FFCMY.yaml"),
         )
     ),
 )

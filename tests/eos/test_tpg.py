@@ -17,8 +17,8 @@ pytestmark = pytest.mark.parametrize(
             "thtr_C2H4_Air_Skeletal.yaml",
         ),
         (
-            "CH4_O2_Stanford_Skeletal.yaml",
-            "thtr_CH4_O2_Stanford_Skeletal.yaml",
+            "CH4_O2_FFCMY.yaml",
+            "thtr_CH4_O2_FFCMY.yaml",
         ),
         (
             "GRI30.yaml",
@@ -61,7 +61,7 @@ def test_tpg(my_setup, ctfile, thfile):
     ng = blk.ng
 
     mb.generateHalo()
-    mb.computeMetrics(config["RHS"]["diffOrder"])
+    mb.computeMetrics()
 
     blk.array["q"][:, :, :, 0] = p
     blk.array["q"][:, :, :, 1:4] = 0.0

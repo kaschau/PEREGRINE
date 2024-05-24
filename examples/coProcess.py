@@ -5,7 +5,7 @@ run with 2 mpi processes!!!!!!
 
 """
 
-from mpi4py import MPI
+from mpi4py import MPI  # noqa: F401
 
 import peregrinepy as pg
 import numpy as np
@@ -159,7 +159,7 @@ def simulate():
 
     mb.initSolverArrays(config)
     mb.generateHalo()
-    mb.computeMetrics(config["RHS"]["diffOrder"])
+    mb.computeMetrics()
 
     blk.array["q"][:, :, :, 0] = 101325.0
     blk.array["q"][:, :, :, 1] = 10.0
@@ -173,11 +173,11 @@ def simulate():
     if rank == 0:
         print(mb)
     dt = 1.44e-6
-    mb.coproc(mb, mb.nrt)
+    mb.coproc(mb)
     while mb.nrt < 100:
         pg.misc.progressBar(mb.nrt, 100)
         mb.step(dt)
-        mb.coproc(mb, mb.nrt)
+        mb.coproc(mb)
 
     mb.coproc.finalize()
     if rank == 0:

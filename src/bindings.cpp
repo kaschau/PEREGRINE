@@ -1,8 +1,8 @@
-#include "Kokkos_Core.hpp"
 #include "block_.hpp"
 #include "compute.hpp"
 #include "face_.hpp"
 #include "kokkosTypes.hpp"
+#include <Kokkos_Core.hpp>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
@@ -42,10 +42,9 @@ PYBIND11_MODULE(compute, m) {
   bindUtils(m);
   bindKokkos(m);
 
-  ////////////////////////////////////////////////////////////////////////////////
-  ///////////////////  C++ Parent block_ class
-  //////////////////////////////////////
-  ////////////////////////////////////////////////////////////////////////////////
+  // --------------------------------------------------------------------------//
+  // C++ Parent block_ class
+  // --------------------------------------------------------------------------//
 
   py::class_<block_>(m, "block_", py::dynamic_attr())
       .def(py::init<>())
@@ -170,6 +169,9 @@ PYBIND11_MODULE(compute, m) {
       // Switch
       .def_readwrite("phi", &block_::phi);
 
+  // --------------------------------------------------------------------------//
+  // C++ Parent face_ class
+  // --------------------------------------------------------------------------//
   py::class_<face_>(m, "face_", py::dynamic_attr())
       .def(py::init<>())
 

@@ -18,9 +18,9 @@ pytestmark = pytest.mark.parametrize(
             "chem_C2H4_Air_Skeletal",
         ),
         (
-            "CH4_O2_Stanford_Skeletal.yaml",
-            "thtr_CH4_O2_Stanford_Skeletal.yaml",
-            "chem_CH4_O2_Stanford_Skeletal",
+            "CH4_O2_FFCMY.yaml",
+            "thtr_CH4_O2_FFCMY.yaml",
+            "chem_CH4_O2_FFCMY",
         ),
         (
             "GRI30.yaml",
@@ -60,7 +60,7 @@ def test_chemistry(my_setup, thfile, ctfile, chmfile):
     blk = mb[0]
 
     mb.generateHalo()
-    mb.computeMetrics(config["RHS"]["diffOrder"])
+    mb.computeMetrics()
 
     blk.array["q"][:, :, :, 0] = p
     blk.array["q"][:, :, :, 4] = T
@@ -109,7 +109,4 @@ def test_chemistry(my_setup, thfile, ctfile, chmfile):
         )
 
     passfail = np.all(np.array(pd) < 1e-10)
-    print("*****")
-    print(np.array(pd))
-    print("*****")
     assert passfail

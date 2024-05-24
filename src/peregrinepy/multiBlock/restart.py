@@ -1,23 +1,10 @@
-# -*- coding: utf-8 -*-
-
-""" multiBlock.py
-
-Authors:
-
-Kyle Schau
-
-
-This module holds the peregrinepy.multiBlock object class that inherits from
-python lists to create a list of peregrine.block object with added functionality and attributes
-
-"""
-
 from .grid import grid
 from .restartBlock import restartBlock
 
 
 class restart(grid):
-    """A list of peregrinepy.restart.restart_block objects. Inherits from peregrinepy.multiBlock.grid"""
+    """A list of peregrinepy.multiBlock.restart block.
+    Inherits from peregrinepy.multiBlock.grid"""
 
     mbType = "restart"
 
@@ -59,19 +46,8 @@ class restart(grid):
             blk.tme = val
 
     def checkSpeciesSum(self, normalize=False):
-        """Loop through each block to check that the sum of all species does not exceed 1.0 anywhere in the domain
-
-        Parameters
-        ----------
-
-        normalize: bool
-            Whether to normalize the species mass fraction such that the summ is less than one.
-
-        Returns
-        -------
-        None
-
-        """
+        """Loop through each block to check that the sum of all
+        species does not exceed 1.0 anywhere in the domain."""
 
         anyBad = False
         for blk in self:

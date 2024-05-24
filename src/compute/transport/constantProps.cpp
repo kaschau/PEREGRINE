@@ -1,8 +1,8 @@
-#include "Kokkos_Core.hpp"
 #include "block_.hpp"
 #include "compute.hpp"
 #include "kokkosTypes.hpp"
 #include "thtrdat_.hpp"
+#include <Kokkos_Core.hpp>
 #include <math.h>
 
 void constantProps(block_ &b, const thtrdat_ &th, const int &nface,
@@ -56,13 +56,6 @@ void constantProps(block_ &b, const thtrdat_ &th, const int &nface,
           }
           for (int n = 0; n <= ns - 1; n++) {
             X(n) = Y(n) / th.MW(n) / mass;
-          }
-        }
-        // Mean molecular weight
-        {
-          double MWmix = 0.0;
-          for (int n = 0; n <= ns - 1; n++) {
-            MWmix += X(n) * th.MW(n);
           }
         }
 

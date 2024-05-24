@@ -1,12 +1,12 @@
 #ifndef __compute_H__
 #define __compute_H__
 
-#include "Kokkos_Core.hpp"
 #include "block_.hpp"
 #include "face_.hpp"
 #include "kokkosTypes.hpp"
 #include "thtrdat_.hpp"
 #include "vector"
+#include <Kokkos_Core.hpp>
 #include <string>
 
 ///////////////////////////////////////////////////////////

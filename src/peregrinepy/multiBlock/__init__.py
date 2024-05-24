@@ -1,6 +1,3 @@
-from .topology import topology
-from .grid import grid
-from .restart import restart
 from .solver import solver
 
 from ..integrators import getIntegrator
@@ -8,6 +5,12 @@ from ..thermoTransport import thtrdat, findUserSpData
 from peregrinepy import compute
 
 from ..misc import null
+
+"""
+This is the mother ship of a peregrine case. The function generateMultiBlockSolver
+sets all the attributes of the solver class that we need to run a case, checks
+that our config file makes sense, etc.
+"""
 
 
 class pgConfigError(Exception):
@@ -20,6 +23,11 @@ class pgConfigError(Exception):
 # Consistify
 #########################################
 def setConsistify(cls, config):
+    """
+    Sets the funcitons for the consistify routine calls.
+    see PEREGRINE/src/peregrinepy/consistify.py
+    """
+
     # EOS
     eos = config["thermochem"]["eos"]
     try:
@@ -27,7 +35,7 @@ def setConsistify(cls, config):
     except AttributeError:
         raise pgConfigError("eos", eos)
 
-    # Transport properties.
+    # Transport properties
     if config["RHS"]["diffusion"]:
         trans = config["thermochem"]["trans"]
         try:
@@ -58,6 +66,11 @@ def setConsistify(cls, config):
 # RHS
 #########################################
 def setRHS(cls, config):
+    """
+    Set the functions for the right hand side calls,
+    see PEREGRINE/src/peregrinepy/RHS.py
+    """
+
     # Primary advective fluxes
     primary = config["RHS"]["primaryAdvFlux"]
     try:
@@ -95,11 +108,7 @@ def setRHS(cls, config):
 
     # spatial derivatives, subgrid mode, diffusive fluxes
     if config["RHS"]["diffusion"]:
-        dqO = config["RHS"]["diffOrder"]
-        try:
-            cls.dqdxyz = getattr(compute.utils, f"dq{dqO}FD")
-        except AttributeError:
-            raise pgConfigError("diffOrder", f"dq{dqO}FD")
+        cls.dqdxyz = getattr(compute.utils, "dq2FD")
 
         # Subgrid models
         if config["RHS"]["subgrid"] is not None:
@@ -140,6 +149,14 @@ def setRHS(cls, config):
             try:
                 cls.expChem = null
                 cls.impChem = getattr(compute.chemistry, mech)
+                if config["thermochem"]["nChemSubSteps"] > 1:
+                    import warnings
+
+                    warnings.warn(
+                        "WARNING: nChemSubSteps > 1 with implicit chemistry. This has no effect.",
+                        RuntimeWarning,
+                    )
+                    config["thermochem"]["nChemSubSteps"] = 1
             except AttributeError:
                 raise pgConfigError("mechanism", mech)
     else:
@@ -148,8 +165,13 @@ def setRHS(cls, config):
 
 
 def howManyNG(config):
+    """
+    Determine how many ghost layers does this case need.
+    """
     advFluxNG = {
-        "secondOrderKEEP": 1,
+        "KEEP": 1,
+        "KEEPpe": 1,
+        "KEPaEC": 1,
         "centralDifference": 1,
         "fourthOrderKEEP": 2,
         "hllc": 1,
@@ -170,8 +192,6 @@ def howManyNG(config):
         None: 1,
     }
 
-    diffOrderNG = {2: 1, 4: 2}
-
     ng = 1
 
     # First check primary advective flux
@@ -185,15 +205,18 @@ def howManyNG(config):
     sub = config["RHS"]["subgrid"]
     ng = max(ng, subgridNG[sub])
 
-    # Now check diffusion term order
-    if config["RHS"]["diffusion"]:
-        dO = config["RHS"]["diffOrder"]
-        ng = max(ng, diffOrderNG[dO])
-
     return ng
 
 
 def generateMultiBlockSolver(nblks, config, myblocks=None):
+    """
+    Generate a complete multiBlock solver object with the
+    - time integrator
+    - species data
+    - consistify methods
+    - RHS methods
+    """
+
     # Get the time integrator from config file
     ti = config["timeIntegration"]["integrator"]
     tic = getIntegrator(ti)
@@ -222,10 +245,10 @@ def generateMultiBlockSolver(nblks, config, myblocks=None):
     # Set the thtrdat object on
     cls.thtrdat = thtrdat(config)
 
-    # Set the compute routines for consistify
+    # Set the compute methods for consistify
     setConsistify(cls, config)
 
-    # Set the compute routines for the RHS
+    # Set the compute methods for the RHS
     setRHS(cls, config)
 
     return cls

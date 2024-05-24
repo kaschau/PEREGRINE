@@ -1,7 +1,7 @@
 import h5py
 import numpy as np
 from ..misc import progressBar
-from .writerMetaData import restartMetaData
+from .writeMetaData import restartMetaData
 
 
 def writeRestart(

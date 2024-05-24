@@ -11,7 +11,7 @@ def findUserSpData(config):
     # then we look in the PEREGRINE data base
     # then we see if we have an absolute path
     spdata = config["thermochem"]["spdata"]
-    if type(spdata) == list:
+    if isinstance(spdata, list):
         usersp = {i: None for i in spdata}
         return usersp
     else:

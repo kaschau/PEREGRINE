@@ -1,9 +1,9 @@
-#include "Kokkos_Core.hpp"
 #include "block_.hpp"
 #include "compute.hpp"
 #include "face_.hpp"
 #include "kokkosTypes.hpp"
 #include "thtrdat_.hpp"
+#include <Kokkos_Core.hpp>
 #include <string.h>
 
 // Strategy for wall halo velocities:

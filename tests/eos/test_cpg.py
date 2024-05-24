@@ -35,7 +35,7 @@ def test_cpg(my_setup):
     ng = blk.ng
 
     mb.generateHalo()
-    mb.computeMetrics(config["RHS"]["diffOrder"])
+    mb.computeMetrics()
 
     blk.array["q"][:, :, :, 0] = p
     blk.array["q"][:, :, :, 1:4] = 0.0

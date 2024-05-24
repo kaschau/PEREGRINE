@@ -1,8 +1,7 @@
-# -*- coding: utf-8 -*-
 import h5py
 import numpy as np
 from ..misc import progressBar
-from .writerMetaData import gridMetaData
+from .writeMetaData import gridMetaData
 
 
 def writeGrid(mb, path="./", precision="double", withHalo=False, lump=True):

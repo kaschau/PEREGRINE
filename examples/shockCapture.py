@@ -15,7 +15,7 @@ Spring
 for more.
 """
 
-from mpi4py import MPI
+from mpi4py import MPI  # noqa: F401
 
 import peregrinepy as pg
 import numpy as np
@@ -335,7 +335,7 @@ def simulate(testnum, index="i"):
     config = pg.files.configFile()
     config["thermochem"]["spdata"] = ["DB"]
     config["RHS"]["shockHandling"] = "artificialDissipation"
-    config["RHS"]["primaryAdvFlux"] = "secondOrderKEEP"
+    config["RHS"]["primaryAdvFlux"] = "KEEPpe"
     config["RHS"]["secondaryAdvFlux"] = "scalarDissipation"
     config["RHS"]["switchAdvFlux"] = "vanLeer"
     config["timeIntegration"]["integrator"] = "rk3"
@@ -391,7 +391,7 @@ def simulate(testnum, index="i"):
 
     mb.setBlockCommunication()
     mb.unifyGrid()
-    mb.computeMetrics(fdOrder=2)
+    mb.computeMetrics()
 
     ccArray = {"i": "xc", "j": "yc", "k": "zc"}
     uIndex = {"i": 1, "j": 2, "k": 3}

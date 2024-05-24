@@ -11,7 +11,7 @@ Should reproduce figure 3 depending on resolution setting.
 
 """
 
-from mpi4py import MPI
+from mpi4py import MPI  # noqa: F401
 import peregrinepy as pg
 import numpy as np
 from time import perf_counter
@@ -69,7 +69,8 @@ def simulate():
     mb.setBlockCommunication()
 
     mb.unifyGrid()
-    mb.computeMetrics(config["RHS"]["diffOrder"])
+    mb.computeMetrics()
+    print(mb)
 
     Rc = 1.0
     rhoInf = 1.0
@@ -90,9 +91,7 @@ def simulate():
     r = np.sqrt(((xc - x0) ** 2 + (yc - y0) ** 2) / Rc**2)
 
     # u
-    blk.array["q"][:, :, :, 1] = uInf - (C0 * (yc - y0) / Rc**2) * np.exp(
-        -(r**2) / 2.0
-    )
+    blk.array["q"][:, :, :, 1] = uInf - (C0 * (yc - y0) / Rc**2) * np.exp(-(r**2) / 2.0)
     # v
     blk.array["q"][:, :, :, 2] = (C0 * (xc - x0) / Rc**2) * np.exp(-(r**2) / 2.0)
 

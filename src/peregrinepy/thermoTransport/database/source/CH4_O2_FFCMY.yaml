@@ -13,7 +13,7 @@ description: |-
   ****************************************************************************
 
 generator: ck2yaml
-input-files: [CH4_O2_Stanford_Skeletal.txt, therm.txt, tran.txt]
+input-files: [CH4_O2_FFCMY.txt, therm.txt, tran.txt]
 cantera-version: 3.0.0a3
 date: Wed, 30 Nov 2022 10:43:22 -0500
 

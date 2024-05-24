@@ -1,7 +1,7 @@
 from abc import ABCMeta
 
 import numpy as np
-from mpi4py import MPI
+from mpi4py import MPI  # noqa: F401
 
 from ..compute.timeIntegration import (
     DTrk3s1,

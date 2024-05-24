@@ -5,7 +5,7 @@ Couette Flow with top wall moving at 5m/s
 
 """
 
-from mpi4py import MPI
+from mpi4py import MPI  # noqa: F401
 
 import peregrinepy as pg
 import numpy as np
@@ -140,7 +140,7 @@ def simulate(index, velo):
     mb.setBlockCommunication()
 
     mb.unifyGrid()
-    mb.computeMetrics(config["RHS"]["diffOrder"])
+    mb.computeMetrics()
 
     ng = blk.ng
     blk.array["q"][:, :, :, 0] = 101325.0

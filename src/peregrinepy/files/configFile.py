@@ -1,17 +1,11 @@
-# -*- coding: utf-8 -*-
-
-""" config.py
-
-Authors:
-
-Kyle Schau
-
-This module holds a python dictionary version
-of a standard PEREGRINE config file.
+from ..misc import frozenDict
 
 """
 
-from ..misc import frozenDict
+This module holds a defines a dictionary version
+of a standard PEREGRINE config file.
+
+"""
 
 
 class pgConfigError(Exception):
@@ -58,11 +52,10 @@ class configFile(frozenDict):
         self["RHS"] = frozenDict(
             {
                 "shockHandling": None,
-                "primaryAdvFlux": "secondOrderKEEP",
+                "primaryAdvFlux": "KEPaEC",
                 "secondaryAdvFlux": None,
                 "switchAdvFlux": None,
                 "diffusion": False,
-                "diffOrder": 2,
                 "subgrid": None,
             }
         )
@@ -103,15 +96,19 @@ class configFile(frozenDict):
         self._freeze()
 
     def validateConfig(self):
-        ###################################################################################
-        # Sanity checks go here:
-        ###################################################################################
+        #######################################################################
+        # Sanity checks go here
+        #######################################################################
 
-        # Simulation checks
+        # ---------------------------------------------------------------------#
+        # io checks
+        # ---------------------------------------------------------------------#
         if self["io"]["saveExtraVars"] is None:
             self["io"]["saveExtraVars"] = []
 
-        # Time Integration Checks
+        # ---------------------------------------------------------------------#
+        # timeIntegration Checks
+        # ---------------------------------------------------------------------#
         ti = self["timeIntegration"]["integrator"]
         eos = self["thermochem"]["eos"]
 
@@ -129,7 +126,9 @@ class configFile(frozenDict):
                 "Only fixed time step currently supported.",
             )
 
+        # ---------------------------------------------------------------------#
         # RHS checks
+        # ---------------------------------------------------------------------#
         primaryAdvFlux = self["RHS"]["primaryAdvFlux"]
         secondaryAdvFlux = self["RHS"]["secondaryAdvFlux"]
         switch = self["RHS"]["switchAdvFlux"]
@@ -170,7 +169,9 @@ class configFile(frozenDict):
                     "\nYou set an flux switching option without a secondary flux.",
                 )
 
-        # viscous sponge check
+        # ---------------------------------------------------------------------#
+        # viscousSponge check
+        # ---------------------------------------------------------------------#
         if self["viscousSponge"]["spongeON"]:
             if not self["RHS"]["diffusion"]:
                 raise pgConfigError(
@@ -179,7 +180,9 @@ class configFile(frozenDict):
                     "\nYou turned on viscousSponge without solving for diffusion.",
                 )
 
-        # Chemistry checks
+        # ---------------------------------------------------------------------#
+        # thermochem checks
+        # ---------------------------------------------------------------------#
         self["thermochem"]["nChemSubSteps"] = max(
             1, self["thermochem"]["nChemSubSteps"]
         )

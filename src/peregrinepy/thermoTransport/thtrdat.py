@@ -56,7 +56,7 @@ class thtrdat(thtrdat_):
 
         # Get user species data, the spData from the config file is just a list of strings,
         # then we assume we just want to grab those species, otherwise we use the thtr.yaml file.
-        if type(config["thermochem"]["spdata"]) == list:
+        if isinstance(config["thermochem"]["spdata"], list):
             usersp = {}
             for key in config["thermochem"]["spdata"]:
                 usersp[key] = None
@@ -163,13 +163,13 @@ class thtrdat(thtrdat_):
                 )
 
     def updateDeviceView(self, vars):
-        if type(vars) == str:
+        if isinstance(vars, str):
             vars = [vars]
         for var in vars:
             deep_copy(getattr(self, var), self.mirror[var])
 
     def updateHostView(self, vars):
-        if type(vars) == str:
+        if isinstance(vars, str):
             vars = [vars]
         for var in vars:
             deep_copy(self.mirror[var], getattr(self, var))

@@ -2,10 +2,6 @@
 """
 A utility to cut up a peregrine grid into smaller blocks.
 
-Current limitations: Right now we are relying on dot products to find periodic faces.
-This means that we can only handle translational periodicity, and the periodic faces
-must be planes.
-
 """
 
 import numpy as np
@@ -317,7 +313,6 @@ def performCutOperations(mb, cutOps):
 
 if __name__ == "__main__":
     import argparse
-    import os
 
     parser = argparse.ArgumentParser(
         description="Cut a grid arbitrary number of times along arbitrary axis",
@@ -433,7 +428,7 @@ if __name__ == "__main__":
                     while trialNcells > maxBlockSize:
                         trialNsplits[a] += 1
                         # How many times do we need to cut this axis before block size is less than maxBlockSize?
-                        trialNcells = np.product(nis / trialNsplits)
+                        trialNcells = np.prod(nis / trialNsplits)
                         if trialNsplits[a] >= nis[a]:
                             raise ValueError(
                                 "I have to split the largest block to single cell sizes to meet your requested maxBlockSize. Are you sure thats a reasonable block size?"

@@ -27,17 +27,17 @@
 // 38 reactions.
 // ========================================================== //
 
-#include "Kokkos_Core.hpp"
 #include "block_.hpp"
 #include "compute.hpp"
 #include "kokkosTypes.hpp"
 #include "thtrdat_.hpp"
+#include <Kokkos_Core.hpp>
 #include <math.h>
 
-void chem_CH4_O2_Stanford_Skeletal(
-    block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
-    const int &indxI /*=0*/, const int &indxJ /*=0*/, const int &indxK /*=0*/,
-    const int &nChemSubSteps /*=1*/, const double &dt /*=1.0*/) {
+void chem_CH4_O2_FFCMY(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
+                       const int &indxI /*=0*/, const int &indxJ /*=0*/,
+                       const int &indxK /*=0*/, const int &nChemSubSteps /*=1*/,
+                       const double &dt /*=1.0*/) {
 
   // --------------------------------------------------------------|
   // cc range

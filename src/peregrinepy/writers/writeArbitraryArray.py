@@ -1,6 +1,6 @@
 import h5py
 import numpy as np
-from .writerMetaData import arbitraryMetaData
+from .writeMetaData import arbitraryMetaData
 
 
 def writeArbitraryArray(

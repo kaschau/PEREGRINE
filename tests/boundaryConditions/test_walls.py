@@ -13,8 +13,8 @@ pytestmark = pytest.mark.parametrize(
     "adv,spdata",
     list(
         itertools.product(
-            ("secondOrderKEEP", "fourthOrderKEEP"),
-            (["Air"], "thtr_CH4_O2_Stanford_Skeletal.yaml"),
+            ("KEEPpe", "fourthOrderKEEP"),
+            (["Air"], "thtr_CH4_O2_FFCMY.yaml"),
         )
     ),
 )
@@ -78,7 +78,8 @@ def test_adiabaticNoSlipWall(my_setup, adv, spdata):
         face.bcFunc(blk, face, mb.eos, mb.thtrdat, "postDqDxyz", mb.tme)
         blk.updateHostView(["dqdx", "dqdy", "dqdz"])
         s0_ = face.s0_[0]
-        s2_ = face.s2_[0]
+
+        # s2_ = face.s2_[0]
         # negate pressure gradients
         assert np.allclose(dpdx[s0_], -dpdx[face.s1_])
         assert np.allclose(dpdy[s0_], -dpdy[face.s1_])
@@ -208,7 +209,8 @@ def test_adiabaticMovingWall(my_setup, adv, spdata):
         face.bcFunc(blk, face, mb.eos, mb.thtrdat, "postDqDxyz", mb.tme)
         blk.updateHostView(["dqdx", "dqdy", "dqdz"])
         s0_ = face.s0_[0]
-        s2_ = face.s2_[0]
+        # s2_ = face.s2_[0]
+
         # negate presure gradient
         assert np.allclose(dpdx[s0_], -dpdx[face.s1_])
         assert np.allclose(dpdy[s0_], -dpdy[face.s1_])
@@ -288,7 +290,8 @@ def test_isoTNoSlipWall(my_setup, adv, spdata):
         face.bcFunc(blk, face, mb.eos, mb.thtrdat, "postDqDxyz", mb.tme)
         blk.updateHostView(["dqdx", "dqdy", "dqdz"])
         s0_ = face.s0_[0]
-        s2_ = face.s2_[0]
+        # s2_ = face.s2_[0]
+
         # negate pressure gradients
         assert np.allclose(dpdx[s0_], -dpdx[face.s1_])
         assert np.allclose(dpdy[s0_], -dpdy[face.s1_])
@@ -367,7 +370,8 @@ def test_isoTSlipWall(my_setup, adv, spdata):
         face.bcFunc(blk, face, mb.eos, mb.thtrdat, "postDqDxyz", mb.tme)
         blk.updateHostView(["dqdx", "dqdy", "dqdz"])
         s0_ = face.s0_[0]
-        s2_ = face.s2_[0]
+        # s2_ = face.s2_[0]
+
         # neumann pressure gradient
         assert np.allclose(dpdx[s0_], -dpdx[face.s1_])
         assert np.allclose(dpdy[s0_], -dpdy[face.s1_])
@@ -459,7 +463,8 @@ def test_isoTMovingWall(my_setup, adv, spdata):
         face.bcFunc(blk, face, mb.eos, mb.thtrdat, "postDqDxyz", mb.tme)
         blk.updateHostView(["dqdx", "dqdy", "dqdz"])
         s0_ = face.s0_[0]
-        s2_ = face.s2_[0]
+        # s2_ = face.s2_[0]
+
         # negate pressure
         assert np.allclose(dpdx[s0_], -dpdx[face.s1_])
         assert np.allclose(dpdy[s0_], -dpdy[face.s1_])

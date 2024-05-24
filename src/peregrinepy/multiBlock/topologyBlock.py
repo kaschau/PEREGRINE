@@ -1,28 +1,9 @@
-# -*- coding: utf-8 -*-
 from .topologyFace import topologyFace
-
-""" topologyBlock.py
-
-Authors:
-
-Kyle Schau
-
-This module defines the topology block class.
-This object is the most basic object that a multiBlock
-composition can be comprised of.
-
-"""
 
 
 class topologyBlock:
     """topologyBlock object is the most basic object a peregrinepy.multiBlock
     (or one of its descendants) can be.
-
-    Attributes
-    ---------
-    nblki : int
-        Block number (first block number is 0)
-
     """
 
     blockType = "topology"

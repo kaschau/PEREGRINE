@@ -1,8 +1,8 @@
-#include "Kokkos_Core.hpp"
 #include "block_.hpp"
 #include "compute.hpp"
 #include "kokkosTypes.hpp"
 #include "thtrdat_.hpp"
+#include <Kokkos_Core.hpp>
 #include <math.h>
 
 void kineticTheoryUnityLewis(block_ &b, const thtrdat_ &th, const int &nface,
@@ -61,18 +61,14 @@ void kineticTheoryUnityLewis(block_ &b, const thtrdat_ &th, const int &nface,
 
         // Update mixture properties
         // Mole fractions
-        double MWmix;
         {
           double mass = 0.0;
           for (int n = 0; n <= ns - 1; n++) {
             mass += Y(n) / th.MW(n);
           }
-
           // Mean molecular weight, mole fraction
-          MWmix = 0.0;
           for (int n = 0; n <= ns - 1; n++) {
             X(n) = Y(n) / th.MW(n) / mass;
-            MWmix += X(n) * th.MW(n);
           }
         }
 

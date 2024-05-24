@@ -6,7 +6,7 @@ Generate 1D detonation profile
 
 """
 
-from mpi4py import MPI
+from mpi4py import MPI  # noqa: F401
 from pathlib import Path
 
 import cantera as ct
@@ -19,7 +19,7 @@ import peregrinepy as pg
 def simulate():
     relpath = str(Path(__file__).parent)
     ct.add_directory(relpath + "/../src/peregrinepy/thermoTransport/database/source")
-    gas = ct.Solution("CH4_O2_Stanford_Skeletal.yaml")
+    gas = ct.Solution("CH4_O2_FFCMY.yaml")
     # set the gas state
     gas.TP = 300.0, 101325.0
     phi = 1.0
@@ -28,15 +28,15 @@ def simulate():
     config = pg.files.configFile()
     config["RHS"]["diffusion"] = False
     config["RHS"]["shockHandling"] = "artificialDissipation"
-    config["RHS"]["primaryAdvFlux"] = "secondOrderKEEP"
+    config["RHS"]["primaryAdvFlux"] = "KEEPpe"
     config["RHS"]["secondaryAdvFlux"] = "scalarDissipation"
     config["RHS"]["switchAdvFlux"] = "vanLeer"
     config["timeIntegration"]["integrator"] = "rk3"
     config["thermochem"]["chemistry"] = True
-    config["thermochem"]["mechanism"] = "chem_CH4_O2_Stanford_Skeletal"
+    config["thermochem"]["mechanism"] = "chem_CH4_O2_FFCMY"
     config["thermochem"]["nChemSubSteps"] = 10
     config["thermochem"]["eos"] = "tpg"
-    config["thermochem"]["spdata"] = "thtr_CH4_O2_Stanford_Skeletal.yaml"
+    config["thermochem"]["spdata"] = "thtr_CH4_O2_FFCMY.yaml"
     config.validateConfig()
     mb = pg.multiBlock.generateMultiBlockSolver(1, config)
 
@@ -58,7 +58,7 @@ def simulate():
 
     mb.setBlockCommunication()
     mb.unifyGrid()
-    mb.computeMetrics(config["RHS"]["diffOrder"])
+    mb.computeMetrics()
 
     ng = blk.ng
 

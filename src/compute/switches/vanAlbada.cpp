@@ -1,6 +1,6 @@
-#include "Kokkos_Core.hpp"
 #include "block_.hpp"
 #include "kokkosTypes.hpp"
+#include <Kokkos_Core.hpp>
 #include <math.h>
 #include <numeric>
 

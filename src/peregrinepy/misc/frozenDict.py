@@ -1,4 +1,11 @@
 class frozenDict(dict):
+    """
+    Defines a dictionary that can be frozen after its key/values pairs are set.
+
+    We use this so users can't make mistakes and modify some dictionaries
+    inappropriately.
+    """
+
     __isfrozen = False
 
     def __setitem__(self, key, value):

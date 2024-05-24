@@ -27,7 +27,7 @@ def create(bc, adv, spdata):
 
     mb.initSolverArrays(config)
     mb.generateHalo()
-    mb.computeMetrics(config["RHS"]["diffOrder"])
+    mb.computeMetrics()
 
     blk = mb[0]
     for face in blk.faces:

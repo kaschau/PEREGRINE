@@ -13,8 +13,8 @@ pytestmark = pytest.mark.parametrize(
     "adv,spdata",
     list(
         itertools.product(
-            ("secondOrderKEEP", "fourthOrderKEEP"),
-            (["Air"], "thtr_CH4_O2_Stanford_Skeletal.yaml"),
+            ("KEEPpe", "fourthOrderKEEP"),
+            (["Air"], "thtr_CH4_O2_FFCMY.yaml"),
         )
     ),
 )
@@ -59,7 +59,7 @@ class TestPeriodics:
         mb.initSolverArrays(config)
 
         mb.unifyGrid()
-        mb.computeMetrics(config["RHS"]["diffOrder"])
+        mb.computeMetrics()
 
         qshape = blk.array["q"][:, :, :, 0].shape
         p = np.random.uniform(low=101325 * 0.9, high=101325 * 1.1)

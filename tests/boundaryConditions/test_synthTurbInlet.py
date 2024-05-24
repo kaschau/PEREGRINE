@@ -3,7 +3,11 @@ import shutil
 
 import numpy as np
 import peregrinepy as pg
-import sempy
+
+try:
+    import sempy
+except ImportError:
+    pass
 from scipy import interpolate as itrp
 
 
@@ -43,7 +47,7 @@ def test_synthTurbInlet(my_setup):
     mb.initSolverArrays(config)
 
     mb.generateHalo()
-    mb.computeMetrics(config["RHS"]["diffOrder"])
+    mb.computeMetrics()
 
     blk = mb[0]
     face = blk.getFace(1)

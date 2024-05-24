@@ -8,8 +8,6 @@ A time trial test for testing and stuff.
 
 import peregrinepy as pg
 import numpy as np
-from time import perf_counter
-import subprocess
 import os
 
 np.seterr(all="raise")

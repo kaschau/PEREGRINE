@@ -1,6 +1,6 @@
-#include "Kokkos_Core.hpp"
 #include "block_.hpp"
 #include "kokkosTypes.hpp"
+#include <Kokkos_Core.hpp>
 
 void viscousSponge(block_ &b, const std::array<double, 3> &origin,
                    const std::array<double, 3> &ending, double mult) {

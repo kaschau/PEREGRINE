@@ -5,7 +5,7 @@ Real gas properties.
 
 """
 
-from mpi4py import MPI
+from mpi4py import MPI  # noqa: F401
 import peregrinepy as pg
 import numpy as np
 import matplotlib.pyplot as plt
@@ -36,7 +36,7 @@ def simulate():
 
     mb.unifyGrid()
 
-    mb.computeMetrics(config["RHS"]["diffOrder"])
+    mb.computeMetrics()
 
     ps = np.linspace(25, 35, 3)
     Ts = np.linspace(600, 1600, 100)

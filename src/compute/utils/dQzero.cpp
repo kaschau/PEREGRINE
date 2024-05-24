@@ -1,6 +1,6 @@
-#include "Kokkos_Core.hpp"
 #include "block_.hpp"
 #include "kokkosTypes.hpp"
+#include <Kokkos_Core.hpp>
 
 void dQzero(block_ &b) {
 

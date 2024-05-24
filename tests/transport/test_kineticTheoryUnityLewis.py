@@ -14,8 +14,8 @@ pytestmark = pytest.mark.parametrize(
     "ctfile,thfile",
     [
         (
-            "CH4_O2_Stanford_Skeletal.yaml",
-            "thtr_CH4_O2_Stanford_Skeletal.yaml",
+            "CH4_O2_FFCMY.yaml",
+            "thtr_CH4_O2_FFCMY.yaml",
         ),
         (
             "GRI30.yaml",
@@ -54,7 +54,7 @@ def test_kineticTheoryUnityLewis(my_setup, ctfile, thfile):
     blk = mb[0]
 
     mb.generateHalo()
-    mb.computeMetrics(config["RHS"]["diffOrder"])
+    mb.computeMetrics()
 
     gas.TPY = T, p, Y
     blk.array["q"][:, :, :, 0] = p

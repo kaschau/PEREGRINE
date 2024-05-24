@@ -1,8 +1,6 @@
-# -*- coding: utf-8 -*-
-
 import h5py
 import numpy as np
-from .writerMetaData import restartMetaData, arbitraryMetaData
+from .writeMetaData import restartMetaData, arbitraryMetaData
 from ..mpiComm.mpiUtils import getCommRankSize
 from mpi4py.MPI import INT as MPIINT
 
@@ -50,7 +48,7 @@ def registerParallelMetaData(
 
     Returns
     -------
-    peregrinepy.writer.writerMetaData.restartMetaData
+    peregrinepy.writer.writeMetaData.restartMetaData
 
     """
 

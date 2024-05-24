@@ -70,7 +70,6 @@ def ct2pgChem(ctyaml, cpp):
     gas = ct.Solution(ctyaml)
     ns = gas.n_species
     nr = gas.n_reactions
-    rTBC = []  # list of all three body reactions
 
     Ea_f = np.zeros(nr)
     m_f = np.zeros(nr)
@@ -132,11 +131,11 @@ def ct2pgChem(ctyaml, cpp):
     )
 
     outString = (
-        '#include "Kokkos_Core.hpp"\n'
         '#include "kokkosTypes.hpp"\n'
         '#include "block_.hpp"\n'
         '#include "thtrdat_.hpp"\n'
         '#include "compute.hpp"\n'
+        "#include <Kokkos_Core.hpp>\n"
         "#include <math.h>\n"
         "\n"
         f"void {cpp.replace('.cpp','')}(block_ &b,\n"
@@ -333,22 +332,20 @@ def ct2pgChem(ctyaml, cpp):
                     else:
                         outString.append(f" + cs[{j}]")
             outString[0] = outString[0].replace(" + ", "")
-            pgMech.write(f"  cTBC = ")
+            pgMech.write("  cTBC = ")
             for item in outString:
                 pgMech.write(item)
             pgMech.write(";\n")
 
         if r.reaction_type == "three-body-Arrhenius":  # ThreeBodyReaction
-            outString = f"  k_f *= cTBC;\n"
+            outString = "  k_f *= cTBC;\n"
             pgMech.write(outString)
         elif r.reaction_type == "falloff-Lindemann":
             pgMech.write(f"  //  Lindeman Reaction #{i}\n")
             pgMech.write("  Fcent = 1.0;\n")
             pgMech.write("  k0 = " + rateConstString(A_o[i], m_o[i], Ea_o[i]) + ";\n")
             outString = (
-                f"  Pr = cTBC*k0/k_f;\n"
-                f"  pmod = Pr/(1.0 + Pr);\n"
-                f"  k_f *= pmod;\n"
+                "  Pr = cTBC*k0/k_f;\n" "  pmod = Pr/(1.0 + Pr);\n" "  k_f *= pmod;\n"
             )
             pgMech.write(outString)
 
@@ -373,7 +370,7 @@ def ct2pgChem(ctyaml, cpp):
             pgMech.write(outString)
             pgMech.write("  k0 = " + rateConstString(A_o[i], m_o[i], Ea_o[i]) + ";\n")
             outString = (
-                f"  Pr = cTBC*k0/k_f;\n"
+                "  Pr = cTBC*k0/k_f;\n"
                 "  A = log10(Pr) + C;\n"
                 "  f1 = A/(N - 0.14*A);\n"
                 "  F_pdr = pow(10.0,log10(Fcent)/(1.0+f1*f1));\n"

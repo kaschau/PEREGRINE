@@ -23,11 +23,6 @@ void bindUtils(py::module_ &m) {
             "Second order approx of spatial derivative of q array via finite "
             "difference",
             py::arg("block_ object"));
-  //  |----> dq4FD.cpp
-  utils.def("dq4FD", &dq4FD,
-            "Fourth order approx of spatial derivative of q array via finite "
-            "difference",
-            py::arg("block_ object"));
   //    |------> axpby
   utils.def("AEQConst",
             py::overload_cast<fourDview &, const double &>(&AEQConst),
