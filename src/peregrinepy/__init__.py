@@ -15,6 +15,7 @@ from . import files  # noqa: E402
 from . import grid  # noqa: E402
 from . import interpolation  # noqa: E402
 from . import misc  # noqa: E402
+from . import mpiComm  # noqa: E402
 from . import multiBlock  # noqa: E402
 from . import readers  # noqa: E402
 from . import thermoTransport  # noqa: E402
@@ -32,6 +33,7 @@ __all__ = [
     "grid",
     "interpolation",
     "misc",
+    "mpiComm",
     "multiBlock",
     "readers",
     "thermoTransport",
