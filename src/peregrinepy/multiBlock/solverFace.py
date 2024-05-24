@@ -52,7 +52,7 @@ class solverFace(gridFace, face_):
         # arrays that faces save
         #
         # List of all possible communicate vars
-        commVars = ["x", "y", "z", "q", "Q", "dqdx", "dqdy", "dqdz", "phi", "s"]
+        commVars = ["x", "y", "z", "q", "Q", "dqdx", "dqdy", "dqdz", "phi"]
         self.mirror = frozenDict()
         for d in commVars:
             self.array["sendBuffer_" + d] = None
@@ -277,7 +277,7 @@ class solverFace(gridFace, face_):
                 nLayers = ng
             else:
                 nLayers = 1
-            # phi only uses 3 last exis elements not ne
+            # phi only uses 3 last axis elements not ne
             if var in ["phi"]:
                 nE = 3
             else:
@@ -307,34 +307,7 @@ class solverFace(gridFace, face_):
             shape = self.array[tempRecvName].shape
             createViewMirrorArray(self, tempRecvName, shape)
 
-        # entropy comm
-        nLayers = ng
-
-        temp = self.orient(np.empty(ccShape))
-        sendName = "sendBuffer_" + "s"
-        self.array[sendName] = np.ascontiguousarray(
-            np.empty(tuple([nLayers]) + temp.shape)
-        )
-        shape = self.array[sendName].shape
-        createViewMirrorArray(self, sendName, shape)
-
-        # We revieve the data in the correct shape already
-        recvName = "recvBuffer_" + "s"
-        self.array[recvName] = np.ascontiguousarray(
-            np.empty(tuple([nLayers]) + ccShape)
-        )
-        shape = self.array[recvName].shape
-        createViewMirrorArray(self, recvName, shape)
-
-        # We use temporary buffers for some storage
-        tempRecvName = "tempRecvBuffer_" + "s"
-        self.array[tempRecvName] = np.ascontiguousarray(
-            np.empty(tuple([nLayers]) + ccShape)
-        )
-        shape = self.array[tempRecvName].shape
-        createViewMirrorArray(self, tempRecvName, shape)
-
-        # Unique tags.
+        # Unique tags
         self.tagR = int(nblki * 6 + self.nface)
         self.tagS = int(self.neighbor * 6 + self.neighborNface)
 
@@ -408,13 +381,13 @@ class solverFace(gridFace, face_):
         return self._ng
 
     def updateDeviceView(self, vars):
-        if type(vars) == str:
+        if isinstance(vars, str):
             vars = [vars]
         for var in vars:
             deep_copy(getattr(self, var), self.mirror[var])
 
     def updateHostView(self, vars):
-        if type(vars) == str:
+        if isinstance(vars, str):
             vars = [vars]
         for var in vars:
             deep_copy(self.mirror[var], getattr(self, var))

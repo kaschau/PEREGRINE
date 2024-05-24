@@ -4,14 +4,12 @@
 #include "block_.hpp"
 
 // ./advFlux
-//    |------> secondOrderKEEP
-void secondOrderKEEP(block_ &b);
-//    |------> myKEEP
-void myKEEP(block_ &b);
-//    |------> roeEC
-void roeEC(block_ &b);
-//    |------> chandKEPEC
-void chandKEPEC(block_ &b);
+//    |------> KEEP
+void KEEP(block_ &b);
+//    |------> KEEPpe
+void KEEPpe(block_ &b);
+//    |------> KEPaEC
+void KEPaEC(block_ &b);
 //    |------> centralDifference
 void centralDifference(block_ &b);
 //    |------> fourthOrderKEEP
@@ -28,7 +26,5 @@ void hllc(block_ &b);
 void muscl2hllc(block_ &b);
 //    |------> muscl2rusanov
 void muscl2rusanov(block_ &b);
-//    |------> KEEPdissipation
-void KEEPdissipation(block_ &b);
 
 #endif

@@ -7,22 +7,20 @@ namespace py = pybind11;
 void bindAdvFlux(py::module_ &m) {
   // ./advFlux
   py::module advFlux = m.def_submodule("advFlux", "advective flux module");
-  //  |----> secondOrderKEEP.cpp
-  advFlux.def("secondOrderKEEP", &secondOrderKEEP,
+  //  |----> KEEP.cpp
+  advFlux.def("KEEP", &KEEP,
               "Compute centeral difference euler fluxes via second order KEEP",
               py::arg("block_ object"));
-  //  |----> myKEEP.cpp
-  advFlux.def("myKEEP", &myKEEP,
-              "Compute centeral difference euler fluxes via second order KEEP",
-              py::arg("block_ object"));
-  //  |----> rhoEC.cpp
-  advFlux.def("roeEC", &roeEC,
-              "Compute centeral difference euler fluxes via second order KEEP",
-              py::arg("block_ object"));
-  //  |----> chandKEPEC.cpp
-  advFlux.def("chandKEPEC", &chandKEPEC,
-              "Compute centeral difference euler fluxes via second order KEEP",
-              py::arg("block_ object"));
+  //  |----> KEEPpe.cpp
+  advFlux.def(
+      "KEEPpe", &KEEPpe,
+      "Compute centeral difference euler fluxes via second order KEEPpe",
+      py::arg("block_ object"));
+  //  |----> KEPaEC.cpp
+  advFlux.def(
+      "KEPaEC", &KEPaEC,
+      "Compute centeral difference euler fluxes via second order KEPaEC",
+      py::arg("block_ object"));
   //  |----> centeredDifference.cpp
   advFlux.def("centralDifference", &centralDifference,
               "Compute central difference euler fluxes",
@@ -54,8 +52,4 @@ void bindAdvFlux(py::module_ &m) {
       "muscl2rusanov", &muscl2rusanov,
       "Compute first order euler fluxes via 2nd order MUSCL with rusanov flux",
       py::arg("block_ object"));
-  //  |----> KEEPdissipation.cpp
-  advFlux.def("KEEPdissipation", &KEEPdissipation,
-              "Compute scalar dissipation I invented all by myself",
-              py::arg("block_ object"));
 }
