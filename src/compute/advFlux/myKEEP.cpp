@@ -114,30 +114,11 @@ static void computeFlux(const block_ &b, fourDview &iF, const threeDview &isx,
         double V4 = 0.5 * (v4R + v4L);
         double PHI = 0.5 * (phiR + phiL);
 
-        // This comes from Eq. 4.5c of Tamdor, but there are consequences to the
-        // form of G_v+1/2 (Fs_m+1/2)
-        // If we use the cubic form
-        //
         double Fs = rho * U * 0.5 * (sR + sL);
-        //
-        // Then we actually match the KEEPep scheme almost float for float,
-        // so close that there has to be an equality between them.
-        //
-        // Whereas if we use either the quadratic or divergent forms
-        // double Fs = 0.5 * (rhoR * sR + rhoL * sL) * U;
-        // double Fs = 0.5 * (rhoR * uR * sR + rhoL * uL * sL) * iS(i, j, k);
-        //
-        // Then we are substantially different from the KEEPep scheme. In fact
-        // the original KEEP scheme, none of the forms of Fs results in the same
-        // answer. However, when we use the quadratic and divergent forms
-        // We match exactly with v.\delF/delx evolution, where as for the cubic
-        // form of Fs, we do not match v.\delF/\delx. wtf.
-
         double Ij = (Fs + PHI - V0 * iF(i, j, k, 0) - V1 * iF(i, j, k, 1) -
                      V2 * iF(i, j, k, 2) - V3 * iF(i, j, k, 3)) /
                         V4 -
                     Pj - Kj;
-        Ij = (eL * TR + eR * TL) / (TL + TR) * U;
 
         iF(i, j, k, 4) = Ij + Kj + Pj;
 
