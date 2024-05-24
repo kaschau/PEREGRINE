@@ -11,22 +11,16 @@ Should reproduce results in Fig. 1 for the KEEP scheme (blue line)
 
 """
 
-from mpi4py import MPI
+from mpi4py import MPI  # noqa: F401
 
 import peregrinepy as pg
 import numpy as np
 import matplotlib.pyplot as plt
 
-plt.style.use("~/.config/matplotlib/stylelib/whitePresentation.mplstyle")
-
-save = False
-
 
 def simulate(index="i"):
     config = pg.files.configFile()
-    config["timeIntegration"]["integrator"] = "rk4"
-    config["RHS"]["primaryAdvFlux"] = "myKEEP"
-    config["thermochem"]["eos"] = "cpg"
+    config["RHS"]["primaryAdvFlux"] = "KEPaEC"
     config["RHS"]["diffusion"] = False
     config.validateConfig()
     mb = pg.multiBlock.generateMultiBlockSolver(1, config)
@@ -67,12 +61,10 @@ def simulate(index="i"):
 
     mb.setBlockCommunication()
     mb.unifyGrid()
-    mb.computeMetrics(config["RHS"]["diffOrder"])
+    mb.computeMetrics()
 
     ng = blk.ng
     R = 287.002507
-    cp = 1002.838449439523
-    gamma = cp / (cp - R)
     ccArray = {"i": "xc", "j": "yc", "k": "zc"}
     uIndex = {"i": 1, "j": 2, "k": 3}
     blk.array["q"][:, :, :, 0] = 1.0
@@ -87,104 +79,36 @@ def simulate(index="i"):
     mb.eos(blk, mb.thtrdat, 0, "prims")
     pg.consistify(mb)
 
-    # entropy stuff
-    s = cp / gamma * np.log(blk.array["q"][:, :, :, 4]) - R * np.log(
-        blk.array["Q"][:, :, :, 0]
-    )
-    blk.array["s"][:] = blk.array["Q"][:, :, :, 0] * s
-    blk.updateDeviceView(["s"])
-    pg.consistify(mb)
-
-    sDerived = []
-    sEvolved = []
-    t = []
-    dx = 1.0 / (nx - 1.0)
-    CFL = 0.1
-    lam = np.sqrt(gamma * R * np.max(initial_T))
-    dt = CFL * dx
+    dt = 0.1 * 0.025
     tEnd = 11.0
-    s_ = rotate(np.s_[ng:-ng, ng, ng], index)
     while mb.tme < tEnd:
-        abort = pg.mpiComm.mpiUtils.checkForNan(mb)
-        if abort > 0:
-            print("Nan")
-            break
-
         if mb.nrt % 50 == 0:
             pg.misc.progressBar(mb.tme, tEnd)
-
-        if mb.nrt % 10 == 0:
-            dS = np.sum(
-                blk.array["Q"][s_][:, 0]
-                * (
-                    cp / gamma * np.log(blk.array["q"][s_][:, 4])
-                    - R * np.log(blk.array["Q"][s_][:, 0])
-                )
-            )
-            sDerived.append(dS)
-            eS = np.sum(blk.array["s"][s_])
-            sEvolved.append(eS)
-            t.append(mb.tme)
 
         mb.step(dt)
 
     blk.updateHostView(["q", "Q"])
-    fig, ax1 = plt.subplots(figsize=(5, 3.5))
-    # ax1.set_title("1D Advection Results")
-    ax1.set_xlabel(r"$x$")
+    fig, ax1 = plt.subplots()
+    ax1.set_title("1D Advection Results")
+    ax1.set_xlabel(r"x")
+    s_ = rotate(np.s_[ng:-ng, ng, ng], index)
     x = blk.array[ccArray[index]][s_]
     rho = blk.array["Q"][s_][:, 0]
     p = blk.array["q"][s_][:, 0]
     u = blk.array["q"][s_][:, uIndex[index]]
-    T = blk.array["q"][s_][:, 4]
-    sd = rho * (cp / gamma * np.log(T) - R * np.log(rho))
-    se = blk.array["s"][s_]
-    ax1.plot(x, rho, color="g", label=r"$\rho$")
-    ax1.plot(x, p, color="r", label=r"$p$")
-    ax1.plot(x, u, color="k", label=r"$u$")
+    ax1.plot(x, rho, color="g", label="rho", linewidth=0.5)
+    ax1.plot(x, p, color="r", label="p", linewidth=0.5)
+    ax1.plot(x, u, color="k", label="u", linewidth=0.5)
     ax1.scatter(
         x,
         initial_rho[ng:-ng, ng:-ng, ng:-ng],
         marker="o",
         facecolor="w",
         edgecolor="b",
-        label=r"$\rho_{exact}$",
+        label="exact",
+        linewidth=0.5,
     )
     ax1.legend()
-    plt.show()
-    plt.close()
-
-    # entropy space
-    fig, ax1 = plt.subplots()
-    ax1.plot(x, sd, color="k", label="Recon")
-    ax1.plot(x, se, color="r", label=r"$\partial{\rho s}/\partial{t}$")
-    ax1.set_ylabel(r"$\rho s \quad [ c_{v}\ln (T) - R \ln (\rho) ]$")
-    ax1.set_xlabel(r"x")
-    ax1.legend()
-    plt.show()
-    plt.close()
-
-    # entropy total
-    fig, ax = plt.subplots(figsize=(5, 3.5))
-    ax.set_xlim([0, 11])
-    ax.plot(
-        t,
-        (sEvolved - sDerived[0]) / abs(sDerived[0]),
-        c="orange",
-        label=r"$\partial{\rho s}/\partial{t}$",
-        marker="o",
-        markevery=25,
-        # s=1.0,
-    )
-    ax.plot(
-        t,
-        (sDerived - sDerived[0]) / abs(sDerived[0]),
-        label=r"$s = c_{v}\ln \left(T\right) - R \ln \left( \rho \right)$",
-    )
-
-    ax.legend(loc="upper left")
-    ax.set_ylabel(r"$\Delta(\rho s) / \left|\left(\rho s\right)_0\right|$")
-    ax.set_xlabel(r"$t$")
     plt.show()
     plt.close()
 
