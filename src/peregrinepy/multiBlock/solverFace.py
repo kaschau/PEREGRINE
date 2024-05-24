@@ -52,7 +52,7 @@ class solverFace(gridFace, face_):
         # arrays that faces save
         #
         # List of all possible communicate vars
-        commVars = ["x", "y", "z", "q", "Q", "dqdx", "dqdy", "dqdz", "phi"]
+        commVars = ["x", "y", "z", "q", "Q", "dqdx", "dqdy", "dqdz", "phi", "s"]
         self.mirror = frozenDict()
         for d in commVars:
             self.array["sendBuffer_" + d] = None
@@ -307,7 +307,34 @@ class solverFace(gridFace, face_):
             shape = self.array[tempRecvName].shape
             createViewMirrorArray(self, tempRecvName, shape)
 
-        # Unique tags
+        # entropy comm
+        nLayers = ng
+
+        temp = self.orient(np.empty(ccShape))
+        sendName = "sendBuffer_" + "s"
+        self.array[sendName] = np.ascontiguousarray(
+            np.empty(tuple([nLayers]) + temp.shape)
+        )
+        shape = self.array[sendName].shape
+        createViewMirrorArray(self, sendName, shape)
+
+        # We revieve the data in the correct shape already
+        recvName = "recvBuffer_" + "s"
+        self.array[recvName] = np.ascontiguousarray(
+            np.empty(tuple([nLayers]) + ccShape)
+        )
+        shape = self.array[recvName].shape
+        createViewMirrorArray(self, recvName, shape)
+
+        # We use temporary buffers for some storage
+        tempRecvName = "tempRecvBuffer_" + "s"
+        self.array[tempRecvName] = np.ascontiguousarray(
+            np.empty(tuple([nLayers]) + ccShape)
+        )
+        shape = self.array[tempRecvName].shape
+        createViewMirrorArray(self, tempRecvName, shape)
+
+        # Unique tags.
         self.tagR = int(nblki * 6 + self.nface)
         self.tagS = int(self.neighbor * 6 + self.neighborNface)
 

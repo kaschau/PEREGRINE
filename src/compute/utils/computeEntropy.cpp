@@ -2,6 +2,7 @@
 #include "block_.hpp"
 #include "kokkosTypes.hpp"
 #include "math.h"
+#include "vector"
 
 double computeEntropy(const std::vector<block_> &mb) {
 
@@ -11,7 +12,7 @@ double computeEntropy(const std::vector<block_> &mb) {
   double returnS = 0.0;
   double tempS;
 
-  for (const block_ b : mb) {
+  for (const block_ &b : mb) {
     MDRange3 range_cc({b.ng, b.ng, b.ng},
                       {b.ni + b.ng - 1, b.nj + b.ng - 1, b.nk + b.ng - 1});
     Kokkos::parallel_reduce(
@@ -42,7 +43,7 @@ double sumEntropy(const std::vector<block_> &mb) {
   double returnS = 0.0;
   double tempS;
 
-  for (const block_ b : mb) {
+  for (const block_ &b : mb) {
     MDRange3 range_cc({b.ng, b.ng, b.ng},
                       {b.ni + b.ng - 1, b.nj + b.ng - 1, b.nk + b.ng - 1});
     Kokkos::parallel_reduce(

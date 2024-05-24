@@ -10,6 +10,8 @@ void KEEP(block_ &b);
 void KEEPpe(block_ &b);
 //    |------> KEPaEC
 void KEPaEC(block_ &b);
+//    |------> myKEEP
+void myKEEP(block_ &b);
 //    |------> centralDifference
 void centralDifference(block_ &b);
 //    |------> fourthOrderKEEP

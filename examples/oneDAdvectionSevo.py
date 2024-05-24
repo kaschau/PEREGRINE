@@ -17,14 +17,14 @@ import peregrinepy as pg
 import numpy as np
 import matplotlib.pyplot as plt
 
-plt.style.use("~/.config/matplotlib/stylelib/whitePresentation.mplstyle")
+# plt.style.use("~/.config/matplotlib/stylelib/whitePresentation.mplstyle")
 
 save = False
 
 
 def simulate(index="i"):
     config = pg.files.configFile()
-    config["timeIntegration"]["integrator"] = "rk4"
+    config["timeIntegration"]["integrator"] = "rk3"
     config["RHS"]["primaryAdvFlux"] = "myKEEP"
     config["thermochem"]["eos"] = "cpg"
     config["RHS"]["diffusion"] = False
@@ -67,7 +67,7 @@ def simulate(index="i"):
 
     mb.setBlockCommunication()
     mb.unifyGrid()
-    mb.computeMetrics(config["RHS"]["diffOrder"])
+    mb.computeMetrics()
 
     ng = blk.ng
     R = 287.002507
@@ -129,7 +129,7 @@ def simulate(index="i"):
         mb.step(dt)
 
     blk.updateHostView(["q", "Q"])
-    fig, ax1 = plt.subplots(figsize=(5, 3.5))
+    fig, ax1 = plt.subplots()
     # ax1.set_title("1D Advection Results")
     ax1.set_xlabel(r"$x$")
     x = blk.array[ccArray[index]][s_]
@@ -139,9 +139,9 @@ def simulate(index="i"):
     T = blk.array["q"][s_][:, 4]
     sd = rho * (cp / gamma * np.log(T) - R * np.log(rho))
     se = blk.array["s"][s_]
-    ax1.plot(x, rho, color="g", label=r"$\rho$")
-    ax1.plot(x, p, color="r", label=r"$p$")
-    ax1.plot(x, u, color="k", label=r"$u$")
+    ax1.plot(x, rho, color="g", label=r"$\rho$", linewidth=0.5)
+    ax1.plot(x, p, color="r", label=r"$p$", linewidth=0.5)
+    ax1.plot(x, u, color="k", label=r"$u$", linewidth=0.5)
     ax1.scatter(
         x,
         initial_rho[ng:-ng, ng:-ng, ng:-ng],
@@ -149,6 +149,7 @@ def simulate(index="i"):
         facecolor="w",
         edgecolor="b",
         label=r"$\rho_{exact}$",
+        linewidth=0.5,
     )
     ax1.legend()
     plt.show()
@@ -165,7 +166,7 @@ def simulate(index="i"):
     plt.close()
 
     # entropy total
-    fig, ax = plt.subplots(figsize=(5, 3.5))
+    fig, ax = plt.subplots()
     ax.set_xlim([0, 11])
     ax.plot(
         t,
@@ -174,12 +175,14 @@ def simulate(index="i"):
         label=r"$\partial{\rho s}/\partial{t}$",
         marker="o",
         markevery=25,
+        linewidth=0.5,
         # s=1.0,
     )
     ax.plot(
         t,
         (sDerived - sDerived[0]) / abs(sDerived[0]),
         label=r"$s = c_{v}\ln \left(T\right) - R \ln \left( \rho \right)$",
+        linewidth=0.5,
     )
 
     ax.legend(loc="upper left")
