@@ -40,7 +40,7 @@ static void computeFlux(const block_ &b, fourDview &F, const threeDview &isx,
         double lambda = bulkVisc - 2.0 / 3.0 * mu;
 
         // continuity
-        F(i, j, k, 0) = 0.0;
+        iF(i, j, k, 0) = 0.0;
 
         // Geometric terms
         double e[3] = {b.xc(i, j, k) - b.xc(i - iMod, j - jMod, k - kMod),
@@ -120,7 +120,7 @@ static void computeFlux(const block_ &b, fourDview &F, const threeDview &isx,
         double txy = -mu * (dvdx + dudy);
         double txz = -mu * (dwdx + dudz);
 
-        F(i, j, k, 1) =
+        iF(i, j, k, 1) =
             txx * isx(i, j, k) + txy * isy(i, j, k) + txz * isz(i, j, k);
 
         // y momentum
@@ -128,7 +128,7 @@ static void computeFlux(const block_ &b, fourDview &F, const threeDview &isx,
         double tyy = -2.0 * mu * dvdy - lambda * div;
         double tyz = -mu * (dwdy + dvdz);
 
-        F(i, j, k, 2) =
+        iF(i, j, k, 2) =
             tyx * isx(i, j, k) + tyy * isy(i, j, k) + tyz * isz(i, j, k);
 
         // z momentum
@@ -136,7 +136,7 @@ static void computeFlux(const block_ &b, fourDview &F, const threeDview &isx,
         double &tzy = tyz;
         double tzz = -2.0 * mu * dwdz - lambda * div;
 
-        F(i, j, k, 3) =
+        iF(i, j, k, 3) =
             tzx * isx(i, j, k) + tzy * isy(i, j, k) + tzz * isz(i, j, k);
 
         // energy
@@ -170,9 +170,9 @@ static void computeFlux(const block_ &b, fourDview &F, const threeDview &isx,
         double wf =
             0.5 * (b.q(i, j, k, 3) + b.q(i - iMod, j - jMod, k - kMod, 3));
 
-        F(i, j, k, 4) = -(uf * txx + vf * txy + wf * txz) * isx(i, j, k) -
-                        (uf * tyx + vf * tyy + wf * tyz) * isy(i, j, k) -
-                        (uf * tzx + vf * tzy + wf * tzz) * isz(i, j, k) + q;
+        iF(i, j, k, 4) = -(uf * txx + vf * txy + wf * txz) * isx(i, j, k) -
+                         (uf * tyx + vf * tyy + wf * tyz) * isy(i, j, k) -
+                         (uf * tzx + vf * tzy + wf * tzz) * isz(i, j, k) + q;
 
         // Species
         double Dk, Vc = 0.0;
@@ -205,7 +205,7 @@ static void computeFlux(const block_ &b, fourDview &F, const threeDview &isx,
               (dYdx * isx(i, j, k) + dYdy * isy(i, j, k) + dYdz * isz(i, j, k));
           gradYns -= gradYk;
           Vc += Dk * gradYk;
-          F(i, j, k, 5 + n) = -rho * Dk * gradYk;
+          iF(i, j, k, 5 + n) = -rho * Dk * gradYk;
         }
         // Apply n=ns species to correction
         Dk = 0.5 * (b.qt(i, j, k, 2 + b.ne - 5) +
@@ -219,17 +219,17 @@ static void computeFlux(const block_ &b, fourDview &F, const threeDview &isx,
           Yk = 0.5 *
                (b.q(i, j, k, 5 + n) + b.q(i - iMod, j - jMod, k - kMod, 5 + n));
           Yns -= Yk;
-          F(i, j, k, 5 + n) += Yk * rho * Vc;
+          iF(i, j, k, 5 + n) += Yk * rho * Vc;
           // Species thermal diffusion
           hk = 0.5 * (b.qh(i, j, k, 5 + n) +
                       b.qh(i - iMod, j - jMod, k - kMod, 5 + n));
-          F(i, j, k, 4) += F(i, j, k, 5 + n) * hk;
+          iF(i, j, k, 4) += iF(i, j, k, 5 + n) * hk;
         }
         // Apply the n=ns species to thermal diffusion
         Yns = fmax(Yns, 0.0);
         hk = 0.5 *
              (b.qh(i, j, k, b.ne) + b.qh(i - iMod, j - jMod, k - kMod, b.ne));
-        F(i, j, k, 4) += (-rho * Dk * gradYns + Yns * rho * Vc) * hk;
+        iF(i, j, k, 4) += (-rho * Dk * gradYns + Yns * rho * Vc) * hk;
       });
 }
 
