@@ -6,7 +6,7 @@
 
 // This should basically never be used. It always worse than alpha damping.
 
-static void computeFlux(const block_ &b, fourDview &F, const threeDview &isx,
+static void computeFlux(const block_ &b, fourDview &iF, const threeDview &isx,
                         const threeDview &isy, const threeDview &isz,
                         const int iMod, const int jMod, const int kMod) {
 

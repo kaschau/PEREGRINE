@@ -12,7 +12,7 @@
 // Journal of Computational Physics
 // 408 (2020)
 
-static void computeFlux(const block_ &b, fourDview &F, const threeDview &isx,
+static void computeFlux(const block_ &b, fourDview &iF, const threeDview &isx,
                         const threeDview &isy, const threeDview &isz,
                         const threeDview &inx, const threeDview &iny,
                         const threeDview &inz, const threeDview &ixc,
@@ -213,11 +213,11 @@ static void computeFlux(const block_ &b, fourDview &F, const threeDview &isx,
         Vc += Dk * gradYns;
 
         // Apply correction and species thermal flux
-        double Yk, hk;
+        double hk;
         double Yns = 1.0;
         for (int n = 0; n < b.ne - 5; n++) {
-          Yk = 0.5 *
-               (b.q(i, j, k, 5 + n) + b.q(i - iMod, j - jMod, k - kMod, 5 + n));
+          double Yk = 0.5 * (b.q(i, j, k, 5 + n) +
+                             b.q(i - iMod, j - jMod, k - kMod, 5 + n));
           Yns -= Yk;
           iF(i, j, k, 5 + n) += Yk * rho * Vc;
           // Species thermal diffusion
@@ -226,7 +226,10 @@ static void computeFlux(const block_ &b, fourDview &F, const threeDview &isx,
           iF(i, j, k, 4) += iF(i, j, k, 5 + n) * hk;
         }
         // Apply the n=ns species to thermal diffusion
-        Yns = fmax(Yns, 0.0);
+        // If we are single species, this should be zero,
+        // so Yns will = 1.0, but gradYns will == 0.0 and
+        // Vc will == 0.0 (bc gradYns==0.0) from above
+        // so this is zero for ns=1
         hk = 0.5 *
              (b.qh(i, j, k, b.ne) + b.qh(i - iMod, j - jMod, k - kMod, b.ne));
         iF(i, j, k, 4) += (-rho * Dk * gradYns + Yns * rho * Vc) * hk;
