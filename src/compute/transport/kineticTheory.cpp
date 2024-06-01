@@ -70,7 +70,6 @@ void kineticTheory(block_ &b, const thtrdat_ &th, const int &nface,
           Y(n) = b.q(i, j, k, 5 + n);
           Y(ns - 1) -= Y(n);
         }
-        Y(ns - 1) = fmax(0.0, Y(ns - 1));
 
         // Update mixture properties
         // Mole fractions

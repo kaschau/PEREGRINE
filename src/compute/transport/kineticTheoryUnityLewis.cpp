@@ -57,7 +57,6 @@ void kineticTheoryUnityLewis(block_ &b, const thtrdat_ &th, const int &nface,
           Y(n) = b.q(i, j, k, 5 + n);
           Y(ns - 1) -= Y(n);
         }
-        Y(ns - 1) = fmax(0.0, Y(ns - 1));
 
         // Update mixture properties
         // Mole fractions
@@ -134,16 +133,4 @@ void kineticTheoryUnityLewis(block_ &b, const thtrdat_ &th, const int &nface,
         token.release(id);
 #endif
       });
-
-  // if ns == 1, we need the diffusion coeff to be zero
-  // so the viscous flux correction term is zero in
-  // diffusiveFlux.cpp
-  if (ns == 1) {
-    MDRange3 range = getRange3(b, nface, indxI, indxJ, indxK);
-    Kokkos::parallel_for(
-        "Const Props Transport", range,
-        KOKKOS_LAMBDA(const int i, const int j, const int k) {
-          b.qt(i, j, k, 2) = 0.0;
-        });
-  }
 }
