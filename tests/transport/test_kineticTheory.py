@@ -8,6 +8,12 @@ import pytest
 ##############################################
 # Test kinetic theory
 ##############################################
+# NOTE: These ranges vary by input file in Cantera. It seems to set the
+# minTemp and maxTemp based on the min/max ranges of the NASA7 poly'l
+# data. In testing, this seems to explain the errors we sometimes get
+# in thermodynamic testing against Cantera.
+# (i.e. takes error from 1% to 0.001%). For now we just use sensible values
+# here.
 
 pytestmark = pytest.mark.parametrize(
     "ctfile,thfile",
@@ -30,7 +36,9 @@ pytestmark = pytest.mark.parametrize(
 
 def test_kineticTheory(my_setup, ctfile, thfile):
     relpath = str(Path(__file__).parent)
-    ct.add_directory(relpath + "/../../src/peregrinepy/thermoTransport/database/source")
+    ct.add_directory(
+        relpath + "/../../src/peregrinepy/thermoTransport/database/source"
+    )
 
     gas = ct.Solution(ctfile)
     p = np.random.uniform(low=10000, high=1000000)
@@ -85,12 +93,16 @@ def test_kineticTheory(my_setup, ctfile, thfile):
     pd.append(print_diff("T", gas.T, pgprim[4]))
     for i, n in enumerate(gas.species_names[0:-1]):
         pd.append(print_diff(n, gas.Y[i], pgprim[5 + i]))
-    pd.append(print_diff(gas.species_names[-1], gas.Y[-1], 1.0 - np.sum(pgprim[5::])))
+    pd.append(
+        print_diff(gas.species_names[-1], gas.Y[-1], 1.0 - np.sum(pgprim[5::]))
+    )
     print("Mixture Properties")
     pd.append(print_diff("mu", gas.viscosity, pgtrns[0]))
     pd.append(print_diff("kappa", gas.thermal_conductivity, pgtrns[1]))
     for i, n in enumerate(gas.species_names):
-        pd.append(print_diff(f"D_{n}", gas.mix_diff_coeffs_mass[i], pgtrns[2 + i]))
+        pd.append(
+            print_diff(f"D_{n}", gas.mix_diff_coeffs_mass[i], pgtrns[2 + i])
+        )
 
     passfail = np.all(np.array(pd) < 1.0)
     assert passfail

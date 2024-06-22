@@ -93,7 +93,8 @@ void kineticTheory(block_ &b, const thtrdat_ &th, const int &nface,
 
         // Evaluate all property polynomials
         const double logT = log(T);
-        const double sqrt_T = exp(0.5 * logT);
+        const double sqrt_T = sqrt(T);
+        const double sqrtsqrt_T = sqrt(sqrt_T);
         double logT_n[deg + 1];
         logT_n[0] = 1.0;
         for (int ply = 1; ply <= deg; ply++) {
@@ -112,9 +113,10 @@ void kineticTheory(block_ &b, const thtrdat_ &th, const int &nface,
           }
 
           // Set to the correct dimensions
-          mu_sp(n) *= sqrt_T;
+          mu_sp(n) *= sqrtsqrt_T;
+          mu_sp(n) *= mu_sp(n);
           kappa_sp(n) *= sqrt_T;
-          const double T_3o2 = pow(T, 1.5);
+          const double T_3o2 = T * sqrt_T;
           for (int n2 = n; n2 <= ns - 1; n2++) {
             Dij(n, n2) *= T_3o2;
             Dij(n2, n) = Dij(n, n2);
