@@ -203,7 +203,7 @@ void chem_CH4_O2_FFCMY(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             q[5] = q_f + q_b;
 
             // Reaction #6
-            k_f = exp(log(4710000000000.001) - 1.0 * logT);
+            k_f = 4710000000000.001 * Tinv;
             dG = -gbs[1] - gbs[3] + gbs[4];
             K_c = exp(-dG) / prefRuT;
             //  Three Body Reaction #6

@@ -201,7 +201,7 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             q[3] = q_f + q_b;
 
             // Reaction #4
-            k_f = exp(log(1000000000000.0002) - 1.0 * logT);
+            k_f = 1000000000000.0002 * Tinv;
             dG = gbs[0] - 2.0 * gbs[1];
             K_c = exp(-dG) / prefRuT;
             //  Three Body Reaction #4
@@ -238,7 +238,7 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             q[6] = q_f + q_b;
 
             // Reaction #7
-            k_f = exp(log(550000000000000.1) - 2.0 * logT);
+            k_f = 550000000000000.1 * Tinv * Tinv;
             dG = gbs[0] - 2.0 * gbs[1];
             K_c = exp(-dG) / prefRuT;
             //  Three Body Reaction #7
@@ -249,7 +249,7 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             q[7] = q_f + q_b;
 
             // Reaction #8
-            k_f = exp(log(2.2000000000000004e+16) - 2.0 * logT);
+            k_f = 2.2000000000000004e+16 * Tinv * Tinv;
             dG = -gbs[1] - gbs[4] + gbs[5];
             K_c = exp(-dG) / prefRuT;
             //  Three Body Reaction #8
@@ -265,7 +265,7 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             q[8] = q_f + q_b;
 
             // Reaction #9
-            k_f = exp(log(500000000000.0001) - 1.0 * logT);
+            k_f = 500000000000.0001 * Tinv;
             dG = -gbs[1] - gbs[2] + gbs[4];
             K_c = exp(-dG) / prefRuT;
             //  Three Body Reaction #9
@@ -281,7 +281,7 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             q[9] = q_f + q_b;
 
             // Reaction #10
-            k_f = exp(log(120000000000.00002) - 1.0 * logT);
+            k_f = 120000000000.00002 * Tinv;
             dG = -2.0 * gbs[2] + gbs[3];
             K_c = exp(-dG) / prefRuT;
             //  Three Body Reaction #10
@@ -429,7 +429,7 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             q[22] = q_f + q_b;
 
             // Reaction #23
-            k_f = exp(log(12100.000000000002) + 2.0 * logT -
+            k_f = exp(log(12100.000000000002) + 2 * logT -
                       (2616.741574193582 * Tinv));
             dG = gbs[0] - gbs[1] + gbs[6] - gbs[7];
             K_c = exp(-dG);
@@ -446,7 +446,7 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             q[24] = q_f + q_b;
 
             // Reaction #25
-            k_f = exp(log(9630.0) + 2.0 * logT - (2012.8781339950629 * Tinv));
+            k_f = exp(log(9630.0) + 2 * logT - (2012.8781339950629 * Tinv));
             dG = -gbs[2] + gbs[4] + gbs[6] - gbs[7];
             K_c = exp(-dG);
             q_f = k_f * cs[2] * cs[7];
@@ -677,7 +677,7 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             q[44] = q_f + q_b;
 
             // Reaction #45
-            k_f = exp(log(187000000000000.03) - 1.0 * logT -
+            k_f = exp(log(187000000000000.03) - 1 * logT -
                       (8554.732069479018 * Tinv));
             dG = gbs[1] + gbs[13] - gbs[15];
             K_c = prefRuT * exp(-dG);
@@ -730,7 +730,7 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             q[47] = q_f + q_b;
 
             // Reaction #48
-            k_f = exp(log(500.0000000000001) + 2.0 * logT -
+            k_f = exp(log(500.0000000000001) + 2 * logT -
                       (3638.277227196076 * Tinv));
             dG = -gbs[0] + gbs[1] - gbs[9] + gbs[11];
             K_c = exp(-dG);
@@ -771,7 +771,7 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             q[52] = q_f + q_b;
 
             // Reaction #53
-            k_f = exp(log(11300.000000000002) + 2.0 * logT -
+            k_f = exp(log(11300.000000000002) + 2 * logT -
                       (1509.6586004962971 * Tinv));
             dG = -gbs[4] + gbs[5] + gbs[8] - gbs[9];
             K_c = exp(-dG);
@@ -1302,7 +1302,7 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             q[104] = q_f + q_b;
 
             // Reaction #105
-            k_f = exp(log(2460.0000000000005) + 2.0 * logT -
+            k_f = exp(log(2460.0000000000005) + 2 * logT -
                       (4161.6255420347925 * Tinv));
             dG = -gbs[9] + 2.0 * gbs[11] - gbs[12];
             K_c = exp(-dG);
@@ -1418,7 +1418,7 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             q[114] = q_f + q_b;
 
             // Reaction #115
-            k_f = exp(log(16320.000000000004) + 2.0 * logT -
+            k_f = exp(log(16320.000000000004) + 2 * logT -
                       (956.117113647655 * Tinv));
             dG = gbs[1] - gbs[2] - gbs[18] + gbs[24];
             K_c = exp(-dG);
@@ -1427,7 +1427,7 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             q[115] = q_f + q_b;
 
             // Reaction #116
-            k_f = exp(log(4080.000000000001) + 2.0 * logT -
+            k_f = exp(log(4080.000000000001) + 2 * logT -
                       (956.117113647655 * Tinv));
             dG = -gbs[2] + gbs[9] + gbs[13] - gbs[18];
             K_c = exp(-dG);
@@ -1445,7 +1445,7 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             q[117] = q_f + q_b;
 
             // Reaction #118
-            k_f = exp(log(4.830000000000001e-07) + 4.0 * logT -
+            k_f = exp(log(4.830000000000001e-07) + 4 * logT -
                       (-1006.4390669975314 * Tinv));
             dG = -gbs[4] + gbs[11] + gbs[13] - gbs[18];
             K_c = exp(-dG);
@@ -1454,7 +1454,7 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             q[118] = q_f + q_b;
 
             // Reaction #119
-            k_f = exp(log(10000.000000000002) + 2.0 * logT -
+            k_f = exp(log(10000.000000000002) + 2 * logT -
                       (3019.3172009925943 * Tinv));
             dG = gbs[13] - gbs[15] - gbs[18] + gbs[20];
             K_c = exp(-dG);
@@ -1926,7 +1926,7 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             q[159] = q_f + q_b;
 
             // Reaction #160
-            k_f = exp(log(3600.0000000000005) + 2.0 * logT -
+            k_f = exp(log(3600.0000000000005) + 2 * logT -
                       (1258.0488337469144 * Tinv));
             dG = -gbs[4] + gbs[5] + gbs[20] - gbs[21];
             K_c = exp(-dG);
@@ -1951,7 +1951,7 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             q[162] = q_f + q_b;
 
             // Reaction #163
-            k_f = exp(log(10000.000000000002) + 2.0 * logT -
+            k_f = exp(log(10000.000000000002) + 2 * logT -
                       (4025.7562679901257 * Tinv));
             dG = gbs[13] - gbs[15] - gbs[21] + gbs[22];
             K_c = exp(-dG);
@@ -1984,7 +1984,7 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             q[166] = q_f + q_b;
 
             // Reaction #167
-            k_f = exp(log(227.00000000000003) + 2.0 * logT -
+            k_f = exp(log(227.00000000000003) + 2 * logT -
                       (4629.619708188645 * Tinv));
             dG = -gbs[11] + gbs[12] + gbs[20] - gbs[21];
             K_c = exp(-dG);
@@ -2161,7 +2161,7 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
                     (0.02) * exp(-T / (1096.6)) + exp(-(6859.5) * Tinv);
             C = -0.4 - 0.67 * log10(Fcent);
             N = 0.75 - 1.27 * log10(Fcent);
-            k0 = exp(log(1.3300000000000002e+54) - 12.0 * logT -
+            k0 = exp(log(1.3300000000000002e+54) - 12 * logT -
                      (3003.113532013934 * Tinv));
             Pr = cTBC * k0 / k_f;
             A = log10(Pr) + C;
@@ -2279,7 +2279,7 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
             q[194] = q_f + q_b;
 
             // Reaction #195
-            k_f = exp(log(3100.0000000000005) + 2.0 * logT -
+            k_f = exp(log(3100.0000000000005) + 2 * logT -
                       (-149.9594209826322 * Tinv));
             dG = -gbs[4] + gbs[5] + gbs[28] - gbs[29];
             K_c = exp(-dG);

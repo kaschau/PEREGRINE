@@ -184,7 +184,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             double Tinv = 1.0 / T;
             double prefRuT = 101325.0 / (th.Ru * T);
             // Reaction #0
-            k_f = exp(log(120000000000.00002) - 1.0 * logT);
+            k_f = 120000000000.00002 * Tinv;
             dG = -2.0 * gbs[2] + gbs[3];
             K_c = exp(-dG) / prefRuT;
             //  Three Body Reaction #0
@@ -203,7 +203,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             q[0] = q_f + q_b;
 
             // Reaction #1
-            k_f = exp(log(500000000000.0001) - 1.0 * logT);
+            k_f = 500000000000.0001 * Tinv;
             dG = -gbs[1] - gbs[2] + gbs[4];
             K_c = exp(-dG) / prefRuT;
             //  Three Body Reaction #1
@@ -238,7 +238,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             q[3] = q_f + q_b;
 
             // Reaction #4
-            k_f = exp(log(9630.0) + 2.0 * logT - (2012.8781339950629 * Tinv));
+            k_f = exp(log(9630.0) + 2 * logT - (2012.8781339950629 * Tinv));
             dG = -gbs[2] + gbs[4] + gbs[6] - gbs[7];
             K_c = exp(-dG);
             q_f = k_f * cs[2] * cs[7];
@@ -386,7 +386,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             q[19] = q_f + q_b;
 
             // Reaction #20
-            k_f = exp(log(13500.000000000002) + 2.0 * logT -
+            k_f = exp(log(13500.000000000002) + 2 * logT -
                       (956.117113647655 * Tinv));
             dG = gbs[1] - gbs[2] - gbs[22] + gbs[27];
             K_c = exp(-dG);
@@ -404,7 +404,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             q[21] = q_f + q_b;
 
             // Reaction #22
-            k_f = exp(log(6940.000000000001) + 2.0 * logT -
+            k_f = exp(log(6940.000000000001) + 2 * logT -
                       (956.117113647655 * Tinv));
             dG = -gbs[2] + gbs[10] + gbs[14] - gbs[22];
             K_c = exp(-dG);
@@ -558,7 +558,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             q[37] = q_f + q_b;
 
             // Reaction #38
-            k_f = exp(log(1000000000000.0002) - 1.0 * logT);
+            k_f = 1000000000000.0002 * Tinv;
             dG = gbs[0] - 2.0 * gbs[1];
             K_c = exp(-dG) / prefRuT;
             //  Three Body Reaction #38
@@ -599,7 +599,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             q[40] = q_f + q_b;
 
             // Reaction #41
-            k_f = exp(log(550000000000000.1) - 2.0 * logT);
+            k_f = 550000000000000.1 * Tinv * Tinv;
             dG = gbs[0] - 2.0 * gbs[1];
             K_c = exp(-dG) / prefRuT;
             //  Three Body Reaction #41
@@ -610,7 +610,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             q[41] = q_f + q_b;
 
             // Reaction #42
-            k_f = exp(log(2.2000000000000004e+16) - 2.0 * logT);
+            k_f = 2.2000000000000004e+16 * Tinv * Tinv;
             dG = -gbs[1] - gbs[4] + gbs[5];
             K_c = exp(-dG) / prefRuT;
             //  Three Body Reaction #42
@@ -653,7 +653,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             q[45] = q_f + q_b;
 
             // Reaction #46
-            k_f = exp(log(12100.000000000002) + 2.0 * logT -
+            k_f = exp(log(12100.000000000002) + 2 * logT -
                       (2616.741574193582 * Tinv));
             dG = gbs[0] - gbs[1] + gbs[6] - gbs[7];
             K_c = exp(-dG);
@@ -1014,7 +1014,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             q[68] = q_f + q_b;
 
             // Reaction #69
-            k_f = exp(log(100000000000000.02) - 1.0 * logT);
+            k_f = 100000000000000.02 * Tinv;
             dG = -gbs[1] - gbs[21] + gbs[22];
             K_c = exp(-dG) / prefRuT;
             //  Three Body Reaction #69
@@ -1366,7 +1366,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             q[91] = q_f + q_b;
 
             // Reaction #92
-            k_f = exp(log(11300.000000000002) + 2.0 * logT -
+            k_f = exp(log(11300.000000000002) + 2 * logT -
                       (1509.6586004962971 * Tinv));
             dG = -gbs[4] + gbs[5] + gbs[9] - gbs[10];
             K_c = exp(-dG);
@@ -1484,7 +1484,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             q[102] = q_f + q_b;
 
             // Reaction #103
-            k_f = exp(log(1440.0000000000002) + 2.0 * logT -
+            k_f = exp(log(1440.0000000000002) + 2 * logT -
                       (-422.70440813896323 * Tinv));
             dG = -gbs[4] + gbs[5] + gbs[18] - gbs[20];
             K_c = exp(-dG);
@@ -1493,7 +1493,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             q[103] = q_f + q_b;
 
             // Reaction #104
-            k_f = exp(log(6300.000000000001) + 2.0 * logT -
+            k_f = exp(log(6300.000000000001) + 2 * logT -
                       (754.8293002481486 * Tinv));
             dG = -gbs[4] + gbs[5] + gbs[19] - gbs[20];
             K_c = exp(-dG);
@@ -1528,7 +1528,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             q[107] = q_f + q_b;
 
             // Reaction #108
-            k_f = exp(log(33700.0) + 2.0 * logT - (7045.07346898272 * Tinv));
+            k_f = exp(log(33700.0) + 2 * logT - (7045.07346898272 * Tinv));
             dG = -gbs[4] + gbs[5] + gbs[21] - gbs[22];
             K_c = exp(-dG);
             q_f = k_f * cs[4] * cs[22];
@@ -1536,7 +1536,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             q[108] = q_f + q_b;
 
             // Reaction #109
-            k_f = exp(log(4.830000000000001e-07) + 4.0 * logT -
+            k_f = exp(log(4.830000000000001e-07) + 4 * logT -
                       (-1006.4390669975314 * Tinv));
             dG = -gbs[4] + gbs[12] + gbs[14] - gbs[22];
             K_c = exp(-dG);
@@ -1553,7 +1553,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             q[110] = q_f + q_b;
 
             // Reaction #111
-            k_f = exp(log(3600.0000000000005) + 2.0 * logT -
+            k_f = exp(log(3600.0000000000005) + 2 * logT -
                       (1258.0488337469144 * Tinv));
             dG = -gbs[4] + gbs[5] + gbs[23] - gbs[24];
             K_c = exp(-dG);
@@ -1627,7 +1627,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             q[119] = q_f + q_b;
 
             // Reaction #120
-            k_f = exp(log(5600.000000000001) + 2.0 * logT -
+            k_f = exp(log(5600.000000000001) + 2 * logT -
                       (6038.634401985189 * Tinv));
             dG = -gbs[6] + gbs[7] + gbs[16] - gbs[17];
             K_c = exp(-dG);
@@ -1771,7 +1771,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             q[134] = q_f;
 
             // Reaction #135
-            k_f = exp(log(500.0000000000001) + 2.0 * logT -
+            k_f = exp(log(500.0000000000001) + 2 * logT -
                       (3638.277227196076 * Tinv));
             dG = -gbs[0] + gbs[1] - gbs[10] + gbs[12];
             K_c = exp(-dG);
@@ -1796,7 +1796,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             q[137] = q_f + q_b;
 
             // Reaction #138
-            k_f = exp(log(2460.0000000000005) + 2.0 * logT -
+            k_f = exp(log(2460.0000000000005) + 2 * logT -
                       (4161.6255420347925 * Tinv));
             dG = -gbs[10] + 2.0 * gbs[12] - gbs[13];
             K_c = exp(-dG);
@@ -2074,7 +2074,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             q[162] = q_f + q_b;
 
             // Reaction #163
-            k_f = exp(log(227.00000000000003) + 2.0 * logT -
+            k_f = exp(log(227.00000000000003) + 2 * logT -
                       (4629.619708188645 * Tinv));
             dG = -gbs[12] + gbs[13] + gbs[23] - gbs[24];
             K_c = exp(-dG);
@@ -2092,7 +2092,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             q[164] = q_f + q_b;
 
             // Reaction #165
-            k_f = exp(log(1500000000000000.2) - 1.0 * logT -
+            k_f = exp(log(1500000000000000.2) - 1 * logT -
                       (8554.732069479018 * Tinv));
             dG = gbs[1] + gbs[14] - gbs[16];
             K_c = prefRuT * exp(-dG);
@@ -2104,7 +2104,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             q[165] = q_f + q_b;
 
             // Reaction #166
-            k_f = exp(log(187000000000000.03) - 1.0 * logT -
+            k_f = exp(log(187000000000000.03) - 1 * logT -
                       (8554.732069479018 * Tinv));
             dG = gbs[1] + gbs[14] - gbs[16];
             K_c = prefRuT * exp(-dG);
@@ -2239,7 +2239,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             q[177] = q_f + q_b;
 
             // Reaction #178
-            k_f = exp(log(9000000.000000002) + 1.0 * logT -
+            k_f = exp(log(9000000.000000002) + 1 * logT -
                       (3270.9269677419775 * Tinv));
             dG = gbs[2] - gbs[3] - gbs[30] + gbs[35];
             K_c = exp(-dG);
@@ -2387,7 +2387,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             q[192] = q_f + q_b;
 
             // Reaction #193
-            k_f = exp(log(461.00000000000006) + 2.0 * logT -
+            k_f = exp(log(461.00000000000006) + 2 * logT -
                       (3270.9269677419775 * Tinv));
             dG = gbs[2] - gbs[3] - gbs[31] + gbs[38];
             K_c = exp(-dG);
@@ -2709,7 +2709,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             q[227] = q_f + q_b;
 
             // Reaction #228
-            k_f = exp(log(3800000000000000.5) - 2.0 * logT -
+            k_f = exp(log(3800000000000000.5) - 2 * logT -
                       (402.5756267990126 * Tinv));
             dG = gbs[15] - gbs[35] - gbs[46] + gbs[47];
             K_c = exp(-dG);
@@ -3144,7 +3144,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             q[271] = q_f + q_b;
 
             // Reaction #272
-            k_f = exp(log(20000.000000000004) + 2.0 * logT -
+            k_f = exp(log(20000.000000000004) + 2 * logT -
                       (1006.4390669975314 * Tinv));
             dG = -gbs[44] + gbs[45];
             K_c = exp(-dG);

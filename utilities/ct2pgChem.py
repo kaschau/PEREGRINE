@@ -53,7 +53,7 @@ def rateConstString(A, m, Ea):
         string = f"exp(log({A}){ m:+}*logT)"
     elif isinstance(m, int) and Ea == 0.0:
         if m < 0:
-            string = f"{A}" + "".join("*Tinv" for _ in range(m))
+            string = f"{A}" + "".join("*Tinv" for _ in range(abs(m)))
         elif m > 0:
             string = f"{A}" + "".join("*T" for _ in range(m))
         else:
@@ -107,7 +107,7 @@ def ct2pgChem(ctyaml, cpp):
                 A_o[i] = 0.0
         elif r.reaction_type == "Arrhenius":
             Ea_f[i] = rate.activation_energy / Ru
-            m_f[i] = intOrFloat(rate.temperature_exponent)
+            m_f[i] = rate.temperature_exponent
             A_f[i] = rate.pre_exponential_factor
         else:
             raise UnknownReactionType(r.reaction_type, i, r.equation)
@@ -121,7 +121,9 @@ def ct2pgChem(ctyaml, cpp):
     for line in gas.input_header["description"].split("\n"):
         pgMech.write("// " + line + "\n")
     pgMech.write("")
-    pgMech.write("// ========================================================== //\n")
+    pgMech.write(
+        "// ========================================================== //\n"
+    )
     for i, sp in enumerate(gas.species_names):
         pgMech.write(f"// Y({i:>3d}) = {sp}\n")
     pgMech.write(
@@ -285,7 +287,11 @@ def ct2pgChem(ctyaml, cpp):
 
     for i in range(nr):
         pgMech.write(f"  // Reaction #{i}\n")
-        outString = "  k_f = " + rateConstString(A_f[i], m_f[i], Ea_f[i]) + ";\n"
+        outString = (
+            "  k_f = "
+            + rateConstString(A_f[i], intOrFloat(m_f[i]), Ea_f[i])
+            + ";\n"
+        )
 
         pgMech.write(outString)
         nu_sum = nu_b[:, i] - nu_f[:, i]
@@ -343,9 +349,15 @@ def ct2pgChem(ctyaml, cpp):
         elif r.reaction_type == "falloff-Lindemann":
             pgMech.write(f"  //  Lindeman Reaction #{i}\n")
             pgMech.write("  Fcent = 1.0;\n")
-            pgMech.write("  k0 = " + rateConstString(A_o[i], m_o[i], Ea_o[i]) + ";\n")
+            pgMech.write(
+                "  k0 = "
+                + rateConstString(A_o[i], intOrFloat(m_o[i]), Ea_o[i])
+                + ";\n"
+            )
             outString = (
-                "  Pr = cTBC*k0/k_f;\n" "  pmod = Pr/(1.0 + Pr);\n" "  k_f *= pmod;\n"
+                "  Pr = cTBC*k0/k_f;\n"
+                "  pmod = Pr/(1.0 + Pr);\n"
+                "  k_f *= pmod;\n"
             )
             pgMech.write(outString)
 
@@ -368,7 +380,11 @@ def ct2pgChem(ctyaml, cpp):
                 "  N =   0.75 - 1.27*log10(Fcent);\n"
             )
             pgMech.write(outString)
-            pgMech.write("  k0 = " + rateConstString(A_o[i], m_o[i], Ea_o[i]) + ";\n")
+            pgMech.write(
+                "  k0 = "
+                + rateConstString(A_o[i], intOrFloat(m_o[i]), Ea_o[i])
+                + ";\n"
+            )
             outString = (
                 "  Pr = cTBC*k0/k_f;\n"
                 "  A = log10(Pr) + C;\n"
@@ -508,7 +524,9 @@ if __name__ == "__main__":
 
     ctFileName = args.ctFileName
 
-    cppFileName = f'chem_{ctFileName.replace(".yaml",".cpp")}'.replace("-", "_")
+    cppFileName = f'chem_{ctFileName.replace(".yaml",".cpp")}'.replace(
+        "-", "_"
+    )
 
     ct2pgChem(ctFileName, cppFileName)
 
