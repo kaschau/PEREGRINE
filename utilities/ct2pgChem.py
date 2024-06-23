@@ -53,9 +53,9 @@ def rateConstString(A, m, Ea):
         string = f"exp(log({A}){ m:+}*logT)"
     elif isinstance(m, int) and Ea == 0.0:
         if m < 0:
-            string = f"{A}" + "".join("*Tinv" for _ in range(m)) + ")"
+            string = f"{A}" + "".join("*Tinv" for _ in range(m))
         elif m > 0:
-            string = f"{A}" + "".join("*T" for _ in range(m)) + ""
+            string = f"{A}" + "".join("*T" for _ in range(m))
         else:
             raise ValueError("Huh?")
     elif Ea != 0.0:
