@@ -309,7 +309,7 @@ void constantMassFluxSubsonicInlet(
             Q0(i, j, 2) = q0(i, j, 2) * rho;
             Q0(i, j, 3) = q0(i, j, 3) * rho;
 
-            // we have created tke in halo, compute that and add it to
+            // we have created ke in halo, compute that and add it to
             // the existing rhoE, which is just internal energy at this
             // point
             double tke = 0.5 *
