@@ -275,7 +275,7 @@ void tpg(block_ &b, const thtrdat_ &th, const int &nface,
             }
 
             error = e - (h - Rmix * T);
-            T = T - error / (-cp - Rmix);
+            T = T - error / (-cp + Rmix);
             nitr += 1;
           }
 
