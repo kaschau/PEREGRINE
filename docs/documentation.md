@@ -8,14 +8,26 @@ PEREGRINE can run in both a scriptable mode for simple cases, or executable mode
     import peregrinepy as pg
     nblks = 10 #number of grid blocks
     ns = 2 #number of species
+
+    # create multiblock restart
     mb = pg.multiBlock.restart(nblks, ns)
 
     # read in grid
     pg.readers.readGrid(mb, "/path/to/g.*")
 
+    # iterate over each block and
     # set values of initialization in q
+    # (can access the x,y,z coords of cell centers with
+    #  blk.array["xc"][:,:,:] and so on.)
     for blk in mb:
-        blk.array["q"][:,:,:] = 101325.0 #pressure
+        blk.array["q"][:,:,:, 0] = 101325.0 #pressure
+        blk.array["q"][:,:,:, 1] = 1.0 # u velocity
+        blk.array["q"][:,:,:, 2] = 0.0 # v velocity
+        blk.array["q"][:,:,:, 3] = 0.0 # w velocity
+        blk.array["q"][:,:,:, 4] = 0.0 # Temperature
+        blk.array["q"][:,:,:, 5] = 0.0 # First species
+        # ... and so on for ns-1 species.
+
 
     # write out the zeroth restart file
     pg.writers.writeRestart(mb,
@@ -69,7 +81,7 @@ There are a bunch of utilities to make running with PEREGRINE easier, see the [u
 
  * [ct2pgChem](https://github.com/kaschau/PEREGRINE/blob/main/utilities/ct2pgChem.py): For performance, PEREGRINE hand writes the chemical source term kernel for a given chemistry mechanism. This utility takes a cantera yaml file and outputs a C++ source code ready to be used in PEREGRINE. You just need to add the C++ code to the appropriate folder in `src` (make sure to add the pybind11 bindings as well), and the `compute` module will have access to your new chemical source terms.
 
- * [ct2pgTHTR](https://github.com/kaschau/PEREGRINE/blob/main/utilities/ct2pgTHTR.py): Thermodynamic and transport properties are given to PEREGRINE via a stripped down, custom yaml file that is read in at run time. This utility creates that file from a cantera yaml file.
+ * [ct2pgTHTR](https://github.com/kaschau/PEREGRINE/blob/main/utilities/ct2pgTHTR.py): Thermodynamic and transport properties are given to PEREGRINE via a stripped down, custom yaml file that is read in at run time. This utility creates that file from a cantera yaml file. The order of the species is set by this file (and thus the order in the canter file). So make sure this is the order you want, and this agrees with the order in your chemistry kernel.
 
  * [cutGrid](https://github.com/kaschau/PEREGRINE/blob/main/utilities/cutGrid.py): This utility decomposes a PEREGRINE grid into smaller blocks be performing persistent number cuts of blocks along a specified axis. YAY MULTIBLOCK!
 
