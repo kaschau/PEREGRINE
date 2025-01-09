@@ -3,7 +3,24 @@
 
 ## Executable Mode
 
-PEREGRINE can run in both a scriptable mode for simple cases, or executable mode for larger production runs. For examples of scripting modes, see the [examples](https://github.com/kaschau/PEREGRINE/tree/main/examples) directory in the repository. For executable mode, see the case directory structure [here](./executableMode.md), as well as the format the the input config file below.
+PEREGRINE can run in both a scriptable mode for simple cases, or executable mode for larger production runs. For examples of scripting modes, see the [examples](https://github.com/kaschau/PEREGRINE/tree/main/examples) directory in the repository. For executable mode, see the case directory structure [here](./executableMode.md), as well as the format the the input config file below. In executable mode, one creates an initialization file (a zero-th restart file) and begins from there. A scripted approach is best suited for this, read in a grid, use all the python goodies you want to create the initial flow field, then fire away:
+
+    import peregrinepy as pg
+    nblks = 10 #number of grid blocks
+    ns = 2 #number of species
+    mb = pg.multiBlock.restart(nblks, ns)
+
+    # read in grid
+    pg.readers.readGrid(mb, "/path/to/g.*")
+
+    # set values of initialization in q
+    for blk in mb:
+        blk.array["q"][:,:,:] = 101325.0 #pressure
+
+    # write out the zeroth restart file
+    pg.writers.writeRestart(mb,
+                            "/path/to/Restart",
+                            "/path/to/Grid")
 
 ## CoProcessing
 
