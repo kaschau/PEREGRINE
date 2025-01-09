@@ -9,7 +9,7 @@ The directory structure is as follows:
     ├── Restart                # Folder to read/write restarts (q.h5, q.xmf)
     ├── Grid                   # Folder to read/write grid (g.h5, g.xmf)
     ├── peregrine.yaml         # PEREGRINE config file (see /src/peregrinepy/files/configFile.py)
-    ├── Input                  # Folder to hold all input files 
+    ├── Input                  # Folder to hold all input files
     │   ├── conn.yaml          # Connectivity file
     │   ├── bcFams.yaml        # Boundary conditions file
     └── └── blocksForProcs.inp # Load balancing file
@@ -21,7 +21,7 @@ The connectivity file `conn.yaml` uses GridPro notation for block connectivity.
 
 ## Boundary Conditions File
 
-The boundary conditions file `bcFams.yaml` specifies the boundary conditions. See [templates](../src/peregrinepy/bcs/bcFamTemplates).
+The boundary conditions file `bcFams.yaml` specifies the boundary conditions. See [templates](https://github.com/kaschau/PEREGRINE/tree/main/src/peregrinepy/bcs/bcFamTemplates).
 
 ## Load Balancing File
 

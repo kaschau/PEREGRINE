@@ -52,7 +52,7 @@ There are a bunch of utilities to make running with PEREGRINE easier, see the [u
 
  * [ct2pgChem](https://github.com/kaschau/PEREGRINE/blob/main/utilities/ct2pgChem.py): For performance, PEREGRINE hand writes the chemical source term kernel for a given chemistry mechanism. This utility takes a cantera yaml file and outputs a C++ source code ready to be used in PEREGRINE. You just need to add the C++ code to the appropriate folder in `src` (make sure to add the pybind11 bindings as well), and the `compute` module will have access to your new chemical source terms.
 
- * [ct2pgTHTR](https://github.com/kaschau/PEREGRINE/blob/main/utilities/ct2THTR.py): Thermodynamic and transport properties are given to PEREGRINE via a stripped down, custom yaml file that is read in at run time. This utility creates that file from a cantera yaml file.
+ * [ct2pgTHTR](https://github.com/kaschau/PEREGRINE/blob/main/utilities/ct2pgTHTR.py): Thermodynamic and transport properties are given to PEREGRINE via a stripped down, custom yaml file that is read in at run time. This utility creates that file from a cantera yaml file.
 
  * [cutGrid](https://github.com/kaschau/PEREGRINE/blob/main/utilities/cutGrid.py): This utility decomposes a PEREGRINE grid into smaller blocks be performing persistent number cuts of blocks along a specified axis. YAY MULTIBLOCK!
 
@@ -68,7 +68,7 @@ There are a bunch of utilities to make running with PEREGRINE easier, see the [u
 
  * [verifyGrid](https://github.com/kaschau/PEREGRINE/blob/main/utilities/verifyGrid.py): Go block by block, face by face, and make sure everyone agrees who is connected to who, and in what orientation.
 
- ## Config input
+## Config File
 
 PEREGRINE run in executable mode requires an input configuration file (in yaml format) to tell it what to do. Here is a sample of such a file with comments.
 
