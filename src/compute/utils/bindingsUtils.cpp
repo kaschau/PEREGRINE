@@ -24,24 +24,19 @@ void bindUtils(py::module_ &m) {
             "difference",
             py::arg("block_ object"));
   //    |------> axpby
-  utils.def("AEQConst",
-            py::overload_cast<fourDview &, const double &>(&AEQConst),
-            "A = Const", py::arg("A fourDview"), py::arg("const double Const"));
-  utils.def(
-      "AEQConst", py::overload_cast<threeDview &, const double &>(&AEQConst),
-      "A = Const", py::arg("A threeDview"), py::arg("const double Const"));
   utils.def("AEQB", &AEQB, "A = B", py::arg("A view"), py::arg("B view"));
   utils.def("axnpby",
             py::overload_cast<fourDview &, const double &, const double &,
                               const fourDview &>(&axnpby),
             "A = a*A + b*B", py::arg("A"), py::arg("a"), py::arg("b"),
             py::arg("B"));
-  utils.def("axnpby",
-            py::overload_cast<fourDview &, const double &, const double &,
-                              const fourDview &, const double &,
-                              const fourDview &>(&axnpby),
-            "A = a*A + b*B + c*C", py::arg("A"), py::arg("a"), py::arg("b"),
-            py::arg("B"), py::arg("c"), py::arg("C"));
+  utils.def(
+      "axnpby",
+      py::overload_cast<fourDview &, const double &, const double &,
+                        const fourDview &, const double &, const fourDview &>(
+          &axnpby),
+      "A = a*A + b*B + c*C", py::arg("A"), py::arg("a"), py::arg("b"),
+      py::arg("B"), py::arg("c"), py::arg("C"));
   //    |------> cfl
   utils.def("CFLmax", &CFLmax,
             "Find max acoustic, convective, spectral radius CFL factors c/dx",

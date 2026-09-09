@@ -20,6 +20,10 @@ twoDsubview getFaceSlice(const threeDview &view, const int &nface,
                          const int &slice);
 threeDsubview getFaceSlice(const fourDview &view, const int &nface,
                            const int &slice);
+// the unit normal of a face, from whichever of the i, j, k face arrays it
+// belongs to
+void getFaceNormals(const block_ &b, const int &nface, const int &slice,
+                    twoDsubview &nx, twoDsubview &ny, twoDsubview &nz);
 void getFaceSliceIdxs(int &firstHaloIdx, int &s1, int &s2, int &plus,
                       const int &ni, const int &nj, const int &nk,
                       const int &ng, const int &nface);

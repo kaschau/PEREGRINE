@@ -79,81 +79,6 @@ void constantVelocitySubsonicInlet(
         });
   }
 }
-
-void cubicSplineSubsonicInlet(
-    block_ &b, face_ &face,
-    const std::function<void(block_, thtrdat_, int, std::string)> &eos,
-    const thtrdat_ &th, const std::string &terms, const double &tme) {
-  //-------------------------------------------------------------------------------------------|
-  // Update target values with cubic spline, moving intervals if needed
-  //-------------------------------------------------------------------------------------------|
-  if (terms.compare("euler") == 0) {
-    int totalIntervals = face.cubicSplineAlphas.extent(1);
-    int currentInterval =
-        static_cast<int>(std::floor(tme / face.intervalDt)) % totalIntervals;
-
-    // Check if the interval time puts us into the next interval
-    if (currentInterval != face.currentInterval) {
-      face.currentInterval = currentInterval;
-      // Now we update the interval alphas
-      auto subview = Kokkos::subview(face.cubicSplineAlphas, Kokkos::ALL,
-                                     face.currentInterval, Kokkos::ALL,
-                                     Kokkos::ALL, Kokkos::ALL);
-
-      auto intervalAlphasMirror =
-          Kokkos::create_mirror_view(face.intervalAlphas);
-      Kokkos::deep_copy(intervalAlphasMirror, subview);
-      Kokkos::deep_copy(face.intervalAlphas, intervalAlphasMirror);
-    }
-    // Now we compute the target values
-
-    MDRange2 range_face = MDRange2({0, 0}, {face.intervalAlphas.extent(1) - 1,
-                                            face.intervalAlphas.extent(2) - 1});
-    double interpTime =
-        tme - static_cast<double>(
-                  static_cast<int>(tme / face.intervalDt / totalIntervals) *
-                  totalIntervals) *
-                  face.intervalDt;
-    double intervalTime =
-        interpTime -
-        face.intervalDt * static_cast<double>(face.currentInterval);
-    // Form of the cubic spline for the interval "i" is
-
-    // u(t) = alpha[0]*(t-t[i-1])**3 + alpha[1]*(t-t[i-1])**2 +
-    // alpha[2]*(t-t[i-1]) + alpha[3]
-
-    // where t[i-1] is the value of time at the beginning of the current
-    // interval, i.e. if we are in interval [2] then t[2-1] is the value of
-    // time for frame 2.
-    //
-    //|frame 0|             |frame 1|             |frame 2|             |...
-    //|  t[0] | ----------> |  t[1] | ----------> |  t[2] | ----------> |...
-    //|       |<interval 0> |       |<interval 1> |       |<interval 2> |...
-    Kokkos::parallel_for(
-        "Cubic spline subsonic", range_face,
-        KOKKOS_LAMBDA(const int i, const int j) {
-          face.qBcVals(i, j, 1) = 0.0;
-          face.qBcVals(i, j, 2) = 0.0;
-          face.qBcVals(i, j, 3) = 0.0;
-          for (int k = 0; k < 4; k++) {
-            face.qBcVals(i, j, 1) +=
-                face.intervalAlphas(k, i, j, 0) *
-                pow(intervalTime, static_cast<double>(3 - k));
-            face.qBcVals(i, j, 2) +=
-                face.intervalAlphas(k, i, j, 1) *
-                pow(intervalTime, static_cast<double>(3 - k));
-            face.qBcVals(i, j, 3) +=
-                face.intervalAlphas(k, i, j, 2) *
-                pow(intervalTime, static_cast<double>(3 - k));
-          }
-        });
-    // Now we call constant velo subsonic bc as usual
-    constantVelocitySubsonicInlet(b, face, eos, th, terms, tme);
-  } else {
-    constantVelocitySubsonicInlet(b, face, eos, th, terms, tme);
-  }
-}
-
 void supersonicInlet(
     block_ &b, face_ &face,
     const std::function<void(block_, thtrdat_, int, std::string)> &eos,
@@ -370,26 +295,7 @@ void stagnationSubsonicInlet(
     threeDsubview qh1 = getFaceSlice(b.qh, face._nface, firstInteriorCellIdx);
     twoDsubview nx, ny, nz;
 
-    switch (face._nface) {
-    case 1:
-    case 2:
-      nx = getFaceSlice(b.inx, face._nface, blockFaceIdx);
-      ny = getFaceSlice(b.iny, face._nface, blockFaceIdx);
-      nz = getFaceSlice(b.inz, face._nface, blockFaceIdx);
-      break;
-    case 3:
-    case 4:
-      nx = getFaceSlice(b.jnx, face._nface, blockFaceIdx);
-      ny = getFaceSlice(b.jny, face._nface, blockFaceIdx);
-      nz = getFaceSlice(b.jnz, face._nface, blockFaceIdx);
-      break;
-    case 5:
-    case 6:
-      nx = getFaceSlice(b.knx, face._nface, blockFaceIdx);
-      ny = getFaceSlice(b.kny, face._nface, blockFaceIdx);
-      nz = getFaceSlice(b.knz, face._nface, blockFaceIdx);
-      break;
-    }
+    getFaceNormals(b, face._nface, blockFaceIdx, nx, ny, nz);
 
     MDRange2 range_face = MDRange2({0, 0}, {q1.extent(0), q1.extent(1)});
 

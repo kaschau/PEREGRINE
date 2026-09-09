@@ -71,7 +71,6 @@ def verify(mb):
                     "constantVelocitySubsonicInlet",
                     "supersonicInlet",
                     "constantMassFluxSubsonicInlet",
-                    "cubicSplineSubsonicInlet",
                     # Exits
                     "constantPressureSubsonicExit",
                     "supersonicExit",

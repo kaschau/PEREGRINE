@@ -35,7 +35,6 @@ using twoDsubview = Kokkos::View<double **, Kokkos::LayoutStride, viewSpace>;
 using threeDview = Kokkos::View<double ***, layout, viewSpace>;
 using threeDsubview = Kokkos::View<double ***, Kokkos::LayoutStride, viewSpace>;
 using fourDview = Kokkos::View<double ****, layout, viewSpace>;
-using fiveDview = Kokkos::View<double *****, layout, viewSpace>;
 using MDRange1 = Kokkos::MDRangePolicy<execSpace, Kokkos::Rank<1>>;
 using MDRange2 = Kokkos::MDRangePolicy<execSpace, Kokkos::Rank<2>>;
 using MDRange3 = Kokkos::MDRangePolicy<execSpace, Kokkos::Rank<3>>;
@@ -46,6 +45,4 @@ using MDRange5 = Kokkos::MDRangePolicy<execSpace, Kokkos::Rank<5>>;
 using hostSpace = Kokkos::HostSpace;
 using fourDviewHostsubview =
     Kokkos::View<double ****, Kokkos::LayoutStride, hostSpace>;
-using fiveDviewHost =
-    Kokkos::View<double *****, Kokkos::LayoutRight, hostSpace>;
 #endif

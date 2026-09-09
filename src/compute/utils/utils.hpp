@@ -18,8 +18,6 @@ void dq2FDoneSided(block_ &b, const int &nface);
 //    |------> dq4FD
 void dq4FD(block_ &b);
 //    |------> axpby
-void AEQConst(threeDview &A, const double &Const);
-void AEQConst(fourDview &A, const double &Const);
 void AEQB(fourDview &A, fourDview &B);
 // A = a*A + b*B [+ c*C], the linear combination every stage is built from
 void axnpby(fourDview &A, const double &a, const double &b, const fourDview &B);

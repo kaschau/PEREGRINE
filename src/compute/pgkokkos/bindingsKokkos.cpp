@@ -112,25 +112,6 @@ void bindKokkos(py::module_ &m) {
       });
 
   // FIVE D HOST VIEW
-  py::class_<fiveDviewHost>(pgkokkos, "hostView5", py::buffer_protocol())
-      .def(py::init<std::string, size_t, size_t, size_t, size_t, size_t>())
-      .def_buffer([](fiveDviewHost &view) -> py::buffer_info {
-        size_t shape[5] = {view.extent(0), view.extent(1), view.extent(2),
-                           view.extent(3), view.extent(4)};
-        size_t stride[5] = {
-            sizeof(double) * view.stride(0), sizeof(double) * view.stride(1),
-            sizeof(double) * view.stride(2), sizeof(double) * view.stride(3),
-            sizeof(double) * view.stride(4)};
-        return py::buffer_info(
-            view.data(),                             // Pointer to buffer
-            sizeof(double),                          // Size of one scalar
-            py::format_descriptor<double>::format(), // Descriptor
-            5,                                       // Number of dimensions
-            shape,                                   // Buffer dimensions
-            stride // Strides (in bytes) for each index
-        );
-      });
-
   pgkokkos.def("initialize", []() { Kokkos::initialize(); });
   pgkokkos.def("finalize", []() { Kokkos::finalize(); });
 

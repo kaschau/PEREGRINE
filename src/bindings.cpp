@@ -208,9 +208,7 @@ PYBIND11_MODULE(compute, m) {
       .def_readwrite("periodicRotMatrixUp", &face_::periodicRotMatrixUp)
       .def_readwrite("periodicRotMatrixDown", &face_::periodicRotMatrixDown)
 
-      .def_readwrite("intervalDt", &face_::intervalDt)
-      .def_readwrite("cubicSplineAlphas", &face_::cubicSplineAlphas)
-      .def_readwrite("intervalAlphas", &face_::intervalAlphas);
+      ;
 
   static auto _atexit = []() {
     if (Kokkos::is_initialized())

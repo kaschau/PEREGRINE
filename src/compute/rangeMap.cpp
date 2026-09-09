@@ -156,3 +156,33 @@ void getFaceSliceIdxs(int &firstHaloIdx, int &firstInteriorCellIdx,
     throw std::invalid_argument("Unknown argument setHaloSlice");
   }
 }
+
+void getFaceNormals(const block_ &b, const int &nface, const int &slice,
+                    twoDsubview &nx, twoDsubview &ny, twoDsubview &nz) {
+  //-------------------------------------------------------------------------------------------|
+  // The unit normal of a face, taken from whichever of the i, j, k face
+  // arrays that face belongs to.
+  //-------------------------------------------------------------------------------------------|
+  switch (nface) {
+  case 1:
+  case 2:
+    nx = getFaceSlice(b.inx, nface, slice);
+    ny = getFaceSlice(b.iny, nface, slice);
+    nz = getFaceSlice(b.inz, nface, slice);
+    break;
+  case 3:
+  case 4:
+    nx = getFaceSlice(b.jnx, nface, slice);
+    ny = getFaceSlice(b.jny, nface, slice);
+    nz = getFaceSlice(b.jnz, nface, slice);
+    break;
+  case 5:
+  case 6:
+    nx = getFaceSlice(b.knx, nface, slice);
+    ny = getFaceSlice(b.kny, nface, slice);
+    nz = getFaceSlice(b.knz, nface, slice);
+    break;
+  default:
+    throw std::runtime_error("Unknown nface in getFaceNormals.");
+  }
+}

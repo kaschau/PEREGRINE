@@ -31,12 +31,6 @@ struct face_ {
   fourDview tempRecvBuffer_dqdx, tempRecvBuffer_dqdy, tempRecvBuffer_dqdz;
   fourDview tempRecvBuffer_phi;
 
-  // For cubic spline inlets
-  fiveDviewHost cubicSplineAlphas;
-  fourDview intervalAlphas;
-  double intervalDt;
-  int currentInterval = -1;
-
   // Periodic rotation matricies
   twoDview periodicRotMatrixUp, periodicRotMatrixDown;
 };
