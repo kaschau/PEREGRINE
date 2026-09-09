@@ -190,7 +190,7 @@ def bootstrapCase(config):
     ################################################################
     # Dual time initialization
     ################################################################
-    if mb.step.stepType == "dualTime":
+    if mb.stepType == "dualTime":
         mb.initializeDualTime()
 
     ################################################################

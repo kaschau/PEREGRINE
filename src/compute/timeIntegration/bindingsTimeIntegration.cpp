@@ -23,31 +23,12 @@ void bindTimeIntegration(py::module_ &m) {
   timeIntegration.def("invertDQ", &invertDQ, "Solve dq = \\Gamma^{-1} dQ",
                       py::arg("block_"), py::arg("dt"), py::arg("thtrdat_"),
                       py::arg("viscous"));
-  //  |----> maccormack.cpp
-  timeIntegration.def("corrector", &corrector, "maccormack corrector",
-                      py::arg("block_"), py::arg("dt"));
-  //  |----> rk2Stages.cpp
-  timeIntegration.def("rk2s1", &rk2s1, "rk2 stage 1", py::arg("block_"),
-                      py::arg("dt"));
-  timeIntegration.def("rk2s2", &rk2s2, "rk2 stage 2", py::arg("block_"),
-                      py::arg("dt"));
-  //  |----> rk3Stages.cpp
-  timeIntegration.def("rk3s1", &rk3s1, "rk3 stage 1", py::arg("block_"),
-                      py::arg("dt"));
-  timeIntegration.def("rk3s2", &rk3s2, "rk3 stage 2", py::arg("block_"),
-                      py::arg("dt"));
-  timeIntegration.def("rk3s3", &rk3s3, "rk3 stage 3", py::arg("block_"),
-                      py::arg("dt"));
-  //  |----> rk34Stages.cpp
-  timeIntegration.def("rk34s1", &rk34s1, "rk34 stage 1", py::arg("block_"),
-                      py::arg("dt"));
-  timeIntegration.def("rk34s2", &rk34s2, "rk34 stage 2", py::arg("block_"),
-                      py::arg("dt"));
-  timeIntegration.def("rk34s3", &rk34s3, "rk34 stage 3", py::arg("block_"),
-                      py::arg("dt"));
-  timeIntegration.def("rk34s4", &rk34s4, "rk34 stage 4", py::arg("block_"),
-                      py::arg("dt"));
   //  |----> rk4Stages.cpp
+  timeIntegration.def("applyStage", &applyStage,
+                      "Q = wQ0 Q0 + wQ Q + wdQ dt dQ",
+                      py::arg("block_"), py::arg("dt"), py::arg("wQ0"),
+                      py::arg("wQ"), py::arg("wdQ"), py::arg("storeQ0"));
+
   timeIntegration.def("rk4s1", &rk4s1, "rk4 stage 1", py::arg("block_"),
                       py::arg("dt"));
   timeIntegration.def("rk4s2", &rk4s2, "rk4 stage 2", py::arg("block_"),

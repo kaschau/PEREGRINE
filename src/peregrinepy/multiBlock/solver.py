@@ -99,7 +99,7 @@ class solver(restart):
     def __repr__(self):
         string = f"  Total blocks: {self.totalBlocks}\n"
         string += f"  Species: {self.thtrdat.speciesNames}\n"
-        string += f"  Time Integrator: {self.step.name}\n"
+        string += f"  Time Integrator: {self.integratorName}\n"
         string += f"  Shock Handling: {self.config['RHS']['shockHandling']}\n"
         string += f"  Primary Advective Flux: {self.primaryAdvFlux.__name__}\n"
         string += f"  Switching Function: {self.switch.__name__}\n"

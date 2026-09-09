@@ -1,5 +1,3 @@
-from abc import ABCMeta
-
 import numpy as np
 from mpi4py import MPI  # noqa: F401
 
@@ -31,10 +29,8 @@ def printResidual(resid, nrt, ne):
 
 
 class dualTime:
-    __metaclass__ = ABCMeta
-
-    def __init__(self):
-        pass
+    integratorName = "dualTime"
+    stepType = "dualTime"
 
     def step(self, dt):
         comm, rank, size = getCommRankSize()
@@ -115,8 +111,6 @@ class dualTime:
         self.tme += dt
         self.titme = self.tme
 
-    step.name = "dualTime"
-    step.stepType = "dualTime"
 
     def initializeDualTime(self):
         # Set Qn

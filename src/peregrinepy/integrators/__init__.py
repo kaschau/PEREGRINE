@@ -1,29 +1,26 @@
-from .rk1 import rk1
-from .rk2 import rk2
-from .maccormack import maccormack
-from .rk3 import rk3
-from .rk34 import rk34
-from .rk4 import rk4
-from .strang import strang
 from .dualTime import dualTime
+from .explicit import maccormack, rk1, rk2, rk3, rk34, rk4
+from .strang import Strang
+
+# the schemes strang can split with, and can be run on their own
+_schemes = {i.integratorName: i for i in (rk1, rk2, rk3, rk34, rk4, maccormack)}
+_others = {i.integratorName: i for i in (dualTime,)}
+
+__all__ = ["getIntegrator"]
 
 
 def getIntegrator(ti):
-    if ti == "rk1":
-        return rk1
-    elif ti == "rk2":
-        return rk2
-    elif ti == "maccormack":
-        return maccormack
-    elif ti == "rk3":
-        return rk3
-    elif ti == "rk34":
-        return rk34
-    elif ti == "rk4":
-        return rk4
-    elif ti == "strang":
-        return strang
-    elif ti == "dualTime":
-        return dualTime
-    else:
-        raise ValueError("What time integrator?")
+    """Named in the config. "strang" splits with rk3; "strang-rk4" or any
+    other scheme name after the dash splits with that one instead."""
+    split, _, scheme = ti.partition("-")
+    if split == "strang":
+        try:
+            paired = _schemes[scheme or "rk3"]
+        except KeyError:
+            raise ValueError(f"Strang cannot split with {scheme}.")
+        return type(ti, (Strang, paired), {"integratorName": ti})
+
+    try:
+        return {**_schemes, **_others}[ti]
+    except KeyError:
+        raise ValueError(f"What time integrator? {ti}")

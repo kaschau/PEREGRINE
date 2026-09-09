@@ -1,9 +1,9 @@
-from abc import ABCMeta
-from ..RHS import RHS
-from ..consistify import consistify
-from scipy.integrate import ode
 from itertools import product
-from ..compute.timeIntegration import rk3s1, rk3s2, rk3s3
+
+from scipy.integrate import ode
+
+from ..consistify import consistify
+from .explicit import BaseExplicit
 
 
 def stiff(t, y, blk, thtrdat, impChem, i, j, k):
@@ -13,7 +13,7 @@ def stiff(t, y, blk, thtrdat, impChem, i, j, k):
     return blk.array["omega"][i, j, k, :]
 
 
-class strang:
+class Strang(BaseExplicit):
     """
     Strang-splitting
 
@@ -24,38 +24,9 @@ class strang:
 
     """
 
-    __metaclass__ = ABCMeta
-
-    def __init__(self):
-        pass
-
-    def non_stiff(self, dt):
-        # First Stage
-        self.titme = self.tme
-        RHS(self)
-
-        for blk in self:
-            rk3s1(blk, dt)
-
-        consistify(self)
-
-        # Second Stage
-        self.titme = self.tme + dt
-        RHS(self)
-
-        for blk in self:
-            rk3s2(blk, dt)
-
-        consistify(self)
-
-        # Third Stage
-        self.titme = self.tme + dt / 2.0
-        RHS(self)
-
-        for blk in self:
-            rk3s3(blk, dt)
-
-        consistify(self)
+    # the transport half's stages come from whichever scheme is paired
+    # with this one; see getIntegrator
+    stepType = "split"
 
     def step(self, dt):
         ###############################################################
@@ -63,7 +34,7 @@ class strang:
         ###############################################################
         dt /= 2.0
 
-        self.non_stiff(dt)
+        self.runStages(dt)
 
         dt *= 2.0
         ###############################################################
@@ -94,7 +65,7 @@ class strang:
         ###############################################################
         dt /= 2.0
 
-        self.non_stiff(dt)
+        self.runStages(dt)
 
         dt *= 2.0
         ###############################################################
@@ -104,5 +75,3 @@ class strang:
         self.tme += dt
         self.titme = self.tme + dt
 
-    step.name = "strang"
-    step.stepType = "split"
