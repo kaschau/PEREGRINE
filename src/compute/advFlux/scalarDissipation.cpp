@@ -48,7 +48,7 @@ static void computeFlux(const block_ &b, fourDview &iF, const threeDview &iS,
 
         double rho2, rho4;
         rho2 = b.Q(i, j, k, 0) - b.Q(i - iMod, j - jMod, k - kMod, 0);
-        rho4 = b.Q(i + 1, j, k, 0) - 3.0 * b.Q(i, j, k, 0) +
+        rho4 = b.Q(i + iMod, j + jMod, k + kMod, 0) - 3.0 * b.Q(i, j, k, 0) +
                3.0 * b.Q(i - iMod, j - jMod, k - kMod, 0) -
                b.Q(i - iMod * 2, j - jMod * 2, k - kMod * 2, 0);
 
@@ -58,7 +58,7 @@ static void computeFlux(const block_ &b, fourDview &iF, const threeDview &iS,
         // u momentum dissipation
         double u2, u4;
         u2 = b.Q(i, j, k, 1) - b.Q(i - iMod, j - jMod, k - kMod, 1);
-        u4 = b.Q(i + 1, j, k, 1) - 3.0 * b.Q(i, j, k, 1) +
+        u4 = b.Q(i + iMod, j + jMod, k + kMod, 1) - 3.0 * b.Q(i, j, k, 1) +
              3.0 * b.Q(i - iMod, j - jMod, k - kMod, 1) -
              b.Q(i - iMod * 2, j - jMod * 2, k - kMod * 2, 1);
 
@@ -67,7 +67,7 @@ static void computeFlux(const block_ &b, fourDview &iF, const threeDview &iS,
         // v momentum dissipation
         double v2, v4;
         v2 = b.Q(i, j, k, 2) - b.Q(i - iMod, j - jMod, k - kMod, 2);
-        v4 = b.Q(i + 1, j, k, 2) - 3.0 * b.Q(i, j, k, 2) +
+        v4 = b.Q(i + iMod, j + jMod, k + kMod, 2) - 3.0 * b.Q(i, j, k, 2) +
              3.0 * b.Q(i - iMod, j - jMod, k - kMod, 2) -
              b.Q(i - iMod * 2, j - jMod * 2, k - kMod * 2, 2);
 
@@ -76,7 +76,7 @@ static void computeFlux(const block_ &b, fourDview &iF, const threeDview &iS,
         // w momentum dissipation
         double w2, w4;
         w2 = b.Q(i, j, k, 3) - b.Q(i - iMod, j - jMod, k - kMod, 3);
-        w4 = b.Q(i + 1, j, k, 3) - 3.0 * b.Q(i, j, k, 3) +
+        w4 = b.Q(i + iMod, j + jMod, k + kMod, 3) - 3.0 * b.Q(i, j, k, 3) +
              3.0 * b.Q(i - iMod, j - jMod, k - kMod, 3) -
              b.Q(i - iMod * 2, j - jMod * 2, k - kMod * 2, 3);
 
@@ -85,7 +85,7 @@ static void computeFlux(const block_ &b, fourDview &iF, const threeDview &iS,
         // total energy dissipation
         double e2, e4;
         e2 = b.Q(i, j, k, 4) - b.Q(i - iMod, j - jMod, k - kMod, 4);
-        e4 = b.Q(i + 1, j, k, 4) - 3.0 * b.Q(i, j, k, 4) +
+        e4 = b.Q(i + iMod, j + jMod, k + kMod, 4) - 3.0 * b.Q(i, j, k, 4) +
              3.0 * b.Q(i - iMod, j - jMod, k - kMod, 4) -
              b.Q(i - iMod * 2, j - jMod * 2, k - kMod * 2, 4);
 
@@ -95,7 +95,8 @@ static void computeFlux(const block_ &b, fourDview &iF, const threeDview &iS,
         for (int n = 0; n < b.ne - 5; n++) {
           double Y2, Y4;
           Y2 = b.Q(i, j, k, 5 + n) - b.Q(i - iMod, j - jMod, k - kMod, 5 + n);
-          Y4 = b.Q(i + 1, j, k, 5 + n) - 3.0 * b.Q(i, j, k, 5 + n) +
+          Y4 = b.Q(i + iMod, j + jMod, k + kMod, 5 + n) -
+               3.0 * b.Q(i, j, k, 5 + n) +
                3.0 * b.Q(i - iMod, j - jMod, k - kMod, 5 + n) -
                b.Q(i - iMod * 2, j - jMod * 2, k - kMod * 2, 5 + n);
           iF(i, j, k, 5 + n) = a * (eps2 * Y2 - eps4 * Y4);

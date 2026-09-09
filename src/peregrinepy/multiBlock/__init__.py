@@ -183,7 +183,6 @@ def howManyNG(config):
     }
 
     subgridNG = {
-        "mixedScaleModel": 2,
         "smagorinsky": 1,
         None: 1,
     }

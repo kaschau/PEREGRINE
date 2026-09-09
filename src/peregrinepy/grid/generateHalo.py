@@ -110,7 +110,7 @@ def generateHalo(blk):
         mask = fM[4]["faceMask"]
         for n in range(ng):
             s0 = -ng + n
-            if ni <= ng:
+            if nj <= ng:
                 s1 = s0 - 1
                 s2 = s1 - 1
             else:
@@ -121,7 +121,7 @@ def generateHalo(blk):
         mask = fM[6]["faceMask"]
         for n in range(ng):
             s0 = -ng + n
-            if ni <= ng:
+            if nk <= ng:
                 s1 = s0 - 1
                 s2 = s1 - 1
             else:

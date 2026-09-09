@@ -44,6 +44,38 @@
 //
 // ----------------------------------------------------------------------//
 
+// With three real roots, the stable phase is the one of least Gibbs energy.
+// Taking the largest is correct only on the gas-like branch. A root at or
+// below Bstar is not a physical volume, so it is not a candidate.
+KOKKOS_INLINE_FUNCTION double stableRoot(const double x1, const double x2,
+                                         const double x3, const double Astar,
+                                         const double Bstar, const double uRG,
+                                         const double wRG) {
+  const double sq = sqrt(uRG * uRG - 4.0 * wRG);
+  const double roots[3] = {x1, x2, x3};
+  // if no root clears Bstar, fall back to the largest
+  double Z = fmax(x1, fmax(x2, x3));
+  double gMin = 0.0;
+  bool found = false;
+  for (int n = 0; n < 3; n++) {
+    const double z = roots[n];
+    if (z <= Bstar) {
+      continue;
+    }
+    // Gibbs energy departure, g/(Ru T)
+    const double g = z - 1.0 - log(z - Bstar) +
+                     Astar / (Bstar * sq) *
+                         log((2.0 * z + Bstar * (uRG - sq)) /
+                             (2.0 * z + Bstar * (uRG + sq)));
+    if (!found || g < gMin) {
+      gMin = g;
+      Z = z;
+      found = true;
+    }
+  }
+  return Z;
+}
+
 void cubic(block_ &b, const thtrdat_ &th, const int &nface,
            const std::string &given, const int &indxI /*=0*/,
            const int &indxJ /*=0*/, const int &indxK /*=0*/) {
@@ -208,7 +240,7 @@ void cubic(block_ &b, const thtrdat_ &th, const int &nface,
                 -(2.0 * sqQ * cos((theta - 2 * 3.14159265358979323846) / 3.0)) -
                 z2o3;
 
-            Z = fmax(x1, fmax(x2, x3));
+            Z = stableRoot(x1, x2, x3, Astar, Bstar, uRG, wRG);
           }
 
           // Update mixture properties
@@ -518,7 +550,7 @@ void cubic(block_ &b, const thtrdat_ &th, const int &nface,
                             cos((theta - 2 * 3.14159265358979323846) / 3.0)) -
                           z2o3;
 
-              Z = fmax(x1, fmax(x2, x3));
+              Z = stableRoot(x1, x2, x3, Astar, Bstar, uRG, wRG);
             }
             // departure functions
             double dam = 0.0;

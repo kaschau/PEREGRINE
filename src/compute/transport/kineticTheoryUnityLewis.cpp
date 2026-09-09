@@ -73,7 +73,8 @@ void kineticTheoryUnityLewis(block_ &b, const thtrdat_ &th, const int &nface,
 
         // Evaluate all property polynomials
         const double logT = log(T);
-        const double sqrt_T = exp(0.5 * logT);
+        const double sqrt_T = sqrt(T);
+        const double sqrtsqrt_T = sqrt(sqrt_T);
         double logT_n[deg + 1];
         logT_n[0] = 1.0;
         for (int ply = 1; ply <= deg; ply++) {
@@ -87,7 +88,9 @@ void kineticTheoryUnityLewis(block_ &b, const thtrdat_ &th, const int &nface,
           }
 
           // Set to the correct dimensions
-          mu_sp(n) *= sqrt_T;
+          // the fit is of sqrt(mu)/T^(1/4), so undo both
+          mu_sp(n) *= sqrtsqrt_T;
+          mu_sp(n) *= mu_sp(n);
           kappa_sp(n) *= sqrt_T;
         }
 

@@ -18,6 +18,20 @@
 //
 //---------------------------------------------------------------------------------------------|
 
+// Weiss & Smith reference velocity: the flow speed, clipped between eps*c and
+// c, and no smaller than the diffusion velocity nu/dx. An inviscid call passes
+// nu = 0 and a degenerate direction an infinite length, so neither binds.
+static KOKKOS_INLINE_FUNCTION double
+referenceVelocity(const double U, const double c, const double nu,
+                  const double dI, const double dJ, const double dK) {
+  const double eps = 1.0e-5;
+  double Ur = fmax(U, eps * c);
+  Ur = fmax(Ur, nu / dI);
+  Ur = fmax(Ur, nu / dJ);
+  Ur = fmax(Ur, nu / dK);
+  return fmin(Ur, c);
+}
+
 void dQdt(block_ &b, const double &dt) {
   //-------------------------------------------------------------------------------------------|
   // Add to dQ with real time derivative source term
@@ -89,12 +103,26 @@ void localDtau(block_ &b, const bool &viscous) {
         double pseudoCFL = 0.5;
         double pseudoVNN = 0.1;
 
+        // the preconditioned system's wave speeds set the pseudo step
+        const double nu = viscous ? b.qt(i, j, k, 0) / b.Q(i, j, k, 0) : 0.0;
+        const double Ur = referenceVelocity(sqrt(u * u + v * v + w * w), c, nu,
+                                            iMult * dI, jMult * dJ, kMult * dK);
+        // the preconditioned system propagates u' +- c', not u + c
+        const double alpha = 0.5 * (1.0 - Ur * Ur / (c * c));
+        const double a2 = alpha * alpha;
+        const double Ur2 = Ur * Ur;
+
         double dtau = Kokkos::Experimental::infinity<double>::value;
-        dtau = fmin(dtau, iMult * pseudoCFL * dI / (uI + c));
-        dtau = fmin(dtau, jMult * pseudoCFL * dJ / (uJ + c));
-        dtau = fmin(dtau, kMult * pseudoCFL * dK / (uK + c));
+        dtau = fmin(dtau,
+                    iMult * pseudoCFL * dI /
+                        (abs((1.0 - alpha) * uI) + sqrt(a2 * uI * uI + Ur2)));
+        dtau = fmin(dtau,
+                    jMult * pseudoCFL * dJ /
+                        (abs((1.0 - alpha) * uJ) + sqrt(a2 * uJ * uJ + Ur2)));
+        dtau = fmin(dtau,
+                    kMult * pseudoCFL * dK /
+                        (abs((1.0 - alpha) * uK) + sqrt(a2 * uK * uK + Ur2)));
         if (viscous) {
-          double nu = b.qt(i, j, k, 0) / b.Q(i, j, k, 0);
           dtau = fmin(dtau, iMult * pseudoVNN * pow(dI, 2.0) / nu);
           dtau = fmin(dtau, jMult * pseudoVNN * pow(dJ, 2.0) / nu);
           dtau = fmin(dtau, kMult * pseudoVNN * pow(dK, 2.0) / nu);
@@ -385,42 +413,19 @@ void invertDQ(block_ &b, const double &dt, const thtrdat_ &th,
         mults[1] = 3.0 / 2.0 * b.dtau(i, j, k) / dt;
 
         // Reference velocity for preconditioning theta
-        double U = abs(sqrt(pow(u, 2.0) + pow(v, 2.0) + pow(w, 2.0)));
-        double eps = 1.0e-5;
-        double Ur;
-
-        // Ideal gas reference velocity
-        if (U < eps * c) {
-          Ur = eps * c;
-        } else if (U > eps * c && U < c) {
-          Ur = U;
-        } else {
-          Ur = c;
-        }
-        // // Incompressible reference velocity
-        // double Umax = 5.0; // <- Case specific
-        // if (U < eps) {
-        //   Ur = eps * Umax;
-        // } else {
-        //   Ur = U;
-        // }
-
-        // Limit reference velocity by viscosity
-        if (viscous) {
-          double dI = sqrt(pow(b.ixc(i + 1, j, k) - b.ixc(i, j, k), 2.0) +
-                           pow(b.iyc(i + 1, j, k) - b.iyc(i, j, k), 2.0) +
-                           pow(b.izc(i + 1, j, k) - b.izc(i, j, k), 2.0));
-          double dJ = sqrt(pow(b.jxc(i, j + 1, k) - b.jxc(i, j, k), 2.0) +
-                           pow(b.jyc(i, j + 1, k) - b.jyc(i, j, k), 2.0) +
-                           pow(b.jzc(i, j + 1, k) - b.jzc(i, j, k), 2.0));
-          double dK = sqrt(pow(b.kxc(i, j, k + 1) - b.kxc(i, j, k), 2.0) +
-                           pow(b.kyc(i, j, k + 1) - b.kyc(i, j, k), 2.0) +
-                           pow(b.kzc(i, j, k + 1) - b.kzc(i, j, k), 2.0));
-          double nu = b.qt(i, j, k, 0) / b.Q(i, j, k, 0);
-          Ur = fmin(Ur, iMult * dI / nu);
-          Ur = fmin(Ur, jMult * dJ / nu);
-          Ur = fmin(Ur, kMult * dK / nu);
-        }
+        const double U = sqrt(u * u + v * v + w * w);
+        const double nu = viscous ? b.qt(i, j, k, 0) / b.Q(i, j, k, 0) : 0.0;
+        double dI = sqrt(pow(b.ixc(i + 1, j, k) - b.ixc(i, j, k), 2.0) +
+                         pow(b.iyc(i + 1, j, k) - b.iyc(i, j, k), 2.0) +
+                         pow(b.izc(i + 1, j, k) - b.izc(i, j, k), 2.0));
+        double dJ = sqrt(pow(b.jxc(i, j + 1, k) - b.jxc(i, j, k), 2.0) +
+                         pow(b.jyc(i, j + 1, k) - b.jyc(i, j, k), 2.0) +
+                         pow(b.jzc(i, j + 1, k) - b.jzc(i, j, k), 2.0));
+        double dK = sqrt(pow(b.kxc(i, j, k + 1) - b.kxc(i, j, k), 2.0) +
+                         pow(b.kyc(i, j, k + 1) - b.kyc(i, j, k), 2.0) +
+                         pow(b.kzc(i, j, k + 1) - b.kzc(i, j, k), 2.0));
+        const double Ur =
+            referenceVelocity(U, c, nu, iMult * dI, jMult * dJ, kMult * dK);
 
         // Thetas (just rho_p for dQdq)
         Thetas[0] = 1.0 / pow(Ur, 2.0) - rho_T / (rho * cp);

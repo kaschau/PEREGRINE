@@ -4,8 +4,6 @@
 #include "block_.hpp"
 
 // ./subgrid
-//    |------> mixedScaleModel
-void mixedScaleModel(block_ &b);
 //    |------> smagorinsky
 void smagorinsky(block_ &b);
 
