@@ -20,11 +20,6 @@ void invertDQ(block_ &b, const double &dt, const thtrdat_ &th,
 //    |------> rk3Stages.cpp
 //    |------> rk34Stages.cpp
 //    |------> rk4Stages.cpp
-// Q = wQ0 * Q0 + wQ * Q + wdQ * dt * dQ, every SSP stage's form
-void applyStage(block_ &b, const double &dt, const double &wQ0,
-                const double &wQ, const double &wdQ,
-                const bool &storeQ0);
-
 void rk4s1(block_ &b, const double &dt);
 void rk4s2(block_ &b, const double &dt);
 void rk4s3(block_ &b, const double &dt);

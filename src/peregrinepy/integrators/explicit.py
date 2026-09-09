@@ -1,14 +1,21 @@
-from ..compute.timeIntegration import applyStage, rk4s1, rk4s2, rk4s3, rk4s4
+from ..compute.timeIntegration import rk4s1, rk4s2, rk4s3, rk4s4
+from ..compute.utils import AEQB, axnpby
 from ..consistify import consistify
 from ..RHS import RHS
 
 
 def ssp(wQ0, wQ, wdQ, storeQ0=False):
-    """A stage of a strong stability preserving scheme, Q = wQ0 Q0 + wQ Q +
-    wdQ dt dQ. The stage that begins a step stores the state it began from."""
+    """A stage of a strong stability preserving scheme,
+    Q = wQ Q + wQ0 Q0 + wdQ dt dQ. The stage that begins a step keeps the
+    state it began from, since later stages combine with it."""
 
     def stage(blk, dt):
-        applyStage(blk, dt, wQ0, wQ, wdQ, storeQ0)
+        if storeQ0:
+            AEQB(blk.Q0, blk.Q)
+        if wQ0 == 0.0:
+            axnpby(blk.Q, wQ, wdQ * dt, blk.dQ)
+        else:
+            axnpby(blk.Q, wQ, wQ0, blk.Q0, wdQ * dt, blk.dQ)
 
     return stage
 

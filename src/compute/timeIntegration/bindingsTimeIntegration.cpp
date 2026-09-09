@@ -24,11 +24,6 @@ void bindTimeIntegration(py::module_ &m) {
                       py::arg("block_"), py::arg("dt"), py::arg("thtrdat_"),
                       py::arg("viscous"));
   //  |----> rk4Stages.cpp
-  timeIntegration.def("applyStage", &applyStage,
-                      "Q = wQ0 Q0 + wQ Q + wdQ dt dQ",
-                      py::arg("block_"), py::arg("dt"), py::arg("wQ0"),
-                      py::arg("wQ"), py::arg("wdQ"), py::arg("storeQ0"));
-
   timeIntegration.def("rk4s1", &rk4s1, "rk4 stage 1", py::arg("block_"),
                       py::arg("dt"));
   timeIntegration.def("rk4s2", &rk4s2, "rk4 stage 2", py::arg("block_"),

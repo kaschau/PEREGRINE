@@ -21,10 +21,10 @@ void dq4FD(block_ &b);
 void AEQConst(threeDview &A, const double &Const);
 void AEQConst(fourDview &A, const double &Const);
 void AEQB(fourDview &A, fourDview &B);
-void ApEQxB(fourDview &A, const double &x, fourDview &B);
-void AEQxB(fourDview &A, const double &x, fourDview &B);
-void CEQxApyB(fourDview &C, const double &x, const fourDview &A,
-              const double &y, const fourDview &B);
+// A = a*A + b*B [+ c*C], the linear combination every stage is built from
+void axnpby(fourDview &A, const double &a, const double &b, const fourDview &B);
+void axnpby(fourDview &A, const double &a, const double &b, const fourDview &B,
+            const double &c, const fourDview &C);
 std::array<double, 3> CFLmax(const std::vector<block_> &mb);
 int checkNan(const std::vector<block_> &mb);
 

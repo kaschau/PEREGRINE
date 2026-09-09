@@ -19,11 +19,8 @@ void AEQB(fourDview &A, fourDview &B) {
   //-------------------------------------------------------------------------------------------|
   // A = B
   //-------------------------------------------------------------------------------------------|
-  int indxI = A.extent(0);
-  int indxJ = A.extent(1);
-  int indxK = A.extent(2);
-  int indxL = A.extent(3);
-  MDRange4 range({0, 0, 0, 0}, {indxI, indxJ, indxK, indxL});
+  MDRange4 range({0, 0, 0, 0},
+                 {A.extent(0), A.extent(1), A.extent(2), A.extent(3)});
   Kokkos::parallel_for(
       "AEQB", range,
       KOKKOS_LAMBDA(const int i, const int j, const int k, const int l) {
@@ -31,51 +28,41 @@ void AEQB(fourDview &A, fourDview &B) {
       });
 }
 
-void ApEQxB(fourDview &A, const double &x, fourDview &B) {
-  //-------------------------------------------------------------------------------------------|
-  // A += x*B
-  //-------------------------------------------------------------------------------------------|
-  int indxI = A.extent(0);
-  int indxJ = A.extent(1);
-  int indxK = A.extent(2);
-  int indxL = A.extent(3);
-  MDRange4 range({0, 0, 0, 0}, {indxI, indxJ, indxK, indxL});
+//-------------------------------------------------------------------------------------------|
+// A = a*A + b*B [+ c*C]
+//
+// The linear combination of solution registers every time integration stage is
+// built from. A leading coefficient of zero means the stage starts from
+// somewhere else, so A is written without being read; the test is on a value
+// that is the same for every element, so the branch costs nothing.
+//-------------------------------------------------------------------------------------------|
+void axnpby(fourDview &A, const double &a, const double &b,
+            const fourDview &B) {
+  MDRange4 range({0, 0, 0, 0},
+                 {A.extent(0), A.extent(1), A.extent(2), A.extent(3)});
   Kokkos::parallel_for(
-      "ApEQxB", range,
+      "axnpby2", range,
       KOKKOS_LAMBDA(const int i, const int j, const int k, const int l) {
-        A(i, j, k, l) += x * B(i, j, k, l);
+        if (a == 0.0) {
+          A(i, j, k, l) = b * B(i, j, k, l);
+        } else {
+          A(i, j, k, l) = a * A(i, j, k, l) + b * B(i, j, k, l);
+        }
       });
 }
 
-void AEQxB(fourDview &A, const double &x, fourDview &B) {
-  //-------------------------------------------------------------------------------------------|
-  // A = xB
-  //-------------------------------------------------------------------------------------------|
-  int indxI = A.extent(0);
-  int indxJ = A.extent(1);
-  int indxK = A.extent(2);
-  int indxL = A.extent(3);
-  MDRange4 range({0, 0, 0, 0}, {indxI, indxJ, indxK, indxL});
+void axnpby(fourDview &A, const double &a, const double &b, const fourDview &B,
+            const double &c, const fourDview &C) {
+  MDRange4 range({0, 0, 0, 0},
+                 {A.extent(0), A.extent(1), A.extent(2), A.extent(3)});
   Kokkos::parallel_for(
-      "AEQxb", range,
+      "axnpby3", range,
       KOKKOS_LAMBDA(const int i, const int j, const int k, const int l) {
-        A(i, j, k, l) = x * B(i, j, k, l);
-      });
-}
-
-void CEQxApyB(fourDview &C, const double &x, const fourDview &A,
-              const double &y, const fourDview &B) {
-  //-------------------------------------------------------------------------------------------|
-  // C = Ax + By
-  //-------------------------------------------------------------------------------------------|
-  int indxI = A.extent(0);
-  int indxJ = A.extent(1);
-  int indxK = A.extent(2);
-  int indxL = A.extent(3);
-  MDRange4 range({0, 0, 0, 0}, {indxI, indxJ, indxK, indxL});
-  Kokkos::parallel_for(
-      "CEQxApyB", range,
-      KOKKOS_LAMBDA(const int i, const int j, const int k, const int l) {
-        C(i, j, k, l) = x * A(i, j, k, l) + y * B(i, j, k, l);
+        if (a == 0.0) {
+          A(i, j, k, l) = b * B(i, j, k, l) + c * C(i, j, k, l);
+        } else {
+          A(i, j, k, l) =
+              a * A(i, j, k, l) + b * B(i, j, k, l) + c * C(i, j, k, l);
+        }
       });
 }
