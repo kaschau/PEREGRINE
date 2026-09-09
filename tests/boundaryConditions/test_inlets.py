@@ -3,11 +3,81 @@ import itertools
 import numpy as np
 import pytest
 
-from .bcBlock import create
+from .bcHarness import BcCase
 
-##############################################
-# Test all inlet boundary conditions
-##############################################
+
+class Inlet(BcCase):
+    def euler(self, face):
+        self.run(face, "euler")
+        self.state(face)
+        self.imposed(face, "T")
+        self.species(face, self.imposed)
+
+
+class SupersonicInlet(Inlet):
+    bcType = "supersonicInlet"
+
+    def state(self, face):
+        self.imposed(face, "p")
+        for c in "uvw":
+            self.imposed(face, c)
+
+
+class ConstantVelocitySubsonicInlet(Inlet):
+    bcType = "constantVelocitySubsonicInlet"
+
+    def state(self, face):
+        self.extrapolate(face, "p")
+        for c in "uvw":
+            self.imposed(face, c)
+
+
+class ConstantMassFluxSubsonicInlet(Inlet):
+    """sets a mass flux rather than a velocity, so the check is on the flux the
+    advective scheme then computes through the face"""
+
+    bcType = "constantMassFluxSubsonicInlet"
+
+    def state(self, face):
+        self.extrapolate(face, "p")
+        self._massFlux(face)
+
+    def _massFlux(self, face):
+        blk, ng = self.blk, self.blk.ng
+        self.mb.primaryAdvFlux(blk)
+        blk.updateHostView(["q", "Q"])
+
+        d = {1: "i", 2: "i", 3: "j", 4: "j", 5: "k", 6: "k"}[face.nface]
+        blk.updateHostView([f"{d}F"])
+        F = blk.array[f"{d}F"][face.s1_][ng:-ng, ng:-ng, 0]
+        S = blk.array[f"{d}S"][face.s1_][ng:-ng, ng:-ng]
+
+        mult = -1.0 if face.nface in (2, 4, 6) else 1.0
+        target = face.array["QBcVals"][0, 0, 0] * np.sum(S)
+        computed = mult * np.sum(F)
+        assert abs(target - computed) / target * 100.0 < 1e-3
+
+
+class StagnationSubsonicInlet(Inlet):
+    """holds total conditions and lets the interior set the mass flow, so the
+    halo velocity is whatever speed the isentropic solve gives -- but always
+    along the face normal, which is the part that does not depend on the
+    algebra"""
+
+    bcType = "stagnationSubsonicInlet"
+
+    def euler(self, face):
+        self.run(face, "euler")
+        self.alongNormal(face)
+        self.species(face, self.imposed)
+
+
+_inlets = (
+    SupersonicInlet,
+    ConstantVelocitySubsonicInlet,
+    ConstantMassFluxSubsonicInlet,
+    StagnationSubsonicInlet,
+)
 
 pytestmark = pytest.mark.parametrize(
     "adv,spdata",
@@ -20,156 +90,9 @@ pytestmark = pytest.mark.parametrize(
 )
 
 
-def test_constantVelocitySubsonicInlet(my_setup, adv, spdata):
-    mb = create("constantVelocitySubsonicInlet", adv, spdata)
-    blk = mb[0]
-
-    p = blk.array["q"][:, :, :, 0]
-    u = blk.array["q"][:, :, :, 1]
-    v = blk.array["q"][:, :, :, 2]
-    w = blk.array["q"][:, :, :, 3]
-    T = blk.array["q"][:, :, :, 4]
-    for face in blk.faces:
-        face.bcFunc(blk, face, mb.eos, mb.thtrdat, "euler", mb.tme)
-        blk.updateHostView(["q"])
-
-        for s0_, s2_ in zip(face.s0_, face.s2_):
-            # extrapolate pressure
-            assert np.allclose(p[s0_], 2.0 * p[face.s1_] - p[s2_])
-
-            # apply velo on face
-            assert np.allclose(u[s0_], face.array["qBcVals"][:, :, 1])
-            assert np.allclose(v[s0_], face.array["qBcVals"][:, :, 2])
-            assert np.allclose(w[s0_], face.array["qBcVals"][:, :, 3])
-
-            # apply T and Ns in face
-            assert np.allclose(T[s0_], face.array["qBcVals"][:, :, 4])
-
-            if blk.ns > 1:
-                for n in range(blk.ns - 1):
-                    N = blk.array["q"][:, :, :, 5 + n]
-                    assert np.allclose(
-                        N[s0_],
-                        face.array["qBcVals"][:, :, 5 + n],
-                    )
-
-        # gradients
-        face.bcFunc(blk, face, mb.eos, mb.thtrdat, "postDqDxyz", mb.tme)
-        blk.updateHostView(["dqdx", "dqdy", "dqdz"])
-
-        s0_ = face.s0_[0]
-        # neumann all gradients
-        assert np.allclose(blk.array["dqdx"][s0_], blk.array["dqdx"][face.s1_])
-        assert np.allclose(blk.array["dqdy"][s0_], blk.array["dqdy"][face.s1_])
-        assert np.allclose(blk.array["dqdz"][s0_], blk.array["dqdz"][face.s1_])
-
-
-def test_supersonicInlet(my_setup, adv, spdata):
-    mb = create("supersonicInlet", adv, spdata)
-    blk = mb[0]
-
-    p = blk.array["q"][:, :, :, 0]
-    u = blk.array["q"][:, :, :, 1]
-    v = blk.array["q"][:, :, :, 2]
-    w = blk.array["q"][:, :, :, 3]
-    T = blk.array["q"][:, :, :, 4]
-    for face in blk.faces:
-        face.bcFunc(blk, face, mb.eos, mb.thtrdat, "euler", mb.tme)
-        blk.updateHostView(["q"])
-
-        for s0_, s2_ in zip(face.s0_, face.s2_):
-            # extrapolate pressure
-            assert np.allclose(p[s0_], face.array["qBcVals"][:, :, 0])
-
-            # apply velo on face
-            assert np.allclose(u[s0_], face.array["qBcVals"][:, :, 1])
-            assert np.allclose(v[s0_], face.array["qBcVals"][:, :, 2])
-            assert np.allclose(w[s0_], face.array["qBcVals"][:, :, 3])
-
-            # apply T and Ns in face
-            assert np.allclose(T[s0_], face.array["qBcVals"][:, :, 4])
-
-            if blk.ns > 1:
-                for n in range(blk.ns - 1):
-                    N = blk.array["q"][:, :, :, 5 + n]
-                    assert np.allclose(
-                        N[s0_],
-                        face.array["qBcVals"][:, :, 5 + n],
-                    )
-
-        # gradients
-        face.bcFunc(blk, face, mb.eos, mb.thtrdat, "postDqDxyz", mb.tme)
-        blk.updateHostView(["dqdx", "dqdy", "dqdz"])
-
-        s0_ = face.s0_[0]
-        # neumann all gradients
-        assert np.allclose(blk.array["dqdx"][s0_], blk.array["dqdx"][face.s1_])
-        assert np.allclose(blk.array["dqdy"][s0_], blk.array["dqdy"][face.s1_])
-        assert np.allclose(blk.array["dqdz"][s0_], blk.array["dqdz"][face.s1_])
-
-
-def test_constantMassFluxSubsonicInlet(my_setup, adv, spdata):
+@pytest.mark.parametrize("inlet", _inlets, ids=lambda i: i.bcType)
+def test_inlet(my_setup, adv, spdata, inlet):
     # NOTE: fourth order not working for constant mdot
-    if adv == "fourthOrderKEEP":
-        return
-
-    mb = create("constantMassFluxSubsonicInlet", adv, spdata)
-    blk = mb[0]
-    ng = blk.ng
-
-    p = blk.array["q"][:, :, :, 0]
-    T = blk.array["q"][:, :, :, 4]
-    for face in blk.faces:
-        face.bcFunc(blk, face, mb.eos, mb.thtrdat, "euler", mb.tme)
-        mb.primaryAdvFlux(blk)
-        blk.updateHostView(["q", "Q"])
-
-        s1_ = face.s1_
-        if face.nface in [1, 2]:
-            blk.updateHostView(["iF"])
-            F = blk.array["iF"][s1_][ng:-ng, ng:-ng, 0]
-            S = blk.array["iS"][s1_][ng:-ng, ng:-ng]
-        elif face.nface in [3, 4]:
-            blk.updateHostView(["jF"])
-            F = blk.array["jF"][s1_][ng:-ng, ng:-ng, 0]
-            S = blk.array["jS"][s1_][ng:-ng, ng:-ng]
-        elif face.nface in [5, 6]:
-            blk.updateHostView(["kF"])
-            F = blk.array["kF"][s1_][ng:-ng, ng:-ng, 0]
-            S = blk.array["kS"][s1_][ng:-ng, ng:-ng]
-
-        for s0_, s2_ in zip(face.s0_, face.s2_):
-            # extrapolate pressure
-            assert np.allclose(p[s0_], 2.0 * p[face.s1_] - p[s2_])
-
-            # apply T and Ns in halo
-            assert np.allclose(T[s0_], face.array["qBcVals"][:, :, 4])
-
-            if blk.ns > 1:
-                for n in range(blk.ns - 1):
-                    N = blk.array["q"][:, :, :, 5 + n]
-                    assert np.allclose(
-                        N[s0_],
-                        face.array["qBcVals"][:, :, 5 + n],
-                    )
-
-        # mass flux on face
-        if face.nface in [2, 4, 6]:
-            mult = -1.0
-        else:
-            mult = 1.0
-
-        faceArea = np.sum(S)
-        targetMassFlux = face.array["QBcVals"][0, 0, 0] * faceArea
-        computedMassFlux = mult * np.sum(F)
-        assert abs(targetMassFlux - computedMassFlux) / targetMassFlux * 100.0 < 1e-3
-
-        # gradients
-        face.bcFunc(blk, face, mb.eos, mb.thtrdat, "postDqDxyz", mb.tme)
-        blk.updateHostView(["dqdx", "dqdy", "dqdz"])
-
-        s0_ = face.s0_[0]
-        # neumann all gradients
-        assert np.allclose(blk.array["dqdx"][s0_], blk.array["dqdx"][face.s1_])
-        assert np.allclose(blk.array["dqdy"][s0_], blk.array["dqdy"][face.s1_])
-        assert np.allclose(blk.array["dqdz"][s0_], blk.array["dqdz"][face.s1_])
+    if inlet is ConstantMassFluxSubsonicInlet and adv == "fourthOrderKEEP":
+        pytest.skip("fourth order not supported for constant mass flux")
+    inlet(adv, spdata).check()

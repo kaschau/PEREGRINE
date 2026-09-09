@@ -52,7 +52,7 @@ def create(bc, adv, spdata):
         blk.array["q"][:, :, :, 5::] = Y
     blk.updateDeviceView("q")
 
-    mb.eos(blk, mb.thtrdat, 0, "prims")
+    mb.eos(blk, mb.thtrdat, -1, "prims")
 
     mb.dqdxyz(blk)
 
@@ -77,6 +77,8 @@ def create(bc, adv, spdata):
         inputBcValues["v"] = vbc
         inputBcValues["w"] = wbc
         inputBcValues["T"] = Tbc
+        inputBcValues["pt"] = pbc
+        inputBcValues["Tt"] = Tbc
         if blk.ns > 1:
             for n, spn in enumerate(blk.speciesNames[0:-1]):
                 inputBcValues[spn] = Ybc[n]

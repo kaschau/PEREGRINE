@@ -370,9 +370,26 @@ void stagnationSubsonicInlet(
     threeDsubview qh1 = getFaceSlice(b.qh, face._nface, firstInteriorCellIdx);
     twoDsubview nx, ny, nz;
 
-    nx = getFaceSlice(b.inx, face._nface, blockFaceIdx);
-    ny = getFaceSlice(b.iny, face._nface, blockFaceIdx);
-    nz = getFaceSlice(b.inz, face._nface, blockFaceIdx);
+    switch (face._nface) {
+    case 1:
+    case 2:
+      nx = getFaceSlice(b.inx, face._nface, blockFaceIdx);
+      ny = getFaceSlice(b.iny, face._nface, blockFaceIdx);
+      nz = getFaceSlice(b.inz, face._nface, blockFaceIdx);
+      break;
+    case 3:
+    case 4:
+      nx = getFaceSlice(b.jnx, face._nface, blockFaceIdx);
+      ny = getFaceSlice(b.jny, face._nface, blockFaceIdx);
+      nz = getFaceSlice(b.jnz, face._nface, blockFaceIdx);
+      break;
+    case 5:
+    case 6:
+      nx = getFaceSlice(b.knx, face._nface, blockFaceIdx);
+      ny = getFaceSlice(b.kny, face._nface, blockFaceIdx);
+      nz = getFaceSlice(b.knz, face._nface, blockFaceIdx);
+      break;
+    }
 
     MDRange2 range_face = MDRange2({0, 0}, {q1.extent(0), q1.extent(1)});
 
