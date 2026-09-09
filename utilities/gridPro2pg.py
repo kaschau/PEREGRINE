@@ -104,7 +104,7 @@ with open(args.bcFam, "r") as f:
     bcFamDict = yaml.load(f, Loader=yaml.FullLoader)
 
 gpSurfaceToPgBcType = {
-    "pdc:INTERBLK": "b0",
+    "pdc:INTERBLK": "interior",
     "pdc:WALL": "adiabaticNoSlipWall",
     "pdc:user8": "adiabaticSlipWall",
 }

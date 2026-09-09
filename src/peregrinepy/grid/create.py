@@ -28,7 +28,7 @@ def cubicConnectivity(
             face.neighbor = None
             face.orientation = None
     else:
-        face.bcType = "b0"
+        face.bcType = "interior"
         face.neighbor = blkNum - 1
         face.orientation = "123"
 
@@ -45,7 +45,7 @@ def cubicConnectivity(
             face.neighbor = None
             face.orientation = None
     else:
-        face.bcType = "b0"
+        face.bcType = "interior"
         face.neighbor = blkNum + 1
         face.orientation = "123"
 
@@ -63,7 +63,7 @@ def cubicConnectivity(
             face.neighbor = None
             face.orientation = None
     else:
-        face.bcType = "b0"
+        face.bcType = "interior"
         face.neighbor = blkNum - mbDims[0]
         face.orientation = "123"
 
@@ -80,7 +80,7 @@ def cubicConnectivity(
             face.neighbor = None
             face.orientation = None
     else:
-        face.bcType = "b0"
+        face.bcType = "interior"
         face.neighbor = blkNum + mbDims[0]
         face.orientation = "123"
 
@@ -98,7 +98,7 @@ def cubicConnectivity(
             face.neighbor = None
             face.orientation = None
     else:
-        face.bcType = "b0"
+        face.bcType = "interior"
         face.neighbor = blkNum - mbDims[0] * mbDims[1]
         face.orientation = "123"
 
@@ -115,7 +115,7 @@ def cubicConnectivity(
             face.neighbor = None
             face.orientation = None
     else:
-        face.bcType = "b0"
+        face.bcType = "interior"
         face.neighbor = blkNum + mbDims[0] * mbDims[1]
         face.orientation = "123"
 
@@ -525,7 +525,7 @@ def multiBlockAnnulus(
                     if k == 0:
                         face = blk.getFace(5)
                         if float(sweep) == 360.0:
-                            face.bcType = "b0"
+                            face.bcType = "interior"
                         else:
                             face.bcType = "periodicRotLow"
                             face.bcFam = "periodic"
@@ -534,7 +534,7 @@ def multiBlockAnnulus(
                     if k == mbDims[2] - 1:
                         face = blk.getFace(6)
                         if float(sweep) == 360.0:
-                            face.bcType = "b0"
+                            face.bcType = "interior"
                         else:
                             face.bcType = "periodicRotHigh"
                             face.bcFam = "periodic"

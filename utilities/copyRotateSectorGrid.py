@@ -175,7 +175,7 @@ if __name__ == "__main__":
                     toFace.orientation = fromFace.orientation
                     # low side faces
                     if fromBlk.nblki in lowside:
-                        toFace.bcType = "b0"
+                        toFace.bcType = "interior"
                         toFace.neighbor = fromFace.neighbor + nblks * i
                         toFace.bcFam = None
                     # high side faces
@@ -185,12 +185,12 @@ if __name__ == "__main__":
                             toFace.neighbor = fromFace.neighbor
                             toFace.bcFam = fromFace.bcFam
                         else:
-                            toFace.bcType = "b0"
+                            toFace.bcType = "interior"
                             toFace.neighbor = fromFace.neighbor + nblks * (i + 2)
                             toFace.bcFam = None
                 # treat the internal faces
-                elif fromFace.bcType == "b0":
-                    toFace.bcType = "b0"
+                elif fromFace.bcType == "interior":
+                    toFace.bcType = "interior"
                     toFace.bcFam = None
                     toFace.orientation = fromFace.orientation
                     toFace.neighbor = fromFace.neighbor + nblks * (i + 1)
@@ -213,7 +213,7 @@ if __name__ == "__main__":
                     # set neighbor to new high side
                     toFace.neighbor = fromFace.neighbor + nblks * (nseg - 1)
                     if is360:
-                        toFace.bcType = "b0"
+                        toFace.bcType = "interior"
                         toFace.bcFam = None
 
         # original and far highside
@@ -223,7 +223,7 @@ if __name__ == "__main__":
             for toFace, fromFace in zip(rotBlk.faces, fromBlk.faces):
                 # set to internal with new neighbor
                 if fromFace.bcType == "periodicRotHigh":
-                    toFace.bcType = "b0"
+                    toFace.bcType = "interior"
                     toFace.neighbor = fromFace.neighbor + nblks
                     toFace.bcFam = None
             # new far high side
@@ -232,7 +232,7 @@ if __name__ == "__main__":
                 # if360, the new high side is an internal face
                 if fromFace.bcType == "periodicRotHigh":
                     if is360:
-                        toFace.bcType = "b0"
+                        toFace.bcType = "interior"
                         toFace.bcFam = None
 
     pg.writers.writeGrid(toGrid, toDir)

@@ -1,6 +1,7 @@
 import numpy as np
 
-from ..compute import bcs, face_
+from .. import bcs
+from ..compute import face_
 from ..compute.pgkokkos import deep_copy
 from ..misc import createViewMirrorArray, frozenDict, null
 from .gridFace import gridFace
@@ -74,7 +75,7 @@ class solverFace(gridFace, face_):
         self.mirror._freeze()
 
         # Boundary function
-        self.bcFunc = bcs.walls.adiabaticSlipWall
+        self.bcFunc = bcs.getBc("adiabaticSlipWall").kernel()
 
         # MPI variables
         self.commRank = None
@@ -102,18 +103,7 @@ class solverFace(gridFace, face_):
         createViewMirrorArray(self, "periodicRotMatrixDown", (3, 3))
 
     def _setBcFunc(self):
-        bcType = self.bcType
-        if bcType == "b0" or bcType.startswith("periodicTrans"):
-            self.bcFunc = null
-        else:
-            for bcmodule in [bcs.inlets, bcs.exits, bcs.walls, bcs.periodics]:
-                try:
-                    self.bcFunc = getattr(bcmodule, bcType)
-                    break
-                except AttributeError:
-                    pass
-            else:
-                raise KeyError(f"{bcType} is not a valid bcType")
+        self.bcFunc = bcs.getBc(self.bcType).kernel()
 
     def _setCommBuffers(self, ni, nj, nk, ne, nblki):
         assert (

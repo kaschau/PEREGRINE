@@ -88,7 +88,7 @@ def reorientBlock1(mb, S, varList):
         old.commRank = None
         new = blk1.getFace(nn)
         new.neighbor = 0
-        new.bcType = "b0"
+        new.bcType = "interior"
         new.commRank = 0
     blk1.getFace(nn).orientation = inverseS
 

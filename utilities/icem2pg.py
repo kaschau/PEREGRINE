@@ -132,7 +132,7 @@ else:
 # Set all bc types to internal... we will set the external bc's later
 for blk in mb:
     for face in blk.faces:
-        face.bcType = "b0"
+        face.bcType = "interior"
 
 faceMapping = {
     "small_i": 1,
@@ -147,17 +147,6 @@ orientationMapping = {"i": 1, "j": 2, "k": 3, "-i": 4, "-j": 5, "-k": 6}
 # ----------------------------------------------------------------- #
 # ------------- External Face Boundary Conditions ----------------- #
 # ----------------------------------------------------------------- #
-validBcTypes = (
-    # Inlets
-    "constantVelocitySubsonicInlet",
-    # Exits
-    "constantPressureSubsonicExit",
-    # Walls
-    "adiabaticNoSlipWall",
-    "adiabaticSlipWall",
-    "adiabaticMovingWall",
-    "isoTMovingWall",
-)
 # Read in bcFam.yaml file so we know what the bcType is for each label.
 with open(args.bcFam, "r") as f:
     bcFam2Type = yaml.load(f, Loader=yaml.FullLoader)
@@ -206,7 +195,7 @@ with open(args.topoFileName, "r") as f:
                 blk.getFace(thisFace).bcFam = tag
                 bcType = bcFam2Type[tag]["bcType"]
                 assert (
-                    bcType in validBcTypes
+                    bcType in pg.bcs.validBcTypes()
                 ), f"{bcType} is not a valid PEREGRINE bcType."
                 blk.getFace(thisFace).bcType = bcType
 
@@ -315,7 +304,7 @@ with open(args.topoFileName, "r") as f:
             # Collect the faces that were not set as external BCs and need connectivity info
             internalFaces = []
             for face in blk.faces:
-                if face.bcType == "b0":
+                if face.bcType == "interior":
                     internalFaces.append(face.nface)
             # March through the required faces
             for internalFace in internalFaces:

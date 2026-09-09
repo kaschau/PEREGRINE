@@ -66,41 +66,16 @@ def verify(mb):
             bcFam = face.bcFam
 
             if neighbor is None:
-                assert bc in (
-                    # Inlets
-                    "constantVelocitySubsonicInlet",
-                    "supersonicInlet",
-                    "constantMassFluxSubsonicInlet",
-                    # Exits
-                    "constantPressureSubsonicExit",
-                    "supersonicExit",
-                    # Walls
-                    "adiabaticNoSlipWall",
-                    "adiabaticSlipWall",
-                    "adiabaticMovingWall",
-                    "isoTNoSlipWall",
-                    "isoTSlipWall",
-                    "isoTMovingWall",
-                ), f"Block #{blk.nblki} face {nface} has no neighbor, but has bcType {bc}"
-
-                assert bc not in (
-                    # Interior, periodic
-                    "b0",
-                    "periodicTransLow",
-                    "periodicTransHigh",
-                    "periodicRotLow",
-                    "periodicRotHigh",
-                ), f"Block #{blk.nblki} face {nface} has no neighbor, but has bcType {bc}"
+                assert not pg.bcs.getBc(bc).hasNeighbor, (
+                    f"Block #{blk.nblki} face {nface} has no neighbor, "
+                    f"but has bcType {bc}"
+                )
 
                 assert (
                     orientation is None
                 ), f"Block #{blk.nblki} face {nface} has no neighbor, but has orientation {orientation}"
 
-                if bc not in (
-                    "supersonicExit",
-                    "adiabaticNoSlipWall",
-                    "adiabaticSlipWall",
-                ):
+                if pg.bcs.getBc(bc).needsBcFam:
                     assert (
                         bcFam is not None
                     ), f"Block #{blk.nblki} face {nface} is {bc}, but has no bcFam"

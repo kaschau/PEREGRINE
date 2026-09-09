@@ -123,7 +123,7 @@ def simulate():
         face = blk.getFace(2)
         face.commRank = 1
         face.neighbor = 1
-        face.bcType = "b0"
+        face.bcType = "interior"
         face.orientation = "123"
 
     else:
@@ -148,7 +148,7 @@ def simulate():
         face = blk.getFace(1)
         face.commRank = 0
         face.neighbor = 0
-        face.bcType = "b0"
+        face.bcType = "interior"
         face.orientation = "123"
 
     for f in [3, 4]:

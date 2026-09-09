@@ -78,7 +78,7 @@ def findInteriorNeighbor(mb, incompleteBlocks, foundFaces):
 
         # Now we go block by block, face by face and look for matching faces
         for face in blk.faces:
-            if face.bcType != "b0" and not face.bcType.startswith("periodic"):
+            if face.bcType != "interior" and not face.bcType.startswith("periodic"):
                 continue
             if foundFaces[index][face.nface - 1]:
                 continue
@@ -201,8 +201,8 @@ def cutBlock(mb, nblki, cutAxis, cutIndex, incompleteBlocks, foundFaces):
     newFace.neighbor = oldBlk.nblki
     oldFace.orientation = "123"
     newFace.orientation = "123"
-    oldFace.bcType = "b0"
-    newFace.bcType = "b0"
+    oldFace.bcType = "interior"
+    newFace.bcType = "interior"
     oldFace.bcFam = None
     newFace.bcFam = None
 

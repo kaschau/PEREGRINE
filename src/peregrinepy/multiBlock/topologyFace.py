@@ -1,5 +1,7 @@
 import numpy as np
 
+from ..bcs import validBcTypes
+
 
 class topologyFace:
     faceType = "topology"
@@ -9,7 +11,7 @@ class topologyFace:
 
         self._nface = nface
         self._bcFam = None
-        self._bcType = "adiabaticNoSlipWall"
+        self._bcType = "adiabaticSlipWall"
         self._neighbor = None
         self._orientation = None
 
@@ -46,32 +48,9 @@ class topologyFace:
         tV = type(value)
         if tV not in (type(None), str):
             raise TypeError(f"bcType must be a string not {tV}")
-        validBcTypes = (
-            # Interior, periodic
-            "b0",
-            "periodicTransLow",
-            "periodicTransHigh",
-            "periodicRotLow",
-            "periodicRotHigh",
-            # Inlets
-            "constantVelocitySubsonicInlet",
-            "supersonicInlet",
-            "constantMassFluxSubsonicInlet",
-            "stagnationSubsonicInlet",
-            # Exits
-            "constantPressureSubsonicExit",
-            "supersonicExit",
-            # Walls
-            "adiabaticNoSlipWall",
-            "adiabaticSlipWall",
-            "adiabaticMovingWall",
-            "isoTNoSlipWall",
-            "isoTSlipWall",
-            "isoTMovingWall",
-        )
         assert (
-            value in validBcTypes
-        ), f"{value} is not a valid bcType. Must be one of {validBcTypes}"
+            value in validBcTypes()
+        ), f"{value} is not a valid bcType. Must be one of {validBcTypes()}"
         self._bcType = value
 
     @property

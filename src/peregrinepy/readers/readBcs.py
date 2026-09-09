@@ -47,12 +47,7 @@ def readBcs(mb, pathToFile, justPeriodic=False):
             bcType = face.bcType
             # Not all bc types need inputs from bcFam, so we check here
             if bcFam is None:
-                if bcType not in (
-                    "b0",
-                    "supersonicExit",
-                    "adiabaticNoSlipWall",
-                    "adiabaticSlipWall",
-                ):
+                if bcs.getBc(bcType).needsBcFam:
                     raise ValueError(
                         f"bcType {bcType} in block {blk.nblki}, face {face.nface} requires a bcFam."
                     )
