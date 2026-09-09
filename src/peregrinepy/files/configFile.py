@@ -24,7 +24,6 @@ class configFile(frozenDict):
                 "archiveDir": "./Archive",
                 "animateArchive": True,
                 "animateRestart": False,
-                "lumpIO": True,
                 "niterArchive": 1000000000,
                 "niterRestart": 10,
                 "niterPrint": 1,

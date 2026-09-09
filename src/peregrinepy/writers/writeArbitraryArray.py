@@ -11,7 +11,6 @@ def writeArbitraryArray(
     animate=True,
     precision="double",
     withHalo=False,
-    lump=True,
 ):
     """This function produces an hdf5 file from a peregrinepy.multiBlock.restart for viewing in Paraview.
 
@@ -45,15 +44,12 @@ def writeArbitraryArray(
         gridPath=gridPath,
         precision=precision,
         animate=animate,
-        lump=lump,
         nrt=mb.nrt,
         tme=mb.tme,
     )
 
-    # If writing a lumped file, open it here
-    if lump:
-        fileName = f"{path}/{metaData.getVarFileName(mb.nrt, None)}"
-        qf = h5py.File(fileName, "w")
+    fileName = f"{path}/{metaData.getVarFileName(mb.nrt)}"
+    qf = h5py.File(fileName, "w")
 
     for blk in mb:
         nblki = blk.nblki
@@ -67,11 +63,6 @@ def writeArbitraryArray(
             ng = 0
 
         extentCC = (ni + 2 * ng - 1) * (nj + 2 * ng - 1) * (nk + 2 * ng - 1)
-
-        # If not lumping the file, open it here
-        if not lump:
-            fileName = f"{path}/{metaData.getVarFileName(blk.nrt, blk.nblki)}"
-            qf = h5py.File(fileName, "w")
 
         if "iter" not in qf.keys():
             qf.create_group("iter")
@@ -110,10 +101,6 @@ def writeArbitraryArray(
                 blockElem, name, mb.nrt, nblki, ni, nj, nk, ng
             )
 
-        if not lump:
-            qf.close()
-
-    if lump:
-        qf.close()
+    qf.close()
 
     metaData.saveXdmf(path, mb.nrt)

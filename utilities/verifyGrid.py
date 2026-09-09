@@ -82,7 +82,7 @@ def verify(mb):
 
                 continue
 
-            (face_x, face_y, face_z) = extractFace(blk, face.nface)
+            face_x, face_y, face_z = extractFace(blk, face.nface)
 
             blk2 = mb.getBlock(neighbor)
             nface2 = face.neighborNface
@@ -93,7 +93,7 @@ def verify(mb):
                     f"Block {blk.nblki}'s' face {nface} says it is connected to\nblock {blk2.nblki}'s' face {nface2}, however block {blk2.nblki}'s\nface {nface2} says it is connected to a different block."
                 )
 
-            (face2_x, face2_y, face2_z) = extractFace(blk2, nface2)
+            face2_x, face2_y, face2_z = extractFace(blk2, nface2)
 
             faceOrientations = [
                 int(i)
@@ -243,25 +243,17 @@ if __name__ == "__main__":
         help="""If your grid has periodics, we need the periodic data from bcFams.""",
         type=str,
     )
-    parser.add_argument(
-        "--not-lumped",
-        action="store_false",
-        dest="isNotLumped",
-        help="""If your grid is not lumped.""",
-    )
-
     args = parser.parse_args()
 
     gp = args.gridPath
     cp = args.connPath
     bcFamPath = args.bcFamPath
-    lump = args.isNotLumped
     tree = etree.parse(f"{gp}/g.xmf")
     nblks = len(tree.getroot().find("Domain").find("Grid"))
     assert nblks > 0
     mb = pg.multiBlock.grid(nblks)
 
-    pg.readers.readGrid(mb, gp, lump=lump)
+    pg.readers.readGrid(mb, gp)
     pg.readers.readConnectivity(mb, cp)
     try:
         pg.readers.readBcs(mb, bcFamPath)

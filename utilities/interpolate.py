@@ -29,7 +29,6 @@ import yaml
 from lxml import etree
 import os
 
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Interpolate from one grid to another")
     parser.add_argument(
@@ -108,33 +107,23 @@ if __name__ == "__main__":
     tree = etree.parse(f"{fromDir}/g.xmf")
     nblkFrom = len(tree.getroot().find("Domain").find("Grid"))
     mbFrom = mbr(nblkFrom, speciesNames)
-    try:
-        readGrid(mbFrom, fromDir)  # lumped
-        lump = True
-    except FileNotFoundError:
-        readGrid(mbFrom, fromDir, lump=False)  # not lumped
-        lump = False
+    readGrid(mbFrom, fromDir)
 
     try:
-        readRestart(mbFrom, fromDir, animate=False, lump=lump)  # not animate
+        readRestart(mbFrom, fromDir, animate=False)  # not animate
         animate = False
     except FileNotFoundError:
         # Try to determint nrt for animate
         qxmf = [i for i in os.listdir(fromDir) if i.endswith("xmf")][0]
         nrt = int(qxmf.strip().split(".")[1])
-        readRestart(mbFrom, fromDir, nrt=nrt, animate=True, lump=lump)
+        readRestart(mbFrom, fromDir, nrt=nrt, animate=True)
         animate = True
 
     # Read in to data
     tree = etree.parse(f"{toDir}/g.xmf")
     nblkTo = len(tree.getroot().find("Domain").find("Grid"))
     mbTo = mbr(nblkTo, speciesNames)
-    try:
-        readGrid(mbTo, toDir)
-        lump = True
-    except FileNotFoundError:
-        readGrid(mbTo, toDir, lump=False)
-        lump = False
+    readGrid(mbTo, toDir)
 
     # Compute bounding blocks of each block
     boundsList = interpolation.bounds.findBounds(mbTo, mbFrom, verboseSearch)
@@ -158,4 +147,4 @@ if __name__ == "__main__":
     mbTo.tme = mbFrom.tme
     mbTo.nrt = mbFrom.nrt
 
-    writeRestart(mbTo, toDir, lump=lump, animate=animate)
+    writeRestart(mbTo, toDir, animate=animate)

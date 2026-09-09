@@ -95,7 +95,7 @@ def bootstrapCase(config):
     ################################################################
     # Read in the grid
     ################################################################
-    pg.readers.readGrid(mb, path=config["io"]["gridDir"], lump=config["io"]["lumpIO"])
+    pg.readers.readGrid(mb, path=config["io"]["gridDir"])
     comm.Barrier()
     if rank == 0:
         print("Read grid.")
@@ -108,7 +108,6 @@ def bootstrapCase(config):
         path=config["io"]["restartDir"],
         nrt=config["simulation"]["restartFrom"],
         animate=config["io"]["animateRestart"],
-        lump=config["io"]["lumpIO"],
     )
     comm.Barrier()
     if rank == 0:
@@ -155,7 +154,6 @@ def bootstrapCase(config):
         gridPath=f"../{config['io']['gridDir']}",
         precision="double",
         animate=config["io"]["animateRestart"],
-        lump=config["io"]["lumpIO"],
     )
     mb.archiveMetaData = pg.writers.parallelWriter.registerParallelMetaData(
         mb,
@@ -163,7 +161,6 @@ def bootstrapCase(config):
         gridPath=f"../{config['io']['gridDir']}",
         precision="single",
         animate=config["io"]["animateArchive"],
-        lump=config["io"]["lumpIO"],
     )
     for extraVar in config["io"]["saveExtraVars"]:
         meta = pg.writers.parallelWriter.registerParallelMetaData(
@@ -172,7 +169,6 @@ def bootstrapCase(config):
             gridPath=f"../{config['io']['gridDir']}",
             precision="single",
             animate=config["io"]["animateArchive"],
-            lump=config["io"]["lumpIO"],
             arrayName=extraVar,
         )
         mb.extraMetaData.append(meta)

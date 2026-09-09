@@ -4,7 +4,7 @@ from ..misc import progressBar
 from .writeMetaData import gridMetaData
 
 
-def writeGrid(mb, path="./", precision="double", withHalo=False, lump=True):
+def writeGrid(mb, path="./", precision="double", withHalo=False):
     """This function produces an hdf5 file from a peregrinepy.multiBlock.grid (or a descendant) for viewing in Paraview.
     Parameters
     ----------
@@ -20,9 +20,6 @@ def writeGrid(mb, path="./", precision="double", withHalo=False, lump=True):
     withHalo : bool
         Whether we write out with halo
 
-    lump : bool
-        Whether to write out a lumped file
-
     Returns
     -------
     None
@@ -34,11 +31,9 @@ def writeGrid(mb, path="./", precision="double", withHalo=False, lump=True):
         fdtype = "float64"
 
     # Start the xdmf tree
-    metaData = gridMetaData(precision, lump)
+    metaData = gridMetaData(precision)
 
-    # If we are lumping the files, open it here
-    if lump:
-        gf = h5py.File(f"{path}/g.h5", "w")
+    gf = h5py.File(f"{path}/g.h5", "w")
 
     for blk in mb:
         if blk.blockType == "solver":
@@ -55,10 +50,6 @@ def writeGrid(mb, path="./", precision="double", withHalo=False, lump=True):
         nblkiS = f"{blk.nblki:06d}"
         coordS = "coordinates_" + nblkiS
         dimS = "dimensions_" + nblkiS
-
-        # If we are doing serial output, open the file here
-        if not lump:
-            gf = h5py.File(f"{path}/g.{nblkiS}.h5", "w")
 
         gf.create_group(coordS)
         gf.create_group(dimS)
@@ -91,10 +82,7 @@ def writeGrid(mb, path="./", precision="double", withHalo=False, lump=True):
 
         if mb.mbType in ["grid", "restart"]:
             progressBar(blk.nblki + 1, len(mb), f"Writing out gridBlock {blk.nblki}")
-        if not lump:
-            gf.close()
 
-    if lump:
-        gf.close()
+    gf.close()
 
     metaData.saveXdmf(path)

@@ -58,7 +58,7 @@ Parallel I/O can be achieved with a parallel capable h5py installation.
     $ export HDF5_DIR="/path/to/parallel/hdf5"  # If this isn't found by default
     $ pip install h5py --no-binary=h5py
     
-`$HDF5_DIR` must point to a parallel enabled HDF5 installation. Parallel I/O is only applicable when running simulations with `config["io"]["lumpIO"]=true`.
+`$HDF5_DIR` must point to a parallel enabled HDF5 installation. All output is written to a single collective file, so a serial HDF5 build will not run a multi-rank case.
 
 ## Attribution
 

@@ -3,9 +3,8 @@ from copy import deepcopy
 
 
 class gridMetaData:
-    def __init__(self, precision, lump):
+    def __init__(self, precision):
         self.metaType = "grid"
-        self.lump = lump
         self.precision = precision
 
         # This is the main xdmf object
@@ -65,29 +64,15 @@ class gridMetaData:
         else:
             gridPath = self.gridPath
 
-        if self.lump:
-            return f"{gridPath}/g.h5:/coordinates_{nblki:06d}/{coord}"
-        else:
-            return f"{gridPath}/g.{nblki:06d}.h5:/coordinates_{nblki:06d}/{coord}"
-
-    def getGridFileName(self, coord, nblki):
-        if self.metaType == "grid":
-            gridPath = "."
-        else:
-            gridPath = self.gridPath
-
-        if self.lump:
-            return f"{gridPath}/g.h5"
-        else:
-            return f"{gridPath}/g.{nblki:06d}.h5"
+        return f"{gridPath}/g.h5:/coordinates_{nblki:06d}/{coord}"
 
     def getOutputName(self, **kwags):
         return "g.xmf"
 
 
 class restartMetaData(gridMetaData):
-    def __init__(self, gridPath, precision, animate, lump, nrt=0, tme=0.0):
-        super().__init__(precision, lump)
+    def __init__(self, gridPath, precision, animate, nrt=0, tme=0.0):
+        super().__init__(precision)
         self.metaType = "restart"
 
         self.animate = animate
@@ -136,28 +121,13 @@ class restartMetaData(gridMetaData):
         return self.gridElem[-1]
 
     def getVarFileH5Location(self, varName, nrt, nblki):
-        if self.lump:
-            if self.animate:
-                return f"q.{nrt:08d}.h5:/results_{nblki:06d}/{varName}"
-            else:
-                return f"q.h5:/results_{nblki:06d}/{varName}"
-        else:
-            if self.animate:
-                return f"q.{nrt:08d}.{nblki:06d}.h5:/results_{nblki:06d}/{varName}"
-            else:
-                return f"q.{nblki:06d}.h5:/results_{nblki:06d}/{varName}"
+        return f"{self.getVarFileName(nrt)}:/results_{nblki:06d}/{varName}"
 
-    def getVarFileName(self, nrt, nblki):
-        if self.lump:
-            if self.animate:
-                return f"q.{nrt:08d}.h5"
-            else:
-                return "q.h5"
+    def getVarFileName(self, nrt):
+        if self.animate:
+            return f"q.{nrt:08d}.h5"
         else:
-            if self.animate:
-                return f"q.{nrt:08d}.{nblki:06d}.h5"
-            else:
-                return f"q.{nblki:06d}.h5"
+            return "q.h5"
 
     def addScalarToBlockElem(self, blockElem, varName, nrt, nblki, ni, nj, nk, ng):
         attributeElem = deepcopy(self.scalarAttributeTemplate)
@@ -195,36 +165,16 @@ class restartMetaData(gridMetaData):
 
 
 class arbitraryMetaData(restartMetaData):
-    def __init__(self, arrayName, gridPath, precision, animate, lump, nrt=0, tme=0.0):
-        super().__init__(gridPath, precision, animate, lump, nrt=0, tme=0.0)
+    def __init__(self, arrayName, gridPath, precision, animate, nrt=0, tme=0.0):
+        super().__init__(gridPath, precision, animate, nrt=nrt, tme=tme)
         self.metaType = "arbitrary"
         self.arrayName = arrayName
 
-    def getVarFileH5Location(self, varName, nrt, nblki):
-        arrayName = self.arrayName
-        if self.lump:
-            if self.animate:
-                return f"{arrayName}.{nrt:08d}.h5:/results_{nblki:06d}/{varName}"
-            else:
-                return f"{arrayName}.h5:/results_{nblki:06d}/{varName}"
+    def getVarFileName(self, nrt):
+        if self.animate:
+            return f"{self.arrayName}.{nrt:08d}.h5"
         else:
-            if self.animate:
-                return f"{arrayName}.{nrt:08d}.{nblki:06d}.h5:/results_{nblki:06d}/{varName}"
-            else:
-                return f"{arrayName}.{nblki:06d}.h5:/results_{nblki:06d}/{varName}"
-
-    def getVarFileName(self, nrt, nblki):
-        arrayName = self.arrayName
-        if self.lump:
-            if self.animate:
-                return f"{arrayName}.{nrt:08d}.h5"
-            else:
-                return f"{arrayName}.h5"
-        else:
-            if self.animate:
-                return f"{arrayName}.{nrt:08d}.{nblki:06d}.h5"
-            else:
-                return f"{arrayName}.{nblki:06d}.h5"
+            return f"{self.arrayName}.h5"
 
     def getOutputName(self, nrt):
         if self.animate:
