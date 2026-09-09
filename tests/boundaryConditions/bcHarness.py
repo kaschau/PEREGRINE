@@ -3,7 +3,7 @@ import numpy as np
 from .bcBlock import create
 
 
-class BcCase:
+class BaseBC:
     """One boundary condition, applied to every face of a single block."""
 
     bcType = None

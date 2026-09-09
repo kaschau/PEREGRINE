@@ -1,7 +1,7 @@
 import numpy as np
 
 
-class BaseBcPrep:
+class BaseBCPrep:
     """Reads a boundary condition's bcFam entry onto its face.
 
     The values come either from a profile file, the same way for every bc, or
@@ -37,7 +37,7 @@ class BaseBcPrep:
             face.array["qBcVals"][:, :, index] = valueDict[key]
 
 
-class InletPrep(BaseBcPrep):
+class InletPrep(BaseBCPrep):
     """an inlet also carries the composition"""
 
     def _constants(self, blk, face, valueDict):
@@ -64,15 +64,15 @@ class MassFluxPrep(InletPrep):
 
 _preps = {
     # walls
-    "adiabaticNoSlipWall": BaseBcPrep(),
-    "adiabaticSlipWall": BaseBcPrep(),
-    "adiabaticMovingWall": BaseBcPrep(u=1, v=2, w=3),
-    "isoTNoSlipWall": BaseBcPrep(T=4),
-    "isoTSlipWall": BaseBcPrep(T=4),
-    "isoTMovingWall": BaseBcPrep(u=1, v=2, w=3, T=4),
+    "adiabaticNoSlipWall": BaseBCPrep(),
+    "adiabaticSlipWall": BaseBCPrep(),
+    "adiabaticMovingWall": BaseBCPrep(u=1, v=2, w=3),
+    "isoTNoSlipWall": BaseBCPrep(T=4),
+    "isoTSlipWall": BaseBCPrep(T=4),
+    "isoTMovingWall": BaseBCPrep(u=1, v=2, w=3, T=4),
     # exits
-    "constantPressureSubsonicExit": BaseBcPrep(p=0),
-    "supersonicExit": BaseBcPrep(),
+    "constantPressureSubsonicExit": BaseBCPrep(p=0),
+    "supersonicExit": BaseBCPrep(),
     # inlets
     "constantVelocitySubsonicInlet": InletPrep(u=1, v=2, w=3, T=4),
     "supersonicInlet": InletPrep(p=0, u=1, v=2, w=3, T=4),

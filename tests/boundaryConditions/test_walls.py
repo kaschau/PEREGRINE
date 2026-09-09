@@ -2,12 +2,12 @@ import itertools
 
 import pytest
 
-from .bcHarness import BcCase
+from .bcHarness import BaseBC
 
 
-class Wall(BcCase):
+class Wall(BaseBC):
     # pressure and species always negate; the other two rules are the two axes
-    # a wall varies on
+    # a Wall varies on
     _tempGrad = None
     _veloGrad = None
 
@@ -108,6 +108,6 @@ pytestmark = pytest.mark.parametrize(
 )
 
 
-@pytest.mark.parametrize("wall", _walls, ids=lambda w: w.bcType)
-def test_wall(my_setup, adv, spdata, wall):
-    wall(adv, spdata).check()
+@pytest.mark.parametrize("bc", _walls, ids=lambda w: w.bcType)
+def test_wall(my_setup, adv, spdata, bc):
+    bc(adv, spdata).check()

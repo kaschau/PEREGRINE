@@ -2,10 +2,10 @@ import itertools
 
 import pytest
 
-from .bcHarness import BcCase
+from .bcHarness import BaseBC
 
 
-class Exit(BcCase):
+class Exit(BaseBC):
     def _flowMasks(self, face):
         """where the flow leaves the block, and where it re-enters"""
         n, sign = self.normals(face)
@@ -60,8 +60,8 @@ pytestmark = pytest.mark.parametrize(
 )
 
 
-@pytest.mark.parametrize("exitBc", _exits, ids=lambda e: e.bcType)
-def test_exit(my_setup, adv, spdata, exitBc):
-    case = exitBc(adv, spdata)
+@pytest.mark.parametrize("bc", _exits, ids=lambda e: e.bcType)
+def test_exit(my_setup, adv, spdata, bc):
+    case = bc(adv, spdata)
     case.blk.updateDeviceView("q")
     case.check()

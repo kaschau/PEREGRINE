@@ -3,10 +3,10 @@ import itertools
 import numpy as np
 import pytest
 
-from .bcHarness import BcCase
+from .bcHarness import BaseBC
 
 
-class Inlet(BcCase):
+class Inlet(BaseBC):
     def euler(self, face):
         self.run(face, "euler")
         self.state(face)
@@ -90,9 +90,9 @@ pytestmark = pytest.mark.parametrize(
 )
 
 
-@pytest.mark.parametrize("inlet", _inlets, ids=lambda i: i.bcType)
-def test_inlet(my_setup, adv, spdata, inlet):
+@pytest.mark.parametrize("bc", _inlets, ids=lambda i: i.bcType)
+def test_inlet(my_setup, adv, spdata, bc):
     # NOTE: fourth order not working for constant mdot
-    if inlet is ConstantMassFluxSubsonicInlet and adv == "fourthOrderKEEP":
+    if bc is ConstantMassFluxSubsonicInlet and adv == "fourthOrderKEEP":
         pytest.skip("fourth order not supported for constant mass flux")
-    inlet(adv, spdata).check()
+    bc(adv, spdata).check()
