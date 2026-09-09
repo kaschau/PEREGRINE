@@ -35,15 +35,9 @@ std::array<double, 3> CFLmax(const std::vector<block_> &mb) {
         KOKKOS_LAMBDA(const int i, const int j, const int k, double &CFLA,
                       double &CFLC, double &CFLR) {
           // Cell lengths
-          double dI = sqrt(pow(b.ixc(i + 1, j, k) - b.ixc(i, j, k), 2.0) +
-                           pow(b.iyc(i + 1, j, k) - b.iyc(i, j, k), 2.0) +
-                           pow(b.izc(i + 1, j, k) - b.izc(i, j, k), 2.0));
-          double dJ = sqrt(pow(b.jxc(i, j + 1, k) - b.jxc(i, j, k), 2.0) +
-                           pow(b.jyc(i, j + 1, k) - b.jyc(i, j, k), 2.0) +
-                           pow(b.jzc(i, j + 1, k) - b.jzc(i, j, k), 2.0));
-          double dK = sqrt(pow(b.kxc(i, j, k + 1) - b.kxc(i, j, k), 2.0) +
-                           pow(b.kyc(i, j, k + 1) - b.kyc(i, j, k), 2.0) +
-                           pow(b.kzc(i, j, k + 1) - b.kzc(i, j, k), 2.0));
+          const double &dI = b.dI(i, j, k);
+          const double &dJ = b.dJ(i, j, k);
+          const double &dK = b.dK(i, j, k);
 
           // Find max convective CFL
           double &u = b.q(i, j, k, 1);

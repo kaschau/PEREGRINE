@@ -113,7 +113,7 @@ class solverBlock(restartBlock, block_):
         #       Cell center
         # ------------------------------------------------------------------- #
         shape = ccshape
-        createViewMirrorArray(self, ["xc", "yc", "zc", "J"], shape)
+        createViewMirrorArray(self, ["xc", "yc", "zc", "J", "dI", "dJ", "dK"], shape)
         # Cell center metrics
         createViewMirrorArray(
             self,

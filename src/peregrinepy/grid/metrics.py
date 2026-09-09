@@ -288,6 +288,30 @@ def metrics(blk, xcOnly=False):
             blk.updateDeviceView(var)
 
     # ----------------------------------------------------------------------------
+    # Cell lengths, opposite face center to opposite face center
+    # ----------------------------------------------------------------------------
+
+    blk.array["dI"][:] = np.sqrt(
+        (blk.array["ixc"][1::, :, :] - blk.array["ixc"][0:-1, :, :]) ** 2
+        + (blk.array["iyc"][1::, :, :] - blk.array["iyc"][0:-1, :, :]) ** 2
+        + (blk.array["izc"][1::, :, :] - blk.array["izc"][0:-1, :, :]) ** 2
+    )
+    blk.array["dJ"][:] = np.sqrt(
+        (blk.array["jxc"][:, 1::, :] - blk.array["jxc"][:, 0:-1, :]) ** 2
+        + (blk.array["jyc"][:, 1::, :] - blk.array["jyc"][:, 0:-1, :]) ** 2
+        + (blk.array["jzc"][:, 1::, :] - blk.array["jzc"][:, 0:-1, :]) ** 2
+    )
+    blk.array["dK"][:] = np.sqrt(
+        (blk.array["kxc"][:, :, 1::] - blk.array["kxc"][:, :, 0:-1]) ** 2
+        + (blk.array["kyc"][:, :, 1::] - blk.array["kyc"][:, :, 0:-1]) ** 2
+        + (blk.array["kzc"][:, :, 1::] - blk.array["kzc"][:, :, 0:-1]) ** 2
+    )
+
+    if blk.blockType == "solver" and blk._isInitialized:
+        for var in ["dI", "dJ", "dK"]:
+            blk.updateDeviceView(var)
+
+    # ----------------------------------------------------------------------------
     # Cell center transformation metrics (ferda FD diffusion operator)
     # second order only
     # ----------------------------------------------------------------------------

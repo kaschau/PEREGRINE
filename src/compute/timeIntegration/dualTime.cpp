@@ -70,20 +70,14 @@ void localDtau(block_ &b, const bool &viscous) {
       "localDtau", range_cc,
       KOKKOS_LAMBDA(const int i, const int j, const int k) {
         // Cell lengths
-        double dI = sqrt(pow(b.ixc(i + 1, j, k) - b.ixc(i, j, k), 2.0) +
-                         pow(b.iyc(i + 1, j, k) - b.iyc(i, j, k), 2.0) +
-                         pow(b.izc(i + 1, j, k) - b.izc(i, j, k), 2.0));
-        double dJ = sqrt(pow(b.jxc(i, j + 1, k) - b.jxc(i, j, k), 2.0) +
-                         pow(b.jyc(i, j + 1, k) - b.jyc(i, j, k), 2.0) +
-                         pow(b.jzc(i, j + 1, k) - b.jzc(i, j, k), 2.0));
-        double dK = sqrt(pow(b.kxc(i, j, k + 1) - b.kxc(i, j, k), 2.0) +
-                         pow(b.kyc(i, j, k + 1) - b.kyc(i, j, k), 2.0) +
-                         pow(b.kzc(i, j, k + 1) - b.kzc(i, j, k), 2.0));
+        const double &dI = b.dI(i, j, k);
+        const double &dJ = b.dJ(i, j, k);
+        const double &dK = b.dK(i, j, k);
 
         // Find max convective CFL
-        double &u = b.q(i, j, k, 1);
-        double &v = b.q(i, j, k, 2);
-        double &w = b.q(i, j, k, 3);
+        const double &u = b.q(i, j, k, 1);
+        const double &v = b.q(i, j, k, 2);
+        const double &w = b.q(i, j, k, 3);
 
         double uI =
             sqrt(pow(0.5 * (b.inx(i, j, k) + b.inx(i + 1, j, k)) * u, 2.0) +
@@ -98,7 +92,7 @@ void localDtau(block_ &b, const bool &viscous) {
                  pow(0.5 * (b.kny(i, j, k) + b.kny(i, j, k + 1)) * v, 2.0) +
                  pow(0.5 * (b.knz(i, j, k) + b.knz(i, j, k + 1)) * w, 2.0));
 
-        double &c = b.qh(i, j, k, 3);
+        const double &c = b.qh(i, j, k, 3);
 
         double pseudoCFL = 0.5;
         double pseudoVNN = 0.1;
@@ -354,12 +348,12 @@ void invertDQ(block_ &b, const double &dt, const thtrdat_ &th,
         /////  \Gamma + 3*dtau / (2*dt) dQdq
         /////
         ////////////////////////////////////////////////
-        double &p = b.q(i, j, k, 0);
-        double &u = b.q(i, j, k, 1);
-        double &v = b.q(i, j, k, 2);
-        double &w = b.q(i, j, k, 3);
-        double &T = b.q(i, j, k, 4);
-        double &rho = b.Q(i, j, k, 0);
+        const double &p = b.q(i, j, k, 0);
+        const double &u = b.q(i, j, k, 1);
+        const double &v = b.q(i, j, k, 2);
+        const double &w = b.q(i, j, k, 3);
+        const double &T = b.q(i, j, k, 4);
+        const double &rho = b.Q(i, j, k, 0);
 #ifdef NSCOMPILE
         double Y(ns);
         double rho_Y(ns);
@@ -415,15 +409,9 @@ void invertDQ(block_ &b, const double &dt, const thtrdat_ &th,
         // Reference velocity for preconditioning theta
         const double U = sqrt(u * u + v * v + w * w);
         const double nu = viscous ? b.qt(i, j, k, 0) / b.Q(i, j, k, 0) : 0.0;
-        double dI = sqrt(pow(b.ixc(i + 1, j, k) - b.ixc(i, j, k), 2.0) +
-                         pow(b.iyc(i + 1, j, k) - b.iyc(i, j, k), 2.0) +
-                         pow(b.izc(i + 1, j, k) - b.izc(i, j, k), 2.0));
-        double dJ = sqrt(pow(b.jxc(i, j + 1, k) - b.jxc(i, j, k), 2.0) +
-                         pow(b.jyc(i, j + 1, k) - b.jyc(i, j, k), 2.0) +
-                         pow(b.jzc(i, j + 1, k) - b.jzc(i, j, k), 2.0));
-        double dK = sqrt(pow(b.kxc(i, j, k + 1) - b.kxc(i, j, k), 2.0) +
-                         pow(b.kyc(i, j, k + 1) - b.kyc(i, j, k), 2.0) +
-                         pow(b.kzc(i, j, k + 1) - b.kzc(i, j, k), 2.0));
+        const double &dI = b.dI(i, j, k);
+        const double &dJ = b.dJ(i, j, k);
+        const double &dK = b.dK(i, j, k);
         const double Ur =
             referenceVelocity(U, c, nu, iMult * dI, jMult * dJ, kMult * dK);
 

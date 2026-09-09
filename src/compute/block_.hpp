@@ -20,6 +20,8 @@ struct block_ {
   // Metric Arrays
   // Cell Centers
   threeDview xc, yc, zc, J;
+  // distance between opposite face centers along each index direction
+  threeDview dI, dJ, dK;
   threeDview dEdx, dEdy, dEdz;
   threeDview dNdx, dNdy, dNdz;
   threeDview dCdx, dCdy, dCdz;

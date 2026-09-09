@@ -76,6 +76,10 @@ PYBIND11_MODULE(compute, m) {
       .def_readwrite("yc", &block_::yc)
       .def_readwrite("zc", &block_::zc)
       .def_readwrite("J", &block_::J)
+      // Cell lengths
+      .def_readwrite("dI", &block_::dI)
+      .def_readwrite("dJ", &block_::dJ)
+      .def_readwrite("dK", &block_::dK)
       // Cell center metrics
       .def_readwrite("dEdx", &block_::dEdx)
       .def_readwrite("dEdy", &block_::dEdy)

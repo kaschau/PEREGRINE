@@ -33,7 +33,7 @@ class gridBlock(topologyBlock):
             self.mirror[f"{d}"] = None
         # Grid metrics
         # Cell centers
-        for d in ["xc", "yc", "zc", "J"]:
+        for d in ["xc", "yc", "zc", "J", "dI", "dJ", "dK"]:
             self.array[f"{d}"] = None
             self.mirror[f"{d}"] = None
         # Cell center metrics
@@ -87,6 +87,9 @@ class gridBlock(topologyBlock):
             "yc",
             "zc",
             "J",
+            "dI",
+            "dJ",
+            "dK",
             "dEdx",
             "dEdy",
             "dEdz",
