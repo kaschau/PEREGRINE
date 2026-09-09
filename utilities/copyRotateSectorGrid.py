@@ -3,7 +3,7 @@
 
 """This utility executes a copy/rotate operation on a sector grid.
 
-Requires a path to a "from" folder that contains g.* and conn.yaml files.
+Requires a path to a "from" folder that contains the g.* files.
 
 The utility will output the copy/rotated grid in the "to" folder.
 
@@ -12,8 +12,6 @@ The utility will output the copy/rotated grid in the "to" folder.
 import argparse
 import peregrinepy as pg
 import numpy as np
-from lxml import etree
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Interpolate from one grid to another")
@@ -78,12 +76,8 @@ if __name__ == "__main__":
             "nseg must be > 1 (it corresponds to the total number of output segments)"
         )
 
-    tree = etree.parse(f"{fromDir}/g.xmf")
-    nblks = len(tree.getroot().find("Domain").find("Grid"))
-
-    fromGrid = pg.multiBlock.grid(nblks)
-    pg.readers.readGrid(fromGrid, fromDir)
-    pg.readers.readConnectivity(fromGrid, fromDir)
+    fromGrid = pg.multiBlock.grid.mbFromGrid(fromDir)
+    nblks = len(fromGrid)
 
     toGrid = pg.multiBlock.grid(nblks * nseg)
 
@@ -236,4 +230,3 @@ if __name__ == "__main__":
                         toFace.bcFam = None
 
     pg.writers.writeGrid(toGrid, toDir)
-    pg.writers.writeConnectivity(toGrid, toDir)

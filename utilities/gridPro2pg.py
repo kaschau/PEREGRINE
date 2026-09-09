@@ -12,13 +12,13 @@ Example
 
 Default vaules to read in are the GridPro generic names of blk.tmp, blk.tmp.conn, and blk.tmp.pty
 
-Output will be a PEREGRINE compatible grid and connectivity file 'conn.yaml'.
+Output will be a PEREGRINE grid file 'g.h5', which carries the connectivity.
 
 """
 
 import argparse
 from peregrinepy.decomposition import condition
-from peregrinepy.writers import writeGrid, writeConnectivity
+from peregrinepy.writers import writeGrid
 import numpy as np
 from peregrinepy.multiBlock import grid as mbg
 from verifyGrid import verify
@@ -300,9 +300,6 @@ condition(mb)
 
 if verified and not verify(mb):
     raise ValueError("Conditioning invalidated the grid.")
-
-print("Writing out PEREGRINE connectivity file: conn.yaml...")
-writeConnectivity(mb, "./")
 
 print("Writing out {} block PEREGRINE grid files".format(len(mb)))
 writeGrid(mb, "./")

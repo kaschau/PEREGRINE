@@ -58,7 +58,13 @@ Parallel I/O can be achieved with a parallel capable h5py installation.
     $ export HDF5_DIR="/path/to/parallel/hdf5"  # If this isn't found by default
     $ pip install h5py --no-binary=h5py
     
-`$HDF5_DIR` must point to a parallel enabled HDF5 installation. All output is written to a single collective file, so a serial HDF5 build will not run a multi-rank case.
+`$HDF5_DIR` must point to a parallel enabled HDF5 installation built against the **same MPI as mpi4py**. All output is written to a single collective file, so a serial HDF5 build will not run a multi-rank case, and two MPIs in one process will crash it. To check which each is using:
+
+    $ python -c "import h5py; print(h5py.get_config().mpi)"          # must be True
+    $ python -c "from mpi4py import MPI; print(MPI.get_vendor())"
+    $ otool -L $(python -c "import h5py,os;print(os.path.dirname(h5py.__file__))")/*.so | grep libmpi
+
+`libmpi.12` is the MPICH ABI soname and `libmpi.40` is Open MPI's; if h5py and mpi4py name different ones, rebuild h5py against the MPI mpi4py uses.
 
 ## Attribution
 

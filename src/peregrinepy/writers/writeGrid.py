@@ -1,3 +1,23 @@
+"""
+Writing a PEREGRINE grid.
+
+g.h5 carries the grid and everything about it that does not change with the
+case: the coordinates of every block, how the blocks connect to each other,
+and any partitions the grid has been balanced into.
+
+    g.h5
+      totalBlocks                                        attribute
+      coordinates_000000/{x,y,z}                         one group per block
+      dimensions_000000/{ni,nj,nk}
+      connectivity/{neighbor,orientation,bcType,bcFam}    (totalBlocks, 6)
+      partitions/16/rank                                  which rank owns each
+
+A grid carries as many partitions side by side as it has been balanced for,
+named by the number of ranks, so one grid runs on 4 or on 64 without being
+rebalanced. Boundary condition values stay in the case's bcFams.yaml -- they
+belong to the case, not to the grid.
+"""
+
 import h5py
 import numpy as np
 from ..misc import progressBar
@@ -6,6 +26,9 @@ from .writeMetaData import gridMetaData
 
 def writeGrid(mb, path="./", precision="double", withHalo=False):
     """This function produces an hdf5 file from a peregrinepy.multiBlock.grid (or a descendant) for viewing in Paraview.
+
+    The grid file also carries the connectivity between the blocks, so a grid
+    is one file.
     Parameters
     ----------
     mb : peregrinepy.multiBlock.grid (or a descendant)
@@ -83,6 +106,72 @@ def writeGrid(mb, path="./", precision="double", withHalo=False):
         if mb.mbType in ["grid", "restart"]:
             progressBar(blk.nblki + 1, len(mb), f"Writing out gridBlock {blk.nblki}")
 
+    gf.attrs["totalBlocks"] = len(mb)
+    _writeConnectivity(gf, mb)
     gf.close()
 
     metaData.saveXdmf(path)
+
+
+def _writeConnectivity(gf, mb):
+    """Store every block's faces as four (totalBlocks, 6) tables."""
+    assert sorted(blk.nblki for blk in mb) == list(
+        range(len(mb))
+    ), "a grid file holds every block of a grid, numbered from zero"
+
+    shape = (len(mb), 6)
+    # hdf5 has no None, so a face with no neighbor names -1 and an unset
+    # string is an empty one
+    neighbor = np.full(shape, -1, dtype=np.int32)
+    tables = {
+        name: np.zeros(shape, dtype=object)
+        for name in ("orientation", "bcType", "bcFam")
+    }
+    for blk in mb:
+        for face in blk.faces:
+            nface = face.nface - 1
+            if face.neighbor is not None:
+                neighbor[blk.nblki, nface] = face.neighbor
+            tables["orientation"][blk.nblki, nface] = face.orientation or ""
+            tables["bcType"][blk.nblki, nface] = face.bcType
+            tables["bcFam"][blk.nblki, nface] = face.bcFam or ""
+
+    if "connectivity" in gf:
+        del gf["connectivity"]
+    group = gf.create_group("connectivity")
+    group.create_dataset("neighbor", data=neighbor)
+    for name, table in tables.items():
+        group.create_dataset(name, data=table, dtype=h5py.string_dtype("utf-8"))
+
+
+def writePartition(blocksForProcs, path="./"):
+    """Add a partition to the grid file at :path:, named by the number of
+    ranks it is for. A grid keeps every partition it has been balanced into,
+    so one grid runs on any of them. Replaces any partition the grid already
+    carries for that many ranks.
+
+    Parameters
+    ----------
+    blocksForProcs : list
+        List of lists, the first index the rank, the second its block number(s)
+
+    path : str
+        Path to the directory holding the g.h5 to add the partition to
+
+    Returns
+    -------
+    None
+
+    """
+
+    nProcs = len(blocksForProcs)
+    rank = np.full(sum(len(group) for group in blocksForProcs), -1, dtype=np.int32)
+    for r, group in enumerate(blocksForProcs):
+        for nblki in group:
+            rank[nblki] = r
+    assert not (rank == -1).any(), "every block must be owned by a rank"
+
+    with h5py.File(f"{path}/g.h5", "a") as gf:
+        if f"partitions/{nProcs}" in gf:
+            del gf[f"partitions/{nProcs}"]
+        gf.create_dataset(f"partitions/{nProcs}/rank", data=rank)

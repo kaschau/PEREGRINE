@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-A utility to create groups of blocks to balance the computational load among
-MPI ranks.
+A utility to group a grid's blocks so the computational load is balanced among
+MPI ranks. The grouping is added to the grid file as a partition, named by the
+number of ranks it is for, so a grid can carry several side by side.
 
 """
 
 import numpy as np
 import peregrinepy as pg
-from lxml import etree
 
 
 def getSortedBlockSizes(mb):
@@ -65,17 +65,16 @@ if __name__ == "__main__":
     import os
 
     parser = argparse.ArgumentParser(
-        description="Create blocksForProcs.txt file",
+        description="Add a load balanced partition to a grid.",
         formatter_class=argparse.RawTextHelpFormatter,
     )
     parser.add_argument(
-        "-from",
-        "--fromDir",
+        "-gridDir",
         action="store",
-        metavar="<fromDir>",
-        dest="fromDir",
+        metavar="<gridDir>",
+        dest="gridDir",
         default="./",
-        help="Directory containing the g.* files. Default is ./",
+        help="Path to grid files",
         type=str,
     )
     parser.add_argument(
@@ -113,16 +112,13 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    fromDir = args.fromDir
+    gridDir = args.gridDir
     minProcs = args.minProcs
     minBlksPerProc = args.minBlksPerProc
     blksPerProcLimit = args.blksPerProcLimit
     numProcs = args.numProcs
 
-    tree = etree.parse(f"{fromDir}/g.xmf")
-    nblks = len(tree.getroot().find("Domain").find("Grid"))
-    mb = pg.multiBlock.grid(nblks)
-    pg.readers.readGrid(mb, fromDir, justNi=True)
+    mb = pg.multiBlock.grid.mbFromGrid(gridDir, justNi=True)
 
     sizesS_L, nblkisS_L = getSortedBlockSizes(mb)
     sizesL_S = sizesS_L[::-1]
@@ -154,7 +150,7 @@ if __name__ == "__main__":
         procLoad.append(currentSize)
 
     elif minBlksPerProc:
-        remainingIndex = [i for i in range(nblks)]
+        remainingIndex = [i for i in range(len(mb))]
         while len(remainingIndex) > 0:
             largeIndex = remainingIndex[-1]
             currentSize = sizesS_L[largeIndex]
@@ -199,13 +195,10 @@ if __name__ == "__main__":
     assert allBlocksAssigned(mb, procGroups)
     efficiency, maxBlksForProcs = analyzeLoad(procLoad, procGroups)
 
-    with open("blocksForProcs.inp", "w") as f:
-        for group in procGroups:
-            for nblki in group:
-                f.write(f"{nblki}, ")
-            f.write("\n")
+    pg.writers.writePartition(procGroups, gridDir)
 
     print(
+        f"Added a {len(procGroups)} rank partition to {gridDir}/g.h5\n\n",
         "Results of Load Balancing:\n",
         f"Total Number of blocks = {mb.nblks}\n",
         f"Total Number of cells  = {np.sum(procLoad)}\n\n",

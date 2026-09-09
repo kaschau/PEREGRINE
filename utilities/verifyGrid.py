@@ -5,7 +5,7 @@ This utility goes through a grid face by face,
 verifying that all the block's connectivities agree,
 and that the coordinates of matching faces are identical.
 
-Inputs are the path to the grid files, and path to the conn.yaml file.
+Input is the path to the grid file.
 
 If you have periodicity in the grid, you must have the periodic
 information populated in the grid, i.e. periodicSpan and periodicAxis
@@ -18,7 +18,6 @@ import argparse
 
 import numpy as np
 import peregrinepy as pg
-from lxml import etree
 
 faceToOrientIndexMapping = {
     1: 0,
@@ -226,15 +225,6 @@ if __name__ == "__main__":
         type=str,
     )
     parser.add_argument(
-        "-connPath",
-        action="store",
-        metavar="<connPath>",
-        dest="connPath",
-        default="./",
-        help="Path to conn.yaml",
-        type=str,
-    )
-    parser.add_argument(
         "-bcFamPath",
         action="store",
         metavar="<bcFamPath>",
@@ -246,15 +236,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     gp = args.gridPath
-    cp = args.connPath
     bcFamPath = args.bcFamPath
-    tree = etree.parse(f"{gp}/g.xmf")
-    nblks = len(tree.getroot().find("Domain").find("Grid"))
-    assert nblks > 0
-    mb = pg.multiBlock.grid(nblks)
-
-    pg.readers.readGrid(mb, gp)
-    pg.readers.readConnectivity(mb, cp)
+    mb = pg.multiBlock.grid.mbFromGrid(gp)
     try:
         pg.readers.readBcs(mb, bcFamPath)
     except FileNotFoundError:

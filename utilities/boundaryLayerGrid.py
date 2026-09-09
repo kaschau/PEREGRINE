@@ -200,4 +200,3 @@ if __name__ == "__main__":
     print(string)
 
     pg.writers.writeGrid(grid)
-    pg.writers.writeConnectivity(grid)

@@ -9,9 +9,8 @@ of the grid.
 import argparse
 
 import numpy as np
-from lxml import etree
 from peregrinepy.multiBlock import grid as mbg
-from peregrinepy.readers import readGrid
+from peregrinepy.readers import listPartitions
 
 
 def analyzeGrid(mb):
@@ -54,11 +53,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     gp = args.gridDir
 
-    tree = etree.parse(f"{gp}/g.xmf")
-    nblks = len(tree.getroot().find("Domain").find("Grid"))
-
-    mb = mbg(nblks)
-    readGrid(mb, gp)
+    mb = mbg.mbFromGrid(gp)
 
     results = analyzeGrid(mb)
 
@@ -75,3 +70,9 @@ if __name__ == "__main__":
     ni, nj, nk = results["minNx"]
     print(f"min block is {minNblki} with {minCells} cells, {ni = }, {nj = }, {nk = }.")
     print(f"{mean = }, {stdv = }")
+
+    partitions = listPartitions(gp)
+    if partitions:
+        print(f"partitioned for {partitions} ranks.")
+    else:
+        print("no partitions stored, so a run gets one block per rank.")

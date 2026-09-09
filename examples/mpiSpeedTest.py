@@ -62,7 +62,6 @@ def simulate():
     pg.writers.writeGrid(mb, "./Grid")
     pg.writers.writeRestart(mb, "./Restart", gridPath="../Grid", animate=False)
     pg.writers.writeConfigFile(config, "./")
-    pg.writers.writeConnectivity(mb, "./Input")
 
     bcFam = """---
 

@@ -10,7 +10,7 @@ Example
 -------
 icem2pg.py -topo <info.topo>
 
-Output will be a PEREGRINE compatible connectivity file 'conn.yaml' as well as hdf5 binary grid files.
+Output will be a PEREGRINE grid file 'g.h5', which carries the connectivity.
 
 """
 
@@ -402,9 +402,6 @@ pg.decomposition.condition(mb)
 
 if verified and not verify(mb):
     raise ValueError("Conditioning invalidated the grid.")
-
-print("Writing out PEREGRINE connectivity file: conn.yaml...")
-pg.writers.writeConnectivity(mb)
 
 print("Writing out {} block PEREGRINE grid files".format(mb.nblks))
 pg.writers.writeGrid(mb)

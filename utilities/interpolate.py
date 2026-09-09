@@ -20,13 +20,12 @@ interpolate.py --from </path/to/from-grid/and/restart> --to </path/to/to-grid/> 
 """
 
 import argparse
-from peregrinepy.readers import readGrid, readRestart
+from peregrinepy.readers import readRestart
 from peregrinepy.writers import writeRestart
 from peregrinepy.multiBlock import restart as mbr
 from peregrinepy import interpolation
 from peregrinepy.misc import progressBar
 import yaml
-from lxml import etree
 import os
 
 if __name__ == "__main__":
@@ -104,10 +103,7 @@ if __name__ == "__main__":
     verboseSearch = args.verboseSearch
 
     # Read in from data
-    tree = etree.parse(f"{fromDir}/g.xmf")
-    nblkFrom = len(tree.getroot().find("Domain").find("Grid"))
-    mbFrom = mbr(nblkFrom, speciesNames)
-    readGrid(mbFrom, fromDir)
+    mbFrom = mbr.mbFromGrid(fromDir, speciesNames)
 
     try:
         readRestart(mbFrom, fromDir, animate=False)  # not animate
@@ -120,10 +116,7 @@ if __name__ == "__main__":
         animate = True
 
     # Read in to data
-    tree = etree.parse(f"{toDir}/g.xmf")
-    nblkTo = len(tree.getroot().find("Domain").find("Grid"))
-    mbTo = mbr(nblkTo, speciesNames)
-    readGrid(mbTo, toDir)
+    mbTo = mbr.mbFromGrid(toDir, speciesNames)
 
     # Compute bounding blocks of each block
     boundsList = interpolation.bounds.findBounds(mbTo, mbFrom, verboseSearch)

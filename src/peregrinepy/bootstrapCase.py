@@ -16,42 +16,19 @@ def bootstrapCase(config):
     ################################################################
     # First we determine what bocks we are responsible for
     ################################################################
-    blocksForProcs = pg.readers.readBlocksForProcs(
-        config["io"]["inputDir"], parallel=True
-    )
+    blocksForProcs = pg.readers.readPartition(config["io"]["gridDir"], size)
     comm.Barrier()
     if rank == 0:
-        print("Read blocksForProcs.")
-    # If blocksForProcs.inp is not found, blocksForProcs will be
-    # None, so we assume one block per proc
+        print("Read partition.")
+    # The grid carries a partition per rank count it has been balanced for.
+    # If it has none for this many, assume one block per proc.
     if blocksForProcs is None:
         blocksForProcs = [[i] for i in range(size)]
         if rank == 0:
             print(
-                "No blocksForProcs.inp found.\n",
+                f"No {size} rank partition in the grid file.\n",
                 f"assuming {size} blocks with one block per proc.",
             )
-
-    # Check that we have correct number of processors
-    if len(blocksForProcs) != size:
-        if rank == 0:
-            print(
-                "ERROR!! Number of requested processors in blocksForProcs does not equal number of processors!"
-            )
-        comm.Abort()
-
-    # Check we have correct number of blks
-    summ = 0
-    maxx = 0
-    for group in blocksForProcs:
-        summ += len(group)
-        maxx = max(maxx, max(group))
-    if summ - 1 != maxx:
-        if rank == 0:
-            print(
-                "ERROR!! Number of blocks in blockForProcs.inp does not equal total number of blocks."
-            )
-        comm.Abort()
 
     myblocks = blocksForProcs[rank]
     # Generate the multiBlock solver object for each MPI process, given the number of
@@ -64,18 +41,12 @@ def bootstrapCase(config):
     ################################################################
     # Read in the connectivity
     ################################################################
-    pg.readers.readConnectivity(mb, config["io"]["inputDir"])
+    pg.readers.readConnectivity(mb, config["io"]["gridDir"])
     comm.Barrier()
     if rank == 0:
         print("Read connectivity.")
-        # Check we have the correct number of blocks.
-        totalCheck = 0
-        for proc in blocksForProcs:
-            totalCheck += len(proc)
-        if mb.totalBlocks != totalCheck:
-            print(
-                "ERROR!! Number of blocks in conn.yaml does not equal number of total blocks"
-            )
+        if mb.totalBlocks != sum(len(proc) for proc in blocksForProcs):
+            print("ERROR!! The partition does not cover every block of the grid.")
             comm.Abort()
 
     ################################################################

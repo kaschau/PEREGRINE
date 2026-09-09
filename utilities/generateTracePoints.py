@@ -233,7 +233,6 @@ def generateTracePoints(mb, points, tags):
 
 if __name__ == "__main__":
     import argparse
-    from lxml import etree
 
     parser = argparse.ArgumentParser(
         description="Utility to generate the tracePoints.npy binary file used in peregrine to trace point data in situ."
@@ -267,12 +266,8 @@ if __name__ == "__main__":
         inp = yaml.load(connFile, Loader=yaml.FullLoader)
 
     gp = args.gridPath
-    tree = etree.parse(f"{gp}/g.xmf")
-    nblks = len(tree.getroot().find("Domain").find("Grid"))
-    assert nblks > 0
-
-    mb = pg.multiBlock.grid(nblks)
-    pg.readers.readGrid(mb, gp)
+    mb = pg.multiBlock.grid.mbFromGrid(gp)
+    assert len(mb) > 0
 
     points, tags = getPointsTagsFromInput(inp)
     generateTracePoints(mb, points, tags)

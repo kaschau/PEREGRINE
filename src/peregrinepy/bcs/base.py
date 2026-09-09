@@ -18,7 +18,7 @@ class BaseBC:
     isoTSlipWall out of step with its own kernel.
     """
 
-    # the name in conn.yaml and bcFams.yaml
+    # the name in the grid file's connectivity and in bcFams.yaml
     bcType = None
     # the compute.bcs submodule holding the kernel, or None for no kernel
     family = None
