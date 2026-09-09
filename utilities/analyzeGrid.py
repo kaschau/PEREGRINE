@@ -10,7 +10,7 @@ import argparse
 
 import numpy as np
 from peregrinepy.multiBlock import grid as mbg
-from peregrinepy.readers import listPartitions
+from peregrinepy.readers import GridReader
 
 
 def analyzeGrid(mb):
@@ -71,7 +71,8 @@ if __name__ == "__main__":
     print(f"min block is {minNblki} with {minCells} cells, {ni = }, {nj = }, {nk = }.")
     print(f"{mean = }, {stdv = }")
 
-    partitions = listPartitions(gp)
+    with GridReader(gp) as reader:
+        partitions = reader.partitions
     if partitions:
         print(f"partitioned for {partitions} ranks.")
     else:

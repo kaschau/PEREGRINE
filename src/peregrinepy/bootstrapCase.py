@@ -16,7 +16,8 @@ def bootstrapCase(config):
     ################################################################
     # First we determine what bocks we are responsible for
     ################################################################
-    blocksForProcs = pg.readers.readPartition(config["io"]["gridDir"], size)
+    gridReader = pg.readers.GridReader(config["io"]["gridDir"])
+    blocksForProcs = gridReader.partition(size)
     comm.Barrier()
     if rank == 0:
         print("Read partition.")
@@ -41,7 +42,7 @@ def bootstrapCase(config):
     ################################################################
     # Read in the connectivity
     ################################################################
-    pg.readers.readConnectivity(mb, config["io"]["gridDir"])
+    gridReader.readConnectivity(mb)
     comm.Barrier()
     if rank == 0:
         print("Read connectivity.")
@@ -66,7 +67,8 @@ def bootstrapCase(config):
     ################################################################
     # Read in the grid
     ################################################################
-    pg.readers.readGrid(mb, path=config["io"]["gridDir"])
+    gridReader.readGrid(mb)
+    gridReader.close()
     comm.Barrier()
     if rank == 0:
         print("Read grid.")

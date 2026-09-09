@@ -1,6 +1,6 @@
 from .topology import topology
 from .gridBlock import gridBlock
-from ..readers import readConnectivity, readGrid, readTotalBlocks
+from ..readers import GridReader
 
 
 class grid(topology):
@@ -22,9 +22,10 @@ class grid(topology):
         filled with its coordinates and its connectivity. Anything the kind
         needs beyond the block count -- a restart's species names, a solver's
         halo depth -- follows the path in the order its class declares them."""
-        mb = cls(readTotalBlocks(path), *args)
-        readGrid(mb, path, justNi=justNi)
-        readConnectivity(mb, path)
+        with GridReader(path) as reader:
+            mb = cls(reader.totalBlocks, *args)
+            reader.readGrid(mb, justNi=justNi)
+            reader.readConnectivity(mb)
         return mb
 
     def initGridArrays(self):

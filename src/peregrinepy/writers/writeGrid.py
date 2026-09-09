@@ -123,24 +123,28 @@ def _writeConnectivity(gf, mb):
     # hdf5 has no None, so a face with no neighbor names -1 and an unset
     # string is an empty one
     neighbor = np.full(shape, -1, dtype=np.int32)
-    tables = {
-        name: np.zeros(shape, dtype=object)
-        for name in ("orientation", "bcType", "bcFam")
-    }
+    orientation = np.zeros(shape, dtype=object)
+    bcType = np.zeros(shape, dtype=object)
+    bcFam = np.zeros(shape, dtype=object)
     for blk in mb:
         for face in blk.faces:
-            nface = face.nface - 1
+            # a face's cell in the tables; nface counts from one
+            mine = blk.nblki, face.nface - 1
             if face.neighbor is not None:
-                neighbor[blk.nblki, nface] = face.neighbor
-            tables["orientation"][blk.nblki, nface] = face.orientation or ""
-            tables["bcType"][blk.nblki, nface] = face.bcType
-            tables["bcFam"][blk.nblki, nface] = face.bcFam or ""
+                neighbor[mine] = face.neighbor
+            orientation[mine] = face.orientation or ""
+            bcType[mine] = face.bcType
+            bcFam[mine] = face.bcFam or ""
 
     if "connectivity" in gf:
         del gf["connectivity"]
     group = gf.create_group("connectivity")
     group.create_dataset("neighbor", data=neighbor)
-    for name, table in tables.items():
+    for name, table in (
+        ("orientation", orientation),
+        ("bcType", bcType),
+        ("bcFam", bcFam),
+    ):
         group.create_dataset(name, data=table, dtype=h5py.string_dtype("utf-8"))
 
 
@@ -164,7 +168,7 @@ def writePartition(blocksForProcs, path="./"):
 
     """
 
-    nProcs = len(blocksForProcs)
+    size = len(blocksForProcs)
     rank = np.full(sum(len(group) for group in blocksForProcs), -1, dtype=np.int32)
     for r, group in enumerate(blocksForProcs):
         for nblki in group:
@@ -172,6 +176,6 @@ def writePartition(blocksForProcs, path="./"):
     assert not (rank == -1).any(), "every block must be owned by a rank"
 
     with h5py.File(f"{path}/g.h5", "a") as gf:
-        if f"partitions/{nProcs}" in gf:
-            del gf[f"partitions/{nProcs}"]
-        gf.create_dataset(f"partitions/{nProcs}/rank", data=rank)
+        if f"partitions/{size}" in gf:
+            del gf[f"partitions/{size}"]
+        gf.create_dataset(f"partitions/{size}/rank", data=rank)
