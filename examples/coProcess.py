@@ -116,7 +116,7 @@ def simulate():
         inputBcValues["T"] = 300.0
 
         face.array["qBcVals"] = np.zeros((blk.array["q"][face.s1_].shape))
-        pg.bcs.prepInlets.prep_constantVelocitySubsonicInlet(blk, face, inputBcValues)
+        pg.bcs.prep(blk, face, inputBcValues)
         shape = blk.array["q"][face.s1_].shape
         pg.misc.createViewMirrorArray(face, "qBcVals", shape)
 
@@ -141,7 +141,7 @@ def simulate():
         inputBcValues = {}
         inputBcValues["p"] = 101325.0
         face.array["qBcVals"] = np.zeros((blk.array["q"][face.s1_].shape))
-        pg.bcs.prepExits.prep_constantPressureSubsonicExit(blk, face, inputBcValues)
+        pg.bcs.prep(blk, face, inputBcValues)
         shape = blk.array["q"][face.s1_].shape
         pg.misc.createViewMirrorArray(face, "qBcVals", shape)
 

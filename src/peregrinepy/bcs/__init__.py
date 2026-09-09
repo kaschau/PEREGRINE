@@ -1,5 +1,3 @@
-from . import prepInlets
-from . import prepExits
-from . import prepWalls
+from .prep import prep
 
-__all__ = ["prepInlets", "prepExits", "prepWalls"]
+__all__ = ["prep"]

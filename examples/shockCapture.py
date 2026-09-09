@@ -425,13 +425,13 @@ def simulate(testnum, index="i"):
             inputBcValues["v"] = bcVelo[1]
             inputBcValues["w"] = bcVelo[2]
             inputBcValues["T"] = test.TL
-            pg.bcs.prepInlets.prep_constantVelocitySubsonicInlet(
+            pg.bcs.prep(
                 blk, face, inputBcValues
             )
         elif test.uL < 0:
             face.bcType = "constantPressureSubsonicExit"
             inputBcValues["p"] = test.pL
-            pg.bcs.prepExits.prep_constantPressureSubsonicExit(blk, face, inputBcValues)
+            pg.bcs.prep(blk, face, inputBcValues)
         shape = blk.array["q"][face.s1_].shape
         pg.misc.createViewMirrorArray(face, "qBcVals", shape)
 
@@ -448,13 +448,13 @@ def simulate(testnum, index="i"):
             inputBcValues["v"] = bcVelo[1]
             inputBcValues["w"] = bcVelo[2]
             inputBcValues["T"] = test.TR
-            pg.bcs.prepInlets.prep_constantVelocitySubsonicInlet(
+            pg.bcs.prep(
                 blk, face, inputBcValues
             )
         elif test.uR > 0:
             face.bcType = "constantPressureSubsonicExit"
             inputBcValues["p"] = test.pR
-            pg.bcs.prepExits.prep_constantPressureSubsonicExit(blk, face, inputBcValues)
+            pg.bcs.prep(blk, face, inputBcValues)
         shape = blk.array["q"][face.s1_].shape
         pg.misc.createViewMirrorArray(face, "qBcVals", shape)
 

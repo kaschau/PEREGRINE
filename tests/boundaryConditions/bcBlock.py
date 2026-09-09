@@ -90,13 +90,7 @@ def create(bc, adv, spdata):
         # index of the QBcVals
         face.array["QBcVals"][:, :, 0] = mDotPerAbc
 
-        for bcmodule in [pg.bcs.prepInlets, pg.bcs.prepExits, pg.bcs.prepWalls]:
-            try:
-                func = getattr(bcmodule, "prep_" + face.bcType)
-                func(blk, face, inputBcValues)
-                break
-            except AttributeError:
-                pass
+        pg.bcs.prep(blk, face, inputBcValues)
 
         pg.misc.createViewMirrorArray(
             face, ["qBcVals", "QBcVals"], face.array["qBcVals"].shape

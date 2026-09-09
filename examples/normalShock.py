@@ -81,7 +81,7 @@ def simulate():
     valueDict = {"u": u2, "v": 0.0, "w": 0.0, "T": T2}
     face1 = blk.getFace(1)
     face1.array["qBcVals"] = np.zeros(blk.array["q"][face1.s1_].shape)
-    pg.bcs.prepInlets.prep_constantVelocitySubsonicInlet(blk, face1, valueDict)
+    pg.bcs.prep(blk, face1, valueDict)
     pg.misc.createViewMirrorArray(face1, "qBcVals", blk.array["q"][face1.s1_].shape)
 
     mb.setBlockCommunication()

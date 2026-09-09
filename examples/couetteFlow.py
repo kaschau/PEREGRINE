@@ -131,7 +131,7 @@ def simulate(index, velo):
     for face in blk.faces:
         if face.bcType == "adiabaticMovingWall":
             face.array["qBcVals"] = np.zeros(blk.array["q"][face.s1_].shape)
-            pg.bcs.prepWalls.prep_adiabaticMovingWall(blk, face, valueDict)
+            pg.bcs.prep(blk, face, valueDict)
             pg.misc.createViewMirrorArray(
                 face, "qBcVals", blk.array["q"][face.s1_].shape
             )

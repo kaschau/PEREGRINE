@@ -99,15 +99,7 @@ def readBcs(mb, pathToFile, justPeriodic=False):
             # Certain boundary conditions need prep work,
             # such as constant mass or profiles, so call them here
             inputValues = bcsIn[bcFam]["bcVals"]
-            for bcmodule in [bcs.prepInlets, bcs.prepExits, bcs.prepWalls]:
-                try:
-                    func = getattr(bcmodule, "prep_" + face.bcType)
-                    func(blk, face, inputValues)
-                    break
-                except AttributeError:
-                    pass
-            else:
-                raise ValueError(f"Could not find the prep_ function for {face.bcType}")
+            bcs.prep(blk, face, inputValues)
 
             names = ["qBcVals", "QBcVals"]
             shape = blk.array["q"][face.s1_].shape
