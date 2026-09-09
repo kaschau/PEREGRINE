@@ -11,6 +11,7 @@ mpi4py.rc.initialize = False
 from . import bcs  # noqa: E402
 from . import compute  # noqa: E402
 from . import coproc  # noqa: E402
+from . import decomposition  # noqa: E402
 from . import files  # noqa: E402
 from . import grid  # noqa: E402
 from . import interpolation  # noqa: E402
@@ -29,6 +30,7 @@ __all__ = [
     "bcs",
     "compute",
     "coproc",
+    "decomposition",
     "files",
     "grid",
     "interpolation",

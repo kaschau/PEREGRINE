@@ -392,10 +392,18 @@ with open(args.topoFileName, "r") as f:
                 pgOrientation = f"{iOrientNum}{jOrientNum}{kOrientNum}"
                 blk.getFace(internalFace).orientation = pgOrientation
 
-if verify(mb):
-    pass
+# a mesher's own precision is its business, so this is a warning, not a
+# gate; what must not happen is conditioning making a good grid bad
+verified = verify(mb)
+if not verified:
+    print("  NOTE: the translated grid does not verify, see above")
 
-print("Writing out PEREGRINE connectivity file: conn.inp...")
+pg.decomposition.condition(mb)
+
+if verified and not verify(mb):
+    raise ValueError("Conditioning invalidated the grid.")
+
+print("Writing out PEREGRINE connectivity file: conn.yaml...")
 pg.writers.writeConnectivity(mb)
 
 print("Writing out {} block PEREGRINE grid files".format(mb.nblks))

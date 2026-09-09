@@ -231,7 +231,7 @@ def multiBlockCube(
                 blk.nblki = blkNum
 
                 origin = [blk_origins_x[i], blk_origins_y[j], blk_origins_z[k]]
-                lengths = [
+                blkLengths = [
                     blk_origins_x[i + 1] - blk_origins_x[i],
                     blk_origins_y[j + 1] - blk_origins_y[j],
                     blk_origins_z[k + 1] - blk_origins_z[k],
@@ -242,7 +242,7 @@ def multiBlockCube(
                     dimsPerBlock[2],
                 ]
 
-                cube(blk, origin, lengths, dimensions)
+                cube(blk, origin, blkLengths, dimensions)
 
                 # Update connectivity
                 cubicConnectivity(

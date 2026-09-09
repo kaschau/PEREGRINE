@@ -85,50 +85,55 @@ class topologyFace:
         a = axis / np.linalg.norm(axis)
         self._periodicAxis = a
 
+    @staticmethod
+    def signedAxis(code):
+        """The signed axis an orientation character names: which axis, and
+        whether it runs against ours."""
+        n = int(code)
+        return (n - 1) % 3, n > 3
+
+    @staticmethod
+    def orientationCode(axis, counterAligned):
+        """The orientation character naming a signed axis."""
+        return str(axis + 1 + (3 if counterAligned else 0))
+
+    @property
+    def myAxis(self):
+        """the index axis this face bounds, 0, 1 or 2"""
+        return (self.nface - 1) // 2
+
+    @property
+    def amILow(self):
+        """whether this face is at the low end of its axis"""
+        return self.nface % 2 == 1
+
     @property
     def neighborNface(self):
-        """Get the face number or our neighbor's face we share."""
-        nface = self.nface
-        orientation = self.orientation
-
-        # Which character in the orientation string do we look at to
-        #  determine the orientation of a face's normal axis
-        faceToOrientIndexMapping = {1: 0, 2: 0, 3: 1, 4: 1, 5: 2, 6: 2}
-        # If we are a small face (1,3,5) and we have a direction (key)
-        #  from above, what is our neighbor face (value)
-        orientToSmallFaceMapping = {1: 2, 2: 4, 3: 6, 4: 1, 5: 3, 6: 5}
-        # If we are a large face (2,4,6) and we have a direction (key)
-        #  from above, what is our neighbor face (value)
-        orientToLargeFaceMapping = {1: 1, 2: 3, 3: 5, 4: 2, 5: 4, 6: 6}
-
-        direction = int(orientation[faceToOrientIndexMapping[nface]])
-
-        if nface in [1, 3, 5]:
-            nface2 = orientToSmallFaceMapping[direction]
-        elif nface in [2, 4, 6]:
-            nface2 = orientToLargeFaceMapping[direction]
-
-        return nface2
+        """The face of our neighbor that we share. The orientation character
+        of our axis names the neighbor's axis; an aligned neighbor meets our
+        low face with its high one."""
+        axis, counterAligned = self.signedAxis(self.orientation[self.myAxis])
+        return 2 * axis + (1 if self.amILow == counterAligned else 2)
 
     @property
     def neighborOrientation(self):
-        orientation = self.orientation
+        """The orientation string our neighbor holds for this connection: ours
+        says where its axes run, so the inverse says where ours do."""
+        out = [None, None, None]
+        for ours, code in enumerate(self.orientation):
+            theirs, counterAligned = self.signedAxis(code)
+            out[theirs] = self.orientationCode(ours, counterAligned)
+        assert None not in out, "orientation does not name three distinct axes"
+        return "".join(out)
 
-        dirToOrientIndexMapping = {1: 0, 2: 1, 3: 2, 4: 0, 5: 1, 6: 2}
-        neighborOrientation = [None, None, None]
-        for i in range(3):
-            n = int(orientation[i])
-            indx = dirToOrientIndexMapping[n]
-
-            if indx == i:
-                neighborOrientation[indx] = str(n)
-            elif n in (1, 2, 3):
-                neighborOrientation[indx] = str(i + 1)
-            elif n in (4, 5, 6):
-                neighborOrientation[indx] = str(i + 4)
-
-        assert (
-            None not in neighborOrientation
-        ), "Something wrong in getNeighborOrientation routine. Check connectivity"
-
-        return "".join(neighborOrientation)
+    @property
+    def alignsNeighborBy(self):
+        """The relabelling, as (perm, flips), that puts our neighbor's axes in
+        our frame. Applied to the neighbor it makes this connection "123", so
+        the two blocks lie inline and can simply be concatenated."""
+        perm, flips = [], []
+        for code in self.orientation:
+            axis, counterAligned = self.signedAxis(code)
+            perm.append(axis)
+            flips.append(counterAligned)
+        return perm, flips

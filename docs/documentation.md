@@ -83,13 +83,11 @@ There are a bunch of utilities to make running with PEREGRINE easier, see the [u
 
  * [ct2pgTHTR](https://github.com/kaschau/PEREGRINE/blob/main/utilities/ct2pgTHTR.py): Thermodynamic and transport properties are given to PEREGRINE via a stripped down, custom yaml file that is read in at run time. This utility creates that file from a cantera yaml file. The order of the species is set by this file (and thus the order in the canter file). So make sure this is the order you want, and this agrees with the order in your chemistry kernel.
 
- * [cutGrid](https://github.com/kaschau/PEREGRINE/blob/main/utilities/cutGrid.py): This utility decomposes a PEREGRINE grid into smaller blocks be performing persistent number cuts of blocks along a specified axis. YAY MULTIBLOCK!
-
  * [generateTracePoints](https://github.com/kaschau/PEREGRINE/blob/main/utilities/generateTracePoints.py): Generate trace point input file for collecting data at points during a simulation.
 
- * [gridPro2pg](https://github.com/kaschau/PEREGRINE/blob/main/utilities/gridPro2pg.py): Grid Pro mesh to PEREGRINE mesh translation.
+ * [gridPro2pg](https://github.com/kaschau/PEREGRINE/blob/main/utilities/gridPro2pg.py): Grid Pro mesh to PEREGRINE mesh translation. The grid is conditioned on the way out: every interface that can be removed is merged away, and every block is re-indexed so its longest extent is i.
 
- * [icem2pg](https://github.com/kaschau/PEREGRINE/blob/main/utilities/icem2pg.py): ICEM mesh to PEREGRINE mesh translation.
+ * [icem2pg](https://github.com/kaschau/PEREGRINE/blob/main/utilities/icem2pg.py): ICEM mesh to PEREGRINE mesh translation. The grid is conditioned on the way out: every interface that can be removed is merged away, and every block is re-indexed so its longest extent is i.
 
  * [interpolate](https://github.com/kaschau/PEREGRINE/blob/main/utilities/interpolate.py): Interpolate results from one mesh to another mesh.
 

@@ -12,11 +12,12 @@ Example
 
 Default vaules to read in are the GridPro generic names of blk.tmp, blk.tmp.conn, and blk.tmp.pty
 
-Output will be a PEREGRINE compatible grid and connectivity file 'conn.inp'.
+Output will be a PEREGRINE compatible grid and connectivity file 'conn.yaml'.
 
 """
 
 import argparse
+from peregrinepy.decomposition import condition
 from peregrinepy.writers import writeGrid, writeConnectivity
 import numpy as np
 from peregrinepy.multiBlock import grid as mbg
@@ -289,8 +290,16 @@ if gridIsPeriodic:
                     f"Not a periodic match between block {blk.nblki} face {face.nface} and block {nBlk.nblki} face {face.neighborNface}."
                 )
 
-if verify(mb):
-    pass
+# a mesher's own precision is its business, so this is a warning, not a
+# gate; what must not happen is conditioning making a good grid bad
+verified = verify(mb)
+if not verified:
+    print("  NOTE: the translated grid does not verify, see above")
+
+condition(mb)
+
+if verified and not verify(mb):
+    raise ValueError("Conditioning invalidated the grid.")
 
 print("Writing out PEREGRINE connectivity file: conn.yaml...")
 writeConnectivity(mb, "./")

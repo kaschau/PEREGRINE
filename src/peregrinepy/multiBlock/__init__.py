@@ -1,3 +1,6 @@
+from .topology import topology
+from .grid import grid
+from .restart import restart
 from .solver import solver
 
 from ..integrators import getIntegrator

@@ -8,10 +8,11 @@ import pytest
 # Every valid (right handed) block-to-block orientation, checked against the
 # trivial "123" case rather than against a hand written index mapping.
 #
-# An orientation is three digits, one per index direction of the neighbor,
-# saying which of our directions it runs along and whether it runs backwards:
-# 1,2,3 for +i,+j,+k and 4,5,6 for -i,-j,-k. So "123" is the identity, and
-# "162" means the neighbor's i is our i, its j is our -k, and its k is our j.
+# An orientation is three digits, one per index direction of ours, saying
+# which of the neighbor's directions it runs along and whether it runs
+# backwards: 1,2,3 for +i,+j,+k and 4,5,6 for -i,-j,-k. So "123" is the
+# identity, and "162" means our i runs along their i, our j along their -k,
+# and our k along their j.
 #
 # Block 1's storage is reoriented while its physical data is unchanged, so
 # after communication block 0 must be bit-identical to the identity run --
