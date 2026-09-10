@@ -19,12 +19,9 @@ def simulate():
     config["thermochem"]["trans"] = "chungDenseGasUnityLewis"
     config.validateConfig()
     mb = pg.multiBlock.generateMultiBlockSolver(1, config)
-    pg.grid.create.multiBlockCube(
-        mb,
-        mbDims=[1, 1, 1],
-        dimsPerBlock=[2, 2, 2],
-        lengths=[0.01, 0.01, 0.01],
-    )
+    pg.mesher.CubeMesher(
+        mbDims=[1, 1, 1], dimsPerBlock=[2, 2, 2], lengths=[0.01, 0.01, 0.01]
+    ).mesh(mb)
     mb.initSolverArrays(config)
 
     blk = mb[0]

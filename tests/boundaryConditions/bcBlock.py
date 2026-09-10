@@ -10,12 +10,9 @@ def create(bc, adv, spdata):
 
     mb = pg.multiBlock.generateMultiBlockSolver(1, config)
 
-    pg.grid.create.multiBlockCube(
-        mb,
-        mbDims=[1, 1, 1],
-        dimsPerBlock=[8, 6, 4],
-        lengths=[1, 1, 1],
-    )
+    pg.mesher.CubeMesher(
+        mbDims=[1, 1, 1], dimsPerBlock=[8, 6, 4], lengths=[1, 1, 1]
+    ).mesh(mb)
 
     # perturb the ineterio points a bit
     for blk in mb:

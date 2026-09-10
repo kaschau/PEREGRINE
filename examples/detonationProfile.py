@@ -43,13 +43,12 @@ def simulate():
     nx = 300
     dx = 0.005 / 50.0  # Aproximate rde resolution
     lx = nx * dx
-    pg.grid.create.multiBlockCube(
-        mb,
+    pg.mesher.CubeMesher(
         mbDims=[1, 1, 1],
         dimsPerBlock=[nx, 2, 2],
         lengths=[lx, 0.01, 0.01],
         periodic=[False, False, False],
-    )
+    ).mesh(mb)
     mb.initSolverArrays(config)
 
     blk = mb[0]

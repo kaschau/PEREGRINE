@@ -33,13 +33,12 @@ def simulate():
     ni = 30
     nbi = 10
     mb = pg.multiBlock.restart(nbi**3, config["thermochem"]["spdata"])
-    pg.grid.create.multiBlockCube(
-        mb,
+    pg.mesher.CubeMesher(
         mbDims=[nbi, nbi, nbi],
         dimsPerBlock=[ni, ni, ni],
         lengths=[1, 1, 1],
         periodic=[True, True, True],
-    )
+    ).mesh(mb)
 
     for blk in mb:
         blk.array["q"][:, :, :, 0] = 101325.0

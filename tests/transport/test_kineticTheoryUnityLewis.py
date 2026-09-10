@@ -46,9 +46,9 @@ def test_kineticTheoryUnityLewis(my_setup, ctfile, thfile):
     config["RHS"]["diffusion"] = True
 
     mb = pg.multiBlock.generateMultiBlockSolver(1, config)
-    pg.grid.create.multiBlockCube(
-        mb, mbDims=[1, 1, 1], dimsPerBlock=[2, 2, 2], lengths=[1, 1, 1]
-    )
+    pg.mesher.CubeMesher(
+        mbDims=[1, 1, 1], dimsPerBlock=[2, 2, 2], lengths=[1, 1, 1]
+    ).mesh(mb)
     mb.initSolverArrays(config)
 
     blk = mb[0]

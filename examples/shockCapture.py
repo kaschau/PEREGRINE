@@ -374,12 +374,9 @@ def simulate(testnum, index="i"):
     dimsPerBlock = rotate([nx, 2, 2], index)
     lengths = rotate([1, 0.1, 0.1], index)
 
-    pg.grid.create.multiBlockCube(
-        mb,
-        mbDims=[1, 1, 1],
-        dimsPerBlock=dimsPerBlock,
-        lengths=lengths,
-    )
+    pg.mesher.CubeMesher(
+        mbDims=[1, 1, 1], dimsPerBlock=dimsPerBlock, lengths=lengths
+    ).mesh(mb)
 
     mb.initSolverArrays(config)
 
@@ -425,9 +422,7 @@ def simulate(testnum, index="i"):
             inputBcValues["v"] = bcVelo[1]
             inputBcValues["w"] = bcVelo[2]
             inputBcValues["T"] = test.TL
-            pg.bcs.prep(
-                blk, face, inputBcValues
-            )
+            pg.bcs.prep(blk, face, inputBcValues)
         elif test.uL < 0:
             face.bcType = "constantPressureSubsonicExit"
             inputBcValues["p"] = test.pL
@@ -448,9 +443,7 @@ def simulate(testnum, index="i"):
             inputBcValues["v"] = bcVelo[1]
             inputBcValues["w"] = bcVelo[2]
             inputBcValues["T"] = test.TR
-            pg.bcs.prep(
-                blk, face, inputBcValues
-            )
+            pg.bcs.prep(blk, face, inputBcValues)
         elif test.uR > 0:
             face.bcType = "constantPressureSubsonicExit"
             inputBcValues["p"] = test.pR

@@ -5,6 +5,7 @@ from . import partition
 from . import files
 from . import grid
 from . import interpolation
+from . import mesher
 from . import misc
 from . import mpiComm
 from . import multiBlock
@@ -24,6 +25,7 @@ __all__ = [
     "files",
     "grid",
     "interpolation",
+    "mesher",
     "misc",
     "mpiComm",
     "multiBlock",

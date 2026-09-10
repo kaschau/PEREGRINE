@@ -16,13 +16,12 @@ partitioner = getPartitioner()
 
 def cube(mbDims=(1, 1, 1), dims=(13, 11, 9), lengths=(1, 1, 1), periodic=(False,) * 3):
     mb = pg.multiBlock.grid(int(np.prod(mbDims)))
-    pg.grid.create.multiBlockCube(
-        mb,
+    pg.mesher.CubeMesher(
         mbDims=list(mbDims),
         dimsPerBlock=list(dims),
         lengths=list(lengths),
         periodic=list(periodic),
-    )
+    ).mesh(mb)
     return mb
 
 

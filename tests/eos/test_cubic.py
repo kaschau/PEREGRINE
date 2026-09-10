@@ -20,9 +20,9 @@ def test_cubic(my_setup):
     T = np.random.uniform(low=100, high=1000)
     Y = np.random.uniform(low=0.0, high=1.0, size=mb[0].ns)
     Y = Y / np.sum(Y)
-    pg.grid.create.multiBlockCube(
-        mb, mbDims=[1, 1, 1], dimsPerBlock=[2, 2, 2], lengths=[1, 1, 1]
-    )
+    pg.mesher.CubeMesher(
+        mbDims=[1, 1, 1], dimsPerBlock=[2, 2, 2], lengths=[1, 1, 1]
+    ).mesh(mb)
     mb.initSolverArrays(config)
 
     blk = mb[0]

@@ -185,7 +185,7 @@ if __name__ == "__main__":
     Lx, Ly, Lz = xLength * delta, endY, zWidth * delta
     nx, ny, nz = int(Lx / (dXplus * yp1)), len(totalYs), int(Lz / (dZplus * yp1))
 
-    pg.grid.create.multiBlockCube(grid, lengths=[Lx, Ly, Lz], dimsPerBlock=[nx, ny, nz])
+    pg.mesher.CubeMesher(lengths=[Lx, Ly, Lz], dimsPerBlock=[nx, ny, nz]).mesh(grid)
 
     # Overwrite the y values with the BL values
     grid[0].array["y"][:, :, :] = totalYs[np.newaxis, :, np.newaxis] * yp1

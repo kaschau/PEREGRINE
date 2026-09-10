@@ -34,13 +34,12 @@ def simulate():
     NE = 64
     NN = 64
     NX = 64
-    pg.grid.create.multiBlockCube(
-        mb,
+    pg.mesher.CubeMesher(
         mbDims=[1, 1, 1],
         dimsPerBlock=[NE, NN, NX],
         lengths=[2 * np.pi for _ in range(3)],
         periodic=[True, True, True],
-    )
+    ).mesh(mb)
 
     mb.initSolverArrays(config)
 

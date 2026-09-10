@@ -19,12 +19,9 @@ def simulate():
     config["RHS"]["primaryAdvFlux"] = "rusanov"
     config.validateConfig()
     mb = pg.multiBlock.generateMultiBlockSolver(1, config)
-    pg.grid.create.multiBlockCube(
-        mb,
-        mbDims=[1, 1, 1],
-        dimsPerBlock=[41, 2, 2],
-        lengths=[1, 0.01, 0.01],
-    )
+    pg.mesher.CubeMesher(
+        mbDims=[1, 1, 1], dimsPerBlock=[41, 2, 2], lengths=[1, 0.01, 0.01]
+    ).mesh(mb)
     mb.initSolverArrays(config)
 
     blk = mb[0]

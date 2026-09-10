@@ -66,13 +66,9 @@ def simulate(index, velo):
     elif "z" in velo:
         periodic = [False, False, True]
 
-    pg.grid.create.multiBlockCube(
-        mb,
-        mbDims=[1, 1, 1],
-        dimsPerBlock=dimsPerBlock,
-        lengths=lengths,
-        periodic=periodic,
-    )
+    pg.mesher.CubeMesher(
+        mbDims=[1, 1, 1], dimsPerBlock=dimsPerBlock, lengths=lengths, periodic=periodic
+    ).mesh(mb)
 
     mb.initSolverArrays(config)
 

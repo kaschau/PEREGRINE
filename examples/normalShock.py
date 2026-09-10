@@ -13,7 +13,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import peregrinepy as pg
 
-
 ##################################################
 ######### 1D Normal Shock ########################
 ##################################################
@@ -38,13 +37,12 @@ def simulate():
     nx = 300
     lx = 1.0
     dx = lx / nx
-    pg.grid.create.multiBlockCube(
-        mb,
+    pg.mesher.CubeMesher(
         mbDims=[1, 1, 1],
         dimsPerBlock=[nx, 2, 2],
         lengths=[lx, 0.01, 0.01],
         periodic=[False, False, False],
-    )
+    ).mesh(mb)
     mb.initSolverArrays(config)
 
     blk = mb[0]

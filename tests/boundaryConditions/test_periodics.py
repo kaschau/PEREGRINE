@@ -4,7 +4,6 @@ import numpy as np
 import peregrinepy as pg
 import pytest
 
-
 ##############################################
 # Test all inlet boundary conditions
 ##############################################
@@ -44,13 +43,7 @@ class TestPeriodics:
         p3 /= np.linalg.norm(axis)
         p3[0] = (-axis[1] * p3[1] - axis[2] * p3[2]) / axis[0]
 
-        pg.grid.create.multiBlockAnnulus(
-            mb,
-            sweep=sweep,
-            p2=axis,
-            p3=p3,
-            periodic=True,
-        )
+        pg.mesher.AnnulusMesher(sweep=sweep, p2=axis, p3=p3, periodic=True).mesh(mb)
         blk = mb[0]
         blk.getFace(5).commRank = 0
         blk.getFace(6).commRank = 0

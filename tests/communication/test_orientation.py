@@ -118,9 +118,9 @@ def buildAndCommunicate(S, adv, spdata, seed):
     config["thermochem"]["spdata"] = spdata
 
     mb = pg.multiBlock.generateMultiBlockSolver(2, config)
-    pg.grid.create.multiBlockCube(
-        mb, mbDims=[2, 1, 1], dimsPerBlock=[6, 3, 2], lengths=[2, 1, 1]
-    )
+    pg.mesher.CubeMesher(
+        mbDims=[2, 1, 1], dimsPerBlock=[6, 3, 2], lengths=[2, 1, 1]
+    ).mesh(mb)
     mb.initSolverArrays(config)
     mb.generateHalo()
     mb.computeMetrics()

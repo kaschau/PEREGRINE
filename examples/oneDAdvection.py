@@ -36,13 +36,9 @@ def simulate(index="i"):
     lengths = rotate([1, 0.1, 0.1], index)
     periodic = rotate([True, False, False], index)
 
-    pg.grid.create.multiBlockCube(
-        mb,
-        mbDims=[1, 1, 1],
-        dimsPerBlock=dimsPerBlock,
-        lengths=lengths,
-        periodic=periodic,
-    )
+    pg.mesher.CubeMesher(
+        mbDims=[1, 1, 1], dimsPerBlock=dimsPerBlock, lengths=lengths, periodic=periodic
+    ).mesh(mb)
     mb.initSolverArrays(config)
 
     blk = mb[0]

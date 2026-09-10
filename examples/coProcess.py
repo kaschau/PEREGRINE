@@ -102,9 +102,9 @@ def simulate():
     mb = pg.multiBlock.generateMultiBlockSolver(1, config)
     blk = mb[0]
     if rank == 0:
-        pg.grid.create.multiBlockCube(
-            mb, mbDims=[1, 1, 1], dimsPerBlock=[100, 40, 2], lengths=[0.1, 0.02, 0.001]
-        )
+        pg.mesher.CubeMesher(
+            mbDims=[1, 1, 1], dimsPerBlock=[100, 40, 2], lengths=[0.1, 0.02, 0.001]
+        ).mesh(mb)
         mb.totalBlocks = 2
         face = blk.getFace(1)
         face.bcType = "constantVelocitySubsonicInlet"
@@ -127,13 +127,12 @@ def simulate():
         face.orientation = "123"
 
     else:
-        pg.grid.create.multiBlockCube(
-            mb,
+        pg.mesher.CubeMesher(
             origin=[0.1, 0.0, 0.0],
             mbDims=[1, 1, 1],
             dimsPerBlock=[100, 40, 2],
             lengths=[0.1, 0.02, 0.001],
-        )
+        ).mesh(mb)
         mb.totalBlocks = 2
         blk.nblki = 1
         face = blk.getFace(2)

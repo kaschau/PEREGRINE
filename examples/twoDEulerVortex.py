@@ -26,13 +26,12 @@ def simulate():
 
     mb = pg.multiBlock.generateMultiBlockSolver(1, config)
     NE = NN = 41
-    pg.grid.create.multiBlockCube(
-        mb,
+    pg.mesher.CubeMesher(
         mbDims=[1, 1, 1],
         dimsPerBlock=[NE, NN, 2],
         lengths=[12, 12, 0.01],
         periodic=[True, True, False],
-    )
+    ).mesh(mb)
 
     blk = mb[0]
     ng = blk.ng

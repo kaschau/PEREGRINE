@@ -4,7 +4,6 @@ import cantera as ct
 from pathlib import Path
 import pytest
 
-
 ##############################################
 # Test kinetic theory
 ##############################################
@@ -36,9 +35,7 @@ pytestmark = pytest.mark.parametrize(
 
 def test_kineticTheory(my_setup, ctfile, thfile):
     relpath = str(Path(__file__).parent)
-    ct.add_directory(
-        relpath + "/../../src/peregrinepy/thermoTransport/database/source"
-    )
+    ct.add_directory(relpath + "/../../src/peregrinepy/thermoTransport/database/source")
 
     gas = ct.Solution(ctfile)
     p = np.random.uniform(low=10000, high=1000000)
@@ -53,9 +50,9 @@ def test_kineticTheory(my_setup, ctfile, thfile):
     config["RHS"]["diffusion"] = True
 
     mb = pg.multiBlock.generateMultiBlockSolver(1, config)
-    pg.grid.create.multiBlockCube(
-        mb, mbDims=[1, 1, 1], dimsPerBlock=[2, 2, 2], lengths=[1, 1, 1]
-    )
+    pg.mesher.CubeMesher(
+        mbDims=[1, 1, 1], dimsPerBlock=[2, 2, 2], lengths=[1, 1, 1]
+    ).mesh(mb)
     mb.initSolverArrays(config)
 
     blk = mb[0]
@@ -93,16 +90,12 @@ def test_kineticTheory(my_setup, ctfile, thfile):
     pd.append(print_diff("T", gas.T, pgprim[4]))
     for i, n in enumerate(gas.species_names[0:-1]):
         pd.append(print_diff(n, gas.Y[i], pgprim[5 + i]))
-    pd.append(
-        print_diff(gas.species_names[-1], gas.Y[-1], 1.0 - np.sum(pgprim[5::]))
-    )
+    pd.append(print_diff(gas.species_names[-1], gas.Y[-1], 1.0 - np.sum(pgprim[5::])))
     print("Mixture Properties")
     pd.append(print_diff("mu", gas.viscosity, pgtrns[0]))
     pd.append(print_diff("kappa", gas.thermal_conductivity, pgtrns[1]))
     for i, n in enumerate(gas.species_names):
-        pd.append(
-            print_diff(f"D_{n}", gas.mix_diff_coeffs_mass[i], pgtrns[2 + i])
-        )
+        pd.append(print_diff(f"D_{n}", gas.mix_diff_coeffs_mass[i], pgtrns[2 + i]))
 
     passfail = np.all(np.array(pd) < 1.0)
     assert passfail
