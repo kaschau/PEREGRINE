@@ -52,6 +52,83 @@ class topologyFace:
     def periodicRotation(self, rotation):
         self._periodicRotation = rotation
 
+    @property
+    def neighborPlaneAlignment(self):
+        """How our neighbor's face plane lies against ours: whether its two
+        axes cross ours, and which of them run backwards. The neighbor names
+        one of our axes for each of its own, and the one naming the normal of
+        the face we share is not in the plane, so it is dropped."""
+        theirNormal = (self.neighborNface - 1) // 2
+        theirPlane = [
+            self.signedAxis(code)
+            for m, code in enumerate(self.neighborOrientation)
+            if m != theirNormal
+        ]
+        ourPlane = [m for m in range(3) if m != self.myAxis]
+        transposed = theirPlane[0][0] == ourPlane[1]
+        flipped = tuple(
+            m for m, (_, counterAligned) in enumerate(theirPlane) if counterAligned
+        )
+        return transposed, flipped
+
+    def alignToMe(self, plane):
+        """Our neighbor's face plane, laid out so it matches ours element for
+        element. The inverse of laying one of ours out the way they read it,
+        so the flips come off before the transpose does."""
+        transposed, flipped = self.neighborPlaneAlignment
+        if flipped:
+            plane = np.flip(plane, flipped)
+        if transposed:
+            plane = np.moveaxis(plane, (0, 1), (1, 0))
+        return plane
+
+    def alignToThem(self, plane):
+        """A face plane of ours, laid out the way our neighbor reads it. The
+        inverse of alignToMe, so the transpose goes on before the flips do."""
+        transposed, flipped = self.neighborPlaneAlignment
+        if transposed:
+            plane = np.moveaxis(plane, (0, 1), (1, 0))
+        return np.flip(plane, flipped) if flipped else plane
+
+    def plane(self, index):
+        """The index-plane of a block array normal to this face. Which plane a
+        face number picks out is topology; whether there is an array to pick it
+        out of is the block's business."""
+        return (slice(None),) * self.myAxis + (index,)
+
+    @property
+    def firstPlane(self):
+        """The outermost plane of a block array on this face."""
+        return self.plane(0 if self.amILow else -1)
+
+    def copyFrom(self, other):
+        """Take on another face's description: what kind of boundary it is,
+        what it is called, how its neighbor's axes run against ours, and how a
+        halo through it is moved. Not which block it meets -- only the caller
+        knows that."""
+        self.bcType = other.bcType
+        self.bcName = other.bcName
+        self.orientation = other.orientation
+        if other.periodicRotation is None:
+            self.periodicRotation = None
+            self.periodicTranslation = None
+        else:
+            self.setPeriodic(
+                rotation=other.periodicRotation,
+                translation=other.periodicTranslation,
+            )
+
+    def setInterior(self, neighbor, orientation="123"):
+        """This face is shared with a block now rather than bounding anything,
+        so it is nameless, reads nothing from a case, and nothing moves a halo
+        through it."""
+        self.bcType = "interior"
+        self.bcName = None
+        self.neighbor = neighbor
+        self.orientation = orientation
+        self.periodicRotation = None
+        self.periodicTranslation = None
+
     @staticmethod
     def rotationAbout(axis, degrees):
         """Turning about the unit vector :axis: by :degrees:, negative the

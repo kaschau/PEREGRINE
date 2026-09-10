@@ -1,5 +1,7 @@
 from ..misc import subclassWhere
-from .blockOpsMixin import BlockOpsMixin
+from .cutMixin import CutMixin
+from .mergeMixin import MergeMixin
+from .orientMixin import OrientMixin
 from .conditioner import Conditioner
 from .basePartitioner import BasePartitioner
 from .greedyPartitioner import GreedyPartitioner
@@ -14,9 +16,11 @@ def getPartitioner(name="auto", **kwargs):
 __all__ = [
     "AutoPartitioner",
     "BasePartitioner",
-    "BlockOpsMixin",
+    "CutMixin",
     "Conditioner",
     "GreedyPartitioner",
+    "MergeMixin",
     "MetisPartitioner",
+    "OrientMixin",
     "getPartitioner",
 ]

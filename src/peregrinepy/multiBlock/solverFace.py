@@ -42,9 +42,9 @@ class solverFace(gridFace):
             s0 = range(-ng, 0)
             s1 = -(ng + 1)
             s2 = range(-(ng + 2), -(2 * ng + 2), -1)
-        self.s0_ = [self._facePlane(i) for i in s0]
-        self.s1_ = self._facePlane(s1)
-        self.s2_ = [self._facePlane(i) for i in s2]
+        self.s0_ = [self.plane(i) for i in s0]
+        self.s1_ = self.plane(s1)
+        self.s2_ = [self.plane(i) for i in s2]
 
         # arrays that faces save
         self.declare("qBcVals", "QBcVals", kind="bcValues")
@@ -161,28 +161,10 @@ class solverFace(gridFace):
         """The planes of the block that what arrives is placed into."""
         return self._recvSlices[self.commVars[var]]
 
-    def _facePlane(self, index):
-        """The index-plane of a block array normal to this face."""
-        return (slice(None),) * self.myAxis + (index,)
-
     def _setOrient(self):
         """How a plane of ours is laid out in our neighbor's frame: which of
         our two face axes it reads first, and which way round it reads each."""
-        # our neighbor's orientation names one of our axes for each of its
-        # own; the one naming the normal of the face we share is not in the
-        # plane, so drop it
-        theirNormal = (self.neighborNface - 1) // 2
-        theirPlane = [
-            self.signedAxis(code)
-            for m, code in enumerate(self.neighborOrientation)
-            if m != theirNormal
-        ]
-        ourPlane = [m for m in range(3) if m != self.myAxis]
-
-        self._transposed = theirPlane[0][0] == ourPlane[1]
-        self._flipped = tuple(
-            m for m, (_, counterAligned) in enumerate(theirPlane) if counterAligned
-        )
+        self._transposed, self._flipped = self.neighborPlaneAlignment
 
     def _setSlices(self):
         """Which planes of the block go out, and where the ones that arrive
@@ -214,10 +196,10 @@ class solverFace(gridFace):
             cellOut = range(nCells - 2 * ng, nCells - ng)
             cellIn = range(nCells - ng, nCells)
 
-        nodeSend = [self._facePlane(i) for i in nodeOut]
-        nodeRecv = [self._facePlane(i) for i in nodeIn]
-        cellSend = [self._facePlane(i) for i in cellOut]
-        cellRecv = [self._facePlane(i) for i in cellIn]
+        nodeSend = [self.plane(i) for i in nodeOut]
+        nodeRecv = [self.plane(i) for i in nodeIn]
+        cellSend = [self.plane(i) for i in cellOut]
+        cellRecv = [self.plane(i) for i in cellIn]
 
         # which plane is the one nearest the block must be picked before the
         # send order is reversed

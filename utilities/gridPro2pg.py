@@ -22,7 +22,6 @@ import numpy as np
 from peregrinepy.multiBlock import grid as mbg
 from peregrinepy.writers import GridWriter
 from verifyGrid import verify
-import yaml
 
 parser = argparse.ArgumentParser(
     description="Convert binary GridPro files into grid and connectivity files used by PEREGRINE"
@@ -52,18 +51,6 @@ parser.add_argument(
     dest="gpPtyFileName",
     default="blk.tmp.pty",
     help="GridPro property file. Default is blk.tmp.pty",
-    type=str,
-)
-parser.add_argument(
-    "-bcFam",
-    action="store",
-    metavar="<bcFam>",
-    dest="bcFam",
-    default="./bcFams.yaml",
-    help="""File to translate the labels given to boundary conditions in GridPro
-            to PEREGRINE bcType (i.e. constantVelocitySubsonicInlet, adiabaticNoSlipWall, etc.)\n
-            \n
-            NOTE: ALL labels from GridPro need an entry in the yaml file. Even walls.""",
     type=str,
 )
 parser.add_argument(
@@ -99,10 +86,6 @@ if args.isBinary:
 else:
     gpBlkFile = open(args.gpBlkFileName, "r")
 
-
-# Read in bcFam.yaml file so we know what the bcType is for each label.
-with open(args.bcFam, "r") as f:
-    bcFamDict = yaml.load(f, Loader=yaml.FullLoader)
 
 gpSurfaceToPgBcType = {
     "pdc:INTERBLK": "interior",
@@ -183,31 +166,15 @@ for i in range(nblks):
     pgConns.append(line[2:-1])
 
 mb = mbg(nblks)
-gridIsPeriodic = False
 for temp, blk in zip(pgConns, mb):
     for face in blk.faces:
         faceData = temp[(int(face.nface) - 1) * 4 : (int(face.nface) - 1) * 4 + 4]
-        # Set the named BCs in the bcFam.yaml
-        if faceData[0] in bcFamDict:
-            face.bcName = f"{faceData[0]}"
-            face.bcType = bcFamDict[faceData[0]]["bcType"]
-        # Need to treat periodics
-        elif faceData[0] == "PERIODIC":
-            gridIsPeriodic = True
-            # get the periodic from bcValues
-            key = [key for key in bcFamDict.keys() if key.startswith("periodic")][0]
-            face.bcName = key
-            # We will set High/Low bcType after we have all the point data
-            # the sign is settled once every block has its points
-            face.bcType = bcFamDict[key]["bcType"]
-            periodicSpan = bcFamDict[key]["bcVals"]["periodicSpan"]
-            periodicAxis = np.array(bcFamDict[key]["bcVals"]["periodicAxis"], float)
-            periodicAxis /= np.linalg.norm(periodicAxis)
-        else:
-            face.bcType = f"{faceData[0]}"
-            face.bcName = None
         face.neighbor = None if int(faceData[2]) == 0 else int(faceData[2]) - 1
         face.orientation = None if "0" in faceData[3] else faceData[3]
+        # GridPro's label is the name the case will bind values to. A face
+        # joined to another block carries no name: it is an interface, or a
+        # periodic, and conditioning works out which by looking at the points.
+        face.bcName = None if face.neighbor is not None else f"{faceData[0]}"
 
 go = True
 while go:
@@ -252,46 +219,12 @@ gpConnFile.close()
 gpPtyFile.close()
 gpBlkFile.close()
 
-# Now we go through the grid to set periodic High/Low
-if gridIsPeriodic:
-    from verifyGrid import extractFace
-
-    for blk in mb:
-        for face in blk.faces:
-            if face.bcType.startswith("periodic"):
-                myX, myY, myZ = extractFace(blk, face.nface)
-                myFaceCenter = np.array([np.mean(i) for i in (myX, myY, myZ)])
-                nBlk = mb.getBlock(face.neighbor)
-                nX, nY, nZ = extractFace(nBlk, face.neighborNface)
-                nFaceCenter = np.array([np.mean(i) for i in (nX, nY, nZ)])
-            else:
-                continue
-
-            if face.bcType == "periodicTrans":
-                up = periodicAxis * periodicSpan
-                faceUp, faceDown = myFaceCenter + up, myFaceCenter - up
-            elif face.bcType == "periodicRot":
-                R = face.rotationAbout(periodicAxis, periodicSpan)
-                faceUp, faceDown = R @ myFaceCenter, R.T @ myFaceCenter
-            else:
-                raise ValueError("Didnt find either periodic Trans or Rot")
-
-            # whichever way lands on the partner is the way this face moves
-            if np.allclose(faceUp, nFaceCenter):
-                sign = 1.0
-            elif np.allclose(faceDown, nFaceCenter):
-                sign = -1.0
-            else:
-                raise ValueError(
-                    f"Not a periodic match between block {blk.nblki} face {face.nface} and block {nBlk.nblki} face {face.neighborNface}."
-                )
-
-            if face.bcType == "periodicTrans":
-                face.setPeriodic(translation=sign * periodicAxis * periodicSpan)
-            else:
-                face.setPeriodic(
-                    rotation=face.rotationAbout(periodicAxis, sign * periodicSpan)
-                )
+# A translator names a face by what it is joined to, not by how far away that
+# is, so a periodic arrives looking like any other interface. Which ones are
+# really periodic, and how they move, is read off the points.
+found = mb.detectPeriodics()
+for kind, n in sorted(found.items()):
+    print(f"Found {n} {kind} face(s) among the interfaces")
 
 # a mesher's own precision is its business, so this is a warning, not a
 # gate; what must not happen is conditioning making a good grid bad

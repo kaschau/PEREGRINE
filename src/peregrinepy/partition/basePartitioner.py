@@ -15,10 +15,11 @@ kinds, so it is the only thing a subclass writes.
 
 import numpy as np
 
-from .blockOpsMixin import BlockOpsMixin
+from .cutMixin import CutMixin
+from .mergeMixin import MergeMixin
 
 
-class BasePartitioner(BlockOpsMixin):
+class BasePartitioner(CutMixin, MergeMixin):
     partitionerName = None
 
     def __init__(self, tol=0.05, refinePasses=10, nStarts=6):
