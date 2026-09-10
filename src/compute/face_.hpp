@@ -8,9 +8,8 @@
 // python wrapper
 struct face_ {
 
-  int _ng;
   // face number
-  int _nface;
+  int nface;
   // Boundary condition value arrays
   threeDview qBcVals, QBcVals;
 

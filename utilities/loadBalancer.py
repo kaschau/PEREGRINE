@@ -16,7 +16,6 @@ from peregrinepy.partition import getPartitioner
 
 if __name__ == "__main__":
     import argparse
-    import os
 
     parser = argparse.ArgumentParser(
         description="Add a load balanced partition to a grid.",
@@ -74,6 +73,12 @@ if __name__ == "__main__":
             ]
         ),
         type=float,
+    )
+    parser.add_argument(
+        "-plot",
+        dest="plot",
+        action="store_true",
+        help="Show the load and block count on each rank when the balance is done.",
     )
 
     args = parser.parse_args()
@@ -134,7 +139,7 @@ if __name__ == "__main__":
             f" {ceiling:.1f}%. Cut with -granularity to go further.\n"
         )
 
-    if os.name == "posix" and "DISPLAY" in os.environ:
+    if args.plot:
         import matplotlib.pyplot as plt
 
         fig, ax = plt.subplots()

@@ -7,23 +7,6 @@ class solver(restart):
     """A list of peregrinepy.multiBlock.solver.
     Inherits from peregrinepy.multiBlock.restart"""
 
-    __slots__ = (
-        "config",
-        "kokkosSpace" "thtrdat",
-        "eos",
-        "trans",
-        "dqdxyz",
-        "primaryAdvFlux",
-        "applyPrimaryAdvFlux",
-        "switch",
-        "secondaryAdvFlux",
-        "applySecondaryAdvFlux" "diffFlux",
-        "applyDiffFlux",
-        "expChem",
-        "impChem",
-        "resultsWriter",
-    )
-
     mbType = "solver"
     hasConservatives = True
 
@@ -43,7 +26,7 @@ class solver(restart):
         super().__init__(nblks, spNames, temp)
 
         # time integrator time
-        self._titme = 0.0
+        self.titme = 0.0
         # Save the species data
         self.thtrdat = None
 
@@ -80,16 +63,6 @@ class solver(restart):
 
         # Result output
         self.resultsWriter = None
-
-    @property
-    def titme(self):
-        return self._titme
-
-    @titme.setter
-    def titme(self, val):
-        self._titme = val
-        for blk in self:
-            blk.titme = val
 
     def generateHalo(self):
         for blk in self:

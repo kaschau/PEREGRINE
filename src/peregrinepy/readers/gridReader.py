@@ -139,7 +139,8 @@ class GridReader:
         for blk in mb:
             for face in blk.faces:
                 mine = blk.nblki, face.nface - 1
-                # the face setters take python types, not numpy ones
+                # the connectivity is python types, not the numpy scalars
+                # hdf5 hands back
                 face.bcType = str(bcType[mine])
                 face.bcFam = str(bcFam[mine]) or None
                 face.orientation = str(orientation[mine]) or None

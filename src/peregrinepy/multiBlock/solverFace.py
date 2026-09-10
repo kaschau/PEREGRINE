@@ -29,7 +29,7 @@ class solverFace(gridFace):
         self.cpp = face_()
         super().__init__(nface)
 
-        self._ng = ng
+        self.ng = ng
         # the block this face bounds, once it knows how big it is
         self.blockExtents = None
         self.ne = None
@@ -273,25 +273,9 @@ class solverFace(gridFace):
             deep_copy(self.mirror[var], getattr(self.cpp, var))
 
     @property
-    def ng(self):
-        return self.cpp._ng
+    def nface(self):
+        return self.cpp.nface
 
-    @ng.setter
-    def ng(self, value):
-        self.cpp._ng = value
-
-    @property
-    def _ng(self):
-        return self.cpp._ng
-
-    @_ng.setter
-    def _ng(self, value):
-        self.cpp._ng = value
-
-    @property
-    def _nface(self):
-        return self.cpp._nface
-
-    @_nface.setter
-    def _nface(self, value):
-        self.cpp._nface = value
+    @nface.setter
+    def nface(self, value):
+        self.cpp.nface = value

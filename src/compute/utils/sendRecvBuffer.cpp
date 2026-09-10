@@ -6,7 +6,7 @@
 void extractSendBuffer(threeDview &view, threeDview &buffer, face_ &face,
                        const std::vector<int> &slices) {
 
-  int &nface = face._nface;
+  int &nface = face.nface;
   int nLayer = slices.size();
 
   for (int g = 0; g < nLayer; g++) {
@@ -23,7 +23,7 @@ void extractSendBuffer(threeDview &view, threeDview &buffer, face_ &face,
 void extractSendBuffer(fourDview &view, fourDview &buffer, face_ &face,
                        const std::vector<int> &slices) {
 
-  int &nface = face._nface;
+  int &nface = face.nface;
   int nLayer = slices.size();
 
   for (int g = 0; g < nLayer; g++) {
@@ -40,7 +40,7 @@ void extractSendBuffer(fourDview &view, fourDview &buffer, face_ &face,
 void placeRecvBuffer(threeDview &view, threeDview &buffer, face_ &face,
                      const std::vector<int> &slices) {
 
-  int &nface = face._nface;
+  int &nface = face.nface;
   int nLayer = slices.size();
 
   for (int g = 0; g < nLayer; g++) {
@@ -57,7 +57,7 @@ void placeRecvBuffer(threeDview &view, threeDview &buffer, face_ &face,
 void placeRecvBuffer(fourDview &view, fourDview &buffer, face_ &face,
                      const std::vector<int> &slices) {
 
-  int &nface = face._nface;
+  int &nface = face.nface;
   int nLayer = slices.size();
 
   for (int g = 0; g < nLayer; g++) {

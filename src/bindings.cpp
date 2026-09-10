@@ -170,8 +170,7 @@ PYBIND11_MODULE(compute, m) {
   py::class_<face_>(m, "face_", py::dynamic_attr())
       .def(py::init<>())
 
-      .def_readwrite("_ng", &face_::_ng)
-      .def_readwrite("_nface", &face_::_nface)
+      .def_readwrite("nface", &face_::nface)
 
       .def_readwrite("qBcVals", &face_::qBcVals)
       .def_readwrite("QBcVals", &face_::QBcVals)
