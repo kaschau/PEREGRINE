@@ -12,6 +12,34 @@ import numpy as np
 from ..misc import progressBar
 
 
+class Partition:
+    """One decomposition the grid carries: which rank owns each block, and,
+    when its blocks are pieces of the base grid rather than the base blocks
+    themselves, which slab of which base block each piece is."""
+
+    def __init__(self, name, blocksForProcs, cuts):
+        self.name = name
+        self.blocksForProcs = blocksForProcs
+        # None when the blocks are the base blocks
+        self.cuts = cuts
+
+    def __len__(self):
+        return sum(len(group) for group in self.blocksForProcs)
+
+    def setProvenance(self, mb):
+        """Tell each block which slab of which base block it is, so reading
+        the grid pulls its hyperslab rather than a whole base block."""
+        for blk in mb:
+            if self.cuts is None:
+                # the blocks are the base blocks, whatever they were numbered
+                # when the multiBlock was built
+                blk.baseNblki, blk.baseSlice = blk.nblki, None
+                continue
+            baseNblki, *bounds = self.cuts[blk.nblki]
+            blk.baseNblki = int(baseNblki)
+            blk.baseSlice = tuple(int(b) for b in bounds)
+
+
 class GridReader:
     """The grid file in :path:.
 
@@ -68,12 +96,24 @@ class GridReader:
             )
             ranksPerNode = layouts[0]
 
-        rank = np.array(self.f[f"partitions/{size}x{ranksPerNode}/rank"])
-        assert len(rank) == self.totalBlocks, (
-            f"the {size} rank partition covers {len(rank)} blocks, "
-            f"but this grid has {self.totalBlocks}"
+        name = f"{size}x{ranksPerNode}"
+        group = self.f[f"partitions/{name}"]
+        rank = np.array(group["rank"])
+        cuts = np.array(group["cuts"]) if "cuts" in group else None
+        if cuts is None:
+            assert len(rank) == self.totalBlocks, (
+                f"the {name} partition covers {len(rank)} blocks, "
+                f"but this grid has {self.totalBlocks}"
+            )
+        else:
+            assert len(rank) == len(cuts), (
+                f"the {name} partition has {len(rank)} ranks for " f"{len(cuts)} pieces"
+            )
+        return Partition(
+            name,
+            [[int(n) for n in np.flatnonzero(rank == r)] for r in range(size)],
+            cuts,
         )
-        return [[int(n) for n in np.flatnonzero(rank == r)] for r in range(size)]
 
     def readGrid(self, mb, justNi=False):
         """Add the coordinate data to a supplied peregrinepy.multiBlock.grid
@@ -90,23 +130,34 @@ class GridReader:
                 ng = 0
                 readS = np.s_[:, :, :]
 
-            coordS = self.f[f"coordinates_{blk.nblki:06d}"]
+            coordS = self.f[f"coordinates_{blk.baseNblki:06d}"]
 
-            # stored (nk, nj, ni), so the shape is the extents backwards
-            nk, nj, ni = coordS["x"].shape
+            if blk.baseSlice is None:
+                # stored (nk, nj, ni), so the shape is the extents backwards
+                nk, nj, ni = coordS["x"].shape
+                sliceS = np.s_[:, :, :]
+            else:
+                i0, i1, j0, j1, k0, k1 = blk.baseSlice
+                ni, nj, nk = i1 - i0 + 1, j1 - j0 + 1, k1 - k0 + 1
+                sliceS = np.s_[k0 : k1 + 1, j0 : j1 + 1, i0 : i1 + 1]
             blk.ni, blk.nj, blk.nk = int(ni), int(nj), int(nk)
 
             if not justNi:
                 blk.initGridArrays()
                 for name in ("x", "y", "z"):
-                    blk.array[name][readS] = coordS[name][:].T
+                    blk.array[name][readS] = coordS[name][sliceS].T
 
             if mb.mbType in ["grid", "restart"]:
                 progressBar(blk.nblki + 1, len(mb), f"Reading in gridBlock {blk.nblki}")
 
-    def readConnectivity(self, mb):
-        """Add the stored connectivity to the faces of the blocks in mb."""
-        group = self.f["connectivity"]
+    def readConnectivity(self, mb, partition=None):
+        """Add the stored connectivity to the faces of the blocks in mb. A
+        partition whose blocks are pieces connects them its own way, so it
+        carries its own."""
+        if partition is not None and partition.cuts is not None:
+            group = self.f[f"partitions/{partition.name}/connectivity"]
+        else:
+            group = self.f["connectivity"]
         neighbor = np.array(group["neighbor"])
         orientation = group["orientation"].asstr()[:]
         bcType = group["bcType"].asstr()[:]
@@ -122,4 +173,8 @@ class GridReader:
                 n = int(neighbor[mine])
                 face.neighbor = None if n == -1 else n
 
-        mb.totalBlocks = self.totalBlocks
+        mb.totalBlocks = (
+            self.totalBlocks
+            if partition is None or partition.cuts is None
+            else len(partition)
+        )

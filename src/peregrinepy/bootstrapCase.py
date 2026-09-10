@@ -18,9 +18,8 @@ def bootstrapCase(config):
     ################################################################
     gridReader = pg.readers.GridReader(config["io"]["gridDir"])
     try:
-        blocksForProcs = gridReader.partition(
-            size, pg.mpiComm.mpiUtils.getRanksPerNode()
-        )
+        partition = gridReader.partition(size, pg.mpiComm.mpiUtils.getRanksPerNode())
+        blocksForProcs = partition.blocksForProcs
     except ValueError as e:
         if rank == 0:
             print(f"ERROR!! {e}")
@@ -33,6 +32,8 @@ def bootstrapCase(config):
     # Generate the multiBlock solver object for each MPI process, given the number of
     # blocks each process is responsible for
     mb = pg.multiBlock.generateMultiBlockSolver(len(myblocks), config, myblocks)
+    # a piece of a base block reads its own slab of it
+    partition.setProvenance(mb)
     comm.Barrier()
     if rank == 0:
         print("Generated multiblock.")
@@ -40,7 +41,7 @@ def bootstrapCase(config):
     ################################################################
     # Read in the connectivity
     ################################################################
-    gridReader.readConnectivity(mb)
+    gridReader.readConnectivity(mb, partition)
     comm.Barrier()
     if rank == 0:
         print("Read connectivity.")

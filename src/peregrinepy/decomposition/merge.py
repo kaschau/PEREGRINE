@@ -124,6 +124,8 @@ def compact(mb, gone):
     renumber = {blk.nblki: n for n, blk in enumerate(keep)}
     for blk in keep:
         blk.nblki = renumber[blk.nblki]
+        # a merged block is its own base again
+        blk.baseNblki, blk.baseSlice = blk.nblki, None
         for face in blk.faces:
             if face.neighbor is not None:
                 face.neighbor = renumber[face.neighbor]
