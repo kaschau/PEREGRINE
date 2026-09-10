@@ -149,7 +149,7 @@ def buildAndCommunicate(S, adv, spdata, seed):
 
     for blk in mb:
         blk.updateDeviceView(VARLIST)
-    pg.mpiComm.communicate(mb, VARLIST)
+    mb.communicator.exchange(VARLIST)
     for blk in mb:
         blk.updateHostView(VARLIST)
 

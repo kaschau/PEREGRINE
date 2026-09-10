@@ -1,6 +1,6 @@
 from .restart import restart
 from .solverBlock import solverBlock
-from .. import mpiComm
+from ..mpiComm import Communicator
 
 
 class solver(restart):
@@ -64,6 +64,9 @@ class solver(restart):
         # Result output
         self.resultsWriter = None
 
+        # Halo exchange, once the blocks know their neighbors
+        self.communicator = None
+
     def generateHalo(self):
         for blk in self:
             blk.generateHalo()
@@ -73,7 +76,7 @@ class solver(restart):
 
         # Lets just be clean and create the edges and corners
         for _ in range(3):
-            mpiComm.communicate(self, ["x", "y", "z"])
+            self.communicator.exchange(["x", "y", "z"])
 
         # Device is up to date after communicate, so pull back down
         for blk in self:
@@ -123,6 +126,7 @@ class solver(restart):
     def setBlockCommunication(self):
         for blk in self:
             blk.setBlockCommunication()
+        self.communicator = Communicator(self)
 
     def __repr__(self):
         string = f"  Total blocks: {self.totalBlocks}\n"

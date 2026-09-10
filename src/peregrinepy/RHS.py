@@ -1,5 +1,4 @@
 from .compute import utils
-from .mpiComm import communicate
 
 """
 The right hand side of a peregrine case. Starts from dQ/dt=0 and
@@ -33,7 +32,7 @@ def RHS(mb):
             mb.dqdxyz(blk.cpp)
 
         # communicate derivatives
-        communicate(mb, ["dqdx", "dqdy", "dqdz"])
+        mb.communicator.exchange(["dqdx", "dqdy", "dqdz"])
         for blk in mb:
             # Apply spatial derivative boundary conditions
             for face in blk.faces:

@@ -61,7 +61,10 @@ class topology(UserList):
         progressBar(n, len(self), message)
 
     def getBlock(self, nblki):
-        if self[nblki].nblki == nblki:
+        """The block numbered nblki, or None if this rank does not hold it. A
+        rank holds a slice of the grid's blocks, so a block's number is only
+        its index here when the whole grid is on one rank."""
+        if nblki < len(self) and self[nblki].nblki == nblki:
             return self[nblki]
         # Otherwise manually search for it
         for blk in self:

@@ -130,7 +130,7 @@ class TestPeriodics:
 
         # check the gradients
         mb.dqdxyz(blk.cpp)
-        pg.mpiComm.communicate(mb, ["dqdx", "dqdy", "dqdz"])
+        mb.communicator.exchange(["dqdx", "dqdy", "dqdz"])
         for face in blk.faces:
             face.bcFunc(blk.cpp, face.cpp, mb.eos, mb.thtrdat.cpp, "postDqDxyz", mb.tme)
 

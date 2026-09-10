@@ -1,5 +1,3 @@
-from .mpiComm import communicate
-
 """
 This function unifies the interior and halo cell data
 such that interior data fields are thermodynamically
@@ -18,9 +16,9 @@ def consistify(mb, given="cons"):
 
     # First communicate conservatives/primatives
     if given == "cons":
-        communicate(mb, ["Q"])
+        mb.communicator.exchange(["Q"])
     elif given == "prims":
-        communicate(mb, ["q"])
+        mb.communicator.exchange(["q"])
 
     # Now update derived arrays for ENTIRE block,
     # even exterior halos.
@@ -47,4 +45,4 @@ def consistify(mb, given="cons"):
 
     # Communicate necessary halos
     if mb.phiComm:
-        communicate(mb, ["phi"])
+        mb.communicator.exchange(["phi"])

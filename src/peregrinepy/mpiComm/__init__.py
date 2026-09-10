@@ -1,4 +1,4 @@
 from . import mpiUtils
-from .communicate import communicate
+from .communicator import Communicator
 
-__all__ = ["mpiUtils", "communicate"]
+__all__ = ["mpiUtils", "Communicator"]
