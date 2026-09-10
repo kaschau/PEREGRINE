@@ -398,7 +398,7 @@ verified = verify(mb)
 if not verified:
     print("  NOTE: the translated grid does not verify, see above")
 
-pg.partition.getPartitioner().condition(mb)
+pg.partition.Conditioner().condition(mb)
 
 if verified and not verify(mb):
     raise ValueError("Conditioning invalidated the grid.")

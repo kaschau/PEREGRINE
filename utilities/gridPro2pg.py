@@ -17,7 +17,7 @@ Output will be a PEREGRINE grid file 'g.h5', which carries the connectivity.
 """
 
 import argparse
-from peregrinepy.partition import getPartitioner
+from peregrinepy.partition import Conditioner
 import numpy as np
 from peregrinepy.multiBlock import grid as mbg
 from peregrinepy.writers import GridWriter
@@ -296,7 +296,7 @@ verified = verify(mb)
 if not verified:
     print("  NOTE: the translated grid does not verify, see above")
 
-getPartitioner().condition(mb)
+Conditioner().condition(mb)
 
 if verified and not verify(mb):
     raise ValueError("Conditioning invalidated the grid.")
