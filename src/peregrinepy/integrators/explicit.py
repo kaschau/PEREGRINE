@@ -4,6 +4,16 @@ from ..consistify import consistify
 from ..RHS import RHS
 
 
+def cppStage(kernel):
+    """A compute kernel used as a stage of its own, which takes the block's
+    compute object rather than the block."""
+
+    def stage(blk, dt):
+        kernel(blk.cpp, dt)
+
+    return stage
+
+
 def ssp(wQ0, wQ, wdQ, storeQ0=False):
     """A stage of a strong stability preserving scheme,
     Q = wQ Q + wQ0 Q0 + wdQ dt dQ. The stage that begins a step keeps the
@@ -29,6 +39,8 @@ class BaseExplicit:
     stepType = "explicit"
     # (fraction of dt, stage)
     stages = ()
+    # how many Q registers the stages combine through
+    nStorage = 0
 
     def runStages(self, dt):
         for frac, stage in self.stages:
@@ -48,11 +60,13 @@ class BaseExplicit:
 
 class rk1(BaseExplicit):
     integratorName = "rk1"
+    nStorage = 0
     stages = ((0.0, ssp(0.0, 1.0, 1.0)),)
 
 
 class rk2(BaseExplicit):
     integratorName = "rk2"
+    nStorage = 1
     stages = (
         (0.0, ssp(0.0, 1.0, 1.0, storeQ0=True)),
         (1.0, ssp(0.5, 0.5, 0.5)),
@@ -66,6 +80,7 @@ class rk3(BaseExplicit):
     """
 
     integratorName = "rk3"
+    nStorage = 1
     stages = (
         (0.0, ssp(0.0, 1.0, 1.0, storeQ0=True)),
         (1.0, ssp(0.75, 0.25, 0.25)),
@@ -75,6 +90,7 @@ class rk3(BaseExplicit):
 
 class rk34(BaseExplicit):
     integratorName = "rk34"
+    nStorage = 1
     stages = (
         (0.0, ssp(0.0, 1.0, 0.5, storeQ0=True)),
         (0.5, ssp(0.0, 1.0, 0.5)),
@@ -89,6 +105,7 @@ class maccormack(BaseExplicit):
     at differs."""
 
     integratorName = "maccormack"
+    nStorage = 1
     stages = (
         (0.0, ssp(0.0, 1.0, 1.0, storeQ0=True)),
         (0.0, ssp(0.5, 0.5, 0.5)),
@@ -100,4 +117,8 @@ class rk4(BaseExplicit):
     than a running combination, so its stages are their own kernels."""
 
     integratorName = "rk4"
-    stages = ((0.0, rk4s1), (0.5, rk4s2), (0.5, rk4s3), (1.0, rk4s4))
+    nStorage = 4
+    stages = tuple(
+        (frac, cppStage(kernel))
+        for frac, kernel in ((0.0, rk4s1), (0.5, rk4s2), (0.5, rk4s3), (1.0, rk4s4))
+    )

@@ -8,7 +8,7 @@ from .explicit import BaseExplicit
 
 def stiff(t, y, blk, thtrdat, impChem, i, j, k):
     blk.array["q"][i, j, k, 4::] = y
-    impChem(blk, thtrdat, 10, i, j, k)
+    impChem(blk.cpp, thtrdat.cpp, 10, i, j, k)
 
     return blk.array["omega"][i, j, k, :]
 
@@ -24,8 +24,8 @@ class Strang(BaseExplicit):
 
     """
 
-    # the transport half's stages come from whichever scheme is paired
-    # with this one; see getIntegrator
+    # the transport half's stages, and so its registers, come from whichever
+    # scheme is paired with this one; see getIntegrator
     stepType = "split"
 
     def step(self, dt):

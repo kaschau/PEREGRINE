@@ -31,6 +31,8 @@ def printResidual(resid, nrt, ne):
 class dualTime:
     integratorName = "dualTime"
     stepType = "dualTime"
+    # the inner pseudo time loop is rk3 like
+    nStorage = 2
 
     def step(self, dt):
         comm, rank, size = getCommRankSize()
@@ -44,7 +46,7 @@ class dualTime:
         for nrtDT in range(20):
             # Determine dtau
             for blk in self:
-                localDtau(blk, self.config["RHS"]["diffusion"])
+                localDtau(blk.cpp, self.config["RHS"]["diffusion"])
 
             ##############################################
             # In pseudo time, we integrate primatives
@@ -56,12 +58,12 @@ class dualTime:
             self.titme = self.tme
             RHS(self)
             for blk in self:
-                dQdt(blk, dt)
+                dQdt(blk.cpp, dt)
 
             # Invert dqdQ, apply first rk stage
             for blk in self:
-                invertDQ(blk, dt, self.thtrdat, self.config["RHS"]["diffusion"])
-                DTrk3s1(blk)
+                invertDQ(blk.cpp, dt, self.thtrdat.cpp, self.config["RHS"]["diffusion"])
+                DTrk3s1(blk.cpp)
 
             consistify(self, "prims")
 
@@ -69,11 +71,11 @@ class dualTime:
             self.titme = self.tme + dt
             RHS(self)
             for blk in self:
-                dQdt(blk, dt)
+                dQdt(blk.cpp, dt)
 
             for blk in self:
-                invertDQ(blk, dt, self.thtrdat, self.config["RHS"]["diffusion"])
-                DTrk3s2(blk)
+                invertDQ(blk.cpp, dt, self.thtrdat.cpp, self.config["RHS"]["diffusion"])
+                DTrk3s2(blk.cpp)
 
             consistify(self, "prims")
 
@@ -81,17 +83,17 @@ class dualTime:
             self.titme = self.tme + dt / 2.0
             RHS(self)
             for blk in self:
-                dQdt(blk, dt)
+                dQdt(blk.cpp, dt)
 
             for blk in self:
-                invertDQ(blk, dt, self.thtrdat, self.config["RHS"]["diffusion"])
-                DTrk3s3(blk)
+                invertDQ(blk.cpp, dt, self.thtrdat.cpp, self.config["RHS"]["diffusion"])
+                DTrk3s3(blk.cpp)
 
             consistify(self, "prims")
 
             # Compute residual
             if self.nrt % self.config["io"]["niterPrint"] == 0:
-                resid = np.array(residual(self), dtype=np.float64)
+                resid = np.array(residual([blk.cpp for blk in self]), dtype=np.float64)
                 comm.Allreduce(MPI.IN_PLACE, resid[0, :], op=MPI.MIN)
                 comm.Allreduce(MPI.IN_PLACE, resid[1, :], op=MPI.SUM)
                 resid[1, :] = np.sqrt(resid[1, :])

@@ -4,6 +4,7 @@ from ..compute import block_
 from ..compute.pgkokkos import deep_copy
 from .restartBlock import restartBlock
 from .solverFace import solverFace
+from ..integrators import getIntegrator
 from ..misc import createViewMirrorArray
 
 
@@ -264,21 +265,11 @@ class solverBlock(restartBlock):
         # ------------------------------------------------------------------- #
         #       Time Integration Storage
         # ------------------------------------------------------------------- #
-        nstorage = {
-            "rk1": 0,
-            "rk2": 1,
-            "maccormack": 1,
-            "rk3": 1,
-            "rk34": 1,
-            "rk4": 4,
-            "strang": 2,
-            "dualTime": 2,
-        }
-        names = [
-            f"Q{i}" for i in range(nstorage[config["timeIntegration"]["integrator"]])
-        ]
-        createViewMirrorArray(self, names, cQshape)
-        if config["timeIntegration"]["integrator"] == "dualTime":
+        integrator = getIntegrator(config["timeIntegration"]["integrator"])
+        createViewMirrorArray(
+            self, [f"Q{i}" for i in range(integrator.nStorage)], cQshape
+        )
+        if integrator.stepType == "dualTime":
             createViewMirrorArray(self, ["Qn", "Qnm1"], cQshape)
             createViewMirrorArray(self, ["dtau"], ccshape)
 
