@@ -10,25 +10,14 @@ class restartBlock(gridBlock):
 
     blockType = "restart"
 
-    def __init__(self, nblki, speciesNames):
-        super().__init__(nblki)
+    def __init__(self, nblki, speciesNames, ng=0):
+        super().__init__(nblki, ng)
 
         self.nrt = 0
         self.tme = 0.0
 
         self.speciesNames = speciesNames
-        # If we are a solver block, and we have hard coded ns at compile
-        # time, it is already set at this point. So we will check if it is,
-        # and make sure it is the same as the number of species we want.
-        if hasattr(self, "ns"):
-            # Then it is alreay set and hard coded
-            if self.ns != len(speciesNames):
-                raise ValueError(
-                    f"ERROR!! You are trying to use {len(speciesNames)} species, but pg.compute\n"
-                    f"    was precompiled for {self.ns} species."
-                )
-        else:
-            self.ns = len(speciesNames)
+        self.ns = len(speciesNames)
         if self.ns < 1:
             raise ValueError("Number of species must be >=1")
 
@@ -42,14 +31,14 @@ class restartBlock(gridBlock):
         if self.blockType == "restart":
             self.array._freeze()
 
+    def fillHaloWithNearest(self, name):
+        """No halo to fill."""
+
     def initRestartArrays(self):
         """
         Create zeroed numpy arrays of correct size.
         """
-        if self.blockType == "solver":
-            ng = self.ng
-        else:
-            ng = 0
+        ng = self.ng
 
         cQshape = (
             self.ni + 2 * ng - 1,

@@ -57,9 +57,9 @@ def simulate():
 
             # Update cons
             blk.updateDeviceView(["q"])
-            mb.eos(blk, mb.thtrdat, 0, "prims")
+            mb.eos(blk.cpp, mb.thtrdat.cpp, 0, "prims")
             # Update transport
-            mb.trans(blk, mb.thtrdat, 0)
+            mb.trans(blk.cpp, mb.thtrdat.cpp, 0)
 
             blk.updateHostView(["Q", "qh", "qt"])
             rhos[j, i] = blk.array["Q"][ng, ng, ng, 0]

@@ -79,11 +79,11 @@ def simulate():
 
     # Update cons
     blk.updateDeviceView(["q"])
-    mb.eos(blk, mb.thtrdat, 0, "prims")
+    mb.eos(blk.cpp, mb.thtrdat.cpp, 0, "prims")
     # Apply euler boundary conditions
     for face in blk.faces:
-        face.bcFunc(blk, face, mb.eos, mb.thtrdat, "euler", mb.tme)
-        face.bcFunc(blk, face, mb.eos, mb.thtrdat, "viscous", mb.tme)
+        face.bcFunc(blk.cpp, face.cpp, mb.eos, mb.thtrdat.cpp, "euler", mb.tme)
+        face.bcFunc(blk.cpp, face.cpp, mb.eos, mb.thtrdat.cpp, "viscous", mb.tme)
     pg.consistify(mb)
 
     dt = 1.0e-9

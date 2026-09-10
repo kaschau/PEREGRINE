@@ -64,8 +64,8 @@ def test_kineticTheoryUnityLewis(my_setup, ctfile, thfile):
 
     # Update transport
     assert mb.trans.__name__ == "kineticTheoryUnityLewis"
-    mb.eos(blk, mb.thtrdat, 0, "prims")
-    mb.trans(blk, mb.thtrdat, 0)
+    mb.eos(blk.cpp, mb.thtrdat.cpp, 0, "prims")
+    mb.trans(blk.cpp, mb.thtrdat.cpp, 0)
     blk.updateHostView(["q", "qt"])
     ng = blk.ng
 

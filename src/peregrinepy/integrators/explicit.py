@@ -11,11 +11,11 @@ def ssp(wQ0, wQ, wdQ, storeQ0=False):
 
     def stage(blk, dt):
         if storeQ0:
-            AEQB(blk.Q0, blk.Q)
+            AEQB(blk.cpp.Q0, blk.cpp.Q)
         if wQ0 == 0.0:
-            axnpby(blk.Q, wQ, wdQ * dt, blk.dQ)
+            axnpby(blk.cpp.Q, wQ, wdQ * dt, blk.cpp.dQ)
         else:
-            axnpby(blk.Q, wQ, wQ0, blk.Q0, wdQ * dt, blk.dQ)
+            axnpby(blk.cpp.Q, wQ, wQ0, blk.cpp.Q0, wdQ * dt, blk.cpp.dQ)
 
     return stage
 

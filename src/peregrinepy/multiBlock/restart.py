@@ -8,7 +8,13 @@ class restart(grid):
 
     mbType = "restart"
 
+    def _newBlock(self, nblki):
+        return restartBlock(nblki, self.speciesNames)
+
     def __init__(self, nblks, spNames, ls=None):
+        self.speciesNames = spNames
+        self.ns = len(spNames)
+
         if ls is None:
             temp = [restartBlock(i, spNames) for i in range(nblks)]
             super().__init__(nblks, temp)

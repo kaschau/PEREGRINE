@@ -48,7 +48,7 @@ def registerParallelMetaData(
     comm, rank, size = getCommRankSize()
     if arrayName == "default":
         # Add scalar variables to block tree
-        names = ["rho", "p", "T"] + mb[0].speciesNames
+        names = ["rho", "p", "T"] + mb.speciesNames
     else:
         shape = mb[0].array[arrayName].shape
         if len(shape) > 3:
@@ -133,16 +133,16 @@ def registerParallelMetaData(
         nj = n[1]
         nk = n[2]
         # Add block to xdmf tree
-        blockElem = metaData.addBlockElem(nblki, ni, nj, nk, ng=0)
+        blockElem = metaData.addBlockElem(nblki, ni, nj, nk)
 
         for name in names:
             metaData.addScalarToBlockElem(
-                blockElem, name, mb.nrt, nblki, ni, nj, nk, ng=0
+                blockElem, name, mb.nrt, nblki, ni, nj, nk
             )
         if arrayName == "default":
             # Add vector variables to block tree
             metaData.addVectorToBlockElem(
-                blockElem, "Velocity", ["u", "v", "w"], mb.nrt, nblki, ni, nj, nk, ng=0
+                blockElem, "Velocity", ["u", "v", "w"], mb.nrt, nblki, ni, nj, nk
             )
 
     # Return the meta data
@@ -161,7 +161,7 @@ def parallelWriteRestart(
     else:
         fdtype = "float32"
 
-    names = ["rho", "p", "u", "v", "w", "T"] + mb[0].speciesNames
+    names = ["rho", "p", "u", "v", "w", "T"] + mb.speciesNames
 
     fileName = f"{path}/{metaData.getVarFileName(mb.nrt)}"
     qf = h5py.File(fileName, "w", driver="mpio", comm=comm)

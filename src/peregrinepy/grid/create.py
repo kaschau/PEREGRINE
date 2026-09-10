@@ -147,10 +147,6 @@ def cube(blk, origin, lengths, dimensions):
     blk.ni = dimensions[0]
     blk.nj = dimensions[1]
     blk.nk = dimensions[2]
-    if blk.blockType == "solver":
-        ng = blk.ng
-    else:
-        ng = 0
 
     blk.initGridArrays()
 
@@ -158,17 +154,13 @@ def cube(blk, origin, lengths, dimensions):
     y = np.linspace(origin[1], origin[1] + lengths[1], dimensions[1], dtype=np.float64)
     z = np.linspace(origin[2], origin[2] + lengths[2], dimensions[2], dtype=np.float64)
 
-    if blk.blockType == "solver":
-        s_i = np.s_[ng:-ng, ng:-ng, ng:-ng]
-    else:
-        s_i = np.s_[:, :, :]
+    s_i = blk.interior
 
     blk.array["x"][s_i], blk.array["y"][s_i], blk.array["z"][s_i] = np.meshgrid(
         x, y, z, indexing="ij"
     )
 
-    if blk.blockType in ["restart", "solver"]:
-        blk.initRestartArrays()
+    blk.initRestartArrays()
 
 
 def multiBlockCube(
@@ -268,9 +260,7 @@ def multiBlockCube(
                         face.periodicAxis = np.array([0.0, 0.0, 1.0])
 
     for blk in mb:
-        if blk.blockType == "solver" and blk._isInitialized:
-            for var in ["x", "y", "z"]:
-                blk.updateDeviceView(var)
+        blk.updateDeviceView(["x", "y", "z"])
 
 
 def annulus(blk, p1, p2, p3, sweep, thickness, dimensions):
@@ -334,17 +324,10 @@ def annulus(blk, p1, p2, p3, sweep, thickness, dimensions):
     blk.ni = dimensions[0]
     blk.nj = dimensions[1]
     blk.nk = dimensions[2]
-    if blk.blockType == "solver":
-        ng = blk.ng
-    else:
-        ng = 0
 
     blk.initGridArrays()
 
-    if blk.blockType == "solver":
-        s_i = np.s_[ng:-ng, ng:-ng, ng:-ng]
-    else:
-        s_i = np.s_[:, :, :]
+    s_i = blk.interior
 
     dx = np.linalg.norm(p2 - p1) / (blk.ni - 1)
     dr = thickness / (blk.nj - 1)
@@ -542,6 +525,4 @@ def multiBlockAnnulus(
                             face.periodicAxis = n12
 
     for blk in mb:
-        if blk.blockType == "solver" and blk._isInitialized:
-            for var in ["x", "y", "z"]:
-                blk.updateDeviceView(var)
+        blk.updateDeviceView(["x", "y", "z"])

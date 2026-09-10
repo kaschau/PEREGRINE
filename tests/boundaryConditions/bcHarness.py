@@ -56,7 +56,7 @@ class BaseBC:
         pass
 
     def run(self, face, stage):
-        face.bcFunc(self.blk, face, self.mb.eos, self.mb.thtrdat, stage, self.mb.tme)
+        face.bcFunc(self.blk.cpp, face.cpp, self.mb.eos, self.mb.thtrdat.cpp, stage, self.mb.tme)
         self.blk.updateHostView(self._pull[stage])
 
     def q(self, name):

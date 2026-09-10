@@ -13,7 +13,9 @@ class gridBlock(topologyBlock):
 
     blockType = "grid"
 
-    def __init__(self, nblki):
+    def __init__(self, nblki, ng=0):
+        self.ng = ng
+
         super().__init__(nblki)
 
         self.ni = 0
@@ -66,14 +68,25 @@ class gridBlock(topologyBlock):
         if self.blockType == "grid":
             self.array._freeze()
 
+    def initRestartArrays(self):
+        """No restart arrays on a grid block."""
+
+    @property
+    def interior(self):
+        """The slice of this block's arrays that is not halo."""
+        return np.s_[:, :, :]
+
+    def updateDeviceView(self, vars):
+        """No device to push to."""
+
+    def updateHostView(self, vars):
+        """No device to pull from."""
+
     def initGridArrays(self):
         """
         Create zeroed numpy arrays of correct size.
         """
-        if self.blockType == "solver":
-            ng = self.ng
-        else:
-            ng = 0
+        ng = self.ng
 
         # Primary grid coordinates
         shape = [self.ni + 2 * ng, self.nj + 2 * ng, self.nk + 2 * ng]

@@ -45,7 +45,10 @@ def communicate(mb, varis):
                 # populate the temp recv array with the unoriented send data, since its
                 # the correct size and shape
                 extractSendBuffer(
-                    getattr(blk, var), getattr(face, recvName), face, sliceIndxs
+                    getattr(blk.cpp, var),
+                    getattr(face.cpp, recvName),
+                    face.cpp,
+                    sliceIndxs,
                 )
                 # update the device temp recv buffer
                 face.updateHostView(recvName)
@@ -77,7 +80,10 @@ def communicate(mb, varis):
                 sliceIndxs = [s for f in sliceR for s in f if isinstance(s, int)]
                 # Place the recv in the view
                 placeRecvBuffer(
-                    getattr(blk, var), getattr(face, recvName), face, sliceIndxs
+                    getattr(blk.cpp, var),
+                    getattr(face.cpp, recvName),
+                    face.cpp,
+                    sliceIndxs,
                 )
 
         comm.Barrier()

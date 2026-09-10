@@ -103,7 +103,7 @@ def simulate():
     blk.array["q"][:, :, :, 4] = blk.array["q"][:, :, :, 0] / (R * rhoInf)
 
     blk.updateDeviceView(["q"])
-    mb.eos(blk, mb.thtrdat, 0, "prims")
+    mb.eos(blk.cpp, mb.thtrdat.cpp, 0, "prims")
     pg.consistify(mb)
 
     refX = xc[ng:-ng, int(NN / 2.0), ng] / Rc

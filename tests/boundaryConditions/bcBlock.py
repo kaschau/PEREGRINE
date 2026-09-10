@@ -52,9 +52,9 @@ def create(bc, adv, spdata):
         blk.array["q"][:, :, :, 5::] = Y
     blk.updateDeviceView("q")
 
-    mb.eos(blk, mb.thtrdat, -1, "prims")
+    mb.eos(blk.cpp, mb.thtrdat.cpp, -1, "prims")
 
-    mb.dqdxyz(blk)
+    mb.dqdxyz(blk.cpp)
 
     if blk.ns > 1:
         Ybc = np.random.uniform(low=0.0, high=1.0, size=blk.ns)

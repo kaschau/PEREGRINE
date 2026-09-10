@@ -26,8 +26,16 @@ class solver(restart):
 
     mbType = "solver"
 
+    def _newBlock(self, nblki):
+        return solverBlock(nblki, self.speciesNames, self.ng)
+
+    def progress(self, n, message):
+        """A running case reports through its own machinery, not a bar."""
+
     def __init__(self, nblks, spNames, ng):
         assert isinstance(spNames, list), f"spNames must me a list not {type(spNames)}"
+
+        self.ng = ng
 
         temp = [solverBlock(i, spNames, ng) for i in range(nblks)]
         super().__init__(nblks, spNames, temp)

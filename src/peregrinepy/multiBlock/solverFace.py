@@ -10,11 +10,12 @@ from .topologyFace import topologyFace
 s_ = np.s_
 
 
-class solverFace(gridFace, face_):
+class solverFace(gridFace):
     faceType = "solver"
 
     def __init__(self, nface, ng):
-        face_.__init__(self)
+        # the compute object must exist before anything forwards to it
+        self.cpp = face_()
         gridFace.__init__(self, nface)
         assert 1 <= nface <= 6, "nface must be between (1,6)"
 
@@ -366,19 +367,39 @@ class solverFace(gridFace, face_):
 
     @property
     def ng(self):
-        return self._ng
+        return self.cpp._ng
+
+    @ng.setter
+    def ng(self, value):
+        self.cpp._ng = value
+
+    @property
+    def _ng(self):
+        return self.cpp._ng
+
+    @_ng.setter
+    def _ng(self, value):
+        self.cpp._ng = value
+
+    @property
+    def _nface(self):
+        return self.cpp._nface
+
+    @_nface.setter
+    def _nface(self, value):
+        self.cpp._nface = value
 
     def updateDeviceView(self, vars):
         if isinstance(vars, str):
             vars = [vars]
         for var in vars:
-            deep_copy(getattr(self, var), self.mirror[var])
+            deep_copy(getattr(self.cpp, var), self.mirror[var])
 
     def updateHostView(self, vars):
         if isinstance(vars, str):
             vars = [vars]
         for var in vars:
-            deep_copy(self.mirror[var], getattr(self, var))
+            deep_copy(self.mirror[var], getattr(self.cpp, var))
 
     ##########################################################
     # Define the possible reorientation routines

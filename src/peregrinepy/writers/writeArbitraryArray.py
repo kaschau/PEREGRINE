@@ -1,5 +1,4 @@
 import h5py
-import numpy as np
 from .writeMetaData import arbitraryMetaData
 
 
@@ -10,7 +9,6 @@ def writeArbitraryArray(
     gridPath="./",
     animate=True,
     precision="double",
-    withHalo=False,
 ):
     """This function produces an hdf5 file from a peregrinepy.multiBlock.restart for viewing in Paraview.
 
@@ -55,14 +53,8 @@ def writeArbitraryArray(
         nblki = blk.nblki
         ni, nj, nk = blk.ni, blk.nj, blk.nk
 
-        if withHalo:
-            writeS = np.s_[:, :, :]
-            ng = blk.ng
-        else:
-            writeS = np.s_[blk.ng : -blk.ng, blk.ng : -blk.ng, blk.ng : -blk.ng]
-            ng = 0
 
-        extentCC = (ni + 2 * ng - 1) * (nj + 2 * ng - 1) * (nk + 2 * ng - 1)
+        extentCC = (ni - 1) * (nj - 1) * (nk - 1)
 
         if "iter" not in qf.keys():
             qf.create_group("iter")
@@ -89,16 +81,16 @@ def writeArbitraryArray(
             qf[resS].create_dataset(dsetName, shape=(extentCC,), dtype=fdtype)
             dset = qf[resS][dsetName]
             if arrayDim > 3:
-                dset[:] = array[writeS + tuple([j])].ravel(order="F")
+                dset[:] = array[blk.interior + tuple([j])].ravel(order="F")
             else:
-                dset[:] = array[writeS].ravel(order="F")
+                dset[:] = array[blk.interior].ravel(order="F")
 
         # Add block to xdmf tree
-        blockElem = metaData.addBlockElem(nblki, ni, nj, nk, ng)
+        blockElem = metaData.addBlockElem(nblki, ni, nj, nk)
 
         for name in names:
             metaData.addScalarToBlockElem(
-                blockElem, name, mb.nrt, nblki, ni, nj, nk, ng
+                blockElem, name, mb.nrt, nblki, ni, nj, nk
             )
 
     qf.close()

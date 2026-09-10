@@ -16,10 +16,11 @@ class topologyBlock:
         # slice of base block in uncut grid (None = entire block)
         self.baseSlice = None
 
-        self.faces = []
-        if self.blockType in ["topology", "grid", "restart"]:
-            for fn in [1, 2, 3, 4, 5, 6]:
-                self.faces.append(topologyFace(fn))
+        self.faces = [self._newFace(nface) for nface in range(1, 7)]
+
+    def _newFace(self, nface):
+        # the kind of face this kind of block is bounded by
+        return topologyFace(nface)
 
     def getFace(self, nface):
         assert 1 <= nface <= 6, "nface must be between (1,6)"

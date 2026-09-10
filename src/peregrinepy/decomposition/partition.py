@@ -29,15 +29,12 @@ def facePlaneCells(blk, face):
 def edgesFromMb(mb):
     """Edge weights {(a, b): plane cells} from a multiBlock's connectivity."""
     edges = {}
-    for blk in mb:
-        for face in blk.faces:
-            if face.neighbor is None:
-                continue
-            key = tuple(sorted((blk.nblki, face.neighbor)))
-            # a connection shows up from both sides, count it once
-            if blk.nblki > face.neighbor and key in edges:
-                continue
-            edges[key] = edges.get(key, 0) + facePlaneCells(blk, face)
+    for blk, face in mb.connections():
+        key = tuple(sorted((blk.nblki, face.neighbor)))
+        # a connection shows up from both sides, count it once
+        if blk.nblki > face.neighbor and key in edges:
+            continue
+        edges[key] = edges.get(key, 0) + facePlaneCells(blk, face)
     return edges
 
 

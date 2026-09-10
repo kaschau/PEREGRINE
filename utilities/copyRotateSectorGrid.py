@@ -229,4 +229,4 @@ if __name__ == "__main__":
                         toFace.bcType = "interior"
                         toFace.bcFam = None
 
-    pg.writers.writeGrid(toGrid, toDir)
+    toGrid.writeGrid(toDir)

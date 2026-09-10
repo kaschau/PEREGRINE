@@ -33,7 +33,7 @@ def test_constantProps(my_setup):
 
     # Update transport
     assert mb.trans.__name__ == "constantProps"
-    mb.trans(blk, mb.thtrdat, 0)
+    mb.trans(blk.cpp, mb.thtrdat.cpp, 0)
     blk.updateHostView(["q", "qt"])
     ng = blk.ng
 

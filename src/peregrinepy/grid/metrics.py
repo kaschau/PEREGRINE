@@ -68,9 +68,7 @@ def metrics(blk, xcOnly=False):
         + z[1::, 1::, 0:-1]
         + z[1::, 1::, 1::]
     )
-    if blk.blockType == "solver" and blk._isInitialized:
-        for var in ["xc", "yc", "zc"]:
-            blk.updateDeviceView(var)
+    blk.updateDeviceView(["xc", "yc", "zc"])
 
     # A lot of times we only want cell centers.
     if xcOnly:
@@ -121,8 +119,8 @@ def metrics(blk, xcOnly=False):
     blk.array["iny"][:] = blk.array["isy"] / blk.array["iS"]
     blk.array["inz"][:] = blk.array["isz"] / blk.array["iS"]
 
-    if blk.blockType == "solver" and blk._isInitialized:
-        for var in [
+    blk.updateDeviceView(
+        [
             "ixc",
             "iyc",
             "izc",
@@ -133,8 +131,8 @@ def metrics(blk, xcOnly=False):
             "inx",
             "iny",
             "inz",
-        ]:
-            blk.updateDeviceView(var)
+        ]
+    )
 
     # ----------------------------------------------------------------------------
     # j face center, area, normal vectors
@@ -181,8 +179,8 @@ def metrics(blk, xcOnly=False):
     blk.array["jny"][:] = blk.array["jsy"] / blk.array["jS"]
     blk.array["jnz"][:] = blk.array["jsz"] / blk.array["jS"]
 
-    if blk.blockType == "solver" and blk._isInitialized:
-        for var in [
+    blk.updateDeviceView(
+        [
             "jxc",
             "jyc",
             "jzc",
@@ -193,8 +191,8 @@ def metrics(blk, xcOnly=False):
             "jnx",
             "jny",
             "jnz",
-        ]:
-            blk.updateDeviceView(var)
+        ]
+    )
 
     # ----------------------------------------------------------------------------
     # k face center, area, normal vectors
@@ -241,8 +239,8 @@ def metrics(blk, xcOnly=False):
     blk.array["kny"][:] = blk.array["ksy"] / blk.array["kS"]
     blk.array["knz"][:] = blk.array["ksz"] / blk.array["kS"]
 
-    if blk.blockType == "solver" and blk._isInitialized:
-        for var in [
+    blk.updateDeviceView(
+        [
             "kxc",
             "kyc",
             "kzc",
@@ -253,8 +251,8 @@ def metrics(blk, xcOnly=False):
             "knx",
             "kny",
             "knz",
-        ]:
-            blk.updateDeviceView(var)
+        ]
+    )
 
     # ----------------------------------------------------------------------------
     # Cell center volumes
@@ -283,9 +281,7 @@ def metrics(blk, xcOnly=False):
 
     np.clip(blk.array["J"], 1e-16, None, out=blk.array["J"])
 
-    if blk.blockType == "solver" and blk._isInitialized:
-        for var in ["J"]:
-            blk.updateDeviceView(var)
+    blk.updateDeviceView(["J"])
 
     # ----------------------------------------------------------------------------
     # Cell lengths, opposite face center to opposite face center
@@ -307,9 +303,7 @@ def metrics(blk, xcOnly=False):
         + (blk.array["kzc"][:, :, 1::] - blk.array["kzc"][:, :, 0:-1]) ** 2
     )
 
-    if blk.blockType == "solver" and blk._isInitialized:
-        for var in ["dI", "dJ", "dK"]:
-            blk.updateDeviceView(var)
+    blk.updateDeviceView(["dI", "dJ", "dK"])
 
     # ----------------------------------------------------------------------------
     # Cell center transformation metrics (ferda FD diffusion operator)
@@ -369,8 +363,8 @@ def metrics(blk, xcOnly=False):
     blk.array["dCdy"][:] = (dxdE * dzdN - dxdN * dzdE) / -blk.array["J"]
     blk.array["dCdz"][:] = (dxdE * dydN - dxdN * dydE) / blk.array["J"]
 
-    if blk.blockType == "solver" and blk._isInitialized:
-        for var in [
+    blk.updateDeviceView(
+        [
             "dEdx",
             "dEdy",
             "dEdz",
@@ -380,8 +374,8 @@ def metrics(blk, xcOnly=False):
             "dCdx",
             "dCdy",
             "dCdz",
-        ]:
-            blk.updateDeviceView(var)
+        ]
+    )
 
     # # fourth order (not used)
     # xc = blk.array["xc"]

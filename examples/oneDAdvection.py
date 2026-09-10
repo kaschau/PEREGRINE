@@ -76,7 +76,7 @@ def simulate(index="i"):
 
     # Update cons
     blk.updateDeviceView(["q", "Q"])
-    mb.eos(blk, mb.thtrdat, 0, "prims")
+    mb.eos(blk.cpp, mb.thtrdat.cpp, 0, "prims")
     pg.consistify(mb)
 
     dt = 0.1 * 0.025

@@ -459,7 +459,7 @@ def simulate(testnum, index="i"):
         pg.misc.createViewMirrorArray(face, "qBcVals", shape)
 
     # Update cons
-    mb.eos(blk, mb.thtrdat, 0, "prims")
+    mb.eos(blk.cpp, mb.thtrdat.cpp, 0, "prims")
     pg.consistify(mb)
     while mb.tme < test.t:
         pg.misc.progressBar(mb.tme, test.t)

@@ -1,4 +1,6 @@
 from collections import UserList
+
+from ..misc import progressBar
 from .topologyBlock import topologyBlock
 
 
@@ -25,6 +27,23 @@ class topology(UserList):
     def blockList(self):
         return [b.nblki for b in self]
 
+    def connections(self):
+        """Every face that names a neighbor, as (block, face)."""
+        for blk in self:
+            for face in blk.faces:
+                if face.neighbor is not None:
+                    yield blk, face
+
+    def boundaries(self):
+        """Every face that does not, as (block, face)."""
+        for blk in self:
+            for face in blk.faces:
+                if face.neighbor is None:
+                    yield blk, face
+
+    def progress(self, n, message):
+        progressBar(n, len(self), message)
+
     def getBlock(self, nblki):
         if self[nblki].nblki == nblki:
             return self[nblki]
@@ -33,15 +52,12 @@ class topology(UserList):
             if blk.nblki == nblki:
                 return blk
 
-    def appendBlock(self):
-        if self.mbType in ["restart", "solver"]:
-            raise TypeError("Cannot append restart or solver multiBlocks.")
-        maxNblki = 0
-        for blk in self:
-            maxNblki = blk.nblki if blk.nblki > maxNblki else maxNblki
-        tmp_blk = self[0].__class__(maxNblki + 1)
+    def _newBlock(self, nblki):
+        return topologyBlock(nblki)
 
-        self.append(tmp_blk)
+    def appendBlock(self):
+        nblki = max((blk.nblki for blk in self), default=-1) + 1
+        self.append(self._newBlock(nblki))
 
     def __repr__(self):
         string = "Topology multiBlock object:\n"

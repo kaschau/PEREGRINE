@@ -61,7 +61,7 @@ def simulate():
     blk.array["q"][:, :, :, 5::] = gas.Y[0:-1]
 
     # Update cons
-    mb.eos(blk, mb.thtrdat, 0, "prims")
+    mb.eos(blk.cpp, mb.thtrdat.cpp, 0, "prims")
     pg.consistify(mb)
 
     dt = 1e-9

@@ -1,3 +1,5 @@
+import numpy as np
+
 from ..compute import block_
 from ..compute.pgkokkos import deep_copy
 from .restartBlock import restartBlock
@@ -5,26 +7,24 @@ from .solverFace import solverFace
 from ..misc import createViewMirrorArray
 
 
-class solverBlock(restartBlock, block_):
+class solverBlock(restartBlock):
     blockType = "solver"
 
     def __init__(self, nblki, spNames, ng):
-        # The c++ stuff must be instantiated first,
-        # so that inhereted python side
-        # attributes are assigned values, not defined
-        # in the upstream __init__s
-        block_.__init__(self)
+        # must exist before anything forwards to it
+        self.cpp = block_()
 
         # Flag to determine if a block's solver arrays are
         # initialized or not
         self._isInitialized = False
 
-        self.ng = ng
+        restartBlock.__init__(self, nblki, spNames, ng)
 
-        restartBlock.__init__(self, nblki, spNames)
-
-        for fn in [1, 2, 3, 4, 5, 6]:
-            self.faces.append(solverFace(fn, self.ng))
+        if hasattr(self.cpp, "ns") and self.cpp.ns != self.ns:
+            raise ValueError(
+                f"ERROR!! You are trying to use {self.ns} species, but pg.compute\n"
+                f"    was precompiled for {self.cpp.ns} species."
+            )
 
         self.ne = 5 + self.ns - 1
 
@@ -62,6 +62,73 @@ class solverBlock(restartBlock, block_):
 
         self.array._freeze()
         self.mirror._freeze()
+
+    def fillHaloWithNearest(self, name):
+        a = self.array[name]
+        ng = self.ng
+        a[0:ng] = a[[ng]]
+        a[-ng::] = a[[-ng - 1]]
+        a[:, 0:ng] = a[:, [ng]]
+        a[:, -ng::] = a[:, [-ng - 1]]
+        a[:, :, 0:ng] = a[:, :, [ng]]
+        a[:, :, -ng::] = a[:, :, [-ng - 1]]
+
+    def _newFace(self, nface):
+        return solverFace(nface, self.ng)
+
+    @property
+    def interior(self):
+        """The slice of this block's arrays that is not halo."""
+        ng = self.ng
+        return np.s_[ng:-ng, ng:-ng, ng:-ng]
+
+    @property
+    def nblki(self):
+        return self.cpp.nblki
+
+    @nblki.setter
+    def nblki(self, value):
+        self.cpp.nblki = value
+
+    @property
+    def ni(self):
+        return self.cpp.ni
+
+    @ni.setter
+    def ni(self, value):
+        self.cpp.ni = value
+
+    @property
+    def nj(self):
+        return self.cpp.nj
+
+    @nj.setter
+    def nj(self, value):
+        self.cpp.nj = value
+
+    @property
+    def nk(self):
+        return self.cpp.nk
+
+    @nk.setter
+    def nk(self, value):
+        self.cpp.nk = value
+
+    @property
+    def ng(self):
+        return self.cpp.ng
+
+    @ng.setter
+    def ng(self, value):
+        self.cpp.ng = value
+
+    @property
+    def ne(self):
+        return self.cpp.ne
+
+    @ne.setter
+    def ne(self, value):
+        self.cpp.ne = value
 
     def initSolverArrays(self, config):
         """
@@ -244,13 +311,17 @@ class solverBlock(restartBlock, block_):
             face._setCommBuffers(self.ni, self.nj, self.nk, self.ne, self.nblki)
 
     def updateDeviceView(self, vars):
+        if not self._isInitialized:
+            return
         if isinstance(vars, str):
             vars = [vars]
         for var in vars:
-            deep_copy(getattr(self, var), self.mirror[var])
+            deep_copy(getattr(self.cpp, var), self.mirror[var])
 
     def updateHostView(self, vars):
+        if not self._isInitialized:
+            return
         if isinstance(vars, str):
             vars = [vars]
         for var in vars:
-            deep_copy(self.mirror[var], getattr(self, var))
+            deep_copy(self.mirror[var], getattr(self.cpp, var))

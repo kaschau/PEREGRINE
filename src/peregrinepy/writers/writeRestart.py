@@ -1,6 +1,5 @@
 import h5py
 import numpy as np
-from ..misc import progressBar
 from .writeMetaData import restartMetaData
 
 
@@ -10,7 +9,6 @@ def writeRestart(
     gridPath="./",
     animate=True,
     precision="double",
-    withHalo=False,
 ):
     """This function produces an hdf5 file from a peregrinepy.multiBlock.restart for viewing in Paraview.
 
@@ -53,18 +51,8 @@ def writeRestart(
         nblki = blk.nblki
         ni, nj, nk = blk.ni, blk.nj, blk.nk
 
-        if blk.blockType == "solver":
-            if withHalo:
-                writeS = np.s_[:, :, :]
-                ng = blk.ng
-            else:
-                writeS = np.s_[blk.ng : -blk.ng, blk.ng : -blk.ng, blk.ng : -blk.ng]
-                ng = 0
-        else:
-            writeS = np.s_[:, :, :]
-            ng = 0
 
-        extentCC = (ni + 2 * ng - 1) * (nj + 2 * ng - 1) * (nk + 2 * ng - 1)
+        extentCC = (ni - 1) * (nj - 1) * (nk - 1)
 
         if "iter" not in qf.keys():
             qf.create_group("iter")
@@ -84,7 +72,7 @@ def writeRestart(
             qf[resS].create_dataset(dsetName, shape=(extentCC,), dtype=fdtype)
             dset = qf[resS][dsetName]
             try:
-                dset[:] = blk.array["Q"][writeS + tuple([0])].ravel(order="F")
+                dset[:] = blk.array["Q"][blk.interior + tuple([0])].ravel(order="F")
             except TypeError:
                 pass
 
@@ -93,20 +81,20 @@ def writeRestart(
             dsetName = names[j]
             qf[resS].create_dataset(dsetName, shape=(extentCC,), dtype=fdtype)
             dset = qf[resS][dsetName]
-            dset[:] = blk.array["q"][writeS + tuple([j])].ravel(order="F")
+            dset[:] = blk.array["q"][blk.interior + tuple([j])].ravel(order="F")
         # Compute the nth species here
         dsetName = blk.speciesNames[-1]
         qf[resS].create_dataset(dsetName, shape=(extentCC,), dtype=fdtype)
         dset = qf[resS][dsetName]
         if blk.ns > 1:
             dset[:] = 1.0 - np.sum(
-                blk.array["q"][writeS + tuple([slice(5, None, None)])], axis=-1
+                blk.array["q"][blk.interior + tuple([slice(5, None, None)])], axis=-1
             ).ravel(order="F")
         elif blk.ns == 1:
             dset[:] = 1.0
 
         # Add block to xdmf tree
-        blockElem = metaData.addBlockElem(nblki, ni, nj, nk, ng)
+        blockElem = metaData.addBlockElem(nblki, ni, nj, nk)
 
         # Add scalar variables to block tree
         names = ["p", "T"] + blk.speciesNames
@@ -115,15 +103,14 @@ def writeRestart(
 
         for name in names:
             metaData.addScalarToBlockElem(
-                blockElem, name, mb.nrt, nblki, ni, nj, nk, ng
+                blockElem, name, mb.nrt, nblki, ni, nj, nk
             )
         # Add vector variables to block tree
         metaData.addVectorToBlockElem(
-            blockElem, "Velocity", ["u", "v", "w"], mb.nrt, nblki, ni, nj, nk, ng
+            blockElem, "Velocity", ["u", "v", "w"], mb.nrt, nblki, ni, nj, nk
         )
 
-        if mb.mbType == "restart":
-            progressBar(nblki + 1, len(mb), f"Writing out restartBlock {nblki}")
+        mb.progress(nblki + 1, f"Writing out restartBlock {nblki}")
 
     qf.close()
 

@@ -44,7 +44,7 @@ class ConstantMassFluxSubsonicInlet(Inlet):
 
     def _massFlux(self, face):
         blk, ng = self.blk, self.blk.ng
-        self.mb.primaryAdvFlux(blk)
+        self.mb.primaryAdvFlux(blk.cpp)
         blk.updateHostView(["q", "Q"])
 
         d = {1: "i", 2: "i", 3: "j", 4: "j", 5: "k", 6: "k"}[face.nface]

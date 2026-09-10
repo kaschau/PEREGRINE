@@ -104,8 +104,8 @@ class dualTime:
 
         # After iterating in pseudo time, shift solution arrays
         for blk in self:
-            AEQB(blk.Qnm1, blk.Qn)
-            AEQB(blk.Qn, blk.Q)
+            AEQB(blk.cpp.Qnm1, blk.cpp.Qn)
+            AEQB(blk.cpp.Qn, blk.cpp.Q)
 
         self.nrt += 1
         self.tme += dt
@@ -128,9 +128,9 @@ class dualTime:
                         blk.array["Qnm1"][ng:-ng, ng:-ng, ng:-ng, :] = np.load(f)
                         blk.updateDeviceView(["Qnm1"])
                 except FileNotFoundError:
-                    AEQB(blk.Qnm1, blk.Q)
-                AEQB(blk.Qn, blk.Q)
+                    AEQB(blk.cpp.Qnm1, blk.cpp.Q)
+                AEQB(blk.cpp.Qn, blk.cpp.Q)
         else:
             for blk in self:
-                AEQB(blk.Qn, blk.Q)
-                AEQB(blk.Qnm1, blk.Q)
+                AEQB(blk.cpp.Qn, blk.cpp.Q)
+                AEQB(blk.cpp.Qnm1, blk.cpp.Q)

@@ -68,10 +68,10 @@ def test_chemistry(my_setup, thfile, ctfile, chmfile):
     blk.updateDeviceView(["q"])
 
     # Update cons
-    pg.compute.thermo.tpg(blk, mb.thtrdat, 0, "prims")
+    pg.compute.thermo.tpg(blk.cpp, mb.thtrdat.cpp, 0, "prims")
     # zero out dQ
-    pg.compute.utils.dQzero(blk)
-    mb.expChem(blk, mb.thtrdat)
+    pg.compute.utils.dQzero(blk.cpp)
+    mb.expChem(blk.cpp, mb.thtrdat.cpp)
 
     blk.updateHostView(["q", "dQ"])
     # test the properties

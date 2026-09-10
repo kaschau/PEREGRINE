@@ -45,15 +45,15 @@ class gridMetaData:
         saveFile = f"{path}/{self.getOutputName(nrt=nrt)}"
         et.write(saveFile, pretty_print=True, encoding="UTF-8", xml_declaration=True)
 
-    def addBlockElem(self, nblki, ni, nj, nk, ng):
+    def addBlockElem(self, nblki, ni, nj, nk):
         blockElem = deepcopy(self.blockTemplate)
         blockElem.set("Name", f"B{nblki:06d}")
         topo = blockElem.find("Topology")
-        topo.set("NumberOfElements", f"{nk+2*ng} {nj+2*ng} {ni+2*ng}")
+        topo.set("NumberOfElements", f"{nk} {nj} {ni}")
 
         for coord, i in zip(["x", "y", "z"], [0, 1, 2]):
             X = blockElem.find("Geometry")[i]
-            X.set("Dimensions", f"{nk+2*ng} {nj+2*ng} {ni+2*ng}")
+            X.set("Dimensions", f"{nk} {nj} {ni}")
             X.text = self.getGridFileH5Location(coord, nblki)
 
         self.gridElem.append(deepcopy(blockElem))
@@ -105,15 +105,15 @@ class restartMetaData(gridMetaData):
         self.dataItemTemplate.set("Format", "HDF")
         self.dataItemTemplate.text = "resultFile location:/results/"
 
-    def addBlockElem(self, nblki, ni, nj, nk, ng):
+    def addBlockElem(self, nblki, ni, nj, nk):
         blockElem = deepcopy(self.blockTemplate)
         blockElem.set("Name", f"B{nblki:06d}")
         topo = blockElem.find("Topology")
-        topo.set("NumberOfElements", f"{nk+2*ng} {nj+2*ng} {ni+2*ng}")
+        topo.set("NumberOfElements", f"{nk} {nj} {ni}")
 
         for coord, i in zip(["x", "y", "z"], [0, 1, 2]):
             X = blockElem.find("Geometry")[i]
-            X.set("Dimensions", f"{nk+2*ng} {nj+2*ng} {ni+2*ng}")
+            X.set("Dimensions", f"{nk} {nj} {ni}")
             X.text = self.getGridFileH5Location(coord, nblki)
 
         self.gridElem.append(deepcopy(blockElem))
@@ -129,27 +129,27 @@ class restartMetaData(gridMetaData):
         else:
             return "q.h5"
 
-    def addScalarToBlockElem(self, blockElem, varName, nrt, nblki, ni, nj, nk, ng):
+    def addScalarToBlockElem(self, blockElem, varName, nrt, nblki, ni, nj, nk):
         attributeElem = deepcopy(self.scalarAttributeTemplate)
         attributeElem.set("Name", varName)
 
         dataItemElem = deepcopy(self.dataItemTemplate)
-        dataItemElem.set("Dimensions", f"{nk+2*ng-1} {nj+2*ng-1} {ni+2*ng-1}")
+        dataItemElem.set("Dimensions", f"{nk-1} {nj-1} {ni-1}")
         dataItemElem.text = self.getVarFileH5Location(varName, nrt, nblki)
 
         attributeElem.append(dataItemElem)
         blockElem.append(attributeElem)
 
     def addVectorToBlockElem(
-        self, blockElem, vectorName, varNames, nrt, nblki, ni, nj, nk, ng
+        self, blockElem, vectorName, varNames, nrt, nblki, ni, nj, nk
     ):
         attributeElem = deepcopy(self.vectorAttributeTemplate)
         attributeElem.set("Name", vectorName)
         functionElem = attributeElem.find("DataItem")
-        functionElem.set("Dimensions", f"{nk+2*ng-1} {nj+2*ng-1} {ni+2*ng-1} 3")
+        functionElem.set("Dimensions", f"{nk-1} {nj-1} {ni-1} 3")
         for varName in varNames:
             dataItemElem = deepcopy(self.dataItemTemplate)
-            dataItemElem.set("Dimensions", f"{nk+2*ng-1} {nj+2*ng-1} {ni+2*ng-1}")
+            dataItemElem.set("Dimensions", f"{nk-1} {nj-1} {ni-1}")
             dataItemElem.text = self.getVarFileH5Location(varName, nrt, nblki)
 
             functionElem.append(dataItemElem)

@@ -21,7 +21,6 @@ interpolate.py --from </path/to/from-grid/and/restart> --to </path/to/to-grid/> 
 
 import argparse
 from peregrinepy.readers import readRestart
-from peregrinepy.writers import writeRestart
 from peregrinepy.multiBlock import restart as mbr
 from peregrinepy import interpolation
 from peregrinepy.misc import progressBar
@@ -140,4 +139,4 @@ if __name__ == "__main__":
     mbTo.tme = mbFrom.tme
     mbTo.nrt = mbFrom.nrt
 
-    writeRestart(mbTo, toDir, animate=animate)
+    mbTo.writeRestart(toDir, animate=animate)

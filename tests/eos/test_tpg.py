@@ -71,7 +71,7 @@ def test_tpg(my_setup, ctfile, thfile):
     # Update cons
     assert mb.eos.__name__ == "tpg"
     blk.updateDeviceView(["q"])
-    mb.eos(blk, mb.thtrdat, 0, "prims")
+    mb.eos(blk.cpp, mb.thtrdat.cpp, 0, "prims")
     blk.updateHostView(["q", "Q", "qh"])
 
     # test the properties
@@ -125,7 +125,7 @@ def test_tpg(my_setup, ctfile, thfile):
     blk.array["q"][:, :, :, 4] = 0.0
     blk.array["q"][:, :, :, 5::] = np.zeros(len(Y[0:-1]))
     blk.updateDeviceView(["q"])
-    mb.eos(blk, mb.thtrdat, 0, "cons")
+    mb.eos(blk.cpp, mb.thtrdat.cpp, 0, "cons")
     blk.updateHostView(["q", "Q", "qh"])
 
     print("********  Conservatives to Primatives ***************")

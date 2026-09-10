@@ -39,9 +39,9 @@ def test_cubic(my_setup):
     # Update cons
     assert mb.eos.__name__ == "cubic"
     blk.updateDeviceView(["q"])
-    mb.eos(blk, mb.thtrdat, 0, "prims")
+    mb.eos(blk.cpp, mb.thtrdat.cpp, 0, "prims")
     # Go the other way
-    mb.eos(blk, mb.thtrdat, 0, "cons")
+    mb.eos(blk.cpp, mb.thtrdat.cpp, 0, "cons")
     blk.updateHostView(["q", "Q", "qh"])
 
     # test the properties

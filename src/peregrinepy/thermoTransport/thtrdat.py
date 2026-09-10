@@ -9,9 +9,10 @@ from .completeSpecies import completeSpecies
 from .findUserSpData import findUserSpData
 
 
-class thtrdat(thtrdat_):
+class thtrdat:
     def __init__(self, config):
-        thtrdat_.__init__(self)
+        # the compute object must exist before anything forwards to it
+        self.cpp = thtrdat_()
 
         self.array = frozenDict(
             {
@@ -69,6 +70,7 @@ class thtrdat(thtrdat_):
 
         ns = len(usersp.keys())
         self.ns = ns
+        self.cpp.ns = ns
         # Ru = refsp["Ru"]
         # self.Ru = Ru
 
@@ -166,10 +168,10 @@ class thtrdat(thtrdat_):
         if isinstance(vars, str):
             vars = [vars]
         for var in vars:
-            deep_copy(getattr(self, var), self.mirror[var])
+            deep_copy(getattr(self.cpp, var), self.mirror[var])
 
     def updateHostView(self, vars):
         if isinstance(vars, str):
             vars = [vars]
         for var in vars:
-            deep_copy(self.mirror[var], getattr(self, var))
+            deep_copy(self.mirror[var], getattr(self.cpp, var))

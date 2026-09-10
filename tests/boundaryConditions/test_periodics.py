@@ -81,7 +81,7 @@ class TestPeriodics:
             blk.array["q"][:, :, :, 5::] = Y
         blk.updateDeviceView("q")
 
-        mb.eos(blk, mb.thtrdat, 0, "prims")
+        mb.eos(blk.cpp, mb.thtrdat.cpp, 0, "prims")
         pg.consistify(mb)
 
         blk.updateHostView(["q"])
@@ -137,10 +137,10 @@ class TestPeriodics:
             )
 
         # check the gradients
-        mb.dqdxyz(blk)
+        mb.dqdxyz(blk.cpp)
         pg.mpiComm.communicate(mb, ["dqdx", "dqdy", "dqdz"])
         for face in blk.faces:
-            face.bcFunc(blk, face, mb.eos, mb.thtrdat, "postDqDxyz", mb.tme)
+            face.bcFunc(blk.cpp, face.cpp, mb.eos, mb.thtrdat.cpp, "postDqDxyz", mb.tme)
 
         blk.updateHostView(["dqdx", "dqdy", "dqdz"])
 

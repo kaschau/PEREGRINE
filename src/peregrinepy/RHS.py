@@ -11,44 +11,48 @@ set for the multiBlock solver.
 def RHS(mb):
     for blk in mb:
         # Zero out dQ array
-        utils.dQzero(blk)
+        utils.dQzero(blk.cpp)
 
         # Primary advective fluxes
-        mb.primaryAdvFlux(blk)
-        mb.applyPrimaryAdvFlux(blk, 1.0)  # <-- 1.0 is for primary flux
+        mb.primaryAdvFlux(blk.cpp)
+        mb.applyPrimaryAdvFlux(blk.cpp, 1.0)  # <-- 1.0 is for primary flux
 
         # Secondary advective fluxes
-        mb.secondaryAdvFlux(blk)
-        mb.applySecondaryAdvFlux(blk, 0.0)  # <-- 0.0 is for secondary flux
+        mb.secondaryAdvFlux(blk.cpp)
+        mb.applySecondaryAdvFlux(blk.cpp, 0.0)  # <-- 0.0 is for secondary flux
 
     if mb.config["RHS"]["diffusion"]:
         for blk in mb:
             # Apply viscous boundary conditions
             for face in blk.faces:
-                face.bcFunc(blk, face, mb.eos, mb.thtrdat, "preDqDxyz", mb.titme)
+                face.bcFunc(
+                    blk.cpp, face.cpp, mb.eos, mb.thtrdat.cpp, "preDqDxyz", mb.titme
+                )
 
             # Update spatial derivatives
-            mb.dqdxyz(blk)
+            mb.dqdxyz(blk.cpp)
 
         # communicate derivatives
         communicate(mb, ["dqdx", "dqdy", "dqdz"])
         for blk in mb:
             # Apply spatial derivative boundary conditions
             for face in blk.faces:
-                face.bcFunc(blk, face, mb.eos, mb.thtrdat, "postDqDxyz", mb.titme)
+                face.bcFunc(
+                    blk.cpp, face.cpp, mb.eos, mb.thtrdat.cpp, "postDqDxyz", mb.titme
+                )
 
             # Apply subgrid model (must be after dqdxyz)
-            mb.sgs(blk)
+            mb.sgs(blk.cpp)
 
             # Diffusive fluxes
-            mb.diffFlux(blk)
-            mb.applyDiffFlux(blk, -1.0)  # <-- -1.0 is arbitrary, see applyFlux.cpp
+            mb.diffFlux(blk.cpp)
+            mb.applyDiffFlux(blk.cpp, -1.0)  # <-- -1.0 is arbitrary, see applyFlux.cpp
 
     for blk in mb:
         # Chemical source terms
         mb.expChem(
-            blk,
-            mb.thtrdat,
+            blk.cpp,
+            mb.thtrdat.cpp,
             nChemSubSteps=mb.config["thermochem"]["nChemSubSteps"],
             dt=mb.config["timeIntegration"]["dt"],
         )

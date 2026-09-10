@@ -148,7 +148,7 @@ def simulate(index, velo):
     blk.array["q"][:, :, :, 4] = 300.0
 
     blk.updateDeviceView(["q"])
-    mb.eos(blk, mb.thtrdat, 0, "prims")
+    mb.eos(blk.cpp, mb.thtrdat.cpp, 0, "prims")
     pg.consistify(mb)
 
     mu = np.unique(mb.thtrdat.array["mu0"])[0]

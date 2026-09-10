@@ -57,7 +57,7 @@ def simulate():
     q = blk.array["q"]
     q[ng:-ng, ng:-ng, ng:-ng, 0] = p1
     q[ng:-ng, ng:-ng, ng:-ng, 4] = T1
-    mb.eos(blk, mb.thtrdat, 0, "prims")
+    mb.eos(blk.cpp, mb.thtrdat.cpp, 0, "prims")
 
     gamma = blk.array["qh"][ng, ng, ng, 0]
     c1 = blk.array["qh"][ng, ng, ng, 3]
@@ -73,7 +73,7 @@ def simulate():
 
     q[ng:-ng, ng:-ng, ng:-ng, 0] = p2
     q[ng:-ng, ng:-ng, ng:-ng, 4] = T2
-    mb.eos(blk, mb.thtrdat, 0, "prims")
+    mb.eos(blk.cpp, mb.thtrdat.cpp, 0, "prims")
     c2 = blk.array["qh"][ng, ng, ng, 3]
 
     u2 = -M2 * c2 + M1 * c1  # In lab reference frame
@@ -107,10 +107,10 @@ def simulate():
     )
 
     # # Update cons
-    mb.eos(blk, mb.thtrdat, 0, "prims")
+    mb.eos(blk.cpp, mb.thtrdat.cpp, 0, "prims")
     # Apply euler boundary conditions
     for face in blk.faces:
-        face.bcFunc(blk, face, mb.eos, mb.thtrdat, "euler", mb.tme)
+        face.bcFunc(blk.cpp, face.cpp, mb.eos, mb.thtrdat.cpp, "euler", mb.tme)
     pg.consistify(mb)
 
     # Set dt based on cfg estimate

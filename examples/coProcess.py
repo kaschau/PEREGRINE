@@ -166,7 +166,7 @@ def simulate():
     blk.array["q"][:, :, :, 4] = 300.0
 
     blk.updateDeviceView("q")
-    mb.eos(blk, mb.thtrdat, 0, "prims")
+    mb.eos(blk.cpp, mb.thtrdat.cpp, 0, "prims")
     pg.consistify(mb)
     mb.coproc = pg.coproc.coprocessor(mb)
 

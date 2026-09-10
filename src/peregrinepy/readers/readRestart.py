@@ -1,6 +1,5 @@
 import numpy as np
 import h5py
-from ..misc import progressBar
 
 
 def readRestart(mb, path="./", nrt=0, animate=True):
@@ -36,38 +35,21 @@ def readRestart(mb, path="./", nrt=0, animate=True):
         blk.initRestartArrays()
 
         variables = ["p", "u", "v", "w", "T"] + blk.speciesNames[0:-1]
-        if blk.blockType == "solver":
-            ng = blk.ng
-            readS = np.s_[ng:-ng, ng:-ng, ng:-ng]
-        else:
-            ng = 0
-            readS = np.s_[:, :, :]
 
         blk.nrt = int(list(qf["iter"]["nrt"])[0])
         blk.tme = float(list(qf["iter"]["tme"])[0])
 
         for i, var in enumerate(variables):
             try:
-                blk.array["q"][readS + tuple([i])] = np.array(
+                blk.array["q"][blk.interior + tuple([i])] = np.array(
                     qf[f"results_{blk.nblki:06d}"][var]
                 ).reshape((blk.ni - 1, blk.nj - 1, blk.nk - 1), order="F")
             except KeyError:
                 if blk.nblki == 0:
                     print(f"Warning, {var} not found in restart. Leaving as is.")
 
-        if mb.mbType == "restart":
-            progressBar(blk.nblki + 1, len(mb), f"Reading in restartBlock {blk.nblki}")
-
-        # If we are a solver, just fill in the halos with the nearest value to
-        # help with boundary conditions and eos calculations from dividing by 0
-        # and so on.
-        if mb.mbType == "solver":
-            blk.array["q"][0:ng, :, :, :] = blk.array["q"][[ng], :, :, :]
-            blk.array["q"][-ng::, :, :, :] = blk.array["q"][[-ng - 1], :, :, :]
-            blk.array["q"][:, 0:ng, :, :] = blk.array["q"][:, [ng], :, :]
-            blk.array["q"][:, -ng::, :, :] = blk.array["q"][:, [-ng - 1], :, :]
-            blk.array["q"][:, :, 0:ng, :] = blk.array["q"][:, :, [ng], :]
-            blk.array["q"][:, :, -ng::, :] = blk.array["q"][:, :, [-ng - 1], :]
+        mb.progress(blk.nblki + 1, f"Reading in restartBlock {blk.nblki}")
+        blk.fillHaloWithNearest("q")
 
     qf.close()
 

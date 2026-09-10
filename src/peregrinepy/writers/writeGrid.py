@@ -28,11 +28,10 @@ belong to the case, not to the grid.
 import h5py
 import numpy as np
 from ..decomposition import cutTable
-from ..misc import progressBar
 from .writeMetaData import gridMetaData
 
 
-def writeGrid(mb, path="./", precision="double", withHalo=False):
+def writeGrid(mb, path="./", precision="double"):
     """This function produces an hdf5 file from a peregrinepy.multiBlock.grid (or a descendant) for viewing in Paraview.
 
     The grid file also carries the connectivity between the blocks, so a grid
@@ -47,9 +46,6 @@ def writeGrid(mb, path="./", precision="double", withHalo=False):
     precision : str
         Options - 'single' for single precision
                   'double' for double precision
-
-    withHalo : bool
-        Whether we write out with halo
 
     Returns
     -------
@@ -67,30 +63,19 @@ def writeGrid(mb, path="./", precision="double", withHalo=False):
     gf = h5py.File(f"{path}/g.h5", "w")
 
     for blk in mb:
-        if blk.blockType == "solver":
-            if withHalo:
-                writeS = np.s_[:, :, :]
-                ng = blk.ng
-            else:
-                writeS = np.s_[blk.ng : -blk.ng, blk.ng : -blk.ng, blk.ng : -blk.ng]
-                ng = 0
-        else:
-            writeS = np.s_[:, :, :]
-            ng = 0
 
         coordS = gf.create_group(f"coordinates_{blk.nblki:06d}")
         for name in ("x", "y", "z"):
             coordS.create_dataset(
                 name,
-                data=np.ascontiguousarray(blk.array[name][writeS].T),
+                data=np.ascontiguousarray(blk.array[name][blk.interior].T),
                 dtype=fdtype,
             )
 
         # Add block to xdmf tree
-        metaData.addBlockElem(blk.nblki, blk.ni, blk.nj, blk.nk, ng)
+        metaData.addBlockElem(blk.nblki, blk.ni, blk.nj, blk.nk)
 
-        if mb.mbType in ["grid", "restart"]:
-            progressBar(blk.nblki + 1, len(mb), f"Writing out gridBlock {blk.nblki}")
+        mb.progress(blk.nblki + 1, f"Writing out gridBlock {blk.nblki}")
 
     gf.attrs["totalBlocks"] = len(mb)
     _writeConnectivity(gf, mb)

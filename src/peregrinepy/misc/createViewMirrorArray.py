@@ -15,11 +15,12 @@ def createViewMirrorArray(obj, names, shape):
 
     Convention for whatever the input "obj" is, is as follows:
 
-    obj.name -> Kokko View
+    obj.cpp.name -> Kokko View
     obj.mirror[name] -> Kokkos Host Mirror View
     obj.array[name] -> Numpy Array wrapping host mirror
 
-    Where obj.mirror and obj.array are python dictionaries.
+    Where obj.mirror and obj.array are python dictionaries, and obj.cpp is the
+    compute side object that owns the views.
 
     """
 
@@ -31,14 +32,14 @@ def createViewMirrorArray(obj, names, shape):
 
     for name in names:
         setattr(
-            obj,
+            obj.cpp,
             name,
             view(
                 name,
                 *shape,
             ),
         )
-        obj.mirror[name] = mirror(getattr(obj, name))
+        obj.mirror[name] = mirror(getattr(obj.cpp, name))
         if obj.array[name] is None:
             # If the numpy array doesnt exist, create it here
             obj.array[name] = np.array(obj.mirror[name], copy=False)
@@ -53,4 +54,4 @@ def createViewMirrorArray(obj, names, shape):
             obj.array[name] = None
             obj.array[name] = np.array(obj.mirror[name], copy=False)
             obj.array[name][:] = temp[:]
-            pgkokkos.deep_copy(getattr(obj, name), obj.mirror[name])
+            pgkokkos.deep_copy(getattr(obj.cpp, name), obj.mirror[name])

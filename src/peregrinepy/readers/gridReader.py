@@ -9,7 +9,6 @@ what you need.
 
 import h5py
 import numpy as np
-from ..misc import progressBar
 
 
 class Partition:
@@ -123,13 +122,6 @@ class GridReader:
             assert mb.mbType not in ["restart", "solver"]
 
         for blk in mb:
-            if blk.blockType == "solver":
-                ng = blk.ng
-                readS = np.s_[ng:-ng, ng:-ng, ng:-ng]
-            else:
-                ng = 0
-                readS = np.s_[:, :, :]
-
             coordS = self.f[f"coordinates_{blk.baseNblki:06d}"]
 
             if blk.baseSlice is None:
@@ -145,10 +137,9 @@ class GridReader:
             if not justNi:
                 blk.initGridArrays()
                 for name in ("x", "y", "z"):
-                    blk.array[name][readS] = coordS[name][sliceS].T
+                    blk.array[name][blk.interior] = coordS[name][sliceS].T
 
-            if mb.mbType in ["grid", "restart"]:
-                progressBar(blk.nblki + 1, len(mb), f"Reading in gridBlock {blk.nblki}")
+            mb.progress(blk.nblki + 1, f"Reading in gridBlock {blk.nblki}")
 
     def readConnectivity(self, mb, partition=None):
         """Add the stored connectivity to the faces of the blocks in mb. A

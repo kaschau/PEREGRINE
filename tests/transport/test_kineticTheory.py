@@ -71,7 +71,7 @@ def test_kineticTheory(my_setup, ctfile, thfile):
 
     # Update transport
     assert mb.trans.__name__ == "kineticTheory"
-    mb.trans(blk, mb.thtrdat, 0)
+    mb.trans(blk.cpp, mb.thtrdat.cpp, 0)
     blk.updateHostView(["q", "qt"])
     ng = blk.ng
 
