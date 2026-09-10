@@ -25,8 +25,9 @@ class GridReader:
         self.f = h5py.File(f"{path}/g.h5", "r")
 
         self.totalBlocks = int(self.f.attrs["totalBlocks"])
+        # (ranks, ranksPerNode) of every partition the grid carries
         self.partitions = (
-            sorted(int(n) for n in self.f["partitions"])
+            sorted(tuple(int(x) for x in n.split("x")) for n in self.f["partitions"])
             if "partitions" in self.f
             else []
         )
@@ -40,22 +41,34 @@ class GridReader:
     def __exit__(self, *_):
         self.close()
 
-    def partition(self, size):
-        """The blocks each of :size: ranks owns, or None if the grid carries no
-        partition for that many.
+    def partition(self, size, ranksPerNode):
+        """The blocks each of :size: ranks owns, placed for :ranksPerNode: of
+        them sharing a node.
 
-        One rank owns the whole grid, so a partition for one is never stored.
+        A partition for the same ranks but a different node layout assigns the
+        same ranks, just placed for a machine we are not on, so it is used
+        with a note rather than refused.
 
         Returns a list of lists, the first index the rank, the second its
         block number(s).
         """
-        if size == 1:
-            return [list(range(self.totalBlocks))]
+        layouts = [rpn for n, rpn in self.partitions if n == size]
+        if not layouts:
+            raise ValueError(
+                f"this grid carries no {size} rank partition, only "
+                f"{['%dx%d' % p for p in self.partitions]}. Balance it with\n"
+                f"  loadBalancer.py -gridDir {self.path} -numProcs {size}"
+                f" -ranksPerNode {ranksPerNode}"
+            )
+        if ranksPerNode not in layouts:
+            print(
+                f"No {size}x{ranksPerNode} partition, using "
+                f"{size}x{layouts[0]}, which was placed for a different node "
+                f"layout."
+            )
+            ranksPerNode = layouts[0]
 
-        if f"partitions/{size}" not in self.f:
-            return None
-
-        rank = np.array(self.f[f"partitions/{size}/rank"])
+        rank = np.array(self.f[f"partitions/{size}x{ranksPerNode}/rank"])
         assert len(rank) == self.totalBlocks, (
             f"the {size} rank partition covers {len(rank)} blocks, "
             f"but this grid has {self.totalBlocks}"
@@ -77,24 +90,16 @@ class GridReader:
                 ng = 0
                 readS = np.s_[:, :, :]
 
-            nblkiS = f"{blk.nblki:06d}"
-            coordS = "coordinates_" + nblkiS
-            dimS = "dimensions_" + nblkiS
+            coordS = self.f[f"coordinates_{blk.nblki:06d}"]
 
-            ni = list(self.f[dimS]["ni"])[0]
-            nj = list(self.f[dimS]["nj"])[0]
-            nk = list(self.f[dimS]["nk"])[0]
-
-            blk.ni = int(ni)
-            blk.nj = int(nj)
-            blk.nk = int(nk)
+            # stored (nk, nj, ni), so the shape is the extents backwards
+            nk, nj, ni = coordS["x"].shape
+            blk.ni, blk.nj, blk.nk = int(ni), int(nj), int(nk)
 
             if not justNi:
                 blk.initGridArrays()
                 for name in ("x", "y", "z"):
-                    blk.array[name][readS] = np.array(self.f[coordS][name]).reshape(
-                        (ni, nj, nk), order="F"
-                    )
+                    blk.array[name][readS] = coordS[name][:].T
 
             if mb.mbType in ["grid", "restart"]:
                 progressBar(blk.nblki + 1, len(mb), f"Reading in gridBlock {blk.nblki}")
@@ -110,8 +115,7 @@ class GridReader:
         for blk in mb:
             for face in blk.faces:
                 mine = blk.nblki, face.nface - 1
-                # the face setters take python types, not numpy ones, and read
-                # an empty string as unset and -1 as no neighbor
+                # the face setters take python types, not numpy ones
                 face.bcType = str(bcType[mine])
                 face.bcFam = str(bcFam[mine]) or None
                 face.orientation = str(orientation[mine]) or None

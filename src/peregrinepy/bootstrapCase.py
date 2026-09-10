@@ -17,19 +17,17 @@ def bootstrapCase(config):
     # First we determine what bocks we are responsible for
     ################################################################
     gridReader = pg.readers.GridReader(config["io"]["gridDir"])
-    blocksForProcs = gridReader.partition(size)
+    try:
+        blocksForProcs = gridReader.partition(
+            size, pg.mpiComm.mpiUtils.getRanksPerNode()
+        )
+    except ValueError as e:
+        if rank == 0:
+            print(f"ERROR!! {e}")
+        comm.Abort()
     comm.Barrier()
     if rank == 0:
         print("Read partition.")
-    # The grid carries a partition per rank count it has been balanced for.
-    # If it has none for this many, assume one block per proc.
-    if blocksForProcs is None:
-        blocksForProcs = [[i] for i in range(size)]
-        if rank == 0:
-            print(
-                f"No {size} rank partition in the grid file.\n",
-                f"assuming {size} blocks with one block per proc.",
-            )
 
     myblocks = blocksForProcs[rank]
     # Generate the multiBlock solver object for each MPI process, given the number of
@@ -46,9 +44,6 @@ def bootstrapCase(config):
     comm.Barrier()
     if rank == 0:
         print("Read connectivity.")
-        if mb.totalBlocks != sum(len(proc) for proc in blocksForProcs):
-            print("ERROR!! The partition does not cover every block of the grid.")
-            comm.Abort()
 
     ################################################################
     # Now we figure out which processor each block's neighbor

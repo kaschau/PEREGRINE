@@ -1,3 +1,5 @@
+from functools import cache
+
 import numpy as np
 
 from ..compute import bcs as computeBcs
@@ -64,11 +66,14 @@ class BaseBC:
             face.array["qBcVals"][:, :, index] = valueDict[key]
 
 
+# called once per face of every block; the registry is fixed after import
+@cache
 def getBc(bcType):
     """The class for a bcType, which is also the check that it is one."""
     return subclassWhere(BaseBC, bcType=bcType)
 
 
+@cache
 def validBcTypes():
     return tuple(sorted(c.bcType for c in subclasses(BaseBC) if c.bcType))
 

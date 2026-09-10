@@ -21,8 +21,7 @@ and any partitions the grid has been balanced into.
 
     g.h5
       totalBlocks                                        attribute
-      coordinates_000000/{x,y,z}                         one group per block
-      dimensions_000000/{ni,nj,nk}
+      coordinates_000000/{x,y,z}                         (nk, nj, ni) per block
       connectivity/{neighbor,orientation,bcType,bcFam}    (totalBlocks, 6)
       partitions/16/rank                                  which rank owns each
 

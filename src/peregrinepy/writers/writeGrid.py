@@ -8,18 +8,26 @@ and any partitions the grid has been balanced into.
     g.h5
       totalBlocks                                        attribute
       coordinates_000000/{x,y,z}                         one group per block
-      dimensions_000000/{ni,nj,nk}
+
+Coordinates are stored (nk, nj, ni) so a piece of a block is a contiguous
+hyperslab, and a block's extents are the shape of its datasets rather than a
+second thing that can disagree with them.
       connectivity/{neighbor,orientation,bcType,bcFam}    (totalBlocks, 6)
-      partitions/16/rank                                  which rank owns each
+      partitions/1x1/rank                                 the base grid
+      partitions/64x4/rank                                which rank owns each
 
 A grid carries as many partitions side by side as it has been balanced for,
-named by the number of ranks, so one grid runs on 4 or on 64 without being
-rebalanced. Boundary condition values stay in the case's bcFams.yaml -- they
+named ranks x ranksPerNode, so one grid runs on 64 ranks of 4 per node or of
+8 without being rebalanced -- the two place blocks differently, because what
+crosses a node costs more than what stays on one. Partition 1x1 is the base
+grid, every block on one rank, and is written with the grid so it is never a
+special case. Boundary condition values stay in the case's bcFams.yaml -- they
 belong to the case, not to the grid.
 """
 
 import h5py
 import numpy as np
+from ..decomposition import cutTable
 from ..misc import progressBar
 from .writeMetaData import gridMetaData
 
@@ -70,35 +78,13 @@ def writeGrid(mb, path="./", precision="double", withHalo=False):
             writeS = np.s_[:, :, :]
             ng = 0
 
-        nblkiS = f"{blk.nblki:06d}"
-        coordS = "coordinates_" + nblkiS
-        dimS = "dimensions_" + nblkiS
-
-        gf.create_group(coordS)
-        gf.create_group(dimS)
-
-        gf[dimS].create_dataset("ni", shape=(1,), dtype="int32")
-        gf[dimS].create_dataset("nj", shape=(1,), dtype="int32")
-        gf[dimS].create_dataset("nk", shape=(1,), dtype="int32")
-
-        dset = gf[dimS]["ni"]
-        dset[0] = blk.ni + 2 * ng
-        dset = gf[dimS]["nj"]
-        dset[0] = blk.nj + 2 * ng
-        dset = gf[dimS]["nk"]
-        dset[0] = blk.nk + 2 * ng
-
-        extent = (blk.ni + 2 * ng) * (blk.nj + 2 * ng) * (blk.nk + 2 * ng)
-        gf[coordS].create_dataset("x", shape=(extent,), dtype=fdtype)
-        gf[coordS].create_dataset("y", shape=(extent,), dtype=fdtype)
-        gf[coordS].create_dataset("z", shape=(extent,), dtype=fdtype)
-
-        dset = gf[coordS]["x"]
-        dset[:] = blk.array["x"][writeS].ravel(order="F")
-        dset = gf[coordS]["y"]
-        dset[:] = blk.array["y"][writeS].ravel(order="F")
-        dset = gf[coordS]["z"]
-        dset[:] = blk.array["z"][writeS].ravel(order="F")
+        coordS = gf.create_group(f"coordinates_{blk.nblki:06d}")
+        for name in ("x", "y", "z"):
+            coordS.create_dataset(
+                name,
+                data=np.ascontiguousarray(blk.array[name][writeS].T),
+                dtype=fdtype,
+            )
 
         # Add block to xdmf tree
         metaData.addBlockElem(blk.nblki, blk.ni, blk.nj, blk.nk, ng)
@@ -108,6 +94,8 @@ def writeGrid(mb, path="./", precision="double", withHalo=False):
 
     gf.attrs["totalBlocks"] = len(mb)
     _writeConnectivity(gf, mb)
+    # the base grid is a partition like any other: one rank owning all of it
+    gf.create_dataset("partitions/1x1/rank", data=np.zeros(len(mb), dtype=np.int32))
     gf.close()
 
     metaData.saveXdmf(path)
@@ -120,8 +108,7 @@ def _writeConnectivity(gf, mb):
     ), "a grid file holds every block of a grid, numbered from zero"
 
     shape = (len(mb), 6)
-    # hdf5 has no None, so a face with no neighbor names -1 and an unset
-    # string is an empty one
+    # hdf5 has no None: -1 is no neighbor, an empty string is unset
     neighbor = np.full(shape, -1, dtype=np.int32)
     orientation = np.zeros(shape, dtype=object)
     bcType = np.zeros(shape, dtype=object)
@@ -148,16 +135,28 @@ def _writeConnectivity(gf, mb):
         group.create_dataset(name, data=table, dtype=h5py.string_dtype("utf-8"))
 
 
-def writePartition(blocksForProcs, path="./"):
+def writePartition(mb, blocksForProcs, ranksPerNode, path="./"):
     """Add a partition to the grid file at :path:, named by the number of
     ranks it is for. A grid keeps every partition it has been balanced into,
     so one grid runs on any of them. Replaces any partition the grid already
     carries for that many ranks.
 
+    A partition whose blocks are pieces of the base grid also stores the cut
+    table that says which slab of which base block each piece is, and the
+    pieces' own connectivity. One whose blocks are the base blocks needs
+    neither, and uses the grid's.
+
     Parameters
     ----------
+    mb : peregrinepy.multiBlock.grid (or a descendant)
+        The blocks being partitioned, base blocks or pieces of them
+
     blocksForProcs : list
         List of lists, the first index the rank, the second its block number(s)
+
+    ranksPerNode : int
+        How many of those ranks share a node, which is what the placement was
+        optimized for
 
     path : str
         Path to the directory holding the g.h5 to add the partition to
@@ -168,7 +167,7 @@ def writePartition(blocksForProcs, path="./"):
 
     """
 
-    size = len(blocksForProcs)
+    name = f"{len(blocksForProcs)}x{ranksPerNode}"
     rank = np.full(sum(len(group) for group in blocksForProcs), -1, dtype=np.int32)
     for r, group in enumerate(blocksForProcs):
         for nblki in group:
@@ -176,6 +175,11 @@ def writePartition(blocksForProcs, path="./"):
     assert not (rank == -1).any(), "every block must be owned by a rank"
 
     with h5py.File(f"{path}/g.h5", "a") as gf:
-        if f"partitions/{size}" in gf:
-            del gf[f"partitions/{size}"]
-        gf.create_dataset(f"partitions/{size}/rank", data=rank)
+        if f"partitions/{name}" in gf:
+            del gf[f"partitions/{name}"]
+        group = gf.create_group(f"partitions/{name}")
+        group.create_dataset("rank", data=rank)
+
+        if any(blk.baseSlice is not None for blk in mb):
+            group.create_dataset("cuts", data=cutTable(mb))
+            _writeConnectivity(group, mb)

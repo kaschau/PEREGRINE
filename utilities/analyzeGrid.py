@@ -74,6 +74,10 @@ if __name__ == "__main__":
     with GridReader(gp) as reader:
         partitions = reader.partitions
     if partitions:
-        print(f"partitioned for {partitions} ranks.")
+        print(
+            "partitioned for "
+            + ", ".join(f"{n}x{rpn}" for n, rpn in partitions)
+            + " (ranks x ranksPerNode)."
+        )
     else:
         print("no partitions stored, so a run gets one block per rank.")

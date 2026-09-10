@@ -108,8 +108,7 @@ def cutBlock(mb, nblki, cutAxis, cutIndex):
     oldCutFace.bcFam = None
     newCutFace.bcFam = None
 
-    # The four faces along the cut are each split in two. Everything but the
-    # neighbor carries over, and a boundary has none to find.
+    # the four faces along the cut split in two; only the neighbor is unknown
     openFaces = []
     for nface in (n for n in range(1, 7) if (n - 1) // 2 != axis):
         oldSplitFace = oldBlk.getFace(nface)
@@ -124,11 +123,20 @@ def cutBlock(mb, nblki, cutAxis, cutIndex):
         if oldSplitFace.neighbor is None:
             newSplitFace.neighbor = None
             continue
-        # our neighbor is on the path and being cut too, so which of its
-        # halves each of ours meets is not known until the path is done
+        # our neighbor is cut too, so which halves meet waits for the path
         oldSplitFace.neighbor = None
         openFaces.append((oldBlk, oldSplitFace))
         openFaces.append((newBlk, newSplitFace))
+
+    # cutIndex is local, so it lands that far along whatever slab we already are
+    base = list(
+        oldBlk.baseSlice or (0, oldBlk.ni - 1, 0, oldBlk.nj - 1, 0, oldBlk.nk - 1)
+    )
+    low, high = list(base), list(base)
+    low[2 * axis + 1] = base[2 * axis] + cutIndex
+    high[2 * axis] = base[2 * axis] + cutIndex
+    newBlk.baseNblki = oldBlk.baseNblki
+    oldBlk.baseSlice, newBlk.baseSlice = tuple(low), tuple(high)
 
     # Now transfer the coordinate arrays
     oldSlice, newSlice = [slice(None)] * 3, [slice(None)] * 3
@@ -142,6 +150,24 @@ def cutBlock(mb, nblki, cutAxis, cutIndex):
     newBlk.ni, newBlk.nj, newBlk.nk = newBlk.array["x"].shape
 
     return openFaces
+
+
+def cutTable(mb):
+    """Which base block each block is a piece of, and which slab of it, as a
+    (nblks, 7) table of baseNblki and inclusive node bounds i0, i1, j0, j1,
+    k0, k1. A decomposition is this table plus which rank owns each row."""
+    table = np.empty((len(mb), 7), dtype=np.int32)
+    for n, blk in enumerate(mb):
+        table[n, 0] = blk.baseNblki
+        table[n, 1:] = blk.baseSlice or (
+            0,
+            blk.ni - 1,
+            0,
+            blk.nj - 1,
+            0,
+            blk.nk - 1,
+        )
+    return table
 
 
 def cutPath(mb, nblki, cutAxis):

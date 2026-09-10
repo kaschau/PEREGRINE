@@ -22,8 +22,7 @@ def pairsOnPlane(mb, nblki, nface):
     """Every (block, face) pair the plane of this interface passes through, or
     None if the plane does not close."""
     start = mb.getBlock(nblki).getFace(nface)
-    # a periodic seam is a boundary that happens to name a neighbor, not an
-    # interface the grid can be merged across
+    # a periodic names is a boundary
     if start.neighbor is None or start.bcType.startswith("periodic"):
         return None
 
@@ -44,8 +43,7 @@ def pairsOnPlane(mb, nblki, nface):
                 continue
             sideB = B.getFace(A.neighborNfaceOf(sideA.nface, across=fa))
             if sideA.neighbor is None or sideB.neighbor is None:
-                # the plane may end here, but only if it ends on both sides
-                # and on the same boundary
+                # the plane may end here, but on both sides and the same boundary
                 if (
                     sideA.neighbor is None
                     and sideB.neighbor is None
@@ -58,8 +56,7 @@ def pairsOnPlane(mb, nblki, nface):
                 "periodic"
             ):
                 return None
-            # the plane carries on into our side neighbor, which must meet
-            # the same block on the far side that we do
+            # our side neighbor must meet the same block on the far side we do
             NA = mb.getBlock(sideA.neighbor)
             planeFace = A.neighborNfaceOf(fa, across=sideA.nface)
             if NA.getFace(planeFace).neighbor != sideB.neighbor:

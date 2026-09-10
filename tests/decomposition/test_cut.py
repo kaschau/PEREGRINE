@@ -5,6 +5,7 @@ import peregrinepy as pg
 import pytest
 from peregrinepy.decomposition import (
     cutPath,
+    cutTable,
     mergeAll,
     performCutOperations,
     reorientBlock,
@@ -125,3 +126,56 @@ def test_cutRunsThroughPeriodic():
             assert face.neighbor is not None
             assert face.periodicSpan is not None
             assert face.periodicAxis is not None
+
+
+def test_uncutGridIsItsOwnBase():
+    mb = cube(mbDims=(2, 2, 1), dims=(9, 8, 7))
+    for blk, (baseNblki, i0, i1, j0, j1, k0, k1) in zip(mb, cutTable(mb)):
+        assert baseNblki == blk.nblki
+        assert (i0, i1, j0, j1, k0, k1) == (
+            0,
+            blk.ni - 1,
+            0,
+            blk.nj - 1,
+            0,
+            blk.nk - 1,
+        )
+
+
+@pytest.mark.parametrize("axis", ("i", "j", "k"))
+@pytest.mark.parametrize("mbDims", ((1, 1, 1), (2, 2, 1)))
+def test_everyPieceIsFoundInTheBlockItNames(mbDims, axis):
+    base = cube(mbDims=mbDims, dims=(9, 8, 7))
+    work = cube(mbDims=mbDims, dims=(9, 8, 7))
+    performCutOperations(work, [[0, axis, 3]])
+
+    table = cutTable(work)
+    assert len(table) == len(work)
+    for blk, (baseNblki, i0, i1, j0, j1, k0, k1) in zip(work, table):
+        assert (blk.ni, blk.nj, blk.nk) == (i1 - i0 + 1, j1 - j0 + 1, k1 - k0 + 1)
+        for var in ("x", "y", "z"):
+            assert np.array_equal(
+                blk.array[var],
+                base.getBlock(baseNblki).array[var][
+                    i0 : i1 + 1, j0 : j1 + 1, k0 : k1 + 1
+                ],
+            )
+    # the pieces of a base block tile it, so the cells add back up
+    cells = sum((b.ni - 1) * (b.nj - 1) * (b.nk - 1) for b in work)
+    assert cells == sum((b.ni - 1) * (b.nj - 1) * (b.nk - 1) for b in base)
+
+
+def test_provenanceSurvivesRepeatedCuts():
+    base = cube(dims=(13, 11, 9))
+    work = cube(dims=(13, 11, 9))
+    # cut a block, then cut its pieces again on another axis
+    performCutOperations(work, [[0, "i", 2]])
+    performCutOperations(work, [[0, "k", 1]])
+
+    for blk, (baseNblki, i0, i1, j0, j1, k0, k1) in zip(work, cutTable(work)):
+        assert baseNblki == 0
+        for var in ("x", "y", "z"):
+            assert np.array_equal(
+                blk.array[var],
+                base[0].array[var][i0 : i1 + 1, j0 : j1 + 1, k0 : k1 + 1],
+            )

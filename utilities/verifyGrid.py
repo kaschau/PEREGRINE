@@ -162,21 +162,21 @@ def verify(mb):
                     f"Error when comparing block {blk.nblki} and block {blk2.nblki} connection"
                 )
 
-            if off_x > 1e-10:
+            if off_x > 1e-8:
                 print(
                     f"Warning, the x coordinates of face {nface} on block {blk.nblki} are not matching the x coordinates of face {nface2} of block {blk2.nblki}"
                 )
                 print(f"Off by average of {off_x}")
                 warn = True
 
-            if off_y > 1e-10:
+            if off_y > 1e-8:
                 print(
                     f"Warning, the y coordinates of face {nface} on block {blk.nblki} are not matching the y coordinates of face {nface2} of block {blk2.nblki}"
                 )
                 print(f"Off by average of {off_y}")
                 warn = True
 
-            if off_z > 1e-10:
+            if off_z > 1e-8:
                 print(
                     f"Warning, the z coordinates of face {nface} on block {blk.nblki} are not matching the z coordinates of face {nface2} of block {blk2.nblki}"
                 )

@@ -11,6 +11,11 @@ class topologyBlock:
     def __init__(self, nblki):
         self.nblki = nblki
 
+        # base block in uncut grid
+        self.baseNblki = nblki
+        # slice of base block in uncut grid (None = entire block)
+        self.baseSlice = None
+
         self.faces = []
         if self.blockType in ["topology", "grid", "restart"]:
             for fn in [1, 2, 3, 4, 5, 6]:

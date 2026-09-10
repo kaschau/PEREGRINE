@@ -31,8 +31,7 @@ def reorientBlock(mb, blk, perm, flips):
     face = blk.faces[0]
     newAxis = {old: new for new, old in enumerate(perm)}
 
-    # our neighbors' orientation strings name our axes, so each character
-    # naming one of ours becomes the character naming its new label
+    # their strings name our axes, so each character becomes our new label
     for other in mb:
         if other is blk:
             continue
@@ -46,8 +45,7 @@ def reorientBlock(mb, blk, perm, flips):
                 for ours, counterAligned in map(face.signedAxis, theirs.orientation)
             )
 
-    # our own strings are indexed by our axis, so they are permuted rather
-    # than rewritten, and a reversed axis flips the sense of its character
+    # ours are indexed by our axis, so permuted not rewritten; a flip inverts
     for f in blk.faces:
         if f.orientation is None:
             continue
@@ -61,8 +59,7 @@ def reorientBlock(mb, blk, perm, flips):
             for m in range(3)
         )
 
-    # a face keeps its identity, but its number changes with its axis, and a
-    # reversed axis swaps its low and high faces
+    # a face keeps its identity; its number follows its axis, a flip swaps ends
     reordered = [None] * 6
     for f in blk.faces:
         m = newAxis[f.myAxis]

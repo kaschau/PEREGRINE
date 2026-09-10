@@ -1,11 +1,19 @@
 from .cut import (
     cutBlock,
     cutPath,
+    cutTable,
     faceCenter,
     faceSearchPoint,
     faceSlice,
     pairCutFaces,
     performCutOperations,
+)
+from .partition import (
+    cellWeights,
+    edgesFromMb,
+    metrics,
+    partition,
+    partitionHierarchical,
 )
 from .merge import compact, mergeAll, mergePlane, pairsOnPlane, removablePlanes
 from .reorient import longestAxisFirst, longestFirst, reorientBlock
@@ -27,12 +35,18 @@ __all__ = [
     "condition",
     "cutBlock",
     "cutPath",
+    "cutTable",
     "faceCenter",
     "faceSearchPoint",
     "faceSlice",
     "longestAxisFirst",
     "longestFirst",
+    "cellWeights",
+    "edgesFromMb",
     "mergeAll",
+    "metrics",
+    "partition",
+    "partitionHierarchical",
     "mergePlane",
     "pairCutFaces",
     "pairsOnPlane",
