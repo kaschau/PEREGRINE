@@ -1,6 +1,7 @@
 from collections import UserList
 
 from ..misc import progressBar
+from ..readers import GridReader
 from .topologyBlock import topologyBlock
 
 
@@ -18,6 +19,21 @@ class topology(UserList):
             super().__init__(ls)
 
         self.totalBlocks = None
+
+    @classmethod
+    def fromGrid(cls, path="./", *args):
+        """A multiBlock of this kind, filled in from the grid file. A
+        topology takes only what it can hold, which is the cheapest read of
+        a grid there is: no coordinate leaves the file."""
+        with GridReader(path) as reader:
+            mb = cls(reader.totalBlocks, *args)
+            mb._readBlocks(reader)
+            reader.readConnectivity(mb)
+        return mb
+
+    def _readBlocks(self, reader):
+        """How big each block is, which is as much as a topology holds."""
+        reader.readExtents(self)
 
     @property
     def nblks(self):

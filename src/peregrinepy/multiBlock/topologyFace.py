@@ -82,8 +82,9 @@ class topologyFace:
 
     @periodicAxis.setter
     def periodicAxis(self, axis):
-        a = axis / np.linalg.norm(axis)
-        self._periodicAxis = a
+        # a periodic face carries no axis until its bcFams entry is read, so a
+        # grid straight off disk has periodics that do not know which way yet
+        self._periodicAxis = None if axis is None else axis / np.linalg.norm(axis)
 
     @staticmethod
     def signedAxis(code):

@@ -17,10 +17,6 @@ class gridBlock(topologyBlock, MetricsMixin):
 
         super().__init__(nblki)
 
-        self.ni = 0
-        self.nj = 0
-        self.nk = 0
-
         #########################################################
         # Data arrays
         #########################################################
@@ -35,6 +31,20 @@ class gridBlock(topologyBlock, MetricsMixin):
         # cell centers are as much as a block with no solution on it can work
         # out; the rest of the metrics are a solverBlock's
         self.declare("xc", "yc", "zc", kind="cell")
+
+    def splitAlong(self, axis, cutIndex):
+        """A grid block holds the coordinates its cut splits in two. The two
+        halves share the plane they are cut on."""
+        low, high = [slice(None)] * 3, [slice(None)] * 3
+        low[axis] = slice(0, cutIndex + 1)
+        high[axis] = slice(cutIndex, None)
+        return {
+            var: (
+                np.copy(self.array[var][tuple(low)]),
+                np.copy(self.array[var][tuple(high)]),
+            )
+            for var in ("x", "y", "z")
+        }
 
     def _newFace(self, nface):
         return gridFace(nface)
@@ -68,10 +78,9 @@ class gridBlock(topologyBlock, MetricsMixin):
         return shape + (components,) if components else shape
 
     def setExtents(self, ni, nj, nk):
-        """This block is this big, so give it its arrays. A block is built
-        before anyone knows its extents -- a mesher works them out, a reader
-        finds them in the file -- so this is the moment it can be filled in."""
-        self.ni, self.nj, self.nk = int(ni), int(nj), int(nk)
+        """A grid block holds arrays shaped by its extents, so learning them
+        is what gives it those arrays."""
+        super().setExtents(ni, nj, nk)
         self.allocate()
 
     def allocate(self):

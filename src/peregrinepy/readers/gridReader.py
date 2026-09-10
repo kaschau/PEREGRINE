@@ -109,7 +109,8 @@ class GridReader:
         """How big each block is, without reading a coordinate. Enough to
         weigh the blocks and plan how to cut them."""
         for blk in mb:
-            _, (blk.ni, blk.nj, blk.nk) = self._blockBaseInfo(blk)
+            _, extents = self._blockBaseInfo(blk)
+            blk.setExtents(*extents)
 
     def readGrid(self, mb):
         """Add the coordinate data to a supplied peregrinepy.multiBlock.grid

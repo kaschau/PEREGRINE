@@ -1,5 +1,4 @@
 from .topology import topology
-from ..readers import GridReader
 from .gridBlock import gridBlock
 
 
@@ -19,17 +18,9 @@ class grid(topology):
         else:
             super().__init__(nblks, ls)
 
-    @classmethod
-    def fromGrid(cls, path="./", *args, extentsOnly=False):
-        """A multiBlock of this kind, sized from the grid file"""
-        with GridReader(path) as reader:
-            mb = cls(reader.totalBlocks, *args)
-            if extentsOnly:
-                reader.readExtents(mb)
-            else:
-                reader.readGrid(mb)
-            reader.readConnectivity(mb)
-        return mb
+    def _readBlocks(self, reader):
+        """Where every block's nodes are, and so how big it is."""
+        reader.readGrid(self)
 
     def computeMetrics(self):
         for blk in self:

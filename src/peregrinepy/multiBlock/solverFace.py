@@ -257,7 +257,7 @@ class solverFace(gridFace):
     @gridFace.periodicAxis.setter
     def periodicAxis(self, axis):
         gridFace.periodicAxis.fset(self, axis)
-        if self.bcType.startswith("periodicRot"):
+        if axis is not None and self.bcType.startswith("periodicRot"):
             self.updateDeviceView(["periodicRotMatrixUp", "periodicRotMatrixDown"])
 
     def updateDeviceView(self, vars):

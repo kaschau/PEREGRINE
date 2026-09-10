@@ -75,7 +75,7 @@ def reorientBlock1(mb, S, varList):
     newDims = [0, 0, 0]
     for m in range(3):
         newDims[axes[m]] = refDims[m]
-    blk1.ni, blk1.nj, blk1.nk = newDims
+    blk1.setExtents(*newDims)
 
     blk0.getFace(2).orientation = S
     nn = blk0.getFace(2).neighborNface
@@ -141,10 +141,9 @@ def buildAndCommunicate(S, adv, spdata, seed):
                     blk.array[v] = None
                     blk.mirror[v] = None
         reorientBlock1(mb, S, VARLIST)
-        # reorienting replaced the mirror backed arrays, so re-sizing each
-        # block rebuilds the views around what it left and sizes its faces
-        for blk in mb:
-            blk.setExtents(blk.ni, blk.nj, blk.nk)
+        # reorienting re-sized block 1, which rebuilt its views around what
+        # it left; block 0 keeps its size but lost the arrays dropped above
+        mb[0].allocate()
 
     mb.setBlockCommunication()
 

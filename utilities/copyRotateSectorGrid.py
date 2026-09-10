@@ -136,9 +136,7 @@ if __name__ == "__main__":
             rotBlk = toGrid[rotNblki]
 
             # copy/rotate block coordinates
-            rotBlk.ni = fromBlk.ni
-            rotBlk.nj = fromBlk.nj
-            rotBlk.nk = fromBlk.nk
+            rotBlk.setExtents(fromBlk.ni, fromBlk.nj, fromBlk.nk)
 
             shape = fromBlk.array["x"].shape
             points = np.column_stack(
@@ -149,9 +147,9 @@ if __name__ == "__main__":
                 )
             )
             points = np.matmul(rotM, points.T).T
-            rotBlk.array["x"] = points[:, 0].reshape(shape)
-            rotBlk.array["y"] = points[:, 1].reshape(shape)
-            rotBlk.array["z"] = points[:, 2].reshape(shape)
+            rotBlk.array["x"][:] = points[:, 0].reshape(shape)
+            rotBlk.array["y"][:] = points[:, 1].reshape(shape)
+            rotBlk.array["z"][:] = points[:, 2].reshape(shape)
 
             # transfer connectivity
             for toFace, fromFace in zip(rotBlk.faces, fromBlk.faces):

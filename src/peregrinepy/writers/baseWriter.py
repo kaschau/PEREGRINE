@@ -20,17 +20,7 @@ class BaseWriter:
         self._dxpl = h5p.create(h5p.DATASET_XFER)
         self._dxpl.set_dxpl_mpio(h5fd.MPIO_COLLECTIVE)
 
-        self.tree = etree.Element("Xdmf")
-        self.tree.set("Version", "2")
-        domainElem = etree.SubElement(self.tree, "Domain")
-        self.gridElem = etree.SubElement(domainElem, "Grid")
-        self.gridElem.set("Name", "PEREGRINE Output")
-        self.gridElem.set("GridType", "Collection")
-        self.gridElem.set("CollectionType", "Spatial")
-
-        self._buildBlockTemplate(mb)
-        for nblki, (ni, nj, nk) in enumerate(self.extents):
-            self._addBlockElem(mb, nblki, ni, nj, nk)
+        self._tree = None
 
     ###########################################################################
     # What the grid is
@@ -97,7 +87,35 @@ class BaseWriter:
     ###########################################################################
     # The xdmf side
     ###########################################################################
-    def _buildBlockTemplate(self, mb):
+    @property
+    def tree(self):
+        if self._tree is None:
+            self._buildTree()
+        return self._tree
+
+    @property
+    def gridElem(self):
+        if self._tree is None:
+            self._buildTree()
+        return self._gridElem
+
+    def _buildTree(self):
+        """The xdmf a reader opens this writer's files through. A writer that
+        only adds to the grid file never asks for it, and a grid of many
+        blocks is a lot of xml to build for nothing, so it waits to be asked."""
+        self._tree = etree.Element("Xdmf")
+        self._tree.set("Version", "2")
+        domainElem = etree.SubElement(self._tree, "Domain")
+        self._gridElem = etree.SubElement(domainElem, "Grid")
+        self._gridElem.set("Name", "PEREGRINE Output")
+        self._gridElem.set("GridType", "Collection")
+        self._gridElem.set("CollectionType", "Spatial")
+
+        self._buildBlockTemplate()
+        for nblki, (ni, nj, nk) in enumerate(self.extents):
+            self._addBlockElem(nblki, ni, nj, nk)
+
+    def _buildBlockTemplate(self):
         """One block's worth of xdmf, deep copied per block."""
         self.blockTemplate = etree.Element("Grid")
         self.blockTemplate.set("Name", "B#Here")
@@ -117,7 +135,7 @@ class BaseWriter:
         for _ in range(2):
             geometryElem.append(deepcopy(dataElem))
 
-    def _addBlockElem(self, mb, nblki, ni, nj, nk):
+    def _addBlockElem(self, nblki, ni, nj, nk):
         blockElem = deepcopy(self.blockTemplate)
         blockElem.set("Name", f"B{nblki:06d}")
         blockElem.find("Topology").set("NumberOfElements", f"{nk} {nj} {ni}")
@@ -127,10 +145,10 @@ class BaseWriter:
             coordElem.set("Dimensions", f"{nk} {nj} {ni}")
             coordElem.text = self.getGridFileH5Location(coord, nblki)
 
-        self._decorateBlockElem(mb, blockElem, nblki, ni, nj, nk)
-        self.gridElem.append(blockElem)
+        self._decorateBlockElem(blockElem, nblki, ni, nj, nk)
+        self._gridElem.append(blockElem)
 
-    def _decorateBlockElem(self, mb, blockElem, nblki, ni, nj, nk):
+    def _decorateBlockElem(self, blockElem, nblki, ni, nj, nk):
         """What this kind of writer hangs on a block beyond its coordinates."""
 
     def getGridFileH5Location(self, coord, nblki):

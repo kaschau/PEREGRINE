@@ -84,8 +84,8 @@ if __name__ == "__main__":
 
     partitioner = getPartitioner(args.method)
 
-    # cutting needs the coordinates, placing them does not
-    mb = pg.multiBlock.grid.fromGrid(gridDir, extentsOnly=granularity is None)
+    # balancing is all extents and connectivity, so no coordinate is read
+    mb = pg.multiBlock.topology.fromGrid(gridDir)
     before, beforeMax = len(mb), partitioner.blockCells(mb).max()
 
     blocksForProcs = partitioner.partition(mb, numProcs, ranksPerNode, granularity)

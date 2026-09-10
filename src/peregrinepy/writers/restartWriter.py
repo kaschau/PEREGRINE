@@ -195,8 +195,8 @@ class RestartWriter(BaseWriter):
     ###########################################################################
     # The xdmf a result needs beyond a grid's
     ###########################################################################
-    def _buildBlockTemplate(self, mb):
-        super()._buildBlockTemplate(mb)
+    def _buildBlockTemplate(self):
+        super()._buildBlockTemplate()
 
         timeElem = etree.SubElement(self.blockTemplate, "Time")
         timeElem.set("Value", "0.0")
@@ -224,7 +224,7 @@ class RestartWriter(BaseWriter):
         self.dataItemTemplate.set("Format", "HDF")
         self.dataItemTemplate.text = "result file location here"
 
-    def _decorateBlockElem(self, mb, blockElem, nblki, ni, nj, nk):
+    def _decorateBlockElem(self, blockElem, nblki, ni, nj, nk):
         scalars = ["p", "T"] + self.speciesNames
         if self.hasConservatives:
             scalars.insert(0, "rho")

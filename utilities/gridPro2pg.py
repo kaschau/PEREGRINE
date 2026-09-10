@@ -223,25 +223,19 @@ for blk in mb:
     gpBlkFile.seek(blockStart)
     blkShape = tuple([int(b) for b in gpBlkFile.readline().strip().split()])
 
-    blk.ni = blkShape[0]
-    blk.nj = blkShape[1]
-    blk.nk = blkShape[2]
+    blk.setExtents(*blkShape)
 
     if args.isBinary:
         byte = gpBlkFile.read(8 * blkShape[0] * blkShape[1] * blkShape[2] * 3)
         temp = np.frombuffer(byte, dtype=np.float64).reshape(
             (blkShape[0] * blkShape[1] * blkShape[2], 3)
         )
-        blk.array["x"] = temp[:, 0].reshape(blkShape) * factor
-        blk.array["y"] = temp[:, 1].reshape(blkShape) * factor
-        blk.array["z"] = temp[:, 2].reshape(blkShape) * factor
+        blk.array["x"][:] = temp[:, 0].reshape(blkShape) * factor
+        blk.array["y"][:] = temp[:, 1].reshape(blkShape) * factor
+        blk.array["z"][:] = temp[:, 2].reshape(blkShape) * factor
 
         gpBlkFile.read(1)
     else:
-        blk.array["x"] = np.empty(blkShape, dtype=np.float64)
-        blk.array["y"] = np.empty(blkShape, dtype=np.float64)
-        blk.array["z"] = np.empty(blkShape, dtype=np.float64)
-
         for i in range(blkShape[0]):
             for j in range(blkShape[1]):
                 for k in range(blkShape[2]):

@@ -23,59 +23,16 @@ class BlockOpsMixin:
     # continue through every block it meets, so a cut is a path, not a single
     # split; the pieces it leaves are re-paired by matching face centers.
     ###########################################################################
-    def _faceSlice(self, nface):
-        """The index of the plane of nodes a face sits on."""
-        return (slice(None),) * ((nface - 1) // 2) + (0 if nface % 2 else -1,)
-
-    def _faceCenter(self, blk, face):
-        """The center of a face, as the mean of its four corners."""
-        center = np.empty(3)
-        for n, var in enumerate(("x", "y", "z")):
-            nodes = blk.array[var][self._faceSlice(face.nface)]
-            center[n] = np.mean(
-                [nodes[0, 0], nodes[0, -1], nodes[-1, 0], nodes[-1, -1]]
+    @staticmethod
+    def _pairCutPieces(pieces, pending):
+        """Point the faces a cut left open at the right half of their old
+        neighbor. The cut ran on through that neighbor too, so which of its
+        halves we now meet is just which way our cut axis runs in its frame."""
+        for lowFace, highFace, neighbor, counterAligned in pending:
+            low, high = pieces[neighbor]
+            lowFace.neighbor, highFace.neighbor = (
+                (high, low) if counterAligned else (low, high)
             )
-        return center
-
-    def _faceSearchPoint(self, face, center):
-        """Where to go looking for a face's partner. Only a periodic sits
-        somewhere other than on top of its partner, so only a periodic moves."""
-        if face.bcType == "periodicTransLow":
-            return center + face.periodicAxis * face.periodicSpan
-        elif face.bcType == "periodicTransHigh":
-            return center - face.periodicAxis * face.periodicSpan
-        elif face.bcType == "periodicRotLow":
-            return np.matmul(face.array["periodicRotMatrixUp"], center)
-        elif face.bcType == "periodicRotHigh":
-            return np.matmul(face.array["periodicRotMatrixDown"], center)
-        return center
-
-    def _pairCutFaces(self, openFaces):
-        """Pair the faces a cut left open, by their centers. Every one of them
-        has its partner somewhere in the set, so a face left over means the cut
-        path did not close."""
-        centers = [self._faceCenter(blk, face) for blk, face in openFaces]
-        searchPoints = [
-            self._faceSearchPoint(face, center)
-            for (blk, face), center in zip(openFaces, centers)
-        ]
-
-        for index, (blk, face) in enumerate(openFaces):
-            # an earlier face may already have claimed us
-            if face.neighbor is not None:
-                continue
-            for testIndex, (testBlk, testFace) in enumerate(openFaces):
-                if testIndex == index or testFace.neighbor is not None:
-                    continue
-                dist = np.linalg.norm(searchPoints[index] - centers[testIndex])
-                if dist < 1e-9:
-                    face.neighbor = testBlk.nblki
-                    testFace.neighbor = blk.nblki
-                    break
-            else:
-                raise ValueError(
-                    f"Block {blk.nblki} face {face.nface} has nothing to pair with across the cut."
-                )
 
     def cutBlock(self, mb, nblki, cutAxis, cutIndex):
         """Split a block in two at cutIndex along cutAxis. The low half stays as
@@ -124,7 +81,7 @@ class BlockOpsMixin:
         newCutFace.bcFam = None
 
         # the four faces along the cut split in two; only the neighbor is unknown
-        openFaces = []
+        pending = []
         for nface in (n for n in range(1, 7) if (n - 1) // 2 != axis):
             oldSplitFace = oldBlk.getFace(nface)
             newSplitFace = newBlk.getFace(nface)
@@ -139,9 +96,10 @@ class BlockOpsMixin:
                 newSplitFace.neighbor = None
                 continue
             # our neighbor is cut too, so which halves meet waits for the path
-            oldSplitFace.neighbor = None
-            openFaces.append((oldBlk, oldSplitFace))
-            openFaces.append((newBlk, newSplitFace))
+            _, counterAligned = oldSplitFace.signedAxis(oldSplitFace.orientation[axis])
+            pending.append(
+                (oldSplitFace, newSplitFace, oldSplitFace.neighbor, counterAligned)
+            )
 
         # cutIndex is local, so it lands that far along whatever slab we already are
         base = list(
@@ -153,27 +111,22 @@ class BlockOpsMixin:
         newBlk.baseNblki = oldBlk.baseNblki
         oldBlk.baseSlice, newBlk.baseSlice = tuple(low), tuple(high)
 
-        # Now transfer the coordinate arrays. Each half is a smaller block, so
-        # it is resized before being filled and everything it derives from its
-        # coordinates comes back the right shape rather than the old one.
-        oldSlice, newSlice = [slice(None)] * 3, [slice(None)] * 3
-        oldSlice[axis] = slice(0, cutIndex + 1)
-        newSlice[axis] = slice(cutIndex, None)
-        halves = {
-            var: (
-                np.copy(oldBlk.array[var][tuple(oldSlice)]),
-                np.copy(oldBlk.array[var][tuple(newSlice)]),
-            )
-            for var in ("x", "y", "z")
-        }
+        # Each half is a smaller block, so it is resized before being filled and
+        # everything it derives from its extents comes back the right shape
+        # rather than the old one. Whatever a kind of block holds along its
+        # extents has to be taken before either of them is resized.
+        halves = oldBlk.splitAlong(axis, cutIndex)
+        lowDims = [oldBlk.ni, oldBlk.nj, oldBlk.nk]
+        highDims = list(lowDims)
+        lowDims[axis] = cutIndex + 1
+        highDims[axis] -= cutIndex
+        oldBlk.setExtents(*lowDims)
+        newBlk.setExtents(*highDims)
+        for var, (lowHalf, highHalf) in halves.items():
+            oldBlk.array[var][:] = lowHalf
+            newBlk.array[var][:] = highHalf
 
-        oldBlk.setExtents(*halves["x"][0].shape)
-        newBlk.setExtents(*halves["x"][1].shape)
-        for var, (low, high) in halves.items():
-            oldBlk.array[var][:] = low
-            newBlk.array[var][:] = high
-
-        return openFaces
+        return pending
 
     @staticmethod
     def cutTable(mb):
@@ -232,13 +185,15 @@ class BlockOpsMixin:
                 cutIndex = int(ogNx * (nCuts - cut) / (nCuts + 1))
                 switchCutIndex = cutNx - cutIndex - 1
 
-                openFaces = []
+                # which two blocks each block on the path became
+                pieces, pending = {}, []
                 for cutNblki, cutAxis, switch in blocksToCut:
                     assert getattr(mb.getBlock(cutNblki), f"n{cutAxis}") == cutNx
                     index = switchCutIndex if switch else cutIndex
-                    openFaces += self.cutBlock(mb, cutNblki, cutAxis, index)
+                    pending += self.cutBlock(mb, cutNblki, cutAxis, index)
+                    pieces[cutNblki] = (cutNblki, mb[-1].nblki)
 
-                self._pairCutFaces(openFaces)
+                self._pairCutPieces(pieces, pending)
 
     ###########################################################################
     # Removing an interface, the inverse of a cut. The plane an interface lies on

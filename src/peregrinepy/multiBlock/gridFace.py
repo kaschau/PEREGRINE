@@ -61,8 +61,8 @@ class gridFace(topologyFace):
         topologyFace.periodicAxis.fset(self, axis)
 
         # only a rotational periodic turns anything, and it cannot know how
-        # far around until it has been given its span
-        if not self.bcType.startswith("periodicRot"):
+        # far around until it has been given its axis and its span
+        if axis is None or not self.bcType.startswith("periodicRot"):
             return
         if self.periodicSpan is None:
             raise AttributeError("Must set periodicSpan before setting periodicAxis")

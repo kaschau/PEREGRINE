@@ -16,7 +16,24 @@ class topologyBlock:
         # slice of base block in uncut grid (None = entire block)
         self.baseSlice = None
 
+        self.ni = 0
+        self.nj = 0
+        self.nk = 0
+
         self.faces = [self._newFace(nface) for nface in range(1, 7)]
+
+    def setExtents(self, ni, nj, nk):
+        """This block is this big. A block is built before anyone knows how
+        big it is -- a mesher works it out, a reader finds it in the file --
+        so this is the moment it can be filled in, and whatever a kind of
+        block derives from its extents is derived here."""
+        self.ni, self.nj, self.nk = int(ni), int(nj), int(nk)
+
+    def splitAlong(self, axis, cutIndex):
+        """The two halves of whatever this block holds along its extents, as
+        {name: (low, high)}, taken before either half is resized. A topology
+        block holds nothing but the extents themselves."""
+        return {}
 
     def _newFace(self, nface):
         # the kind of face this kind of block is bounded by
