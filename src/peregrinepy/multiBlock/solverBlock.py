@@ -75,6 +75,13 @@ class solverBlock(restartBlock, SolverMetricsMixin, HaloMixin):
             self.declare("Qn", "Qnm1", kind="cell", components=self.ne)
             self.declare("dtau", kind="cell")
 
+    def setExtents(self, ni, nj, nk):
+        """A face is shaped by the block it bounds, so it learns how big that
+        block is at the same moment the block does."""
+        for face in self.faces:
+            face.setExtents(ni, nj, nk, self.ne)
+        super().setExtents(ni, nj, nk)
+
     def allocate(self):
         """A solver block's arrays are Kokkos views, with a host mirror the
         numpy array wraps."""
@@ -152,8 +159,7 @@ class solverBlock(restartBlock, SolverMetricsMixin, HaloMixin):
         for face in self.faces:
             if face.neighbor is None:
                 continue
-            face._setOrientFunc(self.ni, self.nj, self.nk, self.ne)
-            face._setCommBuffers(self.ni, self.nj, self.nk, self.ne, self.nblki)
+            face.setCommunication(self.nblki)
 
     def updateDeviceView(self, vars):
         if isinstance(vars, str):

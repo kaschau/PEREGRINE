@@ -31,13 +31,7 @@ def communicate(mb, varis):
                     continue
 
                 send = face.array["sendBuffer_" + var]
-                if var in ["Q", "q"]:
-                    sliceS = face.ccSendAllSlices
-                elif var in ["dqdx", "dqdy", "dqdz", "phi"]:
-                    sliceS = face.ccSendFirstHaloSlice
-                elif var in ["x", "y", "z"]:
-                    sliceS = face.nodeSendSlices
-                for i, sS in enumerate(sliceS):
+                for i, sS in enumerate(face.sendSlices(var)):
                     send[i] = face.orient(blk.array[var][sS])
                 ssize = send.size
                 comm.Send([send, ssize, MPIDOUBLE], dest=face.commRank, tag=face.tagS)
@@ -50,13 +44,7 @@ def communicate(mb, varis):
                     continue
                 Request.Wait(reqs.__next__())
                 recv = face.array["recvBuffer_" + var]
-                if var in ["Q", "q"]:
-                    sliceR = face.ccRecvAllSlices
-                elif var in ["dqdx", "dqdy", "dqdz", "phi"]:
-                    sliceR = face.ccRecvFirstHaloSlice
-                elif var in ["x", "y", "z"]:
-                    sliceR = face.nodeRecvSlices
-                for i, sR in enumerate(sliceR):
+                for i, sR in enumerate(face.recvSlices(var)):
                     blk.array[var][sR] = recv[i]
             # Push back up the device
             blk.updateDeviceView(var)

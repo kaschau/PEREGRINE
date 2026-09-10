@@ -8,7 +8,6 @@ run with 2 mpi processes!!!!!!
 from mpi4py import MPI  # noqa: F401
 
 import peregrinepy as pg
-import numpy as np
 import os
 
 fname = """
@@ -115,10 +114,9 @@ def simulate():
         inputBcValues["w"] = 0.0
         inputBcValues["T"] = 300.0
 
-        face.array["qBcVals"] = np.zeros((blk.array["q"][face.s1_].shape))
+        face.allocate("qBcVals")
         pg.bcs.prep(blk, face, inputBcValues)
-        shape = blk.array["q"][face.s1_].shape
-        pg.misc.createViewMirrorArray(face, "qBcVals", shape)
+        face.updateDeviceView("qBcVals")
 
         face = blk.getFace(2)
         face.commRank = 1
@@ -139,10 +137,9 @@ def simulate():
         face.bcType = "constantPressureSubsonicExit"
         inputBcValues = {}
         inputBcValues["p"] = 101325.0
-        face.array["qBcVals"] = np.zeros((blk.array["q"][face.s1_].shape))
+        face.allocate("qBcVals")
         pg.bcs.prep(blk, face, inputBcValues)
-        shape = blk.array["q"][face.s1_].shape
-        pg.misc.createViewMirrorArray(face, "qBcVals", shape)
+        face.updateDeviceView("qBcVals")
 
         face = blk.getFace(1)
         face.commRank = 0

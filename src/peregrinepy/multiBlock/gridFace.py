@@ -1,71 +1,83 @@
 import numpy as np
 
-from ..misc import frozenDict
 from .topologyFace import topologyFace
 
 
 class gridFace(topologyFace):
+    """
+    gridFace object holds all the information that a grid
+    would need to know about a face.
+    """
+
     faceType = "grid"
 
     def __init__(self, nface):
         super().__init__(nface)
 
-        self.array = frozenDict()
-        self.array["periodicRotMatrixUp"] = None
-        self.array["periodicRotMatrixDown"] = None
+        #########################################################
+        # Data arrays
+        #########################################################
+        # Python side data
+        self.array = {}
+        # Kokkos mirrors (only used for solverFaces)
+        self.mirror = {}
+        # what each array's shape will be, once the block is sized
+        self.declared = {}
 
-        if self.faceType == "grid":
-            self.array._freeze()
+        self.declare("periodicRotMatrixUp", "periodicRotMatrixDown", kind="rotation")
 
-    @topologyFace.bcType.setter
-    def bcType(self, value):
-        topologyFace.bcType.fset(self, value)
+    ###########################################################################
+    # The arrays a face has, and how big they are
+    ###########################################################################
+    def declare(self, *names, kind):
+        """Say an array exists and what shape it will take, before the block
+        this face bounds knows its extents. Nothing else may be put in array."""
+        for name in names:
+            self.declared[name] = kind
+            self.array[name] = None
+            self.mirror[name] = None
 
+    @property
+    def shapes(self):
+        """What each kind of array is shaped, for this face's block."""
+        return {"rotation": (3, 3)}
+
+    def shapeOf(self, name):
+        return self.shapes[self.declared[name]]
+
+    def allocate(self, *names):
+        """Give these arrays their memory now that their shapes are known. A
+        face allocates in groups rather than all at once, since an interior
+        face never holds boundary values and a boundary face never holds
+        halo buffers."""
+        for name in names:
+            self.array[name] = np.zeros(self.shapeOf(name))
+
+    ###########################################################################
+    # Periodic rotation
+    ###########################################################################
     @topologyFace.periodicAxis.setter
     def periodicAxis(self, axis):
         topologyFace.periodicAxis.fset(self, axis)
 
-        # Do we need to compute the rotational matrix?
+        # only a rotational periodic turns anything, and it cannot know how
+        # far around until it has been given its span
         if not self.bcType.startswith("periodicRot"):
             return
-        elif self.periodicSpan is None:
-            # To compute the rot matrix we need the span now.
+        if self.periodicSpan is None:
             raise AttributeError("Must set periodicSpan before setting periodicAxis")
 
-        # Compute rotation matrix for positive and negative rotation
-        rotUp = np.zeros((3, 3))
-        th = self.periodicSpan * np.pi / 180.0
-        ct = np.cos(th)
-        st = np.sin(th)
-        ux, uy, uz = tuple(axis)
-        rotUp[0, 0] = ct + ux**2 * (1 - ct)
-        rotUp[0, 1] = ux * uy * (1 - ct) - uz * st
-        rotUp[0, 2] = ux * uz * (1 - ct) + uy * st
+        self.allocate("periodicRotMatrixUp", "periodicRotMatrixDown")
+        up = self._rotationMatrix(self.periodicAxis, self.periodicSpan * np.pi / 180.0)
+        self.array["periodicRotMatrixUp"][:] = up
+        # a rotation is orthogonal, so turning back the way we came is its
+        # transpose
+        self.array["periodicRotMatrixDown"][:] = up.T
 
-        rotUp[1, 0] = uy * ux * (1 - ct) + uz * st
-        rotUp[1, 1] = ct + uy**2 * (1 - ct)
-        rotUp[1, 2] = uy * uz * (1 - ct) - ux * st
-
-        rotUp[2, 0] = uz * ux * (1 - ct) - uy * st
-        rotUp[2, 1] = uz * uy * (1 - ct) + ux * st
-        rotUp[2, 2] = ct + uz**2 * (1 - ct)
-
-        rotDown = np.zeros((3, 3))
-        ct = np.cos(-th)
-        st = np.sin(-th)
-        rotDown[0, 0] = ct + ux**2 * (1 - ct)
-        rotDown[0, 1] = ux * uy * (1 - ct) - uz * st
-        rotDown[0, 2] = ux * uz * (1 - ct) + uy * st
-
-        rotDown[1, 0] = uy * ux * (1 - ct) + uz * st
-        rotDown[1, 1] = ct + uy**2 * (1 - ct)
-        rotDown[1, 2] = uy * uz * (1 - ct) - ux * st
-
-        rotDown[2, 0] = uz * ux * (1 - ct) - uy * st
-        rotDown[2, 1] = uz * uy * (1 - ct) + ux * st
-        rotDown[2, 2] = ct + uz**2 * (1 - ct)
-
-        # if we are a solver face, these will be turned into
-        # views/mirrors after this
-        self.array["periodicRotMatrixUp"] = rotUp
-        self.array["periodicRotMatrixDown"] = rotDown
+    @staticmethod
+    def _rotationMatrix(u, theta):
+        """Turning about the unit vector :u: by :theta:.
+        See http://paulbourke.net/geometry/rotate/"""
+        ct, st = np.cos(theta), np.sin(theta)
+        cross = np.array([[0.0, -u[2], u[1]], [u[2], 0.0, -u[0]], [-u[1], u[0], 0.0]])
+        return ct * np.eye(3) + st * cross + (1.0 - ct) * np.outer(u, u)

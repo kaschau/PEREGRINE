@@ -33,15 +33,11 @@ def communicate(mb, varis):
 
                 send = face.array["sendBuffer_" + var]
                 recvName = "tempRecvBuffer_" + var
-                if var in ["Q", "q"]:
-                    sliceS = face.ccSendAllSlices
-                elif var in ["dqdx", "dqdy", "dqdz", "phi"]:
-                    sliceS = face.ccSendFirstHaloSlice
-                elif var in ["x", "y", "z"]:
-                    sliceS = face.nodeSendSlices
 
                 # Get the indices of the send slices from the numpy slice object
-                sliceIndxs = [s for f in sliceS for s in f if isinstance(s, int)]
+                sliceIndxs = [
+                    s for f in face.sendSlices(var) for s in f if isinstance(s, int)
+                ]
                 # populate the temp recv array with the unoriented send data, since its
                 # the correct size and shape
                 extractSendBuffer(
@@ -67,17 +63,13 @@ def communicate(mb, varis):
                 Request.Wait(reqs.__next__())
 
                 recvName = "recvBuffer_" + var
-                if var in ["Q", "q"]:
-                    sliceR = face.ccRecvAllSlices
-                elif var in ["dqdx", "dqdy", "dqdz", "phi"]:
-                    sliceR = face.ccRecvFirstHaloSlice
-                elif var in ["x", "y", "z"]:
-                    sliceR = face.nodeRecvSlices
 
                 # Push back up the device
                 face.updateDeviceView(recvName)
                 # Get the indices of the recv slices from the numpy slice object
-                sliceIndxs = [s for f in sliceR for s in f if isinstance(s, int)]
+                sliceIndxs = [
+                    s for f in face.recvSlices(var) for s in f if isinstance(s, int)
+                ]
                 # Place the recv in the view
                 placeRecvBuffer(
                     getattr(blk.cpp, var),

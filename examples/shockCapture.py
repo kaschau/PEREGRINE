@@ -411,7 +411,7 @@ def simulate(testnum, index="i"):
     if test.uL == 0.0:
         pass
     else:
-        face.array["qBcVals"] = np.zeros((blk.array["q"][face.s1_].shape))
+        face.allocate("qBcVals")
         inputBcValues = {}
         if test.uL > 0:
             face.bcType = "constantVelocitySubsonicInlet"
@@ -425,14 +425,13 @@ def simulate(testnum, index="i"):
             face.bcType = "constantPressureSubsonicExit"
             inputBcValues["p"] = test.pL
             pg.bcs.prep(blk, face, inputBcValues)
-        shape = blk.array["q"][face.s1_].shape
-        pg.misc.createViewMirrorArray(face, "qBcVals", shape)
+        face.updateDeviceView("qBcVals")
 
     face = blk.getFace(highFace)
     if test.uR == 0.0:
         pass
     else:
-        face.array["qBcVals"] = np.zeros((blk.array["q"][face.s1_].shape))
+        face.allocate("qBcVals")
         inputBcValues = {}
         if test.uR < 0:
             face.bcType = "constantVelocitySubsonicInlet"
@@ -446,8 +445,7 @@ def simulate(testnum, index="i"):
             face.bcType = "constantPressureSubsonicExit"
             inputBcValues["p"] = test.pR
             pg.bcs.prep(blk, face, inputBcValues)
-        shape = blk.array["q"][face.s1_].shape
-        pg.misc.createViewMirrorArray(face, "qBcVals", shape)
+        face.updateDeviceView("qBcVals")
 
     # Update cons
     mb.eos(blk.cpp, mb.thtrdat.cpp, 0, "prims")

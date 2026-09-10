@@ -141,10 +141,10 @@ def buildAndCommunicate(S, adv, spdata, seed):
                     blk.array[v] = None
                     blk.mirror[v] = None
         reorientBlock1(mb, S, VARLIST)
-        # reorienting replaced the mirror backed arrays, so rebuild the views
-        # around what it left
+        # reorienting replaced the mirror backed arrays, so re-sizing each
+        # block rebuilds the views around what it left and sizes its faces
         for blk in mb:
-            blk.allocate()
+            blk.setExtents(blk.ni, blk.nj, blk.nk)
 
     mb.setBlockCommunication()
 

@@ -66,7 +66,7 @@ def create(bc, adv, spdata):
 
         face.bcType = bc
         # Primative bcs
-        face.array["qBcVals"] = np.zeros((blk.array["q"][face.s1_].shape))
+        face.allocate("qBcVals", "QBcVals")
         inputBcValues = {}
         inputBcValues["p"] = pbc
         inputBcValues["u"] = ubc
@@ -80,7 +80,6 @@ def create(bc, adv, spdata):
                 inputBcValues[spn] = Ybc[n]
 
         # Conservative like bcs
-        face.array["QBcVals"] = np.zeros((blk.array["Q"][face.s1_].shape))
         inputBcValues["mDotPerUnitArea"] = mDotPerAbc
         # Just so we can check we set the target mdot to the zeroth (unused)
         # index of the QBcVals
@@ -88,8 +87,6 @@ def create(bc, adv, spdata):
 
         pg.bcs.prep(blk, face, inputBcValues)
 
-        pg.misc.createViewMirrorArray(
-            face, ["qBcVals", "QBcVals"], face.array["qBcVals"].shape
-        )
+        face.updateDeviceView(["qBcVals", "QBcVals"])
 
     return mb

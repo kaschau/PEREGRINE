@@ -124,11 +124,9 @@ def simulate(index, velo):
         raise ValueError()
     for face in blk.faces:
         if face.bcType == "adiabaticMovingWall":
-            face.array["qBcVals"] = np.zeros(blk.array["q"][face.s1_].shape)
+            face.allocate("qBcVals")
             pg.bcs.prep(blk, face, valueDict)
-            pg.misc.createViewMirrorArray(
-                face, "qBcVals", blk.array["q"][face.s1_].shape
-            )
+            face.updateDeviceView("qBcVals")
             break
 
     mb.setBlockCommunication()

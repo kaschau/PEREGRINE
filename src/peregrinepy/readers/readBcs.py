@@ -1,4 +1,3 @@
-import numpy as np
 import yaml
 from .. import bcs
 
@@ -81,21 +80,15 @@ def readBcs(mb, pathToFile, justPeriodic=False):
             if justPeriodic:
                 continue
 
-            # If we are a solver face, we need to create the kokkos arrays
-            if face.faceType != "solver":
+            # only a solver face holds the values a bc applies
+            if "qBcVals" not in face.declared:
                 continue
 
-            from ..misc import createViewMirrorArray
-
-            # Create "profile" arrays for bc values
-            face.array["qBcVals"] = np.zeros(blk.array["q"][face.s1_].shape)
-            face.array["QBcVals"] = np.zeros(blk.array["Q"][face.s1_].shape)
+            face.allocate("qBcVals", "QBcVals")
 
             # Certain boundary conditions need prep work,
             # such as constant mass or profiles, so call them here
             inputValues = bcsIn[bcFam]["bcVals"]
             bcs.prep(blk, face, inputValues)
 
-            names = ["qBcVals", "QBcVals"]
-            shape = blk.array["q"][face.s1_].shape
-            createViewMirrorArray(face, names, shape)
+            face.updateDeviceView(["qBcVals", "QBcVals"])
