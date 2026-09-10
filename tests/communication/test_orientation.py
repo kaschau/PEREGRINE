@@ -117,7 +117,7 @@ def buildAndCommunicate(S, adv, spdata, seed):
     config["RHS"]["diffusion"] = True
     config["thermochem"]["spdata"] = spdata
 
-    mb = pg.multiBlock.generateMultiBlockSolver(2, config)
+    mb = pg.multiBlock.buildSolver(config, 2)
     pg.mesher.CubeMesher(
         mbDims=[2, 1, 1], dimsPerBlock=[6, 3, 2], lengths=[2, 1, 1]
     ).mesh(mb)

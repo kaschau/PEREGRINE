@@ -32,7 +32,7 @@ def simulate():
     config["thermochem"]["spdata"] = ["Air"]
     config.validateConfig()
 
-    mb = pg.multiBlock.generateMultiBlockSolver(1, config)
+    mb = pg.multiBlock.buildSolver(config, 1)
 
     nx = 300
     lx = 1.0

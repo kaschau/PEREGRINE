@@ -266,7 +266,7 @@ if __name__ == "__main__":
         inp = yaml.load(connFile, Loader=yaml.FullLoader)
 
     gp = args.gridPath
-    mb = pg.multiBlock.grid.mbFromGrid(gp)
+    mb = pg.multiBlock.grid.fromGrid(gp)
     assert len(mb) > 0
 
     points, tags = getPointsTagsFromInput(inp)

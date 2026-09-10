@@ -21,6 +21,7 @@ interpolate.py --from </path/to/from-grid/and/restart> --to </path/to/to-grid/> 
 
 import argparse
 from peregrinepy.readers import readRestart
+import peregrinepy as pg
 from peregrinepy.multiBlock import restart as mbr
 from peregrinepy.writers import RestartWriter
 from peregrinepy import interpolation
@@ -103,7 +104,7 @@ if __name__ == "__main__":
     verboseSearch = args.verboseSearch
 
     # Read in from data
-    mbFrom = mbr.mbFromGrid(fromDir, speciesNames)
+    mbFrom = mbr.fromGrid(fromDir, speciesNames)
 
     # results are numbered, so take the one the caller asked for or the newest
     nrts = sorted(
@@ -114,7 +115,7 @@ if __name__ == "__main__":
     readRestart(mbFrom, fromDir, nrt=nrts[-1])
 
     # Read in to data
-    mbTo = mbr.mbFromGrid(toDir, speciesNames)
+    mbTo = mbr.fromGrid(toDir, speciesNames)
 
     # Compute bounding blocks of each block
     boundsList = interpolation.bounds.findBounds(mbTo, mbFrom, verboseSearch)

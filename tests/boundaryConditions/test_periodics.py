@@ -34,7 +34,7 @@ class TestPeriodics:
         config["RHS"]["diffusion"] = True
         config["thermochem"]["spdata"] = spdata
 
-        mb = pg.multiBlock.generateMultiBlockSolver(1, config)
+        mb = pg.multiBlock.buildSolver(config, 1)
 
         axis = np.random.random(3)
         axis /= np.linalg.norm(axis)

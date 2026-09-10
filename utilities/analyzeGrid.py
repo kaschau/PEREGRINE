@@ -9,7 +9,7 @@ of the grid.
 import argparse
 
 import numpy as np
-from peregrinepy.multiBlock import grid as mbg
+import peregrinepy as pg
 from peregrinepy.readers import GridReader
 
 
@@ -53,7 +53,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     gp = args.gridDir
 
-    mb = mbg.mbFromGrid(gp)
+    mb = pg.multiBlock.grid.fromGrid(gp)
 
     results = analyzeGrid(mb)
 

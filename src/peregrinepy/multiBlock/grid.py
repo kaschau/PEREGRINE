@@ -1,6 +1,6 @@
 from .topology import topology
-from .gridBlock import gridBlock
 from ..readers import GridReader
+from .gridBlock import gridBlock
 
 
 class grid(topology):
@@ -20,11 +20,8 @@ class grid(topology):
             super().__init__(nblks, ls)
 
     @classmethod
-    def mbFromGrid(cls, path="./", *args, extentsOnly=False):
-        """A multiBlock of this kind, sized from the grid file at :path: and
-        filled with its coordinates and its connectivity. Anything the kind
-        needs beyond the block count -- a restart's species names, a solver's
-        halo depth -- follows the path in the order its class declares them."""
+    def fromGrid(cls, path="./", *args, extentsOnly=False):
+        """A multiBlock of this kind, sized from the grid file"""
         with GridReader(path) as reader:
             mb = cls(reader.totalBlocks, *args)
             if extentsOnly:

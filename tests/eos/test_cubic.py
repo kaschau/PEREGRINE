@@ -15,7 +15,7 @@ def test_cubic(my_setup):
     config["thermochem"]["eos"] = "cubic"
     config["RHS"]["diffusion"] = False
 
-    mb = pg.multiBlock.generateMultiBlockSolver(1, config)
+    mb = pg.multiBlock.buildSolver(config, 1)
     p = np.random.uniform(low=10000, high=100000)
     T = np.random.uniform(low=100, high=1000)
     Y = np.random.uniform(low=0.0, high=1.0, size=mb[0].ns)

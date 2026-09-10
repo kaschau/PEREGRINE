@@ -24,7 +24,7 @@ def bootstrapCase(config):
 
     # Generate the multiBlock solver object for each MPI process, given the number of
     # blocks each process is responsible for
-    mb = pg.multiBlock.generateMultiBlockSolver(len(myblocks), config, myblocks)
+    mb = pg.multiBlock.buildSolver(config, myblocks=myblocks)
     comm.Barrier()
     if rank == 0:
         print("Generated multiblock.")

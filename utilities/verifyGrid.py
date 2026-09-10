@@ -237,7 +237,7 @@ if __name__ == "__main__":
 
     gp = args.gridPath
     bcFamPath = args.bcFamPath
-    mb = pg.multiBlock.grid.mbFromGrid(gp)
+    mb = pg.multiBlock.grid.fromGrid(gp)
     try:
         pg.readers.readBcs(mb, bcFamPath)
     except FileNotFoundError:

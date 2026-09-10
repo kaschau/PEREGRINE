@@ -30,7 +30,7 @@ def simulate():
     config = pg.files.configFile()
     config.validateConfig()
 
-    mb = pg.multiBlock.generateMultiBlockSolver(1, config)
+    mb = pg.multiBlock.buildSolver(config, 1)
     NE = 64
     NN = 64
     NX = 64

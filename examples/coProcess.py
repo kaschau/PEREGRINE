@@ -99,7 +99,7 @@ def simulate():
     if rank == 0:
         with open("tempcoproc.py", "w") as f:
             f.write(fname)
-    mb = pg.multiBlock.generateMultiBlockSolver(1, config)
+    mb = pg.multiBlock.buildSolver(config, 1)
     blk = mb[0]
     if rank == 0:
         pg.mesher.CubeMesher(

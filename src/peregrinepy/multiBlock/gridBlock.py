@@ -1,4 +1,5 @@
 import numpy as np
+from .gridFace import gridFace
 from .metricsMixin import MetricsMixin
 from .topologyBlock import topologyBlock
 
@@ -34,6 +35,9 @@ class gridBlock(topologyBlock, MetricsMixin):
         # cell centers are as much as a block with no solution on it can work
         # out; the rest of the metrics are a solverBlock's
         self.declare("xc", "yc", "zc", kind="cell")
+
+    def _newFace(self, nface):
+        return gridFace(nface)
 
     ###########################################################################
     # The arrays a block has, and how big they are

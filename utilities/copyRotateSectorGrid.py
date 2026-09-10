@@ -76,7 +76,7 @@ if __name__ == "__main__":
             "nseg must be > 1 (it corresponds to the total number of output segments)"
         )
 
-    fromGrid = pg.multiBlock.grid.mbFromGrid(fromDir)
+    fromGrid = pg.multiBlock.grid.fromGrid(fromDir)
     nblks = len(fromGrid)
 
     toGrid = pg.multiBlock.grid(nblks * nseg)

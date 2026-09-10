@@ -8,7 +8,7 @@ def create(bc, adv, spdata):
     config["RHS"]["diffusion"] = True
     config["thermochem"]["spdata"] = spdata
 
-    mb = pg.multiBlock.generateMultiBlockSolver(1, config)
+    mb = pg.multiBlock.buildSolver(config, 1)
 
     pg.mesher.CubeMesher(
         mbDims=[1, 1, 1], dimsPerBlock=[8, 6, 4], lengths=[1, 1, 1]

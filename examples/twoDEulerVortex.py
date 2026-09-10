@@ -24,7 +24,7 @@ def simulate():
     config = pg.files.configFile()
     config.validateConfig()
 
-    mb = pg.multiBlock.generateMultiBlockSolver(1, config)
+    mb = pg.multiBlock.buildSolver(config, 1)
     NE = NN = 41
     pg.mesher.CubeMesher(
         mbDims=[1, 1, 1],

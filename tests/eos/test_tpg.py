@@ -51,7 +51,7 @@ def test_tpg(my_setup, ctfile, thfile):
     config["thermochem"]["eos"] = "tpg"
     config["RHS"]["diffusion"] = False
 
-    mb = pg.multiBlock.generateMultiBlockSolver(1, config)
+    mb = pg.multiBlock.buildSolver(config, 1)
     pg.mesher.CubeMesher(
         mbDims=[1, 1, 1], dimsPerBlock=[2, 2, 2], lengths=[1, 1, 1]
     ).mesh(mb)

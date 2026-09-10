@@ -18,7 +18,7 @@ def simulate():
     config["thermochem"]["spdata"] = ["CO2"]
     config["thermochem"]["trans"] = "chungDenseGasUnityLewis"
     config.validateConfig()
-    mb = pg.multiBlock.generateMultiBlockSolver(1, config)
+    mb = pg.multiBlock.buildSolver(config, 1)
     pg.mesher.CubeMesher(
         mbDims=[1, 1, 1], dimsPerBlock=[2, 2, 2], lengths=[0.01, 0.01, 0.01]
     ).mesh(mb)

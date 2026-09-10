@@ -10,7 +10,7 @@ from peregrinepy import compute
 from ..misc import null
 
 """
-This is the mother ship of a peregrine case. The function generateMultiBlockSolver
+This is the mother ship of a peregrine case. The function buildSolver
 sets all the attributes of the solver class that we need to run a case, checks
 that our config file makes sense, etc.
 """
@@ -206,45 +206,30 @@ def howManyNG(config):
     return ng
 
 
-def generateMultiBlockSolver(nblks, config, myblocks=None):
-    """
-    Generate a complete multiBlock solver object with the
-    - time integrator
-    - species data
-    - consistify methods
-    - RHS methods
-    """
-
-    # Get the time integrator from config file
-    ti = config["timeIntegration"]["integrator"]
-    tic = getIntegrator(ti)
-    name = "solver" + ti
-    # Merge the time integration class with the multiblock solver class
-    mbsolver = type(name, (solver, tic), dict(name=name))
-
-    # Get the species names from the spdata file
-    spn = list(findUserSpData(config).keys())
-
-    # Get the number of ghost layers
-    ng = howManyNG(config)
-    # Instantiate the combined mbsolver+timeint object
-    cls = mbsolver(nblks, spn, ng=ng, config=config)
-
-    # In parallel we need to overwrite the generated block numbers
+def buildSolver(config, nblks=None, myblocks=None):
+    """A runnable solver multiBlock: the time integrator merged in, the species
+    data attached, and the consistify and RHS methods set from what the config
+    asks for. Unlike grid.fromGrid this does not fill a container, it builds
+    and wires one. :myblocks: are the block numbers this rank is responsible
+    for, which is also how many blocks it holds."""
     if myblocks is not None:
-        assert (
-            len(myblocks) == nblks
-        ), "You passed a quantity of block number assignments that != nblks"
+        nblks = len(myblocks)
+
+    # merge the time integration class with the multiBlock solver class
+    ti = config["timeIntegration"]["integrator"]
+    name = "solver" + ti
+    mbsolver = type(name, (solver, getIntegrator(ti)), dict(name=name))
+
+    spn = list(findUserSpData(config).keys())
+    cls = mbsolver(nblks, spn, ng=howManyNG(config), config=config)
+
+    # in parallel the blocks are numbered by the partition, not by order
+    if myblocks is not None:
         for blk, nblki in zip(cls, myblocks):
-            blk.nblki = nblki
+            blk.nblki = blk.baseNblki = nblki
 
-    # Set the thtrdat object on
     cls.thtrdat = thtrdat(config)
-
-    # Set the compute methods for consistify
     setConsistify(cls, config)
-
-    # Set the compute methods for the RHS
     setRHS(cls, config)
 
     return cls

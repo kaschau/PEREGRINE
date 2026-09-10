@@ -36,7 +36,7 @@ def simulate():
     config["thermochem"]["eos"] = "tpg"
     config["thermochem"]["spdata"] = "thtr_CH4_O2_FFCMY.yaml"
     config.validateConfig()
-    mb = pg.multiBlock.generateMultiBlockSolver(1, config)
+    mb = pg.multiBlock.buildSolver(config, 1)
     pg.mesher.CubeMesher(
         mbDims=[1, 1, 1], dimsPerBlock=[2, 2, 2], lengths=[0.01, 0.01, 0.01]
     ).mesh(mb)

@@ -23,7 +23,7 @@ def simulate(index="i"):
     config["RHS"]["primaryAdvFlux"] = "KEPaEC"
     config["RHS"]["diffusion"] = False
     config.validateConfig()
-    mb = pg.multiBlock.generateMultiBlockSolver(1, config)
+    mb = pg.multiBlock.buildSolver(config, 1)
     print(mb)
 
     rot = {"i": 0, "j": 1, "k": 2}
