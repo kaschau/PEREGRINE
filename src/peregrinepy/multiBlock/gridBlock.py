@@ -1,8 +1,9 @@
 import numpy as np
+from .metricsMixin import MetricsMixin
 from .topologyBlock import topologyBlock
 
 
-class gridBlock(topologyBlock):
+class gridBlock(topologyBlock, MetricsMixin):
     """
     gridBlock object holds all the information that a grid
     would need to know about a block.
@@ -102,53 +103,3 @@ class gridBlock(topologyBlock):
 
     def updateHostView(self, vars):
         """No device to pull from."""
-
-    def computeMetrics(self):
-        """Where this block's cells are. A block with no solution on it has no
-        use for the face vectors a flux is taken through."""
-        x = self.array["x"]
-        y = self.array["y"]
-        z = self.array["z"]
-
-        if x is None:
-            raise ValueError(
-                "You must initialize the grid arrays before computing metrics"
-            )
-
-        # ----------------------------------------------------------------------------
-        # Cell Centers
-        # ----------------------------------------------------------------------------
-
-        self.array["xc"][:] = 0.125 * (
-            x[0:-1, 0:-1, 0:-1]
-            + x[0:-1, 0:-1, 1::]
-            + x[0:-1, 1::, 0:-1]
-            + x[0:-1, 1::, 1::]
-            + x[1::, 0:-1, 0:-1]
-            + x[1::, 0:-1, 1::]
-            + x[1::, 1::, 0:-1]
-            + x[1::, 1::, 1::]
-        )
-
-        self.array["yc"][:] = 0.125 * (
-            y[0:-1, 0:-1, 0:-1]
-            + y[0:-1, 0:-1, 1::]
-            + y[0:-1, 1::, 0:-1]
-            + y[0:-1, 1::, 1::]
-            + y[1::, 0:-1, 0:-1]
-            + y[1::, 0:-1, 1::]
-            + y[1::, 1::, 0:-1]
-            + y[1::, 1::, 1::]
-        )
-
-        self.array["zc"][:] = 0.125 * (
-            z[0:-1, 0:-1, 0:-1]
-            + z[0:-1, 0:-1, 1::]
-            + z[0:-1, 1::, 0:-1]
-            + z[0:-1, 1::, 1::]
-            + z[1::, 0:-1, 0:-1]
-            + z[1::, 0:-1, 1::]
-            + z[1::, 1::, 0:-1]
-            + z[1::, 1::, 1::]
-        )
-        self.updateDeviceView(["xc", "yc", "zc"])

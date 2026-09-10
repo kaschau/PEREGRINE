@@ -81,10 +81,6 @@ class solverBlock(restartBlock, SolverMetricsMixin, HaloMixin):
         for name in self.declared:
             createViewMirrorArray(self, name, list(self.shapeOf(name)))
 
-    def computeMetrics(self):
-        super().computeMetrics()
-        self.computeSolverMetrics()
-
     def fillHaloWithNearest(self, name):
         a = self.array[name]
         ng = self.ng

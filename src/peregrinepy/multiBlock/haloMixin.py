@@ -8,7 +8,7 @@ import numpy as np
 
 
 class HaloMixin:
-    # every low face before every high one; the blends are order dependent
+    # every low face before every high one; the blend is order dependent
     _order = (1, 3, 5, 2, 4, 6)
 
     @staticmethod
@@ -21,22 +21,25 @@ class HaloMixin:
     def _masks(shape, ng):
         """A face plane split into its interior, the ring of edges around it, and
         its four corners."""
+        inner = (np.s_[ng : shape[0] + ng], np.s_[ng : shape[1] + ng])
+        ends = (np.s_[0:ng], np.s_[-ng:])
+
         out = {}
         for name in ("face", "edge", "corner"):
-            m = np.zeros((shape[0] + 2 * ng, shape[1] + 2 * ng))
+            m = np.zeros((shape[0] + 2 * ng, shape[1] + 2 * ng), dtype=bool)
             if name == "face":
-                m[ng : shape[0] + ng, ng : shape[1] + ng] = 1.0
+                m[inner] = True
             elif name == "edge":
-                m[0:ng, ng : shape[1] + ng] = 1.0
-                m[ng : shape[0] + ng, 0:ng] = 1.0
-                m[-ng::, ng : shape[1] + ng] = 1.0
-                m[ng : shape[0] + ng, -ng::] = 1.0
+                # the ring around the face interior: off one end, inside the other
+                for end in ends:
+                    m[end, inner[1]] = True
+                    m[inner[0], end] = True
             else:
-                m[0:ng, 0:ng] = 1.0
-                m[0:ng, -ng::] = 1.0
-                m[-ng::, 0:ng] = 1.0
-                m[-ng::, -ng::] = 1.0
-            out[name] = np.ma.make_mask(m)
+                # off both ends at once
+                for a in ends:
+                    for b in ends:
+                        m[a, b] = True
+            out[name] = m
         return out
 
     @staticmethod
@@ -55,23 +58,13 @@ class HaloMixin:
         return s0, -ng - 1, -ng - n - 2
 
     @staticmethod
-    def _replace(cur, extrapolated, hits):
-        return extrapolated
-
-    @staticmethod
-    def _average(cur, extrapolated, hits):
-        """a cell two faces both reach takes the mean of what each would set"""
-        return np.where(cur == 0.0, extrapolated, 0.5 * cur + 0.5 * extrapolated)
-
-    @staticmethod
-    def _runningMean(cur, extrapolated, hits):
-        """a corner is reached by three faces, so keep a running mean"""
+    def _blend(cur, extrapolated, hits):
+        """What a face writes into a cell some other face may already have
+        written. A face interior is reached once and takes the extrapolation
+        outright; an edge is reached by two faces and a corner by three, so
+        each one folds into a running mean of what came before it."""
         w = hits / (hits + 1.0)
-        return np.where(cur == 0.0, extrapolated, w * cur + (1.0 - w) * extrapolated)
-
-    # faces first, then the edges between them, then the corners between those.
-    # Each pass reads what the one before it wrote, and a cell off the face
-    # interior is reached by more than one face, so the blends above combine them.
+        return np.where(hits == 0.0, extrapolated, w * cur + (1.0 - w) * extrapolated)
 
     def generateHalo(self):
         ng = self.ng
@@ -81,15 +74,6 @@ class HaloMixin:
 
         varis = ["x", "y", "z"]
 
-        # faces first, then the edges between them, then the corners between
-        # those. Each pass reads what the one before it wrote, and a cell off the
-        # face interior is reached by more than one face, so the blends combine
-        passes = (
-            ("face", self._replace),
-            ("edge", self._average),
-            ("corner", self._runningMean),
-        )
-
         # the halo is built from nothing, so it starts as nothing
         for var in varis:
             x = self.array[var]
@@ -97,28 +81,26 @@ class HaloMixin:
                 self._plane(x, nface, np.s_[0:ng])[:] = 0.0
                 self._plane(x, nface, np.s_[-ng::])[:] = 0.0
 
-        for name, blend in passes:
+        # faces first, then the edges between them, then the corners between
+        # those, since each pass reads what the one before it wrote
+        for name in ("face", "edge", "corner"):
             for var in varis:
                 x = self.array[var]
-                hits = np.zeros(x.shape) if blend is self._runningMean else None
+                hits = np.zeros(x.shape)
                 for nface in self._order:
                     mask = masks[nface][name]
                     extent = extents[(nface - 1) // 2]
                     for n in range(ng):
                         s0, s1, s2 = self._layers(nface, n, ng, extent)
                         cur = self._plane(x, nface, s0)
-                        extrapolated = (
-                            2.0 * self._plane(x, nface, s1)[mask]
-                            - self._plane(x, nface, s2)[mask]
-                        )
-                        counted = None if hits is None else self._plane(hits, nface, s0)
-                        cur[mask] = blend(
+                        counted = self._plane(hits, nface, s0)
+                        cur[mask] = self._blend(
                             cur[mask],
-                            extrapolated,
-                            None if counted is None else counted[mask],
+                            2.0 * self._plane(x, nface, s1)[mask]
+                            - self._plane(x, nface, s2)[mask],
+                            counted[mask],
                         )
-                        if counted is not None:
-                            counted[mask] += 1.0
+                        counted[mask] += 1.0
 
         for var in varis:
             self.updateDeviceView(var)
