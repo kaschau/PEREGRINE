@@ -74,4 +74,3 @@ class Strang(BaseExplicit):
         self.nrt += 1
         self.tme += dt
         self.titme = self.tme + dt
-

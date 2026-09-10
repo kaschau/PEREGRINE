@@ -3,13 +3,9 @@ import itertools
 import numpy as np
 import peregrinepy as pg
 import pytest
-from peregrinepy.decomposition import (
-    cutPath,
-    cutTable,
-    mergeAll,
-    performCutOperations,
-    reorientBlock,
-)
+from peregrinepy.partition import getPartitioner
+
+partitioner = getPartitioner()
 
 ##############################################
 # A cut plane through one block has to continue through every block it meets,
@@ -56,7 +52,7 @@ def properRelabelings():
 def test_cutTilesTheBlock(axis, nCuts):
     base = cube()
     work = cube()
-    performCutOperations(work, [[0, axis, nCuts]])
+    partitioner.performCutOperations(work, [[0, axis, nCuts]])
     assert len(work) == nCuts + 1
     assert connectionsAreMutual(work)
 
@@ -79,9 +75,9 @@ def test_cutTilesTheBlock(axis, nCuts):
 def test_mergeUndoesCut(axis):
     base = cube()
     work = cube()
-    performCutOperations(work, [[0, axis, 3]])
+    partitioner.performCutOperations(work, [[0, axis, 3]])
 
-    assert mergeAll(work) == 3
+    assert partitioner.mergeAll(work) == 3
     assert len(work) == 1
     for var in ("x", "y", "z"):
         assert np.array_equal(work[0].array[var], base[0].array[var])
@@ -89,7 +85,7 @@ def test_mergeUndoesCut(axis):
 
 def test_evenlySpacedCuts():
     work = cube()
-    performCutOperations(work, [[0, "j", 2]])
+    partitioner.performCutOperations(work, [[0, "j", 2]])
     # nj = 11, so the cuts land at int(11*2/3) = 7 then int(11/3) = 3
     assert sorted(blk.nj for blk in work) == [4, 4, 5]
 
@@ -97,11 +93,11 @@ def test_evenlySpacedCuts():
 @pytest.mark.parametrize("perm,flips", list(properRelabelings()))
 def test_cutPathFollowsOrientation(perm, flips):
     mb = cube(mbDims=(2, 1, 1), dims=(9, 8, 7), lengths=(2, 1, 1))
-    reorientBlock(mb, mb.getBlock(1), perm, flips)
+    partitioner.reorientBlock(mb, mb.getBlock(1), perm, flips)
     face = mb.getBlock(0).getFace(2)
 
     for myAxis, axis in enumerate("ijk"):
-        path = cutPath(mb, 0, axis)
+        path = partitioner.cutPath(mb, 0, axis)
         if axis == "i":
             # block 1 is across an i face, so an i cut never reaches it
             assert path == [[0, "i", False]]
@@ -114,7 +110,7 @@ def test_cutPathFollowsOrientation(perm, flips):
 
 def test_cutRunsThroughPeriodic():
     mb = cube(mbDims=(2, 1, 1), dims=(9, 8, 7), lengths=(2, 1, 1), periodic=(True,) * 3)
-    performCutOperations(mb, [[0, "j", 1]])
+    partitioner.performCutOperations(mb, [[0, "j", 1]])
 
     assert len(mb) == 4
     assert connectionsAreMutual(mb)
@@ -130,7 +126,7 @@ def test_cutRunsThroughPeriodic():
 
 def test_uncutGridIsItsOwnBase():
     mb = cube(mbDims=(2, 2, 1), dims=(9, 8, 7))
-    for blk, (baseNblki, i0, i1, j0, j1, k0, k1) in zip(mb, cutTable(mb)):
+    for blk, (baseNblki, i0, i1, j0, j1, k0, k1) in zip(mb, partitioner.cutTable(mb)):
         assert baseNblki == blk.nblki
         assert (i0, i1, j0, j1, k0, k1) == (
             0,
@@ -147,9 +143,9 @@ def test_uncutGridIsItsOwnBase():
 def test_everyPieceIsFoundInTheBlockItNames(mbDims, axis):
     base = cube(mbDims=mbDims, dims=(9, 8, 7))
     work = cube(mbDims=mbDims, dims=(9, 8, 7))
-    performCutOperations(work, [[0, axis, 3]])
+    partitioner.performCutOperations(work, [[0, axis, 3]])
 
-    table = cutTable(work)
+    table = partitioner.cutTable(work)
     assert len(table) == len(work)
     for blk, (baseNblki, i0, i1, j0, j1, k0, k1) in zip(work, table):
         assert (blk.ni, blk.nj, blk.nk) == (i1 - i0 + 1, j1 - j0 + 1, k1 - k0 + 1)
@@ -169,10 +165,12 @@ def test_provenanceSurvivesRepeatedCuts():
     base = cube(dims=(13, 11, 9))
     work = cube(dims=(13, 11, 9))
     # cut a block, then cut its pieces again on another axis
-    performCutOperations(work, [[0, "i", 2]])
-    performCutOperations(work, [[0, "k", 1]])
+    partitioner.performCutOperations(work, [[0, "i", 2]])
+    partitioner.performCutOperations(work, [[0, "k", 1]])
 
-    for blk, (baseNblki, i0, i1, j0, j1, k0, k1) in zip(work, cutTable(work)):
+    for blk, (baseNblki, i0, i1, j0, j1, k0, k1) in zip(
+        work, partitioner.cutTable(work)
+    ):
         assert baseNblki == 0
         for var in ("x", "y", "z"):
             assert np.array_equal(

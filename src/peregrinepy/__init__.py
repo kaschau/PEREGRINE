@@ -1,7 +1,7 @@
 from . import bcs
 from . import compute
 from . import coproc
-from . import decomposition
+from . import partition
 from . import files
 from . import grid
 from . import interpolation
@@ -20,7 +20,7 @@ __all__ = [
     "bcs",
     "compute",
     "coproc",
-    "decomposition",
+    "partition",
     "files",
     "grid",
     "interpolation",

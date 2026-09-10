@@ -43,12 +43,8 @@ def kineticTheoryPoly(usersp, refsp, eos):
     Ts = np.linspace(Tmin, Tmax, npts)
 
     # Collision integral interpolations
-    intrp_o22 = intrp.RectBivariateSpline(
-        tstar22, delta, omega22_table, kx=5, ky=5
-    )
-    intrp_Astar = intrp.RectBivariateSpline(
-        tstar, delta, astar_table, kx=5, ky=5
-    )
+    intrp_o22 = intrp.RectBivariateSpline(tstar22, delta, omega22_table, kx=5, ky=5)
+    intrp_Astar = intrp.RectBivariateSpline(tstar, delta, astar_table, kx=5, ky=5)
 
     # Get molecular mass
     MW = completeSpecies("MW", usersp, refsp)
@@ -145,9 +141,7 @@ def kineticTheoryPoly(usersp, refsp, eos):
         Tstar = T * kb / well
         omga22 = intrp_o22(Tstar, r_deltastar.diagonal(), grid=False)
         visc[i, :] = (
-            (5.0 / 16.0)
-            * np.sqrt(np.pi * mass * kb * T)
-            / (np.pi * diam**2 * omga22)
+            (5.0 / 16.0) * np.sqrt(np.pi * mass * kb * T) / (np.pi * diam**2 * omga22)
         )
 
     ##########################################
@@ -239,10 +233,7 @@ def kineticTheoryPoly(usersp, refsp, eos):
     w = 1.0 / (visc**2)
     muPoly = np.flip(
         np.array(
-            [
-                list(np.polyfit(logTs, visc[:, k], deg=deg, w=w[:, k]))
-                for k in range(ns)
-            ]
+            [list(np.polyfit(logTs, visc[:, k], deg=deg, w=w[:, k])) for k in range(ns)]
         ),
         -1,
     )
@@ -253,10 +244,7 @@ def kineticTheoryPoly(usersp, refsp, eos):
     w = 1.0 / (cond**2)
     kappaPoly = np.flip(
         np.array(
-            [
-                list(np.polyfit(logTs, cond[:, k], deg=deg, w=w[:, k]))
-                for k in range(ns)
-            ]
+            [list(np.polyfit(logTs, cond[:, k], deg=deg, w=w[:, k])) for k in range(ns)]
         ),
         -1,
     )
@@ -266,9 +254,7 @@ def kineticTheoryPoly(usersp, refsp, eos):
     w = 1.0 / (diff**2)
     for k in range(ns):
         for j in range(k, ns):
-            Dij.append(
-                list(np.polyfit(logTs, diff[:, k, j], deg=deg, w=w[:, k, j]))
-            )
+            Dij.append(list(np.polyfit(logTs, diff[:, k, j], deg=deg, w=w[:, k, j])))
 
     DijPoly = np.flip(np.array(Dij), -1)
 

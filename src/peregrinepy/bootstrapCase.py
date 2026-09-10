@@ -17,23 +17,14 @@ def bootstrapCase(config):
     # First we determine what bocks we are responsible for
     ################################################################
     gridReader = pg.readers.GridReader(config["io"]["gridDir"])
-    try:
-        partition = gridReader.partition(size, pg.mpiComm.mpiUtils.getRanksPerNode())
-        blocksForProcs = partition.blocksForProcs
-    except ValueError as e:
-        if rank == 0:
-            print(f"ERROR!! {e}")
-        comm.Abort()
+    myblocks = gridReader.partition(size, pg.mpiComm.mpiUtils.getRanksPerNode())
     comm.Barrier()
     if rank == 0:
         print("Read partition.")
 
-    myblocks = blocksForProcs[rank]
     # Generate the multiBlock solver object for each MPI process, given the number of
     # blocks each process is responsible for
     mb = pg.multiBlock.generateMultiBlockSolver(len(myblocks), config, myblocks)
-    # a piece of a base block reads its own slab of it
-    partition.setProvenance(mb)
     comm.Barrier()
     if rank == 0:
         print("Generated multiblock.")
@@ -41,24 +32,10 @@ def bootstrapCase(config):
     ################################################################
     # Read in the connectivity
     ################################################################
-    gridReader.readConnectivity(mb, partition)
+    gridReader.readConnectivity(mb)
     comm.Barrier()
     if rank == 0:
         print("Read connectivity.")
-
-    ################################################################
-    # Now we figure out which processor each block's neighbor
-    # is on
-    ################################################################
-    for blk in mb:
-        for face in blk.faces:
-            neighbor = face.neighbor
-            if neighbor is None:
-                face.commRank = None
-                continue
-            for otherrank, proc in enumerate(blocksForProcs):
-                if neighbor in proc:
-                    face.commRank = otherrank
 
     ################################################################
     # Read in the grid

@@ -96,8 +96,7 @@ def generateHalo(blk):
                     s0, s1, s2 = _layers(nface, n, ng, extent)
                     cur = _plane(x, nface, s0)
                     extrapolated = (
-                        2.0 * _plane(x, nface, s1)[mask]
-                        - _plane(x, nface, s2)[mask]
+                        2.0 * _plane(x, nface, s1)[mask] - _plane(x, nface, s2)[mask]
                     )
                     counted = None if hits is None else _plane(hits, nface, s0)
                     cur[mask] = blend(

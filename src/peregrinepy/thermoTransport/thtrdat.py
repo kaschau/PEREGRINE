@@ -148,7 +148,7 @@ class thtrdat:
             elif "chungDenseGas" in config["thermochem"]["trans"]:
                 from .chungDenseGas import chungDenseGas
 
-                (chungA, chungB, redDipole) = chungDenseGas(usersp, refsp)
+                chungA, chungB, redDipole = chungDenseGas(usersp, refsp)
                 self.array["chungA"] = chungA
                 shape = [ns, 10]
                 createViewMirrorArray(self, ["chungA"], shape)

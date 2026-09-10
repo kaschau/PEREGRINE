@@ -10,33 +10,7 @@ what you need.
 import h5py
 import numpy as np
 
-
-class Partition:
-    """One decomposition the grid carries: which rank owns each block, and,
-    when its blocks are pieces of the base grid rather than the base blocks
-    themselves, which slab of which base block each piece is."""
-
-    def __init__(self, name, blocksForProcs, cuts):
-        self.name = name
-        self.blocksForProcs = blocksForProcs
-        # None when the blocks are the base blocks
-        self.cuts = cuts
-
-    def __len__(self):
-        return sum(len(group) for group in self.blocksForProcs)
-
-    def setProvenance(self, mb):
-        """Tell each block which slab of which base block it is, so reading
-        the grid pulls its hyperslab rather than a whole base block."""
-        for blk in mb:
-            if self.cuts is None:
-                # the blocks are the base blocks, whatever they were numbered
-                # when the multiBlock was built
-                blk.baseNblki, blk.baseSlice = blk.nblki, None
-                continue
-            baseNblki, *bounds = self.cuts[blk.nblki]
-            blk.baseNblki = int(baseNblki)
-            blk.baseSlice = tuple(int(b) for b in bounds)
+from ..mpiComm.mpiUtils import getCommRankSize
 
 
 class GridReader:
@@ -58,6 +32,8 @@ class GridReader:
             if "partitions" in self.f
             else []
         )
+        # which partition we picked, and what the rest of the reads follow
+        self._partitionName, self._cuts, self._rankOfNblki = None, None, None
 
     def close(self):
         self.f.close()
@@ -69,15 +45,14 @@ class GridReader:
         self.close()
 
     def partition(self, size, ranksPerNode):
-        """The blocks each of :size: ranks owns, placed for :ranksPerNode: of
-        them sharing a node.
+        """Pick the partition for :size: ranks, placed for :ranksPerNode: of
+        them sharing a node, and return the blocks this rank owns. Everything
+        read afterwards follows it: the coordinates each block pulls, the
+        connectivity its faces get, and which rank each neighbor is on.
 
         A partition for the same ranks but a different node layout assigns the
         same ranks, just placed for a machine we are not on, so it is used
         with a note rather than refused.
-
-        Returns a list of lists, the first index the rank, the second its
-        block number(s).
         """
         layouts = [rpn for n, rpn in self.partitions if n == size]
         if not layouts:
@@ -108,11 +83,8 @@ class GridReader:
             assert len(rank) == len(cuts), (
                 f"the {name} partition has {len(rank)} ranks for " f"{len(cuts)} pieces"
             )
-        return Partition(
-            name,
-            [[int(n) for n in np.flatnonzero(rank == r)] for r in range(size)],
-            cuts,
-        )
+        self._partitionName, self._cuts, self._rankOfNblki = name, cuts, rank
+        return [int(n) for n in np.flatnonzero(rank == getCommRankSize()[1])]
 
     def readGrid(self, mb, justNi=False):
         """Add the coordinate data to a supplied peregrinepy.multiBlock.grid
@@ -122,6 +94,14 @@ class GridReader:
             assert mb.mbType not in ["restart", "solver"]
 
         for blk in mb:
+            # which block of the grid this one is, and which slab of it
+            if self._cuts is None:
+                blk.baseNblki, blk.baseSlice = blk.nblki, None
+            else:
+                baseNblki, *bounds = self._cuts[blk.nblki]
+                blk.baseNblki = int(baseNblki)
+                blk.baseSlice = tuple(int(b) for b in bounds)
+
             coordS = self.f[f"coordinates_{blk.baseNblki:06d}"]
 
             if blk.baseSlice is None:
@@ -140,12 +120,12 @@ class GridReader:
 
             mb.progress(blk.nblki + 1, f"Reading in gridBlock {blk.nblki}")
 
-    def readConnectivity(self, mb, partition=None):
+    def readConnectivity(self, mb):
         """Add the stored connectivity to the faces of the blocks in mb. A
         partition whose blocks are pieces connects them its own way, so it
         carries its own."""
-        if partition is not None and partition.cuts is not None:
-            group = self.f[f"partitions/{partition.name}/connectivity"]
+        if self._cuts is not None:
+            group = self.f[f"partitions/{self._partitionName}/connectivity"]
         else:
             group = self.f["connectivity"]
         neighbor = np.array(group["neighbor"])
@@ -162,9 +142,8 @@ class GridReader:
                 face.orientation = str(orientation[mine]) or None
                 n = int(neighbor[mine])
                 face.neighbor = None if n == -1 else n
+                if self._rankOfNblki is not None:
+                    face.commRank = None if n == -1 else int(self._rankOfNblki[n])
 
-        mb.totalBlocks = (
-            self.totalBlocks
-            if partition is None or partition.cuts is None
-            else len(partition)
-        )
+        # a cut partition's blocks are its pieces, not the base grid's blocks
+        mb.totalBlocks = self.totalBlocks if self._cuts is None else len(self._cuts)

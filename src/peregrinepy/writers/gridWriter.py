@@ -28,7 +28,7 @@ belong to the case, not to the grid.
 
 import numpy as np
 
-from ..decomposition import cutTable
+from ..partition import BasePartitioner
 from .baseWriter import BaseWriter
 
 
@@ -84,26 +84,7 @@ class GridWriter(BaseWriter):
         cut table that says which slab of which base block each piece is, and
         the pieces' own connectivity. One whose blocks are the base blocks
         needs neither, and uses the grid's.
-
-        Parameters
-        ----------
-        mb : peregrinepy.multiBlock.grid (or a descendant)
-            The blocks being partitioned, base blocks or pieces of them
-
-        blocksForProcs : list
-            List of lists, the first index the rank, the second its block
-            number(s)
-
-        ranksPerNode : int
-            How many of those ranks share a node, which is what the placement
-            was optimized for
-
-        Returns
-        -------
-        None
-
         """
-
         name = f"{len(blocksForProcs)}x{ranksPerNode}"
         rank = np.full(self.totalBlocks, -1, dtype=np.int32)
         for r, group in enumerate(blocksForProcs):
@@ -118,7 +99,7 @@ class GridWriter(BaseWriter):
         group.create_dataset("rank", data=rank)
 
         if any(blk.baseSlice is not None for blk in mb):
-            group.create_dataset("cuts", data=cutTable(mb))
+            group.create_dataset("cuts", data=BasePartitioner.cutTable(mb))
             self._writeConnectivity(group, mb)
         gf.close()
 

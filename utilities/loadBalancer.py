@@ -12,95 +12,7 @@ when that, rather than the grouping, is what binds.
 
 import numpy as np
 import peregrinepy as pg
-from peregrinepy.decomposition import (
-    cellWeights,
-    cutPath,
-    edgesFromMb,
-    metrics,
-    partitionHierarchical,
-    performCutOperations,
-)
-
-
-def getSortedBlockSizes(mb):
-    sizes = np.empty(mb.nblks, dtype=np.int32)
-    nblkis = np.empty(mb.nblks, dtype=np.int32)
-    for i, blk in enumerate(mb):
-        sizes[i] = (blk.ni - 1) * (blk.nj - 1) * (blk.nk - 1)
-        nblkis[i] = blk.nblki
-
-    perm = sizes.argsort()
-    return list(sizes[perm]), list(nblkis[perm])
-
-
-def analyzeLoad(procSizes, procGroups):
-    assert len(procSizes) > 0
-    assert len(procGroups) > 0
-
-    maxBlksForProc = 0
-    maxLoad = np.max(procSizes)
-
-    for size, group in zip(procSizes, procGroups):
-        maxBlksForProc = len(group) if len(group) > maxBlksForProc else maxBlksForProc
-
-    perfectLoad = np.mean(procSizes)
-    efficiency = perfectLoad / maxLoad * 100
-
-    return efficiency, maxBlksForProc
-
-
-def allBlocksAssigned(mb, procGroups):
-    """Every block of the grid is owned by exactly one rank."""
-    assigned = [nblki for group in procGroups for nblki in group]
-
-    missing = sorted(set(mb.blockList) - set(assigned))
-    if missing:
-        print(f"Blocks assigned to no rank: {missing}")
-    twice = sorted(n for n in set(assigned) if assigned.count(n) > 1)
-    if twice:
-        print(f"Blocks assigned to more than one rank: {twice}")
-
-    return not missing and not twice and len(assigned) == mb.nblks
-
-
-def blockCells(mb):
-    return np.array([(b.ni - 1) * (b.nj - 1) * (b.nk - 1) for b in mb])
-
-
-def cutToFit(mb, maxCells):
-    """Cut blocks until none holds more than maxCells. A cut runs on through
-    every block its plane meets, so the cheapest axis is the shortest path."""
-    while True:
-        sizes = blockCells(mb)
-        worst = int(sizes.argmax())
-        if sizes[worst] <= maxCells:
-            return
-        blk = mb[worst]
-
-        best = None
-        for axis, nNodes in zip("ijk", (blk.ni, blk.nj, blk.nk)):
-            # every piece needs a cell, so n nodes take at most n-2 cuts
-            nCuts = min(int(np.ceil(sizes[worst] / maxCells)) - 1, nNodes - 2)
-            if nCuts < 1:
-                continue
-            cost = len(cutPath(mb, blk.nblki, axis)) * nCuts
-            if best is None or cost < best[0]:
-                best = (cost, axis, nCuts)
-        if best is None:
-            raise ValueError(
-                f"block {blk.nblki} holds {sizes[worst]} cells and cannot be cut"
-                f" under {maxCells}: it is only {blk.ni}x{blk.nj}x{blk.nk} nodes"
-            )
-        performCutOperations(mb, [[blk.nblki, best[1], best[2]]])
-
-
-def loadCeiling(sizes, numProcs):
-    """The best efficiency any grouping of whole blocks can reach. A rank
-    holding the largest block cannot finish before it does, so once the
-    largest block is bigger than an even share it, and not the grouping, is
-    what limits the result."""
-    return min(1.0, np.sum(sizes) / numProcs / np.max(sizes)) * 100
-
+from peregrinepy.partition import getPartitioner
 
 if __name__ == "__main__":
     import argparse
@@ -142,6 +54,13 @@ if __name__ == "__main__":
         type=int,
     )
     parser.add_argument(
+        "-method",
+        dest="method",
+        default="auto",
+        help="Which partitioner places the blocks: auto, greedy or metis.",
+        type=str,
+    )
+    parser.add_argument(
         "-granularity",
         dest="granularity",
         default=None,
@@ -163,39 +82,32 @@ if __name__ == "__main__":
     ranksPerNode = args.ranksPerNode
     granularity = args.granularity
 
-    if numProcs % ranksPerNode:
-        raise SystemExit(
-            f"-numProcs {numProcs} is not a whole number of nodes at"
-            f" -ranksPerNode {ranksPerNode}."
-        )
-    nNodes = numProcs // ranksPerNode
+    partitioner = getPartitioner(args.method)
 
     # cutting needs the coordinates, placing them does not
     mb = pg.multiBlock.grid.mbFromGrid(gridDir, justNi=granularity is None)
+    before, beforeMax = len(mb), partitioner.blockCells(mb).max()
+
+    blocksForProcs = partitioner.partition(mb, numProcs, ranksPerNode, granularity)
 
     if granularity is not None:
-        cap = int(blockCells(mb).sum() / numProcs / granularity)
-        before, beforeMax = len(mb), blockCells(mb).max()
-        cutToFit(mb, cap)
         print(
-            f"  cap {cap} cells per piece: {before} blocks -> {len(mb)} pieces,"
-            f" largest {beforeMax} -> {blockCells(mb).max()}"
+            f"  {before} blocks -> {len(mb)} pieces,"
+            f" largest {beforeMax} -> {partitioner.blockCells(mb).max()}"
         )
 
-    # the edges are keyed by block number, which is also the position in mb
-    assert [blk.nblki for blk in mb] == list(range(len(mb)))
-    weights, edges = cellWeights(mb), edgesFromMb(mb)
-    assign = partitionHierarchical(weights, edges, nNodes, ranksPerNode)
-    procGroups = [
-        [int(n) for n in np.flatnonzero(assign == r)] for r in range(numProcs)
-    ]
+    weights, edges = partitioner.cellWeights(mb), partitioner.edgesFromMb(mb)
+    assign = np.empty(len(mb), dtype=np.int64)
+    for r, group in enumerate(blocksForProcs):
+        assign[group] = r
     procLoad = np.bincount(assign, weights=weights, minlength=numProcs)
-    traffic = metrics(assign, weights, edges, numProcs, ranksPerNode)
+    traffic = partitioner.metrics(assign, weights, edges, numProcs, ranksPerNode)
 
-    assert allBlocksAssigned(mb, procGroups)
-    efficiency, maxBlksForProcs = analyzeLoad(procLoad, procGroups)
+    efficiency = procLoad.mean() / procLoad.max() * 100
+    maxBlksForProcs = max(len(g) for g in blocksForProcs)
+    nNodes = numProcs // ranksPerNode
 
-    pg.writers.GridWriter(mb, gridDir).writePartition(mb, procGroups, ranksPerNode)
+    pg.writers.GridWriter(mb, gridDir).writePartition(mb, blocksForProcs, ranksPerNode)
 
     print(
         f"Added a {numProcs}x{ranksPerNode} partition"
@@ -213,7 +125,7 @@ if __name__ == "__main__":
         f"  (busiest node {int(traffic['maxNodeTrunk'])} cells)\n",
     )
 
-    ceiling = loadCeiling(weights, numProcs)
+    ceiling = partitioner.loadCeiling(weights, numProcs)
     if ceiling < 99.9:
         share = int(weights.sum() / numProcs)
         print(
@@ -233,7 +145,11 @@ if __name__ == "__main__":
 
         ax1 = ax.twinx()
         ax1.set_ylabel("Number of Blocks")
-        ax1.plot(np.array([len(i) for i in procGroups]), label="nBlocks", color="r")
+        ax1.plot(
+            np.array([len(g) for g in blocksForProcs]),
+            label="nBlocks",
+            color="r",
+        )
         ax1.set_ylim(bottom=0, top=None)
 
         h1, la1 = ax.get_legend_handles_labels()

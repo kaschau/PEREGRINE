@@ -111,7 +111,6 @@ class dualTime:
         self.tme += dt
         self.titme = self.tme
 
-
     def initializeDualTime(self):
         # Set Qn
         if self.nrt != 0:
