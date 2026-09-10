@@ -178,7 +178,7 @@ def generateTracePoints(mb, points, tags):
     maxDist = 0.0
     for blk in mb:
         # pg.misc.progressBar(blk.nblki, nb, "Searching blocks")
-        inside = pg.interpolation.bounds.ptsInBlkBounds(blk, points)
+        inside = pg.interpolation.BaseInterpolator.ptsInBlkBounds(blk, points)
         for index in np.where(inside)[0]:
             x = points[index][0]
             y = points[index][1]

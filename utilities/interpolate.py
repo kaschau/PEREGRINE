@@ -24,8 +24,6 @@ from peregrinepy.readers import readRestart
 import peregrinepy as pg
 from peregrinepy.multiBlock import restart as mbr
 from peregrinepy.writers import RestartWriter
-from peregrinepy import interpolation
-from peregrinepy.misc import progressBar
 import yaml
 import os
 
@@ -108,7 +106,9 @@ if __name__ == "__main__":
 
     # results are numbered, so take the one the caller asked for or the newest
     nrts = sorted(
-        int(f.split(".")[1]) for f in os.listdir(fromDir) if f.endswith(".xmf")
+        int(f.split(".")[1])
+        for f in os.listdir(fromDir)
+        if f.startswith("q.") and f.endswith(".xmf")
     )
     if not nrts:
         raise FileNotFoundError(f"No results found in {fromDir}")
@@ -117,26 +117,8 @@ if __name__ == "__main__":
     # Read in to data
     mbTo = mbr.fromGrid(toDir, speciesNames)
 
-    # Compute bounding blocks of each block
-    boundsList = interpolation.bounds.findBounds(mbTo, mbFrom, verboseSearch)
-    if [] in boundsList:
-        raise ValueError(
-            "ERROR: It looks like there are blocks in your to-grid that are completely outside your from-grid domain"
-        )
-
-    boundingBlocks = []
-    for bounds in boundsList:
-        boundingBlocks.append([mbFrom.getBlock(nblki) for nblki in bounds])
-
-    nblks = mbTo.nblks
-    for blkTo, bounds in zip(mbTo, boundingBlocks):
-        interpolation.blocksToBlock(bounds, blkTo, function, smooth)
-        progressBar(blkTo.nblki + 1, nblks, f"Interpolating block {blkTo.nblki}")
-
-    if len(speciesNames) > 1:
-        mbTo.checkSpeciesSum(True)
-
-    mbTo.tme = mbFrom.tme
-    mbTo.nrt = mbFrom.nrt
+    pg.interpolation.getInterpolator(function, smooth, verboseSearch).interpolate(
+        mbFrom, mbTo
+    )
 
     RestartWriter(mbTo, toDir).write(mbTo)
