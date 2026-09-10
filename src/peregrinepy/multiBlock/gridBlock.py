@@ -76,6 +76,25 @@ class gridBlock(topologyBlock):
         """The slice of this block's arrays that is not halo."""
         return np.s_[:, :, :]
 
+    @property
+    def baseNodeSlab(self):
+        """Where this block's nodes sit in the base block it is a piece of,
+        which is how the grid and result files are indexed. baseSlice counts
+        nodes inclusively."""
+        if self.baseSlice is None:
+            return np.s_[:, :, :]
+        i0, i1, j0, j1, k0, k1 = self.baseSlice
+        return np.s_[k0 : k1 + 1, j0 : j1 + 1, i0 : i1 + 1]
+
+    @property
+    def baseCellSlab(self):
+        """The same, for this block's cells. A block of ni nodes spans ni-1
+        cells, so nodes i0..i1 are cells i0..i1-1."""
+        if self.baseSlice is None:
+            return np.s_[:, :, :]
+        i0, i1, j0, j1, k0, k1 = self.baseSlice
+        return np.s_[k0:k1, j0:j1, i0:i1]
+
     def updateDeviceView(self, vars):
         """No device to push to."""
 

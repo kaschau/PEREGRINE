@@ -22,6 +22,7 @@ interpolate.py --from </path/to/from-grid/and/restart> --to </path/to/to-grid/> 
 import argparse
 from peregrinepy.readers import readRestart
 from peregrinepy.multiBlock import restart as mbr
+from peregrinepy.writers import RestartWriter
 from peregrinepy import interpolation
 from peregrinepy.misc import progressBar
 import yaml
@@ -104,15 +105,13 @@ if __name__ == "__main__":
     # Read in from data
     mbFrom = mbr.mbFromGrid(fromDir, speciesNames)
 
-    try:
-        readRestart(mbFrom, fromDir, animate=False)  # not animate
-        animate = False
-    except FileNotFoundError:
-        # Try to determint nrt for animate
-        qxmf = [i for i in os.listdir(fromDir) if i.endswith("xmf")][0]
-        nrt = int(qxmf.strip().split(".")[1])
-        readRestart(mbFrom, fromDir, nrt=nrt, animate=True)
-        animate = True
+    # results are numbered, so take the one the caller asked for or the newest
+    nrts = sorted(
+        int(f.split(".")[1]) for f in os.listdir(fromDir) if f.endswith(".xmf")
+    )
+    if not nrts:
+        raise FileNotFoundError(f"No results found in {fromDir}")
+    readRestart(mbFrom, fromDir, nrt=nrts[-1])
 
     # Read in to data
     mbTo = mbr.mbFromGrid(toDir, speciesNames)
@@ -139,4 +138,4 @@ if __name__ == "__main__":
     mbTo.tme = mbFrom.tme
     mbTo.nrt = mbFrom.nrt
 
-    mbTo.writeRestart(toDir, animate=animate)
+    RestartWriter(mbTo, toDir).write(mbTo)

@@ -199,4 +199,4 @@ if __name__ == "__main__":
     string += f"Log Layer Cells: {len(np.where((totalYs > 30.0) & (totalYs*yp1/delta < 0.2))[0])}\n"
     print(string)
 
-    pg.writers.writeGrid(grid)
+    pg.writers.GridWriter(grid).write(grid)

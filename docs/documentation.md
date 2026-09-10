@@ -29,10 +29,10 @@ PEREGRINE can run in both a scriptable mode for simple cases, or executable mode
         # ... and so on for ns-1 species.
 
 
-    # write out the zeroth restart file
-    pg.writers.writeRestart(mb,
-                            "/path/to/Results",
-                            "/path/to/Grid")
+    # write out the zeroth result
+    pg.writers.RestartWriter(mb,
+                             "/path/to/Results",
+                             gridPath="/path/to/Grid").write(mb)
 
 ## CoProcessing
 

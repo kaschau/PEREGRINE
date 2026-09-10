@@ -18,9 +18,9 @@ Output will be a PEREGRINE grid file 'g.h5', which carries the connectivity.
 
 import argparse
 from peregrinepy.decomposition import condition
-from peregrinepy.writers import writeGrid
 import numpy as np
 from peregrinepy.multiBlock import grid as mbg
+from peregrinepy.writers import GridWriter
 from verifyGrid import verify
 import yaml
 
@@ -302,6 +302,6 @@ if verified and not verify(mb):
     raise ValueError("Conditioning invalidated the grid.")
 
 print("Writing out {} block PEREGRINE grid files".format(len(mb)))
-writeGrid(mb, "./")
+GridWriter(mb, "./").write(mb)
 
 print("GridPro to PEREGRINE translation done.")

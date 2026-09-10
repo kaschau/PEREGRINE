@@ -114,11 +114,11 @@ def bootstrapCase(config):
         print("Set boundary conditions.")
 
     ################################################################
-    # Register parallel restart/archive writers
+    # Build the writer this case reports its results through
     ################################################################
-    mb.resultsMetaData = pg.writers.parallelWriter.registerParallelMetaData(
+    mb.resultsWriter = pg.writers.RestartWriter(
         mb,
-        blocksForProcs,
+        path=config["io"]["resultsDir"],
         gridPath=f"../{config['io']['gridDir']}",
         precision="single",
     )

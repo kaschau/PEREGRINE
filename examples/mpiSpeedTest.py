@@ -59,8 +59,8 @@ def simulate():
     except FileExistsError:
         pass
 
-    mb.writeGrid("./Grid")
-    mb.writeRestart("./Restart", gridPath="../Grid", animate=False)
+    pg.writers.GridWriter(mb, "./Grid").write(mb)
+    pg.writers.RestartWriter(mb, "./Restart", gridPath="../Grid").write(mb)
     pg.writers.writeConfigFile(config, "./")
 
     bcFam = """---

@@ -195,7 +195,7 @@ if __name__ == "__main__":
     assert allBlocksAssigned(mb, procGroups)
     efficiency, maxBlksForProcs = analyzeLoad(procLoad, procGroups)
 
-    mb.writePartition(procGroups, ranksPerNode, gridDir)
+    pg.writers.GridWriter(mb, gridDir).writePartition(mb, procGroups, ranksPerNode)
 
     print(
         f"Added a {numProcs}x{ranksPerNode} partition"

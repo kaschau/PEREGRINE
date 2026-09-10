@@ -21,10 +21,11 @@ class solver(restart):
         "applyDiffFlux",
         "expChem",
         "impChem",
-        "parallelXmf",
+        "resultsWriter",
     )
 
     mbType = "solver"
+    hasConservatives = True
 
     def _newBlock(self, nblki):
         return solverBlock(nblki, self.speciesNames, self.ng)
@@ -78,8 +79,8 @@ class solver(restart):
         self.expChem = None
         self.impChem = None
 
-        # Parallel output
-        self.resultsMetaData = None
+        # Result output
+        self.resultsWriter = None
 
     @property
     def titme(self):

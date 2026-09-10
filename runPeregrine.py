@@ -1,6 +1,5 @@
 #!/usr/bin/env -S python -m mpi4py
 import sys
-from mpi4py import MPI  # noqa: F401
 from time import perf_counter
 
 import numpy as np
@@ -68,15 +67,9 @@ def simulate(configFilePath):
         if mb.nrt % niterOut == 0:
             if rank == 0:
                 print("Saving results.\n")
-            pg.writers.parallelWriter.parallelWriteRestart(
-                mb,
-                mb.resultsMetaData,
-                path=config["io"]["resultsDir"],
-            )
+            mb.resultsWriter.write(mb)
             if mb.config["timeIntegration"]["integrator"] == "dualTime":
-                pg.writers.writeDualTimeQnm1(
-                    mb, path=config["io"]["resultsDir"]
-                )
+                pg.writers.writeDualTimeQnm1(mb, path=config["io"]["resultsDir"])
 
         # Check if we need to check for Nan
         if checkNan:
@@ -84,11 +77,7 @@ def simulate(configFilePath):
                 abort = pg.mpiComm.mpiUtils.checkForNan(mb)
                 if abort > 0:
                     mb.nrt = 99999999
-                    pg.writers.parallelWriter.parallelWriteRestart(
-                        mb,
-                        mb.resultsMetaData,
-                        path=config["io"]["resultsDir"],
-                    )
+                    mb.resultsWriter.write(mb)
                     comm.Barrier()
                     if rank == 0:
                         print("Nan/inf detected. Aborting.")

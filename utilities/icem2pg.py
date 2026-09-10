@@ -404,7 +404,7 @@ if verified and not verify(mb):
     raise ValueError("Conditioning invalidated the grid.")
 
 print("Writing out {} block PEREGRINE grid files".format(mb.nblks))
-pg.writers.writeGrid(mb)
+pg.writers.GridWriter(mb).write(mb)
 
 
 print("ICEM to PEREGRINE translation done.")

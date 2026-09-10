@@ -127,12 +127,11 @@ class GridReader:
             if blk.baseSlice is None:
                 # stored (nk, nj, ni), so the shape is the extents backwards
                 nk, nj, ni = coordS["x"].shape
-                sliceS = np.s_[:, :, :]
             else:
                 i0, i1, j0, j1, k0, k1 = blk.baseSlice
                 ni, nj, nk = i1 - i0 + 1, j1 - j0 + 1, k1 - k0 + 1
-                sliceS = np.s_[k0 : k1 + 1, j0 : j1 + 1, i0 : i1 + 1]
             blk.ni, blk.nj, blk.nk = int(ni), int(nj), int(nk)
+            sliceS = blk.baseNodeSlab
 
             if not justNi:
                 blk.initGridArrays()

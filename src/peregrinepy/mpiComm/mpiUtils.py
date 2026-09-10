@@ -59,7 +59,7 @@ def getLoadEfficiency(mb):
 def getDtMaxCFL(mb):
     comm, rank, size = getCommRankSize()
 
-    cfl = np.array(CFLmax(mb), dtype=np.float64)
+    cfl = np.array(CFLmax([blk.cpp for blk in mb]), dtype=np.float64)
     comm.Allreduce(MPI.IN_PLACE, cfl, op=MPI.MAX)
 
     if mb.config["timeIntegration"]["variableTimeStep"]:
@@ -75,7 +75,7 @@ def checkForNan(mb):
     comm, rank, size = getCommRankSize()
 
     abort = np.array([0], np.int32)
-    abort[0] = checkNan(mb)
+    abort[0] = checkNan([blk.cpp for blk in mb])
     if abort[0] > 0:
         for blk in mb:
             blk.updateHostView(["Q"])

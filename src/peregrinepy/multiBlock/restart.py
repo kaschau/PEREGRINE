@@ -7,6 +7,8 @@ class restart(grid):
     Inherits from peregrinepy.multiBlock.grid"""
 
     mbType = "restart"
+    # a restart holds the primatives it was written with, not conserved variables
+    hasConservatives = False
 
     def _newBlock(self, nblki):
         return restartBlock(nblki, self.speciesNames)
