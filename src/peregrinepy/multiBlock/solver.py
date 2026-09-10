@@ -9,7 +9,6 @@ class solver(restart):
     """A list of peregrinepy.multiBlock.solver.
     Inherits from peregrinepy.multiBlock.restart"""
 
-    mbType = "solver"
     hasConservatives = True
 
     def _newBlock(self, nblki):

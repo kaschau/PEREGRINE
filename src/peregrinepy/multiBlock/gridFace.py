@@ -9,8 +9,6 @@ class gridFace(topologyFace):
     would need to know about a face.
     """
 
-    faceType = "grid"
-
     def __init__(self, nface):
         super().__init__(nface)
 

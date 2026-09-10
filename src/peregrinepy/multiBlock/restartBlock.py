@@ -8,8 +8,6 @@ class restartBlock(gridBlock):
     would need to know about a block.
     """
 
-    blockType = "restart"
-
     def __init__(self, nblki, speciesNames, ng=0):
         super().__init__(nblki, ng)
 

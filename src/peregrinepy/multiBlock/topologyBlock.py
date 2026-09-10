@@ -6,8 +6,6 @@ class topologyBlock:
     (or one of its descendants) can be.
     """
 
-    blockType = "topology"
-
     def __init__(self, nblki):
         self.nblki = nblki
 

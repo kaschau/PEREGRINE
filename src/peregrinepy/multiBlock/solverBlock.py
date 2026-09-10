@@ -11,8 +11,6 @@ from ..misc import createViewMirrorArray
 
 
 class solverBlock(restartBlock, SolverMetricsMixin, HaloMixin):
-    blockType = "solver"
-
     def __init__(self, nblki, spNames, ng, config):
         # must exist before anything forwards to it
         self.cpp = block_()

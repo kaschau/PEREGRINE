@@ -9,8 +9,6 @@ class topology(UserList):
     """A list of peregrinepy.multiBlock.topology block.
     Inherits from python UserList"""
 
-    mbType = "topology"
-
     def __init__(self, nblks, ls=None):
         if ls is None:
             temp = [topologyBlock(i) for i in range(nblks)]

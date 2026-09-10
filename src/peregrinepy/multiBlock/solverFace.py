@@ -9,8 +9,6 @@ from .topologyFace import topologyFace
 
 
 class solverFace(gridFace):
-    faceType = "solver"
-
     # what a face trades with its neighbor, and the shape each trade takes
     commVars = {
         "x": "node",

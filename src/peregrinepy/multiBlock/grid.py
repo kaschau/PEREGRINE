@@ -6,8 +6,6 @@ class grid(topology):
     """A list of peregrinepy.multiBlock.grid objects.
     Inherits from peregrinepy.multiBlock.topology"""
 
-    mbType = "grid"
-
     def _newBlock(self, nblki):
         return gridBlock(nblki)
 

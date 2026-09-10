@@ -395,7 +395,6 @@ class BlockOpsMixin:
         blk.faces = reordered
 
         dims = (blk.ni, blk.nj, blk.nk)
-        blk.ni, blk.nj, blk.nk = (dims[perm[m]] for m in range(3))
         for name, values in blk.array.items():
             if values is None:
                 continue
@@ -404,6 +403,8 @@ class BlockOpsMixin:
                 if flips[m]:
                     moved = np.flip(moved, axis=m)
             blk.array[name] = np.ascontiguousarray(moved)
+        # the arrays are the new shape already, so sizing the block keeps them
+        blk.setExtents(*(dims[perm[m]] for m in range(3)))
 
     def longestAxisFirst(self, mb):
         """Relabel every block so its longest extent is i, the axis a launch walks

@@ -10,8 +10,6 @@ class gridBlock(topologyBlock, MetricsMixin):
     would need to know about a block.
     """
 
-    blockType = "grid"
-
     def __init__(self, nblki, ng=0):
         self.ng = ng
 
@@ -84,8 +82,14 @@ class gridBlock(topologyBlock, MetricsMixin):
         self.allocate()
 
     def allocate(self):
+        """Give every declared array the memory its shape asks for. One that
+        already has that shape keeps what is in it, which is what lets a block
+        be re-sized around arrays that have already been rearranged."""
         for name in self.declared:
-            self.array[name] = np.zeros(self.shapeOf(name))
+            shape = self.shapeOf(name)
+            if self.array[name] is not None and self.array[name].shape == shape:
+                continue
+            self.array[name] = np.zeros(shape)
 
     @property
     def interior(self):

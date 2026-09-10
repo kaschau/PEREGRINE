@@ -4,8 +4,6 @@ from ..bcs import validBcTypes
 
 
 class topologyFace:
-    faceType = "topology"
-
     def __init__(self, nface):
         assert 1 <= nface <= 6, "nface must be between (1,6)"
 
