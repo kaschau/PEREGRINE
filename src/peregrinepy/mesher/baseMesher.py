@@ -33,7 +33,6 @@ class BaseMesher:
 
         mbDims = self.mbDims
         for k in range(mbDims[2]):
-            self.startLayer(k)
             for j in range(mbDims[1]):
                 for i in range(mbDims[0]):
                     blkNum = k * mbDims[1] * mbDims[0] + j * mbDims[0] + i
@@ -56,9 +55,6 @@ class BaseMesher:
     def periodicAxes(self):
         """Which of i, j, k wrap around, for the connectivity."""
         return (False, False, False)
-
-    def startLayer(self, k):
-        """Whatever a kind works out once per layer of blocks."""
 
     def shapeBlock(self, blk, i, j, k):
         raise NotImplementedError
