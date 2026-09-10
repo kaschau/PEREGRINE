@@ -17,7 +17,7 @@ class tracePointsCoprocessor:
     def __init__(self, mb):
         # First just make sure the folder is there
         comm, rank, size = getCommRankSize()
-        path = f"{mb.config['io']['archiveDir']}/Trace/"
+        path = f"{mb.config['io']['resultsDir']}/Trace/"
         if rank == 0:
             if not isdir(path):
                 from os import mkdir

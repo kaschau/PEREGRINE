@@ -79,9 +79,7 @@ class solver(restart):
         self.impChem = None
 
         # Parallel output
-        self.restartMetaData = None
-        self.archiveMetaData = None
-        self.extraMetaData = []
+        self.resultsMetaData = None
 
     @property
     def titme(self):

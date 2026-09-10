@@ -5,8 +5,7 @@ The directory structure is as follows:
 
     .myCase
     ├── runPeregrine.py        # symlink to runPeregrine.py
-    ├── Archive                # Folder to write archive results (*.h5, *.xmf)
-    ├── Restart                # Folder to read/write restarts (q.h5, q.xmf)
+    ├── Results                # Folder to read/write results (q.<nrt>.h5, .xmf)
     ├── Grid                   # Folder to read/write grid (g.h5, g.xmf)
     ├── peregrine.yaml         # PEREGRINE config file (see /src/peregrinepy/files/configFile.py)
     ├── Input                  # Folder to hold all input files

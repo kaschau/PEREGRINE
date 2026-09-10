@@ -74,9 +74,8 @@ def bootstrapCase(config):
     ################################################################
     pg.readers.readRestart(
         mb,
-        path=config["io"]["restartDir"],
+        path=config["io"]["resultsDir"],
         nrt=config["simulation"]["restartFrom"],
-        animate=config["io"]["animateRestart"],
     )
     comm.Barrier()
     if rank == 0:
@@ -117,30 +116,12 @@ def bootstrapCase(config):
     ################################################################
     # Register parallel restart/archive writers
     ################################################################
-    mb.restartMetaData = pg.writers.parallelWriter.registerParallelMetaData(
-        mb,
-        blocksForProcs,
-        gridPath=f"../{config['io']['gridDir']}",
-        precision="double",
-        animate=config["io"]["animateRestart"],
-    )
-    mb.archiveMetaData = pg.writers.parallelWriter.registerParallelMetaData(
+    mb.resultsMetaData = pg.writers.parallelWriter.registerParallelMetaData(
         mb,
         blocksForProcs,
         gridPath=f"../{config['io']['gridDir']}",
         precision="single",
-        animate=config["io"]["animateArchive"],
     )
-    for extraVar in config["io"]["saveExtraVars"]:
-        meta = pg.writers.parallelWriter.registerParallelMetaData(
-            mb,
-            blocksForProcs,
-            gridPath=f"../{config['io']['gridDir']}",
-            precision="single",
-            animate=config["io"]["animateArchive"],
-            arrayName=extraVar,
-        )
-        mb.extraMetaData.append(meta)
 
     ################################################################
     # Prepare interior fields

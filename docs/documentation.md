@@ -31,7 +31,7 @@ PEREGRINE can run in both a scriptable mode for simple cases, or executable mode
 
     # write out the zeroth restart file
     pg.writers.writeRestart(mb,
-                            "/path/to/Restart",
+                            "/path/to/Results",
                             "/path/to/Grid")
 
 ## CoProcessing
@@ -103,18 +103,14 @@ PEREGRINE run in executable mode requires an input configuration file (in yaml f
     io:
      gridDir: ./Grid
      inputDir: ./Input
-     restartDir: ./Restart
-     archiveDir: ./Archive
+     resultsDir: ./Results
 
     # simulation control
     simulation:
       niter: 10
       dt: 0.9
-      restartFrom: 0
-      animateRestart: true
-      animateArchive: true
-      niterRestart: 1 #save out restart files
-      niterArchive: 10 #save out light weight single precision files
+      restartFrom: 0 #which results to start from
+      niterOut: 10 #save out results
       niterPrint: 1  #print to stdout case progress
       variableTimeStep: true
       maxCFL: 1.0

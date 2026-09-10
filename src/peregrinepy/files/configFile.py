@@ -20,14 +20,9 @@ class configFile(frozenDict):
             {
                 "gridDir": "./Grid",
                 "inputDir": "./Input",
-                "restartDir": "./Restart",
-                "archiveDir": "./Archive",
-                "animateArchive": True,
-                "animateRestart": False,
-                "niterArchive": 1000000000,
-                "niterRestart": 10,
+                "resultsDir": "./Results",
+                "niterOut": 10,
                 "niterPrint": 1,
-                "saveExtraVars": [],
             }
         )
         self["simulation"] = frozenDict(
@@ -102,9 +97,6 @@ class configFile(frozenDict):
         # ---------------------------------------------------------------------#
         # io checks
         # ---------------------------------------------------------------------#
-        if self["io"]["saveExtraVars"] is None:
-            self["io"]["saveExtraVars"] = []
-
         # ---------------------------------------------------------------------#
         # timeIntegration Checks
         # ---------------------------------------------------------------------#

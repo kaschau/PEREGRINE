@@ -45,8 +45,7 @@ def simulate(configFilePath):
 
     # Time integration
     niter = config["simulation"]["niter"]
-    niterRestart = config["io"]["niterRestart"]
-    niterArchive = config["io"]["niterArchive"]
+    niterOut = config["io"]["niterOut"]
     niterPrint = config["io"]["niterPrint"]
     checkNan = config["simulation"]["checkNan"]
     for niter in range(niter):
@@ -65,35 +64,18 @@ def simulate(configFilePath):
 
         mb.step(dt)
 
-        # Check if we need to write a restart
-        if mb.nrt % niterRestart == 0:
+        # Check if we need to write results
+        if mb.nrt % niterOut == 0:
             if rank == 0:
-                print("Saving restart.\n")
+                print("Saving results.\n")
             pg.writers.parallelWriter.parallelWriteRestart(
                 mb,
-                mb.restartMetaData,
-                path=config["io"]["restartDir"],
+                mb.resultsMetaData,
+                path=config["io"]["resultsDir"],
             )
             if mb.config["timeIntegration"]["integrator"] == "dualTime":
                 pg.writers.writeDualTimeQnm1(
-                    mb,
-                    path=config["io"]["restartDir"],
-                    animate=config["io"]["animateRestart"],
-                )
-        # Check if we need to write archive
-        if mb.nrt % niterArchive == 0:
-            if rank == 0:
-                print("Saving archive.\n")
-            pg.writers.parallelWriter.parallelWriteRestart(
-                mb,
-                mb.archiveMetaData,
-                path=config["io"]["archiveDir"],
-            )
-            for metaData in mb.extraMetaData:
-                pg.writers.parallelWriter.parallelWriteArbitraryArray(
-                    mb,
-                    metaData,
-                    path=config["io"]["archiveDir"],
+                    mb, path=config["io"]["resultsDir"]
                 )
 
         # Check if we need to check for Nan
@@ -102,12 +84,10 @@ def simulate(configFilePath):
                 abort = pg.mpiComm.mpiUtils.checkForNan(mb)
                 if abort > 0:
                     mb.nrt = 99999999
-                    mb.restartMetaData.animate = True
-                    mb.restartMetaData.precision = "single"
                     pg.writers.parallelWriter.parallelWriteRestart(
                         mb,
-                        mb.restartMetaData,
-                        path=config["io"]["restartDir"],
+                        mb.resultsMetaData,
+                        path=config["io"]["resultsDir"],
                     )
                     comm.Barrier()
                     if rank == 0:

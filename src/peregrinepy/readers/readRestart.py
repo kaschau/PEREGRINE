@@ -2,7 +2,7 @@ import numpy as np
 import h5py
 
 
-def readRestart(mb, path="./", nrt=0, animate=True):
+def readRestart(mb, path="./", nrt=0):
     """This function reads in all the HDF5 grid files in :path:
     and adds the coordinate data to a supplied peregrinepy.multiBlock.restart
     object (or one of its descendants)
@@ -15,20 +15,13 @@ def readRestart(mb, path="./", nrt=0, animate=True):
     path : str
         Path to find all the HDF5 grid files to be read in
 
-    animate : bool
-        Whether we are appending nrt to the file name.
-
     Returns
     -------
     None
 
     """
 
-    if animate:
-        fileName = f"{path}/q.{nrt:08d}.h5"
-    else:
-        fileName = f"{path}/q.h5"
-    qf = h5py.File(fileName, "r")
+    qf = h5py.File(f"{path}/q.{nrt:08d}.h5", "r")
 
     for blk in mb:
         # Create the "q" array

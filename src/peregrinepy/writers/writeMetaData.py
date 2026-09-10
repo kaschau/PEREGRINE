@@ -71,11 +71,10 @@ class gridMetaData:
 
 
 class restartMetaData(gridMetaData):
-    def __init__(self, gridPath, precision, animate, nrt=0, tme=0.0):
+    def __init__(self, gridPath, precision, nrt=0, tme=0.0):
         super().__init__(precision)
         self.metaType = "restart"
 
-        self.animate = animate
         self.gridPath = gridPath
 
         self.timeElem = etree.SubElement(self.blockTemplate, "Time")
@@ -124,10 +123,7 @@ class restartMetaData(gridMetaData):
         return f"{self.getVarFileName(nrt)}:/results_{nblki:06d}/{varName}"
 
     def getVarFileName(self, nrt):
-        if self.animate:
-            return f"q.{nrt:08d}.h5"
-        else:
-            return "q.h5"
+        return f"q.{nrt:08d}.h5"
 
     def addScalarToBlockElem(self, blockElem, varName, nrt, nblki, ni, nj, nk):
         attributeElem = deepcopy(self.scalarAttributeTemplate)
@@ -157,28 +153,4 @@ class restartMetaData(gridMetaData):
         blockElem.append(attributeElem)
 
     def getOutputName(self, nrt):
-        if self.animate:
-            outputName = f"q.{nrt:08d}.xmf"
-        else:
-            outputName = "q.xmf"
-        return outputName
-
-
-class arbitraryMetaData(restartMetaData):
-    def __init__(self, arrayName, gridPath, precision, animate, nrt=0, tme=0.0):
-        super().__init__(gridPath, precision, animate, nrt=nrt, tme=tme)
-        self.metaType = "arbitrary"
-        self.arrayName = arrayName
-
-    def getVarFileName(self, nrt):
-        if self.animate:
-            return f"{self.arrayName}.{nrt:08d}.h5"
-        else:
-            return f"{self.arrayName}.h5"
-
-    def getOutputName(self, nrt):
-        if self.animate:
-            outputName = f"{self.arrayName}.{nrt:08d}.xmf"
-        else:
-            outputName = f"{self.arrayName}.xmf"
-        return outputName
+        return f"q.{nrt:08d}.xmf"

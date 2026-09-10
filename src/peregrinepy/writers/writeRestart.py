@@ -7,8 +7,7 @@ def writeRestart(
     mb,
     path="./",
     gridPath="./",
-    animate=True,
-    precision="double",
+    precision="single",
 ):
     """This function produces an hdf5 file from a peregrinepy.multiBlock.restart for viewing in Paraview.
 
@@ -39,7 +38,6 @@ def writeRestart(
     metaData = restartMetaData(
         gridPath=gridPath,
         precision=precision,
-        animate=animate,
         nrt=mb.nrt,
         tme=mb.tme,
     )

@@ -115,14 +115,10 @@ class dualTime:
     def initializeDualTime(self):
         # Set Qn
         if self.nrt != 0:
-            animate = self.config["io"]["animateRestart"]
-            path = self.config["io"]["restartDir"]
+            path = self.config["io"]["resultsDir"]
             for blk in self:
                 ng = blk.ng
-                if animate:
-                    fileName = f"{path}/Qnm1.{self.nrt:08d}.{blk.nblki:06d}.npy"
-                else:
-                    fileName = f"{path}/Qnm1.{blk.nblki:06d}.npy"
+                fileName = f"{path}/Qnm1.{self.nrt:08d}.{blk.nblki:06d}.npy"
                 try:
                     with open(fileName, "rb") as f:
                         blk.array["Qnm1"][ng:-ng, ng:-ng, ng:-ng, :] = np.load(f)
