@@ -64,11 +64,6 @@ def bootstrapCase(config):
     mb.setBlockCommunication()
 
     ################################################################
-    # Read in any periodic boundary condition info
-    ################################################################
-    pg.readers.readBcs(mb, config["io"]["inputDir"], justPeriodic=True)
-
-    ################################################################
     # Unify the grid via halo construction, compute metrics
     ################################################################
     mb.unifyGrid()
@@ -78,9 +73,9 @@ def bootstrapCase(config):
         print("Unified grid.")
 
     ################################################################
-    # Read in all non-periodic boundary conditions
+    # Put the case's boundary values on the faces that take them
     ################################################################
-    pg.readers.readBcs(mb, config["io"]["inputDir"], justPeriodic=False)
+    pg.bcs.applyBcValues(mb)
     comm.Barrier()
     if rank == 0:
         print("Set boundary conditions.")

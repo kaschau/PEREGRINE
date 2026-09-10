@@ -82,8 +82,7 @@ class BaseMesher:
         face = blk.getFace(1)
         if i == 0:
             if periodicI:
-                face.bcType = "periodicTransLow"
-                face.bcFam = "periodic_I"
+                face.bcType = "periodicTrans"
                 face.neighbor = blkNum + (mbDims[0] - 1)
                 face.orientation = "123"
             else:
@@ -99,8 +98,7 @@ class BaseMesher:
         face = blk.getFace(2)
         if i == mbDims[0] - 1:
             if periodicI:
-                face.bcType = "periodicTransHigh"
-                face.bcFam = "periodic_I"
+                face.bcType = "periodicTrans"
                 face.neighbor = blkNum - (mbDims[0] - 1)
                 face.orientation = "123"
             else:
@@ -117,8 +115,7 @@ class BaseMesher:
         face = blk.getFace(3)
         if j == 0:
             if periodicJ:
-                face.bcType = "periodicTransLow"
-                face.bcFam = "periodic_J"
+                face.bcType = "periodicTrans"
                 face.neighbor = blkNum + mbDims[0] * (mbDims[1] - 1)
                 face.orientation = "123"
             else:
@@ -134,8 +131,7 @@ class BaseMesher:
         face = blk.getFace(4)
         if j == mbDims[1] - 1:
             if periodicJ:
-                face.bcType = "periodicTransHigh"
-                face.bcFam = "periodic_J"
+                face.bcType = "periodicTrans"
                 face.neighbor = blkNum - mbDims[0] * (mbDims[1] - 1)
                 face.orientation = "123"
             else:
@@ -152,8 +148,7 @@ class BaseMesher:
         face = blk.getFace(5)
         if k == 0:
             if periodicK:
-                face.bcType = "periodicTransLow"
-                face.bcFam = "periodic_K"
+                face.bcType = "periodicTrans"
                 face.neighbor = blkNum + mbDims[0] * mbDims[1] * (mbDims[2] - 1)
                 face.orientation = "123"
             else:
@@ -169,8 +164,7 @@ class BaseMesher:
         face = blk.getFace(6)
         if k == mbDims[2] - 1:
             if periodicK:
-                face.bcType = "periodicTransHigh"
-                face.bcFam = "periodic_K"
+                face.bcType = "periodicTrans"
                 face.neighbor = blkNum - mbDims[0] * mbDims[1] * (mbDims[2] - 1)
                 face.orientation = "123"
             else:

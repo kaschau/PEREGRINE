@@ -39,11 +39,13 @@ class CubeMesher(BaseMesher):
 
     def setPeriodicFaces(self, blk, i, j, k):
         for face in blk.faces:
-            if not face.bcType.startswith("periodicTrans"):
+            if face.bcType != "periodicTrans":
                 continue
-            axis = (face.nface - 1) // 2
-            face.periodicSpan = self.lengths[axis]
-            face.periodicAxis = np.array([1.0 if n == axis else 0.0 for n in range(3)])
+            # the low face of an axis takes its halo from the high end, so it
+            # is moved back down the axis, and the high face the other way
+            axis = face.myAxis
+            span = -self.lengths[axis] if face.amILow else self.lengths[axis]
+            face.setPeriodic(translation=[span if n == axis else 0.0 for n in range(3)])
 
     def _cube(self, blk, origin, lengths, dimensions):
         """Function to populate the coordinate arrays of a provided peregrinepy.block in the shape of a cube with prescribed location, extents, and discretization.

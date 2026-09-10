@@ -83,8 +83,14 @@ class configFile(frozenDict):
             },
         )
 
+        # What each boundary reads, by the name the grid gives it. Which
+        # faces carry a name is the grid's business; what they read is the
+        # case's, so the names here are the user's and not frozen.
+        self["bcValues"] = {}
+
         for key in self.keys():
-            self[key]._freeze()
+            if isinstance(self[key], frozenDict):
+                self[key]._freeze()
 
         # Freeze input file from adding new keys
         self._freeze()

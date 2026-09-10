@@ -62,16 +62,6 @@ def simulate():
     pg.writers.RestartWriter(mb, "./Restart", gridPath="../Grid").write(mb)
     pg.writers.writeConfigFile(config, "./")
 
-    bcFam = """---
-
-periodic:
-  bcType: periodicTrans
-  bcVals:
-    periodicSpan: 0.1
-    periodicAxis: [1, 0, 0]"""
-    with open("./Input/bcFams.yaml", "w") as f:
-        f.write(bcFam)
-
 
 if __name__ == "__main__":
     try:

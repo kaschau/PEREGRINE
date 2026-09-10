@@ -59,11 +59,7 @@ void supersonicExit(
     const std::function<void(block_, thtrdat_, int, std::string)> &eos,
     const thtrdat_ &th, const std::string &terms, const double /*&tme*/);
 //    |------> periodics
-void periodicRotHigh(
-    block_ &b, face_ &face,
-    const std::function<void(block_, thtrdat_, int, std::string)> /*&eos*/,
-    const thtrdat_ /*&th*/, const std::string &terms, const double /*&tme*/);
-void periodicRotLow(
+void periodicRot(
     block_ &b, face_ &face,
     const std::function<void(block_, thtrdat_, int, std::string)> /*&eos*/,
     const thtrdat_ /*&th*/, const std::string &terms, const double /*&tme*/);

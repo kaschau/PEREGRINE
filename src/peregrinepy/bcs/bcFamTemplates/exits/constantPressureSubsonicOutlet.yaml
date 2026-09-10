@@ -1,6 +1,0 @@
----
-
-dummy_exit:
-  bcType: constantPressureSubsonicExit
-  bcVals:
-    p: 101325.0

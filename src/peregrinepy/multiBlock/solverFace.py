@@ -254,11 +254,11 @@ class solverFace(gridFace):
         topologyFace.bcType.fset(self, value)
         self.bcFunc = bcs.getBc(self.bcType).kernel()
 
-    @gridFace.periodicAxis.setter
-    def periodicAxis(self, axis):
-        gridFace.periodicAxis.fset(self, axis)
-        if axis is not None and self.bcType.startswith("periodicRot"):
-            self.updateDeviceView(["periodicRotMatrixUp", "periodicRotMatrixDown"])
+    @gridFace.periodicRotation.setter
+    def periodicRotation(self, rotation):
+        gridFace.periodicRotation.fset(self, rotation)
+        if rotation is not None:
+            self.updateDeviceView("periodicRotMatrix")
 
     def updateDeviceView(self, vars):
         if isinstance(vars, str):

@@ -24,7 +24,7 @@ class gridFace(topologyFace):
         # what each array's shape will be, once the block is sized
         self.declared = {}
 
-        self.declare("periodicRotMatrixUp", "periodicRotMatrixDown", kind="rotation")
+        self.declare("periodicRotMatrix", kind="rotation")
 
     ###########################################################################
     # The arrays a face has, and how big they are
@@ -54,30 +54,14 @@ class gridFace(topologyFace):
             self.array[name] = np.zeros(self.shapeOf(name))
 
     ###########################################################################
-    # Periodic rotation
+    # How a halo arriving through this face is moved onto it
     ###########################################################################
-    @topologyFace.periodicAxis.setter
-    def periodicAxis(self, axis):
-        topologyFace.periodicAxis.fset(self, axis)
-
-        # only a rotational periodic turns anything, and it cannot know how
-        # far around until it has been given its axis and its span
-        if axis is None or not self.bcType.startswith("periodicRot"):
+    @topologyFace.periodicRotation.setter
+    def periodicRotation(self, rotation):
+        topologyFace.periodicRotation.fset(self, rotation)
+        # the compute side turns the vectors in the halo with the same matrix,
+        # so it needs one of its own to read
+        if rotation is None:
             return
-        if self.periodicSpan is None:
-            raise AttributeError("Must set periodicSpan before setting periodicAxis")
-
-        self.allocate("periodicRotMatrixUp", "periodicRotMatrixDown")
-        up = self._rotationMatrix(self.periodicAxis, self.periodicSpan * np.pi / 180.0)
-        self.array["periodicRotMatrixUp"][:] = up
-        # a rotation is orthogonal, so turning back the way we came is its
-        # transpose
-        self.array["periodicRotMatrixDown"][:] = up.T
-
-    @staticmethod
-    def _rotationMatrix(u, theta):
-        """Turning about the unit vector :u: by :theta:.
-        See http://paulbourke.net/geometry/rotate/"""
-        ct, st = np.cos(theta), np.sin(theta)
-        cross = np.array([[0.0, -u[2], u[1]], [u[2], 0.0, -u[0]], [-u[1], u[0], 0.0]])
-        return ct * np.eye(3) + st * cross + (1.0 - ct) * np.outer(u, u)
+        self.allocate("periodicRotMatrix")
+        self.array["periodicRotMatrix"][:] = rotation

@@ -8,7 +8,8 @@ and any partitions the grid has been balanced into.
     g.h5
       totalBlocks                                        attribute
       coordinates_000000/{x,y,z}                         one group per block
-      connectivity/{neighbor,orientation,bcType,bcFam}    (totalBlocks, 6)
+      connectivity/{neighbor,orientation,bcName}             (totalBlocks, 6)
+      connectivity/{periodicRotation,periodicTranslation}    how a periodic moves
       partitions/1x1/rank                                 the base grid
       partitions/64x4/rank                                which rank owns each
 
@@ -22,8 +23,16 @@ named ranks x ranksPerNode, so one grid runs on 64 ranks of 4 per node or of
 8 without being rebalanced -- the two place blocks differently, because what
 crosses a node costs more than what stays on one. Partition 1x1 is the base
 grid, every block on one rank, and is written with the grid so it is never a
-special case. Boundary condition values stay in the case's bcFams.yaml -- they
-belong to the case, not to the grid.
+special case. How a periodic face reaches its partner is stored with the
+connectivity as the transform itself, a rotation and a translation, because it
+is the shape of the grid: a halo arriving through it lands at R @ p + t
+whether it was turned or moved.
+
+What kind of boundary a face is does not live here. The grid gives a face a
+name and the case says what that name means, so one grid runs as a wall on
+one case and an inlet on the next. A face the grid leaves unnamed says what
+it is by itself: one with a neighbor is interior, or periodic if it carries a
+transform, and one with neither is an adiabatic slip wall.
 """
 
 import numpy as np
@@ -104,13 +113,19 @@ class GridWriter(BaseWriter):
         gf.close()
 
     def _writeConnectivity(self, group, mb):
-        """Store every block's faces as four (totalBlocks, 6) tables."""
+        """Store every block's faces as a table per thing a face knows, each
+        one (totalBlocks, 6). How a periodic face reaches its partner is the
+        shape of the grid rather than anything about a case, so the transform
+        is kept here with the rest of the connectivity."""
         shape = (self.totalBlocks, 6)
-        # hdf5 has no None: -1 is no neighbor, an empty string is unset
+        # hdf5 has no None: -1 is no neighbor, an empty string is unset, and
+        # a rotation of all zeros is a face that is not periodic, which no
+        # real rotation can be
         neighbor = np.full(shape, -1, dtype=np.int32)
         orientation = np.zeros(shape, dtype=object)
-        bcType = np.zeros(shape, dtype=object)
-        bcFam = np.zeros(shape, dtype=object)
+        bcName = np.zeros(shape, dtype=object)
+        periodicRotation = np.zeros(shape + (3, 3), dtype=np.float64)
+        periodicTranslation = np.zeros(shape + (3,), dtype=np.float64)
         for blk in mb:
             for face in blk.faces:
                 # a face's cell in the tables; nface counts from one
@@ -118,18 +133,18 @@ class GridWriter(BaseWriter):
                 if face.neighbor is not None:
                     neighbor[mine] = face.neighbor
                 orientation[mine] = face.orientation or ""
-                bcType[mine] = face.bcType
-                bcFam[mine] = face.bcFam or ""
+                bcName[mine] = face.bcName or ""
+                if face.periodicRotation is not None:
+                    periodicRotation[mine] = face.periodicRotation
+                    periodicTranslation[mine] = face.periodicTranslation
 
         if "connectivity" in group:
             del group["connectivity"]
         connS = group.create_group("connectivity")
         connS.create_dataset("neighbor", data=neighbor)
-        for name, table in (
-            ("orientation", orientation),
-            ("bcType", bcType),
-            ("bcFam", bcFam),
-        ):
+        connS.create_dataset("periodicRotation", data=periodicRotation)
+        connS.create_dataset("periodicTranslation", data=periodicTranslation)
+        for name, table in (("orientation", orientation), ("bcName", bcName)):
             # parallel hdf5 has no variable length strings, so size to the longest
             table = table.astype("S")
             connS.create_dataset(name, data=table, dtype=table.dtype)

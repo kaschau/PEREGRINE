@@ -204,8 +204,7 @@ PYBIND11_MODULE(compute, m) {
       .def_readwrite("tempRecvBuffer_dqdz", &face_::tempRecvBuffer_dqdz)
       .def_readwrite("tempRecvBuffer_phi", &face_::tempRecvBuffer_phi)
 
-      .def_readwrite("periodicRotMatrixUp", &face_::periodicRotMatrixUp)
-      .def_readwrite("periodicRotMatrixDown", &face_::periodicRotMatrixDown)
+      .def_readwrite("periodicRotMatrix", &face_::periodicRotMatrix)
 
       ;
 

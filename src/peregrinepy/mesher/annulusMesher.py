@@ -101,10 +101,11 @@ class AnnulusMesher(BaseMesher):
             if self.sweep == 360.0:
                 face.bcType = "interior"
             else:
-                face.bcType = "periodicRotLow" if nface == 5 else "periodicRotHigh"
-                face.bcFam = "periodic"
-                face.periodicSpan = self.sweep
-                face.periodicAxis = self.axis
+                # the low face takes its halo from the far end of the sweep, so
+                # it is turned back, and the high face the other way
+                face.bcType = "periodicRot"
+                sweep = -self.sweep if face.amILow else self.sweep
+                face.setPeriodic(rotation=face.rotationAbout(self.axis, sweep))
 
     def _rotate(self, p, theta):
         """p turned about the annulus axis by each angle in :theta:.

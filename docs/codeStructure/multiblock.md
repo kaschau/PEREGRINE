@@ -69,21 +69,17 @@ compute side, it is a leftover and should be renamed.
 
 Underscores on the python side are the ordinary private storage behind a
 property that does real work -- ```_bcType``` behind the ```bcType``` check,
-```_periodicAxis``` behind the setter that normalizes the axis and builds the
-rotation matrices. Those have nothing to do with C++.
+```_periodicRotation``` behind the setter that hands the matrix to the compute
+side. Those have nothing to do with C++.
 
 ## Building of inherited setter methods ##
 
 Sometime in the inheritance structure, we want to do more when we set the
 class attribute than the inherited setter does. For example, when we set the
-```periodicAxis``` values for a ```topologyFace```, we want to set the axis
-values, normalize them if needed, and move on. But for a ```gridFace``` object,
-we want to set the values *AND* calculate the ```periodicRotMatrixUp/Down```
-arrays as well (if the periodic is rotational). But when we are a solver face,
-we want to do all that *AND* create the corresponding Kokkos views/mirrors so
-the rotational matrices are available on the C++ side. To do this we define the
-setter that computes the matrix in the ```gridFace``` class, the build on it in
-the solver setter for  ```periodicAxis``` as follows.
+```periodicRotation``` of a ```topologyFace```, we just want to keep it. But a
+```gridFace``` also wants it in ```array``` so the compute side has one of its
+own, and a ```solverFace``` wants that pushed to the device on top. To do this
+we define the setter at each level and build on the one below it.
 
 **topologyFace**
 
@@ -95,23 +91,23 @@ the solver setter for  ```periodicAxis``` as follows.
 
 **gridFace**
 ``` python
-    @topologyFace.periodicAxis.setter
-    def periodicAxis(self, axis):
+    @topologyFace.periodicRotation.setter
+    def periodicRotation(self, rotation):
         # This calls the topology setter method
-        topologyFace.periodicAxis.fset(self, axis) 
-        
-        # ... compute rotational matrix
+        topologyFace.periodicRotation.fset(self, rotation)
+
+        # ... put it where the compute side reads it
 ```
 
 **solverFace**
 ``` python
-    @gridFace.periodicAxis.setter
-    def periodicAxis(self, axis):
+    @gridFace.periodicRotation.setter
+    def periodicRotation(self, rotation):
         # This calls the grid setter method
-        gridFace.periodicAxis.fset(self, axis) 
-        
-        # ... set kokkos view/mirrors
+        gridFace.periodicRotation.fset(self, rotation)
+
+        # ... push it up to the device
 ```
 
-Thus, setting the value of ```periodicAxis``` achieves the desired behavior at
+Thus, setting the value of ```periodicRotation``` achieves the desired behavior at
 each level of the inheritance structure.

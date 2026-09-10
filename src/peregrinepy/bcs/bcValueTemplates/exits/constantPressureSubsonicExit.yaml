@@ -1,0 +1,10 @@
+---
+
+# A constantPressureSubsonicExit family, to paste into a case's
+# peregrine.yaml. The grid names the faces; this says what the name
+# means and what it reads.
+
+bcValues:
+  dummy_exit:
+    bcType: constantPressureSubsonicExit
+    p: 101325.0

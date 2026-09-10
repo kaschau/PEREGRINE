@@ -30,8 +30,8 @@ struct face_ {
   fourDview tempRecvBuffer_dqdx, tempRecvBuffer_dqdy, tempRecvBuffer_dqdz;
   fourDview tempRecvBuffer_phi;
 
-  // Periodic rotation matricies
-  twoDview periodicRotMatrixUp, periodicRotMatrixDown;
+  // How a halo arriving through this face is turned onto it
+  twoDview periodicRotMatrix;
 };
 
 #endif

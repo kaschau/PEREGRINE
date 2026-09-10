@@ -1,8 +1,0 @@
----
-
-dummy_inlet:
-  bcType: constantMassFluxSubsonicInlet
-  bcVals:
-    mDotPerUnitArea: 1.0
-    T: 300.0
-    Air: 1.0

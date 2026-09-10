@@ -1,0 +1,13 @@
+---
+
+# A isoTMovingWall family, to paste into a case's
+# peregrine.yaml. The grid names the faces; this says what the name
+# means and what it reads.
+
+bcValues:
+  dummy_wall:
+    bcType: isoTMovingWall
+    u: 1.0
+    v: 0.0
+    w: 0.0
+    T: 300.0

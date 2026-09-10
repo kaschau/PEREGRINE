@@ -191,7 +191,7 @@ with open(args.topoFileName, "r") as f:
                         break
                     else:
                         thisFace = None
-                blk.getFace(thisFace).bcFam = tag
+                blk.getFace(thisFace).bcName = tag
                 bcType = bcFam2Type[tag]["bcType"]
                 assert (
                     bcType in pg.bcs.validBcTypes()

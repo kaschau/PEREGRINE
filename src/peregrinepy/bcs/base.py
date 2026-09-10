@@ -11,7 +11,7 @@ class BaseBC:
 
     Everything the rest of the code needs to know about a bc is declared here:
     the name it goes by in the input files, which compute submodule holds the
-    kernel that applies it, what it reads out of its bcFams entry, and whether
+    kernel that applies it, what it reads out of its config entry, and whether
     it sits on a block interface. Adding a bc means adding a subclass, and
     nothing else has a list to keep in step.
 
@@ -20,14 +20,12 @@ class BaseBC:
     isoTSlipWall out of step with its own kernel.
     """
 
-    # the name in the grid file's connectivity and in bcFams.yaml
+    # what this bc is called, which is what the grid's connectivity stores
     bcType = None
     # the compute.bcs submodule holding the kernel, or None for no kernel
     family = None
     # input key -> index into the face's qBcVals
     values = {}
-    # a bc with nothing to read can be left out of bcFams.yaml
-    needsBcFam = True
     # whether the face is shared with another block rather than standing alone
     hasNeighbor = False
 
@@ -39,7 +37,7 @@ class BaseBC:
 
     @classmethod
     def prep(cls, blk, face, valueDict):
-        """Read this face's bcFams entry onto it."""
+        """Read this face's config entry onto it."""
         if valueDict.get("profile", False):
             cls._profile(blk, face)
         else:
@@ -49,7 +47,7 @@ class BaseBC:
     def _profile(cls, blk, face):
         ng = blk.ng
         with open(
-            f"./Input/profiles/{face.bcFam}_{blk.nblki}_{face.nface}.npy", "rb"
+            f"./Input/profiles/{face.bcName}_{blk.nblki}_{face.nface}.npy", "rb"
         ) as f:
             face.array["qBcVals"][ng:-ng, ng:-ng, :] = np.load(f)
             face.array["QBcVals"][ng:-ng, ng:-ng, :] = np.load(f)

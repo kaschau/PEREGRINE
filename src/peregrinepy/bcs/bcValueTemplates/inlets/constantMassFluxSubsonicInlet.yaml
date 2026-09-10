@@ -1,0 +1,12 @@
+---
+
+# A constantMassFluxSubsonicInlet family, to paste into a case's
+# peregrine.yaml. The grid names the faces; this says what the name
+# means and what it reads.
+
+bcValues:
+  dummy_inlet:
+    bcType: constantMassFluxSubsonicInlet
+    mDotPerUnitArea: 1.0
+    T: 300.0
+    Air: 1.0

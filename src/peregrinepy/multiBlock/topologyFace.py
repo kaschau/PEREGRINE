@@ -10,15 +10,15 @@ class topologyFace:
         assert 1 <= nface <= 6, "nface must be between (1,6)"
 
         self.nface = nface
-        # bcType and periodicAxis are reached through properties that are
-        # built on further down, so they need somewhere of their own to sit
+        # bcType and periodicRotation are reached through properties that
+        # are built on further down, so they need somewhere of their own
         self._bcType = "adiabaticSlipWall"
-        self._periodicAxis = None
+        self._periodicRotation = None
 
-        self.bcFam = None
+        self.bcName = None
         self.neighbor = None
         self.orientation = None
-        self.periodicSpan = None
+        self.periodicTranslation = None
 
     @property
     def bcType(self):
@@ -31,16 +31,39 @@ class topologyFace:
         ), f"{value} is not a valid bcType. Must be one of {validBcTypes()}"
         self._bcType = value
 
-    # Periodic stuff
-    @property
-    def periodicAxis(self):
-        return self._periodicAxis
+    ###########################################################################
+    # How a halo arriving through this face is moved onto it
+    ###########################################################################
+    def setPeriodic(self, rotation=None, translation=None):
+        """A halo coming through here lands at R @ p + t. A translational
+        periodic is not turned and a rotational one is not moved, so each
+        names only its own and the other falls out as doing nothing."""
+        self.periodicTranslation = (
+            np.zeros(3) if translation is None else np.array(translation, np.float64)
+        )
+        # last, so a kind of face that builds on it sees the whole transform
+        self.periodicRotation = (
+            np.eye(3) if rotation is None else np.array(rotation, np.float64)
+        )
 
-    @periodicAxis.setter
-    def periodicAxis(self, axis):
-        # a periodic face carries no axis until its bcFams entry is read, so a
-        # grid straight off disk has periodics that do not know which way yet
-        self._periodicAxis = None if axis is None else axis / np.linalg.norm(axis)
+    @property
+    def periodicRotation(self):
+        return self._periodicRotation
+
+    @periodicRotation.setter
+    def periodicRotation(self, rotation):
+        self._periodicRotation = rotation
+
+    @staticmethod
+    def rotationAbout(axis, degrees):
+        """Turning about the unit vector :axis: by :degrees:, negative the
+        other way. See http://paulbourke.net/geometry/rotate/"""
+        u = np.array(axis, np.float64)
+        u = u / np.linalg.norm(u)
+        th = degrees * np.pi / 180.0
+        ct, st = np.cos(th), np.sin(th)
+        cross = np.array([[0.0, -u[2], u[1]], [u[2], 0.0, -u[0]], [-u[1], u[0], 0.0]])
+        return ct * np.eye(3) + st * cross + (1.0 - ct) * np.outer(u, u)
 
     @staticmethod
     def signedAxis(code):

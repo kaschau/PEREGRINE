@@ -119,8 +119,8 @@ def test_cutRunsThroughPeriodic():
             if not face.bcType.startswith("periodic"):
                 continue
             assert face.neighbor is not None
-            assert face.periodicSpan is not None
-            assert face.periodicAxis is not None
+            assert face.periodicRotation is not None
+            assert face.periodicTranslation is not None
 
 
 def test_uncutGridIsItsOwnBase():

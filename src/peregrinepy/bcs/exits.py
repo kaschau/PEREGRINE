@@ -12,4 +12,3 @@ class ConstantPressureSubsonicExit(ExitBC):
 
 class SupersonicExit(ExitBC):
     bcType = "supersonicExit"
-    needsBcFam = False

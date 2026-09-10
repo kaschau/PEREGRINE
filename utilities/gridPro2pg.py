@@ -189,21 +189,23 @@ for temp, blk in zip(pgConns, mb):
         faceData = temp[(int(face.nface) - 1) * 4 : (int(face.nface) - 1) * 4 + 4]
         # Set the named BCs in the bcFam.yaml
         if faceData[0] in bcFamDict:
-            face.bcFam = f"{faceData[0]}"
+            face.bcName = f"{faceData[0]}"
             face.bcType = bcFamDict[faceData[0]]["bcType"]
         # Need to treat periodics
         elif faceData[0] == "PERIODIC":
             gridIsPeriodic = True
-            # get the periodic from bcFam
+            # get the periodic from bcValues
             key = [key for key in bcFamDict.keys() if key.startswith("periodic")][0]
-            face.bcFam = key
+            face.bcName = key
             # We will set High/Low bcType after we have all the point data
-            face.bcType = bcFamDict[key]["bcType"] + "Low"
-            face.periodicSpan = bcFamDict[key]["bcVals"]["periodicSpan"]
-            face.periodicAxis = bcFamDict[key]["bcVals"]["periodicAxis"]
+            # the sign is settled once every block has its points
+            face.bcType = bcFamDict[key]["bcType"]
+            periodicSpan = bcFamDict[key]["bcVals"]["periodicSpan"]
+            periodicAxis = np.array(bcFamDict[key]["bcVals"]["periodicAxis"], float)
+            periodicAxis /= np.linalg.norm(periodicAxis)
         else:
             face.bcType = f"{faceData[0]}"
-            face.bcFam = None
+            face.bcName = None
         face.neighbor = None if int(faceData[2]) == 0 else int(faceData[2]) - 1
         face.orientation = None if "0" in faceData[3] else faceData[3]
 
@@ -265,23 +267,30 @@ if gridIsPeriodic:
             else:
                 continue
 
-            if face.bcType == "periodicTransLow":
-                faceUp = myFaceCenter + face.periodicAxis * face.periodicSpan
-                faceDown = myFaceCenter - face.periodicAxis * face.periodicSpan
-            elif face.bcType == "periodicRotLow":
-                faceUp = np.matmul(face.array["periodicRotMatrixUp"], myFaceCenter)
-                faceDown = np.matmul(face.array["periodicRotMatrixDown"], myFaceCenter)
+            if face.bcType == "periodicTrans":
+                up = periodicAxis * periodicSpan
+                faceUp, faceDown = myFaceCenter + up, myFaceCenter - up
+            elif face.bcType == "periodicRot":
+                R = face.rotationAbout(periodicAxis, periodicSpan)
+                faceUp, faceDown = R @ myFaceCenter, R.T @ myFaceCenter
             else:
                 raise ValueError("Didnt find either periodic Trans or Rot")
 
+            # whichever way lands on the partner is the way this face moves
             if np.allclose(faceUp, nFaceCenter):
-                # Keep the face low
-                pass
+                sign = 1.0
             elif np.allclose(faceDown, nFaceCenter):
-                face.bcType = face.bcType.replace("Low", "High")
+                sign = -1.0
             else:
                 raise ValueError(
                     f"Not a periodic match between block {blk.nblki} face {face.nface} and block {nBlk.nblki} face {face.neighborNface}."
+                )
+
+            if face.bcType == "periodicTrans":
+                face.setPeriodic(translation=sign * periodicAxis * periodicSpan)
+            else:
+                face.setPeriodic(
+                    rotation=face.rotationAbout(periodicAxis, sign * periodicSpan)
                 )
 
 # a mesher's own precision is its business, so this is a warning, not a

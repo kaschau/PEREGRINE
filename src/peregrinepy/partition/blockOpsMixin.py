@@ -59,10 +59,12 @@ class BlockOpsMixin:
         newOppFace.neighbor = oldCutFace.neighbor
         newOppFace.orientation = oldCutFace.orientation
         newOppFace.bcType = oldCutFace.bcType
-        newOppFace.bcFam = oldCutFace.bcFam
-        if oldCutFace.bcType.startswith("periodic"):
-            newOppFace.periodicSpan = oldCutFace.periodicSpan
-            newOppFace.periodicAxis = oldCutFace.periodicAxis
+        newOppFace.bcName = oldCutFace.bcName
+        if oldCutFace.periodicRotation is not None:
+            newOppFace.setPeriodic(
+                rotation=oldCutFace.periodicRotation,
+                translation=oldCutFace.periodicTranslation,
+            )
 
         # We also need to update the oppFace neighbor of the oldBlk
         if oldCutFace.neighbor is not None:
@@ -77,8 +79,14 @@ class BlockOpsMixin:
         newCutFace.orientation = "123"
         oldCutFace.bcType = "interior"
         newCutFace.bcType = "interior"
-        oldCutFace.bcFam = None
-        newCutFace.bcFam = None
+        oldCutFace.bcName = None
+        newCutFace.bcName = None
+        # the cut face met a partner across the grid before it met its own
+        # other half, so whatever moved a halo onto it no longer applies
+        oldCutFace.periodicRotation = None
+        oldCutFace.periodicTranslation = None
+        newCutFace.periodicRotation = None
+        newCutFace.periodicTranslation = None
 
         # the four faces along the cut split in two; only the neighbor is unknown
         pending = []
@@ -86,12 +94,14 @@ class BlockOpsMixin:
             oldSplitFace = oldBlk.getFace(nface)
             newSplitFace = newBlk.getFace(nface)
             newSplitFace.orientation = oldSplitFace.orientation
-            newSplitFace.bcFam = oldSplitFace.bcFam
+            newSplitFace.bcName = oldSplitFace.bcName
             newSplitFace.bcType = oldSplitFace.bcType
             # if the split face is a periodic, they need the perodic info
-            if oldSplitFace.bcType.startswith("periodic"):
-                newSplitFace.periodicSpan = oldSplitFace.periodicSpan
-                newSplitFace.periodicAxis = oldSplitFace.periodicAxis
+            if oldSplitFace.periodicRotation is not None:
+                newSplitFace.setPeriodic(
+                    rotation=oldSplitFace.periodicRotation,
+                    translation=oldSplitFace.periodicTranslation,
+                )
             if oldSplitFace.neighbor is None:
                 newSplitFace.neighbor = None
                 continue
@@ -230,7 +240,7 @@ class BlockOpsMixin:
                         sideA.neighbor is None
                         and sideB.neighbor is None
                         and sideA.bcType == sideB.bcType
-                        and sideA.bcFam == sideB.bcFam
+                        and sideA.bcName == sideB.bcName
                     ):
                         continue
                     return None

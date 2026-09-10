@@ -7,12 +7,10 @@ class WallBC(BaseBC):
 
 class AdiabaticNoSlipWall(WallBC):
     bcType = "adiabaticNoSlipWall"
-    needsBcFam = False
 
 
 class AdiabaticSlipWall(WallBC):
     bcType = "adiabaticSlipWall"
-    needsBcFam = False
 
 
 class AdiabaticMovingWall(WallBC):

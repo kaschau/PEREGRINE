@@ -8,7 +8,7 @@ and that the coordinates of matching faces are identical.
 Input is the path to the grid file.
 
 If you have periodicity in the grid, you must have the periodic
-information populated in the grid, i.e. periodicSpan and periodicAxis
+information populated in the grid, i.e. the periodic transform
 
 Output will print any discrepencies to the screen
 
@@ -56,13 +56,14 @@ def extractFace(blk, nface):
 
 def verify(mb):
     warn = False
+    tol = 1e-7
     for blk in mb:
         for face in blk.faces:
             nface = face.nface
             neighbor = face.neighbor
             bc = face.bcType
             orientation = face.orientation
-            bcFam = face.bcFam
+            bcName = face.bcName
 
             if neighbor is None:
                 assert not pg.bcs.getBc(bc).hasNeighbor, (
@@ -74,10 +75,10 @@ def verify(mb):
                     orientation is None
                 ), f"Block #{blk.nblki} face {nface} has no neighbor, but has orientation {orientation}"
 
-                if pg.bcs.getBc(bc).needsBcFam:
+                if pg.bcs.getBc(bc).values:
                     assert (
-                        bcFam is not None
-                    ), f"Block #{blk.nblki} face {nface} is {bc}, but has no bcFam"
+                        bcName is not None
+                    ), f"Block #{blk.nblki} face {nface} is {bc}, but has no bcName"
 
                 continue
 
@@ -124,30 +125,14 @@ def verify(mb):
                 face_y = np.flip(face_y, 1)
                 face_z = np.flip(face_z, 1)
 
-            # Here we translate the coordinates to periodic face
-            if bc == "periodicTransLow":
-                face_x += face.periodicAxis[0] * face.periodicSpan
-                face_y += face.periodicAxis[1] * face.periodicSpan
-                face_z += face.periodicAxis[2] * face.periodicSpan
-            elif bc == "periodicTransHigh":
-                face_x -= face.periodicAxis[0] * face.periodicSpan
-                face_y -= face.periodicAxis[1] * face.periodicSpan
-                face_z -= face.periodicAxis[2] * face.periodicSpan
-            elif bc == "periodicRotLow":
+            # move the face onto its partner, the way a halo through it goes
+            if face.periodicRotation is not None:
                 shape = face_x.shape
                 points = np.column_stack(
                     (face_x.ravel(), face_y.ravel(), face_z.ravel())
                 )
-                points = np.matmul(face.array["periodicRotMatrixUp"], points.T).T
-                face_x = points[:, 0].reshape(shape)
-                face_y = points[:, 1].reshape(shape)
-                face_z = points[:, 2].reshape(shape)
-            elif bc == "periodicRotHigh":
-                shape = face_x.shape
-                points = np.column_stack(
-                    (face_x.ravel(), face_y.ravel(), face_z.ravel())
-                )
-                points = np.matmul(face.array["periodicRotMatrixDown"], points.T).T
+                # the partner is the other way round from the halo
+                points = (points - face.periodicTranslation) @ face.periodicRotation
                 face_x = points[:, 0].reshape(shape)
                 face_y = points[:, 1].reshape(shape)
                 face_z = points[:, 2].reshape(shape)
@@ -162,21 +147,21 @@ def verify(mb):
                     f"Error when comparing block {blk.nblki} and block {blk2.nblki} connection"
                 )
 
-            if off_x > 1e-8:
+            if off_x > tol:
                 print(
                     f"Warning, the x coordinates of face {nface} on block {blk.nblki} are not matching the x coordinates of face {nface2} of block {blk2.nblki}"
                 )
                 print(f"Off by average of {off_x}")
                 warn = True
 
-            if off_y > 1e-8:
+            if off_y > tol:
                 print(
                     f"Warning, the y coordinates of face {nface} on block {blk.nblki} are not matching the y coordinates of face {nface2} of block {blk2.nblki}"
                 )
                 print(f"Off by average of {off_y}")
                 warn = True
 
-            if off_z > 1e-8:
+            if off_z > tol:
                 print(
                     f"Warning, the z coordinates of face {nface} on block {blk.nblki} are not matching the z coordinates of face {nface2} of block {blk2.nblki}"
                 )
@@ -224,24 +209,10 @@ if __name__ == "__main__":
         help="Path to grid files",
         type=str,
     )
-    parser.add_argument(
-        "-bcFamPath",
-        action="store",
-        metavar="<bcFamPath>",
-        dest="bcFamPath",
-        default="./",
-        help="""If your grid has periodics, we need the periodic data from bcFams.""",
-        type=str,
-    )
     args = parser.parse_args()
 
     gp = args.gridPath
-    bcFamPath = args.bcFamPath
     mb = pg.multiBlock.grid.fromGrid(gp)
-    try:
-        pg.readers.readBcs(mb, bcFamPath)
-    except FileNotFoundError:
-        print("No bcFam.yaml file provided, assuming no periodics.")
 
     if verify(mb):
         print("Grid is valid!")

@@ -112,6 +112,24 @@ class GridReader:
             _, extents = self._blockBaseInfo(blk)
             blk.setExtents(*extents)
 
+    @staticmethod
+    def _bcTypeOf(face):
+        """What a face the grid did not name is. One with a neighbor is an
+        interface, and a periodic is an interface that has been moved: turned
+        if its rotation is one, and only carried if it is the identity. A face
+        that is named waits for the case to say what it is."""
+        if face.bcName is not None:
+            return face.bcType
+        if face.neighbor is None:
+            return "adiabaticSlipWall"
+        if face.periodicRotation is None:
+            return "interior"
+        return (
+            "periodicTrans"
+            if np.allclose(face.periodicRotation, np.eye(3))
+            else "periodicRot"
+        )
+
     def readGrid(self, mb):
         """Add the coordinate data to a supplied peregrinepy.multiBlock.grid
         (or one of its descendants)."""
@@ -133,19 +151,27 @@ class GridReader:
             group = self.f["connectivity"]
         neighbor = np.array(group["neighbor"])
         orientation = group["orientation"].asstr()[:]
-        bcType = group["bcType"].asstr()[:]
-        bcFam = group["bcFam"].asstr()[:]
+        bcName = group["bcName"].asstr()[:]
+        periodicRotation = np.array(group["periodicRotation"])
+        periodicTranslation = np.array(group["periodicTranslation"])
 
         for blk in mb:
             for face in blk.faces:
                 mine = blk.nblki, face.nface - 1
                 # the connectivity is python types, not the numpy scalars
                 # hdf5 hands back
-                face.bcType = str(bcType[mine])
-                face.bcFam = str(bcFam[mine]) or None
+                face.bcName = str(bcName[mine]) or None
                 face.orientation = str(orientation[mine]) or None
                 n = int(neighbor[mine])
                 face.neighbor = None if n == -1 else n
+                # a periodic knows how to reach its partner; a rotation of
+                # all zeros is a face that is not periodic
+                if periodicRotation[mine].any():
+                    face.setPeriodic(
+                        rotation=periodicRotation[mine],
+                        translation=periodicTranslation[mine],
+                    )
+                face.bcType = self._bcTypeOf(face)
                 if self._rankOfNblki is not None:
                     face.commRank = None if n == -1 else int(self._rankOfNblki[n])
 
