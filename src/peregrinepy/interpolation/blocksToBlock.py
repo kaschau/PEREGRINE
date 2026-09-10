@@ -34,9 +34,9 @@ def blocksToBlock(blksFrom, blkTo, function="nearest", smooth=0.5):
         Updates attributes of parameter blkTo.
     """
     for blk in blksFrom:
-        blk.computeMetrics(xcOnly=True)
+        blk.computeMetrics()
 
-    blkTo.computeMetrics(xcOnly=True)
+    blkTo.computeMetrics()
 
     # qv interpolation
     blkFromX = np.concatenate(tuple([blk.array["xc"].ravel() for blk in blksFrom]))

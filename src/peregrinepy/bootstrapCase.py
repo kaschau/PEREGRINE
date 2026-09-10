@@ -64,11 +64,6 @@ def bootstrapCase(config):
     mb.setBlockCommunication()
 
     ################################################################
-    # Initialize the solver arrays
-    ################################################################
-    mb.initSolverArrays(config)
-
-    ################################################################
     # Read in any periodic boundary condition info
     ################################################################
     pg.readers.readBcs(mb, config["io"]["inputDir"], justPeriodic=True)

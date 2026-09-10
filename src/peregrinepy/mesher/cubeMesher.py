@@ -69,11 +69,7 @@ class CubeMesher(BaseMesher):
             Updates attributes of parameter blk.
 
         """
-        blk.ni = dimensions[0]
-        blk.nj = dimensions[1]
-        blk.nk = dimensions[2]
-
-        blk.initGridArrays()
+        blk.setExtents(*dimensions)
 
         x = np.linspace(
             origin[0], origin[0] + lengths[0], dimensions[0], dtype=np.float64
@@ -90,5 +86,3 @@ class CubeMesher(BaseMesher):
         blk.array["x"][s_i], blk.array["y"][s_i], blk.array["z"][s_i] = np.meshgrid(
             x, y, z, indexing="ij"
         )
-
-        blk.initRestartArrays()

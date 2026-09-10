@@ -3,7 +3,6 @@ from . import compute
 from . import coproc
 from . import partition
 from . import files
-from . import grid
 from . import interpolation
 from . import mesher
 from . import misc
@@ -23,7 +22,6 @@ __all__ = [
     "coproc",
     "partition",
     "files",
-    "grid",
     "interpolation",
     "mesher",
     "misc",

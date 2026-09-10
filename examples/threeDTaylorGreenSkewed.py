@@ -41,8 +41,6 @@ def simulate():
         periodic=[True, True, True],
     ).mesh(mb)
 
-    mb.initSolverArrays(config)
-
     blk = mb[0]
     ng = blk.ng
 

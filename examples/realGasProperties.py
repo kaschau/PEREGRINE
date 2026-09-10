@@ -22,7 +22,6 @@ def simulate():
     pg.mesher.CubeMesher(
         mbDims=[1, 1, 1], dimsPerBlock=[2, 2, 2], lengths=[0.01, 0.01, 0.01]
     ).mesh(mb)
-    mb.initSolverArrays(config)
 
     blk = mb[0]
     ng = blk.ng

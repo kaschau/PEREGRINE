@@ -121,7 +121,6 @@ def buildAndCommunicate(S, adv, spdata, seed):
     pg.mesher.CubeMesher(
         mbDims=[2, 1, 1], dimsPerBlock=[6, 3, 2], lengths=[2, 1, 1]
     ).mesh(mb)
-    mb.initSolverArrays(config)
     mb.generateHalo()
     mb.computeMetrics()
 
@@ -133,7 +132,7 @@ def buildAndCommunicate(S, adv, spdata, seed):
             blk.array[var][:] = np.random.random(blk.array[var].shape)
 
     if S != "123":
-        # initSolverArrays copies existing numpy arrays into the new views and
+        # allocation copies existing numpy arrays into the new views and
         # asserts the shapes agree; block 1's other arrays still carry the
         # pre-reorientation shape, so drop them and let them be rebuilt
         for blk in mb:
@@ -142,9 +141,12 @@ def buildAndCommunicate(S, adv, spdata, seed):
                     blk.array[v] = None
                     blk.mirror[v] = None
         reorientBlock1(mb, S, VARLIST)
+        # reorienting replaced the mirror backed arrays, so rebuild the views
+        # around what it left
+        for blk in mb:
+            blk.allocate()
 
     mb.setBlockCommunication()
-    mb.initSolverArrays(config)
 
     for blk in mb:
         blk.updateDeviceView(VARLIST)

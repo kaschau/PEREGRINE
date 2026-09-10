@@ -20,24 +20,23 @@ class grid(topology):
             super().__init__(nblks, ls)
 
     @classmethod
-    def mbFromGrid(cls, path="./", *args, justNi=False):
+    def mbFromGrid(cls, path="./", *args, extentsOnly=False):
         """A multiBlock of this kind, sized from the grid file at :path: and
         filled with its coordinates and its connectivity. Anything the kind
         needs beyond the block count -- a restart's species names, a solver's
         halo depth -- follows the path in the order its class declares them."""
         with GridReader(path) as reader:
             mb = cls(reader.totalBlocks, *args)
-            reader.readGrid(mb, justNi=justNi)
+            if extentsOnly:
+                reader.readExtents(mb)
+            else:
+                reader.readGrid(mb)
             reader.readConnectivity(mb)
         return mb
 
-    def initGridArrays(self):
+    def computeMetrics(self):
         for blk in self:
-            blk.initGridArrays()
-
-    def computeMetrics(self, xcOnly=False):
-        for blk in self:
-            blk.computeMetrics(xcOnly)
+            blk.computeMetrics()
 
     def generateHalo(self):
         for blk in self:

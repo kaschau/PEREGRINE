@@ -55,7 +55,6 @@ def test_chemistry(my_setup, thfile, ctfile, chmfile):
     pg.mesher.CubeMesher(
         mbDims=[1, 1, 1], dimsPerBlock=[2, 2, 2], lengths=[1, 1, 1]
     ).mesh(mb)
-    mb.initSolverArrays(config)
 
     blk = mb[0]
 

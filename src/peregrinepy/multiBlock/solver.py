@@ -1,6 +1,6 @@
 from .restart import restart
 from .solverBlock import solverBlock
-from ..grid import unifySolverGrid
+from .. import mpiComm
 
 
 class solver(restart):
@@ -28,23 +28,22 @@ class solver(restart):
     hasConservatives = True
 
     def _newBlock(self, nblki):
-        return solverBlock(nblki, self.speciesNames, self.ng)
+        return solverBlock(nblki, self.speciesNames, self.ng, self.config)
 
     def progress(self, n, message):
         """A running case reports through its own machinery, not a bar."""
 
-    def __init__(self, nblks, spNames, ng):
+    def __init__(self, nblks, spNames, ng, config):
         assert isinstance(spNames, list), f"spNames must me a list not {type(spNames)}"
 
         self.ng = ng
 
-        temp = [solverBlock(i, spNames, ng) for i in range(nblks)]
+        self.config = config
+        temp = [solverBlock(i, spNames, ng, config) for i in range(nblks)]
         super().__init__(nblks, spNames, temp)
 
         # time integrator time
         self._titme = 0.0
-        # Save the config file to the mb object
-        self.config = None
         # Save the species data
         self.thtrdat = None
 
@@ -92,12 +91,61 @@ class solver(restart):
         for blk in self:
             blk.titme = val
 
-    def initSolverArrays(self, config):
+    def generateHalo(self):
         for blk in self:
-            blk.initSolverArrays(config)
+            blk.generateHalo()
 
     def unifyGrid(self):
-        unifySolverGrid(self)
+        self.generateHalo()
+
+        # Lets just be clean and create the edges and corners
+        for _ in range(3):
+            mpiComm.communicate(self, ["x", "y", "z"])
+
+        # Device is up to date after communicate, so pull back down
+        for blk in self:
+            blk.updateHostView(["x", "y", "z"])
+
+        for blk in self:
+            for face in blk.faces:
+                bc = face.bcType
+                if not bc.startswith("periodic"):
+                    continue
+                for i, s0 in enumerate(face.s0_):
+                    x = blk.array["x"][s0]
+                    y = blk.array["y"][s0]
+                    z = blk.array["z"][s0]
+
+                    # Translate periodics
+                    if face.bcType == "periodicTransLow":
+                        x[:] -= face.periodicAxis[0] * face.periodicSpan
+                        y[:] -= face.periodicAxis[1] * face.periodicSpan
+                        z[:] -= face.periodicAxis[2] * face.periodicSpan
+                    elif face.bcType == "periodicTransHigh":
+                        x[:] += face.periodicAxis[0] * face.periodicSpan
+                        y[:] += face.periodicAxis[1] * face.periodicSpan
+                        z[:] += face.periodicAxis[2] * face.periodicSpan
+                    elif face.bcType.startswith("periodicRot"):
+                        if face.bcType == "periodicRotLow":
+                            rotM = face.array["periodicRotMatrixDown"]
+                        elif face.bcType == "periodicRotHigh":
+                            rotM = face.array["periodicRotMatrixUp"]
+                        tempx = (
+                            rotM[0, 0] * x[:] + rotM[0, 1] * y[:] + rotM[0, 2] * z[:]
+                        )
+                        tempy = (
+                            rotM[1, 0] * x[:] + rotM[1, 1] * y[:] + rotM[1, 2] * z[:]
+                        )
+                        tempz = (
+                            rotM[2, 0] * x[:] + rotM[2, 1] * y[:] + rotM[2, 2] * z[:]
+                        )
+                        x[:] = tempx[:]
+                        y[:] = tempy[:]
+                        z[:] = tempz[:]
+
+        # Push back up the device
+        for blk in self:
+            blk.updateDeviceView(["x", "y", "z"])
 
     def setBlockCommunication(self):
         for blk in self:

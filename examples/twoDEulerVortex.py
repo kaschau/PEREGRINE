@@ -64,7 +64,6 @@ def simulate():
         face = blk.getFace(f)
         face.bcType = "adiabaticSlipWall"
 
-    mb.initSolverArrays(config)
     mb.setBlockCommunication()
 
     mb.unifyGrid()

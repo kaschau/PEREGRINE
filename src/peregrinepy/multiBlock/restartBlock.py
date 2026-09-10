@@ -21,32 +21,11 @@ class restartBlock(gridBlock):
         if self.ns < 1:
             raise ValueError("Number of species must be >=1")
 
-        #########################################################
-        # Primative Variables
-        #########################################################
-        for d in ["q"]:
-            self.array[f"{d}"] = None
-            self.mirror[f"{d}"] = None
-
-        if self.blockType == "restart":
-            self.array._freeze()
+        # Primative variables
+        self.declare("q", kind="cell", components=5 + self.ns - 1)
 
     def fillHaloWithNearest(self, name):
         """No halo to fill."""
-
-    def initRestartArrays(self):
-        """
-        Create zeroed numpy arrays of correct size.
-        """
-        ng = self.ng
-
-        cQshape = (
-            self.ni + 2 * ng - 1,
-            self.nj + 2 * ng - 1,
-            self.nk + 2 * ng - 1,
-            5 + self.ns - 1,
-        )
-        self.array["q"] = np.zeros((cQshape))
 
     def verifySpeciesSum(self, normalize=False):
         """Function to verify that the sum of species in any cell is not greater than unity"""

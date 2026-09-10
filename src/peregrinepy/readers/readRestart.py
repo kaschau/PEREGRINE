@@ -23,9 +23,6 @@ def readRestart(mb, path="./", nrt=0):
     qf = h5py.File(f"{path}/q.{nrt:08d}.h5", "r")
 
     for blk in mb:
-        # Create the "q" array
-        blk.initRestartArrays()
-
         variables = ["p", "u", "v", "w", "T"] + blk.speciesNames[0:-1]
 
         blk.nrt = int(list(qf["iter"]["nrt"])[0])
@@ -36,7 +33,7 @@ def readRestart(mb, path="./", nrt=0):
         dest = blk.array["q"]
         for i, var in enumerate(variables):
             # a case may carry species the result it restarts from did not,
-            # and those keep whatever initRestartArrays gave them
+            # and those keep the zeros they were allocated with
             if var not in resS:
                 if blk.nblki == 0:
                     print(f"Warning, {var} not found in restart. Leaving as is.")

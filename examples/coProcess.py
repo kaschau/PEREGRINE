@@ -156,7 +156,6 @@ def simulate():
 
     mb.setBlockCommunication()
 
-    mb.initSolverArrays(config)
     mb.generateHalo()
     mb.computeMetrics()
 

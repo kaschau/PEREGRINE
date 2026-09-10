@@ -22,7 +22,6 @@ def create(bc, adv, spdata):
         blk.array["y"][i:-i, i:-i, i:-i] += np.random.uniform(-1, 1, size) * 0.02
         blk.array["z"][i:-i, i:-i, i:-i] += np.random.uniform(-1, 1, size) * 0.02
 
-    mb.initSolverArrays(config)
     mb.generateHalo()
     mb.computeMetrics()
 

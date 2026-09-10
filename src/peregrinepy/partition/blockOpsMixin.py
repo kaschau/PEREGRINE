@@ -153,16 +153,25 @@ class BlockOpsMixin:
         newBlk.baseNblki = oldBlk.baseNblki
         oldBlk.baseSlice, newBlk.baseSlice = tuple(low), tuple(high)
 
-        # Now transfer the coordinate arrays
+        # Now transfer the coordinate arrays. Each half is a smaller block, so
+        # it is resized before being filled and everything it derives from its
+        # coordinates comes back the right shape rather than the old one.
         oldSlice, newSlice = [slice(None)] * 3, [slice(None)] * 3
         oldSlice[axis] = slice(0, cutIndex + 1)
         newSlice[axis] = slice(cutIndex, None)
-        for var in ["x", "y", "z"]:
-            newBlk.array[var] = np.copy(oldBlk.array[var][tuple(newSlice)])
-            oldBlk.array[var] = np.copy(oldBlk.array[var][tuple(oldSlice)])
+        halves = {
+            var: (
+                np.copy(oldBlk.array[var][tuple(oldSlice)]),
+                np.copy(oldBlk.array[var][tuple(newSlice)]),
+            )
+            for var in ("x", "y", "z")
+        }
 
-        oldBlk.ni, oldBlk.nj, oldBlk.nk = oldBlk.array["x"].shape
-        newBlk.ni, newBlk.nj, newBlk.nk = newBlk.array["x"].shape
+        oldBlk.setExtents(*halves["x"][0].shape)
+        newBlk.setExtents(*halves["x"][1].shape)
+        for var, (low, high) in halves.items():
+            oldBlk.array[var][:] = low
+            newBlk.array[var][:] = high
 
         return openFaces
 
@@ -315,13 +324,17 @@ class BlockOpsMixin:
             lower, upper = (B, A) if faceA.amILow else (A, B)
             dropShared = [slice(None)] * 3
             dropShared[axis] = slice(1, None)
-            for name in ("x", "y", "z"):
-                A.array[name] = np.concatenate(
+            joined = {
+                name: np.concatenate(
                     [lower.array[name], upper.array[name][tuple(dropShared)]], axis=axis
                 )
+                for name in ("x", "y", "z")
+            }
             dims = [A.ni, A.nj, A.nk]
             dims[axis] += (B.ni, B.nj, B.nk)[axis] - 1
-            A.ni, A.nj, A.nk = dims
+            A.setExtents(*dims)
+            for name, values in joined.items():
+                A.array[name][:] = values
 
             # B is now in our frame, so its far face is ours on that side
             A.faces[fa - 1] = B.getFace(fa)

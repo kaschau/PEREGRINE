@@ -192,7 +192,7 @@ def generateTracePoints(mb, points, tags):
             found[index] = True
             indexes[index, 0] = blk.nblki
 
-            blk.computeMetrics(2, xcOnly=True)
+            blk.computeMetrics()
             dists = np.sqrt(
                 (blk.array["xc"] - x) ** 2
                 + (blk.array["yc"] - y) ** 2

@@ -85,7 +85,7 @@ class AnnulusMesher(BaseMesher):
                 face.periodicAxis = self.axis
 
     def _annulus(self, blk, p1, p2, p3, sweep, thickness, dimensions):
-        """Function to populate the coordinate arrays of a provided peregrinepy.grid.grid_block in the shape of an annulus with prescribed location, extents, and discretization.
+        """Function to populate the coordinate arrays of a provided peregrinepy.multiBlock.gridBlock in the shape of an annulus with prescribed location, extents, and discretization.
         If the input multiBlock object is a restart block the shape and size of the flow data arrays are also updated.
 
         Parameters
@@ -142,11 +142,7 @@ class AnnulusMesher(BaseMesher):
         n12 = (p2 - p1) / np.linalg.norm(p2 - p1)
         n13 = (p3 - p1) / np.linalg.norm(p3 - p1)
 
-        blk.ni = dimensions[0]
-        blk.nj = dimensions[1]
-        blk.nk = dimensions[2]
-
-        blk.initGridArrays()
+        blk.setExtents(*dimensions)
 
         s_i = blk.interior
 

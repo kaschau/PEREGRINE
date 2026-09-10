@@ -49,7 +49,6 @@ def simulate():
         lengths=[lx, 0.01, 0.01],
         periodic=[False, False, False],
     ).mesh(mb)
-    mb.initSolverArrays(config)
 
     blk = mb[0]
     for face in blk.faces:

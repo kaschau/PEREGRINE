@@ -378,8 +378,6 @@ def simulate(testnum, index="i"):
         mbDims=[1, 1, 1], dimsPerBlock=dimsPerBlock, lengths=lengths
     ).mesh(mb)
 
-    mb.initSolverArrays(config)
-
     blk = mb[0]
     ng = blk.ng
 

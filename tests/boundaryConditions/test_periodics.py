@@ -49,7 +49,6 @@ class TestPeriodics:
         blk.getFace(6).commRank = 0
 
         mb.setBlockCommunication()
-        mb.initSolverArrays(config)
 
         mb.unifyGrid()
         mb.computeMetrics()

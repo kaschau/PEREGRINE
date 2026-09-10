@@ -70,8 +70,6 @@ def simulate(index, velo):
         mbDims=[1, 1, 1], dimsPerBlock=dimsPerBlock, lengths=lengths, periodic=periodic
     ).mesh(mb)
 
-    mb.initSolverArrays(config)
-
     blk = mb[0]
 
     if index == "i":

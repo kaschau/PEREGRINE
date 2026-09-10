@@ -39,7 +39,6 @@ def simulate(index="i"):
     pg.mesher.CubeMesher(
         mbDims=[1, 1, 1], dimsPerBlock=dimsPerBlock, lengths=lengths, periodic=periodic
     ).mesh(mb)
-    mb.initSolverArrays(config)
 
     blk = mb[0]
     for face in blk.faces:

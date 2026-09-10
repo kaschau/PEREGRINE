@@ -26,10 +26,6 @@ class restart(grid):
         self.__nrt = 0
         self.__tme = 0.0
 
-    def initRestartArrays(self):
-        for blk in self:
-            blk.initRestartArrays()
-
     # We will make the nrt and tme attribues of the restart containter
     # properties with a setter so that setting the container value will
     # also set the block object values as well.

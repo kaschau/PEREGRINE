@@ -86,37 +86,39 @@ class GridReader:
         self._partitionName, self._cuts, self._rankOfNblki = name, cuts, rank
         return [int(n) for n in np.flatnonzero(rank == getCommRankSize()[1])]
 
-    def readGrid(self, mb, justNi=False):
-        """Add the coordinate data to a supplied peregrinepy.multiBlock.grid
-        (or one of its descendants). With justNi, read only the block extents.
-        """
-        if justNi:
-            assert mb.mbType not in ["restart", "solver"]
+    def _blockBaseInfo(self, blk):
+        """Which block of the grid this one is, which slab of it, and how big
+        that slab is."""
+        if self._cuts is None:
+            blk.baseNblki, blk.baseSlice = blk.nblki, None
+        else:
+            baseNblki, *bounds = self._cuts[blk.nblki]
+            blk.baseNblki = int(baseNblki)
+            blk.baseSlice = tuple(int(b) for b in bounds)
 
+        coordS = self.f[f"coordinates_{blk.baseNblki:06d}"]
+        if blk.baseSlice is None:
+            # stored (nk, nj, ni), so the shape is the extents backwards
+            nk, nj, ni = coordS["x"].shape
+        else:
+            i0, i1, j0, j1, k0, k1 = blk.baseSlice
+            ni, nj, nk = i1 - i0 + 1, j1 - j0 + 1, k1 - k0 + 1
+        return coordS, (int(ni), int(nj), int(nk))
+
+    def readExtents(self, mb):
+        """How big each block is, without reading a coordinate. Enough to
+        weigh the blocks and plan how to cut them."""
         for blk in mb:
-            # which block of the grid this one is, and which slab of it
-            if self._cuts is None:
-                blk.baseNblki, blk.baseSlice = blk.nblki, None
-            else:
-                baseNblki, *bounds = self._cuts[blk.nblki]
-                blk.baseNblki = int(baseNblki)
-                blk.baseSlice = tuple(int(b) for b in bounds)
+            _, (blk.ni, blk.nj, blk.nk) = self._blockBaseInfo(blk)
 
-            coordS = self.f[f"coordinates_{blk.baseNblki:06d}"]
-
-            if blk.baseSlice is None:
-                # stored (nk, nj, ni), so the shape is the extents backwards
-                nk, nj, ni = coordS["x"].shape
-            else:
-                i0, i1, j0, j1, k0, k1 = blk.baseSlice
-                ni, nj, nk = i1 - i0 + 1, j1 - j0 + 1, k1 - k0 + 1
-            blk.ni, blk.nj, blk.nk = int(ni), int(nj), int(nk)
-            sliceS = blk.baseNodeSlab
-
-            if not justNi:
-                blk.initGridArrays()
-                for name in ("x", "y", "z"):
-                    blk.array[name][blk.interior] = coordS[name][sliceS].T
+    def readGrid(self, mb):
+        """Add the coordinate data to a supplied peregrinepy.multiBlock.grid
+        (or one of its descendants)."""
+        for blk in mb:
+            coordS, extents = self._blockBaseInfo(blk)
+            blk.setExtents(*extents)
+            for name in ("x", "y", "z"):
+                blk.array[name][blk.interior] = coordS[name][blk.baseNodeSlab].T
 
             mb.progress(blk.nblki + 1, f"Reading in gridBlock {blk.nblki}")
 

@@ -1,8 +1,5 @@
 import numpy as np
 from .topologyBlock import topologyBlock
-from ..misc import frozenDict
-from ..grid import metrics
-from ..grid import generateHalo
 
 
 class gridBlock(topologyBlock):
@@ -26,50 +23,55 @@ class gridBlock(topologyBlock):
         # Data arrays
         #########################################################
         # Python side data
-        self.array = frozenDict()
+        self.array = {}
         # Kokkos mirrors (only used for solverBlocks)
-        self.mirror = frozenDict()
-        # Coordinate arrays
-        for d in ["x", "y", "z"]:
-            self.array[f"{d}"] = None
-            self.mirror[f"{d}"] = None
-        # Grid metrics
-        # Cell centers
-        for d in ["xc", "yc", "zc", "J", "dI", "dJ", "dK"]:
-            self.array[f"{d}"] = None
-            self.mirror[f"{d}"] = None
-        # Cell center metrics
-        for d in [
-            "dEdx",
-            "dEdy",
-            "dEdz",
-            "dNdx",
-            "dNdy",
-            "dNdz",
-            "dCdx",
-            "dCdy",
-            "dCdz",
-        ]:
-            self.array[f"{d}"] = None
-            self.mirror[f"{d}"] = None
-        # i face area vectors
-        for d in ["ixc", "iyc", "izc", "isx", "isy", "isz", "iS", "inx", "iny", "inz"]:
-            self.array[f"{d}"] = None
-            self.mirror[f"{d}"] = None
-        # j face area vectors
-        for d in ["jxc", "jyc", "jzc", "jsx", "jsy", "jsz", "jS", "jnx", "jny", "jnz"]:
-            self.array[f"{d}"] = None
-            self.mirror[f"{d}"] = None
-        # k face area vectors
-        for d in ["kxc", "kyc", "kzc", "ksx", "ksy", "ksz", "kS", "knx", "kny", "knz"]:
-            self.array[f"{d}"] = None
-            self.mirror[f"{d}"] = None
+        self.mirror = {}
+        # what each array's shape will be, once the extents are known
+        self.declared = {}
 
-        if self.blockType == "grid":
-            self.array._freeze()
+        self.declare("x", "y", "z", kind="node")
+        # cell centers are as much as a block with no solution on it can work
+        # out; the rest of the metrics are a solverBlock's
+        self.declare("xc", "yc", "zc", kind="cell")
 
-    def initRestartArrays(self):
-        """No restart arrays on a grid block."""
+    ###########################################################################
+    # The arrays a block has, and how big they are
+    ###########################################################################
+    def declare(self, *names, kind, components=None):
+        """Say an array exists and what shape it will take, before this block
+        knows its extents. Nothing else may be put in array."""
+        for name in names:
+            self.declared[name] = (kind, components)
+            self.array[name] = None
+            self.mirror[name] = None
+
+    @property
+    def shapes(self):
+        """What each kind of array is shaped, for this block's extents."""
+        ng, ni, nj, nk = self.ng, self.ni, self.nj, self.nk
+        return {
+            "node": (ni + 2 * ng, nj + 2 * ng, nk + 2 * ng),
+            "cell": (ni + 2 * ng - 1, nj + 2 * ng - 1, nk + 2 * ng - 1),
+            "iface": (ni + 2 * ng, nj + 2 * ng - 1, nk + 2 * ng - 1),
+            "jface": (ni + 2 * ng - 1, nj + 2 * ng, nk + 2 * ng - 1),
+            "kface": (ni + 2 * ng - 1, nj + 2 * ng - 1, nk + 2 * ng),
+        }
+
+    def shapeOf(self, name):
+        kind, components = self.declared[name]
+        shape = self.shapes[kind]
+        return shape + (components,) if components else shape
+
+    def setExtents(self, ni, nj, nk):
+        """This block is this big, so give it its arrays. A block is built
+        before anyone knows its extents -- a mesher works them out, a reader
+        finds them in the file -- so this is the moment it can be filled in."""
+        self.ni, self.nj, self.nk = int(ni), int(nj), int(nk)
+        self.allocate()
+
+    def allocate(self):
+        for name in self.declared:
+            self.array[name] = np.zeros(self.shapeOf(name))
 
     @property
     def interior(self):
@@ -101,89 +103,52 @@ class gridBlock(topologyBlock):
     def updateHostView(self, vars):
         """No device to pull from."""
 
-    def initGridArrays(self):
-        """
-        Create zeroed numpy arrays of correct size.
-        """
-        ng = self.ng
+    def computeMetrics(self):
+        """Where this block's cells are. A block with no solution on it has no
+        use for the face vectors a flux is taken through."""
+        x = self.array["x"]
+        y = self.array["y"]
+        z = self.array["z"]
 
-        # Primary grid coordinates
-        shape = [self.ni + 2 * ng, self.nj + 2 * ng, self.nk + 2 * ng]
-        for name in ["x", "y", "z"]:
-            self.array[name] = np.zeros((shape))
+        if x is None:
+            raise ValueError(
+                "You must initialize the grid arrays before computing metrics"
+            )
 
-        # Cell center locations, volumes, diffusive metrics
-        shape = [self.ni + 2 * ng - 1, self.nj + 2 * ng - 1, self.nk + 2 * ng - 1]
-        for name in [
-            "xc",
-            "yc",
-            "zc",
-            "J",
-            "dI",
-            "dJ",
-            "dK",
-            "dEdx",
-            "dEdy",
-            "dEdz",
-            "dNdx",
-            "dNdy",
-            "dNdz",
-            "dCdx",
-            "dCdy",
-            "dCdz",
-        ]:
-            self.array[name] = np.zeros((shape))
+        # ----------------------------------------------------------------------------
+        # Cell Centers
+        # ----------------------------------------------------------------------------
 
-        # i face normal, area vectors
-        shape = [self.ni + 2 * ng, self.nj + 2 * ng - 1, self.nk + 2 * ng - 1]
-        for name in [
-            "ixc",
-            "iyc",
-            "izc",
-            "isx",
-            "isy",
-            "isz",
-            "iS",
-            "inx",
-            "iny",
-            "inz",
-        ]:
-            self.array[name] = np.zeros((shape))
+        self.array["xc"][:] = 0.125 * (
+            x[0:-1, 0:-1, 0:-1]
+            + x[0:-1, 0:-1, 1::]
+            + x[0:-1, 1::, 0:-1]
+            + x[0:-1, 1::, 1::]
+            + x[1::, 0:-1, 0:-1]
+            + x[1::, 0:-1, 1::]
+            + x[1::, 1::, 0:-1]
+            + x[1::, 1::, 1::]
+        )
 
-        # j face normal, area vectors
-        shape = [self.ni + 2 * ng - 1, self.nj + 2 * ng, self.nk + 2 * ng - 1]
-        for name in [
-            "jxc",
-            "jyc",
-            "jzc",
-            "jsx",
-            "jsy",
-            "jsz",
-            "jS",
-            "jnx",
-            "jny",
-            "jnz",
-        ]:
-            self.array[name] = np.zeros((shape))
+        self.array["yc"][:] = 0.125 * (
+            y[0:-1, 0:-1, 0:-1]
+            + y[0:-1, 0:-1, 1::]
+            + y[0:-1, 1::, 0:-1]
+            + y[0:-1, 1::, 1::]
+            + y[1::, 0:-1, 0:-1]
+            + y[1::, 0:-1, 1::]
+            + y[1::, 1::, 0:-1]
+            + y[1::, 1::, 1::]
+        )
 
-        # k face normal, area vectors
-        shape = [self.ni + 2 * ng - 1, self.nj + 2 * ng - 1, self.nk + 2 * ng]
-        for name in [
-            "kxc",
-            "kyc",
-            "kzc",
-            "ksx",
-            "ksy",
-            "ksz",
-            "kS",
-            "knx",
-            "kny",
-            "knz",
-        ]:
-            self.array[name] = np.zeros((shape))
-
-    def computeMetrics(self, xcOnly=False):
-        metrics(self, xcOnly)
-
-    def generateHalo(self):
-        generateHalo(self)
+        self.array["zc"][:] = 0.125 * (
+            z[0:-1, 0:-1, 0:-1]
+            + z[0:-1, 0:-1, 1::]
+            + z[0:-1, 1::, 0:-1]
+            + z[0:-1, 1::, 1::]
+            + z[1::, 0:-1, 0:-1]
+            + z[1::, 0:-1, 1::]
+            + z[1::, 1::, 0:-1]
+            + z[1::, 1::, 1::]
+        )
+        self.updateDeviceView(["xc", "yc", "zc"])

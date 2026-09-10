@@ -228,7 +228,7 @@ def generateMultiBlockSolver(nblks, config, myblocks=None):
     # Get the number of ghost layers
     ng = howManyNG(config)
     # Instantiate the combined mbsolver+timeint object
-    cls = mbsolver(nblks, spn, ng=ng)
+    cls = mbsolver(nblks, spn, ng=ng, config=config)
 
     # In parallel we need to overwrite the generated block numbers
     if myblocks is not None:
@@ -238,8 +238,6 @@ def generateMultiBlockSolver(nblks, config, myblocks=None):
         for blk, nblki in zip(cls, myblocks):
             blk.nblki = nblki
 
-    # Set the config file on
-    cls.config = config
     # Set the thtrdat object on
     cls.thtrdat = thtrdat(config)
 
