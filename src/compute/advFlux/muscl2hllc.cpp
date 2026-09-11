@@ -1,4 +1,5 @@
 #include "block_.hpp"
+#include "compute.hpp"
 #include "kokkosTypes.hpp"
 #include "math.h"
 #include "thtrdat_.hpp"
@@ -30,6 +31,10 @@ void muscl2hllc(block_ &b) {
   Kokkos::parallel_for(
       "MUSCL 2 hllc i face conv fluxes", range_i,
       KOKKOS_LAMBDA(const int i, const int j, const int k) {
+        double S, nx, ny, nz;
+        faceNormal(b.iS(i, j, k, 0), b.iS(i, j, k, 1), b.iS(i, j, k, 2), S, nx,
+                   ny, nz);
+
         double rR, rL, phiR, phiL;
 
         // Reconstruct density
@@ -83,11 +88,6 @@ void muscl2hllc(block_ &b) {
 
         double wfR = wi - 0.5 * phiR * (wip1 - wi);
         double wfL = wim1 + 0.5 * phiL * (wi - wim1);
-
-        // Face normal velocity
-        double &nx = b.inx(i, j, k);
-        double &ny = b.iny(i, j, k);
-        double &nz = b.inz(i, j, k);
 
         double UR = nx * ufR + ny * vfR + nz * wfR;
         double UL = nx * ufL + ny * vfL + nz * wfL;
@@ -147,11 +147,11 @@ void muscl2hllc(block_ &b) {
             (rhoL * (SL - UL) - rhoR * (SR - UR));
 
         if (SL >= 0.0) {
-          b.iF(i, j, k, 0) = UL * rhoL * b.iS(i, j, k);
-          b.iF(i, j, k, 1) = UL * rhouL * b.iS(i, j, k) + pL * b.isx(i, j, k);
-          b.iF(i, j, k, 2) = UL * rhovL * b.iS(i, j, k) + pL * b.isy(i, j, k);
-          b.iF(i, j, k, 3) = UL * rhowL * b.iS(i, j, k) + pL * b.isz(i, j, k);
-          b.iF(i, j, k, 4) = UL * (EL + pL) * b.iS(i, j, k);
+          b.iF(i, j, k, 0) = UL * rhoL * S;
+          b.iF(i, j, k, 1) = UL * rhouL * S + pL * b.iS(i, j, k, 0);
+          b.iF(i, j, k, 2) = UL * rhovL * S + pL * b.iS(i, j, k, 1);
+          b.iF(i, j, k, 3) = UL * rhowL * S + pL * b.iS(i, j, k, 2);
+          b.iF(i, j, k, 4) = UL * (EL + pL) * S;
           for (int n = 0; n < b.ne - 5; n++) {
             // Reconstruct Y
             double &Yi = b.q(i, j, k, 5 + n);
@@ -162,31 +162,28 @@ void muscl2hllc(block_ &b) {
 
             double YL = Yim1 + 0.5 * phiL * (Yi - Yim1);
             double rhoYL = rhoL * YL;
-            b.iF(i, j, k, 5 + n) = UL * rhoYL * b.iS(i, j, k);
+            b.iF(i, j, k, 5 + n) = UL * rhoYL * S;
           }
         } else if ((SL <= 0.0) && (Sstar >= 0.0)) {
           double FrhoL, FUL, FVL, FWL, FEL, UstarL;
-          FrhoL = UL * rhoL * b.iS(i, j, k);
-          FUL = UL * rhouL * b.iS(i, j, k) + pL * b.isx(i, j, k);
-          FVL = UL * rhovL * b.iS(i, j, k) + pL * b.isy(i, j, k);
-          FWL = UL * rhowL * b.iS(i, j, k) + pL * b.isz(i, j, k);
-          FEL = UL * (EL + pL) * b.iS(i, j, k);
+          FrhoL = UL * rhoL * S;
+          FUL = UL * rhouL * S + pL * b.iS(i, j, k, 0);
+          FVL = UL * rhovL * S + pL * b.iS(i, j, k, 1);
+          FWL = UL * rhowL * S + pL * b.iS(i, j, k, 2);
+          FEL = UL * (EL + pL) * S;
           UstarL = rhoL * (SL - UL) / (SL - Sstar);
 
-          b.iF(i, j, k, 0) = FrhoL + SL * (UstarL - rhoL) * b.iS(i, j, k);
-          b.iF(i, j, k, 1) =
-              FUL + SL * (UstarL * Sstar * nx - rhouL) * b.iS(i, j, k);
-          b.iF(i, j, k, 2) =
-              FVL + SL * (UstarL * Sstar * ny - rhovL) * b.iS(i, j, k);
-          b.iF(i, j, k, 3) =
-              FWL + SL * (UstarL * Sstar * nz - rhowL) * b.iS(i, j, k);
+          b.iF(i, j, k, 0) = FrhoL + SL * (UstarL - rhoL) * S;
+          b.iF(i, j, k, 1) = FUL + SL * (UstarL * Sstar * nx - rhouL) * S;
+          b.iF(i, j, k, 2) = FVL + SL * (UstarL * Sstar * ny - rhovL) * S;
+          b.iF(i, j, k, 3) = FWL + SL * (UstarL * Sstar * nz - rhowL) * S;
           b.iF(i, j, k, 4) =
               FEL +
               SL *
                   (UstarL * (EL / rhoL +
                              (Sstar - UL) * (Sstar + pL / (rhoL * (SL - UL)))) -
                    EL) *
-                  b.iS(i, j, k);
+                  S;
           for (int n = 0; n < b.ne - 5; n++) {
             // Reconstruct Y
             double &Yi = b.q(i, j, k, 5 + n);
@@ -197,33 +194,29 @@ void muscl2hllc(block_ &b) {
 
             double YL = Yim1 + 0.5 * phiL * (Yi - Yim1);
             double rhoYL = rhoL * YL;
-            double FYL = rhoYL * UL * b.iS(i, j, k);
-            b.iF(i, j, k, 5 + n) =
-                FYL + SL * (UstarL * YL - rhoYL) * b.iS(i, j, k);
+            double FYL = rhoYL * UL * S;
+            b.iF(i, j, k, 5 + n) = FYL + SL * (UstarL * YL - rhoYL) * S;
           }
         } else if ((SR >= 0.0) && (Sstar <= 0.0)) {
           double FrhoR, FUR, FVR, FWR, FER, UstarR;
-          FrhoR = UR * rhoR * b.iS(i, j, k);
-          FUR = UR * rhouR * b.iS(i, j, k) + pR * b.isx(i, j, k);
-          FVR = UR * rhovR * b.iS(i, j, k) + pR * b.isy(i, j, k);
-          FWR = UR * rhowR * b.iS(i, j, k) + pR * b.isz(i, j, k);
-          FER = UR * (ER + pR) * b.iS(i, j, k);
+          FrhoR = UR * rhoR * S;
+          FUR = UR * rhouR * S + pR * b.iS(i, j, k, 0);
+          FVR = UR * rhovR * S + pR * b.iS(i, j, k, 1);
+          FWR = UR * rhowR * S + pR * b.iS(i, j, k, 2);
+          FER = UR * (ER + pR) * S;
           UstarR = rhoR * (SR - UR) / (SR - Sstar);
 
-          b.iF(i, j, k, 0) = FrhoR + SR * (UstarR - rhoR) * b.iS(i, j, k);
-          b.iF(i, j, k, 1) =
-              FUR + SR * (UstarR * Sstar * nx - rhouR) * b.iS(i, j, k);
-          b.iF(i, j, k, 2) =
-              FVR + SR * (UstarR * Sstar * ny - rhovR) * b.iS(i, j, k);
-          b.iF(i, j, k, 3) =
-              FWR + SR * (UstarR * Sstar * nz - rhowR) * b.iS(i, j, k);
+          b.iF(i, j, k, 0) = FrhoR + SR * (UstarR - rhoR) * S;
+          b.iF(i, j, k, 1) = FUR + SR * (UstarR * Sstar * nx - rhouR) * S;
+          b.iF(i, j, k, 2) = FVR + SR * (UstarR * Sstar * ny - rhovR) * S;
+          b.iF(i, j, k, 3) = FWR + SR * (UstarR * Sstar * nz - rhowR) * S;
           b.iF(i, j, k, 4) =
               FER +
               SR *
                   (UstarR * (ER / rhoR +
                              (Sstar - UR) * (Sstar + pR / (rhoR * (SR - UR)))) -
                    ER) *
-                  b.iS(i, j, k);
+                  S;
           for (int n = 0; n < b.ne - 5; n++) {
             // Reconstruct Y
             double &Yi = b.q(i, j, k, 5 + n);
@@ -234,16 +227,15 @@ void muscl2hllc(block_ &b) {
 
             double YR = Yi - 0.5 * phiR * (Yip1 - Yi);
             double rhoYR = rhoR * YR;
-            double FYR = rhoYR * UR * b.iS(i, j, k);
-            b.iF(i, j, k, 5 + n) =
-                FYR + SR * (UstarR * YR - rhoYR) * b.iS(i, j, k);
+            double FYR = rhoYR * UR * S;
+            b.iF(i, j, k, 5 + n) = FYR + SR * (UstarR * YR - rhoYR) * S;
           }
         } else if (SR <= 0.0) {
-          b.iF(i, j, k, 0) = UR * rhoR * b.iS(i, j, k);
-          b.iF(i, j, k, 1) = UR * rhouR * b.iS(i, j, k) + pR * b.isx(i, j, k);
-          b.iF(i, j, k, 2) = UR * rhovR * b.iS(i, j, k) + pR * b.isy(i, j, k);
-          b.iF(i, j, k, 3) = UR * rhowR * b.iS(i, j, k) + pR * b.isz(i, j, k);
-          b.iF(i, j, k, 4) = UR * (ER + pR) * b.iS(i, j, k);
+          b.iF(i, j, k, 0) = UR * rhoR * S;
+          b.iF(i, j, k, 1) = UR * rhouR * S + pR * b.iS(i, j, k, 0);
+          b.iF(i, j, k, 2) = UR * rhovR * S + pR * b.iS(i, j, k, 1);
+          b.iF(i, j, k, 3) = UR * rhowR * S + pR * b.iS(i, j, k, 2);
+          b.iF(i, j, k, 4) = UR * (ER + pR) * S;
           for (int n = 0; n < b.ne - 5; n++) {
             // Reconstruct Y
             double &Yi = b.q(i, j, k, 5 + n);
@@ -254,7 +246,7 @@ void muscl2hllc(block_ &b) {
 
             double YR = Yi - 0.5 * phiR * (Yip1 - Yi);
             double rhoYR = rhoR * YR;
-            b.iF(i, j, k, 5 + n) = UR * rhoYR * b.iS(i, j, k);
+            b.iF(i, j, k, 5 + n) = UR * rhoYR * S;
           }
         }
       });
@@ -267,6 +259,10 @@ void muscl2hllc(block_ &b) {
   Kokkos::parallel_for(
       "MUSCL 2 hllc j face conv fluxes", range_j,
       KOKKOS_LAMBDA(const int i, const int j, const int k) {
+        double S, nx, ny, nz;
+        faceNormal(b.jS(i, j, k, 0), b.jS(i, j, k, 1), b.jS(i, j, k, 2), S, nx,
+                   ny, nz);
+
         double rR, rL, phiR, phiL;
 
         // Reconstruct density
@@ -320,11 +316,6 @@ void muscl2hllc(block_ &b) {
 
         double wfR = wi - 0.5 * phiR * (wip1 - wi);
         double wfL = wim1 + 0.5 * phiL * (wi - wim1);
-
-        // Face normal velocity
-        double &nx = b.jnx(i, j, k);
-        double &ny = b.jny(i, j, k);
-        double &nz = b.jnz(i, j, k);
 
         double UR = nx * ufR + ny * vfR + nz * wfR;
         double UL = nx * ufL + ny * vfL + nz * wfL;
@@ -384,11 +375,11 @@ void muscl2hllc(block_ &b) {
             (rhoL * (SL - UL) - rhoR * (SR - UR));
 
         if (SL >= 0.0) {
-          b.jF(i, j, k, 0) = UL * rhoL * b.jS(i, j, k);
-          b.jF(i, j, k, 1) = UL * rhouL * b.jS(i, j, k) + pL * b.jsx(i, j, k);
-          b.jF(i, j, k, 2) = UL * rhovL * b.jS(i, j, k) + pL * b.jsy(i, j, k);
-          b.jF(i, j, k, 3) = UL * rhowL * b.jS(i, j, k) + pL * b.jsz(i, j, k);
-          b.jF(i, j, k, 4) = UL * (EL + pL) * b.jS(i, j, k);
+          b.jF(i, j, k, 0) = UL * rhoL * S;
+          b.jF(i, j, k, 1) = UL * rhouL * S + pL * b.jS(i, j, k, 0);
+          b.jF(i, j, k, 2) = UL * rhovL * S + pL * b.jS(i, j, k, 1);
+          b.jF(i, j, k, 3) = UL * rhowL * S + pL * b.jS(i, j, k, 2);
+          b.jF(i, j, k, 4) = UL * (EL + pL) * S;
           for (int n = 0; n < b.ne - 5; n++) {
             // Reconstruct Y
             double &Yi = b.q(i, j, k, 5 + n);
@@ -399,31 +390,28 @@ void muscl2hllc(block_ &b) {
 
             double YL = Yim1 + 0.5 * phiL * (Yi - Yim1);
             double rhoYL = rhoL * YL;
-            b.jF(i, j, k, 5 + n) = UL * rhoYL * b.jS(i, j, k);
+            b.jF(i, j, k, 5 + n) = UL * rhoYL * S;
           }
         } else if ((SL <= 0.0) && (Sstar >= 0.0)) {
           double FrhoL, FUL, FVL, FWL, FEL, UstarL;
-          FrhoL = UL * rhoL * b.jS(i, j, k);
-          FUL = UL * rhouL * b.jS(i, j, k) + pL * b.jsx(i, j, k);
-          FVL = UL * rhovL * b.jS(i, j, k) + pL * b.jsy(i, j, k);
-          FWL = UL * rhowL * b.jS(i, j, k) + pL * b.jsz(i, j, k);
-          FEL = UL * (EL + pL) * b.jS(i, j, k);
+          FrhoL = UL * rhoL * S;
+          FUL = UL * rhouL * S + pL * b.jS(i, j, k, 0);
+          FVL = UL * rhovL * S + pL * b.jS(i, j, k, 1);
+          FWL = UL * rhowL * S + pL * b.jS(i, j, k, 2);
+          FEL = UL * (EL + pL) * S;
           UstarL = rhoL * (SL - UL) / (SL - Sstar);
 
-          b.jF(i, j, k, 0) = FrhoL + SL * (UstarL - rhoL) * b.jS(i, j, k);
-          b.jF(i, j, k, 1) =
-              FUL + SL * (UstarL * Sstar * nx - rhouL) * b.jS(i, j, k);
-          b.jF(i, j, k, 2) =
-              FVL + SL * (UstarL * Sstar * ny - rhovL) * b.jS(i, j, k);
-          b.jF(i, j, k, 3) =
-              FWL + SL * (UstarL * Sstar * nz - rhowL) * b.jS(i, j, k);
+          b.jF(i, j, k, 0) = FrhoL + SL * (UstarL - rhoL) * S;
+          b.jF(i, j, k, 1) = FUL + SL * (UstarL * Sstar * nx - rhouL) * S;
+          b.jF(i, j, k, 2) = FVL + SL * (UstarL * Sstar * ny - rhovL) * S;
+          b.jF(i, j, k, 3) = FWL + SL * (UstarL * Sstar * nz - rhowL) * S;
           b.jF(i, j, k, 4) =
               FEL +
               SL *
                   (UstarL * (EL / rhoL +
                              (Sstar - UL) * (Sstar + pL / (rhoL * (SL - UL)))) -
                    EL) *
-                  b.jS(i, j, k);
+                  S;
           for (int n = 0; n < b.ne - 5; n++) {
             // Reconstruct Y
             double &Yi = b.q(i, j, k, 5 + n);
@@ -434,33 +422,29 @@ void muscl2hllc(block_ &b) {
 
             double YL = Yim1 + 0.5 * phiL * (Yi - Yim1);
             double rhoYL = rhoL * YL;
-            double FYL = rhoYL * UL * b.jS(i, j, k);
-            b.jF(i, j, k, 5 + n) =
-                FYL + SL * (UstarL * YL - rhoYL) * b.jS(i, j, k);
+            double FYL = rhoYL * UL * S;
+            b.jF(i, j, k, 5 + n) = FYL + SL * (UstarL * YL - rhoYL) * S;
           }
         } else if ((SR >= 0.0) && (Sstar <= 0.0)) {
           double FrhoR, FUR, FVR, FWR, FER, UstarR;
-          FrhoR = UR * rhoR * b.jS(i, j, k);
-          FUR = UR * rhouR * b.jS(i, j, k) + pR * b.jsx(i, j, k);
-          FVR = UR * rhovR * b.jS(i, j, k) + pR * b.jsy(i, j, k);
-          FWR = UR * rhowR * b.jS(i, j, k) + pR * b.jsz(i, j, k);
-          FER = UR * (ER + pR) * b.jS(i, j, k);
+          FrhoR = UR * rhoR * S;
+          FUR = UR * rhouR * S + pR * b.jS(i, j, k, 0);
+          FVR = UR * rhovR * S + pR * b.jS(i, j, k, 1);
+          FWR = UR * rhowR * S + pR * b.jS(i, j, k, 2);
+          FER = UR * (ER + pR) * S;
           UstarR = rhoR * (SR - UR) / (SR - Sstar);
 
-          b.jF(i, j, k, 0) = FrhoR + SR * (UstarR - rhoR) * b.jS(i, j, k);
-          b.jF(i, j, k, 1) =
-              FUR + SR * (UstarR * Sstar * nx - rhouR) * b.jS(i, j, k);
-          b.jF(i, j, k, 2) =
-              FVR + SR * (UstarR * Sstar * ny - rhovR) * b.jS(i, j, k);
-          b.jF(i, j, k, 3) =
-              FWR + SR * (UstarR * Sstar * nz - rhowR) * b.jS(i, j, k);
+          b.jF(i, j, k, 0) = FrhoR + SR * (UstarR - rhoR) * S;
+          b.jF(i, j, k, 1) = FUR + SR * (UstarR * Sstar * nx - rhouR) * S;
+          b.jF(i, j, k, 2) = FVR + SR * (UstarR * Sstar * ny - rhovR) * S;
+          b.jF(i, j, k, 3) = FWR + SR * (UstarR * Sstar * nz - rhowR) * S;
           b.jF(i, j, k, 4) =
               FER +
               SR *
                   (UstarR * (ER / rhoR +
                              (Sstar - UR) * (Sstar + pR / (rhoR * (SR - UR)))) -
                    ER) *
-                  b.jS(i, j, k);
+                  S;
           for (int n = 0; n < b.ne - 5; n++) {
             // Reconstruct Y
             double &Yi = b.q(i, j, k, 5 + n);
@@ -471,16 +455,15 @@ void muscl2hllc(block_ &b) {
 
             double YR = Yi - 0.5 * phiR * (Yip1 - Yi);
             double rhoYR = rhoR * YR;
-            double FYR = rhoYR * UR * b.jS(i, j, k);
-            b.jF(i, j, k, 5 + n) =
-                FYR + SR * (UstarR * YR - rhoYR) * b.jS(i, j, k);
+            double FYR = rhoYR * UR * S;
+            b.jF(i, j, k, 5 + n) = FYR + SR * (UstarR * YR - rhoYR) * S;
           }
         } else if (SR <= 0.0) {
-          b.jF(i, j, k, 0) = UR * rhoR * b.jS(i, j, k);
-          b.jF(i, j, k, 1) = UR * rhouR * b.jS(i, j, k) + pR * b.jsx(i, j, k);
-          b.jF(i, j, k, 2) = UR * rhovR * b.jS(i, j, k) + pR * b.jsy(i, j, k);
-          b.jF(i, j, k, 3) = UR * rhowR * b.jS(i, j, k) + pR * b.jsz(i, j, k);
-          b.jF(i, j, k, 4) = UR * (ER + pR) * b.jS(i, j, k);
+          b.jF(i, j, k, 0) = UR * rhoR * S;
+          b.jF(i, j, k, 1) = UR * rhouR * S + pR * b.jS(i, j, k, 0);
+          b.jF(i, j, k, 2) = UR * rhovR * S + pR * b.jS(i, j, k, 1);
+          b.jF(i, j, k, 3) = UR * rhowR * S + pR * b.jS(i, j, k, 2);
+          b.jF(i, j, k, 4) = UR * (ER + pR) * S;
           for (int n = 0; n < b.ne - 5; n++) {
             // Reconstruct Y
             double &Yi = b.q(i, j, k, 5 + n);
@@ -491,7 +474,7 @@ void muscl2hllc(block_ &b) {
 
             double YR = Yi - 0.5 * phiR * (Yip1 - Yi);
             double rhoYR = rhoR * YR;
-            b.jF(i, j, k, 5 + n) = UR * rhoYR * b.jS(i, j, k);
+            b.jF(i, j, k, 5 + n) = UR * rhoYR * S;
           }
         }
       });
@@ -503,6 +486,10 @@ void muscl2hllc(block_ &b) {
   Kokkos::parallel_for(
       "MUSCL 2 hllc k face conv fluxes", range_k,
       KOKKOS_LAMBDA(const int i, const int j, const int k) {
+        double S, nx, ny, nz;
+        faceNormal(b.kS(i, j, k, 0), b.kS(i, j, k, 1), b.kS(i, j, k, 2), S, nx,
+                   ny, nz);
+
         double rR, rL, phiR, phiL;
 
         // Reconstruct density
@@ -556,11 +543,6 @@ void muscl2hllc(block_ &b) {
 
         double wfR = wi - 0.5 * phiR * (wip1 - wi);
         double wfL = wim1 + 0.5 * phiL * (wi - wim1);
-
-        // Face normal velocity
-        double &nx = b.knx(i, j, k);
-        double &ny = b.kny(i, j, k);
-        double &nz = b.knz(i, j, k);
 
         double UR = nx * ufR + ny * vfR + nz * wfR;
         double UL = nx * ufL + ny * vfL + nz * wfL;
@@ -620,11 +602,11 @@ void muscl2hllc(block_ &b) {
             (rhoL * (SL - UL) - rhoR * (SR - UR));
 
         if (SL >= 0.0) {
-          b.kF(i, j, k, 0) = UL * rhoL * b.kS(i, j, k);
-          b.kF(i, j, k, 1) = UL * rhouL * b.kS(i, j, k) + pL * b.ksx(i, j, k);
-          b.kF(i, j, k, 2) = UL * rhovL * b.kS(i, j, k) + pL * b.ksy(i, j, k);
-          b.kF(i, j, k, 3) = UL * rhowL * b.kS(i, j, k) + pL * b.ksz(i, j, k);
-          b.kF(i, j, k, 4) = UL * (EL + pL) * b.kS(i, j, k);
+          b.kF(i, j, k, 0) = UL * rhoL * S;
+          b.kF(i, j, k, 1) = UL * rhouL * S + pL * b.kS(i, j, k, 0);
+          b.kF(i, j, k, 2) = UL * rhovL * S + pL * b.kS(i, j, k, 1);
+          b.kF(i, j, k, 3) = UL * rhowL * S + pL * b.kS(i, j, k, 2);
+          b.kF(i, j, k, 4) = UL * (EL + pL) * S;
           for (int n = 0; n < b.ne - 5; n++) {
             // Reconstruct Y
             double &Yi = b.q(i, j, k, 5 + n);
@@ -635,31 +617,28 @@ void muscl2hllc(block_ &b) {
 
             double YL = Yim1 + 0.5 * phiL * (Yi - Yim1);
             double rhoYL = rhoL * YL;
-            b.kF(i, j, k, 5 + n) = UL * rhoYL * b.kS(i, j, k);
+            b.kF(i, j, k, 5 + n) = UL * rhoYL * S;
           }
         } else if ((SL <= 0.0) && (Sstar >= 0.0)) {
           double FrhoL, FUL, FVL, FWL, FEL, UstarL;
-          FrhoL = UL * rhoL * b.kS(i, j, k);
-          FUL = UL * rhouL * b.kS(i, j, k) + pL * b.ksx(i, j, k);
-          FVL = UL * rhovL * b.kS(i, j, k) + pL * b.ksy(i, j, k);
-          FWL = UL * rhowL * b.kS(i, j, k) + pL * b.ksz(i, j, k);
-          FEL = UL * (EL + pL) * b.kS(i, j, k);
+          FrhoL = UL * rhoL * S;
+          FUL = UL * rhouL * S + pL * b.kS(i, j, k, 0);
+          FVL = UL * rhovL * S + pL * b.kS(i, j, k, 1);
+          FWL = UL * rhowL * S + pL * b.kS(i, j, k, 2);
+          FEL = UL * (EL + pL) * S;
           UstarL = rhoL * (SL - UL) / (SL - Sstar);
 
-          b.kF(i, j, k, 0) = FrhoL + SL * (UstarL - rhoL) * b.kS(i, j, k);
-          b.kF(i, j, k, 1) =
-              FUL + SL * (UstarL * Sstar * nx - rhouL) * b.kS(i, j, k);
-          b.kF(i, j, k, 2) =
-              FVL + SL * (UstarL * Sstar * ny - rhovL) * b.kS(i, j, k);
-          b.kF(i, j, k, 3) =
-              FWL + SL * (UstarL * Sstar * nz - rhowL) * b.kS(i, j, k);
+          b.kF(i, j, k, 0) = FrhoL + SL * (UstarL - rhoL) * S;
+          b.kF(i, j, k, 1) = FUL + SL * (UstarL * Sstar * nx - rhouL) * S;
+          b.kF(i, j, k, 2) = FVL + SL * (UstarL * Sstar * ny - rhovL) * S;
+          b.kF(i, j, k, 3) = FWL + SL * (UstarL * Sstar * nz - rhowL) * S;
           b.kF(i, j, k, 4) =
               FEL +
               SL *
                   (UstarL * (EL / rhoL +
                              (Sstar - UL) * (Sstar + pL / (rhoL * (SL - UL)))) -
                    EL) *
-                  b.kS(i, j, k);
+                  S;
           for (int n = 0; n < b.ne - 5; n++) {
             // Reconstruct Y
             double &Yi = b.q(i, j, k, 5 + n);
@@ -670,33 +649,29 @@ void muscl2hllc(block_ &b) {
 
             double YL = Yim1 + 0.5 * phiL * (Yi - Yim1);
             double rhoYL = rhoL * YL;
-            double FYL = rhoYL * UL * b.kS(i, j, k);
-            b.kF(i, j, k, 5 + n) =
-                FYL + SL * (UstarL * YL - rhoYL) * b.kS(i, j, k);
+            double FYL = rhoYL * UL * S;
+            b.kF(i, j, k, 5 + n) = FYL + SL * (UstarL * YL - rhoYL) * S;
           }
         } else if ((SR >= 0.0) && (Sstar <= 0.0)) {
           double FrhoR, FUR, FVR, FWR, FER, UstarR;
-          FrhoR = UR * rhoR * b.kS(i, j, k);
-          FUR = UR * rhouR * b.kS(i, j, k) + pR * b.ksx(i, j, k);
-          FVR = UR * rhovR * b.kS(i, j, k) + pR * b.ksy(i, j, k);
-          FWR = UR * rhowR * b.kS(i, j, k) + pR * b.ksz(i, j, k);
-          FER = UR * (ER + pR) * b.kS(i, j, k);
+          FrhoR = UR * rhoR * S;
+          FUR = UR * rhouR * S + pR * b.kS(i, j, k, 0);
+          FVR = UR * rhovR * S + pR * b.kS(i, j, k, 1);
+          FWR = UR * rhowR * S + pR * b.kS(i, j, k, 2);
+          FER = UR * (ER + pR) * S;
           UstarR = rhoR * (SR - UR) / (SR - Sstar);
 
-          b.kF(i, j, k, 0) = FrhoR + SR * (UstarR - rhoR) * b.kS(i, j, k);
-          b.kF(i, j, k, 1) =
-              FUR + SR * (UstarR * Sstar * nx - rhouR) * b.kS(i, j, k);
-          b.kF(i, j, k, 2) =
-              FVR + SR * (UstarR * Sstar * ny - rhovR) * b.kS(i, j, k);
-          b.kF(i, j, k, 3) =
-              FWR + SR * (UstarR * Sstar * nz - rhowR) * b.kS(i, j, k);
+          b.kF(i, j, k, 0) = FrhoR + SR * (UstarR - rhoR) * S;
+          b.kF(i, j, k, 1) = FUR + SR * (UstarR * Sstar * nx - rhouR) * S;
+          b.kF(i, j, k, 2) = FVR + SR * (UstarR * Sstar * ny - rhovR) * S;
+          b.kF(i, j, k, 3) = FWR + SR * (UstarR * Sstar * nz - rhowR) * S;
           b.kF(i, j, k, 4) =
               FER +
               SR *
                   (UstarR * (ER / rhoR +
                              (Sstar - UR) * (Sstar + pR / (rhoR * (SR - UR)))) -
                    ER) *
-                  b.kS(i, j, k);
+                  S;
           for (int n = 0; n < b.ne - 5; n++) {
             // Reconstruct Y
             double &Yi = b.q(i, j, k, 5 + n);
@@ -707,16 +682,15 @@ void muscl2hllc(block_ &b) {
 
             double YR = Yi - 0.5 * phiR * (Yip1 - Yi);
             double rhoYR = rhoR * YR;
-            double FYR = rhoYR * UR * b.kS(i, j, k);
-            b.kF(i, j, k, 5 + n) =
-                FYR + SR * (UstarR * YR - rhoYR) * b.kS(i, j, k);
+            double FYR = rhoYR * UR * S;
+            b.kF(i, j, k, 5 + n) = FYR + SR * (UstarR * YR - rhoYR) * S;
           }
         } else if (SR <= 0.0) {
-          b.kF(i, j, k, 0) = UR * rhoR * b.kS(i, j, k);
-          b.kF(i, j, k, 1) = UR * rhouR * b.kS(i, j, k) + pR * b.ksx(i, j, k);
-          b.kF(i, j, k, 2) = UR * rhovR * b.kS(i, j, k) + pR * b.ksy(i, j, k);
-          b.kF(i, j, k, 3) = UR * rhowR * b.kS(i, j, k) + pR * b.ksz(i, j, k);
-          b.kF(i, j, k, 4) = UR * (ER + pR) * b.kS(i, j, k);
+          b.kF(i, j, k, 0) = UR * rhoR * S;
+          b.kF(i, j, k, 1) = UR * rhouR * S + pR * b.kS(i, j, k, 0);
+          b.kF(i, j, k, 2) = UR * rhovR * S + pR * b.kS(i, j, k, 1);
+          b.kF(i, j, k, 3) = UR * rhowR * S + pR * b.kS(i, j, k, 2);
+          b.kF(i, j, k, 4) = UR * (ER + pR) * S;
           for (int n = 0; n < b.ne - 5; n++) {
             // Reconstruct Y
             double &Yi = b.q(i, j, k, 5 + n);
@@ -727,7 +701,7 @@ void muscl2hllc(block_ &b) {
 
             double YR = Yi - 0.5 * phiR * (Yip1 - Yi);
             double rhoYR = rhoR * YR;
-            b.kF(i, j, k, 5 + n) = UR * rhoYR * b.kS(i, j, k);
+            b.kF(i, j, k, 5 + n) = UR * rhoYR * S;
           }
         }
       });

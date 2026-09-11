@@ -58,16 +58,15 @@ def test_cutTilesTheBlock(axis, nCuts):
     myAxis = "ijk".index(axis)
     # the cube is axis aligned, so the pieces sort along the coordinate the
     # cut axis runs on
-    pieces = sorted(work, key=lambda blk: blk.array["xyz"[myAxis]].min())
+    pieces = sorted(work, key=lambda blk: blk.array["nodes"][..., myAxis].min())
     dropShared = [slice(None)] * 3
     dropShared[myAxis] = slice(1, None)
-    for var in ("x", "y", "z"):
-        joined = np.concatenate(
-            [pieces[0].array[var]]
-            + [p.array[var][tuple(dropShared)] for p in pieces[1:]],
-            axis=myAxis,
-        )
-        assert np.array_equal(joined, base[0].array[var])
+    joined = np.concatenate(
+        [pieces[0].array["nodes"]]
+        + [p.array["nodes"][tuple(dropShared)] for p in pieces[1:]],
+        axis=myAxis,
+    )
+    assert np.array_equal(joined, base[0].array["nodes"])
 
 
 @pytest.mark.parametrize("axis", ("i", "j", "k"))
@@ -78,8 +77,7 @@ def test_mergeUndoesCut(axis):
 
     assert partitioner.mergeAll(work) == 3
     assert len(work) == 1
-    for var in ("x", "y", "z"):
-        assert np.array_equal(work[0].array[var], base[0].array[var])
+    assert np.array_equal(work[0].array["nodes"], base[0].array["nodes"])
 
 
 def test_evenlySpacedCuts():
@@ -148,13 +146,12 @@ def test_everyPieceIsFoundInTheBlockItNames(mbDims, axis):
     assert len(table) == len(work)
     for blk, (baseNblki, i0, i1, j0, j1, k0, k1) in zip(work, table):
         assert (blk.ni, blk.nj, blk.nk) == (i1 - i0 + 1, j1 - j0 + 1, k1 - k0 + 1)
-        for var in ("x", "y", "z"):
-            assert np.array_equal(
-                blk.array[var],
-                base.getBlock(baseNblki).array[var][
-                    i0 : i1 + 1, j0 : j1 + 1, k0 : k1 + 1
-                ],
-            )
+        assert np.array_equal(
+            blk.array["nodes"],
+            base.getBlock(baseNblki).array["nodes"][
+                i0 : i1 + 1, j0 : j1 + 1, k0 : k1 + 1
+            ],
+        )
     # the pieces of a base block tile it, so the cells add back up
     cells = sum((b.ni - 1) * (b.nj - 1) * (b.nk - 1) for b in work)
     assert cells == sum((b.ni - 1) * (b.nj - 1) * (b.nk - 1) for b in base)
@@ -171,8 +168,7 @@ def test_provenanceSurvivesRepeatedCuts():
         work, partitioner.cutTable(work)
     ):
         assert baseNblki == 0
-        for var in ("x", "y", "z"):
-            assert np.array_equal(
-                blk.array[var],
-                base[0].array[var][i0 : i1 + 1, j0 : j1 + 1, k0 : k1 + 1],
-            )
+        assert np.array_equal(
+            blk.array["nodes"],
+            base[0].array["nodes"][i0 : i1 + 1, j0 : j1 + 1, k0 : k1 + 1],
+        )

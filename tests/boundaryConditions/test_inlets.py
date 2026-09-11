@@ -50,7 +50,7 @@ class ConstantMassFluxSubsonicInlet(Inlet):
         d = {1: "i", 2: "i", 3: "j", 4: "j", 5: "k", 6: "k"}[face.nface]
         blk.updateHostView([f"{d}F"])
         F = blk.array[f"{d}F"][face.s1_][ng:-ng, ng:-ng, 0]
-        S = blk.array[f"{d}S"][face.s1_][ng:-ng, ng:-ng]
+        S = blk.faceNormals(d)[0][face.s1_][ng:-ng, ng:-ng]
 
         mult = -1.0 if face.nface in (2, 4, 6) else 1.0
         target = face.array["QBcVals"][0, 0, 0] * np.sum(S)

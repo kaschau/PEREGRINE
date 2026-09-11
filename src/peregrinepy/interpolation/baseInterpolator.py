@@ -76,12 +76,9 @@ class BaseInterpolator:
         # the points never change from one variable to the next, only what was
         # sampled at them, so the geometry is worked out once
         fromPts = np.concatenate(
-            [
-                np.column_stack([blk.array[f"{v}c"].ravel() for v in "xyz"])
-                for blk in blksFrom
-            ]
+            [blk.array["cells"].reshape(-1, 3) for blk in blksFrom]
         )
-        toPts = np.column_stack([blkTo.array[f"{v}c"].ravel() for v in "xyz"])
+        toPts = blkTo.array["cells"].reshape(-1, 3)
         onto = self.prepare(fromPts, toPts)
 
         shape = blkTo.array["q"].shape[:3]
@@ -125,8 +122,12 @@ class BaseInterpolator:
         # the box each block of the from grid occupies, and its hull, neither
         # of which changes as we walk the blocks being interpolated onto
         fromBounds = {
-            blk.nblki: np.array(
-                [[blk.array[v].min(), blk.array[v].max()] for v in "xyz"]
+            blk.nblki: np.stack(
+                [
+                    blk.array["nodes"].min(axis=(0, 1, 2)),
+                    blk.array["nodes"].max(axis=(0, 1, 2)),
+                ],
+                axis=-1,
             )
             for blk in mbFrom
         }
@@ -134,7 +135,7 @@ class BaseInterpolator:
 
         boundingBlocks = []
         for blkTo in mbTo:
-            centers = np.column_stack([blkTo.array[f"{v}c"].ravel() for v in "xyz"])
+            centers = blkTo.array["cells"].reshape(-1, 3)
             toLo, toHi = centers.min(axis=0), centers.max(axis=0)
 
             found = np.zeros(len(centers), dtype=bool)
@@ -173,12 +174,12 @@ class BaseInterpolator:
         handful of them instead is much cheaper to hull but wrong as soon as
         the block curves: a 170 degree annulus block's hull, taken off its
         corners and edge midpoints, excludes half of its own cells."""
-        x, y, z = (blk.array[v] for v in ("x", "y", "z"))
-        onSurface = np.zeros(x.shape, dtype=bool)
+        nodes = blk.array["nodes"]
+        onSurface = np.zeros(nodes.shape[:3], dtype=bool)
         onSurface[[0, -1]] = True
         onSurface[:, [0, -1]] = True
         onSurface[:, :, [0, -1]] = True
-        return spatial.ConvexHull(np.column_stack([a[onSurface] for a in (x, y, z)]))
+        return spatial.ConvexHull(nodes[onSurface])
 
     @staticmethod
     def ptsInHull(hull, testPts):

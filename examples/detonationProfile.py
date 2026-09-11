@@ -65,7 +65,7 @@ def simulate():
     q[ng:-ng, ng:-ng, ng:-ng, 4] = gas.T
     q[ng:-ng, ng:-ng, ng:-ng, 5::] = gas.Y[0:-1]
 
-    xc = blk.array["xc"][ng:-ng, ng:-ng, ng:-ng]
+    xc = blk.array["cells"][..., 0][ng:-ng, ng:-ng, ng:-ng]
 
     shockX = lx * 0.05
     q[ng:-ng, ng:-ng, ng:-ng, 0] = np.where(
@@ -105,7 +105,7 @@ def simulate():
     ax1.set_title("1D Detonation Profile")
     ax1.set_ylabel("Pressure [MPa]")
     ax1.set_xlabel(r"x")
-    x = blk.array["xc"][ng:-ng, ng, ng]
+    x = blk.array["cells"][..., 0][ng:-ng, ng, ng]
     p = blk.array["q"][ng:-ng, ng, ng, 0] / 1e6
     ax1.plot(x, p, color="r", label="p", linewidth=0.5)
     ax12 = ax1.twinx()

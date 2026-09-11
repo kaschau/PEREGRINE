@@ -15,19 +15,19 @@ struct face_ {
 
   // MPI send and recv buffers
   // send
-  threeDview sendBuffer_x, sendBuffer_y, sendBuffer_z;
+  fourDview sendBuffer_nodes;
   fourDview sendBuffer_q, sendBuffer_Q;
-  fourDview sendBuffer_dqdx, sendBuffer_dqdy, sendBuffer_dqdz;
+  fiveDview sendBuffer_grads;
   fourDview sendBuffer_phi;
   // recv
-  threeDview recvBuffer_x, recvBuffer_y, recvBuffer_z;
+  fourDview recvBuffer_nodes;
   fourDview recvBuffer_q, recvBuffer_Q;
-  fourDview recvBuffer_dqdx, recvBuffer_dqdy, recvBuffer_dqdz;
+  fiveDview recvBuffer_grads;
   fourDview recvBuffer_phi;
   // temps
-  threeDview tempRecvBuffer_x, tempRecvBuffer_y, tempRecvBuffer_z;
+  fourDview tempRecvBuffer_nodes;
   fourDview tempRecvBuffer_q, tempRecvBuffer_Q;
-  fourDview tempRecvBuffer_dqdx, tempRecvBuffer_dqdy, tempRecvBuffer_dqdz;
+  fiveDview tempRecvBuffer_grads;
   fourDview tempRecvBuffer_phi;
 
   // How a halo arriving through this face is turned onto it

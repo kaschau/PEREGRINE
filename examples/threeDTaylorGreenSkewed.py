@@ -54,9 +54,7 @@ def simulate():
     delY = Ly / (NN - 1)
     delZ = Lz / (NX - 1)
 
-    x = blk.array["x"]
-    y = blk.array["y"]
-    z = blk.array["z"]
+    x, y, z = (blk.array["nodes"][..., n] for n in range(3))
     for E in range(NE):
         for N in range(NN):
             for X in range(NX):
@@ -96,9 +94,9 @@ def simulate():
     rho0 = 1.0
     gamma = cp / (cp - R)
 
-    xc = blk.array["xc"]
-    yc = blk.array["yc"]
-    zc = blk.array["zc"]
+    xc = blk.array["cells"][..., 0]
+    yc = blk.array["cells"][..., 1]
+    zc = blk.array["cells"][..., 2]
 
     blk.array["q"][:, :, :, 0] = 1 / gamma + (rho0 * M0**2 / 16.0) * (
         np.cos(2 * xc) + np.cos(2 * yc)

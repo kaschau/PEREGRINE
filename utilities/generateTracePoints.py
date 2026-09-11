@@ -194,9 +194,9 @@ def generateTracePoints(mb, points, tags):
 
             blk.computeMetrics()
             dists = np.sqrt(
-                (blk.array["xc"] - x) ** 2
-                + (blk.array["yc"] - y) ** 2
-                + (blk.array["zc"] - z) ** 2
+                (blk.array["cells"][..., 0] - x) ** 2
+                + (blk.array["cells"][..., 1] - y) ** 2
+                + (blk.array["cells"][..., 2] - z) ** 2
             )
             minIndex = np.where((dists == np.min(dists)))
             minIndex = tuple([minIndex[0][0], minIndex[1][0], minIndex[2][0]])

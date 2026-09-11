@@ -29,9 +29,7 @@ void adiabaticNoSlipWall(
   if (terms.compare("euler") == 0) {
 
     threeDsubview q1 = getFaceSlice(b.q, face.nface, firstInteriorCellIdx);
-    twoDsubview nx, ny, nz;
-
-    getFaceNormals(b, face.nface, blockFaceIdx, nx, ny, nz);
+    threeDsubview sVec = getFaceAreaVectors(b, face.nface, blockFaceIdx);
 
     MDRange2 range_face = MDRange2({0, 0}, {q1.extent(0), q1.extent(1)});
     for (int g = 0; g < b.ng; g++) {
@@ -41,15 +39,19 @@ void adiabaticNoSlipWall(
       Kokkos::parallel_for(
           "Adia no slip wall euler terms", range_face,
           KOKKOS_LAMBDA(const int i, const int j) {
+            double S, nx, ny, nz;
+            faceNormal(sVec(i, j, 0), sVec(i, j, 1), sVec(i, j, 2), S, nx, ny,
+                       nz);
+
             // match pressure
             q0(i, j, 0) = q1(i, j, 0);
 
             // mirror velo on wall
-            double uDotn = q1(i, j, 1) * nx(i, j) + q1(i, j, 2) * ny(i, j) +
-                           q1(i, j, 3) * nz(i, j);
-            q0(i, j, 1) = q1(i, j, 1) - 2.0 * uDotn * nx(i, j);
-            q0(i, j, 2) = q1(i, j, 2) - 2.0 * uDotn * ny(i, j);
-            q0(i, j, 3) = q1(i, j, 3) - 2.0 * uDotn * nz(i, j);
+            double uDotn =
+                q1(i, j, 1) * nx + q1(i, j, 2) * ny + q1(i, j, 3) * nz;
+            q0(i, j, 1) = q1(i, j, 1) - 2.0 * uDotn * nx;
+            q0(i, j, 2) = q1(i, j, 2) - 2.0 * uDotn * ny;
+            q0(i, j, 3) = q1(i, j, 3) - 2.0 * uDotn * nz;
 
             // match temperature
             q0(i, j, 4) = q1(i, j, 4);
@@ -82,47 +84,42 @@ void adiabaticNoSlipWall(
   } else if (terms.compare("postDqDxyz") == 0) {
 
     // Only applied to first halo slice
-    threeDsubview dqdx0 = getFaceSlice(b.dqdx, face.nface, firstHaloIdx);
-    threeDsubview dqdy0 = getFaceSlice(b.dqdy, face.nface, firstHaloIdx);
-    threeDsubview dqdz0 = getFaceSlice(b.dqdz, face.nface, firstHaloIdx);
+    fourDsubview grads0 = getFaceSlice(b.grads, face.nface, firstHaloIdx);
 
-    threeDsubview dqdx1 =
-        getFaceSlice(b.dqdx, face.nface, firstInteriorCellIdx);
-    threeDsubview dqdy1 =
-        getFaceSlice(b.dqdy, face.nface, firstInteriorCellIdx);
-    threeDsubview dqdz1 =
-        getFaceSlice(b.dqdz, face.nface, firstInteriorCellIdx);
+    fourDsubview grads1 =
+        getFaceSlice(b.grads, face.nface, firstInteriorCellIdx);
 
-    MDRange2 range_face = MDRange2({0, 0}, {dqdx1.extent(0), dqdx1.extent(1)});
+    MDRange2 range_face =
+        MDRange2({0, 0}, {grads1.extent(0), grads1.extent(1)});
     Kokkos::parallel_for(
         "Adia no slip postDqDxyz terms", range_face,
         KOKKOS_LAMBDA(const int i, const int j) {
           // negate pressure,  neumann velocity gradients
-          dqdx0(i, j, 0) = -dqdx1(i, j, 0);
-          dqdx0(i, j, 1) = dqdx1(i, j, 1);
-          dqdx0(i, j, 2) = dqdx1(i, j, 2);
-          dqdx0(i, j, 3) = dqdx1(i, j, 3);
+          grads0(i, j, 0, 0) = -grads1(i, j, 0, 0);
+          grads0(i, j, 1, 0) = grads1(i, j, 1, 0);
+          grads0(i, j, 2, 0) = grads1(i, j, 2, 0);
+          grads0(i, j, 3, 0) = grads1(i, j, 3, 0);
 
-          dqdy0(i, j, 0) = -dqdy1(i, j, 0);
-          dqdy0(i, j, 1) = dqdy1(i, j, 1);
-          dqdy0(i, j, 2) = dqdy1(i, j, 2);
-          dqdy0(i, j, 3) = dqdy1(i, j, 3);
+          grads0(i, j, 0, 1) = -grads1(i, j, 0, 1);
+          grads0(i, j, 1, 1) = grads1(i, j, 1, 1);
+          grads0(i, j, 2, 1) = grads1(i, j, 2, 1);
+          grads0(i, j, 3, 1) = grads1(i, j, 3, 1);
 
-          dqdz0(i, j, 0) = -dqdz1(i, j, 0);
-          dqdz0(i, j, 1) = dqdz1(i, j, 1);
-          dqdz0(i, j, 2) = dqdz1(i, j, 2);
-          dqdz0(i, j, 3) = dqdz1(i, j, 3);
+          grads0(i, j, 0, 2) = -grads1(i, j, 0, 2);
+          grads0(i, j, 1, 2) = grads1(i, j, 1, 2);
+          grads0(i, j, 2, 2) = grads1(i, j, 2, 2);
+          grads0(i, j, 3, 2) = grads1(i, j, 3, 2);
 
           // negate temp and species gradient (so gradient evaluates to zero
           // on wall)
-          dqdx0(i, j, 4) = -dqdx1(i, j, 4);
-          dqdy0(i, j, 4) = -dqdy1(i, j, 4);
-          dqdz0(i, j, 4) = -dqdz1(i, j, 4);
+          grads0(i, j, 4, 0) = -grads1(i, j, 4, 0);
+          grads0(i, j, 4, 1) = -grads1(i, j, 4, 1);
+          grads0(i, j, 4, 2) = -grads1(i, j, 4, 2);
 
           for (int n = 5; n < b.ne; n++) {
-            dqdx0(i, j, n) = -dqdx1(i, j, n);
-            dqdy0(i, j, n) = -dqdy1(i, j, n);
-            dqdz0(i, j, n) = -dqdz1(i, j, n);
+            grads0(i, j, n, 0) = -grads1(i, j, n, 0);
+            grads0(i, j, n, 1) = -grads1(i, j, n, 1);
+            grads0(i, j, n, 2) = -grads1(i, j, n, 2);
           }
         });
   }
@@ -143,8 +140,7 @@ void adiabaticSlipWall(
   if (terms.compare("euler") == 0) {
 
     threeDsubview q1 = getFaceSlice(b.q, face.nface, firstInteriorCellIdx);
-    twoDsubview nx, ny, nz;
-    getFaceNormals(b, face.nface, blockFaceIdx, nx, ny, nz);
+    threeDsubview sVec = getFaceAreaVectors(b, face.nface, blockFaceIdx);
 
     MDRange2 range_face = MDRange2({0, 0}, {q1.extent(0), q1.extent(1)});
     for (int g = 0; g < b.ng; g++) {
@@ -155,15 +151,19 @@ void adiabaticSlipWall(
       Kokkos::parallel_for(
           "Adia slip wall euler terms", range_face,
           KOKKOS_LAMBDA(const int i, const int j) {
+            double S, nx, ny, nz;
+            faceNormal(sVec(i, j, 0), sVec(i, j, 1), sVec(i, j, 2), S, nx, ny,
+                       nz);
+
             // match pressure
             q0(i, j, 0) = q1(i, j, 0);
 
             // mirror velo on wall
-            double uDotn = q1(i, j, 1) * nx(i, j) + q1(i, j, 2) * ny(i, j) +
-                           q1(i, j, 3) * nz(i, j);
-            q0(i, j, 1) = q1(i, j, 1) - 2.0 * uDotn * nx(i, j);
-            q0(i, j, 2) = q1(i, j, 2) - 2.0 * uDotn * ny(i, j);
-            q0(i, j, 3) = q1(i, j, 3) - 2.0 * uDotn * nz(i, j);
+            double uDotn =
+                q1(i, j, 1) * nx + q1(i, j, 2) * ny + q1(i, j, 3) * nz;
+            q0(i, j, 1) = q1(i, j, 1) - 2.0 * uDotn * nx;
+            q0(i, j, 2) = q1(i, j, 2) - 2.0 * uDotn * ny;
+            q0(i, j, 3) = q1(i, j, 3) - 2.0 * uDotn * nz;
 
             // match temperature
             q0(i, j, 4) = q1(i, j, 4);
@@ -177,27 +177,21 @@ void adiabaticSlipWall(
   } else if (terms.compare("postDqDxyz") == 0) {
 
     // Only applied to first halo slice
-    threeDsubview dqdx0 = getFaceSlice(b.dqdx, face.nface, firstHaloIdx);
-    threeDsubview dqdy0 = getFaceSlice(b.dqdy, face.nface, firstHaloIdx);
-    threeDsubview dqdz0 = getFaceSlice(b.dqdz, face.nface, firstHaloIdx);
+    fourDsubview grads0 = getFaceSlice(b.grads, face.nface, firstHaloIdx);
 
-    threeDsubview dqdx1 =
-        getFaceSlice(b.dqdx, face.nface, firstInteriorCellIdx);
-    threeDsubview dqdy1 =
-        getFaceSlice(b.dqdy, face.nface, firstInteriorCellIdx);
-    threeDsubview dqdz1 =
-        getFaceSlice(b.dqdz, face.nface, firstInteriorCellIdx);
+    fourDsubview grads1 =
+        getFaceSlice(b.grads, face.nface, firstInteriorCellIdx);
 
     MDRange3 range_face =
-        MDRange3({0, 0, 0}, {static_cast<long>(dqdx1.extent(0)),
-                             static_cast<long>(dqdx1.extent(1)), b.ne});
+        MDRange3({0, 0, 0}, {static_cast<long>(grads1.extent(0)),
+                             static_cast<long>(grads1.extent(1)), b.ne});
     Kokkos::parallel_for(
         "Adia slip visc terms", range_face,
         KOKKOS_LAMBDA(const int i, const int j, const int l) {
           // negate all gradients
-          dqdx0(i, j, l) = -dqdx1(i, j, l);
-          dqdy0(i, j, l) = -dqdy1(i, j, l);
-          dqdz0(i, j, l) = -dqdz1(i, j, l);
+          for (int d = 0; d < 3; d++) {
+            grads0(i, j, l, d) = -grads1(i, j, l, d);
+          }
         });
   }
 }
@@ -217,8 +211,7 @@ void adiabaticMovingWall(
   if (terms.compare("euler") == 0) {
 
     threeDsubview q1 = getFaceSlice(b.q, face.nface, firstInteriorCellIdx);
-    twoDsubview nx, ny, nz;
-    getFaceNormals(b, face.nface, blockFaceIdx, nx, ny, nz);
+    threeDsubview sVec = getFaceAreaVectors(b, face.nface, blockFaceIdx);
 
     MDRange2 range_face = MDRange2({0, 0}, {q1.extent(0), q1.extent(1)});
     for (int g = 0; g < b.ng; g++) {
@@ -229,15 +222,19 @@ void adiabaticMovingWall(
       Kokkos::parallel_for(
           "Adia moving wall euler terms", range_face,
           KOKKOS_LAMBDA(const int i, const int j) {
+            double S, nx, ny, nz;
+            faceNormal(sVec(i, j, 0), sVec(i, j, 1), sVec(i, j, 2), S, nx, ny,
+                       nz);
+
             // match pressure
             q0(i, j, 0) = q1(i, j, 0);
 
             // mirror velo on wall
-            double uDotn = q1(i, j, 1) * nx(i, j) + q1(i, j, 2) * ny(i, j) +
-                           q1(i, j, 3) * nz(i, j);
-            q0(i, j, 1) = q1(i, j, 1) - 2.0 * uDotn * nx(i, j);
-            q0(i, j, 2) = q1(i, j, 2) - 2.0 * uDotn * ny(i, j);
-            q0(i, j, 3) = q1(i, j, 3) - 2.0 * uDotn * nz(i, j);
+            double uDotn =
+                q1(i, j, 1) * nx + q1(i, j, 2) * ny + q1(i, j, 3) * nz;
+            q0(i, j, 1) = q1(i, j, 1) - 2.0 * uDotn * nx;
+            q0(i, j, 2) = q1(i, j, 2) - 2.0 * uDotn * ny;
+            q0(i, j, 3) = q1(i, j, 3) - 2.0 * uDotn * nz;
 
             // match temperature
             q0(i, j, 4) = q1(i, j, 4);
@@ -268,47 +265,42 @@ void adiabaticMovingWall(
     }
   } else if (terms.compare("postDqDxyz") == 0) {
 
-    threeDsubview dqdx0 = getFaceSlice(b.dqdx, face.nface, firstHaloIdx);
-    threeDsubview dqdy0 = getFaceSlice(b.dqdy, face.nface, firstHaloIdx);
-    threeDsubview dqdz0 = getFaceSlice(b.dqdz, face.nface, firstHaloIdx);
+    fourDsubview grads0 = getFaceSlice(b.grads, face.nface, firstHaloIdx);
 
-    threeDsubview dqdx1 =
-        getFaceSlice(b.dqdx, face.nface, firstInteriorCellIdx);
-    threeDsubview dqdy1 =
-        getFaceSlice(b.dqdy, face.nface, firstInteriorCellIdx);
-    threeDsubview dqdz1 =
-        getFaceSlice(b.dqdz, face.nface, firstInteriorCellIdx);
+    fourDsubview grads1 =
+        getFaceSlice(b.grads, face.nface, firstInteriorCellIdx);
 
-    MDRange2 range_face = MDRange2({0, 0}, {dqdx1.extent(0), dqdx1.extent(1)});
+    MDRange2 range_face =
+        MDRange2({0, 0}, {grads1.extent(0), grads1.extent(1)});
     Kokkos::parallel_for(
         "Adia moving wall postDqDxyz terms", range_face,
         KOKKOS_LAMBDA(const int i, const int j) {
           // negate pressure,  neumann velocity gradients
-          dqdx0(i, j, 0) = -dqdx1(i, j, 0);
-          dqdx0(i, j, 1) = dqdx1(i, j, 1);
-          dqdx0(i, j, 2) = dqdx1(i, j, 2);
-          dqdx0(i, j, 3) = dqdx1(i, j, 3);
+          grads0(i, j, 0, 0) = -grads1(i, j, 0, 0);
+          grads0(i, j, 1, 0) = grads1(i, j, 1, 0);
+          grads0(i, j, 2, 0) = grads1(i, j, 2, 0);
+          grads0(i, j, 3, 0) = grads1(i, j, 3, 0);
 
-          dqdy0(i, j, 0) = -dqdy1(i, j, 0);
-          dqdy0(i, j, 1) = dqdy1(i, j, 1);
-          dqdy0(i, j, 2) = dqdy1(i, j, 2);
-          dqdy0(i, j, 3) = dqdy1(i, j, 3);
+          grads0(i, j, 0, 1) = -grads1(i, j, 0, 1);
+          grads0(i, j, 1, 1) = grads1(i, j, 1, 1);
+          grads0(i, j, 2, 1) = grads1(i, j, 2, 1);
+          grads0(i, j, 3, 1) = grads1(i, j, 3, 1);
 
-          dqdz0(i, j, 0) = -dqdz1(i, j, 0);
-          dqdz0(i, j, 1) = dqdz1(i, j, 1);
-          dqdz0(i, j, 2) = dqdz1(i, j, 2);
-          dqdz0(i, j, 3) = dqdz1(i, j, 3);
+          grads0(i, j, 0, 2) = -grads1(i, j, 0, 2);
+          grads0(i, j, 1, 2) = grads1(i, j, 1, 2);
+          grads0(i, j, 2, 2) = grads1(i, j, 2, 2);
+          grads0(i, j, 3, 2) = grads1(i, j, 3, 2);
 
           // negate temp and species gradient (so gradient evaluates to zero
           // on wall)
-          dqdx0(i, j, 4) = -dqdx1(i, j, 4);
-          dqdy0(i, j, 4) = -dqdy1(i, j, 4);
-          dqdz0(i, j, 4) = -dqdz1(i, j, 4);
+          grads0(i, j, 4, 0) = -grads1(i, j, 4, 0);
+          grads0(i, j, 4, 1) = -grads1(i, j, 4, 1);
+          grads0(i, j, 4, 2) = -grads1(i, j, 4, 2);
 
           for (int n = 5; n < b.ne; n++) {
-            dqdx0(i, j, n) = -dqdx1(i, j, n);
-            dqdy0(i, j, n) = -dqdy1(i, j, n);
-            dqdz0(i, j, n) = -dqdz1(i, j, n);
+            grads0(i, j, n, 0) = -grads1(i, j, n, 0);
+            grads0(i, j, n, 1) = -grads1(i, j, n, 1);
+            grads0(i, j, n, 2) = -grads1(i, j, n, 2);
           }
         });
   }
@@ -329,8 +321,7 @@ void isoTNoSlipWall(
   if (terms.compare("euler") == 0) {
 
     threeDsubview q1 = getFaceSlice(b.q, face.nface, firstInteriorCellIdx);
-    twoDsubview nx, ny, nz;
-    getFaceNormals(b, face.nface, blockFaceIdx, nx, ny, nz);
+    threeDsubview sVec = getFaceAreaVectors(b, face.nface, blockFaceIdx);
 
     MDRange2 range_face = MDRange2({0, 0}, {q1.extent(0), q1.extent(1)});
     for (int g = 0; g < b.ng; g++) {
@@ -341,15 +332,19 @@ void isoTNoSlipWall(
       Kokkos::parallel_for(
           "isoT no slip wall euler terms", range_face,
           KOKKOS_LAMBDA(const int i, const int j) {
+            double S, nx, ny, nz;
+            faceNormal(sVec(i, j, 0), sVec(i, j, 1), sVec(i, j, 2), S, nx, ny,
+                       nz);
+
             // match pressure
             q0(i, j, 0) = q1(i, j, 0);
 
             // mirror velo on wall
-            double uDotn = q1(i, j, 1) * nx(i, j) + q1(i, j, 2) * ny(i, j) +
-                           q1(i, j, 3) * nz(i, j);
-            q0(i, j, 1) = q1(i, j, 1) - 2.0 * uDotn * nx(i, j);
-            q0(i, j, 2) = q1(i, j, 2) - 2.0 * uDotn * ny(i, j);
-            q0(i, j, 3) = q1(i, j, 3) - 2.0 * uDotn * nz(i, j);
+            double uDotn =
+                q1(i, j, 1) * nx + q1(i, j, 2) * ny + q1(i, j, 3) * nz;
+            q0(i, j, 1) = q1(i, j, 1) - 2.0 * uDotn * nx;
+            q0(i, j, 2) = q1(i, j, 2) - 2.0 * uDotn * ny;
+            q0(i, j, 3) = q1(i, j, 3) - 2.0 * uDotn * nz;
 
             // set temperature
             q0(i, j, 4) = face.qBcVals(i, j, 4);
@@ -381,46 +376,41 @@ void isoTNoSlipWall(
     }
   } else if (terms.compare("postDqDxyz") == 0) {
 
-    threeDsubview dqdx0 = getFaceSlice(b.dqdx, face.nface, firstHaloIdx);
-    threeDsubview dqdy0 = getFaceSlice(b.dqdy, face.nface, firstHaloIdx);
-    threeDsubview dqdz0 = getFaceSlice(b.dqdz, face.nface, firstHaloIdx);
+    fourDsubview grads0 = getFaceSlice(b.grads, face.nface, firstHaloIdx);
 
-    threeDsubview dqdx1 =
-        getFaceSlice(b.dqdx, face.nface, firstInteriorCellIdx);
-    threeDsubview dqdy1 =
-        getFaceSlice(b.dqdy, face.nface, firstInteriorCellIdx);
-    threeDsubview dqdz1 =
-        getFaceSlice(b.dqdz, face.nface, firstInteriorCellIdx);
+    fourDsubview grads1 =
+        getFaceSlice(b.grads, face.nface, firstInteriorCellIdx);
 
-    MDRange2 range_face = MDRange2({0, 0}, {dqdx1.extent(0), dqdx1.extent(1)});
+    MDRange2 range_face =
+        MDRange2({0, 0}, {grads1.extent(0), grads1.extent(1)});
     Kokkos::parallel_for(
         "isoT no slip postDqDxyz terms", range_face,
         KOKKOS_LAMBDA(const int i, const int j) {
           // negate pressure,  neumann velocity,temperature gradients
-          dqdx0(i, j, 0) = -dqdx1(i, j, 0);
-          dqdx0(i, j, 1) = dqdx1(i, j, 1);
-          dqdx0(i, j, 2) = dqdx1(i, j, 2);
-          dqdx0(i, j, 3) = dqdx1(i, j, 3);
-          dqdx0(i, j, 4) = dqdx1(i, j, 4);
+          grads0(i, j, 0, 0) = -grads1(i, j, 0, 0);
+          grads0(i, j, 1, 0) = grads1(i, j, 1, 0);
+          grads0(i, j, 2, 0) = grads1(i, j, 2, 0);
+          grads0(i, j, 3, 0) = grads1(i, j, 3, 0);
+          grads0(i, j, 4, 0) = grads1(i, j, 4, 0);
 
-          dqdy0(i, j, 0) = -dqdy1(i, j, 0);
-          dqdy0(i, j, 1) = dqdy1(i, j, 1);
-          dqdy0(i, j, 2) = dqdy1(i, j, 2);
-          dqdy0(i, j, 3) = dqdy1(i, j, 3);
-          dqdy0(i, j, 4) = dqdy1(i, j, 4);
+          grads0(i, j, 0, 1) = -grads1(i, j, 0, 1);
+          grads0(i, j, 1, 1) = grads1(i, j, 1, 1);
+          grads0(i, j, 2, 1) = grads1(i, j, 2, 1);
+          grads0(i, j, 3, 1) = grads1(i, j, 3, 1);
+          grads0(i, j, 4, 1) = grads1(i, j, 4, 1);
 
-          dqdz0(i, j, 0) = -dqdz1(i, j, 0);
-          dqdz0(i, j, 1) = dqdz1(i, j, 1);
-          dqdz0(i, j, 2) = dqdz1(i, j, 2);
-          dqdz0(i, j, 3) = dqdz1(i, j, 3);
-          dqdz0(i, j, 4) = dqdz1(i, j, 4);
+          grads0(i, j, 0, 2) = -grads1(i, j, 0, 2);
+          grads0(i, j, 1, 2) = grads1(i, j, 1, 2);
+          grads0(i, j, 2, 2) = grads1(i, j, 2, 2);
+          grads0(i, j, 3, 2) = grads1(i, j, 3, 2);
+          grads0(i, j, 4, 2) = grads1(i, j, 4, 2);
 
           // negatespecies gradient (so gradient evaluates to zero
           // on wall)
           for (int n = 5; n < b.ne; n++) {
-            dqdx0(i, j, n) = -dqdx1(i, j, n);
-            dqdy0(i, j, n) = -dqdy1(i, j, n);
-            dqdz0(i, j, n) = -dqdz1(i, j, n);
+            grads0(i, j, n, 0) = -grads1(i, j, n, 0);
+            grads0(i, j, n, 1) = -grads1(i, j, n, 1);
+            grads0(i, j, n, 2) = -grads1(i, j, n, 2);
           }
         });
   }
@@ -441,8 +431,7 @@ void isoTSlipWall(
   if (terms.compare("euler") == 0) {
 
     threeDsubview q1 = getFaceSlice(b.q, face.nface, firstInteriorCellIdx);
-    twoDsubview nx, ny, nz;
-    getFaceNormals(b, face.nface, blockFaceIdx, nx, ny, nz);
+    threeDsubview sVec = getFaceAreaVectors(b, face.nface, blockFaceIdx);
 
     MDRange2 range_face = MDRange2({0, 0}, {q1.extent(0), q1.extent(1)});
     for (int g = 0; g < b.ng; g++) {
@@ -453,15 +442,19 @@ void isoTSlipWall(
       Kokkos::parallel_for(
           "isoT slip wall euler terms", range_face,
           KOKKOS_LAMBDA(const int i, const int j) {
+            double S, nx, ny, nz;
+            faceNormal(sVec(i, j, 0), sVec(i, j, 1), sVec(i, j, 2), S, nx, ny,
+                       nz);
+
             // match pressure
             q0(i, j, 0) = q1(i, j, 0);
 
             // flip velo on wall
-            double uDotn = q1(i, j, 1) * nx(i, j) + q1(i, j, 2) * ny(i, j) +
-                           q1(i, j, 3) * nz(i, j);
-            q0(i, j, 1) = q1(i, j, 1) - 2.0 * uDotn * nx(i, j);
-            q0(i, j, 2) = q1(i, j, 2) - 2.0 * uDotn * ny(i, j);
-            q0(i, j, 3) = q1(i, j, 3) - 2.0 * uDotn * nz(i, j);
+            double uDotn =
+                q1(i, j, 1) * nx + q1(i, j, 2) * ny + q1(i, j, 3) * nz;
+            q0(i, j, 1) = q1(i, j, 1) - 2.0 * uDotn * nx;
+            q0(i, j, 2) = q1(i, j, 2) - 2.0 * uDotn * ny;
+            q0(i, j, 3) = q1(i, j, 3) - 2.0 * uDotn * nz;
 
             // set temperature
             q0(i, j, 4) = face.qBcVals(i, j, 4);
@@ -475,48 +468,43 @@ void isoTSlipWall(
 
   } else if (terms.compare("postDqDxyz") == 0) {
 
-    threeDsubview dqdx0 = getFaceSlice(b.dqdx, face.nface, firstHaloIdx);
-    threeDsubview dqdy0 = getFaceSlice(b.dqdy, face.nface, firstHaloIdx);
-    threeDsubview dqdz0 = getFaceSlice(b.dqdz, face.nface, firstHaloIdx);
+    fourDsubview grads0 = getFaceSlice(b.grads, face.nface, firstHaloIdx);
 
-    threeDsubview dqdx1 =
-        getFaceSlice(b.dqdx, face.nface, firstInteriorCellIdx);
-    threeDsubview dqdy1 =
-        getFaceSlice(b.dqdy, face.nface, firstInteriorCellIdx);
-    threeDsubview dqdz1 =
-        getFaceSlice(b.dqdz, face.nface, firstInteriorCellIdx);
+    fourDsubview grads1 =
+        getFaceSlice(b.grads, face.nface, firstInteriorCellIdx);
 
-    MDRange2 range_face = MDRange2({0, 0}, {dqdx1.extent(0), dqdx1.extent(1)});
+    MDRange2 range_face =
+        MDRange2({0, 0}, {grads1.extent(0), grads1.extent(1)});
     Kokkos::parallel_for(
         "isoT slip visc terms", range_face,
         KOKKOS_LAMBDA(const int i, const int j) {
           // negate velocity gradients
-          dqdx0(i, j, 0) = -dqdx1(i, j, 0);
-          dqdx0(i, j, 1) = -dqdx1(i, j, 1);
-          dqdx0(i, j, 2) = -dqdx1(i, j, 2);
-          dqdx0(i, j, 3) = -dqdx1(i, j, 3);
+          grads0(i, j, 0, 0) = -grads1(i, j, 0, 0);
+          grads0(i, j, 1, 0) = -grads1(i, j, 1, 0);
+          grads0(i, j, 2, 0) = -grads1(i, j, 2, 0);
+          grads0(i, j, 3, 0) = -grads1(i, j, 3, 0);
 
-          dqdy0(i, j, 0) = -dqdy1(i, j, 0);
-          dqdy0(i, j, 1) = -dqdy1(i, j, 1);
-          dqdy0(i, j, 2) = -dqdy1(i, j, 2);
-          dqdy0(i, j, 3) = -dqdy1(i, j, 3);
+          grads0(i, j, 0, 1) = -grads1(i, j, 0, 1);
+          grads0(i, j, 1, 1) = -grads1(i, j, 1, 1);
+          grads0(i, j, 2, 1) = -grads1(i, j, 2, 1);
+          grads0(i, j, 3, 1) = -grads1(i, j, 3, 1);
 
-          dqdz0(i, j, 0) = -dqdz1(i, j, 0);
-          dqdz0(i, j, 1) = -dqdz1(i, j, 1);
-          dqdz0(i, j, 2) = -dqdz1(i, j, 2);
-          dqdz0(i, j, 3) = -dqdz1(i, j, 3);
+          grads0(i, j, 0, 2) = -grads1(i, j, 0, 2);
+          grads0(i, j, 1, 2) = -grads1(i, j, 1, 2);
+          grads0(i, j, 2, 2) = -grads1(i, j, 2, 2);
+          grads0(i, j, 3, 2) = -grads1(i, j, 3, 2);
 
           // neumann temp gradients
-          dqdx0(i, j, 4) = dqdx1(i, j, 4);
-          dqdy0(i, j, 4) = dqdy1(i, j, 4);
-          dqdz0(i, j, 4) = dqdz1(i, j, 4);
+          grads0(i, j, 4, 0) = grads1(i, j, 4, 0);
+          grads0(i, j, 4, 1) = grads1(i, j, 4, 1);
+          grads0(i, j, 4, 2) = grads1(i, j, 4, 2);
 
           // negate species gradient (so gradient evaluates to zero
           // on wall)
           for (int n = 5; n < b.ne; n++) {
-            dqdx0(i, j, n) = -dqdx1(i, j, n);
-            dqdy0(i, j, n) = -dqdy1(i, j, n);
-            dqdz0(i, j, n) = -dqdz1(i, j, n);
+            grads0(i, j, n, 0) = -grads1(i, j, n, 0);
+            grads0(i, j, n, 1) = -grads1(i, j, n, 1);
+            grads0(i, j, n, 2) = -grads1(i, j, n, 2);
           }
         });
   }
@@ -537,8 +525,7 @@ void isoTMovingWall(
   if (terms.compare("euler") == 0) {
 
     threeDsubview q1 = getFaceSlice(b.q, face.nface, firstInteriorCellIdx);
-    twoDsubview nx, ny, nz;
-    getFaceNormals(b, face.nface, blockFaceIdx, nx, ny, nz);
+    threeDsubview sVec = getFaceAreaVectors(b, face.nface, blockFaceIdx);
 
     MDRange2 range_face = MDRange2({0, 0}, {q1.extent(0), q1.extent(1)});
     for (int g = 0; g < b.ng; g++) {
@@ -549,15 +536,19 @@ void isoTMovingWall(
       Kokkos::parallel_for(
           "Iso T moving wall euler terms", range_face,
           KOKKOS_LAMBDA(const int i, const int j) {
+            double S, nx, ny, nz;
+            faceNormal(sVec(i, j, 0), sVec(i, j, 1), sVec(i, j, 2), S, nx, ny,
+                       nz);
+
             // match pressure
             q0(i, j, 0) = q1(i, j, 0);
 
             // mirror velo on wall
-            double uDotn = q1(i, j, 1) * nx(i, j) + q1(i, j, 2) * ny(i, j) +
-                           q1(i, j, 3) * nz(i, j);
-            q0(i, j, 1) = q1(i, j, 1) - 2.0 * uDotn * nx(i, j);
-            q0(i, j, 2) = q1(i, j, 2) - 2.0 * uDotn * ny(i, j);
-            q0(i, j, 3) = q1(i, j, 3) - 2.0 * uDotn * nz(i, j);
+            double uDotn =
+                q1(i, j, 1) * nx + q1(i, j, 2) * ny + q1(i, j, 3) * nz;
+            q0(i, j, 1) = q1(i, j, 1) - 2.0 * uDotn * nx;
+            q0(i, j, 2) = q1(i, j, 2) - 2.0 * uDotn * ny;
+            q0(i, j, 3) = q1(i, j, 3) - 2.0 * uDotn * nz;
 
             // set temperature
             q0(i, j, 4) = face.qBcVals(i, j, 4);
@@ -589,45 +580,40 @@ void isoTMovingWall(
     }
   } else if (terms.compare("postDqDxyz") == 0) {
 
-    threeDsubview dqdx0 = getFaceSlice(b.dqdx, face.nface, firstHaloIdx);
-    threeDsubview dqdy0 = getFaceSlice(b.dqdy, face.nface, firstHaloIdx);
-    threeDsubview dqdz0 = getFaceSlice(b.dqdz, face.nface, firstHaloIdx);
+    fourDsubview grads0 = getFaceSlice(b.grads, face.nface, firstHaloIdx);
 
-    threeDsubview dqdx1 =
-        getFaceSlice(b.dqdx, face.nface, firstInteriorCellIdx);
-    threeDsubview dqdy1 =
-        getFaceSlice(b.dqdy, face.nface, firstInteriorCellIdx);
-    threeDsubview dqdz1 =
-        getFaceSlice(b.dqdz, face.nface, firstInteriorCellIdx);
+    fourDsubview grads1 =
+        getFaceSlice(b.grads, face.nface, firstInteriorCellIdx);
 
-    MDRange2 range_face = MDRange2({0, 0}, {dqdx1.extent(0), dqdx1.extent(1)});
+    MDRange2 range_face =
+        MDRange2({0, 0}, {grads1.extent(0), grads1.extent(1)});
     Kokkos::parallel_for(
         "Iso T moving wall postDqDxyz terms", range_face,
         KOKKOS_LAMBDA(const int i, const int j) {
           // negate pressure gradient, neumann velocity, temperature gradients
-          dqdx0(i, j, 0) = -dqdx1(i, j, 0);
-          dqdx0(i, j, 1) = dqdx1(i, j, 1);
-          dqdx0(i, j, 2) = dqdx1(i, j, 2);
-          dqdx0(i, j, 3) = dqdx1(i, j, 3);
-          dqdx0(i, j, 4) = dqdx1(i, j, 4);
+          grads0(i, j, 0, 0) = -grads1(i, j, 0, 0);
+          grads0(i, j, 1, 0) = grads1(i, j, 1, 0);
+          grads0(i, j, 2, 0) = grads1(i, j, 2, 0);
+          grads0(i, j, 3, 0) = grads1(i, j, 3, 0);
+          grads0(i, j, 4, 0) = grads1(i, j, 4, 0);
 
-          dqdy0(i, j, 0) = -dqdy1(i, j, 0);
-          dqdy0(i, j, 1) = dqdy1(i, j, 1);
-          dqdy0(i, j, 2) = dqdy1(i, j, 2);
-          dqdy0(i, j, 3) = dqdy1(i, j, 3);
-          dqdy0(i, j, 4) = dqdy1(i, j, 4);
+          grads0(i, j, 0, 1) = -grads1(i, j, 0, 1);
+          grads0(i, j, 1, 1) = grads1(i, j, 1, 1);
+          grads0(i, j, 2, 1) = grads1(i, j, 2, 1);
+          grads0(i, j, 3, 1) = grads1(i, j, 3, 1);
+          grads0(i, j, 4, 1) = grads1(i, j, 4, 1);
 
-          dqdz0(i, j, 0) = -dqdz1(i, j, 0);
-          dqdz0(i, j, 1) = dqdz1(i, j, 1);
-          dqdz0(i, j, 2) = dqdz1(i, j, 2);
-          dqdz0(i, j, 3) = dqdz1(i, j, 3);
-          dqdz0(i, j, 4) = dqdz1(i, j, 4);
+          grads0(i, j, 0, 2) = -grads1(i, j, 0, 2);
+          grads0(i, j, 1, 2) = grads1(i, j, 1, 2);
+          grads0(i, j, 2, 2) = grads1(i, j, 2, 2);
+          grads0(i, j, 3, 2) = grads1(i, j, 3, 2);
+          grads0(i, j, 4, 2) = grads1(i, j, 4, 2);
 
           // negate species gradient (so gradient evaluates to zero on wall)
           for (int n = 5; n < b.ne; n++) {
-            dqdx0(i, j, n) = -dqdx1(i, j, n);
-            dqdy0(i, j, n) = -dqdy1(i, j, n);
-            dqdz0(i, j, n) = -dqdz1(i, j, n);
+            grads0(i, j, n, 0) = -grads1(i, j, n, 0);
+            grads0(i, j, n, 1) = -grads1(i, j, n, 1);
+            grads0(i, j, n, 2) = -grads1(i, j, n, 2);
           }
         });
   }

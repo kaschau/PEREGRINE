@@ -1,4 +1,5 @@
 #include "block_.hpp"
+#include "compute.hpp"
 #include "kokkosTypes.hpp"
 #include "math.h"
 #include "thtrdat_.hpp"
@@ -12,12 +13,9 @@
 // Journal of Computational Physics
 // 408 (2020)
 
-static void computeFlux(const block_ &b, fourDview &iF, const threeDview &isx,
-                        const threeDview &isy, const threeDview &isz,
-                        const threeDview &inx, const threeDview &iny,
-                        const threeDview &inz, const threeDview &ixc,
-                        const threeDview &iyc, const threeDview &izc,
-                        const int iMod, const int jMod, const int kMod) {
+static void computeFlux(const block_ &b, fourDview &iF, const fourDview &iS,
+                        const fourDview &iFaces, const int iMod, const int jMod,
+                        const int kMod) {
 
   // Stokes hypothesis
   double const bulkVisc = 0.0;
@@ -33,6 +31,10 @@ static void computeFlux(const block_ &b, fourDview &iF, const threeDview &isx,
   Kokkos::parallel_for(
       "face visc fluxes", range,
       KOKKOS_LAMBDA(const int i, const int j, const int k) {
+        double S, nx, ny, nz;
+        faceNormal(iS(i, j, k, 0), iS(i, j, k, 1), iS(i, j, k, 2), S, nx, ny,
+                   nz);
+
         double mu =
             0.5 * (b.qt(i, j, k, 0) + b.qt(i - iMod, j - jMod, k - kMod, 0));
         double kappa =
@@ -43,10 +45,11 @@ static void computeFlux(const block_ &b, fourDview &iF, const threeDview &isx,
         iF(i, j, k, 0) = 0.0;
 
         // Geometric terms
-        double e[3] = {b.xc(i, j, k) - b.xc(i - iMod, j - jMod, k - kMod),
-                       b.yc(i, j, k) - b.yc(i - iMod, j - jMod, k - kMod),
-                       b.zc(i, j, k) - b.zc(i - iMod, j - jMod, k - kMod)};
-        double njk[3] = {inx(i, j, k), iny(i, j, k), inz(i, j, k)};
+        double e[3] = {
+            b.cells(i, j, k, 0) - b.cells(i - iMod, j - jMod, k - kMod, 0),
+            b.cells(i, j, k, 1) - b.cells(i - iMod, j - jMod, k - kMod, 1),
+            b.cells(i, j, k, 2) - b.cells(i - iMod, j - jMod, k - kMod, 2)};
+        double njk[3] = {nx, ny, nz};
 
         double MAGeDOTn =
             sqrt(pow(e[0] * njk[0], 2.0) + pow(e[1] * njk[1], 2.0) +
@@ -54,63 +57,68 @@ static void computeFlux(const block_ &b, fourDview &iF, const threeDview &isx,
 
         double damp[3] = {alpha / MAGeDOTn * njk[0], alpha / MAGeDOTn * njk[1],
                           alpha / MAGeDOTn * njk[2]};
-        double xcim1[3] = {ixc(i, j, k) - b.xc(i - iMod, j - jMod, k - kMod),
-                           iyc(i, j, k) - b.yc(i - iMod, j - jMod, k - kMod),
-                           izc(i, j, k) - b.zc(i - iMod, j - jMod, k - kMod)};
-        double xci[3] = {ixc(i, j, k) - b.xc(i, j, k),
-                         iyc(i, j, k) - b.yc(i, j, k),
-                         izc(i, j, k) - b.zc(i, j, k)};
+        double xcim1[3] = {
+            iFaces(i, j, k, 0) - b.cells(i - iMod, j - jMod, k - kMod, 0),
+            iFaces(i, j, k, 1) - b.cells(i - iMod, j - jMod, k - kMod, 1),
+            iFaces(i, j, k, 2) - b.cells(i - iMod, j - jMod, k - kMod, 2)};
+        double xci[3] = {iFaces(i, j, k, 0) - b.cells(i, j, k, 0),
+                         iFaces(i, j, k, 1) - b.cells(i, j, k, 1),
+                         iFaces(i, j, k, 2) - b.cells(i, j, k, 2)};
 
         // Face derivatives = consistent + damping
-        double wDOTxc = (b.dqdx(i - iMod, j - jMod, k - kMod, 1) * xcim1[0] +
-                         b.dqdy(i - iMod, j - jMod, k - kMod, 1) * xcim1[1] +
-                         b.dqdz(i - iMod, j - jMod, k - kMod, 1) * xcim1[2]);
+        double wDOTxc =
+            (b.grads(i - iMod, j - jMod, k - kMod, 1, 0) * xcim1[0] +
+             b.grads(i - iMod, j - jMod, k - kMod, 1, 1) * xcim1[1] +
+             b.grads(i - iMod, j - jMod, k - kMod, 1, 2) * xcim1[2]);
         double wL = b.q(i - iMod, j - jMod, k - kMod, 1) + wDOTxc;
-        wDOTxc = (b.dqdx(i, j, k, 1) * xci[0] + b.dqdy(i, j, k, 1) * xci[1] +
-                  b.dqdz(i, j, k, 1) * xci[2]);
+        wDOTxc =
+            (b.grads(i, j, k, 1, 0) * xci[0] + b.grads(i, j, k, 1, 1) * xci[1] +
+             b.grads(i, j, k, 1, 2) * xci[2]);
         double wR = b.q(i, j, k, 1) + wDOTxc;
-        double dudx = 0.5 * (b.dqdx(i, j, k, 1) +
-                             b.dqdx(i - iMod, j - jMod, k - kMod, 1)) +
+        double dudx = 0.5 * (b.grads(i, j, k, 1, 0) +
+                             b.grads(i - iMod, j - jMod, k - kMod, 1, 0)) +
                       damp[0] * (wR - wL);
-        double dudy = 0.5 * (b.dqdy(i, j, k, 1) +
-                             b.dqdy(i - iMod, j - jMod, k - kMod, 1)) +
+        double dudy = 0.5 * (b.grads(i, j, k, 1, 1) +
+                             b.grads(i - iMod, j - jMod, k - kMod, 1, 1)) +
                       damp[1] * (wR - wL);
-        double dudz = 0.5 * (b.dqdz(i, j, k, 1) +
-                             b.dqdz(i - iMod, j - jMod, k - kMod, 1)) +
+        double dudz = 0.5 * (b.grads(i, j, k, 1, 2) +
+                             b.grads(i - iMod, j - jMod, k - kMod, 1, 2)) +
                       damp[2] * (wR - wL);
 
-        wDOTxc = (b.dqdx(i - iMod, j - jMod, k - kMod, 2) * xcim1[0] +
-                  b.dqdy(i - iMod, j - jMod, k - kMod, 2) * xcim1[1] +
-                  b.dqdz(i - iMod, j - jMod, k - kMod, 2) * xcim1[2]);
+        wDOTxc = (b.grads(i - iMod, j - jMod, k - kMod, 2, 0) * xcim1[0] +
+                  b.grads(i - iMod, j - jMod, k - kMod, 2, 1) * xcim1[1] +
+                  b.grads(i - iMod, j - jMod, k - kMod, 2, 2) * xcim1[2]);
         wL = b.q(i - iMod, j - jMod, k - kMod, 2) + wDOTxc;
-        wDOTxc = (b.dqdx(i, j, k, 2) * xci[0] + b.dqdy(i, j, k, 2) * xci[1] +
-                  b.dqdz(i, j, k, 2) * xci[2]);
+        wDOTxc =
+            (b.grads(i, j, k, 2, 0) * xci[0] + b.grads(i, j, k, 2, 1) * xci[1] +
+             b.grads(i, j, k, 2, 2) * xci[2]);
         wR = b.q(i, j, k, 2) + wDOTxc;
-        double dvdx = 0.5 * (b.dqdx(i, j, k, 2) +
-                             b.dqdx(i - iMod, j - jMod, k - kMod, 2)) +
+        double dvdx = 0.5 * (b.grads(i, j, k, 2, 0) +
+                             b.grads(i - iMod, j - jMod, k - kMod, 2, 0)) +
                       damp[0] * (wR - wL);
-        double dvdy = 0.5 * (b.dqdy(i, j, k, 2) +
-                             b.dqdy(i - iMod, j - jMod, k - kMod, 2)) +
+        double dvdy = 0.5 * (b.grads(i, j, k, 2, 1) +
+                             b.grads(i - iMod, j - jMod, k - kMod, 2, 1)) +
                       damp[1] * (wR - wL);
-        double dvdz = 0.5 * (b.dqdz(i, j, k, 2) +
-                             b.dqdz(i - iMod, j - jMod, k - kMod, 2)) +
+        double dvdz = 0.5 * (b.grads(i, j, k, 2, 2) +
+                             b.grads(i - iMod, j - jMod, k - kMod, 2, 2)) +
                       damp[2] * (wR - wL);
 
-        wDOTxc = (b.dqdx(i - iMod, j - jMod, k - kMod, 3) * xcim1[0] +
-                  b.dqdy(i - iMod, j - jMod, k - kMod, 3) * xcim1[1] +
-                  b.dqdz(i - iMod, j - jMod, k - kMod, 3) * xcim1[2]);
+        wDOTxc = (b.grads(i - iMod, j - jMod, k - kMod, 3, 0) * xcim1[0] +
+                  b.grads(i - iMod, j - jMod, k - kMod, 3, 1) * xcim1[1] +
+                  b.grads(i - iMod, j - jMod, k - kMod, 3, 2) * xcim1[2]);
         wL = b.q(i - iMod, j - jMod, k - kMod, 3) + wDOTxc;
-        wDOTxc = (b.dqdx(i, j, k, 3) * xci[0] + b.dqdy(i, j, k, 3) * xci[1] +
-                  b.dqdz(i, j, k, 3) * xci[2]);
+        wDOTxc =
+            (b.grads(i, j, k, 3, 0) * xci[0] + b.grads(i, j, k, 3, 1) * xci[1] +
+             b.grads(i, j, k, 3, 2) * xci[2]);
         wR = b.q(i, j, k, 3) + wDOTxc;
-        double dwdx = 0.5 * (b.dqdx(i, j, k, 3) +
-                             b.dqdx(i - iMod, j - jMod, k - kMod, 3)) +
+        double dwdx = 0.5 * (b.grads(i, j, k, 3, 0) +
+                             b.grads(i - iMod, j - jMod, k - kMod, 3, 0)) +
                       damp[0] * (wR - wL);
-        double dwdy = 0.5 * (b.dqdy(i, j, k, 3) +
-                             b.dqdy(i - iMod, j - jMod, k - kMod, 3)) +
+        double dwdy = 0.5 * (b.grads(i, j, k, 3, 1) +
+                             b.grads(i - iMod, j - jMod, k - kMod, 3, 1)) +
                       damp[1] * (wR - wL);
-        double dwdz = 0.5 * (b.dqdz(i, j, k, 3) +
-                             b.dqdz(i - iMod, j - jMod, k - kMod, 3)) +
+        double dwdz = 0.5 * (b.grads(i, j, k, 3, 2) +
+                             b.grads(i - iMod, j - jMod, k - kMod, 3, 2)) +
                       damp[2] * (wR - wL);
 
         double div = dudx + dvdy + dwdz;
@@ -121,7 +129,7 @@ static void computeFlux(const block_ &b, fourDview &iF, const threeDview &isx,
         double txz = -mu * (dwdx + dudz);
 
         iF(i, j, k, 1) =
-            txx * isx(i, j, k) + txy * isy(i, j, k) + txz * isz(i, j, k);
+            txx * iS(i, j, k, 0) + txy * iS(i, j, k, 1) + txz * iS(i, j, k, 2);
 
         // y momentum
         double &tyx = txy;
@@ -129,7 +137,7 @@ static void computeFlux(const block_ &b, fourDview &iF, const threeDview &isx,
         double tyz = -mu * (dwdy + dvdz);
 
         iF(i, j, k, 2) =
-            tyx * isx(i, j, k) + tyy * isy(i, j, k) + tyz * isz(i, j, k);
+            tyx * iS(i, j, k, 0) + tyy * iS(i, j, k, 1) + tyz * iS(i, j, k, 2);
 
         // z momentum
         double &tzx = txz;
@@ -137,29 +145,30 @@ static void computeFlux(const block_ &b, fourDview &iF, const threeDview &isx,
         double tzz = -2.0 * mu * dwdz - lambda * div;
 
         iF(i, j, k, 3) =
-            tzx * isx(i, j, k) + tzy * isy(i, j, k) + tzz * isz(i, j, k);
+            tzx * iS(i, j, k, 0) + tzy * iS(i, j, k, 1) + tzz * iS(i, j, k, 2);
 
         // energy
         //   heat conduction
-        wDOTxc = (b.dqdx(i - iMod, j - jMod, k - kMod, 4) * xcim1[0] +
-                  b.dqdy(i - iMod, j - jMod, k - kMod, 4) * xcim1[1] +
-                  b.dqdz(i - iMod, j - jMod, k - kMod, 4) * xcim1[2]);
+        wDOTxc = (b.grads(i - iMod, j - jMod, k - kMod, 4, 0) * xcim1[0] +
+                  b.grads(i - iMod, j - jMod, k - kMod, 4, 1) * xcim1[1] +
+                  b.grads(i - iMod, j - jMod, k - kMod, 4, 2) * xcim1[2]);
         wL = b.q(i - iMod, j - jMod, k - kMod, 4) + wDOTxc;
-        wDOTxc = (b.dqdx(i, j, k, 4) * xci[0] + b.dqdy(i, j, k, 4) * xci[1] +
-                  b.dqdz(i, j, k, 4) * xci[2]);
+        wDOTxc =
+            (b.grads(i, j, k, 4, 0) * xci[0] + b.grads(i, j, k, 4, 1) * xci[1] +
+             b.grads(i, j, k, 4, 2) * xci[2]);
         wR = b.q(i, j, k, 4) + wDOTxc;
-        double dTdx = 0.5 * (b.dqdx(i, j, k, 4) +
-                             b.dqdx(i - iMod, j - jMod, k - kMod, 4)) +
+        double dTdx = 0.5 * (b.grads(i, j, k, 4, 0) +
+                             b.grads(i - iMod, j - jMod, k - kMod, 4, 0)) +
                       damp[0] * (wR - wL);
-        double dTdy = 0.5 * (b.dqdy(i, j, k, 4) +
-                             b.dqdy(i - iMod, j - jMod, k - kMod, 4)) +
+        double dTdy = 0.5 * (b.grads(i, j, k, 4, 1) +
+                             b.grads(i - iMod, j - jMod, k - kMod, 4, 1)) +
                       damp[1] * (wR - wL);
-        double dTdz = 0.5 * (b.dqdz(i, j, k, 4) +
-                             b.dqdz(i - iMod, j - jMod, k - kMod, 4)) +
+        double dTdz = 0.5 * (b.grads(i, j, k, 4, 2) +
+                             b.grads(i - iMod, j - jMod, k - kMod, 4, 2)) +
                       damp[2] * (wR - wL);
 
-        double q = -kappa * (dTdx * isx(i, j, k) + dTdy * isy(i, j, k) +
-                             dTdz * isz(i, j, k));
+        double q = -kappa * (dTdx * iS(i, j, k, 0) + dTdy * iS(i, j, k, 1) +
+                             dTdz * iS(i, j, k, 2));
 
         // flow work
         // Compute face normal volume flux vector
@@ -170,9 +179,9 @@ static void computeFlux(const block_ &b, fourDview &iF, const threeDview &isx,
         double wf =
             0.5 * (b.q(i, j, k, 3) + b.q(i - iMod, j - jMod, k - kMod, 3));
 
-        iF(i, j, k, 4) = -(uf * txx + vf * txy + wf * txz) * isx(i, j, k) -
-                         (uf * tyx + vf * tyy + wf * tyz) * isy(i, j, k) -
-                         (uf * tzx + vf * tzy + wf * tzz) * isz(i, j, k) + q;
+        iF(i, j, k, 4) = -(uf * txx + vf * txy + wf * txz) * iS(i, j, k, 0) -
+                         (uf * tyx + vf * tyy + wf * tyz) * iS(i, j, k, 1) -
+                         (uf * tzx + vf * tzy + wf * tzz) * iS(i, j, k, 2) + q;
 
         // Species
         double Dk, Vc = 0.0;
@@ -183,26 +192,29 @@ static void computeFlux(const block_ &b, fourDview &iF, const threeDview &isx,
         for (int n = 0; n < b.ne - 5; n++) {
           Dk = 0.5 * (b.qt(i, j, k, 2 + n) +
                       b.qt(i - iMod, j - jMod, k - kMod, 2 + n));
-          wDOTxc = (b.dqdx(i - iMod, j - jMod, k - kMod, 5 + n) * xcim1[0] +
-                    b.dqdy(i - iMod, j - jMod, k - kMod, 5 + n) * xcim1[1] +
-                    b.dqdz(i - iMod, j - jMod, k - kMod, 5 + n) * xcim1[2]);
+          wDOTxc = (b.grads(i - iMod, j - jMod, k - kMod, 5 + n, 0) * xcim1[0] +
+                    b.grads(i - iMod, j - jMod, k - kMod, 5 + n, 1) * xcim1[1] +
+                    b.grads(i - iMod, j - jMod, k - kMod, 5 + n, 2) * xcim1[2]);
           wL = b.q(i - iMod, j - jMod, k - kMod, 5 + n) + wDOTxc;
-          wDOTxc = (b.dqdx(i, j, k, 5 + n) * xci[0] +
-                    b.dqdy(i, j, k, 5 + n) * xci[1] +
-                    b.dqdz(i, j, k, 5 + n) * xci[2]);
+          wDOTxc = (b.grads(i, j, k, 5 + n, 0) * xci[0] +
+                    b.grads(i, j, k, 5 + n, 1) * xci[1] +
+                    b.grads(i, j, k, 5 + n, 2) * xci[2]);
           wR = b.q(i, j, k, 5 + n) + wDOTxc;
-          double dYdx = 0.5 * (b.dqdx(i, j, k, 5 + n) +
-                               b.dqdx(i - iMod, j - jMod, k - kMod, 5 + n)) +
-                        damp[0] * (wR - wL);
-          double dYdy = 0.5 * (b.dqdy(i, j, k, 5 + n) +
-                               b.dqdy(i - iMod, j - jMod, k - kMod, 5 + n)) +
-                        damp[1] * (wR - wL);
-          double dYdz = 0.5 * (b.dqdz(i, j, k, 5 + n) +
-                               b.dqdz(i - iMod, j - jMod, k - kMod, 5 + n)) +
-                        damp[2] * (wR - wL);
+          double dYdx =
+              0.5 * (b.grads(i, j, k, 5 + n, 0) +
+                     b.grads(i - iMod, j - jMod, k - kMod, 5 + n, 0)) +
+              damp[0] * (wR - wL);
+          double dYdy =
+              0.5 * (b.grads(i, j, k, 5 + n, 1) +
+                     b.grads(i - iMod, j - jMod, k - kMod, 5 + n, 1)) +
+              damp[1] * (wR - wL);
+          double dYdz =
+              0.5 * (b.grads(i, j, k, 5 + n, 2) +
+                     b.grads(i - iMod, j - jMod, k - kMod, 5 + n, 2)) +
+              damp[2] * (wR - wL);
 
-          double gradYk =
-              (dYdx * isx(i, j, k) + dYdy * isy(i, j, k) + dYdz * isz(i, j, k));
+          double gradYk = (dYdx * iS(i, j, k, 0) + dYdy * iS(i, j, k, 1) +
+                           dYdz * iS(i, j, k, 2));
           gradYns -= gradYk;
           Vc += Dk * gradYk;
           iF(i, j, k, 5 + n) = -rho * Dk * gradYk;
@@ -238,10 +250,7 @@ static void computeFlux(const block_ &b, fourDview &iF, const threeDview &isx,
 
 void alphaDampingFlux(block_ &b) {
 
-  computeFlux(b, b.iF, b.isx, b.isy, b.isz, b.inx, b.iny, b.inz, b.ixc, b.iyc,
-              b.izc, 1, 0, 0);
-  computeFlux(b, b.jF, b.jsx, b.jsy, b.jsz, b.jnx, b.jny, b.jnz, b.jxc, b.jyc,
-              b.jzc, 0, 1, 0);
-  computeFlux(b, b.kF, b.ksx, b.ksy, b.ksz, b.knx, b.kny, b.knz, b.kxc, b.kyc,
-              b.kzc, 0, 0, 1);
+  computeFlux(b, b.iF, b.iS, b.iFaces, 1, 0, 0);
+  computeFlux(b, b.jF, b.jS, b.jFaces, 0, 1, 0);
+  computeFlux(b, b.kF, b.kS, b.kFaces, 0, 0, 1);
 }

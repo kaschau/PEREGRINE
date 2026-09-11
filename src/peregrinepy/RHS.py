@@ -32,7 +32,7 @@ def RHS(mb):
             mb.dqdxyz(blk.cpp)
 
         # communicate derivatives
-        mb.communicator.exchange(["dqdx", "dqdy", "dqdz"])
+        mb.communicator.exchange("grads")
         for blk in mb:
             # Apply spatial derivative boundary conditions
             for face in blk.faces:

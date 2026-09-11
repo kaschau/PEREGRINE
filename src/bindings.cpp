@@ -64,68 +64,30 @@ PYBIND11_MODULE(compute, m) {
       //----------------------------------------------------------------------------//
       //  Primary grid node coordinates
       //----------------------------------------------------------------------------//
-      .def_readwrite("x", &block_::x)
-      .def_readwrite("y", &block_::y)
-      .def_readwrite("z", &block_::z)
+      .def_readwrite("nodes", &block_::nodes)
 
       //----------------------------------------------------------------------------//
       //  Primary metrics
       //----------------------------------------------------------------------------//
       // Cell Centers
-      .def_readwrite("xc", &block_::xc)
-      .def_readwrite("yc", &block_::yc)
-      .def_readwrite("zc", &block_::zc)
+      .def_readwrite("cells", &block_::cells)
       .def_readwrite("J", &block_::J)
       // Cell lengths
-      .def_readwrite("dI", &block_::dI)
-      .def_readwrite("dJ", &block_::dJ)
-      .def_readwrite("dK", &block_::dK)
+      .def_readwrite("dIJK", &block_::dIJK)
       // Cell center metrics
-      .def_readwrite("dEdx", &block_::dEdx)
-      .def_readwrite("dEdy", &block_::dEdy)
-      .def_readwrite("dEdz", &block_::dEdz)
-      .def_readwrite("dNdx", &block_::dNdx)
-      .def_readwrite("dNdy", &block_::dNdy)
-      .def_readwrite("dNdz", &block_::dNdz)
-      .def_readwrite("dCdx", &block_::dCdx)
-      .def_readwrite("dCdy", &block_::dCdy)
-      .def_readwrite("dCdz", &block_::dCdz)
+      .def_readwrite("dENCdxyz", &block_::dENCdxyz)
       // i Face centers
-      .def_readwrite("ixc", &block_::ixc)
-      .def_readwrite("iyc", &block_::iyc)
-      .def_readwrite("izc", &block_::izc)
+      .def_readwrite("iFaces", &block_::iFaces)
       // i face area vector
-      .def_readwrite("isx", &block_::isx)
-      .def_readwrite("isy", &block_::isy)
-      .def_readwrite("isz", &block_::isz)
       .def_readwrite("iS", &block_::iS)
-      .def_readwrite("inx", &block_::inx)
-      .def_readwrite("iny", &block_::iny)
-      .def_readwrite("inz", &block_::inz)
       // j Face centers
-      .def_readwrite("jxc", &block_::jxc)
-      .def_readwrite("jyc", &block_::jyc)
-      .def_readwrite("jzc", &block_::jzc)
+      .def_readwrite("jFaces", &block_::jFaces)
       // j face area vector
-      .def_readwrite("jsx", &block_::jsx)
-      .def_readwrite("jsy", &block_::jsy)
-      .def_readwrite("jsz", &block_::jsz)
       .def_readwrite("jS", &block_::jS)
-      .def_readwrite("jnx", &block_::jnx)
-      .def_readwrite("jny", &block_::jny)
-      .def_readwrite("jnz", &block_::jnz)
       // k Face centers
-      .def_readwrite("kxc", &block_::kxc)
-      .def_readwrite("kyc", &block_::kyc)
-      .def_readwrite("kzc", &block_::kzc)
+      .def_readwrite("kFaces", &block_::kFaces)
       // k face area vector
-      .def_readwrite("ksx", &block_::ksx)
-      .def_readwrite("ksy", &block_::ksy)
-      .def_readwrite("ksz", &block_::ksz)
       .def_readwrite("kS", &block_::kS)
-      .def_readwrite("knx", &block_::knx)
-      .def_readwrite("kny", &block_::kny)
-      .def_readwrite("knz", &block_::knz)
 
       //----------------------------------------------------------------------------//
       //  Flow variables
@@ -136,9 +98,7 @@ PYBIND11_MODULE(compute, m) {
       .def_readwrite("dQ", &block_::dQ)
 
       // Spatial derivative of prim array
-      .def_readwrite("dqdx", &block_::dqdx)
-      .def_readwrite("dqdy", &block_::dqdy)
-      .def_readwrite("dqdz", &block_::dqdz)
+      .def_readwrite("grads", &block_::grads)
 
       // Thermo,transport variables
       .def_readwrite("qh", &block_::qh)
@@ -174,34 +134,22 @@ PYBIND11_MODULE(compute, m) {
 
       .def_readwrite("qBcVals", &face_::qBcVals)
       .def_readwrite("QBcVals", &face_::QBcVals)
-      .def_readwrite("sendBuffer_x", &face_::sendBuffer_x)
-      .def_readwrite("sendBuffer_y", &face_::sendBuffer_y)
-      .def_readwrite("sendBuffer_z", &face_::sendBuffer_z)
+      .def_readwrite("sendBuffer_nodes", &face_::sendBuffer_nodes)
       .def_readwrite("sendBuffer_q", &face_::sendBuffer_q)
       .def_readwrite("sendBuffer_Q", &face_::sendBuffer_Q)
-      .def_readwrite("sendBuffer_dqdx", &face_::sendBuffer_dqdx)
-      .def_readwrite("sendBuffer_dqdy", &face_::sendBuffer_dqdy)
-      .def_readwrite("sendBuffer_dqdz", &face_::sendBuffer_dqdz)
+      .def_readwrite("sendBuffer_grads", &face_::sendBuffer_grads)
       .def_readwrite("sendBuffer_phi", &face_::sendBuffer_phi)
 
-      .def_readwrite("recvBuffer_x", &face_::recvBuffer_x)
-      .def_readwrite("recvBuffer_y", &face_::recvBuffer_y)
-      .def_readwrite("recvBuffer_z", &face_::recvBuffer_z)
+      .def_readwrite("recvBuffer_nodes", &face_::recvBuffer_nodes)
       .def_readwrite("recvBuffer_q", &face_::recvBuffer_q)
       .def_readwrite("recvBuffer_Q", &face_::recvBuffer_Q)
-      .def_readwrite("recvBuffer_dqdx", &face_::recvBuffer_dqdx)
-      .def_readwrite("recvBuffer_dqdy", &face_::recvBuffer_dqdy)
-      .def_readwrite("recvBuffer_dqdz", &face_::recvBuffer_dqdz)
+      .def_readwrite("recvBuffer_grads", &face_::recvBuffer_grads)
       .def_readwrite("recvBuffer_phi", &face_::recvBuffer_phi)
 
-      .def_readwrite("tempRecvBuffer_x", &face_::tempRecvBuffer_x)
-      .def_readwrite("tempRecvBuffer_y", &face_::tempRecvBuffer_y)
-      .def_readwrite("tempRecvBuffer_z", &face_::tempRecvBuffer_z)
+      .def_readwrite("tempRecvBuffer_nodes", &face_::tempRecvBuffer_nodes)
       .def_readwrite("tempRecvBuffer_q", &face_::tempRecvBuffer_q)
       .def_readwrite("tempRecvBuffer_Q", &face_::tempRecvBuffer_Q)
-      .def_readwrite("tempRecvBuffer_dqdx", &face_::tempRecvBuffer_dqdx)
-      .def_readwrite("tempRecvBuffer_dqdy", &face_::tempRecvBuffer_dqdy)
-      .def_readwrite("tempRecvBuffer_dqdz", &face_::tempRecvBuffer_dqdz)
+      .def_readwrite("tempRecvBuffer_grads", &face_::tempRecvBuffer_grads)
       .def_readwrite("tempRecvBuffer_phi", &face_::tempRecvBuffer_phi)
 
       .def_readwrite("periodicRotMatrix", &face_::periodicRotMatrix)

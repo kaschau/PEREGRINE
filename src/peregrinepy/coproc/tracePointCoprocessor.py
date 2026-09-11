@@ -46,9 +46,9 @@ class tracePointsCoprocessor:
                 j = points[m, 2] + ng
                 k = points[m, 3] + ng
 
-                xc = blk.array["xc"][i, j, k]
-                yc = blk.array["yc"][i, j, k]
-                zc = blk.array["zc"][i, j, k]
+                xc = blk.array["cells"][..., 0][i, j, k]
+                yc = blk.array["cells"][..., 1][i, j, k]
+                zc = blk.array["cells"][..., 2][i, j, k]
 
                 fileName = path + f"{tags[m]}_{xc:.6f}_{yc:.6f}_{zc:.6f}.csv"
                 self.traces.append(trace(fileName, blk.nblki, i, j, k))

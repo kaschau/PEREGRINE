@@ -25,10 +25,10 @@ class gridBlock(topologyBlock, MetricsMixin):
         # what each array's shape will be, once the extents are known
         self.declared = {}
 
-        self.declare("x", "y", "z", kind="node")
+        self.declare("nodes", kind="node", components=3)
         # cell centers are as much as a block with no solution on it can work
         # out; the rest of the metrics are a solverBlock's
-        self.declare("xc", "yc", "zc", kind="cell")
+        self.declare("cells", kind="cell", components=3)
 
     def splitAlong(self, axis, cutIndex):
         """A grid block holds the coordinates its cut splits in two. The two
@@ -37,11 +37,10 @@ class gridBlock(topologyBlock, MetricsMixin):
         low[axis] = slice(0, cutIndex + 1)
         high[axis] = slice(cutIndex, None)
         return {
-            var: (
-                np.copy(self.array[var][tuple(low)]),
-                np.copy(self.array[var][tuple(high)]),
+            "nodes": (
+                np.copy(self.array["nodes"][tuple(low)]),
+                np.copy(self.array["nodes"][tuple(high)]),
             )
-            for var in ("x", "y", "z")
         }
 
     def _newFace(self, nface):
@@ -53,6 +52,8 @@ class gridBlock(topologyBlock, MetricsMixin):
     def declare(self, *names, kind, components=None):
         """Say an array exists and what shape it will take, before this block
         knows its extents. Nothing else may be put in array."""
+        if isinstance(components, int):
+            components = (components,)
         for name in names:
             self.declared[name] = (kind, components)
             self.array[name] = None
@@ -72,8 +73,7 @@ class gridBlock(topologyBlock, MetricsMixin):
 
     def shapeOf(self, name):
         kind, components = self.declared[name]
-        shape = self.shapes[kind]
-        return shape + (components,) if components else shape
+        return self.shapes[kind] + (components or ())
 
     def setExtents(self, ni, nj, nk):
         """A grid block holds arrays shaped by its extents, so learning them

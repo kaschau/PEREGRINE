@@ -17,10 +17,8 @@ def create(bc, adv, spdata):
     # perturb the ineterio points a bit
     for blk in mb:
         i = blk.ng + 1
-        size = blk.array["x"][i:-i, i:-i, i:-i].shape
-        blk.array["x"][i:-i, i:-i, i:-i] += np.random.uniform(-1, 1, size) * 0.02
-        blk.array["y"][i:-i, i:-i, i:-i] += np.random.uniform(-1, 1, size) * 0.02
-        blk.array["z"][i:-i, i:-i, i:-i] += np.random.uniform(-1, 1, size) * 0.02
+        size = blk.array["nodes"][i:-i, i:-i, i:-i].shape
+        blk.array["nodes"][i:-i, i:-i, i:-i] += np.random.uniform(-1, 1, size) * 0.02
 
     mb.generateHalo()
     mb.computeMetrics()

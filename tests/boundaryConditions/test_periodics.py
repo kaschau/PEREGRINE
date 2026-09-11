@@ -82,13 +82,12 @@ class TestPeriodics:
         v = blk.array["q"][:, :, :, 2]
         w = blk.array["q"][:, :, :, 3]
 
-        nx = blk.array["knx"]
-        ny = blk.array["kny"]
-        nz = blk.array["knz"]
+        _, knormals = blk.faceNormals("k")
+        nx = knormals[0]
+        ny = knormals[1]
+        nz = knormals[2]
 
-        dqdx = blk.array["dqdx"]
-        dqdy = blk.array["dqdy"]
-        dqdz = blk.array["dqdz"]
+        grads = blk.array["grads"]
 
         ng = blk.ng
         for g in range(ng):
@@ -130,11 +129,11 @@ class TestPeriodics:
 
         # check the gradients
         mb.dqdxyz(blk.cpp)
-        mb.communicator.exchange(["dqdx", "dqdy", "dqdz"])
+        mb.communicator.exchange("grads")
         for face in blk.faces:
             face.bcFunc(blk.cpp, face.cpp, mb.eos, mb.thtrdat.cpp, "postDqDxyz", mb.tme)
 
-        blk.updateHostView(["dqdx", "dqdy", "dqdz"])
+        blk.updateHostView("grads")
 
         # only need the first halo cell
         g = ng - 1
@@ -149,23 +148,11 @@ class TestPeriodics:
             normals5 = np.column_stack(
                 (nx[s5f].ravel(), ny[s5f].ravel(), nz[s5f].ravel())
             )
-            dqdx6 = np.column_stack(
-                (
-                    dqdx[s6][:, :, i].ravel(),
-                    dqdy[s6][:, :, i].ravel(),
-                    dqdz[s6][:, :, i].ravel(),
-                )
-            )
+            grads6 = grads[s6][:, :, i, :].reshape(-1, 3)
 
-            dqdx5 = np.column_stack(
-                (
-                    dqdx[s5c][:, :, i].ravel(),
-                    dqdy[s5c][:, :, i].ravel(),
-                    dqdz[s5c][:, :, i].ravel(),
-                )
-            )
+            grads5 = grads[s5c][:, :, i, :].reshape(-1, 3)
             assert np.allclose(
-                np.sum(normals6 * dqdx6, axis=1), np.sum(normals5 * dqdx5, axis=1)
+                np.sum(normals6 * grads6, axis=1), np.sum(normals5 * grads5, axis=1)
             )
 
             # now go the other way
@@ -173,21 +160,9 @@ class TestPeriodics:
             normals6 = np.column_stack(
                 (nx[s6f].ravel(), ny[s6f].ravel(), nz[s6f].ravel())
             )
-            dqdx5 = np.column_stack(
-                (
-                    dqdx[s5][:, :, i].ravel(),
-                    dqdy[s5][:, :, i].ravel(),
-                    dqdz[s5][:, :, i].ravel(),
-                )
-            )
+            grads5 = grads[s5][:, :, i, :].reshape(-1, 3)
 
-            dqdx6 = np.column_stack(
-                (
-                    dqdx[s6c][:, :, i].ravel(),
-                    dqdy[s6c][:, :, i].ravel(),
-                    dqdz[s6c][:, :, i].ravel(),
-                )
-            )
+            grads6 = grads[s6c][:, :, i, :].reshape(-1, 3)
             assert np.allclose(
-                np.sum(normals5 * dqdx5, axis=1), np.sum(normals6 * dqdx6, axis=1)
+                np.sum(normals5 * grads5, axis=1), np.sum(normals6 * grads6, axis=1)
             )

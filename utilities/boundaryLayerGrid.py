@@ -188,7 +188,7 @@ if __name__ == "__main__":
     pg.mesher.CubeMesher(lengths=[Lx, Ly, Lz], dimsPerBlock=[nx, ny, nz]).mesh(grid)
 
     # Overwrite the y values with the BL values
-    grid[0].array["y"][:, :, :] = totalYs[np.newaxis, :, np.newaxis] * yp1
+    grid[0].array["nodes"][:, :, :, 1] = totalYs[np.newaxis, :, np.newaxis] * yp1
 
     string = "Summary:\n"
     string += f"Domain type: {inp.domainType}\n"

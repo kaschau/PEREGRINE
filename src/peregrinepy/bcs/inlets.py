@@ -42,7 +42,6 @@ class ConstantMassFluxSubsonicInlet(InletBC):
         # the normal has to point into the block
         sign = 1.0 if face.nface in (1, 3, 5) else -1.0
         mDot = valueDict["mDotPerUnitArea"]
-        for m, c in enumerate("xyz", start=1):
-            face.array["QBcVals"][:, :, m] = (
-                sign * blk.array[f"{d}n{c}"][face.s1_] * mDot
-            )
+        _, n = blk.faceNormals(d)
+        for m in range(3):
+            face.array["QBcVals"][:, :, m + 1] = sign * n[m][face.s1_] * mDot

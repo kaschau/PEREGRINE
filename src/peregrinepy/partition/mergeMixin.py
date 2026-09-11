@@ -101,7 +101,7 @@ class MergeMixin(OrientMixin):
                 name: np.concatenate(
                     [lower.array[name], upper.array[name][tuple(dropShared)]], axis=axis
                 )
-                for name in ("x", "y", "z")
+                for name in ("nodes",)
             }
             dims = [A.ni, A.nj, A.nk]
             dims[axis] += (B.ni, B.nj, B.nk)[axis] - 1
@@ -157,9 +157,13 @@ class MergeMixin(OrientMixin):
                 where.append(key)
             return ids[key]
 
+        def flatIds(blk):
+            shape = blk.array["nodes"].shape[:3]
+            return np.arange(np.prod(shape)).reshape(shape)
+
         links, seen = [], set()
         for blk in mb:
-            flatOf = np.arange(blk.array["x"].size).reshape(blk.array["x"].shape)
+            flatOf = flatIds(blk)
             for face in blk.faces:
                 if face.neighbor is None or face.periodicRotation is not None:
                     continue
@@ -172,9 +176,7 @@ class MergeMixin(OrientMixin):
 
                 other = mb.getBlock(face.neighbor)
                 theirFace = other.getFace(face.neighborNface)
-                theirFlat = np.arange(other.array["x"].size).reshape(
-                    other.array["x"].shape
-                )
+                theirFlat = flatIds(other)
                 mine = flatOf[face.firstPlane].ravel()
                 theirs = face.alignToMe(theirFlat[theirFace.firstPlane]).ravel()
                 for a, b in zip(mine, theirs):
@@ -192,16 +194,25 @@ class MergeMixin(OrientMixin):
         blocks = {blk.nblki: blk for blk in mb}
         at = np.array([w[1] for w in where])
         held = np.array([w[0] for w in where])
-        worst = 0.0
-        for name in ("x", "y", "z"):
-            values = np.array([blocks[b].array[name].flat[f] for b, f in zip(held, at)])
-            total = np.bincount(group, weights=values)
-            count = np.bincount(group)
-            mean = (total / count)[group]
-            worst = max(worst, float(np.abs(values - mean).max()))
-            for m, (b, f) in enumerate(zip(held, at)):
-                blocks[b].array[name].flat[f] = mean[m]
-        return worst
+
+        # each copy as the block that holds it and the node of it that it is
+        sites = [
+            (
+                blocks[b].array["nodes"],
+                np.unravel_index(f, blocks[b].array["nodes"].shape[:3]),
+            )
+            for b, f in zip(held, at)
+        ]
+
+        values = np.array([nodes[index] for nodes, index in sites])
+        count = np.bincount(group)
+        mean = np.stack(
+            [np.bincount(group, weights=values[:, n]) / count for n in range(3)],
+            axis=-1,
+        )[group]
+        for m, (nodes, index) in enumerate(sites):
+            nodes[index] = mean[m]
+        return float(np.abs(values - mean).max())
 
     def mergeAll(self, mb):
         """Remove every removable plane, largest first, until none is left.

@@ -55,27 +55,21 @@ void constantVelocitySubsonicInlet(
   } else if (terms.compare("postDqDxyz") == 0) {
 
     // Only applied to first halo slice
-    threeDsubview dqdx1 =
-        getFaceSlice(b.dqdx, face.nface, firstInteriorCellIdx);
-    threeDsubview dqdy1 =
-        getFaceSlice(b.dqdy, face.nface, firstInteriorCellIdx);
-    threeDsubview dqdz1 =
-        getFaceSlice(b.dqdz, face.nface, firstInteriorCellIdx);
+    fourDsubview grads1 =
+        getFaceSlice(b.grads, face.nface, firstInteriorCellIdx);
 
-    threeDsubview dqdx0 = getFaceSlice(b.dqdx, face.nface, firstHaloIdx);
-    threeDsubview dqdy0 = getFaceSlice(b.dqdy, face.nface, firstHaloIdx);
-    threeDsubview dqdz0 = getFaceSlice(b.dqdz, face.nface, firstHaloIdx);
+    fourDsubview grads0 = getFaceSlice(b.grads, face.nface, firstHaloIdx);
 
     MDRange3 range_face =
-        MDRange3({0, 0, 0}, {static_cast<long>(dqdx1.extent(0)),
-                             static_cast<long>(dqdx1.extent(1)), b.ne});
+        MDRange3({0, 0, 0}, {static_cast<long>(grads1.extent(0)),
+                             static_cast<long>(grads1.extent(1)), b.ne});
     Kokkos::parallel_for(
         "Constant velocity subsonic inlet postDqDxyz terms", range_face,
         KOKKOS_LAMBDA(const int i, const int j, const int l) {
           // neumann all gradients
-          dqdx0(i, j, l) = dqdx1(i, j, l);
-          dqdy0(i, j, l) = dqdy1(i, j, l);
-          dqdz0(i, j, l) = dqdz1(i, j, l);
+          for (int d = 0; d < 3; d++) {
+            grads0(i, j, l, d) = grads1(i, j, l, d);
+          }
         });
   }
 }
@@ -117,27 +111,21 @@ void supersonicInlet(
   } else if (terms.compare("postDqDxyz") == 0) {
 
     // Only applied to first halo slice
-    threeDsubview dqdx1 =
-        getFaceSlice(b.dqdx, face.nface, firstInteriorCellIdx);
-    threeDsubview dqdy1 =
-        getFaceSlice(b.dqdy, face.nface, firstInteriorCellIdx);
-    threeDsubview dqdz1 =
-        getFaceSlice(b.dqdz, face.nface, firstInteriorCellIdx);
+    fourDsubview grads1 =
+        getFaceSlice(b.grads, face.nface, firstInteriorCellIdx);
 
-    threeDsubview dqdx0 = getFaceSlice(b.dqdx, face.nface, firstHaloIdx);
-    threeDsubview dqdy0 = getFaceSlice(b.dqdy, face.nface, firstHaloIdx);
-    threeDsubview dqdz0 = getFaceSlice(b.dqdz, face.nface, firstHaloIdx);
+    fourDsubview grads0 = getFaceSlice(b.grads, face.nface, firstHaloIdx);
 
     MDRange3 range_face =
-        MDRange3({0, 0, 0}, {static_cast<long>(dqdx1.extent(0)),
-                             static_cast<long>(dqdx1.extent(1)), b.ne});
+        MDRange3({0, 0, 0}, {static_cast<long>(grads1.extent(0)),
+                             static_cast<long>(grads1.extent(1)), b.ne});
     Kokkos::parallel_for(
         "Supersonic inlet postDqDxyz terms", range_face,
         KOKKOS_LAMBDA(const int i, const int j, const int l) {
           // neumann all gradients
-          dqdx0(i, j, l) = dqdx1(i, j, l);
-          dqdy0(i, j, l) = dqdy1(i, j, l);
-          dqdz0(i, j, l) = dqdz1(i, j, l);
+          for (int d = 0; d < 3; d++) {
+            grads0(i, j, l, d) = grads1(i, j, l, d);
+          }
         });
   }
 }
@@ -247,27 +235,21 @@ void constantMassFluxSubsonicInlet(
   } else if (terms.compare("postDqDxyz") == 0) {
 
     // Only applied to first halo slice
-    threeDsubview dqdx1 =
-        getFaceSlice(b.dqdx, face.nface, firstInteriorCellIdx);
-    threeDsubview dqdy1 =
-        getFaceSlice(b.dqdy, face.nface, firstInteriorCellIdx);
-    threeDsubview dqdz1 =
-        getFaceSlice(b.dqdz, face.nface, firstInteriorCellIdx);
+    fourDsubview grads1 =
+        getFaceSlice(b.grads, face.nface, firstInteriorCellIdx);
 
-    threeDsubview dqdx0 = getFaceSlice(b.dqdx, face.nface, firstHaloIdx);
-    threeDsubview dqdy0 = getFaceSlice(b.dqdy, face.nface, firstHaloIdx);
-    threeDsubview dqdz0 = getFaceSlice(b.dqdz, face.nface, firstHaloIdx);
+    fourDsubview grads0 = getFaceSlice(b.grads, face.nface, firstHaloIdx);
 
     MDRange3 range_face =
-        MDRange3({0, 0, 0}, {static_cast<long>(dqdx1.extent(0)),
-                             static_cast<long>(dqdx1.extent(1)), b.ne});
+        MDRange3({0, 0, 0}, {static_cast<long>(grads1.extent(0)),
+                             static_cast<long>(grads1.extent(1)), b.ne});
     Kokkos::parallel_for(
         "Supersonic inlet postDqDxyz terms", range_face,
         KOKKOS_LAMBDA(const int i, const int j, const int l) {
           // neumann all gradients
-          dqdx0(i, j, l) = dqdx1(i, j, l);
-          dqdy0(i, j, l) = dqdy1(i, j, l);
-          dqdz0(i, j, l) = dqdz1(i, j, l);
+          for (int d = 0; d < 3; d++) {
+            grads0(i, j, l, d) = grads1(i, j, l, d);
+          }
         });
   }
 }
@@ -293,9 +275,7 @@ void stagnationSubsonicInlet(
     threeDsubview q1 = getFaceSlice(b.q, face.nface, firstInteriorCellIdx);
     threeDsubview Q1 = getFaceSlice(b.Q, face.nface, firstInteriorCellIdx);
     threeDsubview qh1 = getFaceSlice(b.qh, face.nface, firstInteriorCellIdx);
-    twoDsubview nx, ny, nz;
-
-    getFaceNormals(b, face.nface, blockFaceIdx, nx, ny, nz);
+    threeDsubview sVec = getFaceAreaVectors(b, face.nface, blockFaceIdx);
 
     MDRange2 range_face = MDRange2({0, 0}, {q1.extent(0), q1.extent(1)});
 
@@ -307,11 +287,15 @@ void stagnationSubsonicInlet(
       Kokkos::parallel_for(
           "Constant velocity subsonic inlet euler terms", range_face,
           KOKKOS_LAMBDA(const int i, const int j) {
+            double S, nx, ny, nz;
+            faceNormal(sVec(i, j, 0), sVec(i, j, 1), sVec(i, j, 2), S, nx, ny,
+                       nz);
+
             // neumann total enthalpy, gamma to halo
             double &gamma = qh1(i, j, 0);
-            double uxi = q1(i, j, 1) * nx(i, j);
-            double uvi = q1(i, j, 2) * ny(i, j);
-            double uwi = q1(i, j, 3) * nz(i, j);
+            double uxi = q1(i, j, 1) * nx;
+            double uvi = q1(i, j, 2) * ny;
+            double uwi = q1(i, j, 3) * nz;
             // Interior velo normal to face
             double Un = uxi + uvi + uwi;
 
@@ -340,9 +324,9 @@ void stagnationSubsonicInlet(
                               -gamma / (gamma - 1.0));
 
             // extrapolate face normal velocity
-            q0(i, j, 1) = Vb * nx(i, j);
-            q0(i, j, 2) = Vb * ny(i, j);
-            q0(i, j, 3) = Vb * nz(i, j);
+            q0(i, j, 1) = Vb * nx;
+            q0(i, j, 2) = Vb * ny;
+            q0(i, j, 3) = Vb * nz;
 
             // compute static temperature
             q0(i, j, 4) = face.qBcVals(i, j, 4) /
@@ -359,27 +343,21 @@ void stagnationSubsonicInlet(
   } else if (terms.compare("postDqDxyz") == 0) {
 
     // Only applied to first halo slice
-    threeDsubview dqdx1 =
-        getFaceSlice(b.dqdx, face.nface, firstInteriorCellIdx);
-    threeDsubview dqdy1 =
-        getFaceSlice(b.dqdy, face.nface, firstInteriorCellIdx);
-    threeDsubview dqdz1 =
-        getFaceSlice(b.dqdz, face.nface, firstInteriorCellIdx);
+    fourDsubview grads1 =
+        getFaceSlice(b.grads, face.nface, firstInteriorCellIdx);
 
-    threeDsubview dqdx0 = getFaceSlice(b.dqdx, face.nface, firstHaloIdx);
-    threeDsubview dqdy0 = getFaceSlice(b.dqdy, face.nface, firstHaloIdx);
-    threeDsubview dqdz0 = getFaceSlice(b.dqdz, face.nface, firstHaloIdx);
+    fourDsubview grads0 = getFaceSlice(b.grads, face.nface, firstHaloIdx);
 
     MDRange3 range_face =
-        MDRange3({0, 0, 0}, {static_cast<long>(dqdx1.extent(0)),
-                             static_cast<long>(dqdx1.extent(1)), b.ne});
+        MDRange3({0, 0, 0}, {static_cast<long>(grads1.extent(0)),
+                             static_cast<long>(grads1.extent(1)), b.ne});
     Kokkos::parallel_for(
         "Supersonic inlet postDqDxyz terms", range_face,
         KOKKOS_LAMBDA(const int i, const int j, const int l) {
           // neumann all gradients
-          dqdx0(i, j, l) = dqdx1(i, j, l);
-          dqdy0(i, j, l) = dqdy1(i, j, l);
-          dqdz0(i, j, l) = dqdz1(i, j, l);
+          for (int d = 0; d < 3; d++) {
+            grads0(i, j, l, d) = grads1(i, j, l, d);
+          }
         });
   }
 }

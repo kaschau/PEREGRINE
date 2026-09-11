@@ -1,13 +1,11 @@
 #include "block_.hpp"
+#include "compute.hpp"
 #include "kokkosTypes.hpp"
 #include "math.h"
 #include "thtrdat_.hpp"
 #include <Kokkos_Core.hpp>
 
-static void computeFlux(const block_ &b, fourDview &iF, const threeDview &iS,
-                        const threeDview &isx, const threeDview &isy,
-                        const threeDview &isz, const threeDview &inx,
-                        const threeDview &iny, const threeDview &inz,
+static void computeFlux(const block_ &b, fourDview &iF, const fourDview &iS,
                         const int iMod, const int jMod, const int kMod) {
 
   // face flux range
@@ -17,6 +15,10 @@ static void computeFlux(const block_ &b, fourDview &iF, const threeDview &iS,
   Kokkos::parallel_for(
       "AUSM+UP face conv fluxes", range,
       KOKKOS_LAMBDA(const int i, const int j, const int k) {
+        double S, nx, ny, nz;
+        faceNormal(iS(i, j, k, 0), iS(i, j, k, 1), iS(i, j, k, 2), S, nx, ny,
+                   nz);
+
         double &ufR = b.q(i, j, k, 1);
         double &vfR = b.q(i, j, k, 2);
         double &wfR = b.q(i, j, k, 3);
@@ -25,10 +27,8 @@ static void computeFlux(const block_ &b, fourDview &iF, const threeDview &iS,
         double vfL = b.q(i - iMod, j - jMod, k - kMod, 2);
         double wfL = b.q(i - iMod, j - jMod, k - kMod, 3);
 
-        double UR =
-            inx(i, j, k) * ufR + iny(i, j, k) * vfR + inz(i, j, k) * wfR;
-        double UL =
-            inx(i, j, k) * ufL + iny(i, j, k) * vfL + inz(i, j, k) * wfL;
+        double UR = nx * ufR + ny * vfR + nz * wfR;
+        double UL = nx * ufL + ny * vfL + nz * wfL;
 
         double &rhoR = b.Q(i, j, k, 0);
         double rhoL = b.Q(i - iMod, j - jMod, k - kMod, 0);
@@ -89,36 +89,35 @@ static void computeFlux(const block_ &b, fourDview &iF, const threeDview &iS,
         const int jIndx = j + indx * jMod;
         const int kIndx = k + indx * kMod;
         // Continuity rho*Ui
-        iF(i, j, k, 0) = mDot12 * iS(i, j, k);
+        iF(i, j, k, 0) = mDot12 * S;
 
         // x momentum rho*u*Ui+ p*Ax
-        iF(i, j, k, 1) = mDot12 * b.q(iIndx, jIndx, kIndx, 1) * iS(i, j, k) +
-                         p12 * isx(i, j, k);
+        iF(i, j, k, 1) =
+            mDot12 * b.q(iIndx, jIndx, kIndx, 1) * S + p12 * iS(i, j, k, 0);
 
         // y momentum rho*v*Ui+ p*Ay
-        iF(i, j, k, 2) = mDot12 * b.q(iIndx, jIndx, kIndx, 2) * iS(i, j, k) +
-                         p12 * isy(i, j, k);
+        iF(i, j, k, 2) =
+            mDot12 * b.q(iIndx, jIndx, kIndx, 2) * S + p12 * iS(i, j, k, 1);
 
         // w momentum rho*w*Ui+ p*Az
-        iF(i, j, k, 3) = mDot12 * b.q(iIndx, jIndx, kIndx, 3) * iS(i, j, k) +
-                         p12 * isz(i, j, k);
+        iF(i, j, k, 3) =
+            mDot12 * b.q(iIndx, jIndx, kIndx, 3) * S + p12 * iS(i, j, k, 2);
 
         // Total energy (rhoE+ p)*Ui)
         iF(i, j, k, 4) =
             mDot12 *
             (b.Q(iIndx, jIndx, kIndx, 4) + b.q(iIndx, jIndx, kIndx, 0)) /
-            b.Q(iIndx, jIndx, kIndx, 0) * iS(i, j, k);
+            b.Q(iIndx, jIndx, kIndx, 0) * S;
 
         // Species
         for (int n = 0; n < b.ne - 5; n++) {
-          iF(i, j, k, 5 + n) =
-              mDot12 * b.q(iIndx, jIndx, kIndx, 5 + n) * iS(i, j, k);
+          iF(i, j, k, 5 + n) = mDot12 * b.q(iIndx, jIndx, kIndx, 5 + n) * S;
         }
       });
 }
 
 void ausmPlusUp(block_ &b) {
-  computeFlux(b, b.iF, b.iS, b.isx, b.isy, b.isz, b.inx, b.iny, b.inz, 1, 0, 0);
-  computeFlux(b, b.jF, b.jS, b.jsx, b.jsy, b.jsz, b.jnx, b.jny, b.jnz, 0, 1, 0);
-  computeFlux(b, b.kF, b.kS, b.ksx, b.ksy, b.ksz, b.knx, b.kny, b.knz, 0, 0, 1);
+  computeFlux(b, b.iF, b.iS, 1, 0, 0);
+  computeFlux(b, b.jF, b.jS, 0, 1, 0);
+  computeFlux(b, b.kF, b.kS, 0, 0, 1);
 }

@@ -58,7 +58,8 @@ void fourthOrderKEEP(block_ &b) {
         vf *= 2.0;
         wf *= 2.0;
 
-        U = b.isx(i, j, k) * uf + b.isy(i, j, k) * vf + b.isz(i, j, k) * wf;
+        U = b.iS(i, j, k, 0) * uf + b.iS(i, j, k, 1) * vf +
+            b.iS(i, j, k, 2) * wf;
 
         // Compute fluxes
 
@@ -113,11 +114,11 @@ void fourthOrderKEEP(block_ &b) {
         rhou *= 2.0;
         p *= 2.0;
 
-        b.iF(i, j, k, 1) = rhou * U + p * b.isx(i, j, k);
+        b.iF(i, j, k, 1) = rhou * U + p * b.iS(i, j, k, 0);
 
-        b.iF(i, j, k, 2) = rhov * U + p * b.isy(i, j, k);
+        b.iF(i, j, k, 2) = rhov * U + p * b.iS(i, j, k, 1);
 
-        b.iF(i, j, k, 3) = rhow * U + p * b.isz(i, j, k);
+        b.iF(i, j, k, 3) = rhow * U + p * b.iS(i, j, k, 2);
 
         // Total energy (rhoE+ p)*Ui)
         double rhoE = 0.0;
@@ -141,14 +142,15 @@ void fourthOrderKEEP(block_ &b) {
                         b.q(i + js, j, k, 3) * b.q(i + js - is, j, k, 3)));
             count++;
 
-            temppu += 0.5 * (b.q(i + js - is, j, k, 0) *
-                                 (b.q(i + js, j, k, 1) * b.isx(i, j, k) +
-                                  b.q(i + js, j, k, 2) * b.isy(i, j, k) +
-                                  b.q(i + js, j, k, 3) * b.isz(i, j, k)) +
-                             b.q(i + js, j, k, 0) *
-                                 (b.q(i + js - is, j, k, 1) * b.isx(i, j, k) +
-                                  b.q(i + js - is, j, k, 2) * b.isy(i, j, k) +
-                                  b.q(i + js - is, j, k, 3) * b.isz(i, j, k)));
+            temppu +=
+                0.5 * (b.q(i + js - is, j, k, 0) *
+                           (b.q(i + js, j, k, 1) * b.iS(i, j, k, 0) +
+                            b.q(i + js, j, k, 2) * b.iS(i, j, k, 1) +
+                            b.q(i + js, j, k, 3) * b.iS(i, j, k, 2)) +
+                       b.q(i + js, j, k, 0) *
+                           (b.q(i + js - is, j, k, 1) * b.iS(i, j, k, 0) +
+                            b.q(i + js - is, j, k, 2) * b.iS(i, j, k, 1) +
+                            b.q(i + js - is, j, k, 3) * b.iS(i, j, k, 2)));
           }
           rhoE += a * temprhoE;
           pu += a * temppu;
@@ -226,7 +228,8 @@ void fourthOrderKEEP(block_ &b) {
         vf *= 2.0;
         wf *= 2.0;
 
-        V = b.jsx(i, j, k) * uf + b.jsy(i, j, k) * vf + b.jsz(i, j, k) * wf;
+        V = b.jS(i, j, k, 0) * uf + b.jS(i, j, k, 1) * vf +
+            b.jS(i, j, k, 2) * wf;
 
         // Compute fluxes
 
@@ -281,11 +284,11 @@ void fourthOrderKEEP(block_ &b) {
         rhou *= 2.0;
         p *= 2.0;
 
-        b.jF(i, j, k, 1) = rhou * V + p * b.jsx(i, j, k);
+        b.jF(i, j, k, 1) = rhou * V + p * b.jS(i, j, k, 0);
 
-        b.jF(i, j, k, 2) = rhov * V + p * b.jsy(i, j, k);
+        b.jF(i, j, k, 2) = rhov * V + p * b.jS(i, j, k, 1);
 
-        b.jF(i, j, k, 3) = rhow * V + p * b.jsz(i, j, k);
+        b.jF(i, j, k, 3) = rhow * V + p * b.jS(i, j, k, 2);
 
         // Total energy (rhoE+ p)*Vi)
         double rhoE = 0.0;
@@ -309,14 +312,15 @@ void fourthOrderKEEP(block_ &b) {
                         b.q(i, j + js, k, 3) * b.q(i, j + js - is, k, 3)));
             count++;
 
-            temppu += 0.5 * (b.q(i, j + js - is, k, 0) *
-                                 (b.q(i, j + js, k, 1) * b.jsx(i, j, k) +
-                                  b.q(i, j + js, k, 2) * b.jsy(i, j, k) +
-                                  b.q(i, j + js, k, 3) * b.jsz(i, j, k)) +
-                             b.q(i, j + js, k, 0) *
-                                 (b.q(i, j + js - is, k, 1) * b.jsx(i, j, k) +
-                                  b.q(i, j + js - is, k, 2) * b.jsy(i, j, k) +
-                                  b.q(i, j + js - is, k, 3) * b.jsz(i, j, k)));
+            temppu +=
+                0.5 * (b.q(i, j + js - is, k, 0) *
+                           (b.q(i, j + js, k, 1) * b.jS(i, j, k, 0) +
+                            b.q(i, j + js, k, 2) * b.jS(i, j, k, 1) +
+                            b.q(i, j + js, k, 3) * b.jS(i, j, k, 2)) +
+                       b.q(i, j + js, k, 0) *
+                           (b.q(i, j + js - is, k, 1) * b.jS(i, j, k, 0) +
+                            b.q(i, j + js - is, k, 2) * b.jS(i, j, k, 1) +
+                            b.q(i, j + js - is, k, 3) * b.jS(i, j, k, 2)));
           }
           rhoE += a * temprhoE;
           pu += a * temppu;
@@ -394,7 +398,8 @@ void fourthOrderKEEP(block_ &b) {
         vf *= 2.0;
         wf *= 2.0;
 
-        W = b.ksx(i, j, k) * uf + b.ksy(i, j, k) * vf + b.ksz(i, j, k) * wf;
+        W = b.kS(i, j, k, 0) * uf + b.kS(i, j, k, 1) * vf +
+            b.kS(i, j, k, 2) * wf;
 
         // Compute fluxes
 
@@ -449,11 +454,11 @@ void fourthOrderKEEP(block_ &b) {
         rhou *= 2.0;
         p *= 2.0;
 
-        b.kF(i, j, k, 1) = rhou * W + p * b.ksx(i, j, k);
+        b.kF(i, j, k, 1) = rhou * W + p * b.kS(i, j, k, 0);
 
-        b.kF(i, j, k, 2) = rhov * W + p * b.ksy(i, j, k);
+        b.kF(i, j, k, 2) = rhov * W + p * b.kS(i, j, k, 1);
 
-        b.kF(i, j, k, 3) = rhow * W + p * b.ksz(i, j, k);
+        b.kF(i, j, k, 3) = rhow * W + p * b.kS(i, j, k, 2);
 
         // Total energy (rhoE+ p)*Wi)
         double rhoE = 0.0;
@@ -477,14 +482,15 @@ void fourthOrderKEEP(block_ &b) {
                         b.q(i, j, k + js, 3) * b.q(i, j, k + js - is, 3)));
             count++;
 
-            temppu += 0.5 * (b.q(i, j, k + js - is, 0) *
-                                 (b.q(i, j, k + js, 1) * b.ksx(i, j, k) +
-                                  b.q(i, j, k + js, 2) * b.ksy(i, j, k) +
-                                  b.q(i, j, k + js, 3) * b.ksz(i, j, k)) +
-                             b.q(i, j, k + js, 0) *
-                                 (b.q(i, j, k + js - is, 1) * b.ksx(i, j, k) +
-                                  b.q(i, j, k + js - is, 2) * b.ksy(i, j, k) +
-                                  b.q(i, j, k + js - is, 3) * b.ksz(i, j, k)));
+            temppu +=
+                0.5 * (b.q(i, j, k + js - is, 0) *
+                           (b.q(i, j, k + js, 1) * b.kS(i, j, k, 0) +
+                            b.q(i, j, k + js, 2) * b.kS(i, j, k, 1) +
+                            b.q(i, j, k + js, 3) * b.kS(i, j, k, 2)) +
+                       b.q(i, j, k + js, 0) *
+                           (b.q(i, j, k + js - is, 1) * b.kS(i, j, k, 0) +
+                            b.q(i, j, k + js - is, 2) * b.kS(i, j, k, 1) +
+                            b.q(i, j, k + js - is, 3) * b.kS(i, j, k, 2)));
           }
           rhoE += a * temprhoE;
           pu += a * temppu;

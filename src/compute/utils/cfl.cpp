@@ -1,5 +1,6 @@
 #include "array"
 #include "block_.hpp"
+#include "compute.hpp"
 #include "kokkosTypes.hpp"
 #include "math.h"
 #include "vector"
@@ -35,27 +36,40 @@ std::array<double, 3> CFLmax(const std::vector<block_> &mb) {
         KOKKOS_LAMBDA(const int i, const int j, const int k, double &CFLA,
                       double &CFLC, double &CFLR) {
           // Cell lengths
-          const double &dI = b.dI(i, j, k);
-          const double &dJ = b.dJ(i, j, k);
-          const double &dK = b.dK(i, j, k);
+          const double &dI = b.dIJK(i, j, k, 0);
+          const double &dJ = b.dIJK(i, j, k, 1);
+          const double &dK = b.dIJK(i, j, k, 2);
 
           // Find max convective CFL
+          double S0, S1;
+          double inx0, iny0, inz0, inx1, iny1, inz1;
+          faceNormal(b.iS(i, j, k, 0), b.iS(i, j, k, 1), b.iS(i, j, k, 2), S0,
+                     inx0, iny0, inz0);
+          faceNormal(b.iS(i + 1, j, k, 0), b.iS(i + 1, j, k, 1),
+                     b.iS(i + 1, j, k, 2), S1, inx1, iny1, inz1);
+          double jnx0, jny0, jnz0, jnx1, jny1, jnz1;
+          faceNormal(b.jS(i, j, k, 0), b.jS(i, j, k, 1), b.jS(i, j, k, 2), S0,
+                     jnx0, jny0, jnz0);
+          faceNormal(b.jS(i, j + 1, k, 0), b.jS(i, j + 1, k, 1),
+                     b.jS(i, j + 1, k, 2), S1, jnx1, jny1, jnz1);
+          double knx0, kny0, knz0, knx1, kny1, knz1;
+          faceNormal(b.kS(i, j, k, 0), b.kS(i, j, k, 1), b.kS(i, j, k, 2), S0,
+                     knx0, kny0, knz0);
+          faceNormal(b.kS(i, j, k + 1, 0), b.kS(i, j, k + 1, 1),
+                     b.kS(i, j, k + 1, 2), S1, knx1, kny1, knz1);
           double &u = b.q(i, j, k, 1);
           double &v = b.q(i, j, k, 2);
           double &w = b.q(i, j, k, 3);
 
-          double uI =
-              sqrt(pow(0.5 * (b.inx(i, j, k) + b.inx(i + 1, j, k)) * u, 2.0) +
-                   pow(0.5 * (b.iny(i, j, k) + b.iny(i + 1, j, k)) * v, 2.0) +
-                   pow(0.5 * (b.inz(i, j, k) + b.inz(i + 1, j, k)) * w, 2.0));
-          double uJ =
-              sqrt(pow(0.5 * (b.jnx(i, j, k) + b.jnx(i, j + 1, k)) * u, 2.0) +
-                   pow(0.5 * (b.jny(i, j, k) + b.jny(i, j + 1, k)) * v, 2.0) +
-                   pow(0.5 * (b.jnz(i, j, k) + b.jnz(i, j + 1, k)) * w, 2.0));
-          double uK =
-              sqrt(pow(0.5 * (b.knx(i, j, k) + b.knx(i, j, k + 1)) * u, 2.0) +
-                   pow(0.5 * (b.kny(i, j, k) + b.kny(i, j, k + 1)) * v, 2.0) +
-                   pow(0.5 * (b.knz(i, j, k) + b.knz(i, j, k + 1)) * w, 2.0));
+          double uI = sqrt(pow(0.5 * (inx0 + inx1) * u, 2.0) +
+                           pow(0.5 * (iny0 + iny1) * v, 2.0) +
+                           pow(0.5 * (inz0 + inz1) * w, 2.0));
+          double uJ = sqrt(pow(0.5 * (jnx0 + jnx1) * u, 2.0) +
+                           pow(0.5 * (jny0 + jny1) * v, 2.0) +
+                           pow(0.5 * (jnz0 + jnz1) * w, 2.0));
+          double uK = sqrt(pow(0.5 * (knx0 + knx1) * u, 2.0) +
+                           pow(0.5 * (kny0 + kny1) * v, 2.0) +
+                           pow(0.5 * (knz0 + knz1) * w, 2.0));
 
           double &c = b.qh(i, j, k, 3);
 

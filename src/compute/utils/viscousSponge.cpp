@@ -10,9 +10,9 @@ void viscousSponge(block_ &b, const std::array<double, 3> &origin,
   Kokkos::parallel_for(
       "Apply viscous sponge", range_cc,
       KOKKOS_LAMBDA(const int i, const int j, const int k) {
-        double &xc = b.xc(i, j, k);
-        double &yc = b.yc(i, j, k);
-        double &zc = b.zc(i, j, k);
+        double &xc = b.cells(i, j, k, 0);
+        double &yc = b.cells(i, j, k, 1);
+        double &zc = b.cells(i, j, k, 2);
 
         double vectorX = xc - origin[0];
         double vectorY = yc - origin[1];

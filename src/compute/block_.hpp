@@ -16,32 +16,32 @@ struct block_ {
 #endif
 
   // Grid Arrays
-  threeDview x, y, z;
+  fourDview nodes;
   // Metric Arrays
   // Cell Centers
-  threeDview xc, yc, zc, J;
+  fourDview cells;
+  threeDview J;
   // distance between opposite face centers along each index direction
-  threeDview dI, dJ, dK;
-  threeDview dEdx, dEdy, dEdz;
-  threeDview dNdx, dNdy, dNdz;
-  threeDview dCdx, dCdy, dCdz;
+  fourDview dIJK;
+  fiveDview dENCdxyz;
+
   // i face centers
-  threeDview ixc, iyc, izc;
+  fourDview iFaces;
   // i face area vectors
-  threeDview isx, isy, isz, iS, inx, iny, inz;
+  fourDview iS;
   // j face centers
-  threeDview jxc, jyc, jzc;
+  fourDview jFaces;
   // j face area vectors
-  threeDview jsx, jsy, jsz, jS, jnx, jny, jnz;
+  fourDview jS;
   // k face centers
-  threeDview kxc, kyc, kzc;
+  fourDview kFaces;
   // k face area vectors
-  threeDview ksx, ksy, ksz, kS, knx, kny, knz;
+  fourDview kS;
 
   // Cons,Prim Arrays
   fourDview Q, q, dQ;
   // Spatial derivative of prim array
-  fourDview dqdx, dqdy, dqdz;
+  fiveDview grads;
   // thermo,trans arrays
   fourDview qh, qt;
   // chemistry

@@ -15,8 +15,6 @@ void dQzero(block_ &b);
 //    |------> dq2FD
 void dq2FD(block_ &b);
 void dq2FDoneSided(block_ &b, const int &nface);
-//    |------> dq4FD
-void dq4FD(block_ &b);
 //    |------> axpby
 void AEQB(fourDview &A, fourDview &B);
 // A = a*A + b*B [+ c*C], the linear combination every stage is built from
@@ -27,11 +25,11 @@ std::array<double, 3> CFLmax(const std::vector<block_> &mb);
 int checkNan(const std::vector<block_> &mb);
 
 //    |------> sendRecvBuffer
-void extractSendBuffer(threeDview &view, threeDview &buffer, face_ &face,
+void extractSendBuffer(fiveDview &view, fiveDview &buffer, face_ &face,
                        const std::vector<int> &slices);
 void extractSendBuffer(fourDview &view, fourDview &buffer, face_ &face,
                        const std::vector<int> &slices);
-void placeRecvBuffer(threeDview &view, threeDview &buffer, face_ &face,
+void placeRecvBuffer(fiveDview &view, fiveDview &buffer, face_ &face,
                      const std::vector<int> &slices);
 void placeRecvBuffer(fourDview &view, fourDview &buffer, face_ &face,
                      const std::vector<int> &slices);

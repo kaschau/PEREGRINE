@@ -30,13 +30,9 @@ class catalystCoprocessor:
             ng = blk.ng
             grid = vtk.vtkStructuredGrid()
             grid.SetDimensions(blk.ni, blk.nj, blk.nk)
+            interior = blk.array["nodes"][ng:-ng, ng:-ng, ng:-ng]
             coords = np.column_stack(
-                tuple(
-                    [
-                        blk.array[var][ng:-ng, ng:-ng, ng:-ng].ravel(order="F")
-                        for var in ("x", "y", "z")
-                    ]
-                )
+                [interior[..., n].ravel(order="F") for n in range(3)]
             )
             points = vtk.vtkPoints()
             points.SetData(numpy_support.numpy_to_vtk(coords))

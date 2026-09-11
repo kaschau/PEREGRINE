@@ -86,9 +86,7 @@ class AnnulusMesher(BaseMesher):
             + r[None, :, None, None] * radial[None, None, :, :]
         )
 
-        s_i = blk.interior
-        for n, var in enumerate(("x", "y", "z")):
-            blk.array[var][s_i] = pts[:, :, :, n]
+        blk.array["nodes"][blk.interior] = pts
 
     def setPeriodicFaces(self, blk, i, j, k):
         """A full turn closes on itself; anything less is a rotational periodic."""

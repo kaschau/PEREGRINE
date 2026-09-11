@@ -46,7 +46,7 @@ void bindUtils(py::module_ &m) {
             py::arg("std::vector<block_ object>"));
   //    |------> sendRecvBuffer
   utils.def("extractSendBuffer",
-            py::overload_cast<threeDview &, threeDview &, face_ &,
+            py::overload_cast<fiveDview &, fiveDview &, face_ &,
                               const std::vector<int> &>(&extractSendBuffer),
             "Extract the send buffer of a view", py::arg("kokkos view"),
             py::arg("buffer"), py::arg("face object"),
@@ -58,7 +58,7 @@ void bindUtils(py::module_ &m) {
             py::arg("buffer"), py::arg("face object"),
             py::arg("lists of slices"));
   utils.def("placeRecvBuffer",
-            py::overload_cast<threeDview &, threeDview &, face_ &,
+            py::overload_cast<fiveDview &, fiveDview &, face_ &,
                               const std::vector<int> &>(&placeRecvBuffer),
             "Place the recv buffer of a view", py::arg("kokkos view"),
             py::arg("buffer"), py::arg("face object"),

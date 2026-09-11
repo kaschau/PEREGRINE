@@ -1,13 +1,11 @@
 #include "block_.hpp"
+#include "compute.hpp"
 #include "kokkosTypes.hpp"
 #include "math.h"
 #include "thtrdat_.hpp"
 #include <Kokkos_Core.hpp>
 
-static void computeFlux(const block_ &b, fourDview &iF, const threeDview &iS,
-                        const threeDview &isx, const threeDview &isy,
-                        const threeDview &isz, const threeDview &inx,
-                        const threeDview &iny, const threeDview &inz,
+static void computeFlux(const block_ &b, fourDview &iF, const fourDview &iS,
                         const int iMod, const int jMod, const int kMod) {
 
   const double kappa2 = 0.5;
@@ -21,6 +19,10 @@ static void computeFlux(const block_ &b, fourDview &iF, const threeDview &iS,
   Kokkos::parallel_for(
       "Scalar Dissipation face conv fluxes", range,
       KOKKOS_LAMBDA(const int i, const int j, const int k) {
+        double S, nx, ny, nz;
+        faceNormal(iS(i, j, k, 0), iS(i, j, k, 1), iS(i, j, k, 2), S, nx, ny,
+                   nz);
+
         // The weird mod indexing math is so we grab the correct last
         // phi index for each dimension
         const int phiIndex =
@@ -38,13 +40,12 @@ static void computeFlux(const block_ &b, fourDview &iF, const threeDview &iS,
         const double wf =
             0.5 * (b.q(i, j, k, 3) + b.q(i - iMod, j - jMod, k - kMod, 3));
 
-        const double U =
-            inx(i, j, k) * uf + iny(i, j, k) * vf + inz(i, j, k) * wf;
+        const double U = nx * uf + ny * vf + nz * wf;
 
         const double a =
             (abs(U) +
              0.5 * (b.qh(i, j, k, 3) + b.qh(i - iMod, j - jMod, k - kMod, 3))) *
-            iS(i, j, k);
+            S;
 
         double rho2, rho4;
         rho2 = b.Q(i, j, k, 0) - b.Q(i - iMod, j - jMod, k - kMod, 0);
@@ -105,7 +106,7 @@ static void computeFlux(const block_ &b, fourDview &iF, const threeDview &iS,
 }
 
 void scalarDissipation(block_ &b) {
-  computeFlux(b, b.iF, b.iS, b.isx, b.isy, b.isz, b.inx, b.iny, b.inz, 1, 0, 0);
-  computeFlux(b, b.jF, b.jS, b.jsx, b.jsy, b.jsz, b.jnx, b.jny, b.jnz, 0, 1, 0);
-  computeFlux(b, b.kF, b.kS, b.ksx, b.ksy, b.ksz, b.knx, b.kny, b.knz, 0, 0, 1);
+  computeFlux(b, b.iF, b.iS, 1, 0, 0);
+  computeFlux(b, b.jF, b.jS, 0, 1, 0);
+  computeFlux(b, b.kF, b.kS, 0, 0, 1);
 }

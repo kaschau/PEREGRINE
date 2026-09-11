@@ -22,8 +22,7 @@ void constantPressureSubsonicExit(
   if (terms.compare("euler") == 0) {
 
     threeDsubview q1 = getFaceSlice(b.q, face.nface, firstInteriorCellIdx);
-    twoDsubview nx, ny, nz;
-    getFaceNormals(b, face.nface, blockFaceIdx, nx, ny, nz);
+    threeDsubview sVec = getFaceAreaVectors(b, face.nface, blockFaceIdx);
 
     MDRange2 range_face = MDRange2({0, 0}, {q1.extent(0), q1.extent(1)});
     double dplus = -plus; // need outward normal
@@ -36,22 +35,26 @@ void constantPressureSubsonicExit(
       Kokkos::parallel_for(
           "Constant pressure subsonic exit euler terms", range_face,
           KOKKOS_LAMBDA(const int i, const int j) {
+            double S, nx, ny, nz;
+            faceNormal(sVec(i, j, 0), sVec(i, j, 1), sVec(i, j, 2), S, nx, ny,
+                       nz);
+
             // set pressure
             q0(i, j, 0) = face.qBcVals(i, j, 0);
 
             // extrapolate velocity, unless reverse flow detected
-            double uDotn = (q1(i, j, 1) * nx(i, j) + q1(i, j, 2) * ny(i, j) +
-                            q1(i, j, 3) * nz(i, j)) *
-                           dplus;
+            double uDotn =
+                (q1(i, j, 1) * nx + q1(i, j, 2) * ny + q1(i, j, 3) * nz) *
+                dplus;
             if (uDotn > 0.0) {
               for (int l = 1; l <= 3; l++) {
                 q0(i, j, l) = 2.0 * q1(i, j, l) - q2(i, j, l);
               }
             } else {
               // flip velocity on face (like slip wall)
-              q0(i, j, 1) = q1(i, j, 1) - 2.0 * uDotn * nx(i, j) * dplus;
-              q0(i, j, 2) = q1(i, j, 2) - 2.0 * uDotn * ny(i, j) * dplus;
-              q0(i, j, 3) = q1(i, j, 3) - 2.0 * uDotn * nz(i, j) * dplus;
+              q0(i, j, 1) = q1(i, j, 1) - 2.0 * uDotn * nx * dplus;
+              q0(i, j, 2) = q1(i, j, 2) - 2.0 * uDotn * ny * dplus;
+              q0(i, j, 3) = q1(i, j, 3) - 2.0 * uDotn * nz * dplus;
             }
 
             // neumann everything else
@@ -64,27 +67,21 @@ void constantPressureSubsonicExit(
   } else if (terms.compare("postDqDxyz") == 0) {
 
     // Only gets applied to first halo slice
-    threeDsubview dqdx1 =
-        getFaceSlice(b.dqdx, face.nface, firstInteriorCellIdx);
-    threeDsubview dqdy1 =
-        getFaceSlice(b.dqdy, face.nface, firstInteriorCellIdx);
-    threeDsubview dqdz1 =
-        getFaceSlice(b.dqdz, face.nface, firstInteriorCellIdx);
+    fourDsubview grads1 =
+        getFaceSlice(b.grads, face.nface, firstInteriorCellIdx);
 
-    threeDsubview dqdx0 = getFaceSlice(b.dqdx, face.nface, firstHaloIdx);
-    threeDsubview dqdy0 = getFaceSlice(b.dqdy, face.nface, firstHaloIdx);
-    threeDsubview dqdz0 = getFaceSlice(b.dqdz, face.nface, firstHaloIdx);
+    fourDsubview grads0 = getFaceSlice(b.grads, face.nface, firstHaloIdx);
 
     MDRange3 range_face =
-        MDRange3({0, 0, 0}, {static_cast<long>(dqdx1.extent(0)),
-                             static_cast<long>(dqdx1.extent(1)), b.ne});
+        MDRange3({0, 0, 0}, {static_cast<long>(grads1.extent(0)),
+                             static_cast<long>(grads1.extent(1)), b.ne});
     Kokkos::parallel_for(
         "Constant pressure subsonic exit postDqDxyz terms", range_face,
         KOKKOS_LAMBDA(const int i, const int j, const int l) {
           // neumann all gradients
-          dqdx0(i, j, l) = dqdx1(i, j, l);
-          dqdy0(i, j, l) = dqdy1(i, j, l);
-          dqdz0(i, j, l) = dqdz1(i, j, l);
+          for (int d = 0; d < 3; d++) {
+            grads0(i, j, l, d) = grads1(i, j, l, d);
+          }
         });
   }
 }
@@ -105,9 +102,7 @@ void supersonicExit(
   if (terms.compare("euler") == 0) {
 
     threeDsubview q1 = getFaceSlice(b.q, face.nface, firstInteriorCellIdx);
-    twoDsubview nx, ny, nz;
-
-    getFaceNormals(b, face.nface, blockFaceIdx, nx, ny, nz);
+    threeDsubview sVec = getFaceAreaVectors(b, face.nface, blockFaceIdx);
 
     MDRange2 range_face = MDRange2({0, 0}, {q1.extent(0), q1.extent(1)});
     double dplus = -plus; // need outward normal
@@ -121,23 +116,27 @@ void supersonicExit(
       Kokkos::parallel_for(
           "Supersonic exit euler terms", range_face,
           KOKKOS_LAMBDA(const int i, const int j) {
+            double S, nx, ny, nz;
+            faceNormal(sVec(i, j, 0), sVec(i, j, 1), sVec(i, j, 2), S, nx, ny,
+                       nz);
+
             // extrapolate pressure (keep it positive, and wave exiting)
             q0(i, j, 0) =
                 fmin(fmax(0.0, 2.0 * q1(i, j, 0) - q2(i, j, 0)), q1(i, j, 0));
 
             // extrapolate velocity, unless reverse flow detected
-            double uDotn = (q1(i, j, 1) * nx(i, j) + q1(i, j, 2) * ny(i, j) +
-                            q1(i, j, 3) * nz(i, j)) *
-                           dplus;
+            double uDotn =
+                (q1(i, j, 1) * nx + q1(i, j, 2) * ny + q1(i, j, 3) * nz) *
+                dplus;
             if (uDotn > 0.0) {
               for (int l = 1; l <= 3; l++) {
                 q0(i, j, l) = 2.0 * q1(i, j, l) - q2(i, j, l);
               }
             } else {
               // flip velocity on face (like slip wall)
-              q0(i, j, 1) = q1(i, j, 1) - 2.0 * uDotn * nx(i, j) * dplus;
-              q0(i, j, 2) = q1(i, j, 2) - 2.0 * uDotn * ny(i, j) * dplus;
-              q0(i, j, 3) = q1(i, j, 3) - 2.0 * uDotn * nz(i, j) * dplus;
+              q0(i, j, 1) = q1(i, j, 1) - 2.0 * uDotn * nx * dplus;
+              q0(i, j, 2) = q1(i, j, 2) - 2.0 * uDotn * ny * dplus;
+              q0(i, j, 3) = q1(i, j, 3) - 2.0 * uDotn * nz * dplus;
             }
 
             // extrapolate temperature (keep it positive)
@@ -153,27 +152,21 @@ void supersonicExit(
   } else if (terms.compare("postDqDxyz") == 0) {
 
     // Only applied to first halo slice
-    threeDsubview dqdx1 =
-        getFaceSlice(b.dqdx, face.nface, firstInteriorCellIdx);
-    threeDsubview dqdy1 =
-        getFaceSlice(b.dqdy, face.nface, firstInteriorCellIdx);
-    threeDsubview dqdz1 =
-        getFaceSlice(b.dqdz, face.nface, firstInteriorCellIdx);
+    fourDsubview grads1 =
+        getFaceSlice(b.grads, face.nface, firstInteriorCellIdx);
 
-    threeDsubview dqdx0 = getFaceSlice(b.dqdx, face.nface, firstHaloIdx);
-    threeDsubview dqdy0 = getFaceSlice(b.dqdy, face.nface, firstHaloIdx);
-    threeDsubview dqdz0 = getFaceSlice(b.dqdz, face.nface, firstHaloIdx);
+    fourDsubview grads0 = getFaceSlice(b.grads, face.nface, firstHaloIdx);
 
     MDRange3 range_face =
-        MDRange3({0, 0, 0}, {static_cast<long>(dqdx1.extent(0)),
-                             static_cast<long>(dqdx1.extent(1)), b.ne});
+        MDRange3({0, 0, 0}, {static_cast<long>(grads1.extent(0)),
+                             static_cast<long>(grads1.extent(1)), b.ne});
     Kokkos::parallel_for(
         "Supersonic exit postDqDxyz terms", range_face,
         KOKKOS_LAMBDA(const int i, const int j, const int l) {
           // neumann all gradients
-          dqdx0(i, j, l) = dqdx1(i, j, l);
-          dqdy0(i, j, l) = dqdy1(i, j, l);
-          dqdz0(i, j, l) = dqdz1(i, j, l);
+          for (int d = 0; d < 3; d++) {
+            grads0(i, j, l, d) = grads1(i, j, l, d);
+          }
         });
   }
 }

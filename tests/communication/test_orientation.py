@@ -94,7 +94,7 @@ def reorientBlock1(mb, S, varList):
     blk1.getFace(nn).orientation = inverseS
 
 
-VARLIST = ["x", "y", "z", "q", "Q", "dqdx", "dqdy", "dqdz", "phi"]
+VARLIST = ["nodes", "q", "Q", "grads", "phi"]
 
 pytestmark = pytest.mark.parametrize(
     "adv,spdata",

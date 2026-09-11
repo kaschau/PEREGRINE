@@ -119,6 +119,36 @@ threeDsubview getFaceSlice(const fourDview &view, const int &nface,
   return subview;
 }
 
+fourDsubview getFaceSlice(const fiveDview &view, const int &nface,
+                          const int &slice) {
+
+  fourDsubview subview;
+  switch (nface) {
+  case 1:
+  case 2:
+    // face 1,2 halo
+    subview = Kokkos::subview(view, slice, Kokkos::ALL, Kokkos::ALL,
+                              Kokkos::ALL, Kokkos::ALL);
+    break;
+  case 3:
+  case 4:
+    // face 3,4 face slices
+    subview = Kokkos::subview(view, Kokkos::ALL, slice, Kokkos::ALL,
+                              Kokkos::ALL, Kokkos::ALL);
+    break;
+  case 5:
+  case 6:
+    // face 5,6 face slices
+    subview = Kokkos::subview(view, Kokkos::ALL, Kokkos::ALL, slice,
+                              Kokkos::ALL, Kokkos::ALL);
+    break;
+  default:
+    throw std::invalid_argument(" <-- Unknown argument to getFaceSlice");
+  }
+
+  return subview;
+}
+
 void getFaceSliceIdxs(int &firstHaloIdx, int &firstInteriorCellIdx,
                       int &blockFaceIdx, int &plus, const int &ni,
                       const int &nj, const int &nk, const int &ng,
@@ -157,32 +187,23 @@ void getFaceSliceIdxs(int &firstHaloIdx, int &firstInteriorCellIdx,
   }
 }
 
-void getFaceNormals(const block_ &b, const int &nface, const int &slice,
-                    twoDsubview &nx, twoDsubview &ny, twoDsubview &nz) {
+threeDsubview getFaceAreaVectors(const block_ &b, const int &nface,
+                                 const int &slice) {
   //-------------------------------------------------------------------------------------------|
-  // The unit normal of a face, taken from whichever of the i, j, k face
+  // The area vector of a face, taken from whichever of the i, j, k face
   // arrays that face belongs to.
   //-------------------------------------------------------------------------------------------|
   switch (nface) {
   case 1:
   case 2:
-    nx = getFaceSlice(b.inx, nface, slice);
-    ny = getFaceSlice(b.iny, nface, slice);
-    nz = getFaceSlice(b.inz, nface, slice);
-    break;
+    return getFaceSlice(b.iS, nface, slice);
   case 3:
   case 4:
-    nx = getFaceSlice(b.jnx, nface, slice);
-    ny = getFaceSlice(b.jny, nface, slice);
-    nz = getFaceSlice(b.jnz, nface, slice);
-    break;
+    return getFaceSlice(b.jS, nface, slice);
   case 5:
   case 6:
-    nx = getFaceSlice(b.knx, nface, slice);
-    ny = getFaceSlice(b.kny, nface, slice);
-    nz = getFaceSlice(b.knz, nface, slice);
-    break;
+    return getFaceSlice(b.kS, nface, slice);
   default:
-    throw std::runtime_error("Unknown nface in getFaceNormals.");
+    throw std::runtime_error("Unknown nface in getFaceAreaVectors.");
   }
 }

@@ -154,7 +154,7 @@ def simulate(index, velo):
         s_ = np.s_[ng, ng:-ng, ng]
     elif index == "k":
         s_ = np.s_[ng, ng, ng:-ng]
-    ccArray = {"i": "xc", "j": "yc", "k": "zc"}
+    ccAxis = {"i": 0, "j": 1, "k": 2}
     if "x" in velo:
         uIndex = 1
     elif "y" in velo:
@@ -164,7 +164,7 @@ def simulate(index, velo):
     else:
         raise ValueError()
 
-    xc = blk.array[ccArray[index]][s_]
+    xc = blk.array["cells"][..., ccAxis[index]][s_]
     sU_ = s_ + (uIndex,)
 
     outputTimes = [0.0005, 0.005, 0.05]

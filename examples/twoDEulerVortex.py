@@ -45,8 +45,7 @@ def simulate():
     xMin = yMin = -6.0
     lamX = lamY = 4.0
     kappa = 0.25
-    x = blk.array["x"]
-    y = blk.array["y"]
+    x, y = (blk.array["nodes"][..., n] for n in range(2))
     for E in range(NE):
         for N in range(NN):
             x[E + ng, N + ng, :] = xMin + delX * (
@@ -83,8 +82,8 @@ def simulate():
     uInf = MInf * aInf
     C0 = 0.02 * uInf * Rc
 
-    xc = blk.array["xc"]
-    yc = blk.array["yc"]
+    xc = blk.array["cells"][..., 0]
+    yc = blk.array["cells"][..., 1]
 
     r = np.sqrt(((xc - x0) ** 2 + (yc - y0) ** 2) / Rc**2)
 

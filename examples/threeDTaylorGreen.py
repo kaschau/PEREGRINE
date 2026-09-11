@@ -53,16 +53,19 @@ def simulate():
     rho0 = 1.0
     gamma = cp / (cp - R)
     blk.array["q"][:, :, :, 0] = 1 / gamma + (rho0 * M0**2 / 16.0) * (
-        np.cos(2 * blk.array["xc"]) + np.cos(2 * blk.array["yc"])
-    ) * (np.cos(2 * blk.array["zc"] + 2.0))
+        np.cos(2 * blk.array["cells"][..., 0]) + np.cos(2 * blk.array["cells"][..., 1])
+    ) * (np.cos(2 * blk.array["cells"][..., 2] + 2.0))
     blk.array["q"][:, :, :, 1] = (
-        M0 * np.sin(blk.array["xc"]) * np.cos(blk.array["yc"]) * np.cos(blk.array["zc"])
+        M0
+        * np.sin(blk.array["cells"][..., 0])
+        * np.cos(blk.array["cells"][..., 1])
+        * np.cos(blk.array["cells"][..., 2])
     )
     blk.array["q"][:, :, :, 2] = (
         -M0
-        * np.cos(blk.array["xc"])
-        * np.sin(blk.array["yc"])
-        * np.cos(blk.array["zc"])
+        * np.cos(blk.array["cells"][..., 0])
+        * np.sin(blk.array["cells"][..., 1])
+        * np.cos(blk.array["cells"][..., 2])
     )
     blk.array["q"][:, :, :, 4] = blk.array["q"][:, :, :, 0] / (R * rho0)
 

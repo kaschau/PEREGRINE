@@ -77,11 +77,11 @@ class solver(restart):
 
         # Lets just be clean and create the edges and corners
         for _ in range(3):
-            self.communicator.exchange(["x", "y", "z"])
+            self.communicator.exchange("nodes")
 
         # Device is up to date after communicate, so pull back down
         for blk in self:
-            blk.updateHostView(["x", "y", "z"])
+            blk.updateHostView("nodes")
 
         for blk in self:
             for face in blk.faces:
@@ -91,16 +91,14 @@ class solver(restart):
                 for s0 in face.s0_:
                     # the halo came from the partner, so it lands where the
                     # transform puts it, turned or moved or both
-                    p = np.column_stack(
-                        [blk.array[v][s0].ravel() for v in ("x", "y", "z")]
+                    p = blk.array["nodes"][s0]
+                    blk.array["nodes"][s0] = (p.reshape(-1, 3) @ R.T + t).reshape(
+                        p.shape
                     )
-                    p = p @ R.T + t
-                    for n, v in enumerate(("x", "y", "z")):
-                        blk.array[v][s0] = p[:, n].reshape(blk.array[v][s0].shape)
 
         # Push back up the device
         for blk in self:
-            blk.updateDeviceView(["x", "y", "z"])
+            blk.updateDeviceView("nodes")
 
     def setBlockCommunication(self):
         for blk in self:

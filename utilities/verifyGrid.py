@@ -47,11 +47,9 @@ def extractFace(blk, nface):
 
     face_i = faceSliceMapping[nface]
 
-    x = np.copy(blk.array["x"][face_i["i"], face_i["j"], face_i["k"]])
-    y = np.copy(blk.array["y"][face_i["i"], face_i["j"], face_i["k"]])
-    z = np.copy(blk.array["z"][face_i["i"], face_i["j"], face_i["k"]])
+    plane = blk.array["nodes"][face_i["i"], face_i["j"], face_i["k"]]
 
-    return x, y, z
+    return (np.copy(plane[..., n]) for n in range(3))
 
 
 def verify(mb):
@@ -169,18 +167,10 @@ def verify(mb):
                 warn = True
 
         # Now we check that all blocks are right handed
-        pO = np.array(
-            [blk.array["x"][0, 0, 0], blk.array["y"][0, 0, 0], blk.array["z"][0, 0, 0]]
-        )
-        pI = np.array(
-            [blk.array["x"][1, 0, 0], blk.array["y"][1, 0, 0], blk.array["z"][1, 0, 0]]
-        )
-        pJ = np.array(
-            [blk.array["x"][0, 1, 0], blk.array["y"][0, 1, 0], blk.array["z"][0, 1, 0]]
-        )
-        pK = np.array(
-            [blk.array["x"][0, 0, 1], blk.array["y"][0, 0, 1], blk.array["z"][0, 0, 1]]
-        )
+        pO = blk.array["nodes"][0, 0, 0]
+        pI = blk.array["nodes"][1, 0, 0]
+        pJ = blk.array["nodes"][0, 1, 0]
+        pK = blk.array["nodes"][0, 0, 1]
         vI = pI - pO
         vJ = pJ - pO
         vK = pK - pO

@@ -38,9 +38,9 @@ def simulate():
     MWA = mb.thtrdat.array["MW"][0]
     MWB = mb.thtrdat.array["MW"][1]
     blk.array["q"][:, :, :, 4] = np.where(
-        blk.array["xc"] < 0.5, 300.0 * MWA / MWB, 300.0
+        blk.array["cells"][..., 0] < 0.5, 300.0 * MWA / MWB, 300.0
     )
-    blk.array["q"][:, :, :, 5] = np.where(blk.array["xc"] < 0.5, 1.0, 0.0)
+    blk.array["q"][:, :, :, 5] = np.where(blk.array["cells"][..., 0] < 0.5, 1.0, 0.0)
 
     # Update cons
     blk.updateDeviceView(["q"])
@@ -58,7 +58,7 @@ def simulate():
     fig, ax1 = plt.subplots()
     ax1.set_title("1D Diffusion Results")
     ax1.set_xlabel(r"x")
-    x = blk.array["xc"][ng:-ng, ng, ng]
+    x = blk.array["cells"][..., 0][ng:-ng, ng, ng]
     A = blk.array["q"][ng:-ng, ng, ng, 5]
     B = 1.0 - blk.array["q"][ng:-ng, ng, ng, 5]
     ax1.plot(x, A, marker="o", color="r", label="A", linewidth=1.0)

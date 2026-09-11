@@ -40,17 +40,9 @@ class grid(topology):
                 if face.neighbor is None or face.periodicRotation is not None:
                     continue
                 other = self.getBlock(face.neighbor)
-                mine = np.stack(
-                    [blk.array[v][face.firstPlane] for v in ("x", "y", "z")], axis=-1
-                ).reshape(-1, 3)
+                mine = blk.array["nodes"][face.firstPlane].reshape(-1, 3)
                 theirs = face.alignToMe(
-                    np.stack(
-                        [
-                            other.array[v][other.getFace(face.neighborNface).firstPlane]
-                            for v in ("x", "y", "z")
-                        ],
-                        axis=-1,
-                    )
+                    other.array["nodes"][other.getFace(face.neighborNface).firstPlane]
                 ).reshape(-1, 3)
 
                 moved = self._transformOnto(theirs, mine, tol)

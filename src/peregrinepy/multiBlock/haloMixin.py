@@ -72,35 +72,31 @@ class HaloMixin:
         planes = ((self.nj, self.nk), (self.ni, self.nk), (self.ni, self.nj))
         masks = {nf: self._masks(planes[(nf - 1) // 2], ng) for nf in self._order}
 
-        varis = ["x", "y", "z"]
+        x = self.array["nodes"]
 
         # the halo is built from nothing, so it starts as nothing
-        for var in varis:
-            x = self.array[var]
-            for nface in (1, 3, 5):
-                self._plane(x, nface, np.s_[0:ng])[:] = 0.0
-                self._plane(x, nface, np.s_[-ng::])[:] = 0.0
+        for nface in (1, 3, 5):
+            self._plane(x, nface, np.s_[0:ng])[:] = 0.0
+            self._plane(x, nface, np.s_[-ng::])[:] = 0.0
 
         # faces first, then the edges between them, then the corners between
         # those, since each pass reads what the one before it wrote
         for name in ("face", "edge", "corner"):
-            for var in varis:
-                x = self.array[var]
-                hits = np.zeros(x.shape)
-                for nface in self._order:
-                    mask = masks[nface][name]
-                    extent = extents[(nface - 1) // 2]
-                    for n in range(ng):
-                        s0, s1, s2 = self._layers(nface, n, ng, extent)
-                        cur = self._plane(x, nface, s0)
-                        counted = self._plane(hits, nface, s0)
-                        cur[mask] = self._blend(
-                            cur[mask],
-                            2.0 * self._plane(x, nface, s1)[mask]
-                            - self._plane(x, nface, s2)[mask],
-                            counted[mask],
-                        )
-                        counted[mask] += 1.0
+            # a node is reached once, not once per coordinate
+            hits = np.zeros(x.shape[:3])
+            for nface in self._order:
+                mask = masks[nface][name]
+                extent = extents[(nface - 1) // 2]
+                for n in range(ng):
+                    s0, s1, s2 = self._layers(nface, n, ng, extent)
+                    cur = self._plane(x, nface, s0)
+                    counted = self._plane(hits, nface, s0)
+                    cur[mask] = self._blend(
+                        cur[mask],
+                        2.0 * self._plane(x, nface, s1)[mask]
+                        - self._plane(x, nface, s2)[mask],
+                        counted[mask][:, None],
+                    )
+                    counted[mask] += 1.0
 
-        for var in varis:
-            self.updateDeviceView(var)
+        self.updateDeviceView("nodes")

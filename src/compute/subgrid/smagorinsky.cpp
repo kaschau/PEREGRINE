@@ -25,17 +25,17 @@ void smagorinsky(block_ &b) {
         const double Prt = 0.4;
         const double Sct = 1.0;
 
-        double &dudx = b.dqdx(i, j, k, 1);
-        double &dudy = b.dqdy(i, j, k, 1);
-        double &dudz = b.dqdz(i, j, k, 1);
+        double &dudx = b.grads(i, j, k, 1, 0);
+        double &dudy = b.grads(i, j, k, 1, 1);
+        double &dudz = b.grads(i, j, k, 1, 2);
 
-        double &dvdx = b.dqdx(i, j, k, 2);
-        double &dvdy = b.dqdy(i, j, k, 2);
-        double &dvdz = b.dqdz(i, j, k, 2);
+        double &dvdx = b.grads(i, j, k, 2, 0);
+        double &dvdy = b.grads(i, j, k, 2, 1);
+        double &dvdz = b.grads(i, j, k, 2, 2);
 
-        double &dwdx = b.dqdx(i, j, k, 3);
-        double &dwdy = b.dqdy(i, j, k, 3);
-        double &dwdz = b.dqdz(i, j, k, 3);
+        double &dwdx = b.grads(i, j, k, 3, 0);
+        double &dwdy = b.grads(i, j, k, 3, 1);
+        double &dwdz = b.grads(i, j, k, 3, 2);
 
         double S[3][3];
         S[0][0] = dudx;

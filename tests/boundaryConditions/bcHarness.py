@@ -8,13 +8,13 @@ class BaseBC:
 
     bcType = None
     # what each variable's gradient does in the first halo
-    grads = {"all": "neumann"}
+    gradRules = {"all": "neumann"}
 
     # which arrays a stage writes, and so what has to come back from the device
     _pull = {
         "euler": ["q"],
         "preDqDxyz": ["q"],
-        "postDqDxyz": ["dqdx", "dqdy", "dqdz"],
+        "postDqDxyz": ["grads"],
     }
     # the slices of q that share a rule
     _slice = {
@@ -43,7 +43,7 @@ class BaseBC:
             self.euler(face)
             self.viscous(face)
             self.run(face, "postDqDxyz")
-            rules = dict(self.grads)
+            rules = dict(self.gradRules)
             if self.blk.ns == 1:
                 rules.pop("Y", None)
             self._gradients(face, rules)
@@ -56,7 +56,9 @@ class BaseBC:
         pass
 
     def run(self, face, stage):
-        face.bcFunc(self.blk.cpp, face.cpp, self.mb.eos, self.mb.thtrdat.cpp, stage, self.mb.tme)
+        face.bcFunc(
+            self.blk.cpp, face.cpp, self.mb.eos, self.mb.thtrdat.cpp, stage, self.mb.tme
+        )
         self.blk.updateHostView(self._pull[stage])
 
     def q(self, name):
@@ -69,7 +71,8 @@ class BaseBC:
         """the unit normal of the face plane, and the sign that makes it point
         out of the block (faces 1, 3, 5 store the inward normal)"""
         d = {1: "i", 2: "i", 3: "j", 4: "j", 5: "k", 6: "k"}[face.nface]
-        n = tuple(self.blk.array[f"{d}n{c}"][face.s1_] for c in "xyz")
+        _, normals = self.blk.faceNormals(d)
+        n = tuple(c[face.s1_] for c in normals)
         return n, (-1.0 if face.nface in (1, 3, 5) else 1.0)
 
     def _bcVals(self, face, name):
@@ -140,10 +143,10 @@ class BaseBC:
     def _gradients(self, face, rules):
         """the first halo layer of every gradient, one rule per variable"""
         s0_ = face.s0_[0]
-        for d in (self.blk.array[f"dqd{c}"] for c in "xyz"):
-            for name, rule in rules.items():
-                sl = self._slice[name]
-                self._close(d[s0_][..., sl], self._sign[rule] * d[face.s1_][..., sl])
+        d = self.blk.array["grads"]
+        for name, rule in rules.items():
+            sl = self._slice[name]
+            self._close(d[s0_][..., sl, :], self._sign[rule] * d[face.s1_][..., sl, :])
 
     @staticmethod
     def _close(got, want, where=None):

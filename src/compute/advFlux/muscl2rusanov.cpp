@@ -1,4 +1,5 @@
 #include "block_.hpp"
+#include "compute.hpp"
 #include "kokkosTypes.hpp"
 #include "math.h"
 #include "thtrdat_.hpp"
@@ -31,6 +32,10 @@ void muscl2rusanov(block_ &b) {
   Kokkos::parallel_for(
       "MUSCL 2 rusanov i face conv fluxes", range_i,
       KOKKOS_LAMBDA(const int i, const int j, const int k) {
+        double S, nx, ny, nz;
+        faceNormal(b.iS(i, j, k, 0), b.iS(i, j, k, 1), b.iS(i, j, k, 2), S, nx,
+                   ny, nz);
+
         double rR, rL, phiR, phiL;
 
         // Reconstruct density
@@ -88,10 +93,8 @@ void muscl2rusanov(block_ &b) {
         double wfL = wim1 + 0.5 * phiL * (wi - wim1);
 
         // Face normal velocity
-        double UR =
-            b.inx(i, j, k) * ufR + b.iny(i, j, k) * vfR + b.inz(i, j, k) * wfR;
-        double UL =
-            b.inx(i, j, k) * ufL + b.iny(i, j, k) * vfL + b.inz(i, j, k) * wfL;
+        double UR = nx * ufR + ny * vfR + nz * wfR;
+        double UL = nx * ufL + ny * vfL + nz * wfL;
 
         // Reconstruct e
         double ei = b.qh(i, j, k, 4) / rhoi;
@@ -129,9 +132,9 @@ void muscl2rusanov(block_ &b) {
 
         // Now compute rusanov flux
         // wave speed estimate
-        double lam = fmax(abs(UL) + cL, abs(UR) + cR) * b.iS(i, j, k);
-        UR *= b.iS(i, j, k);
-        UL *= b.iS(i, j, k);
+        double lam = fmax(abs(UL) + cL, abs(UR) + cR) * S;
+        UR *= S;
+        UL *= S;
 
         // Continuity rho*Ui
         double FrhoR, FrhoL;
@@ -141,18 +144,18 @@ void muscl2rusanov(block_ &b) {
 
         double FUR, FUL;
         // x momentum rho*u*Ui+ p*Ax
-        FUR = UR * ufR * rhoR + pR * b.isx(i, j, k);
-        FUL = UL * ufL * rhoL + pL * b.isx(i, j, k);
+        FUR = UR * ufR * rhoR + pR * b.iS(i, j, k, 0);
+        FUL = UL * ufL * rhoL + pL * b.iS(i, j, k, 0);
         b.iF(i, j, k, 1) = 0.5 * (FUR + FUL - lam * (rhoR * ufR - rhoL * ufL));
 
         // y momentum rho*v*Ui+ p*Ay
-        FUR = UR * vfR * rhoR + pR * b.isy(i, j, k);
-        FUL = UL * vfL * rhoL + pL * b.isy(i, j, k);
+        FUR = UR * vfR * rhoR + pR * b.iS(i, j, k, 1);
+        FUL = UL * vfL * rhoL + pL * b.iS(i, j, k, 1);
         b.iF(i, j, k, 2) = 0.5 * (FUR + FUL - lam * (rhoR * vfR - rhoL * vfL));
 
         // w momentum rho*w*Ui+ p*Az
-        FUR = UR * wfR * rhoR + pR * b.isz(i, j, k);
-        FUL = UL * wfL * rhoL + pL * b.isz(i, j, k);
+        FUR = UR * wfR * rhoR + pR * b.iS(i, j, k, 2);
+        FUL = UL * wfL * rhoL + pL * b.iS(i, j, k, 2);
         b.iF(i, j, k, 3) = 0.5 * (FUR + FUL - lam * (rhoR * wfR - rhoL * wfL));
 
         // Total energy (rhoE+ p)*Ui)
@@ -185,6 +188,10 @@ void muscl2rusanov(block_ &b) {
   Kokkos::parallel_for(
       "MUSCL 2 rusanov j face conv fluxes", range_j,
       KOKKOS_LAMBDA(const int i, const int j, const int k) {
+        double S, nx, ny, nz;
+        faceNormal(b.jS(i, j, k, 0), b.jS(i, j, k, 1), b.jS(i, j, k, 2), S, nx,
+                   ny, nz);
+
         double rR, rL, phiR, phiL;
 
         // Reconstruct density
@@ -242,10 +249,8 @@ void muscl2rusanov(block_ &b) {
         double wfL = wim1 + 0.5 * phiL * (wi - wim1);
 
         // Face normal velocity
-        double UR =
-            b.jnx(i, j, k) * ufR + b.jny(i, j, k) * vfR + b.jnz(i, j, k) * wfR;
-        double UL =
-            b.jnx(i, j, k) * ufL + b.jny(i, j, k) * vfL + b.jnz(i, j, k) * wfL;
+        double UR = nx * ufR + ny * vfR + nz * wfR;
+        double UL = nx * ufL + ny * vfL + nz * wfL;
 
         // Reconstruct e
         double ei = b.qh(i, j, k, 4) / rhoi;
@@ -283,9 +288,9 @@ void muscl2rusanov(block_ &b) {
 
         // Now compute rusanov flux
         // wave speed estimate
-        double lam = fmax(abs(UL) + cL, abs(UR) + cR) * b.jS(i, j, k);
-        UR *= b.jS(i, j, k);
-        UL *= b.jS(i, j, k);
+        double lam = fmax(abs(UL) + cL, abs(UR) + cR) * S;
+        UR *= S;
+        UL *= S;
 
         // Continuity rho*Ui
         double FrhoR, FrhoL;
@@ -295,18 +300,18 @@ void muscl2rusanov(block_ &b) {
 
         double FUR, FUL;
         // x momentum rho*u*Ui+ p*Ax
-        FUR = UR * ufR * rhoR + pR * b.jsx(i, j, k);
-        FUL = UL * ufL * rhoL + pL * b.jsx(i, j, k);
+        FUR = UR * ufR * rhoR + pR * b.jS(i, j, k, 0);
+        FUL = UL * ufL * rhoL + pL * b.jS(i, j, k, 0);
         b.jF(i, j, k, 1) = 0.5 * (FUR + FUL - lam * (rhoR * ufR - rhoL * ufL));
 
         // y momentum rho*v*Ui+ p*Ay
-        FUR = UR * vfR * rhoR + pR * b.jsy(i, j, k);
-        FUL = UL * vfL * rhoL + pL * b.jsy(i, j, k);
+        FUR = UR * vfR * rhoR + pR * b.jS(i, j, k, 1);
+        FUL = UL * vfL * rhoL + pL * b.jS(i, j, k, 1);
         b.jF(i, j, k, 2) = 0.5 * (FUR + FUL - lam * (rhoR * vfR - rhoL * vfL));
 
         // w momentum rho*w*Ui+ p*Az
-        FUR = UR * wfR * rhoR + pR * b.jsz(i, j, k);
-        FUL = UL * wfL * rhoL + pL * b.jsz(i, j, k);
+        FUR = UR * wfR * rhoR + pR * b.jS(i, j, k, 2);
+        FUL = UL * wfL * rhoL + pL * b.jS(i, j, k, 2);
         b.jF(i, j, k, 3) = 0.5 * (FUR + FUL - lam * (rhoR * wfR - rhoL * wfL));
 
         // Total energy (rhoE+ p)*Ui)
@@ -338,6 +343,10 @@ void muscl2rusanov(block_ &b) {
   Kokkos::parallel_for(
       "MUSCL 2 rusanov k face conv fluxes", range_k,
       KOKKOS_LAMBDA(const int i, const int j, const int k) {
+        double S, nx, ny, nz;
+        faceNormal(b.kS(i, j, k, 0), b.kS(i, j, k, 1), b.kS(i, j, k, 2), S, nx,
+                   ny, nz);
+
         double rR, rL, phiR, phiL;
 
         // Reconstruct density
@@ -395,10 +404,8 @@ void muscl2rusanov(block_ &b) {
         double wfL = wim1 + 0.5 * phiL * (wi - wim1);
 
         // Face normal velocity
-        double UR =
-            b.knx(i, j, k) * ufR + b.kny(i, j, k) * vfR + b.knz(i, j, k) * wfR;
-        double UL =
-            b.knx(i, j, k) * ufL + b.kny(i, j, k) * vfL + b.knz(i, j, k) * wfL;
+        double UR = nx * ufR + ny * vfR + nz * wfR;
+        double UL = nx * ufL + ny * vfL + nz * wfL;
 
         // Reconstruct e
         double ei = b.qh(i, j, k, 4) / rhoi;
@@ -436,9 +443,9 @@ void muscl2rusanov(block_ &b) {
 
         // Now compute rusanov flux
         // wave speed estimate
-        double lam = fmax(abs(UL) + cL, abs(UR) + cR) * b.kS(i, j, k);
-        UR *= b.kS(i, j, k);
-        UL *= b.kS(i, j, k);
+        double lam = fmax(abs(UL) + cL, abs(UR) + cR) * S;
+        UR *= S;
+        UL *= S;
 
         // Continuity rho*Ui
         double FrhoR, FrhoL;
@@ -448,18 +455,18 @@ void muscl2rusanov(block_ &b) {
 
         double FUR, FUL;
         // x momentum rho*u*Ui+ p*Ax
-        FUR = UR * ufR * rhoR + pR * b.ksx(i, j, k);
-        FUL = UL * ufL * rhoL + pL * b.ksx(i, j, k);
+        FUR = UR * ufR * rhoR + pR * b.kS(i, j, k, 0);
+        FUL = UL * ufL * rhoL + pL * b.kS(i, j, k, 0);
         b.kF(i, j, k, 1) = 0.5 * (FUR + FUL - lam * (rhoR * ufR - rhoL * ufL));
 
         // y momentum rho*v*Ui+ p*Ay
-        FUR = UR * vfR * rhoR + pR * b.ksy(i, j, k);
-        FUL = UL * vfL * rhoL + pL * b.ksy(i, j, k);
+        FUR = UR * vfR * rhoR + pR * b.kS(i, j, k, 1);
+        FUL = UL * vfL * rhoL + pL * b.kS(i, j, k, 1);
         b.kF(i, j, k, 2) = 0.5 * (FUR + FUL - lam * (rhoR * vfR - rhoL * vfL));
 
         // w momentum rho*w*Ui+ p*Az
-        FUR = UR * wfR * rhoR + pR * b.ksz(i, j, k);
-        FUL = UL * wfL * rhoL + pL * b.ksz(i, j, k);
+        FUR = UR * wfR * rhoR + pR * b.kS(i, j, k, 2);
+        FUL = UL * wfL * rhoL + pL * b.kS(i, j, k, 2);
         b.kF(i, j, k, 3) = 0.5 * (FUR + FUL - lam * (rhoR * wfR - rhoL * wfL));
 
         // Total energy (rhoE+ p)*Ui)

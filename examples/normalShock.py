@@ -90,7 +90,7 @@ def simulate():
     q[ng:-ng, ng:-ng, ng:-ng, 4] = T1
 
     # Set post stock state
-    xc = blk.array["xc"][ng:-ng, ng:-ng, ng:-ng]
+    xc = blk.array["cells"][..., 0][ng:-ng, ng:-ng, ng:-ng]
 
     shockX = lx * 0.05
     q[ng:-ng, ng:-ng, ng:-ng, 0] = np.where(
@@ -130,7 +130,7 @@ def simulate():
     ax1.set_title("1D Normal Shock")
     ax1.set_ylabel("p/p1")
     ax1.set_xlabel(r"x")
-    x = blk.array["xc"][ng:-ng, ng, ng]
+    x = blk.array["cells"][..., 0][ng:-ng, ng, ng]
     p = blk.array["q"][ng:-ng, ng, ng, 0] / p1
     ax1.plot(x, p, color="r", label="p2/p1", linewidth=0.5)
     ax2 = ax1.twinx()

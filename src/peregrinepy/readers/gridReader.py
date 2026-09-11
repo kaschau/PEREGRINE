@@ -136,8 +136,11 @@ class GridReader:
         for blk in mb:
             coordS, extents = self._blockBaseInfo(blk)
             blk.setExtents(*extents)
-            for name in ("x", "y", "z"):
-                blk.array[name][blk.interior] = coordS[name][blk.baseNodeSlab].T
+            # the file keeps a dataset per coordinate, a block one array of them
+            for n, name in enumerate(("x", "y", "z")):
+                blk.array["nodes"][blk.interior + (n,)] = coordS[name][
+                    blk.baseNodeSlab
+                ].T
 
             mb.progress(blk.nblki + 1, f"Reading in gridBlock {blk.nblki}")
 

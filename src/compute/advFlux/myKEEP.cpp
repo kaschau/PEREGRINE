@@ -3,8 +3,7 @@
 #include "thtrdat_.hpp"
 #include <Kokkos_Core.hpp>
 
-static void computeFlux(const block_ &b, fourDview &iF, const threeDview &isx,
-                        const threeDview &isy, const threeDview &isz,
+static void computeFlux(const block_ &b, fourDview &iF, const fourDview &iS,
                         const int iMod, const int jMod, const int kMod) {
 
   // face flux range
@@ -23,7 +22,8 @@ static void computeFlux(const block_ &b, fourDview &iF, const threeDview &isx,
         double wf =
             0.5 * (b.q(i, j, k, 3) + b.q(i - iMod, j - jMod, k - kMod, 3));
 
-        double U = isx(i, j, k) * uf + isy(i, j, k) * vf + isz(i, j, k) * wf;
+        double U =
+            iS(i, j, k, 0) * uf + iS(i, j, k, 1) * vf + iS(i, j, k, 2) * wf;
 
         double pf =
             0.5 * (b.q(i, j, k, 0) + b.q(i - iMod, j - jMod, k - kMod, 0));
@@ -37,13 +37,13 @@ static void computeFlux(const block_ &b, fourDview &iF, const threeDview &isx,
         iF(i, j, k, 0) = Cj;
 
         // x momentum rho*u*Ui+ p*Ax
-        iF(i, j, k, 1) = Cj * uf + pf * isx(i, j, k);
+        iF(i, j, k, 1) = Cj * uf + pf * iS(i, j, k, 0);
 
         // y momentum rho*v*Ui+ p*Ay
-        iF(i, j, k, 2) = Cj * vf + pf * isy(i, j, k);
+        iF(i, j, k, 2) = Cj * vf + pf * iS(i, j, k, 1);
 
         // w momentum rho*w*Ui+ p*Az
-        iF(i, j, k, 3) = Cj * wf + pf * isz(i, j, k);
+        iF(i, j, k, 3) = Cj * wf + pf * iS(i, j, k, 2);
 
         // Total energy (rhoE+ p)*Ui)
         double Kj = rho * 0.5 *
@@ -54,13 +54,13 @@ static void computeFlux(const block_ &b, fourDview &iF, const threeDview &isx,
 
         double Pj =
             0.5 * (b.q(i - iMod, j - jMod, k - kMod, 0) *
-                       (b.q(i, j, k, 1) * isx(i, j, k) +
-                        b.q(i, j, k, 2) * isy(i, j, k) +
-                        b.q(i, j, k, 3) * isz(i, j, k)) +
+                       (b.q(i, j, k, 1) * iS(i, j, k, 0) +
+                        b.q(i, j, k, 2) * iS(i, j, k, 1) +
+                        b.q(i, j, k, 3) * iS(i, j, k, 2)) +
                    b.q(i, j, k, 0) *
-                       (b.q(i - iMod, j - jMod, k - kMod, 1) * isx(i, j, k) +
-                        b.q(i - iMod, j - jMod, k - kMod, 2) * isy(i, j, k) +
-                        b.q(i - iMod, j - jMod, k - kMod, 3) * isz(i, j, k)));
+                       (b.q(i - iMod, j - jMod, k - kMod, 1) * iS(i, j, k, 0) +
+                        b.q(i - iMod, j - jMod, k - kMod, 2) * iS(i, j, k, 1) +
+                        b.q(i - iMod, j - jMod, k - kMod, 3) * iS(i, j, k, 2)));
 
         // solve for internal energy flux
         double cvR = b.qh(i, j, k, 1) / b.qh(i, j, k, 0);
@@ -75,7 +75,7 @@ static void computeFlux(const block_ &b, fourDview &iF, const threeDview &isx,
         double sR = cvR * log(TR) - RR * log(rhoR);
         double phiR =
             -RR * rhoR *
-            (uR * isx(i, j, k) + vR * isy(i, j, k) + wR * isz(i, j, k));
+            (uR * iS(i, j, k, 0) + vR * iS(i, j, k, 1) + wR * iS(i, j, k, 2));
 
         double v0R =
             sR + (-hR + 0.5 * (pow(uR, 2) + pow(vR, 2) + pow(wR, 2))) / TR;
@@ -98,7 +98,7 @@ static void computeFlux(const block_ &b, fourDview &iF, const threeDview &isx,
         double sL = cvL * log(TL) - RL * log(rhoL);
         double phiL =
             -RL * rhoL *
-            (uL * isx(i, j, k) + vL * isy(i, j, k) + wL * isz(i, j, k));
+            (uL * iS(i, j, k, 0) + vL * iS(i, j, k, 1) + wL * iS(i, j, k, 2));
 
         double v0L =
             sL + (-hL + 0.5 * (pow(uL, 2) + pow(vL, 2) + pow(wL, 2))) / TL;
@@ -134,7 +134,7 @@ static void computeFlux(const block_ &b, fourDview &iF, const threeDview &isx,
 }
 
 void myKEEP(block_ &b) {
-  computeFlux(b, b.iF, b.isx, b.isy, b.isz, 1, 0, 0);
-  computeFlux(b, b.jF, b.jsx, b.jsy, b.jsz, 0, 1, 0);
-  computeFlux(b, b.kF, b.ksx, b.ksy, b.ksz, 0, 0, 1);
+  computeFlux(b, b.iF, b.iS, 1, 0, 0);
+  computeFlux(b, b.jF, b.jS, 0, 1, 0);
+  computeFlux(b, b.kF, b.kS, 0, 0, 1);
 }

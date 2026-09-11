@@ -138,18 +138,10 @@ if __name__ == "__main__":
             # copy/rotate block coordinates
             rotBlk.setExtents(fromBlk.ni, fromBlk.nj, fromBlk.nk)
 
-            shape = fromBlk.array["x"].shape
-            points = np.column_stack(
-                (
-                    fromBlk.array["x"].ravel(),
-                    fromBlk.array["y"].ravel(),
-                    fromBlk.array["z"].ravel(),
-                )
-            )
+            shape = fromBlk.array["nodes"].shape
+            points = fromBlk.array["nodes"].reshape(-1, 3)
             points = np.matmul(rotM, points.T).T
-            rotBlk.array["x"][:] = points[:, 0].reshape(shape)
-            rotBlk.array["y"][:] = points[:, 1].reshape(shape)
-            rotBlk.array["z"][:] = points[:, 2].reshape(shape)
+            rotBlk.array["nodes"][:] = points.reshape(shape)
 
             # transfer connectivity
             for toFace, fromFace in zip(rotBlk.faces, fromBlk.faces):

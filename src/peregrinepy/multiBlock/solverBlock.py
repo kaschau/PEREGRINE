@@ -29,20 +29,12 @@ class solverBlock(restartBlock, SolverMetricsMixin, HaloMixin):
         #######################################################################
         # Grid metrics only a solver needs
         #######################################################################
-        self.declare("J", "dI", "dJ", "dK", kind="cell")
+        self.declare("J", kind="cell")
+        self.declare("dIJK", kind="cell", components=3)
         # cell center transformation metrics
-        self.declare(
-            *(f"d{a}d{b}" for a in "ENC" for b in "xyz"),
-            kind="cell",
-        )
+        self.declare("dENCdxyz", kind="cell", components=(3, 3))
         for axis in "ijk":
-            self.declare(
-                *(f"{axis}{n}" for n in ("xc", "yc", "zc")),
-                *(f"{axis}s{n}" for n in "xyz"),
-                f"{axis}S",
-                *(f"{axis}n{n}" for n in "xyz"),
-                kind=f"{axis}face",
-            )
+            self.declare(f"{axis}Faces", f"{axis}S", kind=f"{axis}face", components=3)
 
         #######################################################################
         # Solution Variables
@@ -58,7 +50,7 @@ class solverBlock(restartBlock, SolverMetricsMixin, HaloMixin):
 
         # what the case asks for beyond that
         if config["RHS"]["diffusion"]:
-            self.declare("dqdx", "dqdy", "dqdz", kind="cell", components=self.ne)
+            self.declare("grads", kind="cell", components=(self.ne, 3))
             self.declare("qt", kind="cell", components=2 + self.ns)
         if config["thermochem"]["chemistry"]:
             self.declare("omega", kind="cell", components=1 + self.ns - 1)

@@ -59,36 +59,24 @@ void periodicRot(
     }
   } else if (terms.compare("postDqDxyz") == 0) {
 
-    threeDsubview dqdx1 =
-        getFaceSlice(b.dqdx, face.nface, firstInteriorCellIdx);
-    threeDsubview dqdx0 = getFaceSlice(b.dqdx, face.nface, firstHaloIdx);
-    threeDsubview dqdy0 = getFaceSlice(b.dqdy, face.nface, firstHaloIdx);
-    threeDsubview dqdz0 = getFaceSlice(b.dqdz, face.nface, firstHaloIdx);
+    fourDsubview grads0 = getFaceSlice(b.grads, face.nface, firstHaloIdx);
 
     MDRange3 range_face =
-        MDRange3({0, 0, 0}, {static_cast<long>(dqdx1.extent(0)),
-                             static_cast<long>(dqdx1.extent(1)), b.ne});
+        MDRange3({0, 0, 0}, {static_cast<long>(grads0.extent(0)),
+                             static_cast<long>(grads0.extent(1)), b.ne});
     Kokkos::parallel_for(
         "Periodic postDqDxyz terms", range_face,
         KOKKOS_LAMBDA(const int i, const int j, const int l) {
           // turn the gradient vectors onto this face
-          double tempdx, tempdy, tempdz;
-          double dx = dqdx0(i, j, l);
-          double dy = dqdy0(i, j, l);
-          double dz = dqdz0(i, j, l);
-          tempdx = face.periodicRotMatrix(0, 0) * dx +
-                   face.periodicRotMatrix(0, 1) * dy +
-                   face.periodicRotMatrix(0, 2) * dz;
-          tempdy = face.periodicRotMatrix(1, 0) * dx +
-                   face.periodicRotMatrix(1, 1) * dy +
-                   face.periodicRotMatrix(1, 2) * dz;
-          tempdz = face.periodicRotMatrix(2, 0) * dx +
-                   face.periodicRotMatrix(2, 1) * dy +
-                   face.periodicRotMatrix(2, 2) * dz;
-
-          dqdx0(i, j, l) = tempdx;
-          dqdy0(i, j, l) = tempdy;
-          dqdz0(i, j, l) = tempdz;
+          double grad[3] = {grads0(i, j, l, 0), grads0(i, j, l, 1),
+                            grads0(i, j, l, 2)};
+          for (int r = 0; r < 3; r++) {
+            double turned = 0.0;
+            for (int c = 0; c < 3; c++) {
+              turned += face.periodicRotMatrix(r, c) * grad[c];
+            }
+            grads0(i, j, l, r) = turned;
+          }
         });
   }
 }

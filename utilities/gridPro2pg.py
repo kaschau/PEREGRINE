@@ -199,9 +199,7 @@ for blk in mb:
         temp = np.frombuffer(byte, dtype=np.float64).reshape(
             (blkShape[0] * blkShape[1] * blkShape[2], 3)
         )
-        blk.array["x"][:] = temp[:, 0].reshape(blkShape) * factor
-        blk.array["y"][:] = temp[:, 1].reshape(blkShape) * factor
-        blk.array["z"][:] = temp[:, 2].reshape(blkShape) * factor
+        blk.array["nodes"][:] = temp.reshape(tuple(blkShape) + (3,)) * factor
 
         gpBlkFile.read(1)
     else:
@@ -209,9 +207,7 @@ for blk in mb:
             for j in range(blkShape[1]):
                 for k in range(blkShape[2]):
                     line = gpBlkFile.readline().strip().split()
-                    blk.array["x"][i, j, k] = float(line[0]) * factor
-                    blk.array["y"][i, j, k] = float(line[1]) * factor
-                    blk.array["z"][i, j, k] = float(line[2]) * factor
+                    blk.array["nodes"][i, j, k] = [float(v) * factor for v in line[0:3]]
 
     blockStart = gpBlkFile.tell()
 

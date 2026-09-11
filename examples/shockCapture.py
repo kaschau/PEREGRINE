@@ -388,9 +388,9 @@ def simulate(testnum, index="i"):
     mb.unifyGrid()
     mb.computeMetrics()
 
-    ccArray = {"i": "xc", "j": "yc", "k": "zc"}
+    ccAxis = {"i": 0, "j": 1, "k": 2}
     uIndex = {"i": 1, "j": 2, "k": 3}
-    xc = blk.array[ccArray[index]]
+    xc = blk.array["cells"][..., ccAxis[index]]
     # Initialize Left/Right properties
     blk.array["q"][:, :, :, 0] = np.where(xc <= test.x0, test.pL, test.pR)
     blk.array["q"][:, :, :, uIndex[index]] = np.where(xc <= test.x0, test.uL, test.uR)
@@ -455,7 +455,7 @@ def simulate(testnum, index="i"):
         mb.step(test.dt)
 
     s_ = rotate(np.s_[ng:-ng, ng, ng], index)
-    x = blk.array[ccArray[index]][s_]
+    x = blk.array["cells"][..., ccAxis[index]][s_]
     rho = blk.array["Q"][s_][:, 0]
     p = blk.array["q"][s_][:, 0]
     phi = blk.array["phi"][s_][:, uIndex[index] - 1]

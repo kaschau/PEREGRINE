@@ -14,17 +14,16 @@ void dq2FD(block_ &b) {
   Kokkos::parallel_for(
       "2nd order spatial deriv", range_cc,
       KOKKOS_LAMBDA(const int i, const int j, const int k, const int l) {
-        double dqdE = 0.5 * (b.q(i + 1, j, k, l) - b.q(i - 1, j, k, l));
-        double dqdN = 0.5 * (b.q(i, j + 1, k, l) - b.q(i, j - 1, k, l));
-        double dqdC = 0.5 * (b.q(i, j, k + 1, l) - b.q(i, j, k - 1, l));
+        double dqdENC[3] = {0.5 * (b.q(i + 1, j, k, l) - b.q(i - 1, j, k, l)),
+                            0.5 * (b.q(i, j + 1, k, l) - b.q(i, j - 1, k, l)),
+                            0.5 * (b.q(i, j, k + 1, l) - b.q(i, j, k - 1, l))};
 
-        b.dqdx(i, j, k, l) = dqdE * b.dEdx(i, j, k) + dqdN * b.dNdx(i, j, k) +
-                             dqdC * b.dCdx(i, j, k);
-
-        b.dqdy(i, j, k, l) = dqdE * b.dEdy(i, j, k) + dqdN * b.dNdy(i, j, k) +
-                             dqdC * b.dCdy(i, j, k);
-
-        b.dqdz(i, j, k, l) = dqdE * b.dEdz(i, j, k) + dqdN * b.dNdz(i, j, k) +
-                             dqdC * b.dCdz(i, j, k);
+        for (int d = 0; d < 3; d++) {
+          double grad = 0.0;
+          for (int e = 0; e < 3; e++) {
+            grad += dqdENC[e] * b.dENCdxyz(i, j, k, e, d);
+          }
+          b.grads(i, j, k, l, d) = grad;
+        }
       });
 }

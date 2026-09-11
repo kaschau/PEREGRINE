@@ -12,7 +12,7 @@ class Wall(BaseBC):
     _veloGrad = None
 
     @property
-    def grads(self):
+    def gradRules(self):
         return dict(p="negate", velo=self._veloGrad, T=self._tempGrad, Y="negate")
 
     def euler(self, face):

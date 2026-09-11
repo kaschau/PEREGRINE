@@ -85,6 +85,4 @@ class CubeMesher(BaseMesher):
 
         s_i = blk.interior
 
-        blk.array["x"][s_i], blk.array["y"][s_i], blk.array["z"][s_i] = np.meshgrid(
-            x, y, z, indexing="ij"
-        )
+        blk.array["nodes"][s_i] = np.stack(np.meshgrid(x, y, z, indexing="ij"), axis=-1)

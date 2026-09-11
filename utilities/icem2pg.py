@@ -98,9 +98,7 @@ if args.fmt == "tns3dmb":
             ni, nj, nk = nijk
             temp = f90.read_reals(dtype=np.float64).reshape((ni, nj, nk, 3), order="F")
             blk.setExtents(ni, nj, nk)
-            blk.array["x"][:] = temp[:, :, :, 0] * factor
-            blk.array["y"][:] = temp[:, :, :, 1] * factor
-            blk.array["z"][:] = temp[:, :, :, 2] * factor
+            blk.array["nodes"][:] = temp * factor
 
 ##########################
 # MULTIBLOCK-INFO FORMAT #
@@ -121,9 +119,7 @@ elif args.fmt == "mbi":
         points = np.genfromtxt(fileName, comments="domain.")
 
         blk.setExtents(ni, nj, nk)
-        blk.array["x"][:] = np.reshape(points[:, 0], (ni, nj, nk)) * factor
-        blk.array["y"][:] = np.reshape(points[:, 1], (ni, nj, nk)) * factor
-        blk.array["z"][:] = np.reshape(points[:, 2], (ni, nj, nk)) * factor
+        blk.array["nodes"][:] = np.reshape(points[:, 0:3], (ni, nj, nk, 3)) * factor
 
 else:
     raise ValueError("Unknown file format given, see help menu")

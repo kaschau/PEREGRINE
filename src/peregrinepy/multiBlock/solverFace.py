@@ -11,14 +11,10 @@ from .topologyFace import topologyFace
 class solverFace(gridFace):
     # what a face trades with its neighbor, and the shape each trade takes
     commVars = {
-        "x": "node",
-        "y": "node",
-        "z": "node",
+        "nodes": "node",
         "q": "state",
         "Q": "state",
-        "dqdx": "gradient",
-        "dqdy": "gradient",
-        "dqdz": "gradient",
+        "grads": "gradient",
         "phi": "switch",
     }
 
@@ -92,13 +88,13 @@ class solverFace(gridFace):
         theirCell = cell[::-1] if self._transposed else cell
 
         return shapes | {
-            "node": (ng,) + node,
-            "nodeSend": (ng,) + theirNode,
+            "node": (ng,) + node + (3,),
+            "nodeSend": (ng,) + theirNode + (3,),
             "state": (ng,) + cell + (ne,),
             "stateSend": (ng,) + theirCell + (ne,),
             # a gradient is only ever wanted one cell past the block
-            "gradient": (1,) + cell + (ne,),
-            "gradientSend": (1,) + theirCell + (ne,),
+            "gradient": (1,) + cell + (ne, 3),
+            "gradientSend": (1,) + theirCell + (ne, 3),
             "switch": (1,) + cell + (3,),
             "switchSend": (1,) + theirCell + (3,),
             # what a bc holds across the face itself

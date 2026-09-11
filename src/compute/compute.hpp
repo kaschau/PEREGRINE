@@ -20,12 +20,25 @@ twoDsubview getFaceSlice(const threeDview &view, const int &nface,
                          const int &slice);
 threeDsubview getFaceSlice(const fourDview &view, const int &nface,
                            const int &slice);
-// the unit normal of a face, from whichever of the i, j, k face arrays it
+fourDsubview getFaceSlice(const fiveDview &view, const int &nface,
+                          const int &slice);
+// the area vector of a face, from whichever of the i, j, k face arrays it
 // belongs to
-void getFaceNormals(const block_ &b, const int &nface, const int &slice,
-                    twoDsubview &nx, twoDsubview &ny, twoDsubview &nz);
+threeDsubview getFaceAreaVectors(const block_ &b, const int &nface,
+                                 const int &slice);
 void getFaceSliceIdxs(int &firstHaloIdx, int &s1, int &s2, int &plus,
                       const int &ni, const int &nj, const int &nk,
                       const int &ng, const int &nface);
+
+// a face's area and unit normal, from its area vector
+KOKKOS_INLINE_FUNCTION
+void faceNormal(const double &sx, const double &sy, const double &sz, double &S,
+                double &nx, double &ny, double &nz) {
+  // a degenerate face is floored, we divide by this
+  S = fmax(sqrt(sx * sx + sy * sy + sz * sz), 1e-16);
+  nx = sx / S;
+  ny = sy / S;
+  nz = sz / S;
+}
 
 #endif

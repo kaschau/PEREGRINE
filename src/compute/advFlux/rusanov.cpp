@@ -1,12 +1,10 @@
 #include "block_.hpp"
+#include "compute.hpp"
 #include "kokkosTypes.hpp"
 #include "thtrdat_.hpp"
 #include <Kokkos_Core.hpp>
 
-static void computeFlux(const block_ &b, fourDview &iF, const threeDview &iS,
-                        const threeDview &isx, const threeDview &isy,
-                        const threeDview &isz, const threeDview &inx,
-                        const threeDview &iny, const threeDview &inz,
+static void computeFlux(const block_ &b, fourDview &iF, const fourDview &iS,
                         const int iMod, const int jMod, const int kMod) {
 
   // face flux range
@@ -16,6 +14,10 @@ static void computeFlux(const block_ &b, fourDview &iF, const threeDview &iS,
   Kokkos::parallel_for(
       "rusanov face conv fluxes", range,
       KOKKOS_LAMBDA(const int i, const int j, const int k) {
+        double S, nx, ny, nz;
+        faceNormal(iS(i, j, k, 0), iS(i, j, k, 1), iS(i, j, k, 2), S, nx, ny,
+                   nz);
+
         double UR;
         double UL;
 
@@ -27,8 +29,8 @@ static void computeFlux(const block_ &b, fourDview &iF, const threeDview &iS,
         double &vfL = b.q(i - iMod, j - jMod, k - kMod, 2);
         double &wfL = b.q(i - iMod, j - jMod, k - kMod, 3);
 
-        UR = inx(i, j, k) * ufR + iny(i, j, k) * vfR + inz(i, j, k) * wfR;
-        UL = inx(i, j, k) * ufL + iny(i, j, k) * vfL + inz(i, j, k) * wfL;
+        UR = nx * ufR + ny * vfR + nz * wfR;
+        UL = nx * ufL + ny * vfL + nz * wfL;
 
         double &rhoR = b.Q(i, j, k, 0);
         double &rhoL = b.Q(i - iMod, j - jMod, k - kMod, 0);
@@ -42,9 +44,9 @@ static void computeFlux(const block_ &b, fourDview &iF, const threeDview &iS,
         // wave speed estimate
         double lam = fmax(abs(UL) + b.qh(i, j, k, 3),
                           abs(UR) + b.qh(i - iMod, j - jMod, k - kMod, 3)) *
-                     iS(i, j, k);
-        UR *= iS(i, j, k);
-        UL *= iS(i, j, k);
+                     S;
+        UR *= S;
+        UL *= S;
 
         // Continuity rho*Ui
         double FrhoR, FrhoL;
@@ -54,18 +56,18 @@ static void computeFlux(const block_ &b, fourDview &iF, const threeDview &iS,
 
         double FUR, FUL;
         // x momentum rho*u*Ui+ p*Ax
-        FUR = UR * ufR * rhoR + pR * isx(i, j, k);
-        FUL = UL * ufL * rhoL + pL * isx(i, j, k);
+        FUR = UR * ufR * rhoR + pR * iS(i, j, k, 0);
+        FUL = UL * ufL * rhoL + pL * iS(i, j, k, 0);
         iF(i, j, k, 1) = 0.5 * (FUR + FUL - lam * (rhoR * ufR - rhoL * ufL));
 
         // y momentum rho*v*Ui+ p*Ay
-        FUR = UR * vfR * rhoR + pR * isy(i, j, k);
-        FUL = UL * vfL * rhoL + pL * isy(i, j, k);
+        FUR = UR * vfR * rhoR + pR * iS(i, j, k, 1);
+        FUL = UL * vfL * rhoL + pL * iS(i, j, k, 1);
         iF(i, j, k, 2) = 0.5 * (FUR + FUL - lam * (rhoR * vfR - rhoL * vfL));
 
         // w momentum rho*w*Ui+ p*Az
-        FUR = UR * wfR * rhoR + pR * isz(i, j, k);
-        FUL = UL * wfL * rhoL + pL * isz(i, j, k);
+        FUR = UR * wfR * rhoR + pR * iS(i, j, k, 2);
+        FUL = UL * wfL * rhoL + pL * iS(i, j, k, 2);
         iF(i, j, k, 3) = 0.5 * (FUR + FUL - lam * (rhoR * wfR - rhoL * wfL));
 
         // Total energy (rhoE+ p)*Ui)
@@ -88,7 +90,7 @@ static void computeFlux(const block_ &b, fourDview &iF, const threeDview &iS,
 }
 
 void rusanov(block_ &b) {
-  computeFlux(b, b.iF, b.iS, b.isx, b.isy, b.isz, b.inx, b.iny, b.inz, 1, 0, 0);
-  computeFlux(b, b.jF, b.jS, b.jsx, b.jsy, b.jsz, b.jnx, b.jny, b.jnz, 0, 1, 0);
-  computeFlux(b, b.kF, b.kS, b.ksx, b.ksy, b.ksz, b.knx, b.kny, b.knz, 0, 0, 1);
+  computeFlux(b, b.iF, b.iS, 1, 0, 0);
+  computeFlux(b, b.jF, b.jS, 0, 1, 0);
+  computeFlux(b, b.kF, b.kS, 0, 0, 1);
 }

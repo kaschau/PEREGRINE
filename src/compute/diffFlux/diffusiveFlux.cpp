@@ -6,8 +6,7 @@
 
 // This should basically never be used. It always worse than alpha damping.
 
-static void computeFlux(const block_ &b, fourDview &iF, const threeDview &isx,
-                        const threeDview &isy, const threeDview &isz,
+static void computeFlux(const block_ &b, fourDview &iF, const fourDview &iS,
                         const int iMod, const int jMod, const int kMod) {
 
   // Stokes hypothesis
@@ -31,26 +30,26 @@ static void computeFlux(const block_ &b, fourDview &iF, const threeDview &isx,
         iF(i, j, k, 0) = 0.0;
 
         // Derivatives on face
-        double dudx = 0.5 * (b.dqdx(i, j, k, 1) +
-                             b.dqdx(i - iMod, j - jMod, k - kMod, 1));
-        double dvdx = 0.5 * (b.dqdx(i, j, k, 2) +
-                             b.dqdx(i - iMod, j - jMod, k - kMod, 2));
-        double dwdx = 0.5 * (b.dqdx(i, j, k, 3) +
-                             b.dqdx(i - iMod, j - jMod, k - kMod, 3));
+        double dudx = 0.5 * (b.grads(i, j, k, 1, 0) +
+                             b.grads(i - iMod, j - jMod, k - kMod, 1, 0));
+        double dvdx = 0.5 * (b.grads(i, j, k, 2, 0) +
+                             b.grads(i - iMod, j - jMod, k - kMod, 2, 0));
+        double dwdx = 0.5 * (b.grads(i, j, k, 3, 0) +
+                             b.grads(i - iMod, j - jMod, k - kMod, 3, 0));
 
-        double dudy = 0.5 * (b.dqdy(i, j, k, 1) +
-                             b.dqdy(i - iMod, j - jMod, k - kMod, 1));
-        double dvdy = 0.5 * (b.dqdy(i, j, k, 2) +
-                             b.dqdy(i - iMod, j - jMod, k - kMod, 2));
-        double dwdy = 0.5 * (b.dqdy(i, j, k, 3) +
-                             b.dqdy(i - iMod, j - jMod, k - kMod, 3));
+        double dudy = 0.5 * (b.grads(i, j, k, 1, 1) +
+                             b.grads(i - iMod, j - jMod, k - kMod, 1, 1));
+        double dvdy = 0.5 * (b.grads(i, j, k, 2, 1) +
+                             b.grads(i - iMod, j - jMod, k - kMod, 2, 1));
+        double dwdy = 0.5 * (b.grads(i, j, k, 3, 1) +
+                             b.grads(i - iMod, j - jMod, k - kMod, 3, 1));
 
-        double dudz = 0.5 * (b.dqdz(i, j, k, 1) +
-                             b.dqdz(i - iMod, j - jMod, k - kMod, 1));
-        double dvdz = 0.5 * (b.dqdz(i, j, k, 2) +
-                             b.dqdz(i - iMod, j - jMod, k - kMod, 2));
-        double dwdz = 0.5 * (b.dqdz(i, j, k, 3) +
-                             b.dqdz(i - iMod, j - jMod, k - kMod, 3));
+        double dudz = 0.5 * (b.grads(i, j, k, 1, 2) +
+                             b.grads(i - iMod, j - jMod, k - kMod, 1, 2));
+        double dvdz = 0.5 * (b.grads(i, j, k, 2, 2) +
+                             b.grads(i - iMod, j - jMod, k - kMod, 2, 2));
+        double dwdz = 0.5 * (b.grads(i, j, k, 3, 2) +
+                             b.grads(i - iMod, j - jMod, k - kMod, 3, 2));
 
         double div = dudx + dvdy + dwdz;
 
@@ -60,7 +59,7 @@ static void computeFlux(const block_ &b, fourDview &iF, const threeDview &isx,
         double txz = -mu * (dwdx + dudz);
 
         iF(i, j, k, 1) =
-            txx * isx(i, j, k) + txy * isy(i, j, k) + txz * isz(i, j, k);
+            txx * iS(i, j, k, 0) + txy * iS(i, j, k, 1) + txz * iS(i, j, k, 2);
 
         // y momentum
         double &tyx = txy;
@@ -68,7 +67,7 @@ static void computeFlux(const block_ &b, fourDview &iF, const threeDview &isx,
         double tyz = -mu * (dwdy + dvdz);
 
         iF(i, j, k, 2) =
-            tyx * isx(i, j, k) + tyy * isy(i, j, k) + tyz * isz(i, j, k);
+            tyx * iS(i, j, k, 0) + tyy * iS(i, j, k, 1) + tyz * iS(i, j, k, 2);
 
         // z momentum
         double &tzx = txz;
@@ -76,19 +75,19 @@ static void computeFlux(const block_ &b, fourDview &iF, const threeDview &isx,
         double tzz = -2.0 * mu * dwdz - lambda * div;
 
         iF(i, j, k, 3) =
-            tzx * isx(i, j, k) + tzy * isy(i, j, k) + tzz * isz(i, j, k);
+            tzx * iS(i, j, k, 0) + tzy * iS(i, j, k, 1) + tzz * iS(i, j, k, 2);
 
         // energy
         //   heat conduction
-        double dTdx = 0.5 * (b.dqdx(i, j, k, 4) +
-                             b.dqdx(i - iMod, j - jMod, k - kMod, 4));
-        double dTdy = 0.5 * (b.dqdy(i, j, k, 4) +
-                             b.dqdy(i - iMod, j - jMod, k - kMod, 4));
-        double dTdz = 0.5 * (b.dqdz(i, j, k, 4) +
-                             b.dqdz(i - iMod, j - jMod, k - kMod, 4));
+        double dTdx = 0.5 * (b.grads(i, j, k, 4, 0) +
+                             b.grads(i - iMod, j - jMod, k - kMod, 4, 0));
+        double dTdy = 0.5 * (b.grads(i, j, k, 4, 1) +
+                             b.grads(i - iMod, j - jMod, k - kMod, 4, 1));
+        double dTdz = 0.5 * (b.grads(i, j, k, 4, 2) +
+                             b.grads(i - iMod, j - jMod, k - kMod, 4, 2));
 
-        double q = -kappa * (dTdx * isx(i, j, k) + dTdy * isy(i, j, k) +
-                             dTdz * isz(i, j, k));
+        double q = -kappa * (dTdx * iS(i, j, k, 0) + dTdy * iS(i, j, k, 1) +
+                             dTdz * iS(i, j, k, 2));
 
         // flow work
         // Compute face normal volume flux vector
@@ -99,9 +98,9 @@ static void computeFlux(const block_ &b, fourDview &iF, const threeDview &isx,
         double wf =
             0.5 * (b.q(i, j, k, 3) + b.q(i - iMod, j - jMod, k - kMod, 3));
 
-        iF(i, j, k, 4) = -(uf * txx + vf * txy + wf * txz) * isx(i, j, k) -
-                         (uf * tyx + vf * tyy + wf * tyz) * isy(i, j, k) -
-                         (uf * tzx + vf * tzy + wf * tzz) * isz(i, j, k) + q;
+        iF(i, j, k, 4) = -(uf * txx + vf * txy + wf * txz) * iS(i, j, k, 0) -
+                         (uf * tyx + vf * tyy + wf * tyz) * iS(i, j, k, 1) -
+                         (uf * tzx + vf * tzy + wf * tzz) * iS(i, j, k, 2) + q;
 
         // Species
         double Dk, Vc = 0.0;
@@ -112,15 +111,15 @@ static void computeFlux(const block_ &b, fourDview &iF, const threeDview &isx,
         for (int n = 0; n < b.ne - 5; n++) {
           Dk = 0.5 * (b.qt(i, j, k, 2 + n) +
                       b.qt(i - iMod, j - jMod, k - kMod, 2 + n));
-          double dYdx = 0.5 * (b.dqdx(i, j, k, 5 + n) +
-                               b.dqdx(i - iMod, j - jMod, k - kMod, 5 + n));
-          double dYdy = 0.5 * (b.dqdy(i, j, k, 5 + n) +
-                               b.dqdy(i - iMod, j - jMod, k - kMod, 5 + n));
-          double dYdz = 0.5 * (b.dqdz(i, j, k, 5 + n) +
-                               b.dqdz(i - iMod, j - jMod, k - kMod, 5 + n));
+          double dYdx = 0.5 * (b.grads(i, j, k, 5 + n, 0) +
+                               b.grads(i - iMod, j - jMod, k - kMod, 5 + n, 0));
+          double dYdy = 0.5 * (b.grads(i, j, k, 5 + n, 1) +
+                               b.grads(i - iMod, j - jMod, k - kMod, 5 + n, 1));
+          double dYdz = 0.5 * (b.grads(i, j, k, 5 + n, 2) +
+                               b.grads(i - iMod, j - jMod, k - kMod, 5 + n, 2));
 
-          double gradYk =
-              (dYdx * isx(i, j, k) + dYdy * isy(i, j, k) + dYdz * isz(i, j, k));
+          double gradYk = (dYdx * iS(i, j, k, 0) + dYdy * iS(i, j, k, 1) +
+                           dYdz * iS(i, j, k, 2));
           gradYns -= gradYk;
           Vc += Dk * gradYk;
           iF(i, j, k, 5 + n) = -rho * Dk * gradYk;
@@ -152,7 +151,7 @@ static void computeFlux(const block_ &b, fourDview &iF, const threeDview &isx,
 }
 
 void diffusiveFlux(block_ &b) {
-  computeFlux(b, b.iF, b.isx, b.isy, b.isz, 1, 0, 0);
-  computeFlux(b, b.jF, b.jsx, b.jsy, b.jsz, 0, 1, 0);
-  computeFlux(b, b.kF, b.ksx, b.ksy, b.ksz, 0, 0, 1);
+  computeFlux(b, b.iF, b.iS, 1, 0, 0);
+  computeFlux(b, b.jF, b.jS, 0, 1, 0);
+  computeFlux(b, b.kF, b.kS, 0, 0, 1);
 }

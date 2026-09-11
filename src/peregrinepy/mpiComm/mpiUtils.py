@@ -87,9 +87,9 @@ def checkForNan(mb):
                 continue
             with open(f"nans_{blk.nblki}.log", "w") as f:
                 f.write(f"Nan Detection Log: Block {blk.nblki}\n")
-                xs = blk.array["xc"][ng:-ng, ng:-ng, ng:-ng][nans]
-                ys = blk.array["yc"][ng:-ng, ng:-ng, ng:-ng][nans]
-                zs = blk.array["zc"][ng:-ng, ng:-ng, ng:-ng][nans]
+                xs = blk.array["cells"][..., 0][ng:-ng, ng:-ng, ng:-ng][nans]
+                ys = blk.array["cells"][..., 1][ng:-ng, ng:-ng, ng:-ng][nans]
+                zs = blk.array["cells"][..., 2][ng:-ng, ng:-ng, ng:-ng][nans]
                 for x, y, z in zip(xs, ys, zs):
                     f.write(f"x = {x} y = {y} z = {z}\n")
 

@@ -34,14 +34,22 @@ from .metricsMixin import MetricsMixin
 
 
 class SolverMetricsMixin(MetricsMixin):
+    def faceNormals(self, axis):
+        """The area and unit normal of every :axis: face, worked back over
+        from the area vector, which is the only one of the three stored."""
+        s = self.array[f"{axis}S"]
+        # a degenerate face is floored, we divide by this
+        area = np.maximum(np.sqrt((s**2).sum(axis=-1)), 1e-16)
+        return area, [s[..., n] / area for n in range(3)]
+
     @staticmethod
-    def _corner(coords, axes, *highs):
-        """The (x, y, z) of one corner of every face plane, stacked. :axes:
-        are the two the plane spans, :highs: which end of each to take."""
+    def _corner(nodes, axes, *highs):
+        """The (x, y, z) of one corner of every face plane. :axes: are the two
+        the plane spans, :highs: which end of each to take."""
         s = [slice(None)] * 3
         for n, high in zip(axes, highs):
             s[n] = np.s_[1:] if high else np.s_[:-1]
-        return np.stack([c[tuple(s)] for c in coords], axis=-1)
+        return nodes[tuple(s)]
 
     def computeMetrics(self):
         """The cell centers every block has, and then everything a flux needs:
@@ -50,10 +58,7 @@ class SolverMetricsMixin(MetricsMixin):
         differentiates through."""
         super().computeMetrics()
 
-        x = self.array["x"]
-        y = self.array["y"]
-        z = self.array["z"]
-        coords = (x, y, z)
+        nodes = self.array["nodes"]
 
         # ----------------------------------------------------------------------------
         # Face centers, area vectors and normals
@@ -67,65 +72,40 @@ class SolverMetricsMixin(MetricsMixin):
             diagonal = [(a + 1) % 3, (a + 2) % 3]
 
             center = 0.25 * (
-                self._corner(coords, inPlane, 0, 0)
-                + self._corner(coords, inPlane, 0, 1)
-                + self._corner(coords, inPlane, 1, 0)
-                + self._corner(coords, inPlane, 1, 1)
+                self._corner(nodes, inPlane, 0, 0)
+                + self._corner(nodes, inPlane, 0, 1)
+                + self._corner(nodes, inPlane, 1, 0)
+                + self._corner(nodes, inPlane, 1, 1)
             )
-            for n, c in enumerate("xyz"):
-                self.array[f"{axis}{c}c"][:] = center[..., n]
+            self.array[f"{axis}Faces"][:] = center
 
             S = 0.5 * np.cross(
-                self._corner(coords, diagonal, 1, 0)
-                - self._corner(coords, diagonal, 0, 1),
-                self._corner(coords, diagonal, 1, 1)
-                - self._corner(coords, diagonal, 0, 0),
+                self._corner(nodes, diagonal, 1, 0)
+                - self._corner(nodes, diagonal, 0, 1),
+                self._corner(nodes, diagonal, 1, 1)
+                - self._corner(nodes, diagonal, 0, 0),
             )
-            for n, c in enumerate("xyz"):
-                self.array[f"{axis}s{c}"][:] = S[..., n]
+            self.array[f"{axis}S"][:] = S
 
-            area = self.array[f"{axis}S"]
-            area[:] = np.sqrt(
-                self.array[f"{axis}sx"] ** 2
-                + self.array[f"{axis}sy"] ** 2
-                + self.array[f"{axis}sz"] ** 2
-            )
-            np.clip(area, 1e-16, None, out=area)
-
-            for c in "xyz":
-                self.array[f"{axis}n{c}"][:] = self.array[f"{axis}s{c}"] / area
-
-            self.updateDeviceView(
-                [f"{axis}{c}c" for c in "xyz"]
-                + [f"{axis}s{c}" for c in "xyz"]
-                + [f"{axis}S"]
-                + [f"{axis}n{c}" for c in "xyz"]
-            )
+            self.updateDeviceView([f"{axis}Faces", f"{axis}S"])
 
         # ----------------------------------------------------------------------------
         # Cell center volumes
         # ----------------------------------------------------------------------------
 
+        bodyDiagonal = nodes[1::, 1::, 1::] - nodes[0:-1, 0:-1, 0:-1]
         self.array["J"][:] = (
-            (x[1::, 1::, 1::] - x[0:-1, 0:-1, 0:-1])
-            * (
-                self.array["isx"][1::, :, :]
-                + self.array["jsx"][:, 1::, :]
-                + self.array["ksx"][:, :, 1::]
+            sum(
+                bodyDiagonal[..., n]
+                * (
+                    self.array["iS"][1::, :, :, n]
+                    + self.array["jS"][:, 1::, :, n]
+                    + self.array["kS"][:, :, 1::, n]
+                )
+                for n in range(3)
             )
-            + (y[1::, 1::, 1::] - y[0:-1, 0:-1, 0:-1])
-            * (
-                self.array["isy"][1::, :, :]
-                + self.array["jsy"][:, 1::, :]
-                + self.array["ksy"][:, :, 1::]
-            )
-            + (z[1::, 1::, 1::] - z[0:-1, 0:-1, 0:-1])
-            * (
-                self.array["isz"][1::, :, :]
-                + self.array["jsz"][:, 1::, :]
-                + self.array["ksz"][:, :, 1::]
-            )
-        ) / 3.0e0
+            / 3.0e0
+        )
 
         np.clip(self.array["J"], 1e-16, None, out=self.array["J"])
 
@@ -135,19 +115,14 @@ class SolverMetricsMixin(MetricsMixin):
         # Cell lengths, opposite face center to opposite face center
         # ----------------------------------------------------------------------------
 
-        for a, (axis, length) in enumerate(zip("ijk", ("dI", "dJ", "dK"))):
+        for a, axis in enumerate("ijk"):
             far, near = [slice(None)] * 3, [slice(None)] * 3
             far[a], near[a] = np.s_[1:], np.s_[:-1]
             far, near = tuple(far), tuple(near)
-            self.array[length][:] = np.sqrt(
-                sum(
-                    (self.array[f"{axis}{c}c"][far] - self.array[f"{axis}{c}c"][near])
-                    ** 2
-                    for c in "xyz"
-                )
-            )
+            span = self.array[f"{axis}Faces"][far] - self.array[f"{axis}Faces"][near]
+            self.array["dIJK"][..., a] = np.sqrt((span**2).sum(axis=-1))
 
-        self.updateDeviceView(["dI", "dJ", "dK"])
+        self.updateDeviceView("dIJK")
 
         # ----------------------------------------------------------------------------
         # Cell center transformation metrics (ferda FD diffusion operator)
@@ -156,7 +131,7 @@ class SolverMetricsMixin(MetricsMixin):
 
         # the eight cell corners, numbered as the diagram above
         c1, c2, c3, c4, c5, c6, c7, c8 = (
-            self._corner(coords, (0, 1, 2), *highs)
+            self._corner(nodes, (0, 1, 2), *highs)
             for highs in (
                 (0, 0, 0),
                 (0, 1, 0),
@@ -178,24 +153,9 @@ class SolverMetricsMixin(MetricsMixin):
         # the inverse of that jacobian is its adjugate over its determinant,
         # and the adjugate's rows are the cross products of the other two
         J = self.array["J"]
-        for name, rows in (
-            ("dEd", np.cross(dN, dC)),
-            ("dNd", np.cross(dC, dE)),
-            ("dCd", np.cross(dE, dN)),
-        ):
-            for n, comp in enumerate("xyz"):
-                self.array[f"{name}{comp}"][:] = rows[..., n] / J
-
-        self.updateDeviceView(
-            [
-                "dEdx",
-                "dEdy",
-                "dEdz",
-                "dNdx",
-                "dNdy",
-                "dNdz",
-                "dCdx",
-                "dCdy",
-                "dCdz",
-            ]
+        self.array["dENCdxyz"][:] = (
+            np.stack([np.cross(dN, dC), np.cross(dC, dE), np.cross(dE, dN)], axis=-2)
+            / J[..., None, None]
         )
+
+        self.updateDeviceView("dENCdxyz")
