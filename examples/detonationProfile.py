@@ -18,7 +18,7 @@ import peregrinepy as pg
 
 def simulate():
     relpath = str(Path(__file__).parent)
-    ct.add_directory(relpath + "/../src/peregrinepy/thermoTransport/database/source")
+    ct.add_directory(relpath + "/../src/peregrinepy/mixture/database/source")
     gas = ct.Solution("CH4_O2_FFCMY.yaml")
     # set the gas state
     gas.TP = 300.0, 101325.0
@@ -32,11 +32,11 @@ def simulate():
     config["RHS"]["secondaryAdvFlux"] = "scalarDissipation"
     config["RHS"]["switchAdvFlux"] = "vanLeer"
     config["timeIntegration"]["integrator"] = "rk3"
-    config["thermochem"]["chemistry"] = True
-    config["thermochem"]["mechanism"] = "chem_CH4_O2_FFCMY"
-    config["thermochem"]["nChemSubSteps"] = 10
-    config["thermochem"]["eos"] = "tpg"
-    config["thermochem"]["spdata"] = "thtr_CH4_O2_FFCMY.yaml"
+    config["mcPhysics"]["chemistry"] = True
+    config["mcPhysics"]["mixture"] = "chem_CH4_O2_FFCMY"
+    config["mcPhysics"]["nChemSubSteps"] = 10
+    config["mcPhysics"]["eos"] = "tpg"
+    config["mcPhysics"]["mixture"] = "thtr_CH4_O2_FFCMY.yaml"
     config.validateConfig()
     mb = pg.multiBlock.buildSolver(config, 1)
 

@@ -46,8 +46,8 @@ def simulate(index, velo):
     config = pg.files.configFile()
     config["timeIntegration"]["dt"] = 10 * 1.0e-5 / nx
     config["RHS"]["diffusion"] = True
-    config["thermochem"]["trans"] = "constantProps"
-    config["thermochem"]["spdata"] = ["Air"]
+    config["mcPhysics"]["trans"] = "constantProps"
+    config["mcPhysics"]["mixture"] = ["Air"]
     config.validateConfig()
 
     mb = pg.multiBlock.buildSolver(config, 1)

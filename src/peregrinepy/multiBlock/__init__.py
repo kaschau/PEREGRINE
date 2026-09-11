@@ -32,7 +32,7 @@ def setConsistify(cls, config):
     """
 
     # EOS
-    eos = config["thermochem"]["eos"]
+    eos = config["mcPhysics"]["eos"]
     try:
         cls.eos = getattr(compute.thermo, eos)
     except AttributeError:
@@ -40,7 +40,7 @@ def setConsistify(cls, config):
 
     # Transport properties
     if config["RHS"]["diffusion"]:
-        trans = config["thermochem"]["trans"]
+        trans = config["mcPhysics"]["trans"]
         try:
             cls.trans = getattr(compute.transport, trans)
         except AttributeError:
@@ -137,8 +137,8 @@ def setRHS(cls, config):
         cls.viscousSponge = null
 
     # Chemical source terms
-    if config["thermochem"]["chemistry"]:
-        mech = config["thermochem"]["mechanism"]
+    if config["mcPhysics"]["chemistry"]:
+        mech = config["mcPhysics"]["mixture"]
         if cls.stepType in ["explicit", "dualTime"]:
             try:
                 cls.expChem = getattr(compute.chemistry, mech)
@@ -152,14 +152,14 @@ def setRHS(cls, config):
             try:
                 cls.expChem = null
                 cls.impChem = getattr(compute.chemistry, mech)
-                if config["thermochem"]["nChemSubSteps"] > 1:
+                if config["mcPhysics"]["nChemSubSteps"] > 1:
                     import warnings
 
                     warnings.warn(
                         "WARNING: nChemSubSteps > 1 with implicit chemistry. This has no effect.",
                         RuntimeWarning,
                     )
-                    config["thermochem"]["nChemSubSteps"] = 1
+                    config["mcPhysics"]["nChemSubSteps"] = 1
             except AttributeError:
                 raise pgConfigError("mechanism", mech)
     else:

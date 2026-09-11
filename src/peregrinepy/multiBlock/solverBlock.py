@@ -52,7 +52,7 @@ class solverBlock(restartBlock, SolverMetricsMixin, HaloMixin):
         if config["RHS"]["diffusion"]:
             self.declare("grads", kind="cell", components=(self.ne, 3))
             self.declare("qt", kind="cell", components=2 + self.ns)
-        if config["thermochem"]["chemistry"]:
+        if config["mcPhysics"]["chemistry"]:
             self.declare("omega", kind="cell", components=1 + self.ns - 1)
 
         integrator = getIntegrator(config["timeIntegration"]["integrator"])

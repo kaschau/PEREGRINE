@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 
 def simulate():
     config = pg.files.configFile()
-    config["thermochem"]["spdata"] = ["O2", "N2"]
+    config["mcPhysics"]["mixture"] = ["O2", "N2"]
     config["RHS"]["diffusion"] = True
     config["RHS"]["primaryAdvFlux"] = "rusanov"
     config.validateConfig()

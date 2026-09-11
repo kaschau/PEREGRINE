@@ -14,9 +14,9 @@ import matplotlib.pyplot as plt
 def simulate():
     config = pg.files.configFile()
     config["RHS"]["diffusion"] = True
-    config["thermochem"]["eos"] = "cubic"
-    config["thermochem"]["spdata"] = ["CO2"]
-    config["thermochem"]["trans"] = "chungDenseGasUnityLewis"
+    config["mcPhysics"]["eos"] = "cubic"
+    config["mcPhysics"]["mixture"] = ["CO2"]
+    config["mcPhysics"]["trans"] = "chungDenseGasUnityLewis"
     config.validateConfig()
     mb = pg.multiBlock.buildSolver(config, 1)
     pg.mesher.CubeMesher(
@@ -67,7 +67,7 @@ def simulate():
             kappas[j, i] = blk.array["qt"][ng, ng, ng, 1]
 
     fig, axs = plt.subplots(2, 2, sharex=True)
-    fig.suptitle(f"Thermo Properties of {config['thermochem']['spdata'][0]}")
+    fig.suptitle(f"Thermo Properties of {config['mcPhysics']['mixture'][0]}")
     axs[0, 0].set_ylabel("rho [kg/m^3]")
     axs[0, 1].set_ylabel("Cp [J/kg.K]")
     axs[1, 0].set_ylabel("h [J/kg]")
@@ -84,7 +84,7 @@ def simulate():
         ax.grid()
     plt.show()
 
-    fig.suptitle(f"Transport Properties of {config['thermochem']['spdata'][0]}")
+    fig.suptitle(f"Transport Properties of {config['mcPhysics']['mixture'][0]}")
     fig, (ax1, ax2) = plt.subplots(2, sharex=True)
     ax2.set_xlabel("Temperature [K]")
     ax1.set_ylabel("Thermal Cond. [W/m^2.K]")

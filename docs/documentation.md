@@ -127,12 +127,15 @@ PEREGRINE run in executable mode requires an input configuration file (in yaml f
       diffusion: true #solve diffusion terms?
       subgrid: null #use a subgrid model?
 
-    thermochem: #thermo, transport, chem options
-      spdata: ["O2", "N2"] # list of species names, or path to THTR input yaml
+    mcPhysics: # the gas, and the eos, transport and diffusion models
+      mixture: ["O2", "N2"] # a Cantera mechanism file, or a list of species from the library
       eos: cpg
-      trans: constantProps #transport property calculations
+      trans: null # transport model; a viscous case picks one
+      diffusion: lewis # species diffusion model
       chemistry: false
-      mechanism: null #name of mechanism compiled in the compute module.
+      Trange: null # [Tlow, Thigh] every temperature-dependent property is refit over
+      reFitTol: 1.0e-3 # max relative error of each refit polynomial
+      reFitMaxDegree: 8 # and the degree it may go to
 
     coprocess: # coprocessing
       catalyst: false # or path to paraview catalyst input python file

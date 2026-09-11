@@ -119,10 +119,10 @@ class solver(restart):
         else:
             string += "  Diffusion terms not solved for\n"
         string += f"  Subgrid Model: {self.sgs.__name__}\n"
-        if self.config["thermochem"]["chemistry"]:
+        if self.config["mcPhysics"]["chemistry"]:
             string += f"  Explicit chemistry mechanism used: {self.expChem.__name__}\n"
-            if self.config["thermochem"]["nChemSubSteps"] > 1:
-                nSub = self.config["thermochem"]["nChemSubSteps"]
+            if self.config["mcPhysics"]["nChemSubSteps"] > 1:
+                nSub = self.config["mcPhysics"]["nChemSubSteps"]
                 string += f"    Number chemical sub steps: {nSub}\n"
             string += f"  Implicit chemistry mechanism used: {self.impChem.__name__}\n"
 

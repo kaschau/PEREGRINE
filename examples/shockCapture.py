@@ -333,7 +333,7 @@ class state:
 def simulate(testnum, index="i"):
     nx = 201
     config = pg.files.configFile()
-    config["thermochem"]["spdata"] = ["DB"]
+    config["mcPhysics"]["mixture"] = ["DB"]
     config["RHS"]["shockHandling"] = "artificialDissipation"
     config["RHS"]["primaryAdvFlux"] = "KEEPpe"
     config["RHS"]["secondaryAdvFlux"] = "scalarDissipation"

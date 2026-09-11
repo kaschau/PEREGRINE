@@ -54,14 +54,20 @@ class configFile(frozenDict):
             }
         )
 
-        self["thermochem"] = frozenDict(
+        self["mcPhysics"] = frozenDict(
             {
-                "spdata": ["Air"],
+                # a Cantera mechanism file, or a list of species from the library
+                "mixture": None,
                 "eos": "cpg",
-                "trans": "constantProps",
+                # none, like RHS diffusion: a viscous case picks one
+                "trans": None,
+                "diffusion": "lewis",
                 "chemistry": False,
-                "mechanism": None,
                 "nChemSubSteps": 1,
+                # what every temperature-dependent property is refit over and to
+                "Trange": None,
+                "reFitTol": 1e-3,
+                "reFitMaxDegree": 8,
             }
         )
 
@@ -107,7 +113,7 @@ class configFile(frozenDict):
         # timeIntegration Checks
         # ---------------------------------------------------------------------#
         ti = self["timeIntegration"]["integrator"]
-        eos = self["thermochem"]["eos"]
+        eos = self["mcPhysics"]["eos"]
 
         self["timeIntegration"]["dt"] = float(self["timeIntegration"]["dt"])
         if ti == "dualTime" and eos not in [
@@ -177,8 +183,6 @@ class configFile(frozenDict):
                 )
 
         # ---------------------------------------------------------------------#
-        # thermochem checks
+        # mcPhysics checks
         # ---------------------------------------------------------------------#
-        self["thermochem"]["nChemSubSteps"] = max(
-            1, self["thermochem"]["nChemSubSteps"]
-        )
+        self["mcPhysics"]["nChemSubSteps"] = max(1, self["mcPhysics"]["nChemSubSteps"])

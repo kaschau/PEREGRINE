@@ -28,8 +28,8 @@ def simulate():
     config["RHS"]["diffusion"] = False
     config["RHS"]["primaryAdvFlux"] = "rusanov"
     config["timeIntegration"]["integrator"] = "rk4"
-    config["thermochem"]["eos"] = "cpg"
-    config["thermochem"]["spdata"] = ["Air"]
+    config["mcPhysics"]["eos"] = "cpg"
+    config["mcPhysics"]["mixture"] = ["Air"]
     config.validateConfig()
 
     mb = pg.multiBlock.buildSolver(config, 1)

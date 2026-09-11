@@ -52,6 +52,6 @@ def RHS(mb):
         mb.expChem(
             blk.cpp,
             mb.thtrdat.cpp,
-            nChemSubSteps=mb.config["thermochem"]["nChemSubSteps"],
+            nChemSubSteps=mb.config["mcPhysics"]["nChemSubSteps"],
             dt=mb.config["timeIntegration"]["dt"],
         )

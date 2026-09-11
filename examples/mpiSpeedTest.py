@@ -19,7 +19,7 @@ def simulate():
     config["RHS"]["shockHandling"] = "artificialDissipation"
     config["RHS"]["switchAdvFlux"] = "jamesonPressure"
     config["RHS"]["secondaryAdvFlux"] = "scalarDissipation"
-    config["thermochem"]["spdata"] = ["Air"]
+    config["mcPhysics"]["mixture"] = ["Air"]
 
     config["io"]["niterRestart"] = 1000000
     config["io"]["niterPrint"] = 1000000
@@ -32,7 +32,7 @@ def simulate():
 
     ni = 30
     nbi = 10
-    mb = pg.multiBlock.restart(nbi**3, config["thermochem"]["spdata"])
+    mb = pg.multiBlock.restart(nbi**3, config["mcPhysics"]["mixture"])
     pg.mesher.CubeMesher(
         mbDims=[nbi, nbi, nbi],
         dimsPerBlock=[ni, ni, ni],

@@ -88,8 +88,8 @@ if __name__ == "__main__":
 def simulate():
     config = pg.files.configFile()
     config["RHS"]["diffusion"] = True
-    config["thermochem"]["spdata"] = ["Air"]
-    config["thermochem"]["trans"] = "constantProps"
+    config["mcPhysics"]["mixture"] = ["Air"]
+    config["mcPhysics"]["trans"] = "constantProps"
     config["coprocess"]["catalyst"] = True
     config["coprocess"]["catalystFile"] = "tempcoproc.py"
     config.validateConfig()
