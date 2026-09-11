@@ -131,6 +131,9 @@ PYBIND11_MODULE(compute, m) {
       .def(py::init<>())
 
       .def_readwrite("nface", &face_::nface)
+      .def_readwrite("orientTranspose", &face_::orientTranspose)
+      .def_readwrite("orientFlip0", &face_::orientFlip0)
+      .def_readwrite("orientFlip1", &face_::orientFlip1)
 
       .def_readwrite("qBcVals", &face_::qBcVals)
       .def_readwrite("QBcVals", &face_::QBcVals)
@@ -145,12 +148,6 @@ PYBIND11_MODULE(compute, m) {
       .def_readwrite("recvBuffer_Q", &face_::recvBuffer_Q)
       .def_readwrite("recvBuffer_grads", &face_::recvBuffer_grads)
       .def_readwrite("recvBuffer_phi", &face_::recvBuffer_phi)
-
-      .def_readwrite("tempRecvBuffer_nodes", &face_::tempRecvBuffer_nodes)
-      .def_readwrite("tempRecvBuffer_q", &face_::tempRecvBuffer_q)
-      .def_readwrite("tempRecvBuffer_Q", &face_::tempRecvBuffer_Q)
-      .def_readwrite("tempRecvBuffer_grads", &face_::tempRecvBuffer_grads)
-      .def_readwrite("tempRecvBuffer_phi", &face_::tempRecvBuffer_phi)
 
       .def_readwrite("periodicRotMatrix", &face_::periodicRotMatrix)
 

@@ -46,7 +46,7 @@ class solverFace(gridFace):
         self.declare("qBcVals", "QBcVals", kind="bcValues")
         for var, kind in self.commVars.items():
             self.declare(f"sendBuffer_{var}", kind=f"{kind}Send")
-            self.declare(f"recvBuffer_{var}", f"tempRecvBuffer_{var}", kind=kind)
+            self.declare(f"recvBuffer_{var}", kind=kind)
 
         # Boundary function
         self.bcFunc = bcs.getBc("adiabaticSlipWall").kernel()
@@ -118,9 +118,7 @@ class solverFace(gridFace):
     def commArrays(self):
         """Every buffer this face trades through."""
         return [
-            f"{role}Buffer_{var}"
-            for var in self.commVars
-            for role in ("send", "recv", "tempRecv")
+            f"{role}Buffer_{var}" for var in self.commVars for role in ("send", "recv")
         ]
 
     ###########################################################################
@@ -161,6 +159,10 @@ class solverFace(gridFace):
         """How a plane of ours is laid out in our neighbor's frame: which of
         our two face axes it reads first, and which way round it reads each."""
         self._transposed, self._flipped = self.neighborPlaneAlignment
+        # the pack kernel turns the plane, so the compute side needs to know how
+        self.cpp.orientTranspose = bool(self._transposed)
+        self.cpp.orientFlip0 = 0 in self._flipped
+        self.cpp.orientFlip1 = 1 in self._flipped
 
     def _setSlices(self):
         """Which planes of the block go out, and where the ones that arrive

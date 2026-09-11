@@ -206,4 +206,13 @@ void bindKokkos(py::module_ &m) {
         Kokkos::deep_copy(dest, src);
       },
       "deep_copy_fiveDH", py::arg("dest"), py::arg("src"));
+
+  pgkokkos.def(
+      "deep_copy",
+      [](fourDview &dest, fourDview &src) { Kokkos::deep_copy(dest, src); },
+      "deep_copy_fourDD", py::arg("dest"), py::arg("src"));
+  pgkokkos.def(
+      "deep_copy",
+      [](fiveDview &dest, fiveDview &src) { Kokkos::deep_copy(dest, src); },
+      "deep_copy_fiveDD", py::arg("dest"), py::arg("src"));
 }

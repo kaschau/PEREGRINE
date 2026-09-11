@@ -10,6 +10,8 @@ struct face_ {
 
   // face number
   int nface;
+  // how our neighbor reads the plane we pack for it
+  bool orientTranspose, orientFlip0, orientFlip1;
   // Boundary condition value arrays
   threeDview qBcVals, QBcVals;
 
@@ -24,11 +26,6 @@ struct face_ {
   fourDview recvBuffer_q, recvBuffer_Q;
   fiveDview recvBuffer_grads;
   fourDview recvBuffer_phi;
-  // temps
-  fourDview tempRecvBuffer_nodes;
-  fourDview tempRecvBuffer_q, tempRecvBuffer_Q;
-  fiveDview tempRecvBuffer_grads;
-  fourDview tempRecvBuffer_phi;
 
   // How a halo arriving through this face is turned onto it
   twoDview periodicRotMatrix;
