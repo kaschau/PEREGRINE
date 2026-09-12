@@ -29,9 +29,10 @@ class Jit:
         os.environ.get("PEREGRINE_CACHE", Path.home() / ".cache" / "peregrinepy")
     )
 
-    def __init__(self, config, defines=()):
+    def __init__(self, config, ns, ng):
         self.config = config
-        self.defines = tuple(defines)
+        # a kernel is compiled for one species count and halo depth
+        self.defines = (f"NS={ns}", f"NE={5 + ns - 1}", f"NG={ng}")
         self.toolchain = Toolchain.read(self.package / "toolchain.json")
 
     @property

@@ -12,33 +12,12 @@ PG_ABI void pgTpg(const pgView *Q_, const pgView *q_, const pgView *qh_,
   auto cpPoly = as2(*cpPoly_);
   auto hPoly = as2(*hPoly_);
   auto hRef = as1(*hRef_);
-  const int ns = MW.extent(0);
-
-#ifndef NSCOMPILE
-  Kokkos::Experimental::UniqueToken<execSpace> token;
-  int numIds = token.size();
-  twoDview Y("Y", numIds, ns);
-  twoDview hi("hi", numIds, ns);
-#endif
-
-#ifdef NSCOMPILE
-#define Y(INDEX) Y[INDEX]
-#define hi(INDEX) hi[INDEX]
-#define ns NS
-#else
-#define Y(INDEX) Y(id, INDEX)
-#define hi(INDEX) hi(id, INDEX)
-#endif
 
   MDRange3 range = range3(*r);
   if (fromPrims) {
     Kokkos::parallel_for(
         "Compute all conserved quantities from primatives via tgp", range,
         KOKKOS_LAMBDA(const int i, const int j, const int k) {
-#ifndef NSCOMPILE
-          int id = token.acquire();
-#endif
-
           // Updates all conserved quantities from primatives
           // Along the way, we need to compute mixture properties
           // gamma, cp, h, e, hi
@@ -49,41 +28,37 @@ PG_ABI void pgTpg(const pgView *Q_, const pgView *q_, const pgView *qh_,
           const double &v = q(i, j, k, 2);
           const double &w = q(i, j, k, 3);
           const double &T = q(i, j, k, 4);
-#ifdef NSCOMPILE
-          double Y(ns);
-#endif
+          double Y[ns];
 
           double rho;
           double rhou, rhov, rhow;
           double e, tke, rhoE;
           double gamma, cp, h, c;
-#ifdef NSCOMPILE
-          double hi(ns);
-#endif
+          double hi[ns];
           double Rmix;
 
           // Compute nth species Y
-          Y(ns - 1) = 1.0;
+          Y[ns - 1] = 1.0;
           double testSum = 0.0;
           for (int n = 0; n < ns - 1; n++) {
             q(i, j, k, 5 + n) = fmax(fmin(q(i, j, k, 5 + n), 1.0), 0.0);
-            Y(n) = q(i, j, k, 5 + n);
-            Y(ns - 1) -= Y(n);
-            testSum += Y(n);
+            Y[n] = q(i, j, k, 5 + n);
+            Y[ns - 1] -= Y[n];
+            testSum += Y[n];
           }
 
           // Renormalize if necessary
           if (testSum > 1.0) {
-            Y(ns - 1) = 0.0;
+            Y[ns - 1] = 0.0;
             for (int n = 0; n < ns - 1; n++) {
-              Y(n) /= testSum;
+              Y[n] /= testSum;
             }
           }
 
           // Compute Rmix
           Rmix = 0.0;
           for (int n = 0; n <= ns - 1; n++) {
-            Rmix += Y(n) / MW(n);
+            Rmix += Y[n] / MW(n);
           }
           Rmix *= Ru;
 
@@ -101,9 +76,9 @@ PG_ABI void pgTpg(const pgView *Q_, const pgView *q_, const pgView *qh_,
                 hRT = hRT * u + hPoly(n, m);
               hRT += hRef(n) / T;
               const double Rn = Ru / MW(n);
-              hi(n) = hRT * T * Rn;
-              cp += cpR * Rn * Y(n);
-              h += hi(n) * Y(n);
+              hi[n] = hRT * T * Rn;
+              cp += cpR * Rn * Y[n];
+              h += hi[n] * Y[n];
             }
           }
 
@@ -138,7 +113,7 @@ PG_ABI void pgTpg(const pgView *Q_, const pgView *q_, const pgView *qh_,
           Q(i, j, k, 4) = rhoE;
           // Species mass
           for (int n = 0; n < ns - 1; n++) {
-            Q(i, j, k, 5 + n) = Y(n) * rho;
+            Q(i, j, k, 5 + n) = Y[n] * rho;
           }
           // gamma,cp,h,c,e,hi
           qh(i, j, k, 0) = gamma;
@@ -147,21 +122,13 @@ PG_ABI void pgTpg(const pgView *Q_, const pgView *q_, const pgView *qh_,
           qh(i, j, k, 3) = c;
           qh(i, j, k, 4) = rho * e;
           for (int n = 0; n <= ns - 1; n++) {
-            qh(i, j, k, 5 + n) = hi(n);
+            qh(i, j, k, 5 + n) = hi[n];
           }
-
-#ifndef NSCOMPILE
-          token.release(id);
-#endif
         });
   } else {
     Kokkos::parallel_for(
         "Compute primatives from conserved quantities via tpg", range,
         KOKKOS_LAMBDA(const int i, const int j, const int k) {
-#ifndef NSCOMPILE
-          int id = token.acquire();
-#endif
-
           // Updates all primatives from conserved quantities
           // Along the way, we need to compute mixture properties
           // gamma, cp, h, e, hi
@@ -176,35 +143,31 @@ PG_ABI void pgTpg(const pgView *Q_, const pgView *q_, const pgView *qh_,
           double p;
           double e, tke;
           double T;
-#ifdef NSCOMPILE
           double Y[ns];
-#endif
           double gamma, cp, h, c;
-#ifdef NSCOMPILE
           double hi[ns];
-#endif
           double Rmix;
 
           // Compute TKE
           tke = 0.5 * (pow(rhou, 2.0) + pow(rhov, 2.0) + pow(rhow, 2.0)) / rho;
 
           // Compute species mass fraction
-          Y(ns - 1) = 1.0;
+          Y[ns - 1] = 1.0;
           double testSum = 0.0;
           for (int n = 0; n < ns - 1; n++) {
             Q(i, j, k, 5 + n) =
                 fmax(fmin(Q(i, j, k, 5 + n), Q(i, j, k, 0)), 0.0);
-            Y(n) = Q(i, j, k, 5 + n) / Q(i, j, k, 0);
-            Y(ns - 1) -= Y(n);
-            testSum += Y(n);
+            Y[n] = Q(i, j, k, 5 + n) / Q(i, j, k, 0);
+            Y[ns - 1] -= Y[n];
+            testSum += Y[n];
           }
 
           // Renormalize if necessary
           if (testSum > 1.0) {
-            Y(ns - 1) = 0.0;
+            Y[ns - 1] = 0.0;
             for (int n = 0; n < ns - 1; n++) {
-              Y(n) /= testSum;
-              Q(i, j, k, 5 + n) = Y(n) * Q(i, j, k, 0);
+              Y[n] /= testSum;
+              Q(i, j, k, 5 + n) = Y[n] * Q(i, j, k, 0);
             }
           }
 
@@ -214,7 +177,7 @@ PG_ABI void pgTpg(const pgView *Q_, const pgView *q_, const pgView *qh_,
           // Compute Rmix
           Rmix = 0.0;
           for (int n = 0; n <= ns - 1; n++) {
-            Rmix += Y(n) / MW(n);
+            Rmix += Y[n] / MW(n);
           }
           Rmix *= Ru;
 
@@ -238,9 +201,9 @@ PG_ABI void pgTpg(const pgView *Q_, const pgView *q_, const pgView *qh_,
                   hRT = hRT * u + hPoly(n, m);
                 hRT += hRef(n) / T;
                 const double Rn = Ru / MW(n);
-                hi(n) = hRT * T * Rn;
-                cp += cpR * Rn * Y(n);
-                h += hi(n) * Y(n);
+                hi[n] = hRT * T * Rn;
+                cp += cpR * Rn * Y[n];
+                h += hi[n] * Y[n];
               }
             }
 
@@ -265,7 +228,7 @@ PG_ABI void pgTpg(const pgView *Q_, const pgView *q_, const pgView *qh_,
           q(i, j, k, 3) = rhow / rho;
           q(i, j, k, 4) = T;
           for (int n = 0; n < ns - 1; n++) {
-            q(i, j, k, 5 + n) = Y(n);
+            q(i, j, k, 5 + n) = Y[n];
           }
           // gamma,cp,h,c,e,hi
           qh(i, j, k, 0) = gamma;
@@ -274,12 +237,8 @@ PG_ABI void pgTpg(const pgView *Q_, const pgView *q_, const pgView *qh_,
           qh(i, j, k, 3) = c;
           qh(i, j, k, 4) = rho * e;
           for (int n = 0; n <= ns - 1; n++) {
-            qh(i, j, k, 5 + n) = hi(n);
+            qh(i, j, k, 5 + n) = hi[n];
           }
-
-#ifndef NSCOMPILE
-          token.release(id);
-#endif
         });
   }
 }

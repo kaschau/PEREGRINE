@@ -1,4 +1,4 @@
-#include "abi.hpp"
+#include "kernelUtils.hpp"
 #include "kokkosTypes.hpp"
 #include <Kokkos_Core.hpp>
 #include <math.h>
@@ -7,7 +7,7 @@
 PG_ABI void pgVanLeer(const pgView *phi_, const pgView *q_, const pgDims *d) {
   auto phi = as4(*phi_);
   auto q = as4(*q_);
-  const int ng = d->ng, ni = d->ni, nj = d->nj, nk = d->nk;
+  const int ni = d->ni, nj = d->nj, nk = d->nk;
 
   MDRange3 range_cc({ng, ng, ng}, {ni + ng - 1, nj + ng - 1, nk + ng - 1});
 

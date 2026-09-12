@@ -202,16 +202,18 @@ def buildSolver(config, nblks=None, myblocks=None):
     if myblocks is not None:
         nblks = len(myblocks)
 
-    # the kernels this case calls, compiled if the cache has none
-    Jit(config).load()
+    mixture = Mixture(config["mcPhysics"], root=config["io"]["inputDir"])
+    ng = howManyNG(config)
+
+    # the kernels this case calls, compiled for it if the cache has none
+    Jit(config, len(mixture.speciesNames), ng).load()
 
     # merge the time integration class with the multiBlock solver class
     ti = config["timeIntegration"]["integrator"]
     name = "solver" + ti
     mbsolver = type(name, (solver, getIntegrator(ti)), dict(name=name))
 
-    mixture = Mixture(config["mcPhysics"], root=config["io"]["inputDir"])
-    cls = mbsolver(nblks, mixture.speciesNames, ng=howManyNG(config), config=config)
+    cls = mbsolver(nblks, mixture.speciesNames, ng=ng, config=config)
 
     # in parallel the blocks are numbered by the partition, not by order
     if myblocks is not None:

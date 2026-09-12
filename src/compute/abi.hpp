@@ -17,9 +17,9 @@ struct pgView {
   int extent[5];
 };
 
-// a block's shape: cells per direction and halo depth
+// a block's shape: cells per direction
 struct pgDims {
-  int ni, nj, nk, ng;
+  int ni, nj, nk;
 };
 
 // the cells a kernel does, as Python states them

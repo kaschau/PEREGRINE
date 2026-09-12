@@ -1,4 +1,4 @@
-#include "abi.hpp"
+#include "kernelUtils.hpp"
 #include "kokkosTypes.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -16,8 +16,7 @@ PG_ABI void pgFourthOrderKEEP(const pgView *Q_, const pgView *iF_,
   auto kS = as4(*kS_);
   auto q = as4(*q_);
   auto qh = as4(*qh_);
-  const int ng = d->ng, ni = d->ni, nj = d->nj, nk = d->nk;
-  const int ne = Q.extent(3);
+  const int ni = d->ni, nj = d->nj, nk = d->nk;
 
   //-------------------------------------------------------------------------------------------|
   // i flux face range

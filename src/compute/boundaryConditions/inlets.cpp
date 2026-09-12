@@ -12,8 +12,7 @@ PG_ABI void pgConstantVelocitySubsonicInlet(
   auto S = as4(*S_);
   auto qBcVals = as3(*qBcVals_), QBcVals = as3(*QBcVals_);
   auto rot = as2(*rot_);
-  const int ni = d->ni, nj = d->nj, nk = d->nk, ng = d->ng;
-  const int ne = q.extent(3);
+  const int ni = d->ni, nj = d->nj, nk = d->nk;
   //-------------------------------------------------------------------------------------------|
   // Apply BC to face, slice by slice.
   //-------------------------------------------------------------------------------------------|
@@ -85,8 +84,7 @@ PG_ABI void pgSupersonicInlet(const pgView *q_, const pgView *Q_,
   auto S = as4(*S_);
   auto qBcVals = as3(*qBcVals_), QBcVals = as3(*QBcVals_);
   auto rot = as2(*rot_);
-  const int ni = d->ni, nj = d->nj, nk = d->nk, ng = d->ng;
-  const int ne = q.extent(3);
+  const int ni = d->ni, nj = d->nj, nk = d->nk;
   //-------------------------------------------------------------------------------------------|
   // Apply BC to face, slice by slice.
   //-------------------------------------------------------------------------------------------|
@@ -146,8 +144,7 @@ PG_ABI void pgConstantMassFluxSubsonicInlet(
   auto S = as4(*S_);
   auto qBcVals = as3(*qBcVals_), QBcVals = as3(*QBcVals_);
   auto rot = as2(*rot_);
-  const int ni = d->ni, nj = d->nj, nk = d->nk, ng = d->ng;
-  const int ne = q.extent(3);
+  const int ni = d->ni, nj = d->nj, nk = d->nk;
   //-------------------------------------------------------------------------------------------|
   // Apply BC to face, slice by slice.
   //-------------------------------------------------------------------------------------------|
@@ -278,8 +275,7 @@ PG_ABI void pgStagnationSubsonicInlet(const pgView *q_, const pgView *Q_,
   auto S = as4(*S_);
   auto qBcVals = as3(*qBcVals_), QBcVals = as3(*QBcVals_);
   auto rot = as2(*rot_);
-  const int ni = d->ni, nj = d->nj, nk = d->nk, ng = d->ng;
-  const int ne = q.extent(3);
+  const int ni = d->ni, nj = d->nj, nk = d->nk;
 
   // Stagnation boundary condition from
   // https://ntrs.nasa.gov/api/citations/20180001221/downloads/20180001221.pdf

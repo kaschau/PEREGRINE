@@ -22,8 +22,7 @@ PG_ABI void pgAdiabaticNoSlipWall(const pgView *q_, const pgView *Q_,
   auto S = as4(*S_);
   auto qBcVals = as3(*qBcVals_), QBcVals = as3(*QBcVals_);
   auto rot = as2(*rot_);
-  const int ni = d->ni, nj = d->nj, nk = d->nk, ng = d->ng;
-  const int ne = q.extent(3);
+  const int ni = d->ni, nj = d->nj, nk = d->nk;
   //-------------------------------------------------------------------------------------------|
   // Apply BC to face, slice by slice.
   //-------------------------------------------------------------------------------------------|
@@ -139,8 +138,7 @@ PG_ABI void pgAdiabaticSlipWall(const pgView *q_, const pgView *Q_,
   auto S = as4(*S_);
   auto qBcVals = as3(*qBcVals_), QBcVals = as3(*QBcVals_);
   auto rot = as2(*rot_);
-  const int ni = d->ni, nj = d->nj, nk = d->nk, ng = d->ng;
-  const int ne = q.extent(3);
+  const int ni = d->ni, nj = d->nj, nk = d->nk;
   //-------------------------------------------------------------------------------------------|
   // Apply BC to face, slice by slice.
   //-------------------------------------------------------------------------------------------|
@@ -216,8 +214,7 @@ PG_ABI void pgAdiabaticMovingWall(const pgView *q_, const pgView *Q_,
   auto S = as4(*S_);
   auto qBcVals = as3(*qBcVals_), QBcVals = as3(*QBcVals_);
   auto rot = as2(*rot_);
-  const int ni = d->ni, nj = d->nj, nk = d->nk, ng = d->ng;
-  const int ne = q.extent(3);
+  const int ni = d->ni, nj = d->nj, nk = d->nk;
   //-------------------------------------------------------------------------------------------|
   // Apply BC to face, slice by slice.
   //-------------------------------------------------------------------------------------------|
@@ -332,8 +329,7 @@ PG_ABI void pgIsoTNoSlipWall(const pgView *q_, const pgView *Q_,
   auto S = as4(*S_);
   auto qBcVals = as3(*qBcVals_), QBcVals = as3(*QBcVals_);
   auto rot = as2(*rot_);
-  const int ni = d->ni, nj = d->nj, nk = d->nk, ng = d->ng;
-  const int ne = q.extent(3);
+  const int ni = d->ni, nj = d->nj, nk = d->nk;
   //-------------------------------------------------------------------------------------------|
   // Apply BC to face, slice by slice.
   //-------------------------------------------------------------------------------------------|
@@ -447,8 +443,7 @@ PG_ABI void pgIsoTSlipWall(const pgView *q_, const pgView *Q_,
   auto S = as4(*S_);
   auto qBcVals = as3(*qBcVals_), QBcVals = as3(*QBcVals_);
   auto rot = as2(*rot_);
-  const int ni = d->ni, nj = d->nj, nk = d->nk, ng = d->ng;
-  const int ne = q.extent(3);
+  const int ni = d->ni, nj = d->nj, nk = d->nk;
   //-------------------------------------------------------------------------------------------|
   // Apply BC to face, slice by slice.
   //-------------------------------------------------------------------------------------------|
@@ -547,8 +542,7 @@ PG_ABI void pgIsoTMovingWall(const pgView *q_, const pgView *Q_,
   auto S = as4(*S_);
   auto qBcVals = as3(*qBcVals_), QBcVals = as3(*QBcVals_);
   auto rot = as2(*rot_);
-  const int ni = d->ni, nj = d->nj, nk = d->nk, ng = d->ng;
-  const int ne = q.extent(3);
+  const int ni = d->ni, nj = d->nj, nk = d->nk;
   //-------------------------------------------------------------------------------------------|
   // Apply BC to face, slice by slice.
   //-------------------------------------------------------------------------------------------|

@@ -1,4 +1,4 @@
-#include "abi.hpp"
+#include "kernelUtils.hpp"
 #include "kokkosTypes.hpp"
 #include <Kokkos_Core.hpp>
 #include <math.h>
@@ -21,8 +21,7 @@ PG_ABI void pgSmagorinsky(const pgView *J_, const pgView *Q_,
   auto grads = as5(*grads_);
   auto qh = as4(*qh_);
   auto qt = as4(*qt_);
-  const int ng = d->ng, ni = d->ni, nj = d->nj, nk = d->nk;
-  const int ne = Q.extent(3);
+  const int ni = d->ni, nj = d->nj, nk = d->nk;
 
   MDRange3 range_cc({ng - 1, ng - 1, ng - 1}, {ni + ng, nj + ng, nk + ng});
 

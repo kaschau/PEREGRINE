@@ -1,4 +1,4 @@
-#include "abi.hpp"
+#include "kernelUtils.hpp"
 #include "kokkosTypes.hpp"
 #include "math.h"
 #include <Kokkos_Core.hpp>
@@ -169,8 +169,7 @@ PG_ABI void pgDiffusiveFlux(const pgView *Q_, const pgView *grads_,
   auto q = as4(*q_);
   auto qh = as4(*qh_);
   auto qt = as4(*qt_);
-  const int ng = d->ng, ni = d->ni, nj = d->nj, nk = d->nk;
-  const int ne = Q.extent(3);
+  const int ni = d->ni, nj = d->nj, nk = d->nk;
   computeFlux(Q, grads, q, qh, qt, ne, ng, ni, nj, nk, iF, iS, 1, 0, 0);
   computeFlux(Q, grads, q, qh, qt, ne, ng, ni, nj, nk, jF, jS, 0, 1, 0);
   computeFlux(Q, grads, q, qh, qt, ne, ng, ni, nj, nk, kF, kS, 0, 0, 1);

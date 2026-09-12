@@ -86,39 +86,12 @@ PG_ABI void pgRealGas(const pgView *Q_, const pgView *q_, const pgView *qh_,
   auto Tcrit = as1(*Tcrit_);
   auto pcrit = as1(*pcrit_);
   auto acentric = as1(*acentric_);
-  const int ns = MW.extent(0);
-
-#ifndef NSCOMPILE
-  Kokkos::Experimental::UniqueToken<execSpace> token;
-  int numIds = token.size();
-  twoDview Y("Y", numIds, ns);
-  twoDview hi("hi", numIds, ns);
-  twoDview X("X", numIds, ns);
-  twoDview ai("ai", numIds, ns);
-#endif
-
-#ifdef NSCOMPILE
-#define Y(INDEX) Y[INDEX]
-#define hi(INDEX) hi[INDEX]
-#define X(INDEX) X[INDEX]
-#define ai(INDEX) ai[INDEX]
-#define ns NS
-#else
-#define Y(INDEX) Y(id, INDEX)
-#define hi(INDEX) hi(id, INDEX)
-#define X(INDEX) X(id, INDEX)
-#define ai(INDEX) ai(id, INDEX)
-#endif
 
   MDRange3 range = range3(*r);
   if (fromPrims) {
     Kokkos::parallel_for(
         "Compute all conserved quantities from primatives via real gas", range,
         KOKKOS_LAMBDA(const int i, const int j, const int k) {
-#ifndef NSCOMPILE
-          int id = token.acquire();
-#endif
-
           // Updates all conserved quantities from primatives
           // Along the way, we need to compute mixture properties
           // gamma, cp, h, e, hi
@@ -129,47 +102,43 @@ PG_ABI void pgRealGas(const pgView *Q_, const pgView *q_, const pgView *qh_,
           const double v = q(i, j, k, 2);
           const double w = q(i, j, k, 3);
           const double T = q(i, j, k, 4);
-#ifdef NSCOMPILE
-          double Y(ns);
-          double X(ns);
-#endif
+          double Y[ns];
+          double X[ns];
 
           double rho;
           double rhou, rhov, rhow;
           double e, tke, rhoE;
           double gamma, cp, h, c;
-#ifdef NSCOMPILE
-          double hi(ns);
-#endif
+          double hi[ns];
           double Rmix;
 
           // Compute nth species Y
-          Y(ns - 1) = 1.0;
+          Y[ns - 1] = 1.0;
           double testSum = 0.0;
           // Compute y->x denom
           double denom = 0.0;
           for (int n = 0; n < ns - 1; n++) {
             q(i, j, k, 5 + n) = fmax(fmin(q(i, j, k, 5 + n), 1.0), 0.0);
-            Y(n) = q(i, j, k, 5 + n);
-            Y(ns - 1) -= Y(n);
-            denom += Y(n) / MW(n);
-            testSum += Y(n);
+            Y[n] = q(i, j, k, 5 + n);
+            Y[ns - 1] -= Y[n];
+            denom += Y[n] / MW(n);
+            testSum += Y[n];
           }
-          denom += Y(ns - 1) / MW(ns - 1);
+          denom += Y[ns - 1] / MW(ns - 1);
 
           // Renormalize if necessary
           if (testSum > 1.0) {
-            Y(ns - 1) = 0.0;
+            Y[ns - 1] = 0.0;
             for (int n = 0; n < ns - 1; n++) {
-              Y(n) /= testSum;
+              Y[n] /= testSum;
             }
           }
 
           // Compute mole fraction, mean molecular weight
           double MWmix = 0.0;
           for (int n = 0; n <= ns - 1; n++) {
-            X(n) = (Y(n) / MW(n)) / denom;
-            MWmix += MW(n) * X(n);
+            X[n] = (Y[n] / MW(n)) / denom;
+            MWmix += MW(n) * X[n];
           }
           // Compute Rmix
           Rmix = Ru / MWmix;
@@ -189,9 +158,7 @@ PG_ABI void pgRealGas(const pgView *Q_, const pgView *q_, const pgView *qh_,
           // -------------------------------------------------------------------------------------------------------------//
 
           double am = 0.0, bm = 0.0;
-#ifdef NSCOMPILE
-          double ai(ns);
-#endif
+          double ai[ns];
           double Astar, Bstar;
 
           // Compressibility Factor, Z
@@ -200,16 +167,16 @@ PG_ABI void pgRealGas(const pgView *Q_, const pgView *q_, const pgView *qh_,
             double fOmega =
                 fw0 + fw1 * acentric(n) + fw2 * pow(acentric(n), 2.0);
             double alpha = pow(1.0 + fOmega * (1 - sqrt(Tr)), 2.0);
-            ai(n) = aiConst * (pow(Ru * Tcrit(n), 2.0) * alpha) / pcrit(n);
+            ai[n] = aiConst * (pow(Ru * Tcrit(n), 2.0) * alpha) / pcrit(n);
             double bi = biConst * (Ru * Tcrit(n)) / pcrit(n);
 
-            bm += X(n) * bi;
+            bm += X[n] * bi;
           }
           for (int n = 0; n <= ns - 1; n++) {
             for (int n2 = 0; n2 <= ns - 1; n2++) {
-              am += X(n) * X(n2) *
-                    sqrt(ai(n) *
-                         ai(n2)); // - (1 - kij)  <- For now we ignore binary
+              am += X[n] * X[n2] *
+                    sqrt(ai[n] *
+                         ai[n2]); // - (1 - kij)  <- For now we ignore binary
                                   // interaciton coeff, i.e. assume kij=1
             }
           }
@@ -259,9 +226,9 @@ PG_ABI void pgRealGas(const pgView *Q_, const pgView *q_, const pgView *qh_,
                   fw0 + fw1 * acentric(n) + fw2 * pow(acentric(n), 2.0);
               double fOmegaN2 =
                   fw0 + fw1 * acentric(n2) + fw2 * pow(acentric(n2), 2.0);
-              dam += X(n2) * X(n) * 1.0 *
-                     (fOmegaN2 * sqrt(ai(n) * Tcrit(n2) / pcrit(n2)) +
-                      fOmegaN * sqrt(ai(n2) * Tcrit(n) / pcrit(n)));
+              dam += X[n2] * X[n] * 1.0 *
+                     (fOmegaN2 * sqrt(ai[n] * Tcrit(n2) / pcrit(n2)) +
+                      fOmegaN * sqrt(ai[n2] * Tcrit(n) / pcrit(n)));
             }
           }
           dam *= -0.5 * Ru * sqrt(aiConst / T);
@@ -309,11 +276,11 @@ PG_ABI void pgRealGas(const pgView *Q_, const pgView *q_, const pgView *qh_,
                 hRT = hRT * u + hPoly(n, m);
               hRT += hRef(n) / T;
               const double Rn = Ru / MW(n);
-              hi(n) = hRT * T * Rn;
-              cp += cpR * Rn * Y(n);
-              h += hi(n) * Y(n);
+              hi[n] = hRT * T * Rn;
+              cp += cpR * Rn * Y[n];
+              h += hi[n] * Y[n];
               // Add departure to individual hi
-              hi(n) += Ru * T * hDep / MW(n);
+              hi[n] += Ru * T * hDep / MW(n);
             }
           }
 
@@ -362,7 +329,7 @@ PG_ABI void pgRealGas(const pgView *Q_, const pgView *q_, const pgView *qh_,
           Q(i, j, k, 4) = rhoE;
           // Species mass
           for (int n = 0; n < ns - 1; n++) {
-            Q(i, j, k, 5 + n) = Y(n) * rho;
+            Q(i, j, k, 5 + n) = Y[n] * rho;
           }
           // gamma,cp,h,c,e,hi
           qh(i, j, k, 0) = gamma;
@@ -371,22 +338,13 @@ PG_ABI void pgRealGas(const pgView *Q_, const pgView *q_, const pgView *qh_,
           qh(i, j, k, 3) = c;
           qh(i, j, k, 4) = rho * e;
           for (int n = 0; n <= ns - 1; n++) {
-            qh(i, j, k, 5 + n) = hi(n);
+            qh(i, j, k, 5 + n) = hi[n];
           }
-
-#ifndef NSCOMPILE
-          token.release(id);
-#endif
         });
   } else {
     Kokkos::parallel_for(
         "Compute primatives from conserved quantities via real gas", range,
         KOKKOS_LAMBDA(const int i, const int j, const int k) {
-
-#ifndef NSCOMPILE
-          int id = token.acquire();
-#endif
-
           // Updates all primatives from conserved quantities
           // Along the way, we need to compute mixture properties
           // gamma, cp, h, e, hi
@@ -401,40 +359,36 @@ PG_ABI void pgRealGas(const pgView *Q_, const pgView *q_, const pgView *qh_,
           double p;
           double e, tke;
           double T;
-#ifdef NSCOMPILE
-          double Y(ns);
-          double X(ns);
-#endif
+          double Y[ns];
+          double X[ns];
           double gamma, cp, h, c;
-#ifdef NSCOMPILE
-          double hi(ns);
-#endif
+          double hi[ns];
           double Rmix;
 
           // Compute TKE
           tke = 0.5 * (pow(rhou, 2.0) + pow(rhov, 2.0) + pow(rhow, 2.0)) / rho;
 
           // Compute species mass fraction
-          Y(ns - 1) = 1.0;
+          Y[ns - 1] = 1.0;
           double testSum = 0.0;
           // Compute y->x denom
           double denom = 0.0;
           for (int n = 0; n < ns - 1; n++) {
             Q(i, j, k, 5 + n) =
                 fmax(fmin(Q(i, j, k, 5 + n), Q(i, j, k, 0)), 0.0);
-            Y(n) = Q(i, j, k, 5 + n) / Q(i, j, k, 0);
-            Y(ns - 1) -= Y(n);
-            denom += Y(n) / MW(n);
-            testSum += Y(n);
+            Y[n] = Q(i, j, k, 5 + n) / Q(i, j, k, 0);
+            Y[ns - 1] -= Y[n];
+            denom += Y[n] / MW(n);
+            testSum += Y[n];
           }
-          denom += Y(ns - 1) / MW(ns - 1);
+          denom += Y[ns - 1] / MW(ns - 1);
 
           // Renormalize if necessary
           if (testSum > 1.0) {
-            Y(ns - 1) = 0.0;
+            Y[ns - 1] = 0.0;
             for (int n = 0; n < ns - 1; n++) {
-              Y(n) /= testSum;
-              Q(i, j, k, 5 + n) = Y(n) * Q(i, j, k, 0);
+              Y[n] /= testSum;
+              Q(i, j, k, 5 + n) = Y[n] * Q(i, j, k, 0);
             }
           }
 
@@ -464,8 +418,8 @@ PG_ABI void pgRealGas(const pgView *Q_, const pgView *q_, const pgView *qh_,
           // Compute mole fraction, mean molecular weight
           double MWmix = 0.0;
           for (int n = 0; n <= ns - 1; n++) {
-            X(n) = (Y(n) / MW(n)) / denom;
-            MWmix += MW(n) * X(n);
+            X[n] = (Y[n] / MW(n)) / denom;
+            MWmix += MW(n) * X[n];
           }
           // Compute Rmix
           Rmix = Ru / MWmix;
@@ -483,24 +437,22 @@ PG_ABI void pgRealGas(const pgView *Q_, const pgView *q_, const pgView *qh_,
             double bi;
             double am = 0.0;
             double bm = 0.0;
-#ifdef NSCOMPILE
-            double ai(ns);
-#endif
+            double ai[ns];
             for (int n = 0; n <= ns - 1; n++) {
               double Tr = T / Tcrit(n);
               double fOmega =
                   fw0 + fw1 * acentric(n) + fw2 * pow(acentric(n), 2.0);
               double alpha = pow(1.0 + fOmega * (1 - sqrt(Tr)), 2.0);
-              ai(n) = aiConst * (pow(Ru * Tcrit(n), 2.0) * alpha) / pcrit(n);
+              ai[n] = aiConst * (pow(Ru * Tcrit(n), 2.0) * alpha) / pcrit(n);
               bi = biConst * (Ru * Tcrit(n)) / pcrit(n);
 
-              bm += X(n) * bi;
+              bm += X[n] * bi;
             }
             for (int n = 0; n <= ns - 1; n++) {
               for (int n2 = 0; n2 <= ns - 1; n2++) {
-                am += X(n) * X(n2) *
-                      sqrt(ai(n) *
-                           ai(n2)); // - (1 - kij)  <- For now we ignore binary
+                am += X[n] * X[n2] *
+                      sqrt(ai[n] *
+                           ai[n2]); // - (1 - kij)  <- For now we ignore binary
                                     // interaciton coeff, i.e. assume kij=1
               }
             }
@@ -551,9 +503,9 @@ PG_ABI void pgRealGas(const pgView *Q_, const pgView *q_, const pgView *qh_,
                     fw0 + fw1 * acentric(n) + fw2 * pow(acentric(n), 2.0);
                 double fOmegaN2 =
                     fw0 + fw1 * acentric(n2) + fw2 * pow(acentric(n2), 2.0);
-                dam += X(n2) * X(n) * 1.0 *
-                       (fOmegaN2 * sqrt(ai(n) * Tcrit(n2) / pcrit(n2)) +
-                        fOmegaN * sqrt(ai(n2) * Tcrit(n) / pcrit(n)));
+                dam += X[n2] * X[n] * 1.0 *
+                       (fOmegaN2 * sqrt(ai[n] * Tcrit(n2) / pcrit(n2)) +
+                        fOmegaN * sqrt(ai[n2] * Tcrit(n) / pcrit(n)));
               }
             }
             dam *= -0.5 * Ru * sqrt(aiConst / T);
@@ -602,11 +554,11 @@ PG_ABI void pgRealGas(const pgView *Q_, const pgView *q_, const pgView *qh_,
                   hRT = hRT * u + hPoly(n, m);
                 hRT += hRef(n) / T;
                 const double Rn = Ru / MW(n);
-                hi(n) = hRT * T * Rn;
-                cp += cpR * Rn * Y(n);
-                h += hi(n) * Y(n);
+                hi[n] = hRT * T * Rn;
+                cp += cpR * Rn * Y[n];
+                h += hi[n] * Y[n];
                 // Add departure to individual hi
-                hi(n) += Ru * T * hDep / MW(n);
+                hi[n] += Ru * T * hDep / MW(n);
               }
             }
 
@@ -644,7 +596,7 @@ PG_ABI void pgRealGas(const pgView *Q_, const pgView *q_, const pgView *qh_,
           q(i, j, k, 3) = rhow / rho;
           q(i, j, k, 4) = T;
           for (int n = 0; n < ns - 1; n++) {
-            q(i, j, k, 5 + n) = Y(n);
+            q(i, j, k, 5 + n) = Y[n];
           }
           // gamma,cp,h,c,e,hi
           qh(i, j, k, 0) = gamma;
@@ -653,12 +605,8 @@ PG_ABI void pgRealGas(const pgView *Q_, const pgView *q_, const pgView *qh_,
           qh(i, j, k, 3) = c;
           qh(i, j, k, 4) = rho * e;
           for (int n = 0; n <= ns - 1; n++) {
-            qh(i, j, k, 5 + n) = hi(n);
+            qh(i, j, k, 5 + n) = hi[n];
           }
-
-#ifndef NSCOMPILE
-          token.release(id);
-#endif
         });
   }
 }

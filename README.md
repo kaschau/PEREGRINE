@@ -47,7 +47,7 @@ is set. Finally, run the simulation with nsys enabling cuda,nvtx trace options.
 
 ## Performance
 
-PEREGRINE is pretty fast by default. However, when running a simulation with multiple chemical species, it is recommended to turn on `PEREGRINE_NSCOMPILE` in cmake, and then specify the value of `numSpecies`. This will hard code `ns` at compile time, and gives a considerable performance improvement for EOS/transport calculations.
+Every kernel is compiled for the case that runs it: the species count and halo depth are constants in the compiled code, not runtime values, which is a considerable gain for the EOS and transport kernels. The compiled kernels are cached (`~/.cache/peregrinepy`, or `$PEREGRINE_CACHE`), so a case pays for its kernels once.
 
 ## Parallel I/O 
 

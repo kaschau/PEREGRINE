@@ -130,8 +130,7 @@ PG_ABI void pgAusmPlusUp(const pgView *Q_, const pgView *iF_, const pgView *iS_,
   auto kS = as4(*kS_);
   auto q = as4(*q_);
   auto qh = as4(*qh_);
-  const int ng = d->ng, ni = d->ni, nj = d->nj, nk = d->nk;
-  const int ne = Q.extent(3);
+  const int ni = d->ni, nj = d->nj, nk = d->nk;
   computeFlux(Q, q, qh, ne, ng, ni, nj, nk, iF, iS, 1, 0, 0);
   computeFlux(Q, q, qh, ne, ng, ni, nj, nk, jF, jS, 0, 1, 0);
   computeFlux(Q, q, qh, ne, ng, ni, nj, nk, kF, kS, 0, 0, 1);

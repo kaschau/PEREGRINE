@@ -6,6 +6,12 @@
 #include "abi.hpp"
 #include <utility>
 
+// the case's constants, baked in by the jit
+#if !defined(NS) || !defined(NE) || !defined(NG)
+#error "a kernel is compiled for one case: NS, NE and NG come from the jit"
+#endif
+constexpr int ns = NS, ne = NE, ng = NG;
+
 inline MDRange3 range3(const pgRange &r) {
   return MDRange3({r.i0, r.j0, r.k0}, {r.i1, r.j1, r.k1});
 }
@@ -31,7 +37,7 @@ inline faceCells faceCellsOf(const pgDims &d, const int nface) {
   const int n = nface <= 2 ? d.ni : nface <= 4 ? d.nj : d.nk;
   const bool low = nface % 2;
   const int plus = low ? 1 : -1;
-  const int face = low ? d.ng : n + d.ng - 1;
+  const int face = low ? ng : n + ng - 1;
   // cell `face` is the first interior cell of a low face and the first halo of
   // a high one
   const int halo = low ? face - 1 : face;

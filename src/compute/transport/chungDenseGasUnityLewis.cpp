@@ -37,63 +37,35 @@ PG_ABI void pgChungDenseGasUnityLewis(
   auto chungB = as2(*chungB_);
   auto lewis = as1(*lewis_);
   auto redDipole = as1(*redDipole_);
-  const int ns = MW.extent(0);
-#ifndef NSCOMPILE
-  Kokkos::Experimental::UniqueToken<execSpace> token;
-  int numIds = token.size();
-  twoDview Y("Y", numIds, ns);
-  twoDview X("X", numIds, ns);
-  twoDview mu_sp("mu_sp", numIds, ns);
-  twoDview kappa_sp("kappa_sp", numIds, ns);
-#endif
-
-#ifdef NSCOMPILE
-#define Y(INDEX) Y[INDEX]
-#define X(INDEX) X[INDEX]
-#define mu_sp(INDEX) mu_sp[INDEX]
-#define kappa_sp(INDEX) kappa_sp[INDEX]
-#define ns NS
-#else
-#define Y(INDEX) Y(id, INDEX)
-#define X(INDEX) X(id, INDEX)
-#define mu_sp(INDEX) mu_sp(id, INDEX)
-#define kappa_sp(INDEX) kappa_sp(id, INDEX)
-#endif
 
   MDRange3 range = range3(*r);
   Kokkos::parallel_for(
       "Chung trans props unity Lewis", range,
       KOKKOS_LAMBDA(const int i, const int j, const int k) {
-#ifndef NSCOMPILE
-        int id = token.acquire();
-#endif
-
         double &T = q(i, j, k, 4);
-#ifdef NSCOMPILE
-        double Y(ns);
-        double X(ns);
-        double mu_sp(ns);
-        double kappa_sp(ns);
-#endif
+        double Y[ns];
+        double X[ns];
+        double mu_sp[ns];
+        double kappa_sp[ns];
 
         // Compute nth species Y
-        Y(ns - 1) = 1.0;
+        Y[ns - 1] = 1.0;
         for (int n = 0; n < ns - 1; n++) {
-          Y(n) = q(i, j, k, 5 + n);
-          Y(ns - 1) -= Y(n);
+          Y[n] = q(i, j, k, 5 + n);
+          Y[ns - 1] -= Y[n];
         }
-        Y(ns - 1) = fmax(0.0, Y(ns - 1));
+        Y[ns - 1] = fmax(0.0, Y[ns - 1]);
 
         // Update mixture properties
         // Mole fractions
         {
           double mass = 0.0;
           for (int n = 0; n <= ns - 1; n++) {
-            mass += Y(n) / MW(n);
+            mass += Y[n] / MW(n);
           }
           // Mean molecular weight, mole fraction
           for (int n = 0; n <= ns - 1; n++) {
-            X(n) = Y(n) / MW(n) / mass;
+            X[n] = Y[n] / MW(n) / mass;
           }
         }
 
@@ -144,7 +116,7 @@ PG_ABI void pgChungDenseGasUnityLewis(
               sqrt(Tstar) / Omegav * (Fc / G2 + A6 * Yy) + etaStarStar;
 
           // Compute final viscosity, convert to SI units
-          mu_sp(n) = etaStar * 36.344 * sqrt(MW(n) * Tcrit(n)) /
+          mu_sp[n] = etaStar * 36.344 * sqrt(MW(n) * Tcrit(n)) /
                      pow(Vc, 2.0 / 3.0) * 1e-7;
 
           // Dilute gas thermal conductivity
@@ -181,7 +153,7 @@ PG_ABI void pgChungDenseGasUnityLewis(
               pow(Yy, 2.0) * H2 * sqrt(Tr);
 
           // Compute final thermal conductivity, convert to SI units
-          kappa_sp(n) = (lambdak + lambdap) * 418.68;
+          kappa_sp[n] = (lambdak + lambdap) * 418.68;
         }
 
         // Now every species' property is computed, generate mixture values
@@ -192,12 +164,12 @@ PG_ABI void pgChungDenseGasUnityLewis(
           double phitemp = 0.0;
           for (int n2 = 0; n2 <= ns - 1; n2++) {
             double phi =
-                pow((1.0 + sqrt(mu_sp(n) / mu_sp(n2) * sqrt(MW(n2) / MW(n)))),
+                pow((1.0 + sqrt(mu_sp[n] / mu_sp[n2] * sqrt(MW(n2) / MW(n)))),
                     2.0) /
                 (sqrt(8.0) * sqrt(1 + MW(n) / MW(n2)));
-            phitemp += phi * X(n2);
+            phitemp += phi * X[n2];
           }
-          mu += mu_sp(n) * X(n) / phitemp;
+          mu += mu_sp[n] * X[n] / phitemp;
         }
 
         // thermal conductivity mixture
@@ -206,8 +178,8 @@ PG_ABI void pgChungDenseGasUnityLewis(
           double sum1 = 0.0;
           double sum2 = 0.0;
           for (int n = 0; n <= ns - 1; n++) {
-            sum1 += X(n) * kappa_sp(n);
-            sum2 += X(n) / kappa_sp(n);
+            sum1 += X[n] * kappa_sp[n];
+            sum2 += X[n] / kappa_sp[n];
           }
           kappa = 0.5 * (sum1 + 1.0 / sum2);
         }
@@ -222,9 +194,5 @@ PG_ABI void pgChungDenseGasUnityLewis(
           qt(i, j, k, 2 + n) =
               kappa / (Q(i, j, k, 0) * qh(i, j, k, 1) * lewis(n));
         }
-
-#ifndef NSCOMPILE
-        token.release(id);
-#endif
       });
 }

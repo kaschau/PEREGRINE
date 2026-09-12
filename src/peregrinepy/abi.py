@@ -19,10 +19,14 @@ class Library:
 
     def load(self, path, shared=False):
         """Load a library once; the runtime is shared so the kernels resolve
-        Kokkos out of it."""
+        Kokkos out of it. A kernel compiled for a new case replaces the one
+        of the same name from the last."""
         if path not in self._libs:
             mode = ctypes.RTLD_GLOBAL if shared else ctypes.RTLD_LOCAL
             self._libs[path] = ctypes.CDLL(str(path), mode=mode)
+        else:
+            self._libs[path] = self._libs.pop(path)
+        self._resolved.clear()
 
     def initialize(self):
         """Load the runtime and start Kokkos. Nothing before this touches a
@@ -42,7 +46,7 @@ class Library:
         if name.startswith("_"):
             raise AttributeError(name)
         if name not in self._resolved:
-            for lib in self._libs.values():
+            for lib in reversed(self._libs.values()):
                 if hasattr(lib, name):
                     function = getattr(lib, name)
                     break
@@ -87,13 +91,13 @@ class View(ctypes.Structure):
 
 
 class Dims(ctypes.Structure):
-    """A block's shape: cells per direction and halo depth."""
+    """A block's shape: cells per direction; the halo depth is compiled in."""
 
-    _fields_ = [(n, ctypes.c_int) for n in ("ni", "nj", "nk", "ng")]
+    _fields_ = [(n, ctypes.c_int) for n in ("ni", "nj", "nk")]
 
     @classmethod
     def of(cls, blk):
-        return cls(blk.ni, blk.nj, blk.nk, blk.ng)
+        return cls(blk.ni, blk.nj, blk.nk)
 
 
 class Range(ctypes.Structure):

@@ -1,4 +1,4 @@
-#include "abi.hpp"
+#include "kernelUtils.hpp"
 #include "kokkosTypes.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -7,8 +7,7 @@ PG_ABI void pgDq2FD(const pgView *dENCdxyz_, const pgView *grads_,
   auto dENCdxyz = as5(*dENCdxyz_);
   auto grads = as5(*grads_);
   auto q = as4(*q_);
-  const int ng = d->ng, ni = d->ni, nj = d->nj, nk = d->nk;
-  const int ne = q.extent(3);
+  const int ni = d->ni, nj = d->nj, nk = d->nk;
 
   //-------------------------------------------------------------------------------------------|
   // Spatial derivatices of primative variables

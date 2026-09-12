@@ -1,4 +1,4 @@
-#include "abi.hpp"
+#include "kernelUtils.hpp"
 #include "kokkosTypes.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -8,8 +8,7 @@ PG_ABI void pgRk4s1(const pgView *Q_, const pgView *Q0_, const pgView *Q1_,
   auto Q0 = as4(*Q0_);
   auto Q1 = as4(*Q1_);
   auto dQ = as4(*dQ_);
-  const int ng = d->ng, ni = d->ni, nj = d->nj, nk = d->nk;
-  const int ne = Q.extent(3);
+  const int ni = d->ni, nj = d->nj, nk = d->nk;
   //-------------------------------------------------------------------------------------------|
   // Apply RK4 stage 1
   //-------------------------------------------------------------------------------------------|
@@ -31,8 +30,7 @@ PG_ABI void pgRk4s2(const pgView *Q_, const pgView *Q0_, const pgView *Q2_,
   auto Q0 = as4(*Q0_);
   auto Q2 = as4(*Q2_);
   auto dQ = as4(*dQ_);
-  const int ng = d->ng, ni = d->ni, nj = d->nj, nk = d->nk;
-  const int ne = Q.extent(3);
+  const int ni = d->ni, nj = d->nj, nk = d->nk;
   //-------------------------------------------------------------------------------------------|
   // Apply RK4 stage 2
   //-------------------------------------------------------------------------------------------|
@@ -52,8 +50,7 @@ PG_ABI void pgRk4s3(const pgView *Q_, const pgView *Q0_, const pgView *Q3_,
   auto Q0 = as4(*Q0_);
   auto Q3 = as4(*Q3_);
   auto dQ = as4(*dQ_);
-  const int ng = d->ng, ni = d->ni, nj = d->nj, nk = d->nk;
-  const int ne = Q.extent(3);
+  const int ni = d->ni, nj = d->nj, nk = d->nk;
   //-------------------------------------------------------------------------------------------|
   // Apply RK4 stage 3
   //-------------------------------------------------------------------------------------------|
@@ -76,8 +73,7 @@ PG_ABI void pgRk4s4(const pgView *Q_, const pgView *Q0_, const pgView *Q1_,
   auto Q2 = as4(*Q2_);
   auto Q3 = as4(*Q3_);
   auto dQ = as4(*dQ_);
-  const int ng = d->ng, ni = d->ni, nj = d->nj, nk = d->nk;
-  const int ne = Q.extent(3);
+  const int ni = d->ni, nj = d->nj, nk = d->nk;
   //-------------------------------------------------------------------------------------------|
   // Apply RK4 stage 4
   //-------------------------------------------------------------------------------------------|

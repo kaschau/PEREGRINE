@@ -37,8 +37,7 @@ PG_ABI void pgDQdt(const pgView *Q_, const pgView *Qn_, const pgView *Qnm1_,
   auto Qn = as4(*Qn_);
   auto Qnm1 = as4(*Qnm1_);
   auto dQ = as4(*dQ_);
-  const int ng = d->ng, ni = d->ni, nj = d->nj, nk = d->nk;
-  const int ne = Q.extent(3);
+  const int ni = d->ni, nj = d->nj, nk = d->nk;
   //-------------------------------------------------------------------------------------------|
   // Add to dQ with real time derivative source term
   //-------------------------------------------------------------------------------------------|
@@ -67,7 +66,7 @@ PG_ABI void pgLocalDtau(const pgView *Q_, const pgView *dIJK_,
   auto q = as4(*q_);
   auto qh = as4(*qh_);
   auto qt = as4(*qt_);
-  const int ng = d->ng, ni = d->ni, nj = d->nj, nk = d->nk;
+  const int ni = d->ni, nj = d->nj, nk = d->nk;
   //-------------------------------------------------------------------------------------------|
   // Compute local pseudo time step
   //-------------------------------------------------------------------------------------------|
@@ -164,8 +163,7 @@ PG_ABI void pgDTrk3s1(const pgView *Q0_, const pgView *dQ_, const pgView *dtau_,
   auto dQ = as4(*dQ_);
   auto dtau = as3(*dtau_);
   auto q = as4(*q_);
-  const int ng = d->ng, ni = d->ni, nj = d->nj, nk = d->nk;
-  const int ne = q.extent(3);
+  const int ni = d->ni, nj = d->nj, nk = d->nk;
   //-------------------------------------------------------------------------------------------|
   // Apply RK3 stage 1
   //-------------------------------------------------------------------------------------------|
@@ -186,8 +184,7 @@ PG_ABI void pgDTrk3s2(const pgView *Q0_, const pgView *dQ_, const pgView *dtau_,
   auto dQ = as4(*dQ_);
   auto dtau = as3(*dtau_);
   auto q = as4(*q_);
-  const int ng = d->ng, ni = d->ni, nj = d->nj, nk = d->nk;
-  const int ne = q.extent(3);
+  const int ni = d->ni, nj = d->nj, nk = d->nk;
   //-------------------------------------------------------------------------------------------|
   // Apply RK3 stage 2
   //-------------------------------------------------------------------------------------------|
@@ -207,8 +204,7 @@ PG_ABI void pgDTrk3s3(const pgView *Q0_, const pgView *dQ_, const pgView *dtau_,
   auto dQ = as4(*dQ_);
   auto dtau = as3(*dtau_);
   auto q = as4(*q_);
-  const int ng = d->ng, ni = d->ni, nj = d->nj, nk = d->nk;
-  const int ne = q.extent(3);
+  const int ni = d->ni, nj = d->nj, nk = d->nk;
   //-------------------------------------------------------------------------------------------|
   // Apply RK3 stage 3
   //-------------------------------------------------------------------------------------------|
@@ -235,9 +231,7 @@ PG_ABI void pgInvertDQ(const pgView *Q_, const pgView *dIJK_, const pgView *dQ_,
   auto qh = as4(*qh_);
   auto qt = as4(*qt_);
   auto MW = as1(*MW_);
-  const int ns = MW.extent(0);
-  const int ng = d->ng, ni = d->ni, nj = d->nj, nk = d->nk;
-  const int ne = Q.extent(3);
+  const int ni = d->ni, nj = d->nj, nk = d->nk;
   //-------------------------------------------------------------------------------------------|
   // Solve (\Gamma + dqdQ) dq = dQ to solver for dqdt
   //
@@ -264,50 +258,12 @@ PG_ABI void pgInvertDQ(const pgView *Q_, const pgView *dIJK_, const pgView *dQ_,
 
   MDRange3 range_cc({ng, ng, ng}, {ni + ng - 1, nj + ng - 1, nk + ng - 1});
 
-#ifndef NSCOMPILE
-  Kokkos::Experimental::UniqueToken<execSpace> token;
-  int numIds = token.size();
-  threeDview GdQ("GdQ", numIds, ne, ne);
-  twoDview tempRow("tempRow", numIds, ne);
-  twoDviewInt perm("perm", numIds, ne);
-#endif
-
-#ifdef NSCOMPILE
-#define GdQ(INDEX, INDEX1) GdQ[INDEX][INDEX1]
-#define perm(INDEX) perm[INDEX]
-#define tempRow(INDEX) tempRow[INDEX]
-#define ne 5 + NS - 1
-#else
-#define GdQ(INDEX, INDEX1) GdQ(id, INDEX, INDEX1)
-#define perm(INDEX) perm(id, INDEX)
-#define tempRow(INDEX) tempRow(id, INDEX)
-#endif
-
-#ifndef NSCOMPILE
-  twoDview Y("Y", numIds, ns);
-  twoDview rho_Y("rho_Y", numIds, ns);
-#endif
-
-#ifdef NSCOMPILE
-#define Y(INDEX) Y[INDEX]
-#define rho_Y(INDEX) rho_Y[INDEX]
-#define ns NS
-#else
-#define Y(INDEX) Y(id, INDEX)
-#define rho_Y(INDEX) rho_Y(id, INDEX)
-#endif
-
   Kokkos::parallel_for(
       "dq = (Gamma + dqdQ)^{-1} dQ", range_cc,
       KOKKOS_LAMBDA(const int i, const int j, const int k) {
-
-#ifdef NSCOMPILE
-        double GdQ(ne, ne);
-        int perm(ne);
-        double tempRow(ne);
-#else
-        int id = token.acquire();
-#endif
+        double GdQ[ne][ne];
+        int perm[ne];
+        double tempRow[ne];
 
         ////////////////////////////////////////////////
         ///// COMPUTE GdQ MATRIX
@@ -324,28 +280,26 @@ PG_ABI void pgInvertDQ(const pgView *Q_, const pgView *dIJK_, const pgView *dQ_,
         const double &w = q(i, j, k, 3);
         const double &T = q(i, j, k, 4);
         const double &rho = Q(i, j, k, 0);
-#ifdef NSCOMPILE
-        double Y(ns);
-        double rho_Y(ns);
-#endif
+        double Y[ns];
+        double rho_Y[ns];
         double cp = qh(i, j, k, 1);
         double H = qh(i, j, k, 2) / rho +
                    0.5 * (pow(u, 2.0) + pow(v, 2.0) + pow(w, 2.0));
         double c = qh(i, j, k, 3);
         // Compute nth species Y
-        Y(ns - 1) = 1.0;
+        Y[ns - 1] = 1.0;
         double denom = 0.0;
         for (int n = 0; n < ns - 1; n++) {
-          Y(n) = q(i, j, k, 5 + n);
-          Y(ns - 1) -= Y(n);
-          denom += Y(n) / MW(n);
+          Y[n] = q(i, j, k, 5 + n);
+          Y[ns - 1] -= Y[n];
+          denom += Y[n] / MW(n);
         }
-        denom += Y(ns - 1) / MW(ns - 1);
+        denom += Y[ns - 1] / MW(ns - 1);
 
         // Compute MWmix
         double MWmix = 0.0;
         for (int n = 0; n <= ns - 1; n++) {
-          double X = Y(n) / MW(n) / denom;
+          double X = Y[n] / MW(n) / denom;
           MWmix += MW(n) * X;
         }
 
@@ -354,7 +308,7 @@ PG_ABI void pgInvertDQ(const pgView *Q_, const pgView *dIJK_, const pgView *dQ_,
         double rho_T = -rho / T;
 
         for (int n = 0; n < ns - 1; n++) {
-          rho_Y(n) = -rho * (MWmix * (1.0 / MW(n) - 1.0 / MW(ns - 1)));
+          rho_Y[n] = -rho * (MWmix * (1.0 / MW(n) - 1.0 / MW(ns - 1)));
         }
 
         /////////////////////////////////////////////////
@@ -366,7 +320,7 @@ PG_ABI void pgInvertDQ(const pgView *Q_, const pgView *dIJK_, const pgView *dQ_,
         /////////////////////////////////////////////////
         for (int l = 0; l < ne; l++) {
           for (int m = 0; m < ne; m++) {
-            GdQ(l, m) = 0.0;
+            GdQ[l][m] = 0.0;
           }
         }
         double Thetas[2];
@@ -414,64 +368,64 @@ PG_ABI void pgInvertDQ(const pgView *Q_, const pgView *dIJK_, const pgView *dQ_,
 
           // Block (1)
           // First column
-          GdQ(0, 0) += mult * Theta;
-          GdQ(1, 0) += mult * Theta * u;
-          GdQ(2, 0) += mult * Theta * v;
-          GdQ(3, 0) += mult * Theta * w;
-          GdQ(4, 0) += mult * (Theta * H + T * rho_T / rho);
+          GdQ[0][0] += mult * Theta;
+          GdQ[1][0] += mult * Theta * u;
+          GdQ[2][0] += mult * Theta * v;
+          GdQ[3][0] += mult * Theta * w;
+          GdQ[4][0] += mult * (Theta * H + T * rho_T / rho);
 
           // Second column
-          GdQ(0, 1) += mult * 0.0;
-          GdQ(1, 1) += mult * rho;
-          GdQ(2, 1) += mult * 0.0;
-          GdQ(3, 1) += mult * 0.0;
-          GdQ(4, 1) += mult * rho * u;
+          GdQ[0][1] += mult * 0.0;
+          GdQ[1][1] += mult * rho;
+          GdQ[2][1] += mult * 0.0;
+          GdQ[3][1] += mult * 0.0;
+          GdQ[4][1] += mult * rho * u;
 
           // Third column
-          GdQ(0, 2) += mult * 0.0;
-          GdQ(1, 2) += mult * 0.0;
-          GdQ(2, 2) += mult * rho;
-          GdQ(3, 2) += mult * 0.0;
-          GdQ(4, 2) += mult * rho * v;
+          GdQ[0][2] += mult * 0.0;
+          GdQ[1][2] += mult * 0.0;
+          GdQ[2][2] += mult * rho;
+          GdQ[3][2] += mult * 0.0;
+          GdQ[4][2] += mult * rho * v;
 
           // Fourth column
-          GdQ(0, 3) += mult * 0.0;
-          GdQ(1, 3) += mult * 0.0;
-          GdQ(2, 3) += mult * 0.0;
-          GdQ(3, 3) += mult * rho;
-          GdQ(4, 3) += mult * rho * w;
+          GdQ[0][3] += mult * 0.0;
+          GdQ[1][3] += mult * 0.0;
+          GdQ[2][3] += mult * 0.0;
+          GdQ[3][3] += mult * rho;
+          GdQ[4][3] += mult * rho * w;
 
           // Fifth column
-          GdQ(0, 4) += mult * rho_T;
-          GdQ(1, 4) += mult * rho_T * u;
-          GdQ(2, 4) += mult * rho_T * v;
-          GdQ(3, 4) += mult * rho_T * w;
-          GdQ(4, 4) += mult * (rho_T * H + rho * cp);
+          GdQ[0][4] += mult * rho_T;
+          GdQ[1][4] += mult * rho_T * u;
+          GdQ[2][4] += mult * rho_T * v;
+          GdQ[3][4] += mult * rho_T * w;
+          GdQ[4][4] += mult * (rho_T * H + rho * cp);
 
           for (int n = 5; n < ne; n++) {
             // Block (2) nth column
-            GdQ(0, n) += mult * rho_Y(n - 5);
-            GdQ(1, n) += mult * rho_Y(n - 5) * u;
-            GdQ(2, n) += mult * rho_Y(n - 5) * v;
-            GdQ(3, n) += mult * rho_Y(n - 5) * w;
+            GdQ[0][n] += mult * rho_Y[n - 5];
+            GdQ[1][n] += mult * rho_Y[n - 5] * u;
+            GdQ[2][n] += mult * rho_Y[n - 5] * v;
+            GdQ[3][n] += mult * rho_Y[n - 5] * w;
             double h_y = qh(i, j, k, n) - qh(i, j, k, ne);
-            GdQ(4, n) += mult * (H * rho_Y(n - 5) + rho * h_y);
+            GdQ[4][n] += mult * (H * rho_Y[n - 5] + rho * h_y);
             // Block (3)
-            GdQ(n, 0) += mult * Theta * Y(n - 5);
-            GdQ(n, 1) += mult * 0.0;
-            GdQ(n, 2) += mult * 0.0;
-            GdQ(n, 3) += mult * 0.0;
-            GdQ(n, 4) += mult * rho_T * Y(n - 5);
+            GdQ[n][0] += mult * Theta * Y[n - 5];
+            GdQ[n][1] += mult * 0.0;
+            GdQ[n][2] += mult * 0.0;
+            GdQ[n][3] += mult * 0.0;
+            GdQ[n][4] += mult * rho_T * Y[n - 5];
           }
 
           // Block (4)
           for (int n = 5; n < ne; n++) {
             for (int q = 5; q < ne; q++) {
-              GdQ(q, n) += mult * Y(q - 5) * rho_Y(n - 5);
+              GdQ[q][n] += mult * Y[q - 5] * rho_Y[n - 5];
             }
           }
           for (int n = 5; n < ne; n++) {
-            GdQ(n, n) += mult * rho;
+            GdQ[n][n] += mult * rho;
           }
         }
 
@@ -483,7 +437,7 @@ PG_ABI void pgInvertDQ(const pgView *Q_, const pgView *dIJK_, const pgView *dQ_,
         /////////////////////////////////////////////////////////////////////////////
 
         for (int l = 0; l < ne; l++) {
-          perm(l) = l;
+          perm[l] = l;
         }
 
         for (int l = 0; l < ne; l++) {
@@ -491,36 +445,36 @@ PG_ABI void pgInvertDQ(const pgView *Q_, const pgView *dIJK_, const pgView *dQ_,
           double pivot = 0.0;
           int tempInd;
           for (int m = l; m < ne; m++)
-            if (abs(GdQ(m, l)) > abs(pivot)) {
-              pivot = GdQ(m, l);
+            if (abs(GdQ[m][l]) > abs(pivot)) {
+              pivot = GdQ[m][l];
               pivotInd = m;
             }
 
           for (int p = 0; p < ne; p++) {
-            tempRow(p) = GdQ(l, p);
-            GdQ(l, p) = GdQ(pivotInd, p);
-            GdQ(pivotInd, p) = tempRow(p);
+            tempRow[p] = GdQ[l][p];
+            GdQ[l][p] = GdQ[pivotInd][p];
+            GdQ[pivotInd][p] = tempRow[p];
           }
 
-          tempInd = perm(l);
-          perm(l) = perm(pivotInd);
-          perm(pivotInd) = tempInd;
+          tempInd = perm[l];
+          perm[l] = perm[pivotInd];
+          perm[pivotInd] = tempInd;
 
           for (int p = l + 1; p < ne; p++) {
             double temp;
-            temp = GdQ(p, l) /= GdQ(l, l);
+            temp = GdQ[p][l] /= GdQ[l][l];
             for (int q = l + 1; q < ne; q++) {
-              GdQ(p, q) -= temp * GdQ(l, q);
+              GdQ[p][q] -= temp * GdQ[l][q];
             }
           }
         }
 
         // Row permute dQ to match LU
         for (int l = 0; l < ne; l++) {
-          tempRow(l) = dQ(i, j, k, perm(l));
+          tempRow[l] = dQ(i, j, k, perm[l]);
         }
         for (int l = 0; l < ne; l++) {
-          dQ(i, j, k, l) = tempRow(l);
+          dQ(i, j, k, l) = tempRow[l];
         }
 
         // Solve Ax = b where A = LU by first solving for
@@ -535,7 +489,7 @@ PG_ABI void pgInvertDQ(const pgView *Q_, const pgView *dIJK_, const pgView *dQ_,
 
         for (int l = 0; l < ne; l++) {
           for (int q = 0; q < l; q++) {
-            tempRow(l) -= GdQ(l, q) * tempRow(q);
+            tempRow[l] -= GdQ[l][q] * tempRow[q];
           }
         }
 
@@ -547,11 +501,11 @@ PG_ABI void pgInvertDQ(const pgView *Q_, const pgView *dIJK_, const pgView *dQ_,
         // in place with the resultant dq values (as x)
 
         for (int l = ne - 1; l > -1; l--) {
-          dQ(i, j, k, l) = tempRow(l);
+          dQ(i, j, k, l) = tempRow[l];
           for (int q = ne - 1; q > l; q--) {
-            dQ(i, j, k, l) -= GdQ(l, q) * dQ(i, j, k, q);
+            dQ(i, j, k, l) -= GdQ[l][q] * dQ(i, j, k, q);
           }
-          dQ(i, j, k, l) /= GdQ(l, l);
+          dQ(i, j, k, l) /= GdQ[l][l];
         }
       });
 }

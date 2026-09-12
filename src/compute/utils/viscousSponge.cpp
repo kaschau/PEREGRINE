@@ -1,4 +1,4 @@
-#include "abi.hpp"
+#include "kernelUtils.hpp"
 #include "kokkosTypes.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -7,7 +7,7 @@ PG_ABI void pgViscousSponge(const pgView *cells_, const pgView *qt_,
                             const double *ending, double mult) {
   auto cells = as4(*cells_);
   auto qt = as4(*qt_);
-  const int ng = d->ng, ni = d->ni, nj = d->nj, nk = d->nk;
+  const int ni = d->ni, nj = d->nj, nk = d->nk;
 
   MDRange3 range_cc({ng - 1, ng - 1, ng - 1}, {ni + ng, nj + ng, nk + ng});
   Kokkos::parallel_for(

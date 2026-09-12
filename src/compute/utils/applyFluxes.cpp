@@ -1,4 +1,4 @@
-#include "abi.hpp"
+#include "kernelUtils.hpp"
 #include "kokkosTypes.hpp"
 #include "math.h"
 #include <Kokkos_Core.hpp>
@@ -10,8 +10,7 @@ PG_ABI void pgApplyFlux(const pgView *J_, const pgView *dQ_, const pgView *iF_,
   auto iF = as4(*iF_);
   auto jF = as4(*jF_);
   auto kF = as4(*kF_);
-  const int ng = d->ng, ni = d->ni, nj = d->nj, nk = d->nk;
-  const int ne = dQ.extent(3);
+  const int ni = d->ni, nj = d->nj, nk = d->nk;
 
   //-------------------------------------------------------------------------------------------|
   // Apply fluxes to cc range
@@ -41,8 +40,7 @@ PG_ABI void pgApplyHybridFlux(const pgView *J_, const pgView *dQ_,
   auto jF = as4(*jF_);
   auto kF = as4(*kF_);
   auto phi = as4(*phi_);
-  const int ng = d->ng, ni = d->ni, nj = d->nj, nk = d->nk;
-  const int ne = dQ.extent(3);
+  const int ni = d->ni, nj = d->nj, nk = d->nk;
 
   //-------------------------------------------------------------------------------------------|
   // Apply fluxes to cc range
@@ -86,8 +84,7 @@ PG_ABI void pgApplyDissipationFlux(const pgView *J_, const pgView *dQ_,
   auto iF = as4(*iF_);
   auto jF = as4(*jF_);
   auto kF = as4(*kF_);
-  const int ng = d->ng, ni = d->ni, nj = d->nj, nk = d->nk;
-  const int ne = dQ.extent(3);
+  const int ni = d->ni, nj = d->nj, nk = d->nk;
 
   //-------------------------------------------------------------------------------------------|
   // Apply fluxes to cc range

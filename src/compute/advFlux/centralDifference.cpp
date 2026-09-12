@@ -1,4 +1,4 @@
-#include "abi.hpp"
+#include "kernelUtils.hpp"
 #include "kokkosTypes.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -86,8 +86,7 @@ PG_ABI void pgCentralDifference(const pgView *Q_, const pgView *iF_,
   auto kF = as4(*kF_);
   auto kS = as4(*kS_);
   auto q = as4(*q_);
-  const int ng = d->ng, ni = d->ni, nj = d->nj, nk = d->nk;
-  const int ne = Q.extent(3);
+  const int ni = d->ni, nj = d->nj, nk = d->nk;
   computeFlux(Q, q, ne, ng, ni, nj, nk, iF, iS, 1, 0, 0);
   computeFlux(Q, q, ne, ng, ni, nj, nk, jF, jS, 0, 1, 0);
   computeFlux(Q, q, ne, ng, ni, nj, nk, kF, kS, 0, 0, 1);

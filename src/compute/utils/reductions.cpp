@@ -9,8 +9,7 @@
 // 0 if any conserved quantity in the interior is not finite
 PG_ABI int pgAllFinite(const pgView *Q_, const pgDims *d) {
   auto Q = as4(*Q_);
-  const int ni = d->ni, nj = d->nj, nk = d->nk, ng = d->ng;
-  const int ne = Q.extent(3);
+  const int ni = d->ni, nj = d->nj, nk = d->nk;
   int allFinite;
   MDRange4 range_cc({ng, ng, ng, 0},
                     {ni + ng - 1, nj + ng - 1, nk + ng - 1, ne});
@@ -31,7 +30,7 @@ PG_ABI void pgCFLmax(const pgView *dIJK_, const pgView *iS_, const pgView *jS_,
                      const pgDims *d, double *cfl) {
   auto dIJK = as4(*dIJK_), iS = as4(*iS_), jS = as4(*jS_), kS = as4(*kS_),
        q = as4(*q_), qh = as4(*qh_);
-  const int ni = d->ni, nj = d->nj, nk = d->nk, ng = d->ng;
+  const int ni = d->ni, nj = d->nj, nk = d->nk;
   // a direction one cell thick is not marched in
   const double iMult = ni == 2 ? 0.0 : 1.0;
   const double jMult = nj == 2 ? 0.0 : 1.0;
@@ -99,8 +98,7 @@ PG_ABI void pgCFLmax(const pgView *dIJK_, const pgView *iS_, const pgView *jS_,
 PG_ABI void pgResidual(const pgView *q_, const pgView *Q0_, const pgDims *d,
                        double *rMax, double *rSum) {
   auto q = as4(*q_), Q0 = as4(*Q0_);
-  const int ni = d->ni, nj = d->nj, nk = d->nk, ng = d->ng;
-  const int ne = q.extent(3);
+  const int ni = d->ni, nj = d->nj, nk = d->nk;
   MDRange3 range_cc({ng, ng, ng}, {ni + ng - 1, nj + ng - 1, nk + ng - 1});
   for (int n = 0; n < ne; n++) {
     double rmax, rsum;
