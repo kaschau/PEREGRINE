@@ -120,7 +120,7 @@ def buildAndCommunicate(S, adv, gas, seed):
     config["RHS"]["diffusion"] = True
     configure(config, gas)
 
-    mb = pg.multiBlock.buildSolver(config, 2)
+    mb = pg.multiBlock.solver(config, 2)
     pg.mesher.CubeMesher(
         mbDims=[2, 1, 1], dimsPerBlock=[6, 3, 2], lengths=[2, 1, 1]
     ).mesh(mb)

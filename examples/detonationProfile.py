@@ -38,7 +38,7 @@ def simulate():
     config["mcPhysics"]["eos"] = "tpg"
     config["mcPhysics"]["mixture"] = "thtr_CH4_O2_FFCMY.yaml"
     config.validateConfig()
-    mb = pg.multiBlock.buildSolver(config, 1)
+    mb = pg.multiBlock.solver(config, 1)
 
     nx = 300
     dx = 0.005 / 50.0  # Aproximate rde resolution
@@ -77,12 +77,10 @@ def simulate():
 
     # Update cons
     blk.q.set(q)
-    mb.eos(blk, mb.thtrdat, 0, "prims")
+    mb.stateFromPrims(nface=0)
     # Apply euler boundary conditions
-    for face in blk.faces:
-        face.bcFunc(blk, face, mb.eos, mb.thtrdat, "euler", mb.tme)
-        face.bcFunc(blk, face, mb.eos, mb.thtrdat, "viscous", mb.tme)
-    pg.consistify(mb)
+    mb.applyBcs("euler")
+    mb.consistify()
 
     dt = 1.0e-9
     config["timeIntegration"]["dt"] = dt

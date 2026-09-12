@@ -16,10 +16,14 @@ class solverFace(gridFace):
         "phi": "switch",
     }
 
-    def __init__(self, nface, ng):
+    def __init__(self, nface, ng, blk):
         super().__init__(nface)
 
         self.ng = ng
+        # the block this face bounds
+        self.blk = blk
+        # which of the case's conditions this face is, at each hook
+        self.kind = {}
         # the block this face bounds, once it knows how big it is
         self.blockExtents = None
         self.ne = None
@@ -43,9 +47,6 @@ class solverFace(gridFace):
         for var, kind in self.commVars.items():
             self.declare(f"sendBuffer_{var}", kind=f"{kind}Send")
             self.declare(f"recvBuffer_{var}", kind=kind)
-
-        # Boundary function
-        self.bcFunc = bcs.getBc("adiabaticSlipWall").kernel()
 
         # MPI variables
         self.commRank = None
@@ -97,13 +98,14 @@ class solverFace(gridFace):
             "bcValues": cell + (ne,),
         }
 
-    def allocate(self, *names):
-        """A solver face's arrays live where the kernels run."""
+    def allocate(self, *names, **values):
+        """A solver face's arrays live where the kernels run; one given by
+        name is written as it is made."""
         for name in names:
             setattr(self, name, DeviceArray(self.shapeOf(name)))
-
-    def setRotationMatrix(self, rotation):
-        self.periodicRotMatrix.set(rotation)
+        for name, array in values.items():
+            setattr(self, name, DeviceArray(self.shapeOf(name)))
+            getattr(self, name).set(array)
 
     def hostCopy(self, name):
         return getattr(self, name).get()
@@ -230,4 +232,3 @@ class solverFace(gridFace):
     @topologyFace.bcType.setter
     def bcType(self, value):
         topologyFace.bcType.fset(self, value)
-        self.bcFunc = bcs.getBc(self.bcType).kernel()

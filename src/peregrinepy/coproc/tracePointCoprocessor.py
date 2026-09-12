@@ -80,10 +80,15 @@ class tracePointsCoprocessor:
             return
 
         # one snapshot per block the traces live in
-        qs = {nblki: mb.getBlock(nblki).q.get() for nblki in {t.nblki for t in self.traces}}
+        qs = {
+            nblki: mb.getBlock(nblki).q.get()
+            for nblki in {t.nblki for t in self.traces}
+        }
 
         for trc in self.traces:
-            arr = np.concatenate((np.array([mb.tme]), qs[trc.nblki][trc.i, trc.j, trc.k, :]))
+            arr = np.concatenate(
+                (np.array([mb.tme]), qs[trc.nblki][trc.i, trc.j, trc.k, :])
+            )
             with open(trc.fileName, "a") as f:
                 np.savetxt(
                     f,

@@ -51,7 +51,7 @@ def test_chemistry(my_setup, thfile, ctfile, chmfile):
     config["mcPhysics"]["mixture"] = chmfile
     config["RHS"]["diffusion"] = False
 
-    mb = pg.multiBlock.buildSolver(config, 1)
+    mb = pg.multiBlock.solver(config, 1)
     pg.mesher.CubeMesher(
         mbDims=[1, 1, 1], dimsPerBlock=[2, 2, 2], lengths=[1, 1, 1]
     ).mesh(mb)

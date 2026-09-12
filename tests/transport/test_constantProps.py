@@ -20,7 +20,7 @@ def test_constantProps(my_setup):
     config["mcPhysics"]["trans"] = "constantProps"
     config["RHS"]["diffusion"] = True
 
-    mb = pg.multiBlock.buildSolver(config, 1)
+    mb = pg.multiBlock.solver(config, 1)
     pg.mesher.CubeMesher(
         mbDims=[1, 1, 1], dimsPerBlock=[2, 2, 2], lengths=[1, 1, 1]
     ).mesh(mb)
@@ -39,7 +39,7 @@ def test_constantProps(my_setup):
 
     # Update transport
     assert mb.trans.__name__ == "constantProps"
-    mb.trans(blk, mb.thtrdat, 0)
+    mb.trans(nface=0)
     q, qt = blk.q.get(), blk.qt.get()
     ng = blk.ng
 

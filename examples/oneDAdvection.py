@@ -27,7 +27,7 @@ def simulate(index="i"):
     config["RHS"]["primaryAdvFlux"] = "KEPaEC"
     config["RHS"]["diffusion"] = False
     config.validateConfig()
-    mb = pg.multiBlock.buildSolver(config, 1)
+    mb = pg.multiBlock.solver(config, 1)
     print(mb)
 
     rot = {"i": 0, "j": 1, "k": 2}
@@ -76,8 +76,8 @@ def simulate(index="i"):
 
     # Update cons
     blk.q.set(q)
-    mb.eos(blk, mb.thtrdat, 0, "prims")
-    pg.consistify(mb)
+    mb.stateFromPrims(nface=0)
+    mb.consistify()
 
     dt = 0.1 * 0.025
     tEnd = 11.0

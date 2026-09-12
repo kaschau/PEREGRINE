@@ -7,8 +7,10 @@ class ExitBC(BaseBC):
 
 class ConstantPressureSubsonicExit(ExitBC):
     bcType = "constantPressureSubsonicExit"
+    hooks = ("euler", "postDqDxyz")
     values = {"p": 0}
 
 
 class SupersonicExit(ExitBC):
     bcType = "supersonicExit"
+    hooks = ("euler", "postDqDxyz")

@@ -108,7 +108,8 @@ class SolverMetricsMixin(MetricsMixin):
             / 3.0e0
         )
         np.clip(J, 1e-16, None, out=J)
-        self.J.set(J)
+        # the kernels only ever divide by it
+        self.Jinv.set(1.0 / J)
 
         # ----------------------------------------------------------------------------
         # Cell lengths, opposite face center to opposite face center

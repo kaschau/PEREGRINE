@@ -8,28 +8,17 @@
 // the test is on a value that is the same for every element, so the branch
 // costs nothing. Rank four, any extents.
 
-PG_ABI void pgAxpby(const pgView *A_, double a, double b, const pgView *B_) {
-  auto A = as4(*A_), B = as4(*B_);
-  MDRange4 range({0, 0, 0, 0},
-                 {A.extent(0), A.extent(1), A.extent(2), A.extent(3)});
-  Kokkos::parallel_for(
-      "axpby", range,
-      KOKKOS_LAMBDA(const int i, const int j, const int k, const int l) {
-        A(i, j, k, l) = a == 0.0 ? b * B(i, j, k, l)
-                                 : a * A(i, j, k, l) + b * B(i, j, k, l);
-      });
-}
-
-PG_ABI void pgAxpbypcz(const pgView *A_, double a, double b, const pgView *B_,
-                       double c, const pgView *C_) {
-  auto A = as4(*A_), B = as4(*B_), C = as4(*C_);
-  MDRange4 range({0, 0, 0, 0},
-                 {A.extent(0), A.extent(1), A.extent(2), A.extent(3)});
-  Kokkos::parallel_for(
-      "axpbypcz", range,
-      KOKKOS_LAMBDA(const int i, const int j, const int k, const int l) {
-        A(i, j, k, l) = a == 0.0 ? b * B(i, j, k, l) + c * C(i, j, k, l)
-                                 : a * A(i, j, k, l) + b * B(i, j, k, l) +
-                                       c * C(i, j, k, l);
-      });
+PG_ABI void pgAxpby(int count, const pgView *A_, double a, double b,
+                    const pgView *B_) {
+  for (int e = 0; e < count; e++) {
+    auto A = as4(A_[e]), B = as4(B_[e]);
+    MDRange4 range({0, 0, 0, 0},
+                   {A.extent(0), A.extent(1), A.extent(2), A.extent(3)});
+    Kokkos::parallel_for(
+        "axpby", range,
+        KOKKOS_LAMBDA(const int i, const int j, const int k, const int l) {
+          A(i, j, k, l) = a == 0.0 ? b * B(i, j, k, l)
+                                   : a * A(i, j, k, l) + b * B(i, j, k, l);
+        });
+  }
 }

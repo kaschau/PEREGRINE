@@ -44,6 +44,23 @@ class Mixture:
                 model.populateSpeciesData(self.species)
 
     @property
+    def transportKernel(self):
+        """The one kernel the transport and species diffusion choices pick
+        between them."""
+        pair = (self.trans.name, self.diffusion.name)
+        kernel = {
+            ("kineticTheory", "binary"): "kineticTheory",
+            ("kineticTheory", "lewis"): "kineticTheoryUnityLewis",
+            ("chungDenseGas", "lewis"): "chungDenseGasUnityLewis",
+            ("constantProps", "lewis"): "constantProps",
+        }.get(pair)
+        if kernel is None:
+            raise ValueError(
+                f"no transport kernel for {pair[0]} with {pair[1]} diffusion"
+            )
+        return kernel
+
+    @property
     def models(self):
         """The case's choices, in the order they are checked."""
         return (self.eos, self.trans, self.diffusion)

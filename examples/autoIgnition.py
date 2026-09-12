@@ -36,7 +36,7 @@ def simulate():
     config["mcPhysics"]["eos"] = "tpg"
     config["mcPhysics"]["mixture"] = "thtr_CH4_O2_FFCMY.yaml"
     config.validateConfig()
-    mb = pg.multiBlock.buildSolver(config, 1)
+    mb = pg.multiBlock.solver(config, 1)
     pg.mesher.CubeMesher(
         mbDims=[1, 1, 1], dimsPerBlock=[2, 2, 2], lengths=[0.01, 0.01, 0.01]
     ).mesh(mb)
@@ -59,8 +59,8 @@ def simulate():
     blk.q.set(q)
 
     # Update cons
-    mb.eos(blk, mb.thtrdat, 0, "prims")
-    pg.consistify(mb)
+    mb.stateFromPrims(nface=0)
+    mb.consistify()
 
     dt = 1e-9
     config["timeIntegration"]["dt"] = dt

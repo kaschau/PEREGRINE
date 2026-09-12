@@ -58,7 +58,7 @@ class BaseBC:
         pass
 
     def run(self, face, stage):
-        face.bcFunc(self.blk, face, self.mb.eos, self.mb.thtrdat, stage, self.mb.tme)
+        self.mb.applyBcs(stage, faces=[face])
         for name in self._pull[stage]:
             self.host[name] = getattr(self.blk, name).get()
 

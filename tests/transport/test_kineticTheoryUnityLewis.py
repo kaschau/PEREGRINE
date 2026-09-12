@@ -34,7 +34,7 @@ def test_kineticTheoryUnityLewis(my_setup, ctfile):
     config["mcPhysics"]["diffusion"] = "lewis"
     config["RHS"]["diffusion"] = True
 
-    mb = pg.multiBlock.buildSolver(config, 1)
+    mb = pg.multiBlock.solver(config, 1)
     pg.mesher.CubeMesher(
         mbDims=[1, 1, 1], dimsPerBlock=[2, 2, 2], lengths=[1, 1, 1]
     ).mesh(mb)
@@ -53,8 +53,8 @@ def test_kineticTheoryUnityLewis(my_setup, ctfile):
 
     # Update transport
     assert mb.trans.__name__ == "kineticTheoryUnityLewis"
-    mb.eos(blk, mb.thtrdat, 0, "prims")
-    mb.trans(blk, mb.thtrdat, 0)
+    mb.stateFromPrims(nface=0)
+    mb.trans(nface=0)
     q, qt = blk.q.get(), blk.qt.get()
     ng = blk.ng
 

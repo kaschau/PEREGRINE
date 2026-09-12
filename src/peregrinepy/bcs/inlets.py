@@ -16,16 +16,19 @@ class InletBC(BaseBC):
 
 class ConstantVelocitySubsonicInlet(InletBC):
     bcType = "constantVelocitySubsonicInlet"
+    hooks = ("euler", "postDqDxyz")
     values = {"u": 1, "v": 2, "w": 3, "T": 4}
 
 
 class SupersonicInlet(InletBC):
     bcType = "supersonicInlet"
+    hooks = ("euler", "postDqDxyz")
     values = {"p": 0, "u": 1, "v": 2, "w": 3, "T": 4}
 
 
 class StagnationSubsonicInlet(InletBC):
     bcType = "stagnationSubsonicInlet"
+    hooks = ("euler", "postDqDxyz")
     values = {"pt": 0, "Tt": 4}
 
 
@@ -33,6 +36,7 @@ class ConstantMassFluxSubsonicInlet(InletBC):
     """sets a target momentum from the face normal rather than a velocity"""
 
     bcType = "constantMassFluxSubsonicInlet"
+    hooks = ("euler", "postEos", "postDqDxyz")
     values = {"T": 4}
 
     @classmethod

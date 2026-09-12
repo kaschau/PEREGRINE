@@ -1,15 +1,8 @@
-from ..kernels.timeIntegration import rk4s1, rk4s2, rk4s3, rk4s4
-from ..kernels.utils import AEQB, axnpby
-from ..consistify import consistify
-from ..RHS import RHS
+def cppStage(name):
+    """A compute kernel used as a stage of its own."""
 
-
-def cppStage(kernel):
-    """A compute kernel used as a stage of its own, which takes the block's
-    compute object rather than the block."""
-
-    def stage(blk, dt):
-        kernel(blk, dt)
+    def stage(ti, dt):
+        getattr(ti, name)(dt=dt)
 
     return stage
 
@@ -19,18 +12,41 @@ def ssp(wQ0, wQ, wdQ, storeQ0=False):
     Q = wQ Q + wQ0 Q0 + wdQ dt dQ. The stage that begins a step keeps the
     state it began from, since later stages combine with it."""
 
-    def stage(blk, dt):
+    def stage(ti, dt):
+        Q, Q0, dQ = (ti.mb.table.views(n) for n in ("Q", "Q0", "dQ"))
         if storeQ0:
-            AEQB(blk.Q0, blk.Q)
+            ti.axpby(A=Q0, a=0.0, b=1.0, B=Q)
         if wQ0 == 0.0:
-            axnpby(blk.Q, wQ, wdQ * dt, blk.dQ)
+            ti.axpby(A=Q, a=wQ, b=wdQ * dt, B=dQ)
         else:
-            axnpby(blk.Q, wQ, wQ0, blk.Q0, wdQ * dt, blk.dQ)
+            ti.axpbypcz(A=Q, a=wQ, b=wQ0, B=Q0, c=wdQ * dt, C=dQ)
 
     return stage
 
 
-class BaseExplicit:
+class BaseIntegrator:
+    """How a solver steps in time. It is built with the solver it steps, and
+    the kernels its stages call are the solver's, registered under their own
+    names."""
+
+    integratorName = None
+    stepType = None
+    # how many Q registers the stages combine through
+    nStorage = 0
+    # the kernels the stages call
+    sources = ()
+
+    def __init__(self, mb):
+        self.mb = mb
+        for source in self.sources:
+            kernel = mb.kernel(source)
+            setattr(self, kernel.__name__, kernel)
+
+    def step(self, dt):
+        raise NotImplementedError
+
+
+class BaseExplicit(BaseIntegrator):
     """A step is a fixed list of stages. Each one sets the time the RHS is
     built at, as a fraction of dt past the step's start, then applies its
     update and makes the state consistent again.
@@ -39,23 +55,19 @@ class BaseExplicit:
     stepType = "explicit"
     # (fraction of dt, stage)
     stages = ()
-    # how many Q registers the stages combine through
-    nStorage = 0
+    sources = ("utils/axpby.cpp", "utils/axpbypcz.cpp")
 
     def runStages(self, dt):
+        mb = self.mb
         for frac, stage in self.stages:
-            self.titme = self.tme + frac * dt
-            RHS(self)
-            for blk in self:
-                stage(blk, dt)
-            consistify(self)
+            mb.titme = mb.tme + frac * dt
+            mb.RHS()
+            stage(self, dt)
+            mb.consistify()
 
     def step(self, dt):
         self.runStages(dt)
-
-        self.nrt += 1
-        self.tme += dt
-        self.titme = self.tme
+        self.mb.advance(dt)
 
 
 class rk1(BaseExplicit):
@@ -118,7 +130,15 @@ class rk4(BaseExplicit):
 
     integratorName = "rk4"
     nStorage = 4
+    sources = BaseExplicit.sources + tuple(
+        f"timeIntegration/rk4s{n}.cpp" for n in (1, 2, 3, 4)
+    )
     stages = tuple(
         (frac, cppStage(kernel))
-        for frac, kernel in ((0.0, rk4s1), (0.5, rk4s2), (0.5, rk4s3), (1.0, rk4s4))
+        for frac, kernel in (
+            (0.0, "rk4s1"),
+            (0.5, "rk4s2"),
+            (0.5, "rk4s3"),
+            (1.0, "rk4s4"),
+        )
     )

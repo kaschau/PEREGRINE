@@ -29,7 +29,7 @@ def simulate():
     config["mcPhysics"]["mixture"] = air
     config.validateConfig()
 
-    mb = pg.multiBlock.buildSolver(config, 1)
+    mb = pg.multiBlock.solver(config, 1)
     NE = NN = 41
     pg.mesher.CubeMesher(
         mbDims=[1, 1, 1],
@@ -105,8 +105,8 @@ def simulate():
     q[:, :, :, 4] = q[:, :, :, 0] / (R * rhoInf)
 
     blk.q.set(q)
-    mb.eos(blk, mb.thtrdat, 0, "prims")
-    pg.consistify(mb)
+    mb.stateFromPrims(nface=0)
+    mb.consistify()
 
     refX = xc[ng:-ng, int(NN / 2.0), ng] / Rc
     refV = np.copy(q[ng:-ng, int(NN / 2.0), ng, 2] / uInf)

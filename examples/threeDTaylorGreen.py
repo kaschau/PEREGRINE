@@ -29,7 +29,7 @@ def simulate():
     config["mcPhysics"]["mixture"] = air
     config.validateConfig()
 
-    mb = pg.multiBlock.buildSolver(config, 1)
+    mb = pg.multiBlock.solver(config, 1)
     NE = 65
     NN = 65
     NX = 65
@@ -67,8 +67,8 @@ def simulate():
     q[:, :, :, 4] = q[:, :, :, 0] / (R * rho0)
 
     blk.q.set(q)
-    mb.eos(blk, mb.thtrdat, 0, "prims")
-    pg.consistify(mb)
+    mb.stateFromPrims(nface=0)
+    mb.consistify()
 
     dt = 0.1 * 2 * np.pi / 64
     ke = []

@@ -2,6 +2,7 @@
 extents, a kernel is a C function that takes them."""
 
 import ctypes
+import re
 from pathlib import Path
 
 import numpy as np
@@ -82,12 +83,7 @@ class View(ctypes.Structure):
     @classmethod
     def of(cls, array):
         # an array a face never allocated: the kernel never reads it
-        if array is None:
-            return cls(None, 0, (ctypes.c_int * 5)())
-        shape = array.shape
-        return cls(
-            array.ptr, len(shape), (ctypes.c_int * 5)(*shape, *[0] * (5 - len(shape)))
-        )
+        return cls(None, 0, (ctypes.c_int * 5)()) if array is None else array.record
 
 
 class Dims(ctypes.Structure):
@@ -106,11 +102,10 @@ class Range(ctypes.Structure):
     _fields_ = [(n, ctypes.c_int) for n in ("i0", "i1", "j0", "j1", "k0", "k1")]
 
     @classmethod
-    def of(cls, blk, nface):
+    def of(cls, dims, ng, nface):
         """The old nface convention as explicit bounds: -1 the whole block, 0
         the interior, 1..6 a face's halo."""
-        ng = blk.ng
-        ni, nj, nk = blk.ni + 2 * ng - 1, blk.nj + 2 * ng - 1, blk.nk + 2 * ng - 1
+        ni, nj, nk = dims.ni + 2 * ng - 1, dims.nj + 2 * ng - 1, dims.nk + 2 * ng - 1
         if nface == -1:
             return cls(0, ni, 0, nj, 0, nk)
         if nface == 0:
@@ -139,6 +134,12 @@ class DeviceArray:
         self.dtype = np.dtype(dtype)
         self.nbytes = int(np.prod(self.shape)) * self.dtype.itemsize
         self.ptr = lib.pgAllocate(self.nbytes)
+        # the record a kernel receives, fixed for the life of the array
+        self.record = View(
+            self.ptr,
+            len(self.shape),
+            (ctypes.c_int * 5)(*self.shape, *[0] * (5 - len(self.shape))),
+        )
 
     def __del__(self):
         if getattr(self, "ptr", None):

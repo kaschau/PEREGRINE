@@ -4,6 +4,7 @@ step; imports nothing from the package so it can run before the runtime is
 in place."""
 
 import json
+import os
 import shlex
 import sys
 from pathlib import Path
@@ -50,12 +51,22 @@ class Toolchain:
     def write(self, path):
         Path(path).write_text(json.dumps(vars(self), indent=1))
 
-    def command(self, source, out, defines=()):
-        """The one command that compiles and links a source into a library."""
+    # a sanitized build for the tests, from the environment
+    sanitize = (
+        ["-fsanitize=address", "-fno-omit-frame-pointer"]
+        if os.environ.get("PEREGRINE_ASAN")
+        else []
+    )
+
+    def command(self, source, out, defines=(), includes=()):
+        """The one command that compiles and links a source into a library;
+        :includes: are headers forced in ahead of it."""
         return [
             self.compiler,
             *self.flags,
             *(f"-D{d}" for d in defines),
+            *(f"-include{i}" for i in includes),
+            *self.sanitize,
             *self.link,
             str(source),
             "-o",

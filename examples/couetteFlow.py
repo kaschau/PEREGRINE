@@ -60,7 +60,7 @@ def simulate(index, velo):
     config["mcPhysics"]["mixture"] = air
     config.validateConfig()
 
-    mb = pg.multiBlock.buildSolver(config, 1)
+    mb = pg.multiBlock.solver(config, 1)
     rot = {"i": 0, "j": 1, "k": 2}
 
     def rotate(li, index):
@@ -134,7 +134,7 @@ def simulate(index, velo):
         raise ValueError()
     for face in blk.faces:
         if face.bcType == "adiabaticMovingWall":
-            pg.bcs.prep(blk, face, valueDict)
+            pg.bcs.getBc(face.bcType).setValues(face, valueDict)
             break
 
     mb.setBlockCommunication()
@@ -148,8 +148,8 @@ def simulate(index, velo):
     q[:, :, :, 1:4] = 0.0
     q[:, :, :, 4] = 300.0
     blk.q.set(q)
-    mb.eos(blk, mb.thtrdat, 0, "prims")
-    pg.consistify(mb)
+    mb.stateFromPrims(nface=0)
+    mb.consistify()
 
     mu = np.unique(mb.thtrdat.mu0.get())[0]
     rho = np.unique(blk.Q.get()[:, :, :, 0])[0]

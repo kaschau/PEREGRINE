@@ -35,7 +35,7 @@ class TestPeriodics:
         config["RHS"]["diffusion"] = True
         configure(config, gas)
 
-        mb = pg.multiBlock.buildSolver(config, 1)
+        mb = pg.multiBlock.solver(config, 1)
 
         axis = np.random.random(3)
         axis /= np.linalg.norm(axis)
@@ -75,8 +75,8 @@ class TestPeriodics:
             q[:, :, :, 5::] = Y
         blk.q.set(q)
 
-        mb.eos(blk, mb.thtrdat, 0, "prims")
-        pg.consistify(mb)
+        mb.stateFromPrims(nface=0)
+        mb.consistify()
 
         q = blk.q.get()
 
@@ -128,10 +128,9 @@ class TestPeriodics:
             )
 
         # check the gradients
-        mb.dqdxyz(blk)
+        mb.dqdxyz()
         mb.communicator.exchange("grads")
-        for face in blk.faces:
-            face.bcFunc(blk, face, mb.eos, mb.thtrdat, "postDqDxyz", mb.tme)
+        mb.applyBcs("postDqDxyz")
 
         grads = blk.grads.get()
 

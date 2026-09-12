@@ -12,7 +12,6 @@ import numpy as np
 from mpi4py.MPI import DOUBLE as MPIDOUBLE
 from mpi4py.MPI import Request
 
-from ..kernels.utils import extractSendBuffer, placeRecvBuffer
 from .mpiUtils import getCommRankSize
 
 
@@ -25,6 +24,9 @@ class Communicator:
     """
 
     def __init__(self, mb):
+        # the pack and unpack, one face at a time
+        self.pack = mb.jit.kernel("utils/extractSendBuffer.cpp")
+        self.unpack = mb.jit.kernel("utils/placeRecvBuffer.cpp")
         self.comm, self.rank, self.size = getCommRankSize()
 
         # every face that trades, with the block planes it trades through
@@ -85,8 +87,15 @@ class Communicator:
         # the pack turns the plane onto the neighbor's frame as it goes, so
         # nothing here has to leave the device
         for blk, face, planes in self.trades:
-            extractSendBuffer(
-                getattr(blk, var), getattr(face, send), face, planes[var][0]
+            self.pack(
+                view=getattr(blk, var),
+                buffer=getattr(face, send),
+                nface=face.nface,
+                slices=planes[var][0],
+                nLayer=len(planes[var][0]),
+                transpose=int(face._transposed),
+                flip0=int(0 in face._flipped),
+                flip1=int(1 in face._flipped),
             )
 
         # a neighbor on our own rank reads what we packed as it stands
@@ -106,8 +115,12 @@ class Communicator:
             getattr(face, recv).set(landing[face])
 
         for blk, face, planes in self.trades:
-            placeRecvBuffer(
-                getattr(blk, var), getattr(face, recv), face, planes[var][1]
+            self.unpack(
+                view=getattr(blk, var),
+                buffer=getattr(face, recv),
+                nface=face.nface,
+                slices=planes[var][1],
+                nLayer=len(planes[var][1]),
             )
 
         # a face trades under the same tag whatever the variable, so one

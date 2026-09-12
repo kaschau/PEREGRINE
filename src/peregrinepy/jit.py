@@ -15,11 +15,12 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from .abi import lib
+from .kernel import Kernel
 from .toolchain import Toolchain
 
 
 class Jit:
-    """The kernels one config calls for, and the cache they are built into."""
+    """Compiling kernels for one case, into the cache they are kept in."""
 
     package = Path(__file__).parent
     compute = package.parent / "compute"
@@ -29,59 +30,28 @@ class Jit:
         os.environ.get("PEREGRINE_CACHE", Path.home() / ".cache" / "peregrinepy")
     )
 
-    def __init__(self, config, ns, ng):
-        self.config = config
+    def __init__(self, ns, ng):
         # a kernel is compiled for one species count and halo depth
         self.defines = (f"NS={ns}", f"NE={5 + ns - 1}", f"NG={ng}")
         self.toolchain = Toolchain.read(self.package / "toolchain.json")
 
-    @property
-    def sources(self):
-        """The kernel sources the config calls for, relative to src/compute."""
-        rhs, mc = self.config["RHS"], self.config["mcPhysics"]
-        picked = [f"thermo/{mc['eos']}.cpp"]
-        if rhs["diffusion"]:
-            picked.append(
-                {
-                    ("kineticTheory", "binary"): "transport/kineticTheory.cpp",
-                    ("kineticTheory", "lewis"): "transport/kineticTheoryUnityLewis.cpp",
-                    ("chungDenseGas", "lewis"): "transport/chungDenseGasUnityLewis.cpp",
-                    ("constantProps", "lewis"): "transport/constantProps.cpp",
-                }[(mc["trans"], mc["diffusion"])]
-            )
-            picked.append("diffFlux/alphaDampingFlux.cpp")
-            if rhs["subgrid"] is not None:
-                picked.append(f"subgrid/{rhs['subgrid']}.cpp")
-        for flux in (rhs["primaryAdvFlux"], rhs["secondaryAdvFlux"]):
-            if flux is not None:
-                picked.append(f"advFlux/{flux}.cpp")
-        if rhs["switchAdvFlux"] is not None:
-            picked.append(
-                f"switches/{rhs['switchAdvFlux'].removesuffix('Pressure')}.cpp"
-            )
-        integrator = self.config["timeIntegration"]["integrator"]
-        picked.append(
-            "timeIntegration/dualTime.cpp"
-            if integrator == "dualTime"
-            else "timeIntegration/rk4Stages.cpp"
-        )
-        # the utilities and boundary conditions every case may reach
-        for folder in ("utils", "boundaryConditions"):
-            picked += sorted(
-                str(f.relative_to(self.compute))
-                for f in (self.compute / folder).glob("*.cpp")
-            )
-        return picked
-
-    def build(self, source):
+    def build(self, source, defines=(), includes=()):
         """The library for one kernel source, compiled if the cache has no
-        current one. Returns its path."""
+        current one. Returns its path. A source's own headers, in and under
+        its directory, are part of its key; :defines: and :includes: are its
+        own on top of the case's."""
         path = self.compute / source
+        defines = self.defines + tuple(defines)
+        includes = tuple(self.compute / i for i in includes)
         key = hashlib.sha256()
-        for f in (path, *(self.compute / h for h in self.headers)):
+        headers = [self.compute / h for h in self.headers] + sorted(
+            path.parent.rglob("*.hpp")
+        )
+        for f in (path, *headers, *includes):
             key.update(f.read_bytes())
         key.update(repr(vars(self.toolchain)).encode())
-        key.update(" ".join(sorted(self.defines)).encode())
+        key.update(" ".join(sorted(defines)).encode())
+        key.update(" ".join(str(i) for i in includes).encode())
         out = (
             self.cacheDir / f"{path.stem}-{key.hexdigest()[:16]}{self.toolchain.suffix}"
         )
@@ -96,10 +66,17 @@ class Jit:
                 # built aside and moved in whole, so a reader never sees a partial file
                 with tempfile.TemporaryDirectory(dir=out.parent) as tmp:
                     built = Path(tmp) / out.name
+                    # a sanitized run interposes its runtime into every child; not the compiler
+                    env = {
+                        k: v
+                        for k, v in os.environ.items()
+                        if k != "DYLD_INSERT_LIBRARIES"
+                    }
                     result = subprocess.run(
-                        self.toolchain.command(path, built, self.defines),
+                        self.toolchain.command(path, built, defines, includes),
                         capture_output=True,
                         text=True,
+                        env=env,
                     )
                     if result.returncode:
                         raise RuntimeError(
@@ -109,14 +86,12 @@ class Jit:
         os.remove(out.with_suffix(".lock"))
         return out
 
-    def compile(self):
-        """Build every kernel the config calls for, at once since they are
-        independent, and needing no device: a login node can fill the cache."""
-        with ThreadPoolExecutor() as pool:
-            return list(pool.map(self.build, self.sources))
+    def kernel(self, source, defines=(), includes=()):
+        """The one kernel a source declares, built and loaded."""
+        lib.load(self.build(source, defines, includes))
+        return Kernel.parse((self.compute / source).read_text())
 
-    def load(self):
-        """Build what the config calls for and load it, so its kernels can be
-        called."""
-        for library in self.compile():
-            lib.load(library)
+    def compile(self, requests):
+        """Build many (source, defines) at once; they are independent."""
+        with ThreadPoolExecutor() as pool:
+            list(pool.map(lambda r: self.build(*r), requests))

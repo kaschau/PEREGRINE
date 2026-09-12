@@ -9,7 +9,7 @@ def create(bc, adv, gas):
     config["RHS"]["diffusion"] = True
     configure(config, gas)
 
-    mb = pg.multiBlock.buildSolver(config, 1)
+    mb = pg.multiBlock.solver(config, 1)
 
     pg.mesher.CubeMesher(
         mbDims=[1, 1, 1], dimsPerBlock=[8, 6, 4], lengths=[1, 1, 1]
@@ -50,9 +50,9 @@ def create(bc, adv, gas):
         q[:, :, :, 5::] = Y
     blk.q.set(q)
 
-    mb.eos(blk, mb.thtrdat, -1, "prims")
+    mb.stateFromPrims(nface=-1)
 
-    mb.dqdxyz(blk)
+    mb.dqdxyz()
 
     if blk.ns > 1:
         Ybc = np.random.uniform(low=0.0, high=1.0, size=blk.ns)
@@ -82,7 +82,7 @@ def create(bc, adv, gas):
 
         # Conservative like bcs
         inputBcValues["mDotPerUnitArea"] = mDotPerAbc
-        pg.bcs.prep(blk, face, inputBcValues)
+        pg.bcs.getBc(face.bcType).setValues(face, inputBcValues)
         # the target mdot goes in the zeroth (unused) index of QBcVals, for the check
         QBcVals = face.hostCopy("QBcVals")
         QBcVals[:, :, 0] = mDotPerAbc

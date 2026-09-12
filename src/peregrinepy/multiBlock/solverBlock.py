@@ -9,7 +9,9 @@ from ..integrators import getIntegrator
 
 
 class solverBlock(restartBlock, SolverMetricsMixin, HaloMixin):
-    def __init__(self, nblki, spNames, ng, config):
+    def __init__(self, nblki, spNames, ng, config, mb, tableIndex):
+        # the solver this block belongs to, and which slot of its table is this block's
+        self.mb, self.tableIndex = mb, tableIndex
         restartBlock.__init__(self, nblki, spNames, ng)
         self.ne = 5 + self.ns - 1
         self.config = config
@@ -17,7 +19,7 @@ class solverBlock(restartBlock, SolverMetricsMixin, HaloMixin):
         #######################################################################
         # Grid metrics only a solver needs
         #######################################################################
-        self.declare("J", kind="cell")
+        self.declare("Jinv", kind="cell")
         self.declare("dIJK", kind="cell", components=3)
         # cell center transformation metrics
         self.declare("dENCdxyz", kind="cell", components=(3, 3))
@@ -59,6 +61,7 @@ class solverBlock(restartBlock, SolverMetricsMixin, HaloMixin):
         for face in self.faces:
             face.setExtents(ni, nj, nk, self.ne)
         super().setExtents(ni, nj, nk)
+        self.mb.table.setDims(self.tableIndex, self)
 
     def allocate(self):
         """A solver block's arrays live where the kernels run. The host sees
@@ -69,6 +72,7 @@ class solverBlock(restartBlock, SolverMetricsMixin, HaloMixin):
             if current is not None and current.shape == shape:
                 continue
             setattr(self, name, DeviceArray(shape))
+            self.mb.table.register(self.tableIndex, name, getattr(self, name))
 
     def hostCopy(self, name):
         return getattr(self, name).get()
@@ -88,7 +92,31 @@ class solverBlock(restartBlock, SolverMetricsMixin, HaloMixin):
         getattr(self, name).set(a)
 
     def _newFace(self, nface):
-        return solverFace(nface, self.ng)
+        return solverFace(nface, self.ng, self)
+
+    @staticmethod
+    def haloDepth(config):
+        """How many ghost layers the case's stencils need."""
+        advFluxNG = {
+            "KEEP": 1,
+            "KEEPpe": 1,
+            "KEPaEC": 1,
+            "centralDifference": 1,
+            "fourthOrderKEEP": 2,
+            "hllc": 1,
+            "rusanov": 1,
+            "muscl2hllc": 2,
+            "muscl2rusanov": 2,
+            "scalarDissipation": 2,
+            None: 1,
+        }
+        subgridNG = {"smagorinsky": 1, None: 1}
+        rhs = config["RHS"]
+        return max(
+            advFluxNG[rhs["primaryAdvFlux"]],
+            advFluxNG[rhs["secondaryAdvFlux"]],
+            subgridNG[rhs["subgrid"]],
+        )
 
     @property
     def interior(self):

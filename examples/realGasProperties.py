@@ -19,7 +19,7 @@ def simulate():
     config["mcPhysics"]["trans"] = "chungDenseGas"
     config["mcPhysics"]["Trange"] = (300.0, 2000.0)
     config.validateConfig()
-    mb = pg.multiBlock.buildSolver(config, 1)
+    mb = pg.multiBlock.solver(config, 1)
     pg.mesher.CubeMesher(
         mbDims=[1, 1, 1], dimsPerBlock=[2, 2, 2], lengths=[0.01, 0.01, 0.01]
     ).mesh(mb)
@@ -55,9 +55,9 @@ def simulate():
 
             # Update cons
             blk.q.set(q)
-            mb.eos(blk, mb.thtrdat, 0, "prims")
+            mb.stateFromPrims(nface=0)
             # Update transport
-            mb.trans(blk, mb.thtrdat, 0)
+            mb.trans(nface=0)
 
             Q, qh, qt = blk.Q.get(), blk.qh.get(), blk.qt.get()
             rhos[j, i] = Q[ng, ng, ng, 0]

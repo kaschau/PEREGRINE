@@ -6,8 +6,7 @@
 static void computeFlux(const unmanaged<double ****> &Q,
                         const unmanaged<double ****> &phi,
                         const unmanaged<double ****> &q,
-                        const unmanaged<double ****> &qh, const int ne,
-                        const int ng, const int ni, const int nj, const int nk,
+                        const unmanaged<double ****> &qh, const pgDims &d,
                         unmanaged<double ****> &iF,
                         const unmanaged<double ****> &iS, const int iMod,
                         const int jMod, const int kMod) {
@@ -15,6 +14,7 @@ static void computeFlux(const unmanaged<double ****> &Q,
   const double kappa2 = 0.5;
   const double kappa4 = 0.005;
 
+  const int ni = d.ni, nj = d.nj, nk = d.nk;
   // face flux range
   MDRange3 range({ng, ng, ng},
                  {ni + ng - 1 + iMod, nj + ng - 1 + jMod, nk + ng - 1 + kMod});
@@ -45,9 +45,10 @@ static void computeFlux(const unmanaged<double ****> &Q,
 
         const double U = nx * uf + ny * vf + nz * wf;
 
+        // negative: this flux leaves the state, and is applied like any other
         const double a =
-            (abs(U) +
-             0.5 * (qh(i, j, k, 3) + qh(i - iMod, j - jMod, k - kMod, 3))) *
+            -(abs(U) +
+              0.5 * (qh(i, j, k, 3) + qh(i - iMod, j - jMod, k - kMod, 3))) *
             S;
 
         double rho2, rho4;
@@ -108,24 +109,25 @@ static void computeFlux(const unmanaged<double ****> &Q,
       });
 }
 
-PG_ABI void pgScalarDissipation(const pgView *Q_, const pgView *iF_,
+PG_ABI void pgScalarDissipation(int count, const pgView *Q_, const pgView *iF_,
                                 const pgView *iS_, const pgView *jF_,
                                 const pgView *jS_, const pgView *kF_,
                                 const pgView *kS_, const pgView *phi_,
                                 const pgView *q_, const pgView *qh_,
                                 const pgDims *d) {
-  auto Q = as4(*Q_);
-  auto iF = as4(*iF_);
-  auto iS = as4(*iS_);
-  auto jF = as4(*jF_);
-  auto jS = as4(*jS_);
-  auto kF = as4(*kF_);
-  auto kS = as4(*kS_);
-  auto phi = as4(*phi_);
-  auto q = as4(*q_);
-  auto qh = as4(*qh_);
-  const int ni = d->ni, nj = d->nj, nk = d->nk;
-  computeFlux(Q, phi, q, qh, ne, ng, ni, nj, nk, iF, iS, 1, 0, 0);
-  computeFlux(Q, phi, q, qh, ne, ng, ni, nj, nk, jF, jS, 0, 1, 0);
-  computeFlux(Q, phi, q, qh, ne, ng, ni, nj, nk, kF, kS, 0, 0, 1);
+  for (int e = 0; e < count; e++) {
+    auto Q = as4(Q_[e]);
+    auto iF = as4(iF_[e]);
+    auto iS = as4(iS_[e]);
+    auto jF = as4(jF_[e]);
+    auto jS = as4(jS_[e]);
+    auto kF = as4(kF_[e]);
+    auto kS = as4(kS_[e]);
+    auto phi = as4(phi_[e]);
+    auto q = as4(q_[e]);
+    auto qh = as4(qh_[e]);
+    computeFlux(Q, phi, q, qh, d[e], iF, iS, 1, 0, 0);
+    computeFlux(Q, phi, q, qh, d[e], jF, jS, 0, 1, 0);
+    computeFlux(Q, phi, q, qh, d[e], kF, kS, 0, 0, 1);
+  }
 }

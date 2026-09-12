@@ -41,7 +41,7 @@ def test_tpg(my_setup, ctfile):
     config["mcPhysics"]["Trange"] = (300.0, 3500.0)
     config["RHS"]["diffusion"] = False
 
-    mb = pg.multiBlock.buildSolver(config, 1)
+    mb = pg.multiBlock.solver(config, 1)
     pg.mesher.CubeMesher(
         mbDims=[1, 1, 1], dimsPerBlock=[2, 2, 2], lengths=[1, 1, 1]
     ).mesh(mb)
@@ -59,9 +59,9 @@ def test_tpg(my_setup, ctfile):
     q[:, :, :, 5::] = Y[0:-1]
 
     # Update cons
-    assert mb.eos.__name__ == "tpg"
+    assert mb.stateFromPrims.__name__ == "tpgFromPrims"
     blk.q.set(q)
-    mb.eos(blk, mb.thtrdat, 0, "prims")
+    mb.stateFromPrims(nface=0)
     q, Q, qh = blk.q.get(), blk.Q.get(), blk.qh.get()
 
     # test the properties
@@ -119,7 +119,7 @@ def test_tpg(my_setup, ctfile):
     q[:, :, :, 4] = 0.0
     q[:, :, :, 5::] = np.zeros(len(Y[0:-1]))
     blk.q.set(q)
-    mb.eos(blk, mb.thtrdat, 0, "cons")
+    mb.stateFromCons(nface=0)
     q, Q, qh = blk.q.get(), blk.Q.get(), blk.qh.get()
     pgcons, pgprim, pgthrm = Q[ng, ng, ng], q[ng, ng, ng], qh[ng, ng, ng]
 

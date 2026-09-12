@@ -109,7 +109,7 @@ def simulate():
     if rank == 0:
         with open("tempcoproc.py", "w") as f:
             f.write(fname)
-    mb = pg.multiBlock.buildSolver(config, 1)
+    mb = pg.multiBlock.solver(config, 1)
     blk = mb[0]
     if rank == 0:
         pg.mesher.CubeMesher(
@@ -124,7 +124,7 @@ def simulate():
         inputBcValues["v"] = 0.0
         inputBcValues["w"] = 0.0
         inputBcValues["T"] = 300.0
-        pg.bcs.prep(blk, face, inputBcValues)
+        pg.bcs.getBc(face.bcType).setValues(face, inputBcValues)
 
         face = blk.getFace(2)
         face.commRank = 1
@@ -145,7 +145,7 @@ def simulate():
         face.bcType = "constantPressureSubsonicExit"
         inputBcValues = {}
         inputBcValues["p"] = 101325.0
-        pg.bcs.prep(blk, face, inputBcValues)
+        pg.bcs.getBc(face.bcType).setValues(face, inputBcValues)
 
         face = blk.getFace(1)
         face.commRank = 0
@@ -167,8 +167,8 @@ def simulate():
     q[:, :, :, 1] = 10.0
     q[:, :, :, 4] = 300.0
     blk.q.set(q)
-    mb.eos(blk, mb.thtrdat, 0, "prims")
-    pg.consistify(mb)
+    mb.stateFromPrims(nface=0)
+    mb.consistify()
     mb.coproc = pg.coproc.coprocessor(mb)
 
     if rank == 0:

@@ -24,7 +24,7 @@ def bootstrapCase(config):
 
     # Generate the multiBlock solver object for each MPI process, given the number of
     # blocks each process is responsible for
-    mb = pg.multiBlock.buildSolver(config, myblocks=myblocks)
+    mb = pg.multiBlock.solver(config, myblocks=myblocks)
     comm.Barrier()
     if rank == 0:
         print("Generated multiblock.")
@@ -75,7 +75,7 @@ def bootstrapCase(config):
     ################################################################
     # Put the case's boundary values on the faces that take them
     ################################################################
-    pg.bcs.applyBcValues(mb)
+    mb.applyBcValues()
     comm.Barrier()
     if rank == 0:
         print("Set boundary conditions.")
@@ -93,18 +93,14 @@ def bootstrapCase(config):
     ################################################################
     # Prepare interior fields
     ################################################################
-    # Generate conserved variables
-    for blk in mb:
-        mb.eos(blk, mb.thtrdat, -1, "prims")
-
-    # Consistify total flow field
-    pg.consistify(mb)
+    # the restart holds primitives; everything else follows from them
+    mb.consistifyFromPrims()
 
     ################################################################
     # Dual time initialization
     ################################################################
-    if mb.stepType == "dualTime":
-        mb.initializeDualTime()
+    if mb.integrator.stepType == "dualTime":
+        mb.integrator.initialize()
 
     ################################################################
     # Initialize coprocessor

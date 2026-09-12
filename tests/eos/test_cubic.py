@@ -18,7 +18,7 @@ def test_cubic(my_setup):
     config["mcPhysics"]["Trange"] = (300.0, 3500.0)
     config["RHS"]["diffusion"] = False
 
-    mb = pg.multiBlock.buildSolver(config, 1)
+    mb = pg.multiBlock.solver(config, 1)
     p = np.random.uniform(low=10000, high=100000)
     T = np.random.uniform(low=300, high=1000)
     Y = np.random.uniform(low=0.0, high=1.0, size=mb[0].ns)
@@ -40,11 +40,11 @@ def test_cubic(my_setup):
     q[:, :, :, 5::] = Y[0:-1]
 
     # Update cons
-    assert mb.eos.__name__ == "realGas"
+    assert mb.stateFromPrims.__name__ == "realGasFromPrims"
     blk.q.set(q)
-    mb.eos(blk, mb.thtrdat, 0, "prims")
+    mb.stateFromPrims(nface=0)
     # Go the other way
-    mb.eos(blk, mb.thtrdat, 0, "cons")
+    mb.stateFromCons(nface=0)
     q = blk.q.get()
 
     # test the properties

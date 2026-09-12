@@ -1,9 +1,4 @@
-from functools import cache
-
 import numpy as np
-
-from ..kernels import boundaryConditions
-from ..misc import null, subclasses, subclassWhere
 
 
 class BaseBC:
@@ -22,27 +17,33 @@ class BaseBC:
 
     # what this bc is called, which is what the grid's connectivity stores
     bcType = None
-    # the family of kernel it is (walls, inlets, exits, periodics), or None for no kernel
+    # which folder of boundaryConditions/ holds it
     family = None
+    # the hooks in the step it has a kernel for; an interior face has none
+    hooks = ()
     # input key -> index into the face's qBcVals
     values = {}
     # whether the face is shared with another block rather than standing alone
     hasNeighbor = False
 
     @classmethod
-    def kernel(cls):
-        if cls.family is None:
-            return null
-        return getattr(boundaryConditions, cls.family)[cls.bcType]
+    def header(cls, hook):
+        """The header applying this bc at one hook, relative to src/compute."""
+        return f"boundaryConditions/{cls.family}/{cls.bcType}/{hook}.hpp"
 
     @classmethod
-    def prep(cls, blk, face, valueDict, qBcVals, QBcVals):
-        """Read this face's config entry into the host arrays it will be
-        given."""
+    def setValues(cls, face, valueDict):
+        """Give a face the values its config entry sets, where the kernels
+        run. Some conditions have prep work of their own, a constant mass flux
+        or a profile read off disk, so the entry is read rather than copied."""
+        blk = face.blk
+        qBcVals = np.zeros(face.shapeOf("qBcVals"))
+        QBcVals = np.zeros(face.shapeOf("QBcVals"))
         if valueDict.get("profile", False):
             cls._profile(blk, face, qBcVals, QBcVals)
         else:
             cls._constants(blk, face, valueDict, qBcVals, QBcVals)
+        face.allocate(qBcVals=qBcVals, QBcVals=QBcVals)
 
     @classmethod
     def _profile(cls, blk, face, qBcVals, QBcVals):
@@ -63,25 +64,3 @@ class BaseBC:
     def _constants(cls, blk, face, valueDict, qBcVals, QBcVals):
         for key, index in cls.values.items():
             qBcVals[:, :, index] = valueDict[key]
-
-
-# called once per face of every block; the registry is fixed after import
-@cache
-def getBc(bcType):
-    """The class for a bcType, which is also the check that it is one."""
-    return subclassWhere(BaseBC, bcType=bcType)
-
-
-@cache
-def validBcTypes():
-    return tuple(sorted(c.bcType for c in subclasses(BaseBC) if c.bcType))
-
-
-def prep(blk, face, valueDict):
-    """Give a face the values its entry sets, where the kernels run."""
-    qBcVals = np.zeros(face.shapeOf("qBcVals"))
-    QBcVals = np.zeros(face.shapeOf("QBcVals"))
-    getBc(face.bcType).prep(blk, face, valueDict, qBcVals, QBcVals)
-    face.allocate("qBcVals", "QBcVals")
-    face.qBcVals.set(qBcVals)
-    face.QBcVals.set(QBcVals)

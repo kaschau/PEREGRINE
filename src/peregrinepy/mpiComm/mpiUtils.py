@@ -1,5 +1,4 @@
 from mpi4py import MPI  # noqa: F401
-from ..kernels.utils import CFLmax, allFinite
 import numpy as np
 
 
@@ -61,7 +60,8 @@ def getDtMaxCFL(mb):
 
     # the max over this rank's blocks, then over ranks; the convective floor
     # keeps the time step finite in a quiescent field
-    cfl = np.max([CFLmax(blk) for blk in mb], axis=0)
+    cfl = np.zeros(3)
+    mb.CFLmax(cfl=cfl)
     cfl[1] = max(cfl[1], 1e-16)
     comm.Allreduce(MPI.IN_PLACE, cfl, op=MPI.MAX)
 
@@ -78,7 +78,7 @@ def checkForNan(mb):
     comm, rank, size = getCommRankSize()
 
     abort = np.array([0], np.int32)
-    abort[0] = not all(allFinite(blk) for blk in mb)
+    abort[0] = not mb.allFinite()
     if abort[0] > 0:
         for blk in mb:
             Q = blk.Q.get()

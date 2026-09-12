@@ -343,7 +343,7 @@ def simulate(testnum, index="i"):
     config["RHS"]["switchAdvFlux"] = "vanLeer"
     config["timeIntegration"]["integrator"] = "rk3"
     config.validateConfig()
-    mb = pg.multiBlock.buildSolver(config, 1)
+    mb = pg.multiBlock.solver(config, 1)
 
     Ru = mb.thtrdat.Ru
     MW = mb.thtrdat.MW.get()[0]
@@ -424,11 +424,11 @@ def simulate(testnum, index="i"):
             inputBcValues["v"] = bcVelo[1]
             inputBcValues["w"] = bcVelo[2]
             inputBcValues["T"] = test.TL
-            pg.bcs.prep(blk, face, inputBcValues)
+            pg.bcs.getBc(face.bcType).setValues(face, inputBcValues)
         elif test.uL < 0:
             face.bcType = "constantPressureSubsonicExit"
             inputBcValues["p"] = test.pL
-            pg.bcs.prep(blk, face, inputBcValues)
+            pg.bcs.getBc(face.bcType).setValues(face, inputBcValues)
 
     face = blk.getFace(highFace)
     if test.uR == 0.0:
@@ -442,15 +442,15 @@ def simulate(testnum, index="i"):
             inputBcValues["v"] = bcVelo[1]
             inputBcValues["w"] = bcVelo[2]
             inputBcValues["T"] = test.TR
-            pg.bcs.prep(blk, face, inputBcValues)
+            pg.bcs.getBc(face.bcType).setValues(face, inputBcValues)
         elif test.uR > 0:
             face.bcType = "constantPressureSubsonicExit"
             inputBcValues["p"] = test.pR
-            pg.bcs.prep(blk, face, inputBcValues)
+            pg.bcs.getBc(face.bcType).setValues(face, inputBcValues)
 
     # Update cons
-    mb.eos(blk, mb.thtrdat, 0, "prims")
-    pg.consistify(mb)
+    mb.stateFromPrims(nface=0)
+    mb.consistify()
     while mb.tme < test.t:
         pg.misc.progressBar(mb.tme, test.t)
         mb.step(test.dt)

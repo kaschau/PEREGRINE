@@ -36,13 +36,19 @@ class gridFace(topologyFace):
     def shapeOf(self, name):
         return self.shapes[self.declared[name]]
 
-    def allocate(self, *names):
-        """Give these arrays their memory now that their shapes are known. A
-        face allocates in groups rather than all at once, since an interior
-        face never holds boundary values and a boundary face never holds
-        halo buffers."""
+    def allocate(self, *names, **values):
+        """Give these arrays their memory now that their shapes are known,
+        and any given by name their values. A face allocates in groups rather
+        than all at once, since an interior face never holds boundary values
+        and a boundary face never holds halo buffers."""
         for name in names:
             setattr(self, name, np.zeros(self.shapeOf(name)))
+        for name, array in values.items():
+            setattr(
+                self,
+                name,
+                np.array(array, dtype=np.float64).reshape(self.shapeOf(name)),
+            )
 
     ###########################################################################
     # How a halo arriving through this face is moved onto it
@@ -54,11 +60,7 @@ class gridFace(topologyFace):
         # so it needs one of its own to read
         if rotation is None:
             return
-        self.allocate("periodicRotMatrix")
-        self.setRotationMatrix(rotation)
-
-    def setRotationMatrix(self, rotation):
-        self.periodicRotMatrix[:] = rotation
+        self.allocate(periodicRotMatrix=rotation)
 
     def hostCopy(self, name):
         return getattr(self, name)

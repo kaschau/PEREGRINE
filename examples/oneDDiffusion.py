@@ -21,7 +21,7 @@ def simulate():
     config["RHS"]["diffusion"] = True
     config["RHS"]["primaryAdvFlux"] = "rusanov"
     config.validateConfig()
-    mb = pg.multiBlock.buildSolver(config, 1)
+    mb = pg.multiBlock.solver(config, 1)
     pg.mesher.CubeMesher(
         mbDims=[1, 1, 1], dimsPerBlock=[41, 2, 2], lengths=[1, 0.01, 0.01]
     ).mesh(mb)
@@ -46,8 +46,8 @@ def simulate():
 
     # Update cons
     blk.q.set(q)
-    mb.eos(blk, mb.thtrdat, 0, "prims")
-    pg.consistify(mb)
+    mb.stateFromPrims(nface=0)
+    mb.consistify()
 
     dt = 1e-5
     nrt = 50000

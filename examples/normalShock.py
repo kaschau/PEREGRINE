@@ -43,7 +43,7 @@ def simulate():
     config["mcPhysics"]["mixture"] = air
     config.validateConfig()
 
-    mb = pg.multiBlock.buildSolver(config, 1)
+    mb = pg.multiBlock.solver(config, 1)
 
     nx = 300
     lx = 1.0
@@ -66,7 +66,7 @@ def simulate():
     q[ng:-ng, ng:-ng, ng:-ng, 0] = p1
     q[ng:-ng, ng:-ng, ng:-ng, 4] = T1
     blk.q.set(q)
-    mb.eos(blk, mb.thtrdat, 0, "prims")
+    mb.stateFromPrims(nface=0)
 
     qh = blk.qh.get()
     gamma = qh[ng, ng, ng, 0]
@@ -84,14 +84,14 @@ def simulate():
     q[ng:-ng, ng:-ng, ng:-ng, 0] = p2
     q[ng:-ng, ng:-ng, ng:-ng, 4] = T2
     blk.q.set(q)
-    mb.eos(blk, mb.thtrdat, 0, "prims")
+    mb.stateFromPrims(nface=0)
     c2 = blk.qh.get()[ng, ng, ng, 3]
 
     u2 = -M2 * c2 + M1 * c1  # In lab reference frame
     # Inlet
     valueDict = {"u": u2, "v": 0.0, "w": 0.0, "T": T2}
     face1 = blk.getFace(1)
-    pg.bcs.prep(blk, face1, valueDict)
+    pg.bcs.getBc(face1.bcType).setValues(face1, valueDict)
 
     mb.setBlockCommunication()
     mb.unifyGrid()
@@ -117,11 +117,10 @@ def simulate():
 
     # Update cons
     blk.q.set(q)
-    mb.eos(blk, mb.thtrdat, 0, "prims")
+    mb.stateFromPrims(nface=0)
     # Apply euler boundary conditions
-    for face in blk.faces:
-        face.bcFunc(blk, face, mb.eos, mb.thtrdat, "euler", mb.tme)
-    pg.consistify(mb)
+    mb.applyBcs("euler")
+    mb.consistify()
 
     # Set dt based on cfg estimate
     dt = 0.25 * dx / (c2 + u2)
