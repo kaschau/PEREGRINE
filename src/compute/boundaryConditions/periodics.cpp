@@ -1,32 +1,36 @@
-#include "block_.hpp"
-#include "compute.hpp"
-#include "face_.hpp"
+#include "kernelUtils.hpp"
 #include "kokkosTypes.hpp"
-#include "thtrdat_.hpp"
 #include <Kokkos_Core.hpp>
 #include <string.h>
 
-void periodicRot(
-    block_ &b, face_ &face,
-    const std::function<void(block_, thtrdat_, int, std::string)> /*&eos*/,
-    const thtrdat_ /*&th*/, const std::string &terms, const double /*&tme*/) {
+PG_ABI void pgPeriodicRot(const pgView *q_, const pgView *Q_, const pgView *qh_,
+                          const pgView *grads_, const pgView *S_,
+                          const pgView *qBcVals_, const pgView *QBcVals_,
+                          const pgView *rot_, const pgDims *d, int nface,
+                          int terms, double tme) {
+  auto q = as4(*q_), Q = as4(*Q_), qh = as4(*qh_);
+  auto grads = as5(*grads_);
+  auto S = as4(*S_);
+  auto qBcVals = as3(*qBcVals_), QBcVals = as3(*QBcVals_);
+  auto rot = as2(*rot_);
+  const int ni = d->ni, nj = d->nj, nk = d->nk, ng = d->ng;
+  const int ne = q.extent(3);
   //-------------------------------------------------------------------------------------------|
   // Apply BC to face, slice by slice.
   //-------------------------------------------------------------------------------------------|
-  const int ng = b.ng;
-  int firstHaloIdx, firstInteriorCellIdx, blockFaceIdx, plus;
-  getFaceSliceIdxs(firstHaloIdx, firstInteriorCellIdx, blockFaceIdx, plus, b.ni,
-                   b.nj, b.nk, ng, face.nface);
+  const faceCells f = faceCellsOf(*d, nface);
+  int firstHaloIdx = f.halo, firstInteriorCellIdx = f.interior,
+      blockFaceIdx = f.face, plus = f.plus;
 
-  if (terms.compare("euler") == 0) {
+  if (terms == 0) {
 
-    threeDsubview q1 = getFaceSlice(b.q, face.nface, firstInteriorCellIdx);
+    auto q1 = getFaceSlice(q, nface, firstInteriorCellIdx);
     MDRange2 range_face = MDRange2({0, 0}, {q1.extent(0), q1.extent(1)});
-    for (int g = 0; g < b.ng; g++) {
+    for (int g = 0; g < ng; g++) {
       firstHaloIdx -= plus * g;
 
-      threeDsubview q0 = getFaceSlice(b.q, face.nface, firstHaloIdx);
-      threeDsubview Q0 = getFaceSlice(b.Q, face.nface, firstHaloIdx);
+      auto q0 = getFaceSlice(q, nface, firstHaloIdx);
+      auto Q0 = getFaceSlice(Q, nface, firstHaloIdx);
 
       Kokkos::parallel_for(
           "Rotate periodic euler terms", range_face,
@@ -36,15 +40,9 @@ void periodicRot(
             double u = q0(i, j, 1);
             double v = q0(i, j, 2);
             double w = q0(i, j, 3);
-            tempU = face.periodicRotMatrix(0, 0) * u +
-                    face.periodicRotMatrix(0, 1) * v +
-                    face.periodicRotMatrix(0, 2) * w;
-            tempV = face.periodicRotMatrix(1, 0) * u +
-                    face.periodicRotMatrix(1, 1) * v +
-                    face.periodicRotMatrix(1, 2) * w;
-            tempW = face.periodicRotMatrix(2, 0) * u +
-                    face.periodicRotMatrix(2, 1) * v +
-                    face.periodicRotMatrix(2, 2) * w;
+            tempU = rot(0, 0) * u + rot(0, 1) * v + rot(0, 2) * w;
+            tempV = rot(1, 0) * u + rot(1, 1) * v + rot(1, 2) * w;
+            tempW = rot(2, 0) * u + rot(2, 1) * v + rot(2, 2) * w;
 
             // Update velocity
             q0(i, j, 1) = tempU;
@@ -57,13 +55,13 @@ void periodicRot(
             Q0(i, j, 3) = tempW * Q0(i, j, 0);
           });
     }
-  } else if (terms.compare("postDqDxyz") == 0) {
+  } else if (terms == 2) {
 
-    fourDsubview grads0 = getFaceSlice(b.grads, face.nface, firstHaloIdx);
+    auto grads0 = getFaceSlice(grads, nface, firstHaloIdx);
 
     MDRange3 range_face =
         MDRange3({0, 0, 0}, {static_cast<long>(grads0.extent(0)),
-                             static_cast<long>(grads0.extent(1)), b.ne});
+                             static_cast<long>(grads0.extent(1)), ne});
     Kokkos::parallel_for(
         "Periodic postDqDxyz terms", range_face,
         KOKKOS_LAMBDA(const int i, const int j, const int l) {
@@ -73,7 +71,7 @@ void periodicRot(
           for (int r = 0; r < 3; r++) {
             double turned = 0.0;
             for (int c = 0; c < 3; c++) {
-              turned += face.periodicRotMatrix(r, c) * grad[c];
+              turned += rot(r, c) * grad[c];
             }
             grads0(i, j, l, r) = turned;
           }

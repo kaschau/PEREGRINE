@@ -4,8 +4,9 @@ from .restart import restart
 from .solver import solver
 
 from ..integrators import getIntegrator
-from ..thermoTransport import thtrdat, findUserSpData
-from peregrinepy import compute
+from ..mixture import Mixture
+from .. import kernels
+from .thtrdat import thtrdat
 
 from ..misc import null
 
@@ -34,17 +35,26 @@ def setConsistify(cls, config):
     # EOS
     eos = config["mcPhysics"]["eos"]
     try:
-        cls.eos = getattr(compute.thermo, eos)
+        cls.eos = getattr(kernels.thermo, eos)
     except AttributeError:
         raise pgConfigError("eos", eos)
 
-    # Transport properties
+    # Transport properties: the transport and species diffusion choices pick
+    # one kernel between them
     if config["RHS"]["diffusion"]:
-        trans = config["mcPhysics"]["trans"]
-        try:
-            cls.trans = getattr(compute.transport, trans)
-        except AttributeError:
-            raise pgConfigError("trans", trans)
+        trans, diffusion = (
+            config["mcPhysics"]["trans"],
+            config["mcPhysics"]["diffusion"],
+        )
+        kernel = {
+            ("kineticTheory", "binary"): "kineticTheory",
+            ("kineticTheory", "lewis"): "kineticTheoryUnityLewis",
+            ("chungDenseGas", "lewis"): "chungDenseGasUnityLewis",
+            ("constantProps", "lewis"): "constantProps",
+        }.get((trans, diffusion))
+        if kernel is None:
+            raise pgConfigError("trans", f"{trans} with {diffusion} diffusion")
+        cls.trans = getattr(kernels.transport, kernel)
 
     else:
         cls.trans = null
@@ -58,7 +68,7 @@ def setConsistify(cls, config):
         cls.switch = null
     else:
         try:
-            cls.switch = getattr(compute.switches, switch)
+            cls.switch = getattr(kernels.switches, switch)
         except AttributeError:
             raise pgConfigError("switchAdvFlux", switch)
 
@@ -77,15 +87,15 @@ def setRHS(cls, config):
     # Primary advective fluxes
     primary = config["RHS"]["primaryAdvFlux"]
     try:
-        cls.primaryAdvFlux = getattr(compute.advFlux, primary)
+        cls.primaryAdvFlux = getattr(kernels.advFlux, primary)
     except AttributeError:
         raise pgConfigError("primaryAdvFlux", primary)
     # How to apply primary flux
     shock = config["RHS"]["shockHandling"]
     if shock is None or shock == "artificialDissipation":
-        cls.applyPrimaryAdvFlux = compute.utils.applyFlux
+        cls.applyPrimaryAdvFlux = kernels.utils.applyFlux
     elif shock == "hybrid":
-        cls.applyPrimaryAdvFlux = compute.utils.applyHybridFlux
+        cls.applyPrimaryAdvFlux = kernels.utils.applyHybridFlux
     else:
         raise pgConfigError("shockHandling", shock)
 
@@ -98,32 +108,32 @@ def setRHS(cls, config):
             shock is not None
         ), "*** You set a secondary flux without a shock handler!"
         try:
-            cls.secondaryAdvFlux = getattr(compute.advFlux, secondary)
+            cls.secondaryAdvFlux = getattr(kernels.advFlux, secondary)
         except AttributeError:
             raise pgConfigError("secondaryAdvFlux", secondary)
     # How to apply secondary flux
     if shock is None:
         cls.applySecondaryAdvFlux = null
     elif shock == "artificialDissipation":
-        cls.applySecondaryAdvFlux = compute.utils.applyDissipationFlux
+        cls.applySecondaryAdvFlux = kernels.utils.applyDissipationFlux
     elif shock == "hybrid":
-        cls.applySecondaryAdvFlux = compute.utils.applyHybridFlux
+        cls.applySecondaryAdvFlux = kernels.utils.applyHybridFlux
 
     # spatial derivatives, subgrid mode, diffusive fluxes
     if config["RHS"]["diffusion"]:
-        cls.dqdxyz = getattr(compute.utils, "dq2FD")
+        cls.dqdxyz = kernels.utils.dq2FD
 
         # Subgrid models
         if config["RHS"]["subgrid"] is not None:
             sgs = config["RHS"]["subgrid"]
             try:
-                cls.sgs = getattr(compute.subgrid, sgs)
+                cls.sgs = getattr(kernels.subgrid, sgs)
             except AttributeError:
                 raise pgConfigError("sgs", sgs)
         else:
             cls.sgs = null
-        cls.diffFlux = compute.diffFlux.alphaDampingFlux
-        cls.applyDiffFlux = compute.utils.applyFlux
+        cls.diffFlux = kernels.diffFlux.alphaDampingFlux
+        cls.applyDiffFlux = kernels.utils.applyFlux
 
     else:
         cls.dqdxyz = null
@@ -132,39 +142,15 @@ def setRHS(cls, config):
         cls.applyDiffFlux = null
 
     if config["viscousSponge"]["spongeON"]:
-        cls.viscousSponge = compute.utils.viscousSponge
+        cls.viscousSponge = kernels.utils.viscousSponge
     else:
         cls.viscousSponge = null
 
-    # Chemical source terms
+    # Chemical source terms: parked until the mixture package carries reactions
     if config["mcPhysics"]["chemistry"]:
-        mech = config["mcPhysics"]["mixture"]
-        if cls.stepType in ["explicit", "dualTime"]:
-            try:
-                cls.expChem = getattr(compute.chemistry, mech)
-                cls.impChem = null
-            except AttributeError:
-                raise pgConfigError("mechanism", mech)
-        # If we are using an implicit chemistry integration
-        #  we need to set it here and set the explicit
-        #  module to null so it is not called in RHS
-        elif cls.stepType == "split":
-            try:
-                cls.expChem = null
-                cls.impChem = getattr(compute.chemistry, mech)
-                if config["mcPhysics"]["nChemSubSteps"] > 1:
-                    import warnings
-
-                    warnings.warn(
-                        "WARNING: nChemSubSteps > 1 with implicit chemistry. This has no effect.",
-                        RuntimeWarning,
-                    )
-                    config["mcPhysics"]["nChemSubSteps"] = 1
-            except AttributeError:
-                raise pgConfigError("mechanism", mech)
-    else:
-        cls.expChem = null
-        cls.impChem = null
+        raise pgConfigError("chemistry", True, "Chemistry is not available yet.")
+    cls.expChem = null
+    cls.impChem = null
 
 
 def howManyNG(config):
@@ -220,15 +206,16 @@ def buildSolver(config, nblks=None, myblocks=None):
     name = "solver" + ti
     mbsolver = type(name, (solver, getIntegrator(ti)), dict(name=name))
 
-    spn = list(findUserSpData(config).keys())
-    cls = mbsolver(nblks, spn, ng=howManyNG(config), config=config)
+    mixture = Mixture(config["mcPhysics"], root=config["io"]["inputDir"])
+    cls = mbsolver(nblks, mixture.speciesNames, ng=howManyNG(config), config=config)
 
     # in parallel the blocks are numbered by the partition, not by order
     if myblocks is not None:
         for blk, nblki in zip(cls, myblocks):
             blk.nblki = blk.baseNblki = nblki
 
-    cls.thtrdat = thtrdat(config)
+    cls.mixture = mixture
+    cls.thtrdat = thtrdat(mixture)
     setConsistify(cls, config)
     setRHS(cls, config)
 

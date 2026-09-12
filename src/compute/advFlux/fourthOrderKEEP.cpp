@@ -1,19 +1,32 @@
-#include "block_.hpp"
+#include "abi.hpp"
 #include "kokkosTypes.hpp"
-#include "thtrdat_.hpp"
 #include <Kokkos_Core.hpp>
 
-void fourthOrderKEEP(block_ &b) {
+PG_ABI void pgFourthOrderKEEP(const pgView *Q_, const pgView *iF_,
+                              const pgView *iS_, const pgView *jF_,
+                              const pgView *jS_, const pgView *kF_,
+                              const pgView *kS_, const pgView *q_,
+                              const pgView *qh_, const pgDims *d) {
+  auto Q = as4(*Q_);
+  auto iF = as4(*iF_);
+  auto iS = as4(*iS_);
+  auto jF = as4(*jF_);
+  auto jS = as4(*jS_);
+  auto kF = as4(*kF_);
+  auto kS = as4(*kS_);
+  auto q = as4(*q_);
+  auto qh = as4(*qh_);
+  const int ng = d->ng, ni = d->ni, nj = d->nj, nk = d->nk;
+  const int ne = Q.extent(3);
 
   //-------------------------------------------------------------------------------------------|
   // i flux face range
   //-------------------------------------------------------------------------------------------|
-  MDRange3 range_i({b.ng, b.ng, b.ng},
-                   {b.ni + b.ng, b.nj + b.ng - 1, b.nk + b.ng - 1});
+  MDRange3 range_i({ng, ng, ng}, {ni + ng, nj + ng - 1, nk + ng - 1});
 
   const int order = 4;
-  constexpr int q = order / 2;
-  constexpr int narray = (q * q + q) / 2;
+  constexpr int half = order / 2;
+  constexpr int narray = (half * half + half) / 2;
   const double aq[2] = {2.0 / 3.0, -1.0 / 12.0};
 
   Kokkos::parallel_for(
@@ -33,17 +46,14 @@ void fourthOrderKEEP(block_ &b) {
         double tempv;
         double tempw;
         int count = 0;
-        for (int is = 1; is <= q; is++) {
+        for (int is = 1; is <= half; is++) {
           tempu = 0.0;
           tempv = 0.0;
           tempw = 0.0;
           for (int js = 0; js <= is - 1; js++) {
-            uR[count] =
-                0.5 * (b.q(i + js, j, k, 1) + b.q(i + js - is, j, k, 1));
-            vR[count] =
-                0.5 * (b.q(i + js, j, k, 2) + b.q(i + js - is, j, k, 2));
-            wR[count] =
-                0.5 * (b.q(i + js, j, k, 3) + b.q(i + js - is, j, k, 3));
+            uR[count] = 0.5 * (q(i + js, j, k, 1) + q(i + js - is, j, k, 1));
+            vR[count] = 0.5 * (q(i + js, j, k, 2) + q(i + js - is, j, k, 2));
+            wR[count] = 0.5 * (q(i + js, j, k, 3) + q(i + js - is, j, k, 3));
             tempu += uR[count];
             tempv += vR[count];
             tempw += wR[count];
@@ -58,8 +68,7 @@ void fourthOrderKEEP(block_ &b) {
         vf *= 2.0;
         wf *= 2.0;
 
-        U = b.iS(i, j, k, 0) * uf + b.iS(i, j, k, 1) * vf +
-            b.iS(i, j, k, 2) * wf;
+        U = iS(i, j, k, 0) * uf + iS(i, j, k, 1) * vf + iS(i, j, k, 2) * wf;
 
         // Compute fluxes
 
@@ -67,12 +76,11 @@ void fourthOrderKEEP(block_ &b) {
         double rho = 0.0;
         double temprho = 0.0;
         count = 0;
-        for (int is = 1; is <= q; is++) {
+        for (int is = 1; is <= half; is++) {
           a = aq[is - 1];
           temprho = 0.0;
           for (int js = 0; js <= is - 1; js++) {
-            rhoR[count] =
-                0.5 * (b.Q(i + js, j, k, 0) + b.Q(i + js - is, j, k, 0));
+            rhoR[count] = 0.5 * (Q(i + js, j, k, 0) + Q(i + js - is, j, k, 0));
             temprho += rhoR[count];
             count++;
           }
@@ -80,7 +88,7 @@ void fourthOrderKEEP(block_ &b) {
         }
         rho *= 2.0;
 
-        b.iF(i, j, k, 0) = rho * U;
+        iF(i, j, k, 0) = rho * U;
 
         // x momentum rho*u*Ui+ p*Ax
         // y momentum rho*v*Ui+ p*Ay
@@ -91,7 +99,7 @@ void fourthOrderKEEP(block_ &b) {
         double p = 0.0;
         double temprhou, temprhov, temprhow, tempp;
         count = 0;
-        for (int is = 1; is <= q; is++) {
+        for (int is = 1; is <= half; is++) {
           a = aq[is - 1];
           temprhou = 0.0;
           temprhov = 0.0;
@@ -101,7 +109,7 @@ void fourthOrderKEEP(block_ &b) {
             temprhou += rhoR[count] * uR[count];
             temprhov += rhoR[count] * vR[count];
             temprhow += rhoR[count] * wR[count];
-            tempp += 0.5 * (b.q(i + js, j, k, 0) + b.q(i + js - is, j, k, 0));
+            tempp += 0.5 * (q(i + js, j, k, 0) + q(i + js - is, j, k, 0));
             count++;
           }
           rhou += a * temprhou;
@@ -114,11 +122,11 @@ void fourthOrderKEEP(block_ &b) {
         rhou *= 2.0;
         p *= 2.0;
 
-        b.iF(i, j, k, 1) = rhou * U + p * b.iS(i, j, k, 0);
+        iF(i, j, k, 1) = rhou * U + p * iS(i, j, k, 0);
 
-        b.iF(i, j, k, 2) = rhov * U + p * b.iS(i, j, k, 1);
+        iF(i, j, k, 2) = rhov * U + p * iS(i, j, k, 1);
 
-        b.iF(i, j, k, 3) = rhow * U + p * b.iS(i, j, k, 2);
+        iF(i, j, k, 3) = rhow * U + p * iS(i, j, k, 2);
 
         // Total energy (rhoE+ p)*Ui)
         double rhoE = 0.0;
@@ -126,31 +134,29 @@ void fourthOrderKEEP(block_ &b) {
         double temprhoE, temppu;
         double e, em;
         count = 0;
-        for (int is = 1; is <= q; is++) {
+        for (int is = 1; is <= half; is++) {
           a = aq[is - 1];
           temprhoE = 0.0;
           temppu = 0.0;
           for (int js = 0; js <= is - 1; js++) {
-            e = b.qh(i + js, j, k, 4) / b.Q(i + js, j, k, 0);
-            em = b.qh(i + js - is, j, k, 4) / b.Q(i + js - is, j, k, 0);
+            e = qh(i + js, j, k, 4) / Q(i + js, j, k, 0);
+            em = qh(i + js - is, j, k, 4) / Q(i + js - is, j, k, 0);
 
-            temprhoE +=
-                rhoR[count] *
-                (0.5 * (e + em) +
-                 0.5 * (b.q(i + js, j, k, 1) * b.q(i + js - is, j, k, 1) +
-                        b.q(i + js, j, k, 2) * b.q(i + js - is, j, k, 2) +
-                        b.q(i + js, j, k, 3) * b.q(i + js - is, j, k, 3)));
+            temprhoE += rhoR[count] *
+                        (0.5 * (e + em) +
+                         0.5 * (q(i + js, j, k, 1) * q(i + js - is, j, k, 1) +
+                                q(i + js, j, k, 2) * q(i + js - is, j, k, 2) +
+                                q(i + js, j, k, 3) * q(i + js - is, j, k, 3)));
             count++;
 
-            temppu +=
-                0.5 * (b.q(i + js - is, j, k, 0) *
-                           (b.q(i + js, j, k, 1) * b.iS(i, j, k, 0) +
-                            b.q(i + js, j, k, 2) * b.iS(i, j, k, 1) +
-                            b.q(i + js, j, k, 3) * b.iS(i, j, k, 2)) +
-                       b.q(i + js, j, k, 0) *
-                           (b.q(i + js - is, j, k, 1) * b.iS(i, j, k, 0) +
-                            b.q(i + js - is, j, k, 2) * b.iS(i, j, k, 1) +
-                            b.q(i + js - is, j, k, 3) * b.iS(i, j, k, 2)));
+            temppu += 0.5 * (q(i + js - is, j, k, 0) *
+                                 (q(i + js, j, k, 1) * iS(i, j, k, 0) +
+                                  q(i + js, j, k, 2) * iS(i, j, k, 1) +
+                                  q(i + js, j, k, 3) * iS(i, j, k, 2)) +
+                             q(i + js, j, k, 0) *
+                                 (q(i + js - is, j, k, 1) * iS(i, j, k, 0) +
+                                  q(i + js - is, j, k, 2) * iS(i, j, k, 1) +
+                                  q(i + js - is, j, k, 3) * iS(i, j, k, 2)));
           }
           rhoE += a * temprhoE;
           pu += a * temppu;
@@ -158,10 +164,10 @@ void fourthOrderKEEP(block_ &b) {
         rhoE *= 2.0;
         pu *= 2.0;
 
-        b.iF(i, j, k, 4) = rhoE * U + pu;
+        iF(i, j, k, 4) = rhoE * U + pu;
 
         // Species
-        for (int n = 0; n < b.ne - 5; n++) {
+        for (int n = 0; n < ne - 5; n++) {
           double rhoY = 0.0;
           double temprhoY = 0.0;
           count = 0;
@@ -171,21 +177,20 @@ void fourthOrderKEEP(block_ &b) {
             for (int js = 0; js <= is - 1; js++) {
               temprhoY +=
                   rhoR[count] * 0.5 *
-                  (b.q(i + js, j, k, 5 + n) + b.q(i + js - is, j, k, 5 + n));
+                  (q(i + js, j, k, 5 + n) + q(i + js - is, j, k, 5 + n));
               count++;
             }
             rhoY += a * temprhoY;
           }
           rhoY *= 2.0;
-          b.iF(i, j, k, 5 + n) = rhoY * U;
+          iF(i, j, k, 5 + n) = rhoY * U;
         }
       });
 
   //-------------------------------------------------------------------------------------------|
   // j flux face range
   //-------------------------------------------------------------------------------------------|
-  MDRange3 range_j({b.ng, b.ng, b.ng},
-                   {b.ni + b.ng - 1, b.nj + b.ng, b.nk + b.ng - 1});
+  MDRange3 range_j({ng, ng, ng}, {ni + ng - 1, nj + ng, nk + ng - 1});
   Kokkos::parallel_for(
       "4th Order KEEP j face conv fluxes", range_j,
       KOKKOS_LAMBDA(const int i, const int j, const int k) {
@@ -203,17 +208,14 @@ void fourthOrderKEEP(block_ &b) {
         double tempv;
         double tempw;
         int count = 0;
-        for (int is = 1; is <= q; is++) {
+        for (int is = 1; is <= half; is++) {
           tempu = 0.0;
           tempv = 0.0;
           tempw = 0.0;
           for (int js = 0; js <= is - 1; js++) {
-            uR[count] =
-                0.5 * (b.q(i, j + js, k, 1) + b.q(i, j + js - is, k, 1));
-            vR[count] =
-                0.5 * (b.q(i, j + js, k, 2) + b.q(i, j + js - is, k, 2));
-            wR[count] =
-                0.5 * (b.q(i, j + js, k, 3) + b.q(i, j + js - is, k, 3));
+            uR[count] = 0.5 * (q(i, j + js, k, 1) + q(i, j + js - is, k, 1));
+            vR[count] = 0.5 * (q(i, j + js, k, 2) + q(i, j + js - is, k, 2));
+            wR[count] = 0.5 * (q(i, j + js, k, 3) + q(i, j + js - is, k, 3));
             tempu += uR[count];
             tempv += vR[count];
             tempw += wR[count];
@@ -228,8 +230,7 @@ void fourthOrderKEEP(block_ &b) {
         vf *= 2.0;
         wf *= 2.0;
 
-        V = b.jS(i, j, k, 0) * uf + b.jS(i, j, k, 1) * vf +
-            b.jS(i, j, k, 2) * wf;
+        V = jS(i, j, k, 0) * uf + jS(i, j, k, 1) * vf + jS(i, j, k, 2) * wf;
 
         // Compute fluxes
 
@@ -237,12 +238,11 @@ void fourthOrderKEEP(block_ &b) {
         double rho = 0.0;
         double temprho = 0.0;
         count = 0;
-        for (int is = 1; is <= q; is++) {
+        for (int is = 1; is <= half; is++) {
           a = aq[is - 1];
           temprho = 0.0;
           for (int js = 0; js <= is - 1; js++) {
-            rhoR[count] =
-                0.5 * (b.Q(i, j + js, k, 0) + b.Q(i, j + js - is, k, 0));
+            rhoR[count] = 0.5 * (Q(i, j + js, k, 0) + Q(i, j + js - is, k, 0));
             temprho += rhoR[count];
             count++;
           }
@@ -250,7 +250,7 @@ void fourthOrderKEEP(block_ &b) {
         }
         rho *= 2.0;
 
-        b.jF(i, j, k, 0) = rho * V;
+        jF(i, j, k, 0) = rho * V;
 
         // x momentum rho*u*Vi+ p*Ax
         // y momentum rho*v*Vi+ p*Ay
@@ -261,7 +261,7 @@ void fourthOrderKEEP(block_ &b) {
         double p = 0.0;
         double temprhou, temprhov, temprhow, tempp;
         count = 0;
-        for (int is = 1; is <= q; is++) {
+        for (int is = 1; is <= half; is++) {
           a = aq[is - 1];
           temprhou = 0.0;
           temprhov = 0.0;
@@ -271,7 +271,7 @@ void fourthOrderKEEP(block_ &b) {
             temprhou += rhoR[count] * uR[count];
             temprhov += rhoR[count] * vR[count];
             temprhow += rhoR[count] * wR[count];
-            tempp += 0.5 * (b.q(i, j + js, k, 0) + b.q(i, j + js - is, k, 0));
+            tempp += 0.5 * (q(i, j + js, k, 0) + q(i, j + js - is, k, 0));
             count++;
           }
           rhou += a * temprhou;
@@ -284,11 +284,11 @@ void fourthOrderKEEP(block_ &b) {
         rhou *= 2.0;
         p *= 2.0;
 
-        b.jF(i, j, k, 1) = rhou * V + p * b.jS(i, j, k, 0);
+        jF(i, j, k, 1) = rhou * V + p * jS(i, j, k, 0);
 
-        b.jF(i, j, k, 2) = rhov * V + p * b.jS(i, j, k, 1);
+        jF(i, j, k, 2) = rhov * V + p * jS(i, j, k, 1);
 
-        b.jF(i, j, k, 3) = rhow * V + p * b.jS(i, j, k, 2);
+        jF(i, j, k, 3) = rhow * V + p * jS(i, j, k, 2);
 
         // Total energy (rhoE+ p)*Vi)
         double rhoE = 0.0;
@@ -296,31 +296,29 @@ void fourthOrderKEEP(block_ &b) {
         double temprhoE, temppu;
         double e, em;
         count = 0;
-        for (int is = 1; is <= q; is++) {
+        for (int is = 1; is <= half; is++) {
           a = aq[is - 1];
           temprhoE = 0.0;
           temppu = 0.0;
           for (int js = 0; js <= is - 1; js++) {
-            e = b.qh(i, j + js, k, 4) / b.Q(i, j + js, k, 0);
-            em = b.qh(i, j + js - is, k, 4) / b.Q(i, j + js - is, k, 0);
+            e = qh(i, j + js, k, 4) / Q(i, j + js, k, 0);
+            em = qh(i, j + js - is, k, 4) / Q(i, j + js - is, k, 0);
 
-            temprhoE +=
-                rhoR[count] *
-                (0.5 * (e + em) +
-                 0.5 * (b.q(i, j + js, k, 1) * b.q(i, j + js - is, k, 1) +
-                        b.q(i, j + js, k, 2) * b.q(i, j + js - is, k, 2) +
-                        b.q(i, j + js, k, 3) * b.q(i, j + js - is, k, 3)));
+            temprhoE += rhoR[count] *
+                        (0.5 * (e + em) +
+                         0.5 * (q(i, j + js, k, 1) * q(i, j + js - is, k, 1) +
+                                q(i, j + js, k, 2) * q(i, j + js - is, k, 2) +
+                                q(i, j + js, k, 3) * q(i, j + js - is, k, 3)));
             count++;
 
-            temppu +=
-                0.5 * (b.q(i, j + js - is, k, 0) *
-                           (b.q(i, j + js, k, 1) * b.jS(i, j, k, 0) +
-                            b.q(i, j + js, k, 2) * b.jS(i, j, k, 1) +
-                            b.q(i, j + js, k, 3) * b.jS(i, j, k, 2)) +
-                       b.q(i, j + js, k, 0) *
-                           (b.q(i, j + js - is, k, 1) * b.jS(i, j, k, 0) +
-                            b.q(i, j + js - is, k, 2) * b.jS(i, j, k, 1) +
-                            b.q(i, j + js - is, k, 3) * b.jS(i, j, k, 2)));
+            temppu += 0.5 * (q(i, j + js - is, k, 0) *
+                                 (q(i, j + js, k, 1) * jS(i, j, k, 0) +
+                                  q(i, j + js, k, 2) * jS(i, j, k, 1) +
+                                  q(i, j + js, k, 3) * jS(i, j, k, 2)) +
+                             q(i, j + js, k, 0) *
+                                 (q(i, j + js - is, k, 1) * jS(i, j, k, 0) +
+                                  q(i, j + js - is, k, 2) * jS(i, j, k, 1) +
+                                  q(i, j + js - is, k, 3) * jS(i, j, k, 2)));
           }
           rhoE += a * temprhoE;
           pu += a * temppu;
@@ -328,10 +326,10 @@ void fourthOrderKEEP(block_ &b) {
         rhoE *= 2.0;
         pu *= 2.0;
 
-        b.jF(i, j, k, 4) = rhoE * V + pu;
+        jF(i, j, k, 4) = rhoE * V + pu;
 
         // Species
-        for (int n = 0; n < b.ne - 5; n++) {
+        for (int n = 0; n < ne - 5; n++) {
           double rhoY = 0.0;
           double temprhoY = 0.0;
           count = 0;
@@ -341,21 +339,20 @@ void fourthOrderKEEP(block_ &b) {
             for (int js = 0; js <= is - 1; js++) {
               temprhoY +=
                   rhoR[count] * 0.5 *
-                  (b.q(i, j + js, k, 5 + n) + b.q(i, j + js - is, k, 5 + n));
+                  (q(i, j + js, k, 5 + n) + q(i, j + js - is, k, 5 + n));
               count++;
             }
             rhoY += a * temprhoY;
           }
           rhoY *= 2.0;
-          b.jF(i, j, k, 5 + n) = rhoY * V;
+          jF(i, j, k, 5 + n) = rhoY * V;
         }
       });
 
   //-------------------------------------------------------------------------------------------|
   // k flux face range
   //-------------------------------------------------------------------------------------------|
-  MDRange3 range_k({b.ng, b.ng, b.ng},
-                   {b.ni + b.ng - 1, b.nj + b.ng - 1, b.nk + b.ng});
+  MDRange3 range_k({ng, ng, ng}, {ni + ng - 1, nj + ng - 1, nk + ng});
   Kokkos::parallel_for(
       "4th Order KEEP k face conv fluxes", range_k,
       KOKKOS_LAMBDA(const int i, const int j, const int k) {
@@ -373,17 +370,14 @@ void fourthOrderKEEP(block_ &b) {
         double tempv;
         double tempw;
         int count = 0;
-        for (int is = 1; is <= q; is++) {
+        for (int is = 1; is <= half; is++) {
           tempu = 0.0;
           tempv = 0.0;
           tempw = 0.0;
           for (int js = 0; js <= is - 1; js++) {
-            uR[count] =
-                0.5 * (b.q(i, j, k + js, 1) + b.q(i, j, k + js - is, 1));
-            vR[count] =
-                0.5 * (b.q(i, j, k + js, 2) + b.q(i, j, k + js - is, 2));
-            wR[count] =
-                0.5 * (b.q(i, j, k + js, 3) + b.q(i, j, k + js - is, 3));
+            uR[count] = 0.5 * (q(i, j, k + js, 1) + q(i, j, k + js - is, 1));
+            vR[count] = 0.5 * (q(i, j, k + js, 2) + q(i, j, k + js - is, 2));
+            wR[count] = 0.5 * (q(i, j, k + js, 3) + q(i, j, k + js - is, 3));
             tempu += uR[count];
             tempv += vR[count];
             tempw += wR[count];
@@ -398,8 +392,7 @@ void fourthOrderKEEP(block_ &b) {
         vf *= 2.0;
         wf *= 2.0;
 
-        W = b.kS(i, j, k, 0) * uf + b.kS(i, j, k, 1) * vf +
-            b.kS(i, j, k, 2) * wf;
+        W = kS(i, j, k, 0) * uf + kS(i, j, k, 1) * vf + kS(i, j, k, 2) * wf;
 
         // Compute fluxes
 
@@ -407,12 +400,11 @@ void fourthOrderKEEP(block_ &b) {
         double rho = 0.0;
         double temprho = 0.0;
         count = 0;
-        for (int is = 1; is <= q; is++) {
+        for (int is = 1; is <= half; is++) {
           a = aq[is - 1];
           temprho = 0.0;
           for (int js = 0; js <= is - 1; js++) {
-            rhoR[count] =
-                0.5 * (b.Q(i, j, k + js, 0) + b.Q(i, j, k + js - is, 0));
+            rhoR[count] = 0.5 * (Q(i, j, k + js, 0) + Q(i, j, k + js - is, 0));
             temprho += rhoR[count];
             count++;
           }
@@ -420,7 +412,7 @@ void fourthOrderKEEP(block_ &b) {
         }
         rho *= 2.0;
 
-        b.kF(i, j, k, 0) = rho * W;
+        kF(i, j, k, 0) = rho * W;
 
         // x momentum rho*u*Wi+ p*Ax
         // y momentum rho*v*Wi+ p*Ay
@@ -431,7 +423,7 @@ void fourthOrderKEEP(block_ &b) {
         double p = 0.0;
         double temprhou, temprhov, temprhow, tempp;
         count = 0;
-        for (int is = 1; is <= q; is++) {
+        for (int is = 1; is <= half; is++) {
           a = aq[is - 1];
           temprhou = 0.0;
           temprhov = 0.0;
@@ -441,7 +433,7 @@ void fourthOrderKEEP(block_ &b) {
             temprhou += rhoR[count] * uR[count];
             temprhov += rhoR[count] * vR[count];
             temprhow += rhoR[count] * wR[count];
-            tempp += 0.5 * (b.q(i, j, k + js, 0) + b.q(i, j, k + js - is, 0));
+            tempp += 0.5 * (q(i, j, k + js, 0) + q(i, j, k + js - is, 0));
             count++;
           }
           rhou += a * temprhou;
@@ -454,11 +446,11 @@ void fourthOrderKEEP(block_ &b) {
         rhou *= 2.0;
         p *= 2.0;
 
-        b.kF(i, j, k, 1) = rhou * W + p * b.kS(i, j, k, 0);
+        kF(i, j, k, 1) = rhou * W + p * kS(i, j, k, 0);
 
-        b.kF(i, j, k, 2) = rhov * W + p * b.kS(i, j, k, 1);
+        kF(i, j, k, 2) = rhov * W + p * kS(i, j, k, 1);
 
-        b.kF(i, j, k, 3) = rhow * W + p * b.kS(i, j, k, 2);
+        kF(i, j, k, 3) = rhow * W + p * kS(i, j, k, 2);
 
         // Total energy (rhoE+ p)*Wi)
         double rhoE = 0.0;
@@ -466,31 +458,29 @@ void fourthOrderKEEP(block_ &b) {
         double temprhoE, temppu;
         double e, em;
         count = 0;
-        for (int is = 1; is <= q; is++) {
+        for (int is = 1; is <= half; is++) {
           a = aq[is - 1];
           temprhoE = 0.0;
           temppu = 0.0;
           for (int js = 0; js <= is - 1; js++) {
-            e = b.qh(i, j, k + js, 4) / b.Q(i, j, k + js, 0);
-            em = b.qh(i, j, k + js - is, 4) / b.Q(i, j, k + js - is, 0);
+            e = qh(i, j, k + js, 4) / Q(i, j, k + js, 0);
+            em = qh(i, j, k + js - is, 4) / Q(i, j, k + js - is, 0);
 
-            temprhoE +=
-                rhoR[count] *
-                (0.5 * (e + em) +
-                 0.5 * (b.q(i, j, k + js, 1) * b.q(i, j, k + js - is, 1) +
-                        b.q(i, j, k + js, 2) * b.q(i, j, k + js - is, 2) +
-                        b.q(i, j, k + js, 3) * b.q(i, j, k + js - is, 3)));
+            temprhoE += rhoR[count] *
+                        (0.5 * (e + em) +
+                         0.5 * (q(i, j, k + js, 1) * q(i, j, k + js - is, 1) +
+                                q(i, j, k + js, 2) * q(i, j, k + js - is, 2) +
+                                q(i, j, k + js, 3) * q(i, j, k + js - is, 3)));
             count++;
 
-            temppu +=
-                0.5 * (b.q(i, j, k + js - is, 0) *
-                           (b.q(i, j, k + js, 1) * b.kS(i, j, k, 0) +
-                            b.q(i, j, k + js, 2) * b.kS(i, j, k, 1) +
-                            b.q(i, j, k + js, 3) * b.kS(i, j, k, 2)) +
-                       b.q(i, j, k + js, 0) *
-                           (b.q(i, j, k + js - is, 1) * b.kS(i, j, k, 0) +
-                            b.q(i, j, k + js - is, 2) * b.kS(i, j, k, 1) +
-                            b.q(i, j, k + js - is, 3) * b.kS(i, j, k, 2)));
+            temppu += 0.5 * (q(i, j, k + js - is, 0) *
+                                 (q(i, j, k + js, 1) * kS(i, j, k, 0) +
+                                  q(i, j, k + js, 2) * kS(i, j, k, 1) +
+                                  q(i, j, k + js, 3) * kS(i, j, k, 2)) +
+                             q(i, j, k + js, 0) *
+                                 (q(i, j, k + js - is, 1) * kS(i, j, k, 0) +
+                                  q(i, j, k + js - is, 2) * kS(i, j, k, 1) +
+                                  q(i, j, k + js - is, 3) * kS(i, j, k, 2)));
           }
           rhoE += a * temprhoE;
           pu += a * temppu;
@@ -498,10 +488,10 @@ void fourthOrderKEEP(block_ &b) {
         rhoE *= 2.0;
         pu *= 2.0;
 
-        b.kF(i, j, k, 4) = rhoE * W + pu;
+        kF(i, j, k, 4) = rhoE * W + pu;
 
         // Species
-        for (int n = 0; n < b.ne - 5; n++) {
+        for (int n = 0; n < ne - 5; n++) {
           double rhoY = 0.0;
           double temprhoY = 0.0;
           count = 0;
@@ -511,13 +501,13 @@ void fourthOrderKEEP(block_ &b) {
             for (int js = 0; js <= is - 1; js++) {
               temprhoY +=
                   rhoR[count] * 0.5 *
-                  (b.q(i, j, k + js, 5 + n) + b.q(i, j, k + js - is, 5 + n));
+                  (q(i, j, k + js, 5 + n) + q(i, j, k + js - is, 5 + n));
               count++;
             }
             rhoY += a * temprhoY;
           }
           rhoY *= 2.0;
-          b.kF(i, j, k, 5 + n) = rhoY * W;
+          kF(i, j, k, 5 + n) = rhoY * W;
         }
       });
 }

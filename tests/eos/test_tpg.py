@@ -10,45 +10,35 @@ import pytest
 #######################################
 
 pytestmark = pytest.mark.parametrize(
-    "ctfile,thfile",
-    [
-        (
-            "C2H4_Air_Skeletal.yaml",
-            "thtr_C2H4_Air_Skeletal.yaml",
-        ),
-        (
-            "CH4_O2_FFCMY.yaml",
-            "thtr_CH4_O2_FFCMY.yaml",
-        ),
-        (
-            "GRI30.yaml",
-            "thtr_GRI30.yaml",
-        ),
-    ],
+    "ctfile",
+    ["C2H4_Air_Skeletal.yaml", "CH4_O2_FFCMY.yaml", "GRI30.yaml"],
 )
 
 
-def print_diff(name, c, p):
-    diff = np.abs(c - p) / c * 100
+def print_diff(name, c, p, scale=None):
+    """Percent difference, against c or against a scale for a quantity that
+    can pass through zero."""
+    diff = np.abs(c - p) / (abs(c) if scale is None else scale) * 100
     print(f"{name:<6s}: {c:16.8e} | {p:16.8e} | {diff:16.15e}")
 
     return diff
 
 
-def test_tpg(my_setup, ctfile, thfile):
+def test_tpg(my_setup, ctfile):
     relpath = str(Path(__file__).parent)
-    ct.add_directory(relpath + "/../../src/peregrinepy/thermoTransport/database/source")
+    ct.add_directory(relpath + "/../../src/peregrinepy/mixture/database/mechanisms")
     gas = ct.Solution(ctfile)
     p = np.random.uniform(low=10000, high=100000)
-    T = np.random.uniform(low=100, high=1000)
+    T = np.random.uniform(low=300, high=1000)
     Y = np.random.uniform(low=0.0, high=1.0, size=gas.n_species)
     Y = Y / np.sum(Y)
 
     gas.TPY = T, p, Y
 
     config = pg.files.configFile()
-    config["thermochem"]["spdata"] = thfile
-    config["thermochem"]["eos"] = "tpg"
+    config["mcPhysics"]["mixture"] = ctfile
+    config["mcPhysics"]["eos"] = "tpg"
+    config["mcPhysics"]["Trange"] = (300.0, 3500.0)
     config["RHS"]["diffusion"] = False
 
     mb = pg.multiBlock.buildSolver(config, 1)
@@ -62,21 +52,22 @@ def test_tpg(my_setup, ctfile, thfile):
     mb.generateHalo()
     mb.computeMetrics()
 
-    blk.array["q"][:, :, :, 0] = p
-    blk.array["q"][:, :, :, 1:4] = 0.0
-    blk.array["q"][:, :, :, 4] = T
-    blk.array["q"][:, :, :, 5::] = Y[0:-1]
+    q = blk.q.get()
+    q[:, :, :, 0] = p
+    q[:, :, :, 1:4] = 0.0
+    q[:, :, :, 4] = T
+    q[:, :, :, 5::] = Y[0:-1]
 
     # Update cons
     assert mb.eos.__name__ == "tpg"
-    blk.updateDeviceView(["q"])
-    mb.eos(blk.cpp, mb.thtrdat.cpp, 0, "prims")
-    blk.updateHostView(["q", "Q", "qh"])
+    blk.q.set(q)
+    mb.eos(blk, mb.thtrdat, 0, "prims")
+    q, Q, qh = blk.q.get(), blk.Q.get(), blk.qh.get()
 
     # test the properties
-    pgcons = blk.array["Q"][ng, ng, ng]
-    pgprim = blk.array["q"][ng, ng, ng]
-    pgthrm = blk.array["qh"][ng, ng, ng]
+    pgcons = Q[ng, ng, ng]
+    pgprim = q[ng, ng, ng]
+    pgthrm = qh[ng, ng, ng]
 
     pd = []
     print("******** Primatives to Conservatives ***************")
@@ -115,17 +106,22 @@ def test_tpg(my_setup, ctfile, thfile):
                     / gas.molecular_weights[i]
                 ),
                 pgthrm[5 + i],
+                scale=gas.standard_cp_R[i]
+                * ct.gas_constant
+                * gas.T
+                / gas.molecular_weights[i],
             )
         )
 
     # Go the other way
     # Scramble the primatives
-    blk.array["q"][:, :, :, 0] = 0.0
-    blk.array["q"][:, :, :, 4] = 0.0
-    blk.array["q"][:, :, :, 5::] = np.zeros(len(Y[0:-1]))
-    blk.updateDeviceView(["q"])
-    mb.eos(blk.cpp, mb.thtrdat.cpp, 0, "cons")
-    blk.updateHostView(["q", "Q", "qh"])
+    q[:, :, :, 0] = 0.0
+    q[:, :, :, 4] = 0.0
+    q[:, :, :, 5::] = np.zeros(len(Y[0:-1]))
+    blk.q.set(q)
+    mb.eos(blk, mb.thtrdat, 0, "cons")
+    q, Q, qh = blk.q.get(), blk.Q.get(), blk.qh.get()
+    pgcons, pgprim, pgthrm = Q[ng, ng, ng], q[ng, ng, ng], qh[ng, ng, ng]
 
     print("********  Conservatives to Primatives ***************")
     print(f'       {"Cantera":<15}  | {"PEREGRINE":<15} | {"%Error":<5}')
@@ -163,8 +159,12 @@ def test_tpg(my_setup, ctfile, thfile):
                     / gas.molecular_weights[i]
                 ),
                 pgthrm[5 + i],
+                scale=gas.standard_cp_R[i]
+                * ct.gas_constant
+                * gas.T
+                / gas.molecular_weights[i],
             )
         )
 
-    passfail = np.all(np.array(pd) < 0.0001)
-    assert passfail
+    # every property is a refit to the case's tolerance, in percent here
+    assert np.all(np.array(pd) < config["mcPhysics"]["reFitTol"] * 100)

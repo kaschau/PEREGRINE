@@ -15,6 +15,9 @@ import matplotlib.pyplot as plt
 def simulate():
     config = pg.files.configFile()
     config["mcPhysics"]["mixture"] = ["O2", "N2"]
+    config["mcPhysics"]["eos"] = "tpg"
+    config["mcPhysics"]["trans"] = "kineticTheory"
+    config["mcPhysics"]["Trange"] = (200.0, 1000.0)
     config["RHS"]["diffusion"] = True
     config["RHS"]["primaryAdvFlux"] = "rusanov"
     config.validateConfig()
@@ -33,18 +36,17 @@ def simulate():
     mb.computeMetrics()
 
     ng = blk.ng
-    blk.array["q"][:, :, :, 0] = 101325.0
+    q = blk.q.get()
+    q[:, :, :, 0] = 101325.0
     # Make equal mass
-    MWA = mb.thtrdat.array["MW"][0]
-    MWB = mb.thtrdat.array["MW"][1]
-    blk.array["q"][:, :, :, 4] = np.where(
-        blk.array["cells"][..., 0] < 0.5, 300.0 * MWA / MWB, 300.0
-    )
-    blk.array["q"][:, :, :, 5] = np.where(blk.array["cells"][..., 0] < 0.5, 1.0, 0.0)
+    MWA, MWB = mb.thtrdat.MW.get()[:2]
+    xc = blk.hostCopy("cells")[..., 0]
+    q[:, :, :, 4] = np.where(xc < 0.5, 300.0 * MWA / MWB, 300.0)
+    q[:, :, :, 5] = np.where(xc < 0.5, 1.0, 0.0)
 
     # Update cons
-    blk.updateDeviceView(["q"])
-    mb.eos(blk.cpp, mb.thtrdat.cpp, 0, "prims")
+    blk.q.set(q)
+    mb.eos(blk, mb.thtrdat, 0, "prims")
     pg.consistify(mb)
 
     dt = 1e-5
@@ -54,13 +56,13 @@ def simulate():
         if mb.nrt % 100 == 0:
             pg.misc.progressBar(mb.nrt, nrt)
 
-    blk.updateHostView(["q", "Q"])
+    q = blk.q.get()
     fig, ax1 = plt.subplots()
     ax1.set_title("1D Diffusion Results")
     ax1.set_xlabel(r"x")
-    x = blk.array["cells"][..., 0][ng:-ng, ng, ng]
-    A = blk.array["q"][ng:-ng, ng, ng, 5]
-    B = 1.0 - blk.array["q"][ng:-ng, ng, ng, 5]
+    x = blk.hostCopy("cells")[..., 0][ng:-ng, ng, ng]
+    A = q[ng:-ng, ng, ng, 5]
+    B = 1.0 - q[ng:-ng, ng, ng, 5]
     ax1.plot(x, A, marker="o", color="r", label="A", linewidth=1.0)
     ax1.plot(x, B, linestyle="--", color="k", label="B", linewidth=1.5)
     ax1.set_ylim([0.49, 0.51])
@@ -71,9 +73,9 @@ def simulate():
 
 if __name__ == "__main__":
     try:
-        pg.compute.pgkokkos.initialize()
+        pg.abi.initialize()
         simulate()
-        pg.compute.pgkokkos.finalize()
+        pg.abi.finalize()
 
     except Exception as e:
         import sys

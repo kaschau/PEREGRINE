@@ -99,7 +99,8 @@ class MergeMixin(OrientMixin):
             dropShared[axis] = slice(1, None)
             joined = {
                 name: np.concatenate(
-                    [lower.array[name], upper.array[name][tuple(dropShared)]], axis=axis
+                    [lower.hostCopy(name), upper.hostCopy(name)[tuple(dropShared)]],
+                    axis=axis,
                 )
                 for name in ("nodes",)
             }
@@ -107,7 +108,7 @@ class MergeMixin(OrientMixin):
             dims[axis] += (B.ni, B.nj, B.nk)[axis] - 1
             A.setExtents(*dims)
             for name, values in joined.items():
-                A.array[name][:] = values
+                A.store(name, values)
 
             # B is now in our frame, so its far face is ours on that side
             A.faces[fa - 1] = B.getFace(fa)
@@ -158,7 +159,7 @@ class MergeMixin(OrientMixin):
             return ids[key]
 
         def flatIds(blk):
-            shape = blk.array["nodes"].shape[:3]
+            shape = blk.nodes.shape[:3]
             return np.arange(np.prod(shape)).reshape(shape)
 
         links, seen = [], set()
@@ -198,8 +199,8 @@ class MergeMixin(OrientMixin):
         # each copy as the block that holds it and the node of it that it is
         sites = [
             (
-                blocks[b].array["nodes"],
-                np.unravel_index(f, blocks[b].array["nodes"].shape[:3]),
+                blocks[b].nodes,
+                np.unravel_index(f, blocks[b].nodes.shape[:3]),
             )
             for b, f in zip(held, at)
         ]

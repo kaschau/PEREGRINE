@@ -13,6 +13,17 @@ import matplotlib.pyplot as plt
 import numpy as np
 import peregrinepy as pg
 
+# a calorically perfect air, stated in full: the library carries no such species
+air = {
+    "Air": {
+        "MW": 28.97,
+        "cp0": 1002.838449439523,
+        "mu0": 1.8591191080521142e-05,
+        "kappa0": 0.02625394405190068,
+    }
+}
+
+
 ##################################################
 ######### 1D Normal Shock ########################
 ##################################################
@@ -29,7 +40,7 @@ def simulate():
     config["RHS"]["primaryAdvFlux"] = "rusanov"
     config["timeIntegration"]["integrator"] = "rk4"
     config["mcPhysics"]["eos"] = "cpg"
-    config["mcPhysics"]["mixture"] = ["Air"]
+    config["mcPhysics"]["mixture"] = air
     config.validateConfig()
 
     mb = pg.multiBlock.buildSolver(config, 1)
@@ -51,14 +62,16 @@ def simulate():
 
     # We need to get gamma
     ng = blk.ng
-    q = blk.array["q"]
+    q = blk.q.get()
     q[ng:-ng, ng:-ng, ng:-ng, 0] = p1
     q[ng:-ng, ng:-ng, ng:-ng, 4] = T1
-    mb.eos(blk.cpp, mb.thtrdat.cpp, 0, "prims")
+    blk.q.set(q)
+    mb.eos(blk, mb.thtrdat, 0, "prims")
 
-    gamma = blk.array["qh"][ng, ng, ng, 0]
-    c1 = blk.array["qh"][ng, ng, ng, 3]
-    rho1 = blk.array["Q"][ng, ng, ng, 0]
+    qh = blk.qh.get()
+    gamma = qh[ng, ng, ng, 0]
+    c1 = qh[ng, ng, ng, 3]
+    rho1 = blk.Q.get()[ng, ng, ng, 0]
 
     # Compute post shock state
     M2 = np.sqrt((M1**2 * (gamma - 1) + 2) / (2 * gamma * M1**2 - (gamma - 1)))
@@ -70,16 +83,15 @@ def simulate():
 
     q[ng:-ng, ng:-ng, ng:-ng, 0] = p2
     q[ng:-ng, ng:-ng, ng:-ng, 4] = T2
-    mb.eos(blk.cpp, mb.thtrdat.cpp, 0, "prims")
-    c2 = blk.array["qh"][ng, ng, ng, 3]
+    blk.q.set(q)
+    mb.eos(blk, mb.thtrdat, 0, "prims")
+    c2 = blk.qh.get()[ng, ng, ng, 3]
 
     u2 = -M2 * c2 + M1 * c1  # In lab reference frame
     # Inlet
     valueDict = {"u": u2, "v": 0.0, "w": 0.0, "T": T2}
     face1 = blk.getFace(1)
-    face1.allocate("qBcVals")
     pg.bcs.prep(blk, face1, valueDict)
-    face1.updateDeviceView("qBcVals")
 
     mb.setBlockCommunication()
     mb.unifyGrid()
@@ -90,7 +102,7 @@ def simulate():
     q[ng:-ng, ng:-ng, ng:-ng, 4] = T1
 
     # Set post stock state
-    xc = blk.array["cells"][..., 0][ng:-ng, ng:-ng, ng:-ng]
+    xc = blk.hostCopy("cells")[..., 0][ng:-ng, ng:-ng, ng:-ng]
 
     shockX = lx * 0.05
     q[ng:-ng, ng:-ng, ng:-ng, 0] = np.where(
@@ -103,20 +115,21 @@ def simulate():
         xc < shockX, T2, q[ng:-ng, ng:-ng, ng:-ng, 4]
     )
 
-    # # Update cons
-    mb.eos(blk.cpp, mb.thtrdat.cpp, 0, "prims")
+    # Update cons
+    blk.q.set(q)
+    mb.eos(blk, mb.thtrdat, 0, "prims")
     # Apply euler boundary conditions
     for face in blk.faces:
-        face.bcFunc(blk.cpp, face.cpp, mb.eos, mb.thtrdat.cpp, "euler", mb.tme)
+        face.bcFunc(blk, face, mb.eos, mb.thtrdat, "euler", mb.tme)
     pg.consistify(mb)
 
     # Set dt based on cfg estimate
     dt = 0.25 * dx / (c2 + u2)
     testIndex = int(nx / 2)
     print(mb)
-    while blk.array["q"][testIndex, ng, ng, 4] < 301.0:
+    while blk.q.get()[testIndex, ng, ng, 4] < 301.0:
         if mb.nrt % 10 == 0:
-            shockLoc = np.where((blk.array["q"][:, ng, ng, 4] > 301.0))[0][-1]
+            shockLoc = np.where((blk.q.get()[:, ng, ng, 4] > 301.0))[0][-1]
             pg.misc.progressBar(shockLoc, testIndex)
 
         abort = pg.mpiComm.mpiUtils.checkForNan(mb)
@@ -126,22 +139,20 @@ def simulate():
 
         mb.step(dt)
 
+    q, Q, qh = blk.q.get(), blk.Q.get(), blk.qh.get()
     fig, ax1 = plt.subplots()
     ax1.set_title("1D Normal Shock")
     ax1.set_ylabel("p/p1")
     ax1.set_xlabel(r"x")
-    x = blk.array["cells"][..., 0][ng:-ng, ng, ng]
-    p = blk.array["q"][ng:-ng, ng, ng, 0] / p1
+    x = blk.hostCopy("cells")[..., 0][ng:-ng, ng, ng]
+    p = q[ng:-ng, ng, ng, 0] / p1
     ax1.plot(x, p, color="r", label="p2/p1", linewidth=0.5)
     ax2 = ax1.twinx()
     ax2.set_ylabel("T, M , rho")
     # convert back to shock reference frame
-    u = (
-        -(blk.array["q"][ng:-ng, ng, ng, 1] - M1 * c1)
-        / blk.array["qh"][ng:-ng, ng, ng, 3]
-    )
-    T = blk.array["q"][ng:-ng, ng, ng, 4] / T1
-    rho = blk.array["Q"][ng:-ng, ng, ng, 0] / rho1
+    u = -(q[ng:-ng, ng, ng, 1] - M1 * c1) / qh[ng:-ng, ng, ng, 3]
+    T = q[ng:-ng, ng, ng, 4] / T1
+    rho = Q[ng:-ng, ng, ng, 0] / rho1
     ax2.plot(x, T, color="k", label="T/T1", linewidth=0.5)
     ax2.plot(x, u, color="g", label="M", linewidth=0.5)
     ax2.plot(x, rho, color="orange", label="rho/rho1", linewidth=0.5)
@@ -156,9 +167,9 @@ def simulate():
 
 if __name__ == "__main__":
     try:
-        pg.compute.pgkokkos.initialize()
+        pg.abi.initialize()
         simulate()
-        pg.compute.pgkokkos.finalize()
+        pg.abi.finalize()
 
     except Exception as e:
         import sys

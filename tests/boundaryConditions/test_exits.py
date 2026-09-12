@@ -50,18 +50,17 @@ class SupersonicExit(Exit):
 _exits = (ConstantPressureSubsonicExit, SupersonicExit)
 
 pytestmark = pytest.mark.parametrize(
-    "adv,spdata",
+    "adv,gas",
     list(
         itertools.product(
             ("KEEPpe", "fourthOrderKEEP"),
-            (["Air"], "thtr_CH4_O2_FFCMY.yaml"),
+            ("air", "CH4_O2"),
         )
     ),
 )
 
 
 @pytest.mark.parametrize("bc", _exits, ids=lambda e: e.bcType)
-def test_exit(my_setup, adv, spdata, bc):
-    case = bc(adv, spdata)
-    case.blk.updateDeviceView("q")
+def test_exit(my_setup, adv, gas, bc):
+    case = bc(adv, gas)
     case.check()

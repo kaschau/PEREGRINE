@@ -1,16 +1,16 @@
 import numpy as np
 from mpi4py import MPI  # noqa: F401
 
-from ..compute.timeIntegration import (
+from ..kernels.timeIntegration import (
     DTrk3s1,
     DTrk3s2,
     DTrk3s3,
     dQdt,
-    localDtau,
     invertDQ,
+    localDtau,
     residual,
 )
-from ..compute.utils import AEQB
+from ..kernels.utils import AEQB
 from ..consistify import consistify
 from ..mpiComm.mpiUtils import getCommRankSize
 from ..RHS import RHS
@@ -46,7 +46,7 @@ class dualTime:
         for nrtDT in range(20):
             # Determine dtau
             for blk in self:
-                localDtau(blk.cpp, self.config["RHS"]["diffusion"])
+                localDtau(blk, self.config["RHS"]["diffusion"])
 
             ##############################################
             # In pseudo time, we integrate primatives
@@ -58,12 +58,12 @@ class dualTime:
             self.titme = self.tme
             RHS(self)
             for blk in self:
-                dQdt(blk.cpp, dt)
+                dQdt(blk, dt)
 
             # Invert dqdQ, apply first rk stage
             for blk in self:
-                invertDQ(blk.cpp, dt, self.thtrdat.cpp, self.config["RHS"]["diffusion"])
-                DTrk3s1(blk.cpp)
+                invertDQ(blk, self.thtrdat, dt, self.config["RHS"]["diffusion"])
+                DTrk3s1(blk)
 
             consistify(self, "prims")
 
@@ -71,11 +71,11 @@ class dualTime:
             self.titme = self.tme + dt
             RHS(self)
             for blk in self:
-                dQdt(blk.cpp, dt)
+                dQdt(blk, dt)
 
             for blk in self:
-                invertDQ(blk.cpp, dt, self.thtrdat.cpp, self.config["RHS"]["diffusion"])
-                DTrk3s2(blk.cpp)
+                invertDQ(blk, self.thtrdat, dt, self.config["RHS"]["diffusion"])
+                DTrk3s2(blk)
 
             consistify(self, "prims")
 
@@ -83,18 +83,24 @@ class dualTime:
             self.titme = self.tme + dt / 2.0
             RHS(self)
             for blk in self:
-                dQdt(blk.cpp, dt)
+                dQdt(blk, dt)
 
             for blk in self:
-                invertDQ(blk.cpp, dt, self.thtrdat.cpp, self.config["RHS"]["diffusion"])
-                DTrk3s3(blk.cpp)
+                invertDQ(blk, self.thtrdat, dt, self.config["RHS"]["diffusion"])
+                DTrk3s3(blk)
 
             consistify(self, "prims")
 
             # Compute residual
             if self.nrt % self.config["io"]["niterPrint"] == 0:
-                resid = np.array(residual([blk.cpp for blk in self]), dtype=np.float64)
-                comm.Allreduce(MPI.IN_PLACE, resid[0, :], op=MPI.MIN)
+                perBlock = [residual(blk) for blk in self]
+                resid = np.array(
+                    [
+                        np.max([r[0] for r in perBlock], axis=0),
+                        np.sum([r[1] for r in perBlock], axis=0),
+                    ]
+                )
+                comm.Allreduce(MPI.IN_PLACE, resid[0, :], op=MPI.MAX)
                 comm.Allreduce(MPI.IN_PLACE, resid[1, :], op=MPI.SUM)
                 resid[1, :] = np.sqrt(resid[1, :])
                 if rank == 0:
@@ -106,8 +112,8 @@ class dualTime:
 
         # After iterating in pseudo time, shift solution arrays
         for blk in self:
-            AEQB(blk.cpp.Qnm1, blk.cpp.Qn)
-            AEQB(blk.cpp.Qn, blk.cpp.Q)
+            AEQB(blk.Qnm1, blk.Qn)
+            AEQB(blk.Qn, blk.Q)
 
         self.nrt += 1
         self.tme += dt
@@ -122,12 +128,13 @@ class dualTime:
                 fileName = f"{path}/Qnm1.{self.nrt:08d}.{blk.nblki:06d}.npy"
                 try:
                     with open(fileName, "rb") as f:
-                        blk.array["Qnm1"][ng:-ng, ng:-ng, ng:-ng, :] = np.load(f)
-                        blk.updateDeviceView(["Qnm1"])
+                        Qnm1 = blk.Qnm1.get()
+                        Qnm1[ng:-ng, ng:-ng, ng:-ng, :] = np.load(f)
+                        blk.Qnm1.set(Qnm1)
                 except FileNotFoundError:
-                    AEQB(blk.cpp.Qnm1, blk.cpp.Q)
-                AEQB(blk.cpp.Qn, blk.cpp.Q)
+                    AEQB(blk.Qnm1, blk.Q)
+                AEQB(blk.Qn, blk.Q)
         else:
             for blk in self:
-                AEQB(blk.cpp.Qn, blk.cpp.Q)
-                AEQB(blk.cpp.Qnm1, blk.cpp.Q)
+                AEQB(blk.Qn, blk.Q)
+                AEQB(blk.Qnm1, blk.Q)

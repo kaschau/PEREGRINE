@@ -113,8 +113,8 @@ class RestartWriter(BaseWriter):
                     name, shape=(nk - 1, nj - 1, ni - 1), dtype=self.fdtype
                 )
 
-        for blk in mb:
-            blk.updateHostView(["q", "Q"])
+        # one snapshot of each block's state for the whole write
+        self._host = {id(blk): (blk.hostCopy("q"), blk.hostCopy("Q")) for blk in mb}
 
         # which of my blocks are pieces of each block of the grid
         mine = {}
@@ -133,6 +133,7 @@ class RestartWriter(BaseWriter):
             mb.progress(nblki + 1, f"Writing out results for block {nblki}")
 
         qf.close()
+        self._host = None
 
         self._refreshXdmf(mb)
         self.saveXdmf()
@@ -164,20 +165,19 @@ class RestartWriter(BaseWriter):
 
     def _sourceFor(self, blk, name):
         """Which array and component of it a named variable comes from."""
+        q, Q = self._host[id(blk)]
         if name == "rho":
-            return blk.array["Q"], 0
+            return Q, 0
 
         if name == blk.speciesNames[-1]:
             if blk.ns == 1:
                 # a single species is all of it, and is not stored in q
-                return np.ones(blk.array["q"].shape[:3] + (1,)), 0
+                return np.ones(q.shape[:3] + (1,)), 0
             # the nth species is whatever the others leave
-            left = 1.0 - np.sum(blk.array["q"][..., 5:], axis=-1)
+            left = 1.0 - np.sum(q[..., 5:], axis=-1)
             return left[..., np.newaxis], 0
 
-        return blk.array["q"], (["p", "u", "v", "w", "T"] + blk.speciesNames).index(
-            name
-        )
+        return q, (["p", "u", "v", "w", "T"] + blk.speciesNames).index(name)
 
     def _refreshXdmf(self, mb):
         """Point the tree at this result's file, and say when it is from."""

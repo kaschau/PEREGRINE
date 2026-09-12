@@ -83,6 +83,6 @@ class CubeMesher(BaseMesher):
             origin[2], origin[2] + lengths[2], dimensions[2], dtype=np.float64
         )
 
-        s_i = blk.interior
-
-        blk.array["nodes"][s_i] = np.stack(np.meshgrid(x, y, z, indexing="ij"), axis=-1)
+        nodes = blk.hostCopy("nodes")
+        nodes[blk.interior] = np.stack(np.meshgrid(x, y, z, indexing="ij"), axis=-1)
+        blk.store("nodes", nodes)

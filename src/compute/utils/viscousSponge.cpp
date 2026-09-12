@@ -1,18 +1,21 @@
-#include "block_.hpp"
+#include "abi.hpp"
 #include "kokkosTypes.hpp"
 #include <Kokkos_Core.hpp>
 
-void viscousSponge(block_ &b, const std::array<double, 3> &origin,
-                   const std::array<double, 3> &ending, double mult) {
+PG_ABI void pgViscousSponge(const pgView *cells_, const pgView *qt_,
+                            const pgDims *d, const double *origin,
+                            const double *ending, double mult) {
+  auto cells = as4(*cells_);
+  auto qt = as4(*qt_);
+  const int ng = d->ng, ni = d->ni, nj = d->nj, nk = d->nk;
 
-  MDRange3 range_cc({b.ng - 1, b.ng - 1, b.ng - 1},
-                    {b.ni + b.ng, b.nj + b.ng, b.nk + b.ng});
+  MDRange3 range_cc({ng - 1, ng - 1, ng - 1}, {ni + ng, nj + ng, nk + ng});
   Kokkos::parallel_for(
       "Apply viscous sponge", range_cc,
       KOKKOS_LAMBDA(const int i, const int j, const int k) {
-        double &xc = b.cells(i, j, k, 0);
-        double &yc = b.cells(i, j, k, 1);
-        double &zc = b.cells(i, j, k, 2);
+        double &xc = cells(i, j, k, 0);
+        double &yc = cells(i, j, k, 1);
+        double &zc = cells(i, j, k, 2);
 
         double vectorX = xc - origin[0];
         double vectorY = yc - origin[1];
@@ -34,6 +37,6 @@ void viscousSponge(block_ &b, const std::array<double, 3> &origin,
         double multiplier = dist / spongeLength * (mult - 1.0);
         multiplier = 1.0 + fmin(fmax(0.0, multiplier), mult);
 
-        b.qt(i, j, k, 0) *= multiplier;
+        qt(i, j, k, 0) *= multiplier;
       });
 }

@@ -14,9 +14,10 @@ import matplotlib.pyplot as plt
 def simulate():
     config = pg.files.configFile()
     config["RHS"]["diffusion"] = True
-    config["mcPhysics"]["eos"] = "cubic"
+    config["mcPhysics"]["eos"] = "realGas"
     config["mcPhysics"]["mixture"] = ["CO2"]
-    config["mcPhysics"]["trans"] = "chungDenseGasUnityLewis"
+    config["mcPhysics"]["trans"] = "chungDenseGas"
+    config["mcPhysics"]["Trange"] = (300.0, 2000.0)
     config.validateConfig()
     mb = pg.multiBlock.buildSolver(config, 1)
     pg.mesher.CubeMesher(
@@ -48,23 +49,24 @@ def simulate():
     for j, p in enumerate(ps):
         for i, T in enumerate(Ts):
             # set the gas state
-            blk.array["q"][:, :, :, 0] = p * 1e6
-            blk.array["q"][:, :, :, 4] = T
+            q = blk.q.get()
+            q[:, :, :, 0] = p * 1e6
+            q[:, :, :, 4] = T
 
             # Update cons
-            blk.updateDeviceView(["q"])
-            mb.eos(blk.cpp, mb.thtrdat.cpp, 0, "prims")
+            blk.q.set(q)
+            mb.eos(blk, mb.thtrdat, 0, "prims")
             # Update transport
-            mb.trans(blk.cpp, mb.thtrdat.cpp, 0)
+            mb.trans(blk, mb.thtrdat, 0)
 
-            blk.updateHostView(["Q", "qh", "qt"])
-            rhos[j, i] = blk.array["Q"][ng, ng, ng, 0]
-            cps[j, i] = blk.array["qh"][ng, ng, ng, 1]
-            hs[j, i] = blk.array["qh"][ng, ng, ng, 2]
-            cs[j, i] = blk.array["qh"][ng, ng, ng, 3]
+            Q, qh, qt = blk.Q.get(), blk.qh.get(), blk.qt.get()
+            rhos[j, i] = Q[ng, ng, ng, 0]
+            cps[j, i] = qh[ng, ng, ng, 1]
+            hs[j, i] = qh[ng, ng, ng, 2]
+            cs[j, i] = qh[ng, ng, ng, 3]
 
-            mus[j, i] = blk.array["qt"][ng, ng, ng, 0]
-            kappas[j, i] = blk.array["qt"][ng, ng, ng, 1]
+            mus[j, i] = qt[ng, ng, ng, 0]
+            kappas[j, i] = qt[ng, ng, ng, 1]
 
     fig, axs = plt.subplots(2, 2, sharex=True)
     fig.suptitle(f"Thermo Properties of {config['mcPhysics']['mixture'][0]}")
@@ -101,9 +103,9 @@ def simulate():
 
 if __name__ == "__main__":
     try:
-        pg.compute.pgkokkos.initialize()
+        pg.abi.initialize()
         simulate()
-        pg.compute.pgkokkos.finalize()
+        pg.abi.finalize()
 
     except Exception as e:
         import sys

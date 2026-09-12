@@ -102,8 +102,8 @@ class CutMixin:
         oldBlk.setExtents(*lowDims)
         newBlk.setExtents(*highDims)
         for var, (lowHalf, highHalf) in halves.items():
-            oldBlk.array[var][:] = lowHalf
-            newBlk.array[var][:] = highHalf
+            oldBlk.store(var, lowHalf)
+            newBlk.store(var, highHalf)
 
         return pending
 

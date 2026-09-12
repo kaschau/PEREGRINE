@@ -1,4 +1,4 @@
-#include "block_.hpp"
+#include "abi.hpp"
 #include "kokkosTypes.hpp"
 #include <Kokkos_Core.hpp>
 #include <math.h>
@@ -13,10 +13,18 @@
 // FLUIDSInt.J.Numer.Meth.Fluids2000;32: 369 – 406 E. Lenormand,  P. Sagautb,
 // and  L. Ta Phuoc
 
-void smagorinsky(block_ &b) {
+PG_ABI void pgSmagorinsky(const pgView *J_, const pgView *Q_,
+                          const pgView *grads_, const pgView *qh_,
+                          const pgView *qt_, const pgDims *d) {
+  auto J = as3(*J_);
+  auto Q = as4(*Q_);
+  auto grads = as5(*grads_);
+  auto qh = as4(*qh_);
+  auto qt = as4(*qt_);
+  const int ng = d->ng, ni = d->ni, nj = d->nj, nk = d->nk;
+  const int ne = Q.extent(3);
 
-  MDRange3 range_cc({b.ng - 1, b.ng - 1, b.ng - 1},
-                    {b.ni + b.ng, b.nj + b.ng, b.nk + b.ng});
+  MDRange3 range_cc({ng - 1, ng - 1, ng - 1}, {ni + ng, nj + ng, nk + ng});
 
   Kokkos::parallel_for(
       "Smagorinsky subgrid", range_cc,
@@ -25,17 +33,17 @@ void smagorinsky(block_ &b) {
         const double Prt = 0.4;
         const double Sct = 1.0;
 
-        double &dudx = b.grads(i, j, k, 1, 0);
-        double &dudy = b.grads(i, j, k, 1, 1);
-        double &dudz = b.grads(i, j, k, 1, 2);
+        double &dudx = grads(i, j, k, 1, 0);
+        double &dudy = grads(i, j, k, 1, 1);
+        double &dudz = grads(i, j, k, 1, 2);
 
-        double &dvdx = b.grads(i, j, k, 2, 0);
-        double &dvdy = b.grads(i, j, k, 2, 1);
-        double &dvdz = b.grads(i, j, k, 2, 2);
+        double &dvdx = grads(i, j, k, 2, 0);
+        double &dvdy = grads(i, j, k, 2, 1);
+        double &dvdz = grads(i, j, k, 2, 2);
 
-        double &dwdx = b.grads(i, j, k, 3, 0);
-        double &dwdy = b.grads(i, j, k, 3, 1);
-        double &dwdz = b.grads(i, j, k, 3, 2);
+        double &dwdx = grads(i, j, k, 3, 0);
+        double &dwdy = grads(i, j, k, 3, 1);
+        double &dwdz = grads(i, j, k, 3, 2);
 
         double S[3][3];
         S[0][0] = dudx;
@@ -57,21 +65,21 @@ void smagorinsky(block_ &b) {
         }
         magSij = sqrt(2.0 * magSij);
 
-        double delta = pow(b.J(i, j, k), 1.0 / 3.0);
+        double delta = pow(J(i, j, k), 1.0 / 3.0);
 
         double nusgs = pow(Cs * delta, 2.0) * magSij;
 
-        double musgs = nusgs * b.Q(i, j, k, 0);
+        double musgs = nusgs * Q(i, j, k, 0);
 
         // Add sgs values to properties
         // viscocity
-        b.qt(i, j, k, 0) += musgs;
+        qt(i, j, k, 0) += musgs;
         // thermal conductivity
-        double kappasgs = musgs * b.qh(i, j, k, 1) / Prt;
-        b.qt(i, j, k, 1) += kappasgs;
+        double kappasgs = musgs * qh(i, j, k, 1) / Prt;
+        qt(i, j, k, 1) += kappasgs;
         // Diffusion coefficients mass
-        for (int n = 0; n <= b.ne - 5; n++) {
-          b.qt(i, j, k, 2 + n) += nusgs / Sct;
+        for (int n = 0; n <= ne - 5; n++) {
+          qt(i, j, k, 2 + n) += nusgs / Sct;
         }
       });
 }

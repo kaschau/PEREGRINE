@@ -7,10 +7,10 @@ from .explicit import BaseExplicit
 
 
 def stiff(t, y, blk, thtrdat, impChem, i, j, k):
-    blk.array["q"][i, j, k, 4::] = y
-    impChem(blk.cpp, thtrdat.cpp, 10, i, j, k)
+    blk.q[i, j, k, 4::] = y
+    impChem(blk, thtrdat, 10, i, j, k)
 
-    return blk.array["omega"][i, j, k, :]
+    return blk.omega[i, j, k, :]
 
 
 class Strang(BaseExplicit):
@@ -51,12 +51,12 @@ class Strang(BaseExplicit):
             for ijk in it:
                 i, j, k = ijk
 
-                y0 = blk.array["q"][i, j, k, 4::]
+                y0 = blk.q[i, j, k, 4::]
                 ODE.set_initial_value(y0, 0.0)
                 ODE.set_f_params(blk, self.thtrdat, self.impChem, i, j, k)
                 ODE.integrate(dt)
 
-                blk.array["Q"][i, j, k, 5::] = ODE.y[1::] * blk.array["Q"][i, j, k, 0]
+                blk.Q[i, j, k, 5::] = ODE.y[1::] * blk.Q[i, j, k, 0]
 
         consistify(self)
 

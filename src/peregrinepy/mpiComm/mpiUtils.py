@@ -1,5 +1,5 @@
 from mpi4py import MPI  # noqa: F401
-from ..compute.utils import CFLmax, checkNan
+from ..kernels.utils import CFLmax, allFinite
 import numpy as np
 
 
@@ -59,7 +59,10 @@ def getLoadEfficiency(mb):
 def getDtMaxCFL(mb):
     comm, rank, size = getCommRankSize()
 
-    cfl = np.array(CFLmax([blk.cpp for blk in mb]), dtype=np.float64)
+    # the max over this rank's blocks, then over ranks; the convective floor
+    # keeps the time step finite in a quiescent field
+    cfl = np.max([CFLmax(blk) for blk in mb], axis=0)
+    cfl[1] = max(cfl[1], 1e-16)
     comm.Allreduce(MPI.IN_PLACE, cfl, op=MPI.MAX)
 
     if mb.config["timeIntegration"]["variableTimeStep"]:
@@ -75,21 +78,19 @@ def checkForNan(mb):
     comm, rank, size = getCommRankSize()
 
     abort = np.array([0], np.int32)
-    abort[0] = checkNan([blk.cpp for blk in mb])
+    abort[0] = not all(allFinite(blk) for blk in mb)
     if abort[0] > 0:
         for blk in mb:
-            blk.updateHostView(["Q"])
+            Q = blk.Q.get()
             ng = blk.ng
-            nans = np.where(
-                np.sum(np.isnan(blk.array["Q"][ng:-ng, ng:-ng, ng:-ng, :]), axis=-1) > 0
-            )
+            nans = np.where(np.sum(np.isnan(Q[ng:-ng, ng:-ng, ng:-ng, :]), axis=-1) > 0)
             if len(nans[0]) == 0:
                 continue
             with open(f"nans_{blk.nblki}.log", "w") as f:
                 f.write(f"Nan Detection Log: Block {blk.nblki}\n")
-                xs = blk.array["cells"][..., 0][ng:-ng, ng:-ng, ng:-ng][nans]
-                ys = blk.array["cells"][..., 1][ng:-ng, ng:-ng, ng:-ng][nans]
-                zs = blk.array["cells"][..., 2][ng:-ng, ng:-ng, ng:-ng][nans]
+                xs = blk.cells[..., 0][ng:-ng, ng:-ng, ng:-ng][nans]
+                ys = blk.cells[..., 1][ng:-ng, ng:-ng, ng:-ng][nans]
+                zs = blk.cells[..., 2][ng:-ng, ng:-ng, ng:-ng][nans]
                 for x, y, z in zip(xs, ys, zs):
                     f.write(f"x = {x} y = {y} z = {z}\n")
 

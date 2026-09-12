@@ -1,7 +1,5 @@
-#include "block_.hpp"
-#include "compute.hpp"
+#include "kernelUtils.hpp"
 #include "kokkosTypes.hpp"
-#include "thtrdat_.hpp"
 #include <Kokkos_Core.hpp>
 #include <math.h>
 
@@ -21,13 +19,28 @@
 //     O'Connell
 //     5th Edition, 2001
 
-void chungDenseGasUnityLewis(block_ &b, const thtrdat_ &th, const int &nface,
-                             const int &indxI /*=0*/, const int &indxJ /*=0*/,
-                             const int &indxK /*=0*/) {
+PG_ABI void pgChungDenseGasUnityLewis(
+    const pgView *Q_, const pgView *q_, const pgView *qh_, const pgView *qt_,
+    const pgView *MW_, const pgView *Tcrit_, const pgView *Vcrit_,
+    const pgView *acentric_, const pgView *chungA_, const pgView *chungB_,
+    const pgView *lewis_, const pgView *redDipole_, double Ru,
+    const pgRange *r) {
+  auto Q = as4(*Q_);
+  auto q = as4(*q_);
+  auto qh = as4(*qh_);
+  auto qt = as4(*qt_);
+  auto MW = as1(*MW_);
+  auto Tcrit = as1(*Tcrit_);
+  auto Vcrit = as1(*Vcrit_);
+  auto acentric = as1(*acentric_);
+  auto chungA = as2(*chungA_);
+  auto chungB = as2(*chungB_);
+  auto lewis = as1(*lewis_);
+  auto redDipole = as1(*redDipole_);
+  const int ns = MW.extent(0);
 #ifndef NSCOMPILE
   Kokkos::Experimental::UniqueToken<execSpace> token;
   int numIds = token.size();
-  const int ns = th.ns;
   twoDview Y("Y", numIds, ns);
   twoDview X("X", numIds, ns);
   twoDview mu_sp("mu_sp", numIds, ns);
@@ -47,7 +60,7 @@ void chungDenseGasUnityLewis(block_ &b, const thtrdat_ &th, const int &nface,
 #define kappa_sp(INDEX) kappa_sp(id, INDEX)
 #endif
 
-  MDRange3 range = getRange3(b, nface, indxI, indxJ, indxK);
+  MDRange3 range = range3(*r);
   Kokkos::parallel_for(
       "Chung trans props unity Lewis", range,
       KOKKOS_LAMBDA(const int i, const int j, const int k) {
@@ -55,7 +68,7 @@ void chungDenseGasUnityLewis(block_ &b, const thtrdat_ &th, const int &nface,
         int id = token.acquire();
 #endif
 
-        double &T = b.q(i, j, k, 4);
+        double &T = q(i, j, k, 4);
 #ifdef NSCOMPILE
         double Y(ns);
         double X(ns);
@@ -66,7 +79,7 @@ void chungDenseGasUnityLewis(block_ &b, const thtrdat_ &th, const int &nface,
         // Compute nth species Y
         Y(ns - 1) = 1.0;
         for (int n = 0; n < ns - 1; n++) {
-          Y(n) = b.q(i, j, k, 5 + n);
+          Y(n) = q(i, j, k, 5 + n);
           Y(ns - 1) -= Y(n);
         }
         Y(ns - 1) = fmax(0.0, Y(ns - 1));
@@ -76,11 +89,11 @@ void chungDenseGasUnityLewis(block_ &b, const thtrdat_ &th, const int &nface,
         {
           double mass = 0.0;
           for (int n = 0; n <= ns - 1; n++) {
-            mass += Y(n) / th.MW(n);
+            mass += Y(n) / MW(n);
           }
           // Mean molecular weight, mole fraction
           for (int n = 0; n <= ns - 1; n++) {
-            X(n) = Y(n) / th.MW(n) / mass;
+            X(n) = Y(n) / MW(n) / mass;
           }
         }
 
@@ -94,31 +107,31 @@ void chungDenseGasUnityLewis(block_ &b, const thtrdat_ &th, const int &nface,
 
           // In the Chung paper, Vcrit is in cm^3/mol, but we store Vcrit in
           // m^3/kg
-          double Vc = th.Vcrit(n) * th.MW(n) * 1.0e3;
+          double Vc = Vcrit(n) * MW(n) * 1.0e3;
 
           // Dense gas viscosity
-          double Tr = T / th.Tcrit(n);
+          double Tr = T / Tcrit(n);
           double Tstar = 1.2593 * Tr;
           double Omegav = Acoeff * pow(Tstar, -Bcoeff) +
                           Ccoeff * exp(-Dcoeff * Tstar) +
                           Ecoeff * exp(-Fcoeff * Tstar);
 
-          double Fc = 1.0 - 0.2756 * th.acentric(n) +
-                      0.059035 * pow(th.redDipole(n), 4.0); // + kij??
+          double Fc = 1.0 - 0.2756 * acentric(n) +
+                      0.059035 * pow(redDipole(n), 4.0); // + kij??
 
           // Viscosity for dense fluids
-          double &A1 = th.chungA(n, 0);
-          double &A2 = th.chungA(n, 1);
-          double &A3 = th.chungA(n, 2);
-          double &A4 = th.chungA(n, 3);
-          double &A5 = th.chungA(n, 4);
-          double &A6 = th.chungA(n, 5);
-          double &A7 = th.chungA(n, 6);
-          double &A8 = th.chungA(n, 7);
-          double &A9 = th.chungA(n, 8);
-          double &A10 = th.chungA(n, 9);
+          double &A1 = chungA(n, 0);
+          double &A2 = chungA(n, 1);
+          double &A3 = chungA(n, 2);
+          double &A4 = chungA(n, 3);
+          double &A5 = chungA(n, 4);
+          double &A6 = chungA(n, 5);
+          double &A7 = chungA(n, 6);
+          double &A8 = chungA(n, 7);
+          double &A9 = chungA(n, 8);
+          double &A10 = chungA(n, 9);
 
-          double rhocm = b.Q(i, j, k, 0) / th.MW(n) * 1e-3;
+          double rhocm = Q(i, j, k, 0) / MW(n) * 1e-3;
           double Yy = rhocm * Vc / 6.0;
           double G1 = (1.0 - 0.5 * Yy) / pow(1.0 - Yy, 3.0);
           double G2 = (A1 * (1.0 - exp(-A4 * Yy)) / Yy +
@@ -131,32 +144,32 @@ void chungDenseGasUnityLewis(block_ &b, const thtrdat_ &th, const int &nface,
               sqrt(Tstar) / Omegav * (Fc / G2 + A6 * Yy) + etaStarStar;
 
           // Compute final viscosity, convert to SI units
-          mu_sp(n) = etaStar * 36.344 * sqrt(th.MW(n) * th.Tcrit(n)) /
+          mu_sp(n) = etaStar * 36.344 * sqrt(MW(n) * Tcrit(n)) /
                      pow(Vc, 2.0 / 3.0) * 1e-7;
 
           // Dilute gas thermal conductivity
-          double alpha = b.qh(i, j, k, 1) * 0.001 * th.MW(n) /
-                             b.qh(i, j, k, 0) / (th.Ru / 1000.0) -
-                         1.5;
-          double beta = 0.7862 - 0.7109 * th.acentric(n) +
-                        1.3168 * pow(th.acentric(n), 2.0);
-          double eta0 = 4.0785e-5 * sqrt(th.MW(n) * T) /
-                        (pow(Vc, 2.0 / 3.0) * Omegav) * Fc;
+          double alpha =
+              qh(i, j, k, 1) * 0.001 * MW(n) / qh(i, j, k, 0) / (Ru / 1000.0) -
+              1.5;
+          double beta =
+              0.7862 - 0.7109 * acentric(n) + 1.3168 * pow(acentric(n), 2.0);
+          double eta0 =
+              4.0785e-5 * sqrt(MW(n) * T) / (pow(Vc, 2.0 / 3.0) * Omegav) * Fc;
           double Z = 2.0 + 10.5 * pow(Tr, 2.0);
           double Psi =
               1.0 +
               alpha * ((0.215 + 0.28288 * alpha - 1.061 * beta + 0.26665 * Z) /
                        (0.6366 + beta * Z + 1.061 * alpha * beta));
-          double lambda0 = 7.452 * eta0 / th.MW(n) * Psi;
+          double lambda0 = 7.452 * eta0 / MW(n) * Psi;
 
           // Dilute thermal conductivity, in cal/(cm.s.K) so need to convert
-          double &B1 = th.chungB(n, 0);
-          double &B2 = th.chungB(n, 1);
-          double &B3 = th.chungB(n, 2);
-          double &B4 = th.chungB(n, 3);
-          double &B5 = th.chungB(n, 4);
-          double &B6 = th.chungB(n, 5);
-          double &B7 = th.chungB(n, 6);
+          double &B1 = chungB(n, 0);
+          double &B2 = chungB(n, 1);
+          double &B3 = chungB(n, 2);
+          double &B4 = chungB(n, 3);
+          double &B5 = chungB(n, 4);
+          double &B6 = chungB(n, 5);
+          double &B7 = chungB(n, 6);
 
           double H2 = (B1 * (1.0 - exp(-B4 * Yy)) / Yy +
                        B2 * G1 * exp(B5 * Yy) + B3 * G1) /
@@ -164,8 +177,8 @@ void chungDenseGasUnityLewis(block_ &b, const thtrdat_ &th, const int &nface,
 
           double lambdak = lambda0 * (1.0 / H2 + B6 * Yy);
           double lambdap =
-              (3.039e-4 * sqrt(th.Tcrit(n) / th.MW(n)) / pow(Vc, 2.0 / 3.0)) *
-              B7 * pow(Yy, 2.0) * H2 * sqrt(Tr);
+              (3.039e-4 * sqrt(Tcrit(n) / MW(n)) / pow(Vc, 2.0 / 3.0)) * B7 *
+              pow(Yy, 2.0) * H2 * sqrt(Tr);
 
           // Compute final thermal conductivity, convert to SI units
           kappa_sp(n) = (lambdak + lambdap) * 418.68;
@@ -178,10 +191,10 @@ void chungDenseGasUnityLewis(block_ &b, const thtrdat_ &th, const int &nface,
         for (int n = 0; n <= ns - 1; n++) {
           double phitemp = 0.0;
           for (int n2 = 0; n2 <= ns - 1; n2++) {
-            double phi = pow((1.0 + sqrt(mu_sp(n) / mu_sp(n2) *
-                                         sqrt(th.MW(n2) / th.MW(n)))),
-                             2.0) /
-                         (sqrt(8.0) * sqrt(1 + th.MW(n) / th.MW(n2)));
+            double phi =
+                pow((1.0 + sqrt(mu_sp(n) / mu_sp(n2) * sqrt(MW(n2) / MW(n)))),
+                    2.0) /
+                (sqrt(8.0) * sqrt(1 + MW(n) / MW(n2)));
             phitemp += phi * X(n2);
           }
           mu += mu_sp(n) * X(n) / phitemp;
@@ -201,12 +214,13 @@ void chungDenseGasUnityLewis(block_ &b, const thtrdat_ &th, const int &nface,
 
         // Set values of new properties
         // viscocity
-        b.qt(i, j, k, 0) = mu;
+        qt(i, j, k, 0) = mu;
         // thermal conductivity
-        b.qt(i, j, k, 1) = kappa;
+        qt(i, j, k, 1) = kappa;
         // NOTE: Unity Lewis number approximation!
         for (int n = 0; n <= ns - 1; n++) {
-          b.qt(i, j, k, 2 + n) = kappa / (b.Q(i, j, k, 0) * b.qh(i, j, k, 1));
+          qt(i, j, k, 2 + n) =
+              kappa / (Q(i, j, k, 0) * qh(i, j, k, 1) * lewis(n));
         }
 
 #ifndef NSCOMPILE

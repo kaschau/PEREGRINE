@@ -8,11 +8,11 @@ once the blocks know their neighbors, so they are worked out once here and an
 exchange only moves data.
 """
 
+import numpy as np
 from mpi4py.MPI import DOUBLE as MPIDOUBLE
 from mpi4py.MPI import Request
 
-from ..compute.pgkokkos import deep_copy
-from ..compute.utils import extractSendBuffer, placeRecvBuffer
+from ..kernels.utils import extractSendBuffer, placeRecvBuffer
 from .mpiUtils import getCommRankSize
 
 
@@ -74,9 +74,10 @@ class Communicator:
         send, recv = "sendBuffer_" + var, "recvBuffer_" + var
 
         # what arrives needs somewhere to land before anything is sent
+        landing = {face: np.empty(getattr(face, recv).shape) for face in self.remote}
         reqs = [
             self.comm.Irecv(
-                [face.array[recv], MPIDOUBLE], source=face.commRank, tag=face.tagR
+                [landing[face], MPIDOUBLE], source=face.commRank, tag=face.tagR
             )
             for face in self.remote
         ]
@@ -85,29 +86,28 @@ class Communicator:
         # nothing here has to leave the device
         for blk, face, planes in self.trades:
             extractSendBuffer(
-                getattr(blk.cpp, var), getattr(face.cpp, send), face.cpp, planes[var][0]
+                getattr(blk, var), getattr(face, send), face, planes[var][0]
             )
 
         # a neighbor on our own rank reads what we packed as it stands
         for face, partner in self.local:
-            deep_copy(getattr(partner.cpp, recv), getattr(face.cpp, send))
+            getattr(partner, recv).copyFrom(getattr(face, send))
 
-        # only a message has to go through the host
+        # only a message has to go through the host: a snapshot out, and what
+        # lands set back in
         for face in self.remote:
-            face.updateHostView(send)
-        for face in self.remote:
-            buffer = face.array[send]
+            buffer = getattr(face, send).get()
             self.comm.Send(
                 [buffer, buffer.size, MPIDOUBLE], dest=face.commRank, tag=face.tagS
             )
 
         Request.Waitall(reqs)
         for face in self.remote:
-            face.updateDeviceView(recv)
+            getattr(face, recv).set(landing[face])
 
         for blk, face, planes in self.trades:
             placeRecvBuffer(
-                getattr(blk.cpp, var), getattr(face.cpp, recv), face.cpp, planes[var][1]
+                getattr(blk, var), getattr(face, recv), face, planes[var][1]
             )
 
         # a face trades under the same tag whatever the variable, so one

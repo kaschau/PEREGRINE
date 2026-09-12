@@ -7,11 +7,11 @@ class InletBC(BaseBC):
     family = "inlets"
 
     @classmethod
-    def _constants(cls, blk, face, valueDict):
-        super()._constants(blk, face, valueDict)
+    def _constants(cls, blk, face, valueDict, qBcVals, QBcVals):
+        super()._constants(blk, face, valueDict, qBcVals, QBcVals)
         for i, spn in enumerate(blk.speciesNames[0:-1]):
             if spn in valueDict:
-                face.array["qBcVals"][:, :, 5 + i] = valueDict[spn]
+                qBcVals[:, :, 5 + i] = valueDict[spn]
 
 
 class ConstantVelocitySubsonicInlet(InletBC):
@@ -36,12 +36,12 @@ class ConstantMassFluxSubsonicInlet(InletBC):
     values = {"T": 4}
 
     @classmethod
-    def _constants(cls, blk, face, valueDict):
-        super()._constants(blk, face, valueDict)
+    def _constants(cls, blk, face, valueDict, qBcVals, QBcVals):
+        super()._constants(blk, face, valueDict, qBcVals, QBcVals)
         d = {1: "i", 2: "i", 3: "j", 4: "j", 5: "k", 6: "k"}[face.nface]
         # the normal has to point into the block
         sign = 1.0 if face.nface in (1, 3, 5) else -1.0
         mDot = valueDict["mDotPerUnitArea"]
         _, n = blk.faceNormals(d)
         for m in range(3):
-            face.array["QBcVals"][:, :, m + 1] = sign * n[m][face.s1_] * mDot
+            QBcVals[:, :, m + 1] = sign * n[m][face.s1_] * mDot

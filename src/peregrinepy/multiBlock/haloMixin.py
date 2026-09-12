@@ -72,7 +72,7 @@ class HaloMixin:
         planes = ((self.nj, self.nk), (self.ni, self.nk), (self.ni, self.nj))
         masks = {nf: self._masks(planes[(nf - 1) // 2], ng) for nf in self._order}
 
-        x = self.array["nodes"]
+        x = self.nodes.get()
 
         # the halo is built from nothing, so it starts as nothing
         for nface in (1, 3, 5):
@@ -99,4 +99,4 @@ class HaloMixin:
                     )
                     counted[mask] += 1.0
 
-        self.updateDeviceView("nodes")
+        self.nodes.set(x)

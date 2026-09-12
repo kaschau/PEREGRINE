@@ -2,6 +2,7 @@ import itertools
 
 import numpy as np
 import peregrinepy as pg
+from ..gases import configure
 import pytest
 
 ##############################################
@@ -9,11 +10,11 @@ import pytest
 ##############################################
 
 pytestmark = pytest.mark.parametrize(
-    "adv,spdata",
+    "adv,gas",
     list(
         itertools.product(
             ("KEEPpe", "fourthOrderKEEP"),
-            (["Air"], "thtr_CH4_O2_FFCMY.yaml"),
+            ("air", "CH4_O2"),
         )
     ),
 )
@@ -28,11 +29,11 @@ class TestPeriodics:
     def teardown_class(self):
         pass
 
-    def test_rotationalPeriodics(self, my_setup, adv, spdata):
+    def test_rotationalPeriodics(self, my_setup, adv, gas):
         config = pg.files.configFile()
         config["RHS"]["primaryAdvFlux"] = adv
         config["RHS"]["diffusion"] = True
-        config["thermochem"]["spdata"] = spdata
+        configure(config, gas)
 
         mb = pg.multiBlock.buildSolver(config, 1)
 
@@ -53,7 +54,8 @@ class TestPeriodics:
         mb.unifyGrid()
         mb.computeMetrics()
 
-        qshape = blk.array["q"][:, :, :, 0].shape
+        q = blk.q.get()
+        qshape = q.shape[:3]
         p = np.random.uniform(low=101325 * 0.9, high=101325 * 1.1)
         u = np.random.uniform(low=1, high=1000, size=qshape)
         v = np.random.uniform(low=1, high=1000, size=qshape)
@@ -64,30 +66,28 @@ class TestPeriodics:
             Y = np.random.uniform(low=0.0, high=1.0, size=(blk.ns - 1))
             Y = Y / np.sum(Y)
 
-        blk.array["q"][:, :, :, 0] = p
-        blk.array["q"][:, :, :, 1] = u
-        blk.array["q"][:, :, :, 2] = v
-        blk.array["q"][:, :, :, 3] = w
-        blk.array["q"][:, :, :, 4] = T
+        q[:, :, :, 0] = p
+        q[:, :, :, 1] = u
+        q[:, :, :, 2] = v
+        q[:, :, :, 3] = w
+        q[:, :, :, 4] = T
         if blk.ns > 1:
-            blk.array["q"][:, :, :, 5::] = Y
-        blk.updateDeviceView("q")
+            q[:, :, :, 5::] = Y
+        blk.q.set(q)
 
-        mb.eos(blk.cpp, mb.thtrdat.cpp, 0, "prims")
+        mb.eos(blk, mb.thtrdat, 0, "prims")
         pg.consistify(mb)
 
-        blk.updateHostView(["q"])
+        q = blk.q.get()
 
-        u = blk.array["q"][:, :, :, 1]
-        v = blk.array["q"][:, :, :, 2]
-        w = blk.array["q"][:, :, :, 3]
+        u = q[:, :, :, 1]
+        v = q[:, :, :, 2]
+        w = q[:, :, :, 3]
 
         _, knormals = blk.faceNormals("k")
         nx = knormals[0]
         ny = knormals[1]
         nz = knormals[2]
-
-        grads = blk.array["grads"]
 
         ng = blk.ng
         for g in range(ng):
@@ -128,12 +128,12 @@ class TestPeriodics:
             )
 
         # check the gradients
-        mb.dqdxyz(blk.cpp)
+        mb.dqdxyz(blk)
         mb.communicator.exchange("grads")
         for face in blk.faces:
-            face.bcFunc(blk.cpp, face.cpp, mb.eos, mb.thtrdat.cpp, "postDqDxyz", mb.tme)
+            face.bcFunc(blk, face, mb.eos, mb.thtrdat, "postDqDxyz", mb.tme)
 
-        blk.updateHostView("grads")
+        grads = blk.grads.get()
 
         # only need the first halo cell
         g = ng - 1

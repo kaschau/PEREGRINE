@@ -37,7 +37,7 @@ class SolverMetricsMixin(MetricsMixin):
     def faceNormals(self, axis):
         """The area and unit normal of every :axis: face, worked back over
         from the area vector, which is the only one of the three stored."""
-        s = self.array[f"{axis}S"]
+        s = getattr(self, f"{axis}S").get()
         # a degenerate face is floored, we divide by this
         area = np.maximum(np.sqrt((s**2).sum(axis=-1)), 1e-16)
         return area, [s[..., n] / area for n in range(3)]
@@ -58,7 +58,8 @@ class SolverMetricsMixin(MetricsMixin):
         differentiates through."""
         super().computeMetrics()
 
-        nodes = self.array["nodes"]
+        nodes = self.nodes.get()
+        faces, areas = {}, {}
 
         # ----------------------------------------------------------------------------
         # Face centers, area vectors and normals
@@ -77,7 +78,7 @@ class SolverMetricsMixin(MetricsMixin):
                 + self._corner(nodes, inPlane, 1, 0)
                 + self._corner(nodes, inPlane, 1, 1)
             )
-            self.array[f"{axis}Faces"][:] = center
+            faces[axis] = center
 
             S = 0.5 * np.cross(
                 self._corner(nodes, diagonal, 1, 0)
@@ -85,44 +86,42 @@ class SolverMetricsMixin(MetricsMixin):
                 self._corner(nodes, diagonal, 1, 1)
                 - self._corner(nodes, diagonal, 0, 0),
             )
-            self.array[f"{axis}S"][:] = S
-
-            self.updateDeviceView([f"{axis}Faces", f"{axis}S"])
+            areas[axis] = S
+            getattr(self, f"{axis}Faces").set(center)
+            getattr(self, f"{axis}S").set(S)
 
         # ----------------------------------------------------------------------------
         # Cell center volumes
         # ----------------------------------------------------------------------------
 
         bodyDiagonal = nodes[1::, 1::, 1::] - nodes[0:-1, 0:-1, 0:-1]
-        self.array["J"][:] = (
+        J = (
             sum(
                 bodyDiagonal[..., n]
                 * (
-                    self.array["iS"][1::, :, :, n]
-                    + self.array["jS"][:, 1::, :, n]
-                    + self.array["kS"][:, :, 1::, n]
+                    areas["i"][1::, :, :, n]
+                    + areas["j"][:, 1::, :, n]
+                    + areas["k"][:, :, 1::, n]
                 )
                 for n in range(3)
             )
             / 3.0e0
         )
-
-        np.clip(self.array["J"], 1e-16, None, out=self.array["J"])
-
-        self.updateDeviceView(["J"])
+        np.clip(J, 1e-16, None, out=J)
+        self.J.set(J)
 
         # ----------------------------------------------------------------------------
         # Cell lengths, opposite face center to opposite face center
         # ----------------------------------------------------------------------------
 
+        dIJK = np.zeros(self.shapeOf("dIJK"))
         for a, axis in enumerate("ijk"):
             far, near = [slice(None)] * 3, [slice(None)] * 3
             far[a], near[a] = np.s_[1:], np.s_[:-1]
             far, near = tuple(far), tuple(near)
-            span = self.array[f"{axis}Faces"][far] - self.array[f"{axis}Faces"][near]
-            self.array["dIJK"][..., a] = np.sqrt((span**2).sum(axis=-1))
-
-        self.updateDeviceView("dIJK")
+            span = faces[axis][far] - faces[axis][near]
+            dIJK[..., a] = np.sqrt((span**2).sum(axis=-1))
+        self.dIJK.set(dIJK)
 
         # ----------------------------------------------------------------------------
         # Cell center transformation metrics (ferda FD diffusion operator)
@@ -152,10 +151,7 @@ class SolverMetricsMixin(MetricsMixin):
 
         # the inverse of that jacobian is its adjugate over its determinant,
         # and the adjugate's rows are the cross products of the other two
-        J = self.array["J"]
-        self.array["dENCdxyz"][:] = (
+        self.dENCdxyz.set(
             np.stack([np.cross(dN, dC), np.cross(dC, dE), np.cross(dE, dN)], axis=-2)
             / J[..., None, None]
         )
-
-        self.updateDeviceView("dENCdxyz")

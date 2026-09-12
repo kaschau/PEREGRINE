@@ -15,14 +15,8 @@ class gridBlock(topologyBlock, MetricsMixin):
 
         super().__init__(nblki)
 
-        #########################################################
-        # Data arrays
-        #########################################################
-        # Python side data
-        self.array = {}
-        # Kokkos mirrors (only used for solverBlocks)
-        self.mirror = {}
-        # what each array's shape will be, once the extents are known
+        # every array is an attribute named for it, shaped once the extents are
+        # known; what a block declares is all it may hold
         self.declared = {}
 
         self.declare("nodes", kind="node", components=3)
@@ -38,8 +32,8 @@ class gridBlock(topologyBlock, MetricsMixin):
         high[axis] = slice(cutIndex, None)
         return {
             "nodes": (
-                np.copy(self.array["nodes"][tuple(low)]),
-                np.copy(self.array["nodes"][tuple(high)]),
+                np.copy(self.nodes[tuple(low)]),
+                np.copy(self.nodes[tuple(high)]),
             )
         }
 
@@ -56,8 +50,7 @@ class gridBlock(topologyBlock, MetricsMixin):
             components = (components,)
         for name in names:
             self.declared[name] = (kind, components)
-            self.array[name] = None
-            self.mirror[name] = None
+            setattr(self, name, None)
 
     @property
     def shapes(self):
@@ -87,9 +80,19 @@ class gridBlock(topologyBlock, MetricsMixin):
         be re-sized around arrays that have already been rearranged."""
         for name in self.declared:
             shape = self.shapeOf(name)
-            if self.array[name] is not None and self.array[name].shape == shape:
+            current = getattr(self, name)
+            if current is not None and current.shape == shape:
                 continue
-            self.array[name] = np.zeros(shape)
+            setattr(self, name, np.zeros(shape))
+
+    def hostCopy(self, name):
+        """One of this block's arrays for the host to read: the array itself
+        here, a snapshot on a block that lives on the device."""
+        return getattr(self, name)
+
+    def store(self, name, values):
+        """Write values into one of this block's arrays, wherever it lives."""
+        getattr(self, name)[...] = values
 
     @property
     def interior(self):
@@ -114,9 +117,3 @@ class gridBlock(topologyBlock, MetricsMixin):
             return np.s_[:, :, :]
         i0, i1, j0, j1, k0, k1 = self.baseSlice
         return np.s_[k0:k1, j0:j1, i0:i1]
-
-    def updateDeviceView(self, vars):
-        """No device to push to."""
-
-    def updateHostView(self, vars):
-        """No device to pull from."""

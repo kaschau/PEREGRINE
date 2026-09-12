@@ -67,6 +67,17 @@ SetActiveSource(vTM1)
 # Catalyst options
 from paraview import catalyst
 
+# a calorically perfect air, stated in full: the library carries no such species
+air = {
+    "Air": {
+        "MW": 28.97,
+        "cp0": 1002.838449439523,
+        "mu0": 1.8591191080521142e-05,
+        "kappa0": 0.02625394405190068,
+    }
+}
+
+
 options = catalyst.Options()
 options.ExtractsOutputDirectory = "./"
 options.GlobalTrigger = "TimeStep"
@@ -88,7 +99,7 @@ if __name__ == "__main__":
 def simulate():
     config = pg.files.configFile()
     config["RHS"]["diffusion"] = True
-    config["mcPhysics"]["mixture"] = ["Air"]
+    config["mcPhysics"]["mixture"] = air
     config["mcPhysics"]["trans"] = "constantProps"
     config["coprocess"]["catalyst"] = True
     config["coprocess"]["catalystFile"] = "tempcoproc.py"
@@ -113,10 +124,7 @@ def simulate():
         inputBcValues["v"] = 0.0
         inputBcValues["w"] = 0.0
         inputBcValues["T"] = 300.0
-
-        face.allocate("qBcVals")
         pg.bcs.prep(blk, face, inputBcValues)
-        face.updateDeviceView("qBcVals")
 
         face = blk.getFace(2)
         face.commRank = 1
@@ -137,9 +145,7 @@ def simulate():
         face.bcType = "constantPressureSubsonicExit"
         inputBcValues = {}
         inputBcValues["p"] = 101325.0
-        face.allocate("qBcVals")
         pg.bcs.prep(blk, face, inputBcValues)
-        face.updateDeviceView("qBcVals")
 
         face = blk.getFace(1)
         face.commRank = 0
@@ -156,12 +162,12 @@ def simulate():
     mb.generateHalo()
     mb.computeMetrics()
 
-    blk.array["q"][:, :, :, 0] = 101325.0
-    blk.array["q"][:, :, :, 1] = 10.0
-    blk.array["q"][:, :, :, 4] = 300.0
-
-    blk.updateDeviceView("q")
-    mb.eos(blk.cpp, mb.thtrdat.cpp, 0, "prims")
+    q = blk.q.get()
+    q[:, :, :, 0] = 101325.0
+    q[:, :, :, 1] = 10.0
+    q[:, :, :, 4] = 300.0
+    blk.q.set(q)
+    mb.eos(blk, mb.thtrdat, 0, "prims")
     pg.consistify(mb)
     mb.coproc = pg.coproc.coprocessor(mb)
 
@@ -181,9 +187,9 @@ def simulate():
 
 if __name__ == "__main__":
     try:
-        pg.compute.pgkokkos.initialize()
+        pg.abi.initialize()
         simulate()
-        pg.compute.pgkokkos.finalize()
+        pg.abi.finalize()
 
     except Exception as e:
         import sys

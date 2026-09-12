@@ -1,11 +1,7 @@
-#include "block_.hpp"
-#include "compute.hpp"
+#include "kernelUtils.hpp"
 #include "kokkosTypes.hpp"
-#include "thtrdat_.hpp"
 #include <Kokkos_Core.hpp>
 #include <math.h>
-#include <stdexcept>
-#include <string.h>
 
 // References
 //
@@ -76,14 +72,25 @@ KOKKOS_INLINE_FUNCTION double stableRoot(const double x1, const double x2,
   return Z;
 }
 
-void cubic(block_ &b, const thtrdat_ &th, const int &nface,
-           const std::string &given, const int &indxI /*=0*/,
-           const int &indxJ /*=0*/, const int &indxK /*=0*/) {
+PG_ABI void pgRealGas(const pgView *Q_, const pgView *q_, const pgView *qh_,
+                      const pgView *MW_, const pgView *cpPoly_,
+                      const pgView *hPoly_, const pgView *hRef_,
+                      const pgView *Tcrit_, const pgView *pcrit_,
+                      const pgView *acentric_, double Ru, int fromPrims,
+                      const pgRange *r) {
+  auto Q = as4(*Q_), q = as4(*q_), qh = as4(*qh_);
+  auto MW = as1(*MW_);
+  auto cpPoly = as2(*cpPoly_);
+  auto hPoly = as2(*hPoly_);
+  auto hRef = as1(*hRef_);
+  auto Tcrit = as1(*Tcrit_);
+  auto pcrit = as1(*pcrit_);
+  auto acentric = as1(*acentric_);
+  const int ns = MW.extent(0);
 
 #ifndef NSCOMPILE
   Kokkos::Experimental::UniqueToken<execSpace> token;
   int numIds = token.size();
-  const int ns = th.ns;
   twoDview Y("Y", numIds, ns);
   twoDview hi("hi", numIds, ns);
   twoDview X("X", numIds, ns);
@@ -103,8 +110,8 @@ void cubic(block_ &b, const thtrdat_ &th, const int &nface,
 #define ai(INDEX) ai(id, INDEX)
 #endif
 
-  MDRange3 range = getRange3(b, nface, indxI, indxJ, indxK);
-  if (given.compare("prims") == 0) {
+  MDRange3 range = range3(*r);
+  if (fromPrims) {
     Kokkos::parallel_for(
         "Compute all conserved quantities from primatives via real gas", range,
         KOKKOS_LAMBDA(const int i, const int j, const int k) {
@@ -117,11 +124,11 @@ void cubic(block_ &b, const thtrdat_ &th, const int &nface,
           // gamma, cp, h, e, hi
           // So we store these as well.
 
-          const double p = b.q(i, j, k, 0);
-          const double u = b.q(i, j, k, 1);
-          const double v = b.q(i, j, k, 2);
-          const double w = b.q(i, j, k, 3);
-          const double T = b.q(i, j, k, 4);
+          const double p = q(i, j, k, 0);
+          const double u = q(i, j, k, 1);
+          const double v = q(i, j, k, 2);
+          const double w = q(i, j, k, 3);
+          const double T = q(i, j, k, 4);
 #ifdef NSCOMPILE
           double Y(ns);
           double X(ns);
@@ -142,13 +149,13 @@ void cubic(block_ &b, const thtrdat_ &th, const int &nface,
           // Compute y->x denom
           double denom = 0.0;
           for (int n = 0; n < ns - 1; n++) {
-            b.q(i, j, k, 5 + n) = fmax(fmin(b.q(i, j, k, 5 + n), 1.0), 0.0);
-            Y(n) = b.q(i, j, k, 5 + n);
+            q(i, j, k, 5 + n) = fmax(fmin(q(i, j, k, 5 + n), 1.0), 0.0);
+            Y(n) = q(i, j, k, 5 + n);
             Y(ns - 1) -= Y(n);
-            denom += Y(n) / th.MW(n);
+            denom += Y(n) / MW(n);
             testSum += Y(n);
           }
-          denom += Y(ns - 1) / th.MW(ns - 1);
+          denom += Y(ns - 1) / MW(ns - 1);
 
           // Renormalize if necessary
           if (testSum > 1.0) {
@@ -161,11 +168,11 @@ void cubic(block_ &b, const thtrdat_ &th, const int &nface,
           // Compute mole fraction, mean molecular weight
           double MWmix = 0.0;
           for (int n = 0; n <= ns - 1; n++) {
-            X(n) = (Y(n) / th.MW(n)) / denom;
-            MWmix += th.MW(n) * X(n);
+            X(n) = (Y(n) / MW(n)) / denom;
+            MWmix += MW(n) * X(n);
           }
           // Compute Rmix
-          Rmix = th.Ru / MWmix;
+          Rmix = Ru / MWmix;
 
           // Real gas coefficients for cubic EOS
           // -------------------------------------------------------------------------------------------------------------//
@@ -189,13 +196,12 @@ void cubic(block_ &b, const thtrdat_ &th, const int &nface,
 
           // Compressibility Factor, Z
           for (int n = 0; n <= ns - 1; n++) {
-            double Tr = T / th.Tcrit(n);
+            double Tr = T / Tcrit(n);
             double fOmega =
-                fw0 + fw1 * th.acentric(n) + fw2 * pow(th.acentric(n), 2.0);
+                fw0 + fw1 * acentric(n) + fw2 * pow(acentric(n), 2.0);
             double alpha = pow(1.0 + fOmega * (1 - sqrt(Tr)), 2.0);
-            ai(n) =
-                aiConst * (pow(th.Ru * th.Tcrit(n), 2.0) * alpha) / th.pcrit(n);
-            double bi = biConst * (th.Ru * th.Tcrit(n)) / th.pcrit(n);
+            ai(n) = aiConst * (pow(Ru * Tcrit(n), 2.0) * alpha) / pcrit(n);
+            double bi = biConst * (Ru * Tcrit(n)) / pcrit(n);
 
             bm += X(n) * bi;
           }
@@ -208,8 +214,8 @@ void cubic(block_ &b, const thtrdat_ &th, const int &nface,
             }
           }
 
-          Astar = am * p / pow(th.Ru * T, 2.0);
-          Bstar = bm * p / (th.Ru * T);
+          Astar = am * p / pow(Ru * T, 2.0);
+          Bstar = bm * p / (Ru * T);
 
           // Solve cubic EOS for Z
           // https://www.e-education.psu.edu/png520/m11_p6.html
@@ -219,18 +225,18 @@ void cubic(block_ &b, const thtrdat_ &th, const int &nface,
           z1 = Astar + wRG * Bstar2 - uRG * Bstar - uRG * Bstar2;
           z2 = -(1.0 + Bstar - uRG * Bstar);
 
-          double Q, RR, M;
-          Q = (pow(z2, 2.0) - 3.0 * z1) / 9.0;
+          double cardanoQ, RR, M;
+          cardanoQ = (pow(z2, 2.0) - 3.0 * z1) / 9.0;
           RR = (2.0 * pow(z2, 3.0) - 9.0 * z2 * z1 + 27.0 * z0) / 54.0;
-          M = pow(RR, 2.0) - pow(Q, 3.0);
+          M = pow(RR, 2.0) - pow(cardanoQ, 3.0);
 
           double z2o3 = z2 / 3.0;
           if (M > 0.0) {
             double S = -RR / abs(RR) * pow(abs(RR) + sqrt(M), (1.0 / 3.0));
-            Z = S + Q / S - z2o3;
+            Z = S + cardanoQ / S - z2o3;
           } else {
-            double q1p5 = pow(Q, 1.5);
-            double sqQ = sqrt(Q);
+            double q1p5 = pow(cardanoQ, 1.5);
+            double sqQ = sqrt(cardanoQ);
             double theta = acos(RR / q1p5);
             double x1 = -(2.0 * sqQ * cos(theta / 3.0)) - z2o3;
             double x2 =
@@ -250,15 +256,15 @@ void cubic(block_ &b, const thtrdat_ &th, const int &nface,
           for (int n = 0; n <= ns - 1; n++) {
             for (int n2 = 0; n2 <= ns - 1; n2++) {
               double fOmegaN =
-                  fw0 + fw1 * th.acentric(n) + fw2 * pow(th.acentric(n), 2.0);
+                  fw0 + fw1 * acentric(n) + fw2 * pow(acentric(n), 2.0);
               double fOmegaN2 =
-                  fw0 + fw1 * th.acentric(n2) + fw2 * pow(th.acentric(n2), 2.0);
+                  fw0 + fw1 * acentric(n2) + fw2 * pow(acentric(n2), 2.0);
               dam += X(n2) * X(n) * 1.0 *
-                     (fOmegaN2 * sqrt(ai(n) * th.Tcrit(n2) / th.pcrit(n2)) +
-                      fOmegaN * sqrt(ai(n2) * th.Tcrit(n) / th.pcrit(n)));
+                     (fOmegaN2 * sqrt(ai(n) * Tcrit(n2) / pcrit(n2)) +
+                      fOmegaN * sqrt(ai(n2) * Tcrit(n) / pcrit(n)));
             }
           }
-          dam *= -0.5 * th.Ru * sqrt(aiConst / T);
+          dam *= -0.5 * Ru * sqrt(aiConst / T);
           double dAstardT = -2.0 * (Astar / T) * (1.0 - 0.5 * (T / am) * dam);
           double dBstardT = -Bstar / T;
 
@@ -272,7 +278,7 @@ void cubic(block_ &b, const thtrdat_ &th, const int &nface,
           double dZdT = -(dz2 * pow(Z, 2.0) + dz1 * Z + dz0) /
                         (3.0 * pow(Z, 2.0) + 2.0 * Z * z2 + z1);
 
-          double Cuw = 1.0 / (bm * th.Ru * sqrt(pow(uRG, 2.0) - 4.0 * wRG));
+          double Cuw = 1.0 / (bm * Ru * sqrt(pow(uRG, 2.0) - 4.0 * wRG));
           double ZoB = Z / Bstar;
           double logZoB =
               log((2.0 * ZoB + (uRG - sqrt(pow(uRG, 2.0) - 4.0 * wRG))) /
@@ -280,47 +286,35 @@ void cubic(block_ &b, const thtrdat_ &th, const int &nface,
 
           double cpDep = Cuw * (am / T - dam) * logZoB * 0.5 * T / am * dam +
                          pow((pow(ZoB, 2.0) + uRG * ZoB + wRG) -
-                                 (dam / (bm * th.Ru)) * (ZoB - 1.0),
+                                 (dam / (bm * Ru)) * (ZoB - 1.0),
                              2.0) /
                              (pow(pow(ZoB, 2.0) + uRG * ZoB + wRG, 2.0) -
-                              (am / (bm * th.Ru * T)) * (2.0 * ZoB + uRG) *
+                              (am / (bm * Ru * T)) * (2.0 * ZoB + uRG) *
                                   pow(ZoB - 1.0, 2.0)) -
                          1.0;
 
           double hDep = Cuw * (am / T - dam) * logZoB + (Z - 1.0);
 
           // Start h and cp as departure values
-          h = th.Ru * T * hDep / MWmix;
-          cp = th.Ru * cpDep / MWmix;
-          // start scope of precomputed T**
+          h = Ru * T * hDep / MWmix;
+          cp = Ru * cpDep / MWmix;
           {
-            double Tinv = 1.0 / T;
-            double To2 = T / 2.0;
-            double T2 = pow(T, 2);
-            double T3 = pow(T, 3);
-            double T4 = pow(T, 4);
-            double T2o3 = T2 / 3.0;
-            double T3o4 = T3 / 4.0;
-            double T4o5 = T4 / 5.0;
+            const double u = log(T);
             for (int n = 0; n <= ns - 1; n++) {
-              int m = (T <= th.NASA7(n, 0)) ? 8 : 1;
-
-              double cps = (th.NASA7(n, m + 0) + th.NASA7(n, m + 1) * T +
-                            th.NASA7(n, m + 2) * T2 + th.NASA7(n, m + 3) * T3 +
-                            th.NASA7(n, m + 4) * T4) *
-                           th.Ru / th.MW(n);
-
-              hi(n) = (th.NASA7(n, m + 0) + th.NASA7(n, m + 1) * To2 +
-                       th.NASA7(n, m + 2) * T2o3 + th.NASA7(n, m + 3) * T3o4 +
-                       th.NASA7(n, m + 4) * T4o5 + th.NASA7(n, m + 5) * Tinv) *
-                      T * th.Ru / th.MW(n);
-
-              cp += cps * Y(n);
+              // ideal cp/R and h/(RT), Horner in u
+              double cpR = 0.0, hRT = 0.0;
+              for (int m = cpPoly.extent(1) - 1; m >= 0; m--)
+                cpR = cpR * u + cpPoly(n, m);
+              for (int m = hPoly.extent(1) - 1; m >= 0; m--)
+                hRT = hRT * u + hPoly(n, m);
+              hRT += hRef(n) / T;
+              const double Rn = Ru / MW(n);
+              hi(n) = hRT * T * Rn;
+              cp += cpR * Rn * Y(n);
               h += hi(n) * Y(n);
               // Add departure to individual hi
-              hi(n) += th.Ru * T * hDep / th.MW(n);
+              hi(n) += Ru * T * hDep / MW(n);
             }
-            // end scope of precomputed T**
           }
 
           // Compute density
@@ -359,34 +353,32 @@ void cubic(block_ &b, const thtrdat_ &th, const int &nface,
 
           // Set values of new properties
           // Density
-          b.Q(i, j, k, 0) = rho;
+          Q(i, j, k, 0) = rho;
           // Momentum
-          b.Q(i, j, k, 1) = rhou;
-          b.Q(i, j, k, 2) = rhov;
-          b.Q(i, j, k, 3) = rhow;
+          Q(i, j, k, 1) = rhou;
+          Q(i, j, k, 2) = rhov;
+          Q(i, j, k, 3) = rhow;
           // Total Energy
-          b.Q(i, j, k, 4) = rhoE;
+          Q(i, j, k, 4) = rhoE;
           // Species mass
           for (int n = 0; n < ns - 1; n++) {
-            b.Q(i, j, k, 5 + n) = Y(n) * rho;
+            Q(i, j, k, 5 + n) = Y(n) * rho;
           }
           // gamma,cp,h,c,e,hi
-          b.qh(i, j, k, 0) = gamma;
-          b.qh(i, j, k, 1) = cp;
-          b.qh(i, j, k, 2) = rho * h;
-          b.qh(i, j, k, 3) = c;
-          b.qh(i, j, k, 4) = rho * e;
+          qh(i, j, k, 0) = gamma;
+          qh(i, j, k, 1) = cp;
+          qh(i, j, k, 2) = rho * h;
+          qh(i, j, k, 3) = c;
+          qh(i, j, k, 4) = rho * e;
           for (int n = 0; n <= ns - 1; n++) {
-            b.qh(i, j, k, 5 + n) = hi(n);
+            qh(i, j, k, 5 + n) = hi(n);
           }
 
 #ifndef NSCOMPILE
           token.release(id);
 #endif
         });
-  }
-
-  else if (given.compare("cons") == 0) {
+  } else {
     Kokkos::parallel_for(
         "Compute primatives from conserved quantities via real gas", range,
         KOKKOS_LAMBDA(const int i, const int j, const int k) {
@@ -400,11 +392,11 @@ void cubic(block_ &b, const thtrdat_ &th, const int &nface,
           // gamma, cp, h, e, hi
           // So we store these as well.
 
-          const double rho = b.Q(i, j, k, 0);
-          const double rhou = b.Q(i, j, k, 1);
-          const double rhov = b.Q(i, j, k, 2);
-          const double rhow = b.Q(i, j, k, 3);
-          const double rhoE = b.Q(i, j, k, 4);
+          const double rho = Q(i, j, k, 0);
+          const double rhou = Q(i, j, k, 1);
+          const double rhov = Q(i, j, k, 2);
+          const double rhow = Q(i, j, k, 3);
+          const double rhoE = Q(i, j, k, 4);
 
           double p;
           double e, tke;
@@ -428,21 +420,21 @@ void cubic(block_ &b, const thtrdat_ &th, const int &nface,
           // Compute y->x denom
           double denom = 0.0;
           for (int n = 0; n < ns - 1; n++) {
-            b.Q(i, j, k, 5 + n) =
-                fmax(fmin(b.Q(i, j, k, 5 + n), b.Q(i, j, k, 0)), 0.0);
-            Y(n) = b.Q(i, j, k, 5 + n) / b.Q(i, j, k, 0);
+            Q(i, j, k, 5 + n) =
+                fmax(fmin(Q(i, j, k, 5 + n), Q(i, j, k, 0)), 0.0);
+            Y(n) = Q(i, j, k, 5 + n) / Q(i, j, k, 0);
             Y(ns - 1) -= Y(n);
-            denom += Y(n) / th.MW(n);
+            denom += Y(n) / MW(n);
             testSum += Y(n);
           }
-          denom += Y(ns - 1) / th.MW(ns - 1);
+          denom += Y(ns - 1) / MW(ns - 1);
 
           // Renormalize if necessary
           if (testSum > 1.0) {
             Y(ns - 1) = 0.0;
             for (int n = 0; n < ns - 1; n++) {
               Y(n) /= testSum;
-              b.Q(i, j, k, 5 + n) = Y(n) * b.Q(i, j, k, 0);
+              Q(i, j, k, 5 + n) = Y(n) * Q(i, j, k, 0);
             }
           }
 
@@ -472,11 +464,11 @@ void cubic(block_ &b, const thtrdat_ &th, const int &nface,
           // Compute mole fraction, mean molecular weight
           double MWmix = 0.0;
           for (int n = 0; n <= ns - 1; n++) {
-            X(n) = (Y(n) / th.MW(n)) / denom;
-            MWmix += th.MW(n) * X(n);
+            X(n) = (Y(n) / MW(n)) / denom;
+            MWmix += MW(n) * X(n);
           }
           // Compute Rmix
-          Rmix = th.Ru / MWmix;
+          Rmix = Ru / MWmix;
           // molar volume
           double Vm = MWmix / rho;
 
@@ -484,8 +476,8 @@ void cubic(block_ &b, const thtrdat_ &th, const int &nface,
           double dZdT;
           double Z, z0, z1, z2;
           // Newtons method to find T
-          T = (b.q(i, j, k, 4) < 1.0) ? 300.0
-                                      : b.q(i, j, k, 4); // Initial guess of T
+          T = (q(i, j, k, 4) < 1.0) ? 300.0
+                                    : q(i, j, k, 4); // Initial guess of T
           while ((abs(error) > tol) && (nitr < maxitr)) {
             // With a T, we can compute p
             double bi;
@@ -495,13 +487,12 @@ void cubic(block_ &b, const thtrdat_ &th, const int &nface,
             double ai(ns);
 #endif
             for (int n = 0; n <= ns - 1; n++) {
-              double Tr = T / th.Tcrit(n);
+              double Tr = T / Tcrit(n);
               double fOmega =
-                  fw0 + fw1 * th.acentric(n) + fw2 * pow(th.acentric(n), 2.0);
+                  fw0 + fw1 * acentric(n) + fw2 * pow(acentric(n), 2.0);
               double alpha = pow(1.0 + fOmega * (1 - sqrt(Tr)), 2.0);
-              ai(n) = aiConst * (pow(th.Ru * th.Tcrit(n), 2.0) * alpha) /
-                      th.pcrit(n);
-              bi = biConst * (th.Ru * th.Tcrit(n)) / th.pcrit(n);
+              ai(n) = aiConst * (pow(Ru * Tcrit(n), 2.0) * alpha) / pcrit(n);
+              bi = biConst * (Ru * Tcrit(n)) / pcrit(n);
 
               bm += X(n) * bi;
             }
@@ -517,10 +508,10 @@ void cubic(block_ &b, const thtrdat_ &th, const int &nface,
             double Cc = bm;
             // SRK
             // double Cc = 0.0;
-            p = th.Ru * T / (Vm - bm) - am / (Vm * (Vm + bm) + Cc * (Vm - bm));
+            p = Ru * T / (Vm - bm) - am / (Vm * (Vm + bm) + Cc * (Vm - bm));
 
-            Astar = am * p / pow(th.Ru * T, 2.0);
-            Bstar = bm * p / (th.Ru * T);
+            Astar = am * p / pow(Ru * T, 2.0);
+            Bstar = bm * p / (Ru * T);
 
             // Solve cubic EOS for Z
             // https://www.e-education.psu.edu/png520/m11_p6.html
@@ -529,18 +520,18 @@ void cubic(block_ &b, const thtrdat_ &th, const int &nface,
             z1 = Astar + wRG * Bstar2 - uRG * Bstar - uRG * Bstar2;
             z2 = -(1.0 + Bstar - uRG * Bstar);
 
-            double Q, RR, M;
-            Q = (pow(z2, 2.0) - 3.0 * z1) / 9.0;
+            double cardanoQ, RR, M;
+            cardanoQ = (pow(z2, 2.0) - 3.0 * z1) / 9.0;
             RR = (2.0 * pow(z2, 3.0) - 9.0 * z2 * z1 + 27.0 * z0) / 54.0;
-            M = pow(RR, 2.0) - pow(Q, 3.0);
+            M = pow(RR, 2.0) - pow(cardanoQ, 3.0);
 
             double z2o3 = z2 / 3.0;
             if (M > 0.0) {
               double S = -RR / abs(RR) * pow(abs(RR) + sqrt(M), (1.0 / 3.0));
-              Z = S + Q / S - z2o3;
+              Z = S + cardanoQ / S - z2o3;
             } else {
-              double q1p5 = pow(Q, 1.5);
-              double sqQ = sqrt(Q);
+              double q1p5 = pow(cardanoQ, 1.5);
+              double sqQ = sqrt(cardanoQ);
               double theta = acos(RR / q1p5);
               double x1 = -(2.0 * sqQ * cos(theta / 3.0)) - z2o3;
               double x2 = -(2.0 * sqQ *
@@ -557,15 +548,15 @@ void cubic(block_ &b, const thtrdat_ &th, const int &nface,
             for (int n = 0; n <= ns - 1; n++) {
               for (int n2 = 0; n2 <= ns - 1; n2++) {
                 double fOmegaN =
-                    fw0 + fw1 * th.acentric(n) + fw2 * pow(th.acentric(n), 2.0);
-                double fOmegaN2 = fw0 + fw1 * th.acentric(n2) +
-                                  fw2 * pow(th.acentric(n2), 2.0);
+                    fw0 + fw1 * acentric(n) + fw2 * pow(acentric(n), 2.0);
+                double fOmegaN2 =
+                    fw0 + fw1 * acentric(n2) + fw2 * pow(acentric(n2), 2.0);
                 dam += X(n2) * X(n) * 1.0 *
-                       (fOmegaN2 * sqrt(ai(n) * th.Tcrit(n2) / th.pcrit(n2)) +
-                        fOmegaN * sqrt(ai(n2) * th.Tcrit(n) / th.pcrit(n)));
+                       (fOmegaN2 * sqrt(ai(n) * Tcrit(n2) / pcrit(n2)) +
+                        fOmegaN * sqrt(ai(n2) * Tcrit(n) / pcrit(n)));
               }
             }
-            dam *= -0.5 * th.Ru * sqrt(aiConst / T);
+            dam *= -0.5 * Ru * sqrt(aiConst / T);
             double dAstardT = -2.0 * (Astar / T) * (1.0 - 0.5 * (T / am) * dam);
             double dBstardT = -Bstar / T;
 
@@ -580,7 +571,7 @@ void cubic(block_ &b, const thtrdat_ &th, const int &nface,
             dZdT = -(dz2 * pow(Z, 2.0) + dz1 * Z + dz0) /
                    (3.0 * pow(Z, 2.0) + 2.0 * Z * z2 + z1);
 
-            double Cuw = 1.0 / (bm * th.Ru * sqrt(pow(uRG, 2.0) - 4.0 * wRG));
+            double Cuw = 1.0 / (bm * Ru * sqrt(pow(uRG, 2.0) - 4.0 * wRG));
             double ZoB = Z / Bstar;
             double logZoB =
                 log((2.0 * ZoB + (uRG - sqrt(pow(uRG, 2.0) - 4.0 * wRG))) /
@@ -588,49 +579,35 @@ void cubic(block_ &b, const thtrdat_ &th, const int &nface,
 
             double cpDep = Cuw * (am / T - dam) * logZoB * 0.5 * T / am * dam +
                            pow((pow(ZoB, 2.0) + uRG * ZoB + wRG) -
-                                   (dam / (bm * th.Ru)) * (ZoB - 1.0),
+                                   (dam / (bm * Ru)) * (ZoB - 1.0),
                                2.0) /
                                (pow(pow(ZoB, 2.0) + uRG * ZoB + wRG, 2.0) -
-                                (am / (bm * th.Ru * T)) * (2.0 * ZoB + uRG) *
+                                (am / (bm * Ru * T)) * (2.0 * ZoB + uRG) *
                                     pow(ZoB - 1.0, 2.0)) -
                            1.0;
 
             double hDep = Cuw * (am / T - dam) * logZoB + (Z - 1.0);
 
             // Start h and cp as departure values
-            h = th.Ru * T * hDep / MWmix;
-            cp = th.Ru * cpDep / MWmix;
-            // start scope of precomputed T**
+            h = Ru * T * hDep / MWmix;
+            cp = Ru * cpDep / MWmix;
             {
-              double Tinv = 1.0 / T;
-              double To2 = T / 2.0;
-              double T2 = pow(T, 2);
-              double T3 = pow(T, 3);
-              double T4 = pow(T, 4);
-              double T2o3 = T2 / 3.0;
-              double T3o4 = T3 / 4.0;
-              double T4o5 = T4 / 5.0;
+              const double u = log(T);
               for (int n = 0; n <= ns - 1; n++) {
-                int m = (T <= th.NASA7(n, 0)) ? 8 : 1;
-
-                double cps =
-                    (th.NASA7(n, m + 0) + th.NASA7(n, m + 1) * T +
-                     th.NASA7(n, m + 2) * T2 + th.NASA7(n, m + 3) * T3 +
-                     th.NASA7(n, m + 4) * T4) *
-                    th.Ru / th.MW(n);
-
-                hi(n) =
-                    (th.NASA7(n, m + 0) + th.NASA7(n, m + 1) * To2 +
-                     th.NASA7(n, m + 2) * T2o3 + th.NASA7(n, m + 3) * T3o4 +
-                     th.NASA7(n, m + 4) * T4o5 + th.NASA7(n, m + 5) * Tinv) *
-                    T * th.Ru / th.MW(n);
-
-                cp += cps * Y(n);
+                // ideal cp/R and h/(RT), Horner in u
+                double cpR = 0.0, hRT = 0.0;
+                for (int m = cpPoly.extent(1) - 1; m >= 0; m--)
+                  cpR = cpR * u + cpPoly(n, m);
+                for (int m = hPoly.extent(1) - 1; m >= 0; m--)
+                  hRT = hRT * u + hPoly(n, m);
+                hRT += hRef(n) / T;
+                const double Rn = Ru / MW(n);
+                hi(n) = hRT * T * Rn;
+                cp += cpR * Rn * Y(n);
                 h += hi(n) * Y(n);
                 // Add departure to individual hi
-                hi(n) += th.Ru * T * hDep / th.MW(n);
+                hi(n) += Ru * T * hDep / MW(n);
               }
-              // end scope of precomputed T**
             }
 
             error = e - (h - Z * Rmix * T);
@@ -661,29 +638,27 @@ void cubic(block_ &b, const thtrdat_ &th, const int &nface,
 
           // Set values of new properties
           // Pressure, temperature, Y
-          b.q(i, j, k, 0) = p;
-          b.q(i, j, k, 1) = rhou / rho;
-          b.q(i, j, k, 2) = rhov / rho;
-          b.q(i, j, k, 3) = rhow / rho;
-          b.q(i, j, k, 4) = T;
+          q(i, j, k, 0) = p;
+          q(i, j, k, 1) = rhou / rho;
+          q(i, j, k, 2) = rhov / rho;
+          q(i, j, k, 3) = rhow / rho;
+          q(i, j, k, 4) = T;
           for (int n = 0; n < ns - 1; n++) {
-            b.q(i, j, k, 5 + n) = Y(n);
+            q(i, j, k, 5 + n) = Y(n);
           }
           // gamma,cp,h,c,e,hi
-          b.qh(i, j, k, 0) = gamma;
-          b.qh(i, j, k, 1) = cp;
-          b.qh(i, j, k, 2) = rho * h;
-          b.qh(i, j, k, 3) = c;
-          b.qh(i, j, k, 4) = rho * e;
+          qh(i, j, k, 0) = gamma;
+          qh(i, j, k, 1) = cp;
+          qh(i, j, k, 2) = rho * h;
+          qh(i, j, k, 3) = c;
+          qh(i, j, k, 4) = rho * e;
           for (int n = 0; n <= ns - 1; n++) {
-            b.qh(i, j, k, 5 + n) = hi(n);
+            qh(i, j, k, 5 + n) = hi(n);
           }
 
 #ifndef NSCOMPILE
           token.release(id);
 #endif
         });
-  } else {
-    throw std::invalid_argument("Invalid given string in real gas.");
   }
 }

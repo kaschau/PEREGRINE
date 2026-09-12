@@ -8,9 +8,16 @@ import numpy as np
 
 def test_constantProps(my_setup):
     config = pg.files.configFile()
-    config["thermochem"]["spdata"] = ["Air"]
-    config["thermochem"]["eos"] = "cpg"
-    config["thermochem"]["trans"] = "constantProps"
+    config["mcPhysics"]["mixture"] = {
+        "Air": {
+            "MW": 28.96,
+            "cp0": 1005.0,
+            "mu0": 1.8591191080521142e-05,
+            "kappa0": 0.02625394405190068,
+        }
+    }
+    config["mcPhysics"]["eos"] = "cpg"
+    config["mcPhysics"]["trans"] = "constantProps"
     config["RHS"]["diffusion"] = True
 
     mb = pg.multiBlock.buildSolver(config, 1)
@@ -25,19 +32,20 @@ def test_constantProps(my_setup):
 
     p = np.random.uniform(low=10000, high=1000000)
     T = np.random.uniform(low=200, high=3500)
-    blk.array["q"][:, :, :, 0] = p
-    blk.array["q"][:, :, :, 4] = T
-    blk.updateDeviceView("q")
+    q = blk.q.get()
+    q[:, :, :, 0] = p
+    q[:, :, :, 4] = T
+    blk.q.set(q)
 
     # Update transport
     assert mb.trans.__name__ == "constantProps"
-    mb.trans(blk.cpp, mb.thtrdat.cpp, 0)
-    blk.updateHostView(["q", "qt"])
+    mb.trans(blk, mb.thtrdat, 0)
+    q, qt = blk.q.get(), blk.qt.get()
     ng = blk.ng
 
     # test the properties
-    pgprim = blk.array["q"][ng, ng, ng]
-    pgtrns = blk.array["qt"][ng, ng, ng]
+    pgprim = q[ng, ng, ng]
+    pgtrns = qt[ng, ng, ng]
 
     def print_diff(name, c, p):
         diff = np.abs(c - p) / c * 100

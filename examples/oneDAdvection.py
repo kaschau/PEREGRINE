@@ -17,9 +17,13 @@ import peregrinepy as pg
 import numpy as np
 import matplotlib.pyplot as plt
 
+# the ideal gas the case assumes, stated in full
+air = {"Air": {"MW": 28.97, "cp0": 1000.0}}
+
 
 def simulate(index="i"):
     config = pg.files.configFile()
+    config["mcPhysics"]["mixture"] = air
     config["RHS"]["primaryAdvFlux"] = "KEPaEC"
     config["RHS"]["diffusion"] = False
     config.validateConfig()
@@ -62,16 +66,17 @@ def simulate(index="i"):
     R = 287.002507
     ccAxis = {"i": 0, "j": 1, "k": 2}
     uIndex = {"i": 1, "j": 2, "k": 3}
-    blk.array["q"][:, :, :, 0] = 1.0
-    blk.array["q"][:, :, :, uIndex[index]] = 1.0
-    xc = blk.array["cells"][..., ccAxis[index]]
+    q = blk.q.get()
+    q[:, :, :, 0] = 1.0
+    q[:, :, :, uIndex[index]] = 1.0
+    xc = blk.hostCopy("cells")[..., ccAxis[index]]
     initial_rho = 2.0 + np.sin(2 * np.pi * xc)
     initial_T = 1.0 / (R * initial_rho)
-    blk.array["q"][:, :, :, 4] = initial_T
+    q[:, :, :, 4] = initial_T
 
     # Update cons
-    blk.updateDeviceView(["q", "Q"])
-    mb.eos(blk.cpp, mb.thtrdat.cpp, 0, "prims")
+    blk.q.set(q)
+    mb.eos(blk, mb.thtrdat, 0, "prims")
     pg.consistify(mb)
 
     dt = 0.1 * 0.025
@@ -82,15 +87,15 @@ def simulate(index="i"):
 
         mb.step(dt)
 
-    blk.updateHostView(["q", "Q"])
+    q, Q = blk.q.get(), blk.Q.get()
     fig, ax1 = plt.subplots()
     ax1.set_title("1D Advection Results")
     ax1.set_xlabel(r"x")
     s_ = rotate(np.s_[ng:-ng, ng, ng], index)
-    x = blk.array["cells"][..., ccAxis[index]][s_]
-    rho = blk.array["Q"][s_][:, 0]
-    p = blk.array["q"][s_][:, 0]
-    u = blk.array["q"][s_][:, uIndex[index]]
+    x = blk.hostCopy("cells")[..., ccAxis[index]][s_]
+    rho = Q[s_][:, 0]
+    p = q[s_][:, 0]
+    u = q[s_][:, uIndex[index]]
     ax1.plot(x, rho, color="g", label="rho", linewidth=0.5)
     ax1.plot(x, p, color="r", label="p", linewidth=0.5)
     ax1.plot(x, u, color="k", label="u", linewidth=0.5)
@@ -110,9 +115,9 @@ def simulate(index="i"):
 
 if __name__ == "__main__":
     try:
-        pg.compute.pgkokkos.initialize()
+        pg.abi.initialize()
         simulate("i")
-        pg.compute.pgkokkos.finalize()
+        pg.abi.finalize()
 
     except Exception as e:
         import sys

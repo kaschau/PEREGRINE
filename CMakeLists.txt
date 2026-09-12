@@ -69,26 +69,17 @@ file( GLOB compute_src ${PROJECT_SOURCE_DIR}/src/compute/*.cpp
                        ${PROJECT_SOURCE_DIR}/src/compute/subgrid/*.cpp
                        ${PROJECT_SOURCE_DIR}/src/compute/switches/*.cpp
                        ${PROJECT_SOURCE_DIR}/src/compute/transport/*.cpp
-                       ${PROJECT_SOURCE_DIR}/src/compute/chemistry/*.cpp
-                       ${PROJECT_SOURCE_DIR}/src/compute/utils/*.cpp
-                       ${PROJECT_SOURCE_DIR}/src/compute/pgkokkos/*.cpp)
+                       ${PROJECT_SOURCE_DIR}/src/compute/utils/*.cpp)
 
-include_directories(${PROJECT_SOURCE_DIR}/src/compute
-                    ${PROJECT_SOURCE_DIR}/src/compute/advFlux
-                    ${PROJECT_SOURCE_DIR}/src/compute/boundaryConditions
-                    ${PROJECT_SOURCE_DIR}/src/compute/chemistry
-                    ${PROJECT_SOURCE_DIR}/src/compute/diffFlux
-                    ${PROJECT_SOURCE_DIR}/src/compute/subgrid
-                    ${PROJECT_SOURCE_DIR}/src/compute/switches
-                    ${PROJECT_SOURCE_DIR}/src/compute/thermo
-                    ${PROJECT_SOURCE_DIR}/src/compute/timeIntegration
-                    ${PROJECT_SOURCE_DIR}/src/compute/transport
-                    ${PROJECT_SOURCE_DIR}/src/compute/utils)
+include_directories(${PROJECT_SOURCE_DIR}/src/compute)
 
-
-#Make the bindings for python import
-add_subdirectory(lib/pybind11)
-pybind11_add_module(compute ${compute_src} ${PROJECT_SOURCE_DIR}/src/bindings.cpp)
+# One shared library of extern "C" kernels; peregrinepy loads it with ctypes
+add_library(compute SHARED ${compute_src})
+set_target_properties(compute PROPERTIES
+                      OUTPUT_NAME compute
+                      PREFIX "lib"
+                      CXX_VISIBILITY_PRESET hidden
+                      VISIBILITY_INLINES_HIDDEN ON)
 
 #Link to Kokkos
 Find_Package(Kokkos REQUIRED)

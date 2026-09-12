@@ -45,9 +45,6 @@ class BaseMesher:
                     )
                     self.setPeriodicFaces(blk, i, j, k)
 
-        for blk in mb:
-            blk.updateDeviceView("nodes")
-
     ###########################################################################
     # What a kind of mesh fills in
     ###########################################################################

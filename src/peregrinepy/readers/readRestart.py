@@ -30,7 +30,7 @@ def readRestart(mb, path="./", nrt=0):
 
         # read from base slab
         resS = qf[f"results_{blk.baseNblki:06d}"]
-        dest = blk.array["q"]
+        dest = blk.hostCopy("q")
         for i, var in enumerate(variables):
             # a case may carry species the result it restarts from did not,
             # and those keep the zeros they were allocated with
@@ -45,6 +45,7 @@ def readRestart(mb, path="./", nrt=0):
             else:
                 dest[blk.interior + tuple([i])] = resS[var][blk.baseCellSlab].T
 
+        blk.store("q", dest)
         mb.progress(blk.nblki + 1, f"Reading in restartBlock {blk.nblki}")
         blk.fillHaloWithNearest("q")
 

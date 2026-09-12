@@ -10,6 +10,17 @@ import peregrinepy as pg
 import numpy as np
 import os
 
+# a calorically perfect air, stated in full: the library carries no such species
+air = {
+    "Air": {
+        "MW": 28.97,
+        "cp0": 1002.838449439523,
+        "mu0": 1.8591191080521142e-05,
+        "kappa0": 0.02625394405190068,
+    }
+}
+
+
 np.seterr(all="raise")
 
 
@@ -19,7 +30,7 @@ def simulate():
     config["RHS"]["shockHandling"] = "artificialDissipation"
     config["RHS"]["switchAdvFlux"] = "jamesonPressure"
     config["RHS"]["secondaryAdvFlux"] = "scalarDissipation"
-    config["mcPhysics"]["mixture"] = ["Air"]
+    config["mcPhysics"]["mixture"] = air
 
     config["io"]["niterRestart"] = 1000000
     config["io"]["niterPrint"] = 1000000
@@ -32,7 +43,7 @@ def simulate():
 
     ni = 30
     nbi = 10
-    mb = pg.multiBlock.restart(nbi**3, config["mcPhysics"]["mixture"])
+    mb = pg.multiBlock.restart(nbi**3, list(air))
     pg.mesher.CubeMesher(
         mbDims=[nbi, nbi, nbi],
         dimsPerBlock=[ni, ni, ni],
@@ -41,8 +52,10 @@ def simulate():
     ).mesh(mb)
 
     for blk in mb:
-        blk.array["q"][:, :, :, 0] = 101325.0
-        blk.array["q"][:, :, :, 4] = 300.0
+        q = blk.q.get()
+        q[:, :, :, 0] = 101325.0
+        q[:, :, :, 4] = 300.0
+        blk.q.set(q)
 
     # Create the case structure
     try:

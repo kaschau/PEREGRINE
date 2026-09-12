@@ -70,10 +70,9 @@ class GridWriter(BaseWriter):
 
         for blk in mb:
             coordS = gf[f"coordinates_{blk.nblki:06d}"]
+            nodes = blk.hostCopy("nodes")
             for n, name in enumerate(("x", "y", "z")):
-                coordS[name][:] = np.ascontiguousarray(
-                    blk.array["nodes"][blk.interior + (n,)].T
-                )
+                coordS[name][:] = np.ascontiguousarray(nodes[blk.interior + (n,)].T)
             mb.progress(blk.nblki + 1, f"Writing out gridBlock {blk.nblki}")
 
         self._writeConnectivity(gf, mb)

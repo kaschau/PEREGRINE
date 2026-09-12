@@ -98,16 +98,16 @@ _walls = (
 )
 
 pytestmark = pytest.mark.parametrize(
-    "adv,spdata",
+    "adv,gas",
     list(
         itertools.product(
             ("KEEPpe", "fourthOrderKEEP"),
-            (["Air"], "thtr_CH4_O2_FFCMY.yaml"),
+            ("air", "CH4_O2"),
         )
     ),
 )
 
 
 @pytest.mark.parametrize("bc", _walls, ids=lambda w: w.bcType)
-def test_wall(my_setup, adv, spdata, bc):
-    bc(adv, spdata).check()
+def test_wall(my_setup, adv, gas, bc):
+    bc(adv, gas).check()

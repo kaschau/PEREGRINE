@@ -103,9 +103,9 @@ def simulate(configFilePath):
 if __name__ == "__main__":
     configFilePath = sys.argv[1]
     try:
-        pg.compute.pgkokkos.initialize()
+        pg.abi.initialize()
         simulate(configFilePath)
-        pg.compute.pgkokkos.finalize()
+        pg.abi.finalize()
 
     except Exception as e:
         import sys

@@ -11,7 +11,6 @@ from pathlib import Path
 def test_cpg(my_setup):
     relpath = str(Path(__file__).parent)
     ctfile = relpath + "/ct_test_cpg.yaml"
-    thfile = relpath + "/thtr_ct_test_cpg.yaml"
     gas = ct.Solution(ctfile)
     p = np.random.uniform(low=10000, high=100000)
     T = np.random.uniform(low=100, high=1000)
@@ -21,8 +20,8 @@ def test_cpg(my_setup):
     gas.TPY = T, p, Y
 
     config = pg.files.configFile()
-    config["thermochem"]["spdata"] = thfile
-    config["thermochem"]["eos"] = "cpg"
+    config["mcPhysics"]["mixture"] = ctfile
+    config["mcPhysics"]["eos"] = "cpg"
     config["RHS"]["diffusion"] = False
 
     mb = pg.multiBlock.buildSolver(config, 1)
@@ -36,21 +35,22 @@ def test_cpg(my_setup):
     mb.generateHalo()
     mb.computeMetrics()
 
-    blk.array["q"][:, :, :, 0] = p
-    blk.array["q"][:, :, :, 1:4] = 0.0
-    blk.array["q"][:, :, :, 4] = T
-    blk.array["q"][:, :, :, 5::] = Y[0:-1]
+    q = blk.q.get()
+    q[:, :, :, 0] = p
+    q[:, :, :, 1:4] = 0.0
+    q[:, :, :, 4] = T
+    q[:, :, :, 5::] = Y[0:-1]
 
     # Update cons
     assert mb.eos.__name__ == "cpg"
-    blk.updateDeviceView(["q"])
-    mb.eos(blk.cpp, mb.thtrdat.cpp, 0, "prims")
-    blk.updateHostView(["q", "Q", "qh"])
+    blk.q.set(q)
+    mb.eos(blk, mb.thtrdat, 0, "prims")
+    q, Q, qh = blk.q.get(), blk.Q.get(), blk.qh.get()
 
     # test the properties
-    pgcons = blk.array["Q"][ng, ng, ng]
-    pgprim = blk.array["q"][ng, ng, ng]
-    pgthrm = blk.array["qh"][ng, ng, ng]
+    pgcons = Q[ng, ng, ng]
+    pgprim = q[ng, ng, ng]
+    pgthrm = qh[ng, ng, ng]
 
     def print_diff(name, c, p):
         diff = np.abs(c - p) / c * 100
@@ -100,12 +100,13 @@ def test_cpg(my_setup):
 
     # Go the other way
     # Scramble the primatives
-    blk.array["q"][:, :, :, 0] = 0.0
-    blk.array["q"][:, :, :, 4] = 0.0
-    blk.array["q"][:, :, :, 5::] = np.zeros(len(Y[0:-1]))
-    blk.updateDeviceView(["q"])
-    mb.eos(blk.cpp, mb.thtrdat.cpp, 0, "cons")
-    blk.updateHostView(["q", "Q", "qh"])
+    q[:, :, :, 0] = 0.0
+    q[:, :, :, 4] = 0.0
+    q[:, :, :, 5::] = np.zeros(len(Y[0:-1]))
+    blk.q.set(q)
+    mb.eos(blk, mb.thtrdat, 0, "cons")
+    q, Q, qh = blk.q.get(), blk.Q.get(), blk.qh.get()
+    pgcons, pgprim, pgthrm = Q[ng, ng, ng], q[ng, ng, ng], qh[ng, ng, ng]
 
     print("********  Conservatives to Primatives ***************")
     print(f'       {"Cantera":<15}  | {"PEREGRINE":<15} | {"%Error":<5}')

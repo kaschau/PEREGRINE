@@ -17,11 +17,16 @@ import peregrinepy as pg
 import numpy as np
 import matplotlib.pyplot as plt
 
+# the ideal gas the case assumes, stated in full
+air = {"Air": {"MW": 28.97, "cp0": 1000.0}}
+
+
 np.seterr(all="raise")
 
 
 def simulate():
     config = pg.files.configFile()
+    config["mcPhysics"]["mixture"] = air
     config.validateConfig()
 
     mb = pg.multiBlock.buildSolver(config, 1)
@@ -52,25 +57,17 @@ def simulate():
     M0 = 0.4
     rho0 = 1.0
     gamma = cp / (cp - R)
-    blk.array["q"][:, :, :, 0] = 1 / gamma + (rho0 * M0**2 / 16.0) * (
-        np.cos(2 * blk.array["cells"][..., 0]) + np.cos(2 * blk.array["cells"][..., 1])
-    ) * (np.cos(2 * blk.array["cells"][..., 2] + 2.0))
-    blk.array["q"][:, :, :, 1] = (
-        M0
-        * np.sin(blk.array["cells"][..., 0])
-        * np.cos(blk.array["cells"][..., 1])
-        * np.cos(blk.array["cells"][..., 2])
-    )
-    blk.array["q"][:, :, :, 2] = (
-        -M0
-        * np.cos(blk.array["cells"][..., 0])
-        * np.sin(blk.array["cells"][..., 1])
-        * np.cos(blk.array["cells"][..., 2])
-    )
-    blk.array["q"][:, :, :, 4] = blk.array["q"][:, :, :, 0] / (R * rho0)
+    xc, yc, zc = (blk.hostCopy("cells")[..., n] for n in range(3))
+    q = blk.q.get()
+    q[:, :, :, 0] = 1 / gamma + (rho0 * M0**2 / 16.0) * (
+        np.cos(2 * xc) + np.cos(2 * yc)
+    ) * (np.cos(2 * zc + 2.0))
+    q[:, :, :, 1] = M0 * np.sin(xc) * np.cos(yc) * np.cos(zc)
+    q[:, :, :, 2] = -M0 * np.cos(xc) * np.sin(yc) * np.cos(zc)
+    q[:, :, :, 4] = q[:, :, :, 0] / (R * rho0)
 
-    blk.updateDeviceView(["q"])
-    mb.eos(blk.cpp, mb.thtrdat.cpp, 0, "prims")
+    blk.q.set(q)
+    mb.eos(blk, mb.thtrdat, 0, "prims")
     pg.consistify(mb)
 
     dt = 0.1 * 2 * np.pi / 64
@@ -82,28 +79,26 @@ def simulate():
     while mb.tme < tEnd:
         if mb.nrt % 50 == 0:
             pg.misc.progressBar(mb.tme, tEnd)
-            blk.updateHostView("q")
-            blk.updateHostView("Q")
+            q, Q = blk.q.get(), blk.Q.get()
 
             rke = np.sum(
                 0.5
-                * blk.array["Q"][ng:-ng, ng:-ng, ng:-ng, 0]
+                * Q[ng:-ng, ng:-ng, ng:-ng, 0]
                 * (
-                    blk.array["q"][ng:-ng, ng:-ng, ng:-ng, 1] ** 2
-                    + blk.array["q"][ng:-ng, ng:-ng, ng:-ng, 2] ** 2
-                    + blk.array["q"][ng:-ng, ng:-ng, ng:-ng, 3] ** 2
+                    q[ng:-ng, ng:-ng, ng:-ng, 1] ** 2
+                    + q[ng:-ng, ng:-ng, ng:-ng, 2] ** 2
+                    + q[ng:-ng, ng:-ng, ng:-ng, 3] ** 2
                 )
             )
             re = np.sum(
-                blk.array["Q"][ng:-ng, ng:-ng, ng:-ng, 0]
-                * (blk.array["q"][ng:-ng, ng:-ng, ng:-ng, 4] * cv)
+                Q[ng:-ng, ng:-ng, ng:-ng, 0] * (q[ng:-ng, ng:-ng, ng:-ng, 4] * cv)
             )
 
             rS = np.sum(
-                blk.array["Q"][ng:-ng, ng:-ng, ng:-ng, 0]
+                Q[ng:-ng, ng:-ng, ng:-ng, 0]
                 * np.log10(
-                    blk.array["q"][ng:-ng, ng:-ng, ng:-ng, 0]
-                    * blk.array["Q"][ng:-ng, ng:-ng, ng:-ng, 0] ** (-gamma)
+                    q[ng:-ng, ng:-ng, ng:-ng, 0]
+                    * Q[ng:-ng, ng:-ng, ng:-ng, 0] ** (-gamma)
                 )
             )
 
@@ -131,9 +126,9 @@ def simulate():
 
 if __name__ == "__main__":
     try:
-        pg.compute.pgkokkos.initialize()
+        pg.abi.initialize()
         simulate()
-        pg.compute.pgkokkos.finalize()
+        pg.abi.finalize()
 
     except Exception as e:
         import sys

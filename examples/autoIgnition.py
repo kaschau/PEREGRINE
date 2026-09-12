@@ -52,12 +52,14 @@ def simulate():
 
     mb.computeMetrics()
 
-    blk.array["q"][:, :, :, 0] = gas.P
-    blk.array["q"][:, :, :, 4] = gas.T
-    blk.array["q"][:, :, :, 5::] = gas.Y[0:-1]
+    q = blk.q.get()
+    q[:, :, :, 0] = gas.P
+    q[:, :, :, 4] = gas.T
+    q[:, :, :, 5::] = gas.Y[0:-1]
+    blk.q.set(q)
 
     # Update cons
-    mb.eos(blk.cpp, mb.thtrdat.cpp, 0, "prims")
+    mb.eos(blk, mb.thtrdat, 0, "prims")
     pg.consistify(mb)
 
     dt = 1e-9
@@ -72,13 +74,14 @@ def simulate():
     print("Time   PEREGRINE  CANTERA")
     while mb.tme < 0.05:
         if mb.nrt % niterout == 0:
-            pgT.append(blk.array["q"][ng, ng, ng, 4])
-            pgO2.append(blk.array["q"][ng, ng, ng, 7])
+            q = blk.q.get()
+            pgT.append(q[ng, ng, ng, 4])
+            pgO2.append(q[ng, ng, ng, 7])
             ctT.append(gas.T)
             ctO2.append(gas.Y[2])
             t.append(mb.tme)
 
-            print(f"{mb.tme:.2e} {blk.array['q'][ng,ng,ng,4]:.2f} {gas.T:.2f}")
+            print(f"{mb.tme:.2e} {q[ng,ng,ng,4]:.2f} {gas.T:.2f}")
 
         mb.step(dt)
         sim.advance(mb.tme)
@@ -97,9 +100,9 @@ def simulate():
 
 if __name__ == "__main__":
     try:
-        pg.compute.pgkokkos.initialize()
+        pg.abi.initialize()
         simulate()
-        pg.compute.pgkokkos.finalize()
+        pg.abi.finalize()
 
     except Exception as e:
         import sys

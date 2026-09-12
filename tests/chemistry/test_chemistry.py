@@ -35,7 +35,7 @@ def test_chemistry(my_setup, thfile, ctfile, chmfile):
     config = pg.files.configFile()
 
     relpath = str(Path(__file__).parent)
-    ct.add_directory(relpath + "/../../src/peregrinepy/thermoTransport/database/source")
+    ct.add_directory(relpath + "/../../src/peregrinepy/mixture/database/mechanisms")
 
     gas = ct.Solution(ctfile)
     p = np.random.uniform(low=1e6, high=30e6)
@@ -45,10 +45,10 @@ def test_chemistry(my_setup, thfile, ctfile, chmfile):
 
     gas.TPY = T, p, Y
 
-    config["thermochem"]["eos"] = "tpg"
-    config["thermochem"]["spdata"] = thfile
-    config["thermochem"]["chemistry"] = True
-    config["thermochem"]["mechanism"] = chmfile
+    config["mcPhysics"]["eos"] = "tpg"
+    config["mcPhysics"]["mixture"] = thfile
+    config["mcPhysics"]["chemistry"] = True
+    config["mcPhysics"]["mixture"] = chmfile
     config["RHS"]["diffusion"] = False
 
     mb = pg.multiBlock.buildSolver(config, 1)
@@ -67,10 +67,10 @@ def test_chemistry(my_setup, thfile, ctfile, chmfile):
     blk.updateDeviceView(["q"])
 
     # Update cons
-    pg.compute.thermo.tpg(blk.cpp, mb.thtrdat.cpp, 0, "prims")
+    pg.kernels.thermo.tpg(blk, mb.thtrdat, 0, "prims")
     # zero out dQ
     pg.compute.utils.dQzero(blk.cpp)
-    mb.expChem(blk.cpp, mb.thtrdat.cpp)
+    mb.expChem(blk.cpp, mb.thtrdat)
 
     blk.updateHostView(["q", "dQ"])
     # test the properties

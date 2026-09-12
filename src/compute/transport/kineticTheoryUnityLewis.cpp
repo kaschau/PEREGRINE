@@ -1,18 +1,26 @@
-#include "block_.hpp"
-#include "compute.hpp"
+#include "kernelUtils.hpp"
 #include "kokkosTypes.hpp"
-#include "thtrdat_.hpp"
 #include <Kokkos_Core.hpp>
 #include <math.h>
 
-void kineticTheoryUnityLewis(block_ &b, const thtrdat_ &th, const int &nface,
-                             const int &indxI /*=0*/, const int &indxJ /*=0*/,
-                             const int &indxK /*=0*/) {
+PG_ABI void
+pgKineticTheoryUnityLewis(const pgView *Q_, const pgView *q_, const pgView *qh_,
+                          const pgView *qt_, const pgView *MW_,
+                          const pgView *kappaPoly_, const pgView *lewis_,
+                          const pgView *muPoly_, double Ru, const pgRange *r) {
+  auto Q = as4(*Q_);
+  auto q = as4(*q_);
+  auto qh = as4(*qh_);
+  auto qt = as4(*qt_);
+  auto MW = as1(*MW_);
+  auto kappaPoly = as2(*kappaPoly_);
+  auto lewis = as1(*lewis_);
+  auto muPoly = as2(*muPoly_);
+  const int ns = MW.extent(0);
 
 #ifndef NSCOMPILE
   Kokkos::Experimental::UniqueToken<execSpace> token;
   int numIds = token.size();
-  const int ns = th.ns;
   twoDview Y("Y", numIds, ns);
   twoDview X("X", numIds, ns);
   twoDview mu_sp("mu_sp", numIds, ns);
@@ -33,9 +41,8 @@ void kineticTheoryUnityLewis(block_ &b, const thtrdat_ &th, const int &nface,
 #endif
 
   // poly'l degree
-  const int deg = 4;
 
-  MDRange3 range = getRange3(b, nface, indxI, indxJ, indxK);
+  MDRange3 range = range3(*r);
   Kokkos::parallel_for(
       "Kinetic theory unity lewis", range,
       KOKKOS_LAMBDA(const int i, const int j, const int k) {
@@ -43,7 +50,7 @@ void kineticTheoryUnityLewis(block_ &b, const thtrdat_ &th, const int &nface,
         int id = token.acquire();
 #endif
 
-        double &T = b.q(i, j, k, 4);
+        double &T = q(i, j, k, 4);
 #ifdef NSCOMPILE
         double Y(ns);
         double X(ns);
@@ -54,7 +61,7 @@ void kineticTheoryUnityLewis(block_ &b, const thtrdat_ &th, const int &nface,
         // Compute nth species Y
         Y(ns - 1) = 1.0;
         for (int n = 0; n < ns - 1; n++) {
-          Y(n) = b.q(i, j, k, 5 + n);
+          Y(n) = q(i, j, k, 5 + n);
           Y(ns - 1) -= Y(n);
         }
 
@@ -63,29 +70,26 @@ void kineticTheoryUnityLewis(block_ &b, const thtrdat_ &th, const int &nface,
         {
           double mass = 0.0;
           for (int n = 0; n <= ns - 1; n++) {
-            mass += Y(n) / th.MW(n);
+            mass += Y(n) / MW(n);
           }
           // Mean molecular weight, mole fraction
           for (int n = 0; n <= ns - 1; n++) {
-            X(n) = Y(n) / th.MW(n) / mass;
+            X(n) = Y(n) / MW(n) / mass;
           }
         }
 
-        // Evaluate all property polynomials
-        const double logT = log(T);
+        // Evaluate all property polynomials, Horner in u = ln T
+        const double u = log(T);
         const double sqrt_T = sqrt(T);
         const double sqrtsqrt_T = sqrt(sqrt_T);
-        double logT_n[deg + 1];
-        logT_n[0] = 1.0;
-        for (int ply = 1; ply <= deg; ply++) {
-          logT_n[ply] = logT * logT_n[ply - 1];
-        }
         for (int n = 0; n <= ns - 1; n++) {
-          // Evaluate polynomial
-          for (int ply = 0; ply <= deg; ply++) {
-            mu_sp(n) += th.muPoly(n, ply) * logT_n[ply];
-            kappa_sp(n) += th.kappaPoly(n, ply) * logT_n[ply];
-          }
+          // the scratch persists between cells; Horner starts from zero
+          mu_sp(n) = 0.0;
+          kappa_sp(n) = 0.0;
+          for (int m = muPoly.extent(1) - 1; m >= 0; m--)
+            mu_sp(n) = mu_sp(n) * u + muPoly(n, m);
+          for (int m = kappaPoly.extent(1) - 1; m >= 0; m--)
+            kappa_sp(n) = kappa_sp(n) * u + kappaPoly(n, m);
 
           // Set to the correct dimensions
           // the fit is of sqrt(mu)/T^(1/4), so undo both
@@ -101,10 +105,10 @@ void kineticTheoryUnityLewis(block_ &b, const thtrdat_ &th, const int &nface,
         for (int n = 0; n <= ns - 1; n++) {
           double phitemp = 0.0;
           for (int n2 = 0; n2 <= ns - 1; n2++) {
-            double phi = pow((1.0 + sqrt(mu_sp(n) / mu_sp(n2) *
-                                         sqrt(th.MW(n2) / th.MW(n)))),
-                             2.0) /
-                         (sqrt(8.0) * sqrt(1 + th.MW(n) / th.MW(n2)));
+            double phi =
+                pow((1.0 + sqrt(mu_sp(n) / mu_sp(n2) * sqrt(MW(n2) / MW(n)))),
+                    2.0) /
+                (sqrt(8.0) * sqrt(1 + MW(n) / MW(n2)));
             phitemp += phi * X(n2);
           }
           mu += mu_sp(n) * X(n) / phitemp;
@@ -124,12 +128,13 @@ void kineticTheoryUnityLewis(block_ &b, const thtrdat_ &th, const int &nface,
 
         // Set values of new properties
         // viscocity
-        b.qt(i, j, k, 0) = mu;
+        qt(i, j, k, 0) = mu;
         // thermal conductivity
-        b.qt(i, j, k, 1) = kappa;
+        qt(i, j, k, 1) = kappa;
         // NOTE: Unity Lewis number approximation!
         for (int n = 0; n <= ns - 1; n++) {
-          b.qt(i, j, k, 2 + n) = kappa / (b.Q(i, j, k, 0) * b.qh(i, j, k, 1));
+          qt(i, j, k, 2 + n) =
+              kappa / (Q(i, j, k, 0) * qh(i, j, k, 1) * lewis(n));
         }
 
 #ifndef NSCOMPILE

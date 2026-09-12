@@ -1,4 +1,10 @@
+# the compute library, wherever it is built
 *.so
+*.so.*
+*.dylib
+*.dll
+*.a
+*.o
 build*
 *egg*
 __pycache__

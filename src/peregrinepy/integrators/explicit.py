@@ -1,5 +1,5 @@
-from ..compute.timeIntegration import rk4s1, rk4s2, rk4s3, rk4s4
-from ..compute.utils import AEQB, axnpby
+from ..kernels.timeIntegration import rk4s1, rk4s2, rk4s3, rk4s4
+from ..kernels.utils import AEQB, axnpby
 from ..consistify import consistify
 from ..RHS import RHS
 
@@ -9,7 +9,7 @@ def cppStage(kernel):
     compute object rather than the block."""
 
     def stage(blk, dt):
-        kernel(blk.cpp, dt)
+        kernel(blk, dt)
 
     return stage
 
@@ -21,11 +21,11 @@ def ssp(wQ0, wQ, wdQ, storeQ0=False):
 
     def stage(blk, dt):
         if storeQ0:
-            AEQB(blk.cpp.Q0, blk.cpp.Q)
+            AEQB(blk.Q0, blk.Q)
         if wQ0 == 0.0:
-            axnpby(blk.cpp.Q, wQ, wdQ * dt, blk.cpp.dQ)
+            axnpby(blk.Q, wQ, wdQ * dt, blk.dQ)
         else:
-            axnpby(blk.cpp.Q, wQ, wQ0, blk.cpp.Q0, wdQ * dt, blk.cpp.dQ)
+            axnpby(blk.Q, wQ, wQ0, blk.Q0, wdQ * dt, blk.dQ)
 
     return stage
 

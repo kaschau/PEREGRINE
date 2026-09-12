@@ -1,9 +1,7 @@
 import numpy as np
 
 from .. import bcs
-from ..compute import face_
-from ..compute.pgkokkos import deep_copy
-from ..misc import createViewMirrorArray
+from ..abi import DeviceArray
 from .gridFace import gridFace
 from .topologyFace import topologyFace
 
@@ -19,8 +17,6 @@ class solverFace(gridFace):
     }
 
     def __init__(self, nface, ng):
-        # the compute object must exist before anything forwards to it
-        self.cpp = face_()
         super().__init__(nface)
 
         self.ng = ng
@@ -102,10 +98,18 @@ class solverFace(gridFace):
         }
 
     def allocate(self, *names):
-        """A solver face's arrays are Kokkos views, with a host mirror the
-        numpy array wraps."""
+        """A solver face's arrays live where the kernels run."""
         for name in names:
-            createViewMirrorArray(self, name, list(self.shapeOf(name)))
+            setattr(self, name, DeviceArray(self.shapeOf(name)))
+
+    def setRotationMatrix(self, rotation):
+        self.periodicRotMatrix.set(rotation)
+
+    def hostCopy(self, name):
+        return getattr(self, name).get()
+
+    def store(self, name, values):
+        getattr(self, name).set(values)
 
     def setExtents(self, ni, nj, nk, ne):
         """The block this face bounds is this big, so this face's arrays can
@@ -159,10 +163,6 @@ class solverFace(gridFace):
         """How a plane of ours is laid out in our neighbor's frame: which of
         our two face axes it reads first, and which way round it reads each."""
         self._transposed, self._flipped = self.neighborPlaneAlignment
-        # the pack kernel turns the plane, so the compute side needs to know how
-        self.cpp.orientTranspose = bool(self._transposed)
-        self.cpp.orientFlip0 = 0 in self._flipped
-        self.cpp.orientFlip1 = 1 in self._flipped
 
     def _setSlices(self):
         """Which planes of the block go out, and where the ones that arrive
@@ -231,29 +231,3 @@ class solverFace(gridFace):
     def bcType(self, value):
         topologyFace.bcType.fset(self, value)
         self.bcFunc = bcs.getBc(self.bcType).kernel()
-
-    @gridFace.periodicRotation.setter
-    def periodicRotation(self, rotation):
-        gridFace.periodicRotation.fset(self, rotation)
-        if rotation is not None:
-            self.updateDeviceView("periodicRotMatrix")
-
-    def updateDeviceView(self, vars):
-        if isinstance(vars, str):
-            vars = [vars]
-        for var in vars:
-            deep_copy(getattr(self.cpp, var), self.mirror[var])
-
-    def updateHostView(self, vars):
-        if isinstance(vars, str):
-            vars = [vars]
-        for var in vars:
-            deep_copy(self.mirror[var], getattr(self.cpp, var))
-
-    @property
-    def nface(self):
-        return self.cpp.nface
-
-    @nface.setter
-    def nface(self, value):
-        self.cpp.nface = value

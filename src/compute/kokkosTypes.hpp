@@ -3,48 +3,28 @@
 
 #include <Kokkos_Core.hpp>
 
-// Define the execution and storage space
-#if defined(KOKKOS_ENABLE_CUDA)
-using execSpace = Kokkos::Cuda;
-using viewSpace = Kokkos::CudaSpace;
-using layout = Kokkos::LayoutLeft;
-#elif defined(KOKKOS_ENABLE_HIP)
-using execSpace = Kokkos::Experimental::HIP;
-using viewSpace = Kokkos::Experimental::HIPSpace;
-using layout = Kokkos::LayoutLeft;
-#elif defined(KOKKOS_ENABLE_OPENMPTARGET)
-using execSpace = Kokkos::OpenMPTarget;
-using viewSpace = Kokkos::OpenMPTargetSpace;
-using layout = Kokkos::LayoutLeft;
-#elif defined(KOKKOS_ENABLE_OPENMP)
-using execSpace = Kokkos::OpenMP;
-using viewSpace = Kokkos::HostSpace;
-using layout = Kokkos::LayoutRight;
-#elif defined(KOKKOS_ENABLE_SERIAL)
-using execSpace = Kokkos::Serial;
-using viewSpace = Kokkos::HostSpace;
-using layout = Kokkos::LayoutRight;
-#endif
+// where kernels run, and the memory and layout Kokkos picks for it
+using execSpace = Kokkos::DefaultExecutionSpace;
+using viewSpace = execSpace::memory_space;
+using layout = execSpace::array_layout;
+using hostSpace = Kokkos::HostSpace;
 
-// define some shorthand for the Kokkos views and Range Policies
-using oneDview = Kokkos::View<double *, layout, viewSpace>;
-using oneDsubview = Kokkos::View<double *, Kokkos::LayoutStride, viewSpace>;
+// a kernel's view of an array Python owns
+template <class T>
+using unmanaged =
+    Kokkos::View<T, layout, viewSpace, Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
+// a slice of one: strided whichever index is fixed
+template <class T>
+using strided = Kokkos::View<T, Kokkos::LayoutStride, viewSpace,
+                             Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
+
+// scratch a kernel allocates for itself
 using twoDview = Kokkos::View<double **, layout, viewSpace>;
 using twoDviewInt = Kokkos::View<int **, layout, viewSpace>;
-using twoDsubview = Kokkos::View<double **, Kokkos::LayoutStride, viewSpace>;
 using threeDview = Kokkos::View<double ***, layout, viewSpace>;
-using threeDsubview = Kokkos::View<double ***, Kokkos::LayoutStride, viewSpace>;
-using fourDview = Kokkos::View<double ****, layout, viewSpace>;
-using fourDsubview = Kokkos::View<double ****, Kokkos::LayoutStride, viewSpace>;
-using fiveDview = Kokkos::View<double *****, layout, viewSpace>;
-using MDRange1 = Kokkos::MDRangePolicy<execSpace, Kokkos::Rank<1>>;
+
 using MDRange2 = Kokkos::MDRangePolicy<execSpace, Kokkos::Rank<2>>;
 using MDRange3 = Kokkos::MDRangePolicy<execSpace, Kokkos::Rank<3>>;
 using MDRange4 = Kokkos::MDRangePolicy<execSpace, Kokkos::Rank<4>>;
-using MDRange5 = Kokkos::MDRangePolicy<execSpace, Kokkos::Rank<5>>;
 
-// Always host stuff
-using hostSpace = Kokkos::HostSpace;
-using fourDviewHostsubview =
-    Kokkos::View<double ****, Kokkos::LayoutStride, hostSpace>;
 #endif

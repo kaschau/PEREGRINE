@@ -11,6 +11,16 @@ import peregrinepy as pg
 import numpy as np
 import matplotlib.pyplot as plt
 
+# a calorically perfect air, stated in full: the library carries no such species
+air = {
+    "Air": {
+        "MW": 28.97,
+        "cp0": 1002.838449439523,
+        "mu0": 1.8591191080521142e-05,
+        "kappa0": 0.02625394405190068,
+    }
+}
+
 
 def analytical(y, h, t, nu, wallSpeed):
     n = np.array([i for i in range(50)][1::])
@@ -47,7 +57,7 @@ def simulate(index, velo):
     config["timeIntegration"]["dt"] = 10 * 1.0e-5 / nx
     config["RHS"]["diffusion"] = True
     config["mcPhysics"]["trans"] = "constantProps"
-    config["mcPhysics"]["mixture"] = ["Air"]
+    config["mcPhysics"]["mixture"] = air
     config.validateConfig()
 
     mb = pg.multiBlock.buildSolver(config, 1)
@@ -124,9 +134,7 @@ def simulate(index, velo):
         raise ValueError()
     for face in blk.faces:
         if face.bcType == "adiabaticMovingWall":
-            face.allocate("qBcVals")
             pg.bcs.prep(blk, face, valueDict)
-            face.updateDeviceView("qBcVals")
             break
 
     mb.setBlockCommunication()
@@ -135,17 +143,16 @@ def simulate(index, velo):
     mb.computeMetrics()
 
     ng = blk.ng
-    blk.array["q"][:, :, :, 0] = 101325.0
-    blk.array["q"][:, :, :, 1:4] = 0.0
-    blk.array["q"][:, :, :, 4] = 300.0
-
-    blk.updateDeviceView(["q"])
-    mb.eos(blk.cpp, mb.thtrdat.cpp, 0, "prims")
+    q = blk.q.get()
+    q[:, :, :, 0] = 101325.0
+    q[:, :, :, 1:4] = 0.0
+    q[:, :, :, 4] = 300.0
+    blk.q.set(q)
+    mb.eos(blk, mb.thtrdat, 0, "prims")
     pg.consistify(mb)
 
-    mu = np.unique(mb.thtrdat.array["mu0"])[0]
-    blk.updateHostView(["Q"])
-    rho = np.unique(blk.array["Q"][:, :, :, 0])[0]
+    mu = np.unique(mb.thtrdat.mu0.get())[0]
+    rho = np.unique(blk.Q.get()[:, :, :, 0])[0]
     nu = mu / rho
 
     if index == "i":
@@ -164,7 +171,7 @@ def simulate(index, velo):
     else:
         raise ValueError()
 
-    xc = blk.array["cells"][..., ccAxis[index]][s_]
+    xc = blk.hostCopy("cells")[..., ccAxis[index]][s_]
     sU_ = s_ + (uIndex,)
 
     outputTimes = [0.0005, 0.005, 0.05]
@@ -176,15 +183,13 @@ def simulate(index, velo):
 
         if mb.nrt % 200 == 0:
             pg.misc.progressBar(mb.tme, simTme)
-            blk.updateHostView(["Q"])
-            if np.any(np.isnan(blk.array["Q"])):
+            if np.any(np.isnan(blk.Q.get())):
                 raise ValueError("Nan detected")
 
         for i, oT in enumerate(outputTimes):
             t = oT * h**2 / nu
             if mb.tme >= t and not doneOutput[i]:
-                blk.updateHostView(["q"])
-                outputU.append(blk.array["q"][sU_].copy())
+                outputU.append(blk.q.get()[sU_])
                 doneOutput[i] = True
 
     # Analytical solution
@@ -228,9 +233,9 @@ if __name__ == "__main__":
     try:
         index = "j"
         velo = "+z"
-        pg.compute.pgkokkos.initialize()
+        pg.abi.initialize()
         simulate(index, velo)
-        pg.compute.pgkokkos.finalize()
+        pg.abi.finalize()
 
     except Exception as e:
         import sys

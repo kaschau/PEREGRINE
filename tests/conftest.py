@@ -1,8 +1,8 @@
-from peregrinepy.compute import pgkokkos
+from peregrinepy import abi
 import pytest
 
 
 @pytest.fixture(scope="session")
 def my_setup(request):
-    pgkokkos.initialize()
-    request.addfinalizer(pgkokkos.finalize)
+    abi.initialize()
+    request.addfinalizer(abi.finalize)

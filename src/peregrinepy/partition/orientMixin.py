@@ -70,14 +70,15 @@ class OrientMixin:
         blk.faces = reordered
 
         dims = (blk.ni, blk.nj, blk.nk)
-        for name, values in blk.array.items():
+        for name in blk.declared:
+            values = getattr(blk, name)
             if values is None:
                 continue
             moved = np.moveaxis(values, perm, (0, 1, 2))
             for m in range(3):
                 if flips[m]:
                     moved = np.flip(moved, axis=m)
-            blk.array[name] = np.ascontiguousarray(moved)
+            setattr(blk, name, np.ascontiguousarray(moved))
         # the arrays are the new shape already, so sizing the block keeps them
         blk.setExtents(*(dims[perm[m]] for m in range(3)))
 

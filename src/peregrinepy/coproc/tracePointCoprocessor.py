@@ -46,9 +46,9 @@ class tracePointsCoprocessor:
                 j = points[m, 2] + ng
                 k = points[m, 3] + ng
 
-                xc = blk.array["cells"][..., 0][i, j, k]
-                yc = blk.array["cells"][..., 1][i, j, k]
-                zc = blk.array["cells"][..., 2][i, j, k]
+                xc = blk.cells[..., 0][i, j, k]
+                yc = blk.cells[..., 1][i, j, k]
+                zc = blk.cells[..., 2][i, j, k]
 
                 fileName = path + f"{tags[m]}_{xc:.6f}_{yc:.6f}_{zc:.6f}.csv"
                 self.traces.append(trace(fileName, blk.nblki, i, j, k))
@@ -79,17 +79,11 @@ class tracePointsCoprocessor:
         if mb.nrt % mb.config["coprocess"]["niterTrace"] != 0:
             return
 
-        # TODO: this may be a redundant copy
-        for nblki in list(set([trc.nblki for trc in self.traces])):
-            blk = mb.getBlock(nblki)
-            blk.updateHostView(["q"])
+        # one snapshot per block the traces live in
+        qs = {nblki: mb.getBlock(nblki).q.get() for nblki in {t.nblki for t in self.traces}}
 
         for trc in self.traces:
-            blk = mb.getBlock(trc.nblki)
-            i = trc.i
-            j = trc.j
-            k = trc.k
-            arr = np.concatenate((np.array([mb.tme]), blk.array["q"][i, j, k, :]))
+            arr = np.concatenate((np.array([mb.tme]), qs[trc.nblki][trc.i, trc.j, trc.k, :]))
             with open(trc.fileName, "a") as f:
                 np.savetxt(
                     f,

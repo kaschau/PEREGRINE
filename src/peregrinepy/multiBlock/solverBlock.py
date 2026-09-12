@@ -1,28 +1,16 @@
 import numpy as np
 
-from ..compute import block_
-from ..compute.pgkokkos import deep_copy
+from ..abi import DeviceArray
 from .haloMixin import HaloMixin
 from .restartBlock import restartBlock
 from .solverMetricsMixin import SolverMetricsMixin
 from .solverFace import solverFace
 from ..integrators import getIntegrator
-from ..misc import createViewMirrorArray
 
 
 class solverBlock(restartBlock, SolverMetricsMixin, HaloMixin):
     def __init__(self, nblki, spNames, ng, config):
-        # must exist before anything forwards to it
-        self.cpp = block_()
-
         restartBlock.__init__(self, nblki, spNames, ng)
-
-        if hasattr(self.cpp, "ns") and self.cpp.ns != self.ns:
-            raise ValueError(
-                f"ERROR!! You are trying to use {self.ns} species, but pg.compute\n"
-                f"    was precompiled for {self.cpp.ns} species."
-            )
-
         self.ne = 5 + self.ns - 1
         self.config = config
 
@@ -73,13 +61,23 @@ class solverBlock(restartBlock, SolverMetricsMixin, HaloMixin):
         super().setExtents(ni, nj, nk)
 
     def allocate(self):
-        """A solver block's arrays are Kokkos views, with a host mirror the
-        numpy array wraps."""
+        """A solver block's arrays live where the kernels run. The host sees
+        one through get() and writes one through set()."""
         for name in self.declared:
-            createViewMirrorArray(self, name, list(self.shapeOf(name)))
+            shape = self.shapeOf(name)
+            current = getattr(self, name)
+            if current is not None and current.shape == shape:
+                continue
+            setattr(self, name, DeviceArray(shape))
+
+    def hostCopy(self, name):
+        return getattr(self, name).get()
+
+    def store(self, name, values):
+        getattr(self, name).set(values)
 
     def fillHaloWithNearest(self, name):
-        a = self.array[name]
+        a = getattr(self, name).get()
         ng = self.ng
         a[0:ng] = a[[ng]]
         a[-ng::] = a[[-ng - 1]]
@@ -87,6 +85,7 @@ class solverBlock(restartBlock, SolverMetricsMixin, HaloMixin):
         a[:, -ng::] = a[:, [-ng - 1]]
         a[:, :, 0:ng] = a[:, :, [ng]]
         a[:, :, -ng::] = a[:, :, [-ng - 1]]
+        getattr(self, name).set(a)
 
     def _newFace(self, nface):
         return solverFace(nface, self.ng)
@@ -97,68 +96,8 @@ class solverBlock(restartBlock, SolverMetricsMixin, HaloMixin):
         ng = self.ng
         return np.s_[ng:-ng, ng:-ng, ng:-ng]
 
-    @property
-    def nblki(self):
-        return self.cpp.nblki
-
-    @nblki.setter
-    def nblki(self, value):
-        self.cpp.nblki = value
-
-    @property
-    def ni(self):
-        return self.cpp.ni
-
-    @ni.setter
-    def ni(self, value):
-        self.cpp.ni = value
-
-    @property
-    def nj(self):
-        return self.cpp.nj
-
-    @nj.setter
-    def nj(self, value):
-        self.cpp.nj = value
-
-    @property
-    def nk(self):
-        return self.cpp.nk
-
-    @nk.setter
-    def nk(self, value):
-        self.cpp.nk = value
-
-    @property
-    def ng(self):
-        return self.cpp.ng
-
-    @ng.setter
-    def ng(self, value):
-        self.cpp.ng = value
-
-    @property
-    def ne(self):
-        return self.cpp.ne
-
-    @ne.setter
-    def ne(self, value):
-        self.cpp.ne = value
-
     def setBlockCommunication(self):
         for face in self.faces:
             if face.neighbor is None:
                 continue
             face.setCommunication(self.nblki)
-
-    def updateDeviceView(self, vars):
-        if isinstance(vars, str):
-            vars = [vars]
-        for var in vars:
-            deep_copy(getattr(self.cpp, var), self.mirror[var])
-
-    def updateHostView(self, vars):
-        if isinstance(vars, str):
-            vars = [vars]
-        for var in vars:
-            deep_copy(self.mirror[var], getattr(self.cpp, var))

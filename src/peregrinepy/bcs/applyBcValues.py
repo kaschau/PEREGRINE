@@ -33,8 +33,6 @@ def applyBcValues(mb):
             if not getBc(face.bcType).values:
                 continue
 
-            face.allocate("qBcVals", "QBcVals")
             # some bcs have prep work of their own, a constant mass flux or a
             # profile read off disk, so they are asked rather than assigned to
             prep(blk, face, entry)
-            face.updateDeviceView(["qBcVals", "QBcVals"])

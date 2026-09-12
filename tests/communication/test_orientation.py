@@ -2,6 +2,7 @@ import itertools
 
 import numpy as np
 import peregrinepy as pg
+from ..gases import configure
 import pytest
 
 ##############################################
@@ -66,8 +67,7 @@ def reorientBlock1(mb, S, varList):
     if S == "123":
         return
     blk0, blk1 = mb[0], mb[1]
-    for var in varList:
-        blk1.array[var] = reorient(blk1.array[var], S)
+    data = {var: reorient(blk1.hostCopy(var), S) for var in varList}
 
     # storage axis axes[m] now holds reference axis m
     axes, _ = signedPermutation(S)
@@ -75,7 +75,10 @@ def reorientBlock1(mb, S, varList):
     newDims = [0, 0, 0]
     for m in range(3):
         newDims[axes[m]] = refDims[m]
+    # resizing reallocates every array whose shape changed
     blk1.setExtents(*newDims)
+    for var, values in data.items():
+        blk1.store(var, values)
 
     blk0.getFace(2).orientation = S
     nn = blk0.getFace(2).neighborNface
@@ -97,17 +100,17 @@ def reorientBlock1(mb, S, varList):
 VARLIST = ["nodes", "q", "Q", "grads", "phi"]
 
 pytestmark = pytest.mark.parametrize(
-    "adv,spdata",
+    "adv,gas",
     list(
         itertools.product(
             ("KEEPpe", "fourthOrderKEEP"),
-            (["Air"], "thtr_CH4_O2_FFCMY.yaml"),
+            ("air", "CH4_O2"),
         )
     ),
 )
 
 
-def buildAndCommunicate(S, adv, spdata, seed):
+def buildAndCommunicate(S, adv, gas, seed):
     np.random.seed(seed)
 
     config = pg.files.configFile()
@@ -115,7 +118,7 @@ def buildAndCommunicate(S, adv, spdata, seed):
     config["RHS"]["shockHandling"] = "hybrid"
     config["RHS"]["secondaryAdvFlux"] = "rusanov"
     config["RHS"]["diffusion"] = True
-    config["thermochem"]["spdata"] = spdata
+    configure(config, gas)
 
     mb = pg.multiBlock.buildSolver(config, 2)
     pg.mesher.CubeMesher(
@@ -129,29 +132,12 @@ def buildAndCommunicate(S, adv, spdata, seed):
 
     for blk in mb:
         for var in VARLIST:
-            blk.array[var][:] = np.random.random(blk.array[var].shape)
+            blk.store(var, np.random.random(blk.shapeOf(var)))
 
-    if S != "123":
-        # allocation copies existing numpy arrays into the new views and
-        # asserts the shapes agree; block 1's other arrays still carry the
-        # pre-reorientation shape, so drop them and let them be rebuilt
-        for blk in mb:
-            for v in blk.array.keys():
-                if v not in VARLIST:
-                    blk.array[v] = None
-                    blk.mirror[v] = None
-        reorientBlock1(mb, S, VARLIST)
-        # reorienting re-sized block 1, which rebuilt its views around what
-        # it left; block 0 keeps its size but lost the arrays dropped above
-        mb[0].allocate()
+    reorientBlock1(mb, S, VARLIST)
 
     mb.setBlockCommunication()
-
-    for blk in mb:
-        blk.updateDeviceView(VARLIST)
     mb.communicator.exchange(VARLIST)
-    for blk in mb:
-        blk.updateHostView(VARLIST)
 
     return mb
 
@@ -160,26 +146,26 @@ def buildAndCommunicate(S, adv, spdata, seed):
 _refCache = {}
 
 
-def _reference(adv, spdata, seed):
-    key = (adv, str(spdata), seed)
+def _reference(adv, gas, seed):
+    key = (adv, str(gas), seed)
     if key not in _refCache:
-        mb = buildAndCommunicate("123", adv, spdata, seed)
+        mb = buildAndCommunicate("123", adv, gas, seed)
         _refCache[key] = (
-            {v: mb[0].array[v].copy() for v in VARLIST},
-            {v: mb[1].array[v].copy() for v in VARLIST},
+            {v: mb[0].hostCopy(v) for v in VARLIST},
+            {v: mb[1].hostCopy(v) for v in VARLIST},
         )
     return _refCache[key]
 
 
 @pytest.mark.parametrize("S", allValidOrientations())
-def test_orientation(my_setup, adv, spdata, S):
+def test_orientation(my_setup, adv, gas, S):
     seed = 20260901
-    ref0, ref1 = _reference(adv, spdata, seed)
+    ref0, ref1 = _reference(adv, gas, seed)
 
-    mb = buildAndCommunicate(S, adv, spdata, seed)
+    mb = buildAndCommunicate(S, adv, gas, seed)
     for var in VARLIST:
-        assert np.array_equal(mb[0].array[var], ref0[var]), (S, var, "blk0")
-        assert np.array_equal(mb[1].array[var], reorient(ref1[var], S)), (
+        assert np.array_equal(mb[0].hostCopy(var), ref0[var]), (S, var, "blk0")
+        assert np.array_equal(mb[1].hostCopy(var), reorient(ref1[var], S)), (
             S,
             var,
             "blk1",

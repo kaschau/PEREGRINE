@@ -75,24 +75,20 @@ class BaseInterpolator:
 
         # the points never change from one variable to the next, only what was
         # sampled at them, so the geometry is worked out once
-        fromPts = np.concatenate(
-            [blk.array["cells"].reshape(-1, 3) for blk in blksFrom]
-        )
-        toPts = blkTo.array["cells"].reshape(-1, 3)
+        fromPts = np.concatenate([blk.cells.reshape(-1, 3) for blk in blksFrom])
+        toPts = blkTo.cells.reshape(-1, 3)
         onto = self.prepare(fromPts, toPts)
 
-        shape = blkTo.array["q"].shape[:3]
-        for i in range(blksFrom[0].array["q"].shape[-1]):
-            qvFrom = np.concatenate(
-                [blk.array["q"][:, :, :, i].ravel() for blk in blksFrom]
-            )
+        shape = blkTo.q.shape[:3]
+        for i in range(blksFrom[0].q.shape[-1]):
+            qvFrom = np.concatenate([blk.q[:, :, :, i].ravel() for blk in blksFrom])
             qvTo = onto(qvFrom)
 
             if self.canOvershoot:
                 # do not allow new extrema to be created
                 qvTo = np.clip(qvTo, np.min(qvFrom), np.max(qvFrom))
 
-            blkTo.array["q"][:, :, :, i] = qvTo.reshape(shape)
+            blkTo.q[:, :, :, i] = qvTo.reshape(shape)
 
     def boundingBlocks(self, mbTo, mbFrom):
         """
@@ -124,8 +120,8 @@ class BaseInterpolator:
         fromBounds = {
             blk.nblki: np.stack(
                 [
-                    blk.array["nodes"].min(axis=(0, 1, 2)),
-                    blk.array["nodes"].max(axis=(0, 1, 2)),
+                    blk.nodes.min(axis=(0, 1, 2)),
+                    blk.nodes.max(axis=(0, 1, 2)),
                 ],
                 axis=-1,
             )
@@ -135,7 +131,7 @@ class BaseInterpolator:
 
         boundingBlocks = []
         for blkTo in mbTo:
-            centers = blkTo.array["cells"].reshape(-1, 3)
+            centers = blkTo.cells.reshape(-1, 3)
             toLo, toHi = centers.min(axis=0), centers.max(axis=0)
 
             found = np.zeros(len(centers), dtype=bool)
@@ -174,7 +170,7 @@ class BaseInterpolator:
         handful of them instead is much cheaper to hull but wrong as soon as
         the block curves: a 170 degree annulus block's hull, taken off its
         corners and edge midpoints, excludes half of its own cells."""
-        nodes = blk.array["nodes"]
+        nodes = blk.nodes
         onSurface = np.zeros(nodes.shape[:3], dtype=bool)
         onSurface[[0, -1]] = True
         onSurface[:, [0, -1]] = True

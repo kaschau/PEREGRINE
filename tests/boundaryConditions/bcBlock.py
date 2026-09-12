@@ -1,12 +1,13 @@
 import peregrinepy as pg
 import numpy as np
+from ..gases import configure
 
 
-def create(bc, adv, spdata):
+def create(bc, adv, gas):
     config = pg.files.configFile()
     config["RHS"]["primaryAdvFlux"] = adv
     config["RHS"]["diffusion"] = True
-    config["thermochem"]["spdata"] = spdata
+    configure(config, gas)
 
     mb = pg.multiBlock.buildSolver(config, 1)
 
@@ -17,8 +18,10 @@ def create(bc, adv, spdata):
     # perturb the ineterio points a bit
     for blk in mb:
         i = blk.ng + 1
-        size = blk.array["nodes"][i:-i, i:-i, i:-i].shape
-        blk.array["nodes"][i:-i, i:-i, i:-i] += np.random.uniform(-1, 1, size) * 0.02
+        nodes = blk.hostCopy("nodes")
+        size = nodes[i:-i, i:-i, i:-i].shape
+        nodes[i:-i, i:-i, i:-i] += np.random.uniform(-1, 1, size) * 0.02
+        blk.store("nodes", nodes)
 
     mb.generateHalo()
     mb.computeMetrics()
@@ -27,7 +30,8 @@ def create(bc, adv, spdata):
     for face in blk.faces:
         face.bcType = bc
 
-    qshape = blk.array["q"][:, :, :, 0].shape
+    q = blk.q.get()
+    qshape = q.shape[:3]
     p = np.random.uniform(low=101325.0 * 0.1, high=101325 * 10, size=qshape)
     u = np.random.uniform(low=-200, high=200, size=qshape)
     v = np.random.uniform(low=-200, high=200, size=qshape)
@@ -37,18 +41,18 @@ def create(bc, adv, spdata):
         Y = np.random.uniform(low=0.0, high=1.0, size=qshape + (blk.ns - 1,))
         Y = Y / np.sum(Y, axis=-1)[:, :, :, np.newaxis]
 
-    blk.array["q"][:, :, :, 0] = p
-    blk.array["q"][:, :, :, 1] = u
-    blk.array["q"][:, :, :, 2] = v
-    blk.array["q"][:, :, :, 3] = w
-    blk.array["q"][:, :, :, 4] = T
+    q[:, :, :, 0] = p
+    q[:, :, :, 1] = u
+    q[:, :, :, 2] = v
+    q[:, :, :, 3] = w
+    q[:, :, :, 4] = T
     if blk.ns > 1:
-        blk.array["q"][:, :, :, 5::] = Y
-    blk.updateDeviceView("q")
+        q[:, :, :, 5::] = Y
+    blk.q.set(q)
 
-    mb.eos(blk.cpp, mb.thtrdat.cpp, -1, "prims")
+    mb.eos(blk, mb.thtrdat, -1, "prims")
 
-    mb.dqdxyz(blk.cpp)
+    mb.dqdxyz(blk)
 
     if blk.ns > 1:
         Ybc = np.random.uniform(low=0.0, high=1.0, size=blk.ns)
@@ -64,7 +68,6 @@ def create(bc, adv, spdata):
 
         face.bcType = bc
         # Primative bcs
-        face.allocate("qBcVals", "QBcVals")
         inputBcValues = {}
         inputBcValues["p"] = pbc
         inputBcValues["u"] = ubc
@@ -79,12 +82,10 @@ def create(bc, adv, spdata):
 
         # Conservative like bcs
         inputBcValues["mDotPerUnitArea"] = mDotPerAbc
-        # Just so we can check we set the target mdot to the zeroth (unused)
-        # index of the QBcVals
-        face.array["QBcVals"][:, :, 0] = mDotPerAbc
-
         pg.bcs.prep(blk, face, inputBcValues)
-
-        face.updateDeviceView(["qBcVals", "QBcVals"])
+        # the target mdot goes in the zeroth (unused) index of QBcVals, for the check
+        QBcVals = face.hostCopy("QBcVals")
+        QBcVals[:, :, 0] = mDotPerAbc
+        face.store("QBcVals", QBcVals)
 
     return mb

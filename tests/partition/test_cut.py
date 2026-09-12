@@ -58,15 +58,15 @@ def test_cutTilesTheBlock(axis, nCuts):
     myAxis = "ijk".index(axis)
     # the cube is axis aligned, so the pieces sort along the coordinate the
     # cut axis runs on
-    pieces = sorted(work, key=lambda blk: blk.array["nodes"][..., myAxis].min())
+    pieces = sorted(work, key=lambda blk: blk.hostCopy("nodes")[..., myAxis].min())
     dropShared = [slice(None)] * 3
     dropShared[myAxis] = slice(1, None)
     joined = np.concatenate(
-        [pieces[0].array["nodes"]]
-        + [p.array["nodes"][tuple(dropShared)] for p in pieces[1:]],
+        [pieces[0].hostCopy("nodes")]
+        + [p.hostCopy("nodes")[tuple(dropShared)] for p in pieces[1:]],
         axis=myAxis,
     )
-    assert np.array_equal(joined, base[0].array["nodes"])
+    assert np.array_equal(joined, base[0].hostCopy("nodes"))
 
 
 @pytest.mark.parametrize("axis", ("i", "j", "k"))
@@ -77,7 +77,7 @@ def test_mergeUndoesCut(axis):
 
     assert partitioner.mergeAll(work) == 3
     assert len(work) == 1
-    assert np.array_equal(work[0].array["nodes"], base[0].array["nodes"])
+    assert np.array_equal(work[0].hostCopy("nodes"), base[0].hostCopy("nodes"))
 
 
 def test_evenlySpacedCuts():
@@ -147,8 +147,8 @@ def test_everyPieceIsFoundInTheBlockItNames(mbDims, axis):
     for blk, (baseNblki, i0, i1, j0, j1, k0, k1) in zip(work, table):
         assert (blk.ni, blk.nj, blk.nk) == (i1 - i0 + 1, j1 - j0 + 1, k1 - k0 + 1)
         assert np.array_equal(
-            blk.array["nodes"],
-            base.getBlock(baseNblki).array["nodes"][
+            blk.hostCopy("nodes"),
+            base.getBlock(baseNblki).hostCopy("nodes")[
                 i0 : i1 + 1, j0 : j1 + 1, k0 : k1 + 1
             ],
         )
@@ -169,6 +169,6 @@ def test_provenanceSurvivesRepeatedCuts():
     ):
         assert baseNblki == 0
         assert np.array_equal(
-            blk.array["nodes"],
-            base[0].array["nodes"][i0 : i1 + 1, j0 : j1 + 1, k0 : k1 + 1],
+            blk.hostCopy("nodes"),
+            base[0].hostCopy("nodes")[i0 : i1 + 1, j0 : j1 + 1, k0 : k1 + 1],
         )

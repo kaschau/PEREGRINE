@@ -44,16 +44,14 @@ class ConstantMassFluxSubsonicInlet(Inlet):
 
     def _massFlux(self, face):
         blk, ng = self.blk, self.blk.ng
-        self.mb.primaryAdvFlux(blk.cpp)
-        blk.updateHostView(["q", "Q"])
+        self.mb.primaryAdvFlux(blk)
 
         d = {1: "i", 2: "i", 3: "j", 4: "j", 5: "k", 6: "k"}[face.nface]
-        blk.updateHostView([f"{d}F"])
-        F = blk.array[f"{d}F"][face.s1_][ng:-ng, ng:-ng, 0]
+        F = blk.hostCopy(f"{d}F")[face.s1_][ng:-ng, ng:-ng, 0]
         S = blk.faceNormals(d)[0][face.s1_][ng:-ng, ng:-ng]
 
         mult = -1.0 if face.nface in (2, 4, 6) else 1.0
-        target = face.array["QBcVals"][0, 0, 0] * np.sum(S)
+        target = face.hostCopy("QBcVals")[0, 0, 0] * np.sum(S)
         computed = mult * np.sum(F)
         assert abs(target - computed) / target * 100.0 < 1e-3
 
@@ -80,19 +78,19 @@ _inlets = (
 )
 
 pytestmark = pytest.mark.parametrize(
-    "adv,spdata",
+    "adv,gas",
     list(
         itertools.product(
             ("KEEPpe", "fourthOrderKEEP"),
-            (["Air"], "thtr_CH4_O2_FFCMY.yaml"),
+            ("air", "CH4_O2"),
         )
     ),
 )
 
 
 @pytest.mark.parametrize("bc", _inlets, ids=lambda i: i.bcType)
-def test_inlet(my_setup, adv, spdata, bc):
+def test_inlet(my_setup, adv, gas, bc):
     # NOTE: fourth order not working for constant mdot
     if bc is ConstantMassFluxSubsonicInlet and adv == "fourthOrderKEEP":
         pytest.skip("fourth order not supported for constant mass flux")
-    bc(adv, spdata).check()
+    bc(adv, gas).check()

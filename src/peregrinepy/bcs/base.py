@@ -2,7 +2,7 @@ from functools import cache
 
 import numpy as np
 
-from ..compute import bcs as computeBcs
+from ..kernels import boundaryConditions
 from ..misc import null, subclasses, subclassWhere
 
 
@@ -22,7 +22,7 @@ class BaseBC:
 
     # what this bc is called, which is what the grid's connectivity stores
     bcType = None
-    # the compute.bcs submodule holding the kernel, or None for no kernel
+    # the family of kernel it is (walls, inlets, exits, periodics), or None for no kernel
     family = None
     # input key -> index into the face's qBcVals
     values = {}
@@ -33,35 +33,36 @@ class BaseBC:
     def kernel(cls):
         if cls.family is None:
             return null
-        return getattr(getattr(computeBcs, cls.family), cls.bcType)
+        return getattr(boundaryConditions, cls.family)[cls.bcType]
 
     @classmethod
-    def prep(cls, blk, face, valueDict):
-        """Read this face's config entry onto it."""
+    def prep(cls, blk, face, valueDict, qBcVals, QBcVals):
+        """Read this face's config entry into the host arrays it will be
+        given."""
         if valueDict.get("profile", False):
-            cls._profile(blk, face)
+            cls._profile(blk, face, qBcVals, QBcVals)
         else:
-            cls._constants(blk, face, valueDict)
+            cls._constants(blk, face, valueDict, qBcVals, QBcVals)
 
     @classmethod
-    def _profile(cls, blk, face):
+    def _profile(cls, blk, face, qBcVals, QBcVals):
         ng = blk.ng
         with open(
             f"./Input/profiles/{face.bcName}_{blk.nblki}_{face.nface}.npy", "rb"
         ) as f:
-            face.array["qBcVals"][ng:-ng, ng:-ng, :] = np.load(f)
-            face.array["QBcVals"][ng:-ng, ng:-ng, :] = np.load(f)
+            qBcVals[ng:-ng, ng:-ng, :] = np.load(f)
+            QBcVals[ng:-ng, ng:-ng, :] = np.load(f)
         # extend the profile out into the face's own halo
-        for array in (face.array["qBcVals"], face.array["QBcVals"]):
+        for array in (qBcVals, QBcVals):
             array[0:ng, :, :] = array[[ng], :, :]
             array[-ng::, :, :] = array[[-ng - 1], :, :]
             array[:, 0:ng, :] = array[:, [ng], :]
             array[:, -ng::, :] = array[:, [-ng - 1], :]
 
     @classmethod
-    def _constants(cls, blk, face, valueDict):
+    def _constants(cls, blk, face, valueDict, qBcVals, QBcVals):
         for key, index in cls.values.items():
-            face.array["qBcVals"][:, :, index] = valueDict[key]
+            qBcVals[:, :, index] = valueDict[key]
 
 
 # called once per face of every block; the registry is fixed after import
@@ -77,4 +78,10 @@ def validBcTypes():
 
 
 def prep(blk, face, valueDict):
-    getBc(face.bcType).prep(blk, face, valueDict)
+    """Give a face the values its entry sets, where the kernels run."""
+    qBcVals = np.zeros(face.shapeOf("qBcVals"))
+    QBcVals = np.zeros(face.shapeOf("QBcVals"))
+    getBc(face.bcType).prep(blk, face, valueDict, qBcVals, QBcVals)
+    face.allocate("qBcVals", "QBcVals")
+    face.qBcVals.set(qBcVals)
+    face.QBcVals.set(QBcVals)

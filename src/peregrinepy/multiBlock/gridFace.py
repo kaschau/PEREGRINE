@@ -12,14 +12,8 @@ class gridFace(topologyFace):
     def __init__(self, nface):
         super().__init__(nface)
 
-        #########################################################
-        # Data arrays
-        #########################################################
-        # Python side data
-        self.array = {}
-        # Kokkos mirrors (only used for solverFaces)
-        self.mirror = {}
-        # what each array's shape will be, once the block is sized
+        # every array is an attribute named for it, shaped once the block is
+        # sized; what a face declares is all it may hold
         self.declared = {}
 
         self.declare("periodicRotMatrix", kind="rotation")
@@ -32,8 +26,7 @@ class gridFace(topologyFace):
         this face bounds knows its extents. Nothing else may be put in array."""
         for name in names:
             self.declared[name] = kind
-            self.array[name] = None
-            self.mirror[name] = None
+            setattr(self, name, None)
 
     @property
     def shapes(self):
@@ -49,7 +42,7 @@ class gridFace(topologyFace):
         face never holds boundary values and a boundary face never holds
         halo buffers."""
         for name in names:
-            self.array[name] = np.zeros(self.shapeOf(name))
+            setattr(self, name, np.zeros(self.shapeOf(name)))
 
     ###########################################################################
     # How a halo arriving through this face is moved onto it
@@ -62,4 +55,13 @@ class gridFace(topologyFace):
         if rotation is None:
             return
         self.allocate("periodicRotMatrix")
-        self.array["periodicRotMatrix"][:] = rotation
+        self.setRotationMatrix(rotation)
+
+    def setRotationMatrix(self, rotation):
+        self.periodicRotMatrix[:] = rotation
+
+    def hostCopy(self, name):
+        return getattr(self, name)
+
+    def store(self, name, values):
+        getattr(self, name)[...] = values

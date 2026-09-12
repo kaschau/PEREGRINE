@@ -1,36 +1,35 @@
-#include "block_.hpp"
+#include "abi.hpp"
 #include "kokkosTypes.hpp"
-#include "thtrdat_.hpp"
 #include <Kokkos_Core.hpp>
 
-static void computeFlux(const block_ &b, fourDview &iF, const fourDview &iS,
-                        const int iMod, const int jMod, const int kMod) {
+static void computeFlux(const unmanaged<double ****> &Q,
+                        const unmanaged<double ****> &q,
+                        const unmanaged<double ****> &qh, const int ne,
+                        const int ng, const int ni, const int nj, const int nk,
+                        unmanaged<double ****> &iF,
+                        const unmanaged<double ****> &iS, const int iMod,
+                        const int jMod, const int kMod) {
 
   // face flux range
-  MDRange3 range(
-      {b.ng, b.ng, b.ng},
-      {b.ni + b.ng - 1 + iMod, b.nj + b.ng - 1 + jMod, b.nk + b.ng - 1 + kMod});
+  MDRange3 range({ng, ng, ng},
+                 {ni + ng - 1 + iMod, nj + ng - 1 + jMod, nk + ng - 1 + kMod});
 
   Kokkos::parallel_for(
       "2nd order myKEEP face conv fluxes", range,
       KOKKOS_LAMBDA(const int i, const int j, const int k) {
         // Compute face normal volume flux vector
-        double uf =
-            0.5 * (b.q(i, j, k, 1) + b.q(i - iMod, j - jMod, k - kMod, 1));
-        double vf =
-            0.5 * (b.q(i, j, k, 2) + b.q(i - iMod, j - jMod, k - kMod, 2));
-        double wf =
-            0.5 * (b.q(i, j, k, 3) + b.q(i - iMod, j - jMod, k - kMod, 3));
+        double uf = 0.5 * (q(i, j, k, 1) + q(i - iMod, j - jMod, k - kMod, 1));
+        double vf = 0.5 * (q(i, j, k, 2) + q(i - iMod, j - jMod, k - kMod, 2));
+        double wf = 0.5 * (q(i, j, k, 3) + q(i - iMod, j - jMod, k - kMod, 3));
 
         double U =
             iS(i, j, k, 0) * uf + iS(i, j, k, 1) * vf + iS(i, j, k, 2) * wf;
 
-        double pf =
-            0.5 * (b.q(i, j, k, 0) + b.q(i - iMod, j - jMod, k - kMod, 0));
+        double pf = 0.5 * (q(i, j, k, 0) + q(i - iMod, j - jMod, k - kMod, 0));
 
         // Compute fluxes
         double rho;
-        rho = 0.5 * (b.Q(i, j, k, 0) + b.Q(i - iMod, j - jMod, k - kMod, 0));
+        rho = 0.5 * (Q(i, j, k, 0) + Q(i - iMod, j - jMod, k - kMod, 0));
 
         // Continuity rho*Ui
         double Cj = rho * U;
@@ -47,31 +46,31 @@ static void computeFlux(const block_ &b, fourDview &iF, const fourDview &iS,
 
         // Total energy (rhoE+ p)*Ui)
         double Kj = rho * 0.5 *
-                    (b.q(i, j, k, 1) * b.q(i - iMod, j - jMod, k - kMod, 1) +
-                     b.q(i, j, k, 2) * b.q(i - iMod, j - jMod, k - kMod, 2) +
-                     b.q(i, j, k, 3) * b.q(i - iMod, j - jMod, k - kMod, 3)) *
+                    (q(i, j, k, 1) * q(i - iMod, j - jMod, k - kMod, 1) +
+                     q(i, j, k, 2) * q(i - iMod, j - jMod, k - kMod, 2) +
+                     q(i, j, k, 3) * q(i - iMod, j - jMod, k - kMod, 3)) *
                     U;
 
         double Pj =
-            0.5 * (b.q(i - iMod, j - jMod, k - kMod, 0) *
-                       (b.q(i, j, k, 1) * iS(i, j, k, 0) +
-                        b.q(i, j, k, 2) * iS(i, j, k, 1) +
-                        b.q(i, j, k, 3) * iS(i, j, k, 2)) +
-                   b.q(i, j, k, 0) *
-                       (b.q(i - iMod, j - jMod, k - kMod, 1) * iS(i, j, k, 0) +
-                        b.q(i - iMod, j - jMod, k - kMod, 2) * iS(i, j, k, 1) +
-                        b.q(i - iMod, j - jMod, k - kMod, 3) * iS(i, j, k, 2)));
+            0.5 * (q(i - iMod, j - jMod, k - kMod, 0) *
+                       (q(i, j, k, 1) * iS(i, j, k, 0) +
+                        q(i, j, k, 2) * iS(i, j, k, 1) +
+                        q(i, j, k, 3) * iS(i, j, k, 2)) +
+                   q(i, j, k, 0) *
+                       (q(i - iMod, j - jMod, k - kMod, 1) * iS(i, j, k, 0) +
+                        q(i - iMod, j - jMod, k - kMod, 2) * iS(i, j, k, 1) +
+                        q(i - iMod, j - jMod, k - kMod, 3) * iS(i, j, k, 2)));
 
         // solve for internal energy flux
-        double cvR = b.qh(i, j, k, 1) / b.qh(i, j, k, 0);
-        double &TR = b.q(i, j, k, 4);
-        double &rhoR = b.Q(i, j, k, 0);
-        double RR = b.qh(i, j, k, 1) - cvR;
-        double hR = b.qh(i, j, k, 2) / rhoR;
-        double eR = b.qh(i, j, k, 4);
-        double &uR = b.q(i, j, k, 1);
-        double &vR = b.q(i, j, k, 2);
-        double &wR = b.q(i, j, k, 3);
+        double cvR = qh(i, j, k, 1) / qh(i, j, k, 0);
+        double &TR = q(i, j, k, 4);
+        double &rhoR = Q(i, j, k, 0);
+        double RR = qh(i, j, k, 1) - cvR;
+        double hR = qh(i, j, k, 2) / rhoR;
+        double eR = qh(i, j, k, 4);
+        double &uR = q(i, j, k, 1);
+        double &vR = q(i, j, k, 2);
+        double &wR = q(i, j, k, 3);
         double sR = cvR * log(TR) - RR * log(rhoR);
         double phiR =
             -RR * rhoR *
@@ -85,16 +84,16 @@ static void computeFlux(const block_ &b, fourDview &iF, const fourDview &iS,
         double v4R = 1.0 / TR;
 
         // left
-        double cvL = b.qh(i - iMod, j - jMod, k - kMod, 1) /
-                     b.qh(i - iMod, j - jMod, k - kMod, 0);
-        double &TL = b.q(i - iMod, j - jMod, k - kMod, 4);
-        double &rhoL = b.Q(i - iMod, j - jMod, k - kMod, 0);
-        double RL = b.qh(i - iMod, j - jMod, k - kMod, 1) - cvL;
-        double hL = b.qh(i - iMod, j - jMod, k - kMod, 2) / rhoL;
-        double eL = b.qh(i - iMod, j - jMod, k - kMod, 4);
-        double &uL = b.q(i - iMod, j - jMod, k - kMod, 1);
-        double &vL = b.q(i - iMod, j - jMod, k - kMod, 2);
-        double &wL = b.q(i - iMod, j - jMod, k - kMod, 3);
+        double cvL = qh(i - iMod, j - jMod, k - kMod, 1) /
+                     qh(i - iMod, j - jMod, k - kMod, 0);
+        double &TL = q(i - iMod, j - jMod, k - kMod, 4);
+        double &rhoL = Q(i - iMod, j - jMod, k - kMod, 0);
+        double RL = qh(i - iMod, j - jMod, k - kMod, 1) - cvL;
+        double hL = qh(i - iMod, j - jMod, k - kMod, 2) / rhoL;
+        double eL = qh(i - iMod, j - jMod, k - kMod, 4);
+        double &uL = q(i - iMod, j - jMod, k - kMod, 1);
+        double &vL = q(i - iMod, j - jMod, k - kMod, 2);
+        double &wL = q(i - iMod, j - jMod, k - kMod, 3);
         double sL = cvL * log(TL) - RL * log(rhoL);
         double phiL =
             -RL * rhoL *
@@ -124,17 +123,30 @@ static void computeFlux(const block_ &b, fourDview &iF, const fourDview &iS,
         iF(i, j, k, 4) = Ij + Kj + Pj;
 
         // Species
-        for (int n = 0; n < b.ne - 5; n++) {
+        for (int n = 0; n < ne - 5; n++) {
           iF(i, j, k, 5 + n) =
               0.5 *
-              (b.Q(i, j, k, 5 + n) + b.Q(i - iMod, j - jMod, k - kMod, 5 + n)) *
-              U;
+              (Q(i, j, k, 5 + n) + Q(i - iMod, j - jMod, k - kMod, 5 + n)) * U;
         }
       });
 }
 
-void myKEEP(block_ &b) {
-  computeFlux(b, b.iF, b.iS, 1, 0, 0);
-  computeFlux(b, b.jF, b.jS, 0, 1, 0);
-  computeFlux(b, b.kF, b.kS, 0, 0, 1);
+PG_ABI void pgMyKEEP(const pgView *Q_, const pgView *iF_, const pgView *iS_,
+                     const pgView *jF_, const pgView *jS_, const pgView *kF_,
+                     const pgView *kS_, const pgView *q_, const pgView *qh_,
+                     const pgDims *d) {
+  auto Q = as4(*Q_);
+  auto iF = as4(*iF_);
+  auto iS = as4(*iS_);
+  auto jF = as4(*jF_);
+  auto jS = as4(*jS_);
+  auto kF = as4(*kF_);
+  auto kS = as4(*kS_);
+  auto q = as4(*q_);
+  auto qh = as4(*qh_);
+  const int ng = d->ng, ni = d->ni, nj = d->nj, nk = d->nk;
+  const int ne = Q.extent(3);
+  computeFlux(Q, q, qh, ne, ng, ni, nj, nk, iF, iS, 1, 0, 0);
+  computeFlux(Q, q, qh, ne, ng, ni, nj, nk, jF, jS, 0, 1, 0);
+  computeFlux(Q, q, qh, ne, ng, ni, nj, nk, kF, kS, 0, 0, 1);
 }

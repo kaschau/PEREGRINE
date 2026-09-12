@@ -21,6 +21,9 @@ import peregrinepy as pg
 import numpy as np
 import matplotlib.pyplot as plt
 
+# the debug gas of the Toro cases: R = 281.4, gamma = 1.4
+db = {"DB": {"MW": 29.54065178914549, "cp0": 1000.0}}
+
 
 def guessP(test):
     pL, rhoL, uL = test.pL, test.rhoL, test.uL
@@ -333,7 +336,7 @@ class state:
 def simulate(testnum, index="i"):
     nx = 201
     config = pg.files.configFile()
-    config["mcPhysics"]["mixture"] = ["DB"]
+    config["mcPhysics"]["mixture"] = db
     config["RHS"]["shockHandling"] = "artificialDissipation"
     config["RHS"]["primaryAdvFlux"] = "KEEPpe"
     config["RHS"]["secondaryAdvFlux"] = "scalarDissipation"
@@ -343,9 +346,9 @@ def simulate(testnum, index="i"):
     mb = pg.multiBlock.buildSolver(config, 1)
 
     Ru = mb.thtrdat.Ru
-    MW = mb.thtrdat.array["MW"][0]
+    MW = mb.thtrdat.MW.get()[0]
     R = Ru / MW
-    cp = mb.thtrdat.array["cp0"][0]
+    cp = mb.thtrdat.cp0.get()[0]
     gamma = cp / (cp - R)
 
     print(mb)
@@ -390,11 +393,13 @@ def simulate(testnum, index="i"):
 
     ccAxis = {"i": 0, "j": 1, "k": 2}
     uIndex = {"i": 1, "j": 2, "k": 3}
-    xc = blk.array["cells"][..., ccAxis[index]]
+    xc = blk.hostCopy("cells")[..., ccAxis[index]]
     # Initialize Left/Right properties
-    blk.array["q"][:, :, :, 0] = np.where(xc <= test.x0, test.pL, test.pR)
-    blk.array["q"][:, :, :, uIndex[index]] = np.where(xc <= test.x0, test.uL, test.uR)
-    blk.array["q"][:, :, :, 4] = np.where(xc <= test.x0, test.TL, test.TR)
+    q = blk.q.get()
+    q[:, :, :, 0] = np.where(xc <= test.x0, test.pL, test.pR)
+    q[:, :, :, uIndex[index]] = np.where(xc <= test.x0, test.uL, test.uR)
+    q[:, :, :, 4] = np.where(xc <= test.x0, test.TL, test.TR)
+    blk.q.set(q)
 
     # Update boundary conditions
     if index == "i":
@@ -411,7 +416,6 @@ def simulate(testnum, index="i"):
     if test.uL == 0.0:
         pass
     else:
-        face.allocate("qBcVals")
         inputBcValues = {}
         if test.uL > 0:
             face.bcType = "constantVelocitySubsonicInlet"
@@ -425,13 +429,11 @@ def simulate(testnum, index="i"):
             face.bcType = "constantPressureSubsonicExit"
             inputBcValues["p"] = test.pL
             pg.bcs.prep(blk, face, inputBcValues)
-        face.updateDeviceView("qBcVals")
 
     face = blk.getFace(highFace)
     if test.uR == 0.0:
         pass
     else:
-        face.allocate("qBcVals")
         inputBcValues = {}
         if test.uR < 0:
             face.bcType = "constantVelocitySubsonicInlet"
@@ -445,22 +447,22 @@ def simulate(testnum, index="i"):
             face.bcType = "constantPressureSubsonicExit"
             inputBcValues["p"] = test.pR
             pg.bcs.prep(blk, face, inputBcValues)
-        face.updateDeviceView("qBcVals")
 
     # Update cons
-    mb.eos(blk.cpp, mb.thtrdat.cpp, 0, "prims")
+    mb.eos(blk, mb.thtrdat, 0, "prims")
     pg.consistify(mb)
     while mb.tme < test.t:
         pg.misc.progressBar(mb.tme, test.t)
         mb.step(test.dt)
 
     s_ = rotate(np.s_[ng:-ng, ng, ng], index)
-    x = blk.array["cells"][..., ccAxis[index]][s_]
-    rho = blk.array["Q"][s_][:, 0]
-    p = blk.array["q"][s_][:, 0]
-    phi = blk.array["phi"][s_][:, uIndex[index] - 1]
-    u = blk.array["q"][s_][:, uIndex[index]]
-    e = blk.array["qh"][s_][:, 4]
+    q, Q, qh = blk.q.get(), blk.Q.get(), blk.qh.get()
+    x = blk.hostCopy("cells")[..., ccAxis[index]][s_]
+    rho = Q[s_][:, 0]
+    p = q[s_][:, 0]
+    phi = blk.phi.get()[s_][:, uIndex[index] - 1]
+    u = q[s_][:, uIndex[index]]
+    e = qh[s_][:, 4]
 
     res = solve(test)
     rx = res["x"]
@@ -510,11 +512,11 @@ def simulate(testnum, index="i"):
 
 if __name__ == "__main__":
     try:
-        pg.compute.pgkokkos.initialize()
+        pg.abi.initialize()
         testnum = 5
         index = "i"
         simulate(testnum, index)
-        pg.compute.pgkokkos.finalize()
+        pg.abi.finalize()
 
     except Exception as e:
         import sys

@@ -23,21 +23,21 @@ def consistify(mb, given="cons"):
     # Now update derived arrays for ENTIRE block,
     # even exterior halos.
     for blk in mb:
-        mb.eos(blk.cpp, mb.thtrdat.cpp, -1, given)
+        mb.eos(blk, mb.thtrdat, -1, given)
 
         # Apply euler boundary conditions
         for face in blk.faces:
-            face.bcFunc(blk.cpp, face.cpp, mb.eos, mb.thtrdat.cpp, "euler", mb.titme)
+            face.bcFunc(blk, face, mb.eos, mb.thtrdat, "euler", mb.titme)
 
         # Update transport properties
-        mb.trans(blk.cpp, mb.thtrdat.cpp, -1)
+        mb.trans(blk, mb.thtrdat, -1)
 
         # Update switch
-        mb.switch(blk.cpp)
+        mb.switch(blk)
 
         # Apply viscous sponge
         mb.viscousSponge(
-            blk.cpp,
+            blk,
             mb.config["viscousSponge"]["origin"],
             mb.config["viscousSponge"]["ending"],
             mb.config["viscousSponge"]["multiplier"],

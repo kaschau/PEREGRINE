@@ -11,27 +11,14 @@ import pytest
 ##############################################
 
 pytestmark = pytest.mark.parametrize(
-    "ctfile,thfile",
-    [
-        (
-            "CH4_O2_FFCMY.yaml",
-            "thtr_CH4_O2_FFCMY.yaml",
-        ),
-        (
-            "GRI30.yaml",
-            "thtr_GRI30.yaml",
-        ),
-        (
-            "C2H4_Air_Skeletal.yaml",
-            "thtr_C2H4_Air_Skeletal.yaml",
-        ),
-    ],
+    "ctfile",
+    ["CH4_O2_FFCMY.yaml", "GRI30.yaml", "C2H4_Air_Skeletal.yaml"],
 )
 
 
-def test_kineticTheoryUnityLewis(my_setup, ctfile, thfile):
+def test_kineticTheoryUnityLewis(my_setup, ctfile):
     relpath = str(Path(__file__).parent)
-    ct.add_directory(relpath + "/../../src/peregrinepy/thermoTransport/database/source")
+    ct.add_directory(relpath + "/../../src/peregrinepy/mixture/database/mechanisms")
 
     gas = ct.Solution(ctfile)
     p = np.random.uniform(low=10000, high=1000000)
@@ -40,9 +27,11 @@ def test_kineticTheoryUnityLewis(my_setup, ctfile, thfile):
     Y = Y / np.sum(Y)
 
     config = pg.files.configFile()
-    config["thermochem"]["spdata"] = thfile
-    config["thermochem"]["eos"] = "tpg"
-    config["thermochem"]["trans"] = "kineticTheoryUnityLewis"
+    config["mcPhysics"]["mixture"] = ctfile
+    config["mcPhysics"]["eos"] = "tpg"
+    config["mcPhysics"]["Trange"] = (300.0, 3500.0)
+    config["mcPhysics"]["trans"] = "kineticTheory"
+    config["mcPhysics"]["diffusion"] = "lewis"
     config["RHS"]["diffusion"] = True
 
     mb = pg.multiBlock.buildSolver(config, 1)
@@ -56,21 +45,22 @@ def test_kineticTheoryUnityLewis(my_setup, ctfile, thfile):
     mb.computeMetrics()
 
     gas.TPY = T, p, Y
-    blk.array["q"][:, :, :, 0] = p
-    blk.array["q"][:, :, :, 4] = T
-    blk.array["q"][:, :, :, 5::] = Y[0:-1]
-    blk.updateDeviceView("q")
+    q = blk.q.get()
+    q[:, :, :, 0] = p
+    q[:, :, :, 4] = T
+    q[:, :, :, 5::] = Y[0:-1]
+    blk.q.set(q)
 
     # Update transport
     assert mb.trans.__name__ == "kineticTheoryUnityLewis"
-    mb.eos(blk.cpp, mb.thtrdat.cpp, 0, "prims")
-    mb.trans(blk.cpp, mb.thtrdat.cpp, 0)
-    blk.updateHostView(["q", "qt"])
+    mb.eos(blk, mb.thtrdat, 0, "prims")
+    mb.trans(blk, mb.thtrdat, 0)
+    q, qt = blk.q.get(), blk.qt.get()
     ng = blk.ng
 
     # test the properties
-    pgprim = blk.array["q"][ng, ng, ng]
-    pgtrns = blk.array["qt"][ng, ng, ng]
+    pgprim = q[ng, ng, ng]
+    pgtrns = qt[ng, ng, ng]
 
     def print_diff(name, c, p):
         diff = np.abs(c - p) / p * 100

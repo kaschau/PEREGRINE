@@ -79,26 +79,19 @@ class solver(restart):
         for _ in range(3):
             self.communicator.exchange("nodes")
 
-        # Device is up to date after communicate, so pull back down
         for blk in self:
-            blk.updateHostView("nodes")
-
-        for blk in self:
-            for face in blk.faces:
-                if face.periodicRotation is None:
-                    continue
+            periodic = [f for f in blk.faces if f.periodicRotation is not None]
+            if not periodic:
+                continue
+            nodes = blk.nodes.get()
+            for face in periodic:
                 R, t = face.periodicRotation, face.periodicTranslation
                 for s0 in face.s0_:
                     # the halo came from the partner, so it lands where the
                     # transform puts it, turned or moved or both
-                    p = blk.array["nodes"][s0]
-                    blk.array["nodes"][s0] = (p.reshape(-1, 3) @ R.T + t).reshape(
-                        p.shape
-                    )
-
-        # Push back up the device
-        for blk in self:
-            blk.updateDeviceView("nodes")
+                    p = nodes[s0]
+                    nodes[s0] = (p.reshape(-1, 3) @ R.T + t).reshape(p.shape)
+            blk.nodes.set(nodes)
 
     def setBlockCommunication(self):
         for blk in self:

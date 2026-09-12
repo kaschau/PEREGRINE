@@ -1,23 +1,19 @@
-#include "block_.hpp"
-#include "compute.hpp"
+#include "kernelUtils.hpp"
 #include "kokkosTypes.hpp"
-#include "thtrdat_.hpp"
 #include <Kokkos_Core.hpp>
 #include <math.h>
-#include <stdexcept>
-#include <string.h>
 
-void cpg(block_ &b, const thtrdat_ &th, const int &nface,
-         const std::string &given, const int &indxI /*=0*/,
-         const int &indxJ /*=0*/, const int &indxK /*=0*/) {
+PG_ABI void pgCpg(const pgView *Q_, const pgView *q_, const pgView *qh_,
+                  const pgView *MW_, const pgView *cp0_, double Ru,
+                  int fromPrims, const pgRange *r) {
+  auto Q = as4(*Q_), q = as4(*q_), qh = as4(*qh_);
+  auto MW = as1(*MW_);
+  auto cp0 = as1(*cp0_);
+  const int ns = MW.extent(0);
 
-// For performance purposes, we want to compile with ns known whenever possible
-// however, for testing, developement, etc. we want the flexibility to
-// have it at run time as well. So we define some macros here to allow that.
 #ifndef NSCOMPILE
   Kokkos::Experimental::UniqueToken<execSpace> token;
   int numIds = token.size();
-  const int ns = th.ns;
   twoDview Y("Y", numIds, ns);
 #endif
 
@@ -28,8 +24,8 @@ void cpg(block_ &b, const thtrdat_ &th, const int &nface,
 #define Y(INDEX) Y(id, INDEX)
 #endif
 
-  MDRange3 range = getRange3(b, nface, indxI, indxJ, indxK);
-  if (given.compare("prims") == 0) {
+  MDRange3 range = range3(*r);
+  if (fromPrims) {
     Kokkos::parallel_for(
         "Compute all conserved quantities from primatives via cpg", range,
         KOKKOS_LAMBDA(const int i, const int j, const int k) {
@@ -42,11 +38,11 @@ void cpg(block_ &b, const thtrdat_ &th, const int &nface,
           // gamma, cp, h, e
           // So we store these as well.
 
-          const double &p = b.q(i, j, k, 0);
-          const double &u = b.q(i, j, k, 1);
-          const double &v = b.q(i, j, k, 2);
-          const double &w = b.q(i, j, k, 3);
-          const double &T = b.q(i, j, k, 4);
+          const double &p = q(i, j, k, 0);
+          const double &u = q(i, j, k, 1);
+          const double &v = q(i, j, k, 2);
+          const double &w = q(i, j, k, 3);
+          const double &T = q(i, j, k, 4);
 #ifdef NSCOMPILE
           double Y(ns);
 #endif
@@ -61,8 +57,8 @@ void cpg(block_ &b, const thtrdat_ &th, const int &nface,
           Y(ns - 1) = 1.0;
           double testSum = 0.0;
           for (int n = 0; n < ns - 1; n++) {
-            b.q(i, j, k, 5 + n) = fmax(fmin(b.q(i, j, k, 5 + n), 1.0), 0.0);
-            Y(n) = b.q(i, j, k, 5 + n);
+            q(i, j, k, 5 + n) = fmax(fmin(q(i, j, k, 5 + n), 1.0), 0.0);
+            Y(n) = q(i, j, k, 5 + n);
             Y(ns - 1) -= Y(n);
             testSum += Y(n);
           }
@@ -79,10 +75,10 @@ void cpg(block_ &b, const thtrdat_ &th, const int &nface,
           Rmix = 0.0;
           cp = 0.0;
           for (int n = 0; n <= ns - 1; n++) {
-            Rmix += Y(n) / th.MW(n);
-            cp += Y(n) * th.cp0(n);
+            Rmix += Y(n) / MW(n);
+            cp += Y(n) * cp0(n);
           }
-          Rmix *= th.Ru;
+          Rmix *= Ru;
 
           // Compute mixuture enthalpy
           h = cp * T;
@@ -107,32 +103,32 @@ void cpg(block_ &b, const thtrdat_ &th, const int &nface,
 
           // Set values of new properties
           // Density
-          b.Q(i, j, k, 0) = rho;
+          Q(i, j, k, 0) = rho;
           // Momentum
-          b.Q(i, j, k, 1) = rhou;
-          b.Q(i, j, k, 2) = rhov;
-          b.Q(i, j, k, 3) = rhow;
+          Q(i, j, k, 1) = rhou;
+          Q(i, j, k, 2) = rhov;
+          Q(i, j, k, 3) = rhow;
           // Total Energy
-          b.Q(i, j, k, 4) = rhoE;
+          Q(i, j, k, 4) = rhoE;
           // Species mass
           for (int n = 0; n < ns - 1; n++) {
-            b.Q(i, j, k, 5 + n) = Y(n) * rho;
+            Q(i, j, k, 5 + n) = Y(n) * rho;
           }
           // gamma,cp,h,c,e,hi
-          b.qh(i, j, k, 0) = gamma;
-          b.qh(i, j, k, 1) = cp;
-          b.qh(i, j, k, 2) = rho * h;
-          b.qh(i, j, k, 3) = c;
-          b.qh(i, j, k, 4) = rho * e;
+          qh(i, j, k, 0) = gamma;
+          qh(i, j, k, 1) = cp;
+          qh(i, j, k, 2) = rho * h;
+          qh(i, j, k, 3) = c;
+          qh(i, j, k, 4) = rho * e;
           for (int n = 0; n <= ns - 1; n++) {
-            b.qh(i, j, k, 5 + n) = T * th.cp0(n);
+            qh(i, j, k, 5 + n) = T * cp0(n);
           }
 
 #ifndef NSCOMPILE
           token.release(id);
 #endif
         });
-  } else if (given.compare("cons") == 0) {
+  } else {
     Kokkos::parallel_for(
         "Compute primatives from conserved quantities via cpg", range,
         KOKKOS_LAMBDA(const int i, const int j, const int k) {
@@ -145,11 +141,11 @@ void cpg(block_ &b, const thtrdat_ &th, const int &nface,
           // gamma, cp, h, e, hi
           // So we store these as well.
 
-          const double &rho = b.Q(i, j, k, 0);
-          const double &rhou = b.Q(i, j, k, 1);
-          const double &rhov = b.Q(i, j, k, 2);
-          const double &rhow = b.Q(i, j, k, 3);
-          const double &rhoE = b.Q(i, j, k, 4);
+          const double &rho = Q(i, j, k, 0);
+          const double &rhou = Q(i, j, k, 1);
+          const double &rhov = Q(i, j, k, 2);
+          const double &rhow = Q(i, j, k, 3);
+          const double &rhoE = Q(i, j, k, 4);
 
           double p;
           double T;
@@ -167,9 +163,9 @@ void cpg(block_ &b, const thtrdat_ &th, const int &nface,
           Y(ns - 1) = 1.0;
           double testSum = 0.0;
           for (int n = 0; n < ns - 1; n++) {
-            b.Q(i, j, k, 5 + n) =
-                fmax(fmin(b.Q(i, j, k, 5 + n), b.Q(i, j, k, 0)), 0.0);
-            Y(n) = b.Q(i, j, k, 5 + n) / b.Q(i, j, k, 0);
+            Q(i, j, k, 5 + n) =
+                fmax(fmin(Q(i, j, k, 5 + n), Q(i, j, k, 0)), 0.0);
+            Y(n) = Q(i, j, k, 5 + n) / Q(i, j, k, 0);
             Y(ns - 1) -= Y(n);
             testSum += Y(n);
           }
@@ -179,7 +175,7 @@ void cpg(block_ &b, const thtrdat_ &th, const int &nface,
             Y(ns - 1) = 0.0;
             for (int n = 0; n < ns - 1; n++) {
               Y(n) /= testSum;
-              b.Q(i, j, k, 5 + n) = Y(n) * b.Q(i, j, k, 0);
+              Q(i, j, k, 5 + n) = Y(n) * Q(i, j, k, 0);
             }
           }
 
@@ -190,10 +186,10 @@ void cpg(block_ &b, const thtrdat_ &th, const int &nface,
           Rmix = 0.0;
           cp = 0.0;
           for (int n = 0; n <= ns - 1; n++) {
-            Rmix += Y(n) / th.MW(n);
-            cp += Y(n) * th.cp0(n);
+            Rmix += Y(n) / MW(n);
+            cp += Y(n) * cp0(n);
           }
-          Rmix *= th.Ru;
+          Rmix *= Ru;
 
           // Compute mixuture temperature,pressure
           T = e / (cp - Rmix);
@@ -208,29 +204,27 @@ void cpg(block_ &b, const thtrdat_ &th, const int &nface,
 
           // Set values of new properties
           // Pressure, temperature, Y
-          b.q(i, j, k, 0) = p;
-          b.q(i, j, k, 1) = rhou / rho;
-          b.q(i, j, k, 2) = rhov / rho;
-          b.q(i, j, k, 3) = rhow / rho;
-          b.q(i, j, k, 4) = T;
+          q(i, j, k, 0) = p;
+          q(i, j, k, 1) = rhou / rho;
+          q(i, j, k, 2) = rhov / rho;
+          q(i, j, k, 3) = rhow / rho;
+          q(i, j, k, 4) = T;
           for (int n = 0; n < ns - 1; n++) {
-            b.q(i, j, k, 5 + n) = Y(n);
+            q(i, j, k, 5 + n) = Y(n);
           }
           // gamma,cp,h,c,e,hi
-          b.qh(i, j, k, 0) = gamma;
-          b.qh(i, j, k, 1) = cp;
-          b.qh(i, j, k, 2) = rho * h;
-          b.qh(i, j, k, 3) = c;
-          b.qh(i, j, k, 4) = rho * e;
+          qh(i, j, k, 0) = gamma;
+          qh(i, j, k, 1) = cp;
+          qh(i, j, k, 2) = rho * h;
+          qh(i, j, k, 3) = c;
+          qh(i, j, k, 4) = rho * e;
           for (int n = 0; n <= ns - 1; n++) {
-            b.qh(i, j, k, 5 + n) = T * th.cp0(n);
+            qh(i, j, k, 5 + n) = T * cp0(n);
           }
 
 #ifndef NSCOMPILE
           token.release(id);
 #endif
         });
-  } else {
-    throw std::invalid_argument("Invalid given string in cpg.");
   }
 }

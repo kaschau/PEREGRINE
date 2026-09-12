@@ -10,7 +10,7 @@ class BaseBC:
     # what each variable's gradient does in the first halo
     gradRules = {"all": "neumann"}
 
-    # which arrays a stage writes, and so what has to come back from the device
+    # which arrays a stage writes, and so what to snapshot off the device after it
     _pull = {
         "euler": ["q"],
         "preDqDxyz": ["q"],
@@ -37,6 +37,8 @@ class BaseBC:
     def __init__(self, adv, spdata):
         self.mb = create(self.bcType, adv, spdata)
         self.blk = self.mb[0]
+        # the latest snapshot of each block array a stage wrote
+        self.host = {}
 
     def check(self):
         for face in self.blk.faces:
@@ -56,16 +58,15 @@ class BaseBC:
         pass
 
     def run(self, face, stage):
-        face.bcFunc(
-            self.blk.cpp, face.cpp, self.mb.eos, self.mb.thtrdat.cpp, stage, self.mb.tme
-        )
-        self.blk.updateHostView(self._pull[stage])
+        face.bcFunc(self.blk, face, self.mb.eos, self.mb.thtrdat, stage, self.mb.tme)
+        for name in self._pull[stage]:
+            self.host[name] = getattr(self.blk, name).get()
 
     def q(self, name):
         """the q slice a variable name refers to; a species is "Y3" and so on"""
         if name.startswith("Y") and name[1:].isdigit():
-            return self.blk.array["q"][:, :, :, 5 + int(name[1:])]
-        return self.blk.array["q"][:, :, :, self._slice[name]]
+            return self.host["q"][:, :, :, 5 + int(name[1:])]
+        return self.host["q"][:, :, :, self._slice[name]]
 
     def normals(self, face):
         """the unit normal of the face plane, and the sign that makes it point
@@ -77,8 +78,8 @@ class BaseBC:
 
     def _bcVals(self, face, name):
         if name.startswith("Y") and name[1:].isdigit():
-            return face.array["qBcVals"][:, :, 5 + int(name[1:])]
-        return face.array["qBcVals"][:, :, self._bcIndex[name]]
+            return face.hostCopy("qBcVals")[:, :, 5 + int(name[1:])]
+        return face.hostCopy("qBcVals")[:, :, self._bcIndex[name]]
 
     def species(self, face, rule):
         """apply a rule to every species the case actually carries"""
@@ -143,7 +144,7 @@ class BaseBC:
     def _gradients(self, face, rules):
         """the first halo layer of every gradient, one rule per variable"""
         s0_ = face.s0_[0]
-        d = self.blk.array["grads"]
+        d = self.host["grads"]
         for name, rule in rules.items():
             sl = self._slice[name]
             self._close(d[s0_][..., sl, :], self._sign[rule] * d[face.s1_][..., sl, :])

@@ -17,11 +17,16 @@ import numpy as np
 from time import perf_counter
 import matplotlib.pyplot as plt
 
+# the ideal gas the case assumes, stated in full
+air = {"Air": {"MW": 28.97, "cp0": 1000.0}}
+
+
 np.seterr(all="raise")
 
 
 def simulate():
     config = pg.files.configFile()
+    config["mcPhysics"]["mixture"] = air
     config.validateConfig()
 
     mb = pg.multiBlock.buildSolver(config, 1)
@@ -45,7 +50,8 @@ def simulate():
     xMin = yMin = -6.0
     lamX = lamY = 4.0
     kappa = 0.25
-    x, y = (blk.array["nodes"][..., n] for n in range(2))
+    nodes = blk.hostCopy("nodes")
+    x, y = (nodes[..., n] for n in range(2))
     for E in range(NE):
         for N in range(NN):
             x[E + ng, N + ng, :] = xMin + delX * (
@@ -56,6 +62,7 @@ def simulate():
                 N
                 + Ay * np.sin(2 * np.pi * kappa) * np.sin(lamY * np.pi * E * delX / Lx)
             )
+    blk.store("nodes", nodes)
 
     for face in blk.faces[0:4]:
         face.commRank = 0
@@ -82,29 +89,27 @@ def simulate():
     uInf = MInf * aInf
     C0 = 0.02 * uInf * Rc
 
-    xc = blk.array["cells"][..., 0]
-    yc = blk.array["cells"][..., 1]
+    xc, yc = (blk.hostCopy("cells")[..., n] for n in range(2))
 
     r = np.sqrt(((xc - x0) ** 2 + (yc - y0) ** 2) / Rc**2)
 
+    q = blk.q.get()
     # u
-    blk.array["q"][:, :, :, 1] = uInf - (C0 * (yc - y0) / Rc**2) * np.exp(-(r**2) / 2.0)
+    q[:, :, :, 1] = uInf - (C0 * (yc - y0) / Rc**2) * np.exp(-(r**2) / 2.0)
     # v
-    blk.array["q"][:, :, :, 2] = (C0 * (xc - x0) / Rc**2) * np.exp(-(r**2) / 2.0)
+    q[:, :, :, 2] = (C0 * (xc - x0) / Rc**2) * np.exp(-(r**2) / 2.0)
 
     # p
-    blk.array["q"][:, :, :, 0] = pInf - rhoInf * C0**2 / (2.0 * Rc**2) * np.exp(
-        -(r**2) / 2.0
-    )
+    q[:, :, :, 0] = pInf - rhoInf * C0**2 / (2.0 * Rc**2) * np.exp(-(r**2) / 2.0)
     # T
-    blk.array["q"][:, :, :, 4] = blk.array["q"][:, :, :, 0] / (R * rhoInf)
+    q[:, :, :, 4] = q[:, :, :, 0] / (R * rhoInf)
 
-    blk.updateDeviceView(["q"])
-    mb.eos(blk.cpp, mb.thtrdat.cpp, 0, "prims")
+    blk.q.set(q)
+    mb.eos(blk, mb.thtrdat, 0, "prims")
     pg.consistify(mb)
 
     refX = xc[ng:-ng, int(NN / 2.0), ng] / Rc
-    refV = np.copy(blk.array["q"][ng:-ng, int(NN / 2.0), ng, 2] / uInf)
+    refV = np.copy(q[ng:-ng, int(NN / 2.0), ng, 2] / uInf)
 
     dt = 0.1 * (Lx / NE) / aInf
     tEnd = Lx / uInf
@@ -116,11 +121,9 @@ def simulate():
         mb.step(dt)
     print(f"Time integration took {perf_counter()-ts} seconds.")
 
-    blk.updateHostView(["q"])
+    q = blk.q.get()
     # plot v/Uinf
-    plt.plot(
-        refX, blk.array["q"][ng:-ng, int(NN / 2.0), ng, 2] / uInf, label=f"{NE = }"
-    )
+    plt.plot(refX, q[ng:-ng, int(NN / 2.0), ng, 2] / uInf, label=f"{NE = }")
     plt.plot(refX, refV, "o", label="exact")
     plt.ylim([-0.016, 0.016])
     plt.xlim([-6, 6])
@@ -132,9 +135,9 @@ def simulate():
 
 if __name__ == "__main__":
     try:
-        pg.compute.pgkokkos.initialize()
+        pg.abi.initialize()
         simulate()
-        pg.compute.pgkokkos.finalize()
+        pg.abi.finalize()
 
     except Exception as e:
         import sys

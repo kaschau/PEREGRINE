@@ -31,7 +31,7 @@ class restartBlock(gridBlock):
         assert (
             self.ns > 1
         ), "You are trying to check species sum on a case where ns = 1."
-        summation = np.sum(self.array["q"][:, :, :, 5::], axis=-1)
+        summation = np.sum(self.q[:, :, :, 5::], axis=-1)
         if np.max(summation) > 1.0:
             print(
                 "Warning! Species sum of",
@@ -42,9 +42,9 @@ class restartBlock(gridBlock):
                 self.nblki,
             )
             if normalize:
-                self.array["q"][:, :, :, 5::] = np.where(
+                self.q[:, :, :, 5::] = np.where(
                     summation[:, :, :, np.newaxis] > 1.0,
-                    self.array["q"][:, :, :, 5::] / summation[:, :, :, np.newaxis],
-                    self.array["q"][:, :, :, 5::],
+                    self.q[:, :, :, 5::] / summation[:, :, :, np.newaxis],
+                    self.q[:, :, :, 5::],
                 )
             return False

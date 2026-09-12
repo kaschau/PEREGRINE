@@ -28,9 +28,10 @@ class catalystCoprocessor:
         # Create the grid and data arrays
         for blk in mb:
             ng = blk.ng
+            q, Q = blk.q.get(), blk.Q.get()
             grid = vtk.vtkStructuredGrid()
             grid.SetDimensions(blk.ni, blk.nj, blk.nk)
-            interior = blk.array["nodes"][ng:-ng, ng:-ng, ng:-ng]
+            interior = blk.hostCopy("nodes")[ng:-ng, ng:-ng, ng:-ng]
             coords = np.column_stack(
                 [interior[..., n].ravel(order="F") for n in range(3)]
             )
@@ -39,24 +40,19 @@ class catalystCoprocessor:
             grid.SetPoints(points)
 
             # density arrays
-            self.addArray(
-                grid, "rho", blk.array["Q"][ng:-ng, ng:-ng, ng:-ng, 0].ravel(order="F")
-            )
+            self.addArray(grid, "rho", Q[ng:-ng, ng:-ng, ng:-ng, 0].ravel(order="F"))
 
             # pressure arrays
             self.addArray(
                 grid,
                 "p",
-                blk.array["q"][ng:-ng, ng:-ng, ng:-ng, 0].ravel(order="F"),
+                q[ng:-ng, ng:-ng, ng:-ng, 0].ravel(order="F"),
             )
 
             # velocity array
             array = np.column_stack(
                 tuple(
-                    [
-                        blk.array["q"][ng:-ng, ng:-ng, ng:-ng, i].ravel(order="F")
-                        for i in (1, 2, 3)
-                    ]
+                    [q[ng:-ng, ng:-ng, ng:-ng, i].ravel(order="F") for i in (1, 2, 3)]
                 )
             )
             self.addArray(grid, "Velocity", array)
@@ -65,22 +61,19 @@ class catalystCoprocessor:
             self.addArray(
                 grid,
                 "T",
-                blk.array["q"][ng:-ng, ng:-ng, ng:-ng, 4].ravel(order="F"),
+                q[ng:-ng, ng:-ng, ng:-ng, 4].ravel(order="F"),
             )
 
             for n, var in enumerate(blk.speciesNames[0:-1]):
                 self.addArray(
                     grid,
                     var,
-                    blk.array["q"][ng:-ng, ng:-ng, ng:-ng, 5 + n].ravel(order="F"),
+                    q[ng:-ng, ng:-ng, ng:-ng, 5 + n].ravel(order="F"),
                 )
 
             # Add nth species
             array = numpy_support.numpy_to_vtk(
-                1.0
-                - np.sum(blk.array["q"][ng:-ng, ng:-ng, ng:-ng, 5::], axis=-1).ravel(
-                    order="F"
-                )
+                1.0 - np.sum(q[ng:-ng, ng:-ng, ng:-ng, 5::], axis=-1).ravel(order="F")
             )
             self.addArray(grid, blk.speciesNames[-1], array)
 
@@ -109,48 +102,39 @@ class catalystCoprocessor:
 
         mbds = self.dataDescription.GetInputDescriptionByName("input").GetGrid()
         for blk in mb:
-            blk.updateHostView(["q", "Q"])
+            q, Q = blk.q.get(), blk.Q.get()
             ng = blk.ng
             grid = mbds.GetBlock(blk.nblki)
 
             # density array
-            self.swapArray(
-                grid, "rho", blk.array["Q"][ng:-ng, ng:-ng, ng:-ng, 0].ravel(order="F")
-            )
+            self.swapArray(grid, "rho", Q[ng:-ng, ng:-ng, ng:-ng, 0].ravel(order="F"))
 
             # pressure array
-            self.swapArray(
-                grid, "p", blk.array["q"][ng:-ng, ng:-ng, ng:-ng, 0].ravel(order="F")
-            )
+            self.swapArray(grid, "p", q[ng:-ng, ng:-ng, ng:-ng, 0].ravel(order="F"))
 
             # velocity array
             array = np.column_stack(
                 tuple(
-                    [
-                        blk.array["q"][ng:-ng, ng:-ng, ng:-ng, i].ravel(order="F")
-                        for i in (1, 2, 3)
-                    ]
+                    [q[ng:-ng, ng:-ng, ng:-ng, i].ravel(order="F") for i in (1, 2, 3)]
                 )
             )
             self.addArray(grid, "Velocity", array)
 
             # temperature array
-            self.swapArray(
-                grid, "T", blk.array["q"][ng:-ng, ng:-ng, ng:-ng, 4].ravel(order="F")
-            )
+            self.swapArray(grid, "T", q[ng:-ng, ng:-ng, ng:-ng, 4].ravel(order="F"))
 
             # species arrrays
             for n, var in enumerate(blk.speciesNames[0:-1]):
                 self.swapArray(
                     grid,
                     var,
-                    blk.array["q"][ng:-ng, ng:-ng, ng:-ng, 5 + n].ravel(order="F"),
+                    q[ng:-ng, ng:-ng, ng:-ng, 5 + n].ravel(order="F"),
                 )
 
             # Add nth species
-            array = 1.0 - np.sum(
-                blk.array["q"][ng:-ng, ng:-ng, ng:-ng, 5::], axis=-1
-            ).ravel(order="F")
+            array = 1.0 - np.sum(q[ng:-ng, ng:-ng, ng:-ng, 5::], axis=-1).ravel(
+                order="F"
+            )
             self.swapArray(grid, blk.speciesNames[-1], array.ravel(order="F"))
 
         # Execute coprocessing
