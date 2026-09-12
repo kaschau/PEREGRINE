@@ -5,7 +5,7 @@ import ctypes
 
 import numpy as np
 
-from ..abi import Dims, Range, View, cellRange, lib
+from ..abi import Dims, Range, View, lib
 
 _view, _dims, _range = ctypes.POINTER(View), ctypes.POINTER(Dims), ctypes.POINTER(Range)
 
@@ -15,7 +15,7 @@ def _rec(array):
 
 
 def _dimsOf(blk):
-    return ctypes.byref(Dims(blk.ni, blk.nj, blk.nk, blk.ng))
+    return ctypes.byref(Dims.of(blk))
 
 
 def _doubles(values):
@@ -24,24 +24,27 @@ def _doubles(values):
     )
 
 
-lib.pgAlphaDampingFlux.argtypes = [
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _dims,
-]
+lib.declare(
+    "pgAlphaDampingFlux",
+    [
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _dims,
+    ],
+)
 
 
 def alphaDampingFlux(blk):
@@ -65,20 +68,23 @@ def alphaDampingFlux(blk):
     )
 
 
-lib.pgDiffusiveFlux.argtypes = [
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _dims,
-]
+lib.declare(
+    "pgDiffusiveFlux",
+    [
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _dims,
+    ],
+)
 
 
 def diffusiveFlux(blk):

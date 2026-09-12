@@ -5,7 +5,7 @@ import ctypes
 
 import numpy as np
 
-from ..abi import Dims, Range, View, cellRange, lib
+from ..abi import Dims, Range, View, lib
 
 _view, _dims, _range = ctypes.POINTER(View), ctypes.POINTER(Dims), ctypes.POINTER(Range)
 
@@ -15,7 +15,7 @@ def _rec(array):
 
 
 def _dimsOf(blk):
-    return ctypes.byref(Dims(blk.ni, blk.nj, blk.nk, blk.ng))
+    return ctypes.byref(Dims.of(blk))
 
 
 def _doubles(values):
@@ -24,16 +24,19 @@ def _doubles(values):
     )
 
 
-lib.pgDQzero.argtypes = [_view, _dims]
-lib.pgDq2FD.argtypes = [_view, _view, _view, _dims]
-lib.pgViscousSponge.argtypes = [
-    _view,
-    _view,
-    _dims,
-    ctypes.POINTER(ctypes.c_double),
-    ctypes.POINTER(ctypes.c_double),
-    ctypes.c_double,
-]
+lib.declare("pgDQzero", [_view, _dims])
+lib.declare("pgDq2FD", [_view, _view, _view, _dims])
+lib.declare(
+    "pgViscousSponge",
+    [
+        _view,
+        _view,
+        _dims,
+        ctypes.POINTER(ctypes.c_double),
+        ctypes.POINTER(ctypes.c_double),
+        ctypes.c_double,
+    ],
+)
 
 
 def dQzero(blk):
@@ -55,7 +58,7 @@ def viscousSponge(blk, origin, ending, mult):
     )
 
 
-lib.pgApplyFlux.argtypes = [_view, _view, _view, _view, _view, _dims]
+lib.declare("pgApplyFlux", [_view, _view, _view, _view, _view, _dims])
 
 
 def applyFlux(blk, weight=None):
@@ -69,16 +72,19 @@ def applyFlux(blk, weight=None):
     )
 
 
-lib.pgApplyHybridFlux.argtypes = [
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _dims,
-    ctypes.c_double,
-]
+lib.declare(
+    "pgApplyHybridFlux",
+    [
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _dims,
+        ctypes.c_double,
+    ],
+)
 
 
 def applyHybridFlux(blk, primary):
@@ -94,7 +100,7 @@ def applyHybridFlux(blk, primary):
     )
 
 
-lib.pgApplyDissipationFlux.argtypes = [_view, _view, _view, _view, _view, _dims]
+lib.declare("pgApplyDissipationFlux", [_view, _view, _view, _view, _view, _dims])
 
 
 def applyDissipationFlux(blk, weight=None):
@@ -108,9 +114,8 @@ def applyDissipationFlux(blk, weight=None):
     )
 
 
-lib.pgAllFinite.argtypes = [_view, _dims]
-lib.pgAllFinite.restype = ctypes.c_int
-lib.pgCFLmax.argtypes = [_view] * 6 + [_dims, ctypes.POINTER(ctypes.c_double)]
+lib.declare("pgAllFinite", [_view, _dims], ctypes.c_int)
+lib.declare("pgCFLmax", [_view] * 6 + [_dims, ctypes.POINTER(ctypes.c_double)])
 
 
 def allFinite(blk):
@@ -134,29 +139,39 @@ def CFLmax(blk):
     return cfl
 
 
-lib.pgAxpby.argtypes = [_view, ctypes.c_double, ctypes.c_double, _view]
-lib.pgAxpbypcz.argtypes = [
-    _view,
-    ctypes.c_double,
-    ctypes.c_double,
-    _view,
-    ctypes.c_double,
-    _view,
-]
-lib.pgExtractSendBuffer.argtypes = [
-    _view,
-    _view,
-    ctypes.c_int,
-    ctypes.POINTER(ctypes.c_int),
-    ctypes.c_int,
-] + [ctypes.c_int] * 3
-lib.pgPlaceRecvBuffer.argtypes = [
-    _view,
-    _view,
-    ctypes.c_int,
-    ctypes.POINTER(ctypes.c_int),
-    ctypes.c_int,
-]
+lib.declare("pgAxpby", [_view, ctypes.c_double, ctypes.c_double, _view])
+lib.declare(
+    "pgAxpbypcz",
+    [
+        _view,
+        ctypes.c_double,
+        ctypes.c_double,
+        _view,
+        ctypes.c_double,
+        _view,
+    ],
+)
+lib.declare(
+    "pgExtractSendBuffer",
+    [
+        _view,
+        _view,
+        ctypes.c_int,
+        ctypes.POINTER(ctypes.c_int),
+        ctypes.c_int,
+    ]
+    + [ctypes.c_int] * 3,
+)
+lib.declare(
+    "pgPlaceRecvBuffer",
+    [
+        _view,
+        _view,
+        ctypes.c_int,
+        ctypes.POINTER(ctypes.c_int),
+        ctypes.c_int,
+    ],
+)
 
 
 def AEQB(A, B):

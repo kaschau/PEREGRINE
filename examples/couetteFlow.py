@@ -233,9 +233,9 @@ if __name__ == "__main__":
     try:
         index = "j"
         velo = "+z"
-        pg.abi.initialize()
+        pg.abi.lib.initialize()
         simulate(index, velo)
-        pg.abi.finalize()
+        pg.abi.lib.finalize()
 
     except Exception as e:
         import sys

@@ -6,6 +6,7 @@ from .solver import solver
 from ..integrators import getIntegrator
 from ..mixture import Mixture
 from .. import kernels
+from ..jit import Jit
 from .thtrdat import thtrdat
 
 from ..misc import null
@@ -200,6 +201,9 @@ def buildSolver(config, nblks=None, myblocks=None):
     for, which is also how many blocks it holds."""
     if myblocks is not None:
         nblks = len(myblocks)
+
+    # the kernels this case calls, compiled if the cache has none
+    Jit(config).load()
 
     # merge the time integration class with the multiBlock solver class
     ti = config["timeIntegration"]["integrator"]

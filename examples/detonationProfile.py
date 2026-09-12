@@ -134,9 +134,9 @@ def simulate():
 
 if __name__ == "__main__":
     try:
-        pg.abi.initialize()
+        pg.abi.lib.initialize()
         simulate()
-        pg.abi.finalize()
+        pg.abi.lib.finalize()
 
     except Exception as e:
         import sys

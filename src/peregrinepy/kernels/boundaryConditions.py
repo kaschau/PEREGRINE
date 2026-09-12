@@ -27,7 +27,7 @@ def _call(name, blk, face, stage, tme):
         _rec(face.qBcVals),
         _rec(face.QBcVals),
         _rec(face.periodicRotMatrix),
-        ctypes.byref(Dims(blk.ni, blk.nj, blk.nk, blk.ng)),
+        ctypes.byref(Dims.of(blk)),
         face.nface,
         stage,
         tme,
@@ -36,12 +36,9 @@ def _call(name, blk, face, stage, tme):
 
 def _boundaryCondition(name):
     cname = "pg" + name[0].upper() + name[1:]
-    getattr(lib, cname).argtypes = [_view] * 8 + [
-        _dims,
-        ctypes.c_int,
-        ctypes.c_int,
-        ctypes.c_double,
-    ]
+    lib.declare(
+        cname, [_view] * 8 + [_dims, ctypes.c_int, ctypes.c_int, ctypes.c_double]
+    )
 
     def kernel(blk, face, eos, th, terms, tme):
         _call(cname, blk, face, _terms[terms], tme)

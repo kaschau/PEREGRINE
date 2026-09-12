@@ -5,7 +5,7 @@ import ctypes
 
 import numpy as np
 
-from ..abi import Dims, Range, View, cellRange, lib
+from ..abi import Dims, Range, View, lib
 
 _view, _dims, _range = ctypes.POINTER(View), ctypes.POINTER(Dims), ctypes.POINTER(Range)
 
@@ -15,7 +15,7 @@ def _rec(array):
 
 
 def _dimsOf(blk):
-    return ctypes.byref(Dims(blk.ni, blk.nj, blk.nk, blk.ng))
+    return ctypes.byref(Dims.of(blk))
 
 
 def _doubles(values):
@@ -24,18 +24,21 @@ def _doubles(values):
     )
 
 
-lib.pgKEEP.argtypes = [
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _dims,
-]
+lib.declare(
+    "pgKEEP",
+    [
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _dims,
+    ],
+)
 
 
 def KEEP(blk):
@@ -53,18 +56,21 @@ def KEEP(blk):
     )
 
 
-lib.pgKEEPpe.argtypes = [
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _dims,
-]
+lib.declare(
+    "pgKEEPpe",
+    [
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _dims,
+    ],
+)
 
 
 def KEEPpe(blk):
@@ -82,18 +88,21 @@ def KEEPpe(blk):
     )
 
 
-lib.pgKEPaEC.argtypes = [
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _dims,
-]
+lib.declare(
+    "pgKEPaEC",
+    [
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _dims,
+    ],
+)
 
 
 def KEPaEC(blk):
@@ -111,18 +120,21 @@ def KEPaEC(blk):
     )
 
 
-lib.pgAusmPlusUp.argtypes = [
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _dims,
-]
+lib.declare(
+    "pgAusmPlusUp",
+    [
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _dims,
+    ],
+)
 
 
 def ausmPlusUp(blk):
@@ -140,17 +152,20 @@ def ausmPlusUp(blk):
     )
 
 
-lib.pgCentralDifference.argtypes = [
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _dims,
-]
+lib.declare(
+    "pgCentralDifference",
+    [
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _dims,
+    ],
+)
 
 
 def centralDifference(blk):
@@ -167,18 +182,21 @@ def centralDifference(blk):
     )
 
 
-lib.pgFourthOrderKEEP.argtypes = [
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _dims,
-]
+lib.declare(
+    "pgFourthOrderKEEP",
+    [
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _dims,
+    ],
+)
 
 
 def fourthOrderKEEP(blk):
@@ -196,18 +214,21 @@ def fourthOrderKEEP(blk):
     )
 
 
-lib.pgHllc.argtypes = [
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _dims,
-]
+lib.declare(
+    "pgHllc",
+    [
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _dims,
+    ],
+)
 
 
 def hllc(blk):
@@ -225,18 +246,21 @@ def hllc(blk):
     )
 
 
-lib.pgMuscl2hllc.argtypes = [
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _dims,
-]
+lib.declare(
+    "pgMuscl2hllc",
+    [
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _dims,
+    ],
+)
 
 
 def muscl2hllc(blk):
@@ -254,18 +278,21 @@ def muscl2hllc(blk):
     )
 
 
-lib.pgMuscl2rusanov.argtypes = [
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _dims,
-]
+lib.declare(
+    "pgMuscl2rusanov",
+    [
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _dims,
+    ],
+)
 
 
 def muscl2rusanov(blk):
@@ -283,18 +310,21 @@ def muscl2rusanov(blk):
     )
 
 
-lib.pgMyKEEP.argtypes = [
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _dims,
-]
+lib.declare(
+    "pgMyKEEP",
+    [
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _dims,
+    ],
+)
 
 
 def myKEEP(blk):
@@ -312,18 +342,21 @@ def myKEEP(blk):
     )
 
 
-lib.pgRusanov.argtypes = [
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _dims,
-]
+lib.declare(
+    "pgRusanov",
+    [
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _dims,
+    ],
+)
 
 
 def rusanov(blk):
@@ -341,19 +374,22 @@ def rusanov(blk):
     )
 
 
-lib.pgScalarDissipation.argtypes = [
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _dims,
-]
+lib.declare(
+    "pgScalarDissipation",
+    [
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _dims,
+    ],
+)
 
 
 def scalarDissipation(blk):

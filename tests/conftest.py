@@ -4,5 +4,5 @@ import pytest
 
 @pytest.fixture(scope="session")
 def my_setup(request):
-    abi.initialize()
-    request.addfinalizer(abi.finalize)
+    abi.lib.initialize()
+    request.addfinalizer(abi.lib.finalize)

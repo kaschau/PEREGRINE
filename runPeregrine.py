@@ -103,9 +103,9 @@ def simulate(configFilePath):
 if __name__ == "__main__":
     configFilePath = sys.argv[1]
     try:
-        pg.abi.initialize()
+        pg.abi.lib.initialize()
         simulate(configFilePath)
-        pg.abi.finalize()
+        pg.abi.lib.finalize()
 
     except Exception as e:
         import sys

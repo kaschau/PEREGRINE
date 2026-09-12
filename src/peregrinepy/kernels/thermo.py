@@ -2,21 +2,27 @@
 
 import ctypes
 
-from ..abi import Range, View, cellRange, lib
+from ..abi import Range, View, lib
 
 _view = ctypes.POINTER(View)
 _eosArgs = [_view] * 4
-lib.pgCpg.argtypes = _eosArgs + [
-    _view,
-    ctypes.c_double,
-    ctypes.c_int,
-    ctypes.POINTER(Range),
-]
-lib.pgTpg.argtypes = (
-    _eosArgs + [_view] * 3 + [ctypes.c_double, ctypes.c_int, ctypes.POINTER(Range)]
+lib.declare(
+    "pgCpg",
+    _eosArgs
+    + [
+        _view,
+        ctypes.c_double,
+        ctypes.c_int,
+        ctypes.POINTER(Range),
+    ],
 )
-lib.pgRealGas.argtypes = (
-    _eosArgs + [_view] * 6 + [ctypes.c_double, ctypes.c_int, ctypes.POINTER(Range)]
+lib.declare(
+    "pgTpg",
+    (_eosArgs + [_view] * 3 + [ctypes.c_double, ctypes.c_int, ctypes.POINTER(Range)]),
+)
+lib.declare(
+    "pgRealGas",
+    (_eosArgs + [_view] * 6 + [ctypes.c_double, ctypes.c_int, ctypes.POINTER(Range)]),
 )
 
 
@@ -30,7 +36,7 @@ def cpg(blk, th, nface, given):
         *_views(blk, th, ["cp0"]),
         th.Ru,
         given == "prims",
-        ctypes.byref(cellRange(blk, nface)),
+        ctypes.byref(Range.of(blk, nface)),
     )
 
 
@@ -39,7 +45,7 @@ def tpg(blk, th, nface, given):
         *_views(blk, th, ["cpPoly", "hPoly", "hRef"]),
         th.Ru,
         given == "prims",
-        ctypes.byref(cellRange(blk, nface)),
+        ctypes.byref(Range.of(blk, nface)),
     )
 
 
@@ -48,5 +54,5 @@ def realGas(blk, th, nface, given):
         *_views(blk, th, ["cpPoly", "hPoly", "hRef", "Tcrit", "pcrit", "acentric"]),
         th.Ru,
         given == "prims",
-        ctypes.byref(cellRange(blk, nface)),
+        ctypes.byref(Range.of(blk, nface)),
     )

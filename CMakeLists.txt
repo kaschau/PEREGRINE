@@ -50,41 +50,37 @@ endif()
 #
 # endif()
 ## Add warnings
-set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall" CACHE STRING "" FORCE )
+add_compile_options(-Wall)
 ###########################################################################
 #              BUILD PEREGRINE COMPUTE LIBRARY                            #
 ###########################################################################
 project(compute LANGUAGES C CXX)
+find_package(Python3 REQUIRED COMPONENTS Interpreter)
 
 #Turn off lto junk
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION OFF )
 
-#Add all da files
-file( GLOB compute_src ${PROJECT_SOURCE_DIR}/src/compute/*.cpp
-                       ${PROJECT_SOURCE_DIR}/src/compute/advFlux/*.cpp
-                       ${PROJECT_SOURCE_DIR}/src/compute/timeIntegration/*.cpp
-                       ${PROJECT_SOURCE_DIR}/src/compute/boundaryConditions/*.cpp
-                       ${PROJECT_SOURCE_DIR}/src/compute/diffFlux/*.cpp
-                       ${PROJECT_SOURCE_DIR}/src/compute/thermo/*.cpp
-                       ${PROJECT_SOURCE_DIR}/src/compute/subgrid/*.cpp
-                       ${PROJECT_SOURCE_DIR}/src/compute/switches/*.cpp
-                       ${PROJECT_SOURCE_DIR}/src/compute/transport/*.cpp
-                       ${PROJECT_SOURCE_DIR}/src/compute/utils/*.cpp)
-
-include_directories(${PROJECT_SOURCE_DIR}/src/compute)
-
-# One shared library of extern "C" kernels; peregrinepy loads it with ctypes
-add_library(compute SHARED ${compute_src})
-set_target_properties(compute PROPERTIES
-                      OUTPUT_NAME compute
-                      PREFIX "lib"
+# The runtime alone is built here: Kokkos and the memory the kernels run on.
+# Every kernel is compiled on demand by peregrinepy.jit, with the compiler and
+# flags this configure settled on.
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+add_library(pgruntime SHARED ${PROJECT_SOURCE_DIR}/src/compute/runtime.cpp)
+target_include_directories(pgruntime PUBLIC ${PROJECT_SOURCE_DIR}/src/compute)
+set_target_properties(pgruntime PROPERTIES
                       CXX_VISIBILITY_PRESET hidden
                       VISIBILITY_INLINES_HIDDEN ON)
 
-#Link to Kokkos
+# every kernel library resolves Kokkos out of the runtime, so all of it is here
 Find_Package(Kokkos REQUIRED)
-target_link_libraries(compute PUBLIC Kokkos::kokkos)
-set_property(TARGET compute PROPERTY CXX_STANDARD 17)
+target_link_libraries(pgruntime PUBLIC
+    "$<LINK_LIBRARY:WHOLE_ARCHIVE,Kokkos::kokkoscore,Kokkos::kokkoscontainers,Kokkos::kokkossimd>")
+set_property(TARGET pgruntime PROPERTY CXX_STANDARD 17)
 
-#Set the install path
-install(TARGETS compute LIBRARY DESTINATION ${PROJECT_SOURCE_DIR}/src/peregrinepy/)
+set(package_dir ${PROJECT_SOURCE_DIR}/src/peregrinepy)
+install(TARGETS pgruntime LIBRARY DESTINATION ${package_dir})
+# how runtime.cpp was compiled is how every kernel will be
+install(CODE "execute_process(COMMAND ${Python3_EXECUTABLE} ${package_dir}/toolchain.py
+                                      ${CMAKE_BINARY_DIR}/compile_commands.json
+                                      ${CMAKE_SHARED_LIBRARY_SUFFIX}
+                                      ${package_dir}/toolchain.json
+                              COMMAND_ERROR_IS_FATAL ANY)")

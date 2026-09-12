@@ -5,7 +5,7 @@ import ctypes
 
 import numpy as np
 
-from ..abi import Dims, Range, View, cellRange, lib
+from ..abi import Dims, Range, View, lib
 
 _view, _dims, _range = ctypes.POINTER(View), ctypes.POINTER(Dims), ctypes.POINTER(Range)
 
@@ -15,7 +15,7 @@ def _rec(array):
 
 
 def _dimsOf(blk):
-    return ctypes.byref(Dims(blk.ni, blk.nj, blk.nk, blk.ng))
+    return ctypes.byref(Dims.of(blk))
 
 
 def _doubles(values):
@@ -24,16 +24,19 @@ def _doubles(values):
     )
 
 
-lib.pgKineticTheory.argtypes = [
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    ctypes.c_double,
-    _range,
-]
+lib.declare(
+    "pgKineticTheory",
+    [
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        ctypes.c_double,
+        _range,
+    ],
+)
 
 
 def kineticTheory(blk, th, nface):
@@ -45,22 +48,25 @@ def kineticTheory(blk, th, nface):
         _rec(th.kappaPoly),
         _rec(th.muPoly),
         th.Ru,
-        ctypes.byref(cellRange(blk, nface)),
+        ctypes.byref(Range.of(blk, nface)),
     )
 
 
-lib.pgKineticTheoryUnityLewis.argtypes = [
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    ctypes.c_double,
-    _range,
-]
+lib.declare(
+    "pgKineticTheoryUnityLewis",
+    [
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        ctypes.c_double,
+        _range,
+    ],
+)
 
 
 def kineticTheoryUnityLewis(blk, th, nface):
@@ -74,26 +80,29 @@ def kineticTheoryUnityLewis(blk, th, nface):
         _rec(th.lewis),
         _rec(th.muPoly),
         th.Ru,
-        ctypes.byref(cellRange(blk, nface)),
+        ctypes.byref(Range.of(blk, nface)),
     )
 
 
-lib.pgChungDenseGasUnityLewis.argtypes = [
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    ctypes.c_double,
-    _range,
-]
+lib.declare(
+    "pgChungDenseGasUnityLewis",
+    [
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        ctypes.c_double,
+        _range,
+    ],
+)
 
 
 def chungDenseGasUnityLewis(blk, th, nface):
@@ -111,22 +120,25 @@ def chungDenseGasUnityLewis(blk, th, nface):
         _rec(th.lewis),
         _rec(th.redDipole),
         th.Ru,
-        ctypes.byref(cellRange(blk, nface)),
+        ctypes.byref(Range.of(blk, nface)),
     )
 
 
-lib.pgConstantProps.argtypes = [
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    _view,
-    ctypes.c_double,
-    _range,
-]
+lib.declare(
+    "pgConstantProps",
+    [
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        _view,
+        ctypes.c_double,
+        _range,
+    ],
+)
 
 
 def constantProps(blk, th, nface):
@@ -140,5 +152,5 @@ def constantProps(blk, th, nface):
         _rec(th.lewis),
         _rec(th.mu0),
         th.Ru,
-        ctypes.byref(cellRange(blk, nface)),
+        ctypes.byref(Range.of(blk, nface)),
     )
