@@ -1,5 +1,5 @@
 import numpy as np
-from mpi4py import MPI  # noqa: F401
+from mpi4py import MPI
 
 from ..mpiComm.mpiUtils import getCommRankSize
 from .explicit import BaseIntegrator
@@ -27,83 +27,71 @@ class dualTime(BaseIntegrator):
         f"timeIntegration/{k}.cpp"
         for k in ("dQdt", "localDtau", "dTrk3s1", "dTrk3s2", "dTrk3s3", "invertDQ")
     ) + ("utils/axpby.cpp", "utils/residual.cpp")
+    # pseudo time steps per physical step
+    subIterations = 20
 
-    def _stage(self, stage, dt):
+    def __init__(self, table, thtrdat, graphs, config):
+        super().__init__(table, thtrdat, graphs, config)
+        self.viscous = config["RHS"]["diffusion"]
+        self.ne = 5 + thtrdat.ns - 1
+
+    def _stage(self, stage, tme, dt):
         """One pseudo time rk3 stage: the RHS at its time, the physical time
         derivative, the preconditioned update."""
-        viscous = self.mb.config["RHS"]["diffusion"]
-        self.mb.RHS()
+        self.rhs.run(tme)
         self.dQdt(dt=dt)
-        self.invertDQ(dt=dt, viscous=viscous)
+        self.invertDQ(dt=dt, viscous=self.viscous)
         stage()
-        self.mb.consistifyFromPrims()
+        self.consistifyFromPrims.run(tme)
 
     def _copy(self, dst, src):
-        table = self.mb.table
-        self.axpby(A=table.views(dst), a=0.0, b=1.0, B=table.views(src))
+        views = self.table.views
+        self.axpby(A=views(dst), a=0.0, b=1.0, B=views(src))
 
-    def step(self, dt):
+    def step(self, tme, dt, report=False):
+        """Qn and Qnm1 are the two states before :tme:; the pseudo time loop
+        converges the state at :tme: + :dt:, then the three shift."""
         comm, rank, size = getCommRankSize()
-        mb = self.mb
+        for n in range(self.subIterations):
+            self.localDtau(viscous=self.viscous)
+            self._stage(self.dTrk3s1, tme, dt)
+            self._stage(self.dTrk3s2, tme + dt, dt)
+            self._stage(self.dTrk3s3, tme + dt / 2.0, dt)
 
-        ############################################################################
-        # Inner, pseudo time loop
-        ############################################################################
-
-        # At this point we assume that Qn and Qnm1 are appropriately populated
-        # Inner time loop integrating in pseudo time
-        for nrtDT in range(20):
-            # Determine dtau
-            self.localDtau(viscous=mb.config["RHS"]["diffusion"])
-
-            ##############################################
-            # In pseudo time, we integrate primatives
-            # so b.Q0 will actually represent primative
-            # variable set
-            ##############################################
-            mb.titme = mb.tme
-            self._stage(self.dTrk3s1, dt)
-            mb.titme = mb.tme + dt
-            self._stage(self.dTrk3s2, dt)
-            mb.titme = mb.tme + dt / 2.0
-            self._stage(self.dTrk3s3, dt)
-
-            # Compute residual
-            if mb.nrt % mb.config["io"]["niterPrint"] == 0:
-                ne = mb.blocks[0].ne
-                resid = np.zeros((2, ne))
+            if report:
+                resid = np.zeros((2, self.ne))
                 self.residual(rMax=resid[0], rSum=resid[1])
                 comm.Allreduce(MPI.IN_PLACE, resid[0, :], op=MPI.MAX)
                 comm.Allreduce(MPI.IN_PLACE, resid[1, :], op=MPI.SUM)
                 resid[1, :] = np.sqrt(resid[1, :])
                 if rank == 0:
-                    printResidual(resid[1, :], nrtDT, ne)
+                    printResidual(resid[1, :], n, self.ne)
 
-        ############################################################################
-        # End inner, pseudo time loop
-        ############################################################################
-
-        # After iterating in pseudo time, shift solution arrays
         self._copy("Qnm1", "Qn")
         self._copy("Qn", "Q")
-        mb.advance(dt)
 
     def initialize(self):
-        """Qn and Qnm1 from the results directory, or the current state."""
-        mb = self.mb
-        if mb.nrt != 0:
-            path = mb.config["io"]["resultsDir"]
-            for blk in mb.blocks:
-                ng = blk.ng
-                fileName = f"{path}/Qnm1.{mb.nrt:08d}.{blk.nblki:06d}.npy"
-                try:
-                    with open(fileName, "rb") as f:
-                        Qnm1 = blk.Qnm1.get()
-                        Qnm1[ng:-ng, ng:-ng, ng:-ng, :] = np.load(f)
-                        blk.Qnm1.set(Qnm1)
-                except FileNotFoundError:
-                    blk.Qnm1.copyFrom(blk.Q)
-            self._copy("Qn", "Q")
-        else:
-            self._copy("Qn", "Q")
-            self._copy("Qnm1", "Q")
+        """A fresh case begins at rest in time: both earlier states are this one."""
+        self._copy("Qn", "Q")
+        self._copy("Qnm1", "Q")
+
+    def restore(self, blocks, nrt, path):
+        """Qnm1 as the result was written with, or this state when the result
+        carries none; Qn is this state."""
+        for blk in blocks:
+            ng = blk.ng
+            try:
+                with open(f"{path}/Qnm1.{nrt:08d}.{blk.nblki:06d}.npy", "rb") as f:
+                    Qnm1 = blk.Qnm1.get()
+                    Qnm1[ng:-ng, ng:-ng, ng:-ng, :] = np.load(f)
+                    blk.Qnm1.set(Qnm1)
+            except FileNotFoundError:
+                blk.Qnm1.copyFrom(blk.Q)
+        self._copy("Qn", "Q")
+
+    def writeState(self, blocks, nrt, path):
+        """Qnm1 beside the result, so a restart from it steps as this run did."""
+        for blk in blocks:
+            ng = blk.ng
+            with open(f"{path}/Qnm1.{nrt:08d}.{blk.nblki:06d}.npy", "wb") as f:
+                np.save(f, blk.Qnm1.get()[ng:-ng, ng:-ng, ng:-ng, :])

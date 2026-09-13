@@ -84,14 +84,6 @@ class topologyFace:
             plane = np.moveaxis(plane, (0, 1), (1, 0))
         return plane
 
-    def alignToThem(self, plane):
-        """A face plane of ours, laid out the way our neighbor reads it. The
-        inverse of alignToMe, so the transpose goes on before the flips do."""
-        transposed, flipped = self.neighborPlaneAlignment
-        if transposed:
-            plane = np.moveaxis(plane, (0, 1), (1, 0))
-        return np.flip(plane, flipped) if flipped else plane
-
     def plane(self, index):
         """The index-plane of a block array normal to this face. Which plane a
         face number picks out is topology; whether there is an array to pick it
@@ -163,6 +155,11 @@ class topologyFace:
     def amILow(self):
         """whether this face is at the low end of its axis"""
         return self.nface % 2 == 1
+
+    @property
+    def direction(self):
+        """the letter of the axis this face bounds, i, j or k"""
+        return "ijk"[self.myAxis]
 
     @property
     def neighborNface(self):

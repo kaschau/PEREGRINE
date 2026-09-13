@@ -66,6 +66,17 @@ class HaloMixin:
         w = hits / (hits + 1.0)
         return np.where(hits == 0.0, extrapolated, w * cur + (1.0 - w) * extrapolated)
 
+    def fillHaloWithNearest(self, name):
+        """Every halo plane of an array a copy of the nearest interior one:
+        the starting point for a state read in over the interior alone."""
+        a = self.hostCopy(name)
+        ng = self.ng
+        for axis in range(3):
+            planes = np.moveaxis(a, axis, 0)
+            planes[:ng] = planes[ng]
+            planes[-ng:] = planes[-ng - 1]
+        self.store(name, a)
+
     def generateHalo(self):
         ng = self.ng
         extents = (self.ni, self.nj, self.nk)

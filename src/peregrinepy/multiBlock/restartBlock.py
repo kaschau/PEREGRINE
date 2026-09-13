@@ -1,4 +1,5 @@
 import numpy as np
+
 from .gridBlock import gridBlock
 
 
@@ -21,9 +22,6 @@ class restartBlock(gridBlock):
 
         # Primative variables
         self.declare("q", kind="cell", components=5 + self.ns - 1)
-
-    def fillHaloWithNearest(self, name):
-        """No halo to fill."""
 
     def verifySpeciesSum(self, normalize=False):
         """Function to verify that the sum of species in any cell is not greater than unity"""

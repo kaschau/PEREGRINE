@@ -20,6 +20,10 @@ class topologyBlock:
 
         self.faces = [self._newFace(nface) for nface in range(1, 7)]
 
+    @property
+    def nCells(self):
+        return (self.ni - 1) * (self.nj - 1) * (self.nk - 1)
+
     def setExtents(self, ni, nj, nk):
         """This block is this big. A block is built before anyone knows how
         big it is -- a mesher works it out, a reader finds it in the file --

@@ -1,34 +1,24 @@
-from peregrinepy.misc import null
-
-
 class coprocessor:
+    """Whatever the config asks for alongside the run, each called every step
+    and told when the run is over."""
+
     def __init__(self, mb):
-        config = mb.config
-        # Trace points
-        if config["coprocess"]["trace"]:
-            from .tracePointCoprocesor import tracePointsCoprocessor
+        config = mb.config["coprocess"]
+        self.parts = []
+        if config["trace"]:
+            from .tracePointCoprocessor import tracePointsCoprocessor
 
-            self.trace = tracePointsCoprocessor(mb)
-        else:
-            self.trace = null
+            self.parts.append(tracePointsCoprocessor(mb))
+        if config["catalyst"]:
+            from .catalystCoprocessor import catalystCoprocessor
 
-        # ParaView/Catalyst coprocessing
-        if config["coprocess"]["catalyst"]:
-            try:
-                from .catalystCoprocessor import catalystCoprocessor
-
-                self.catalyst = catalystCoprocessor(mb)
-            except ImportError:
-                raise ImportError("Could not import the coprocessing module.")
-        else:
-            self.catalyst = null
+            self.parts.append(catalystCoprocessor(mb))
 
     def __call__(self, mb):
-        self.trace(mb)
-        self.catalyst(mb)
+        for part in self.parts:
+            part(mb)
 
     def finalize(self):
-        try:
-            self.catalyst.finalize()
-        except AttributeError:
-            pass
+        for part in self.parts:
+            if hasattr(part, "finalize"):
+                part.finalize()

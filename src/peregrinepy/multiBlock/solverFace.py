@@ -1,12 +1,12 @@
 import numpy as np
 
 from .. import bcs
-from ..abi import DeviceArray
+from ..abi import DeviceStorageMixin
 from .gridFace import gridFace
 from .topologyFace import topologyFace
 
 
-class solverFace(gridFace):
+class solverFace(gridFace, DeviceStorageMixin):
     # what a face trades with its neighbor, and the shape each trade takes
     commVars = {
         "nodes": "node",
@@ -106,21 +106,9 @@ class solverFace(gridFace):
         }
 
     def allocate(self, *names, **values):
-        """A solver face's arrays live where the kernels run; one given by
-        name is written as it is made."""
-        for name in names:
-            setattr(self, name, DeviceArray(self.shapeOf(name)))
-        for name, array in values.items():
-            setattr(self, name, DeviceArray(self.shapeOf(name)))
-            getattr(self, name).set(array)
+        super().allocate(*names, **values)
         # a new array is a new record for the hooks that run over this face
         self.blk.mb.facesChanged = True
-
-    def hostCopy(self, name):
-        return getattr(self, name).get()
-
-    def store(self, name, values):
-        getattr(self, name).set(values)
 
     def setExtents(self, ni, nj, nk, ne):
         """The block this face bounds is this big, so this face's arrays can
@@ -147,18 +135,14 @@ class solverFace(gridFace):
             self.blockExtents is not None
         ), "Must get grid before setting block communications."
 
-        self._setOrient()
+        # how a plane of ours is laid out in our neighbor's frame: which of
+        # our two face axes it reads first, and which way round it reads each
+        self._transposed, self._flipped = self.neighborPlaneAlignment
         self.allocate(*self.commArrays)
 
         # Unique tags
         self.tagR = int(nblki * 6 + self.nface)
         self.tagS = int(self.neighbor * 6 + self.neighborNface)
-
-    def orient(self, plane):
-        """A plane of ours, laid out the way our neighbor reads it."""
-        if self._transposed:
-            plane = np.moveaxis(plane, (0, 1), (1, 0))
-        return np.flip(plane, self._flipped) if self._flipped else plane
 
     def tradeLayers(self, var):
         """How many planes of the block this face trades for an array, and
@@ -170,11 +154,6 @@ class solverFace(gridFace):
         if kind == "state":
             return self.ng, 0
         return 1, 0
-
-    def _setOrient(self):
-        """How a plane of ours is laid out in our neighbor's frame: which of
-        our two face axes it reads first, and which way round it reads each."""
-        self._transposed, self._flipped = self.neighborPlaneAlignment
 
     ###########################################################################
     # What a solver face keeps on the device

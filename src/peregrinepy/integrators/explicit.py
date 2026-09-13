@@ -16,7 +16,7 @@ def ssp(wQ0, wQ, wdQ, storeQ0=False):
     state it began from, since later stages combine with it."""
 
     def stage(ti, dt):
-        views = ti.mb.table.views
+        views = ti.table.views
         if storeQ0:
             ti.axpby(A=views("Q0"), a=0.0, b=1.0, B=views("Q"))
         if wQ0 == 0.0:
@@ -30,9 +30,10 @@ def ssp(wQ0, wQ, wdQ, storeQ0=False):
 
 
 class BaseIntegrator:
-    """How a solver steps in time. It is built with the solver it steps, and
-    the kernels its stages call are the solver's, registered under their own
-    names."""
+    """How a case steps in time: from the state at one time to the state a
+    step later, through the case's graphs and the kernels of its own stages.
+    It is built with what it steps -- the block table, the species data, the
+    graphs -- and told the time it steps from."""
 
     integratorName = None
     stepType = None
@@ -41,18 +42,26 @@ class BaseIntegrator:
     # the kernels the stages call
     sources = ()
 
-    def __init__(self, mb):
-        self.mb = mb
-        self.kernels = [
-            BoundKernel(mb.table, mb.thtrdat, source) for source in self.sources
-        ]
+    def __init__(self, table, thtrdat, graphs, config):
+        self.table = table
+        self.rhs = graphs["rhs"]
+        self.consistify = graphs["consistify"]
+        self.consistifyFromPrims = graphs["consistifyFromPrims"]
+        self.kernels = [BoundKernel(table, thtrdat, source) for source in self.sources]
         for kernel in self.kernels:
             setattr(self, kernel.__name__, kernel)
 
     def initialize(self):
-        """What a run does before its first step; nothing, for most."""
+        """What a fresh case does before its first step; nothing, for most."""
 
-    def step(self, dt):
+    def restore(self, blocks, nrt, path):
+        """What a restarted case reads back beyond its state; nothing, for most."""
+
+    def writeState(self, blocks, nrt, path):
+        """What a result holds beyond the state; nothing, for most."""
+
+    def step(self, tme, dt, report=False):
+        """The state at :tme: to the state at :tme: + :dt:."""
         raise NotImplementedError
 
 
@@ -67,17 +76,11 @@ class BaseExplicit(BaseIntegrator):
     stages = ()
     sources = ("utils/axpby.cpp", "utils/axpbypcz.cpp")
 
-    def runStages(self, dt):
-        mb = self.mb
+    def step(self, tme, dt, report=False):
         for frac, stage in self.stages:
-            mb.titme = mb.tme + frac * dt
-            mb.RHS()
+            self.rhs.run(tme + frac * dt)
             stage(self, dt)
-            mb.consistify()
-
-    def step(self, dt):
-        self.runStages(dt)
-        self.mb.advance(dt)
+            self.consistify.run(tme + frac * dt)
 
 
 class rk1(BaseExplicit):

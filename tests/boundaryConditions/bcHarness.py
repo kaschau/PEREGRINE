@@ -71,10 +71,9 @@ class BaseBC:
     def normals(self, face):
         """the unit normal of the face plane, and the sign that makes it point
         out of the block (faces 1, 3, 5 store the inward normal)"""
-        d = {1: "i", 2: "i", 3: "j", 4: "j", 5: "k", 6: "k"}[face.nface]
-        _, normals = self.blk.faceNormals(d)
+        _, normals = self.blk.faceNormals(face.direction)
         n = tuple(face.boundary(c) for c in normals)
-        return n, (-1.0 if face.nface in (1, 3, 5) else 1.0)
+        return n, (-1.0 if face.amILow else 1.0)
 
     def _bcVals(self, face, name):
         if name.startswith("Y") and name[1:].isdigit():

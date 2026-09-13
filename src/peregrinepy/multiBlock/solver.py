@@ -12,7 +12,6 @@ from ..mpiComm import Communicator
 from ..mpiComm.mpiUtils import getCommRankSize
 from ..table import Table
 from ..files.configFile import pgConfigError
-from ..writers.writeDualTimeQnm1 import writeDualTimeQnm1
 from .thtrdat import thtrdat
 
 
@@ -48,9 +47,6 @@ class solver(restart):
             ),
             "rhs": Graph.rhs(config),
         }
-        # time integrator time
-        self.titme = 0.0
-
         # what every kernel runs with: the species data, the block table each
         # block fills in as it allocates, and the jit; the last two learn the
         # halo depth once every kernel is known
@@ -63,7 +59,9 @@ class solver(restart):
         self.communicator = Communicator(self.table, self.thtrdat)
         for graph in self.graphs.values():
             graph.bind(self.table, self.thtrdat, self.communicator)
-        self.integrator = getIntegrator(config["timeIntegration"]["integrator"])(self)
+        self.integrator = getIntegrator(config["timeIntegration"]["integrator"])(
+            self.table, self.thtrdat, self.graphs, config
+        )
         checks = [
             BoundKernel(self.table, self.thtrdat, f"utils/{name}.cpp")
             for name in ("allFinite", "CFLmax")
@@ -91,6 +89,9 @@ class solver(restart):
             self._setUniformState()
         else:
             state.fill(self)
+            # a result holds the interior; the halos start as the nearest cell
+            for blk in self.blocks:
+                blk.fillHaloWithNearest("q")
         self.consistifyFromPrims()
 
     ###########################################################################
@@ -141,7 +142,7 @@ class solver(restart):
             table = Table.ofFaces(faces, hook) if faces else None
         if table is None:
             return
-        node.run(self.titme, table)
+        node.run(self.tme, table)
         # a hook that sets primitives leaves the faces' state to follow
         if hook in ("euler", "postEos"):
             self.stateFromPrims(table=table)
@@ -185,24 +186,19 @@ class solver(restart):
 
     def consistify(self):
         self._connectBcs()
-        self.graphs["consistify"].run(self.titme)
+        self.graphs["consistify"].run(self.tme)
 
     def consistifyFromPrims(self):
         self._connectBcs()
-        self.graphs["consistifyFromPrims"].run(self.titme)
-
-    def RHS(self):
-        self._connectBcs()
-        self.graphs["rhs"].run(self.titme)
+        self.graphs["consistifyFromPrims"].run(self.tme)
 
     def step(self, dt):
-        self.integrator.step(dt)
-
-    def advance(self, dt):
-        """The step is taken: the clock and the count move on."""
+        """One step of the integrator, and the clock and the count move on."""
+        self._connectBcs()
+        report = self.nrt % self.config["io"]["niterPrint"] == 0
+        self.integrator.step(self.tme, dt, report)
         self.nrt += 1
         self.tme += dt
-        self.titme = self.tme
 
     def run(self):
         """The case, start to finish: every step the config asks for, with
@@ -222,7 +218,10 @@ class solver(restart):
             precision="single",
         )
         coproc = coprocessor(self)
-        self.integrator.initialize()
+        if self.nrt == 0:
+            self.integrator.initialize()
+        else:
+            self.integrator.restore(self.blocks, self.nrt, io["resultsDir"])
 
         niterOut, niterPrint = io["niterOut"], io["niterPrint"]
         checkNan = config["simulation"]["checkNan"]
@@ -245,8 +244,7 @@ class solver(restart):
                 if rank == 0:
                     print("Saving results.\n")
                 writer.write(self)
-                if self.integrator.stepType == "dualTime":
-                    writeDualTimeQnm1(self, path=io["resultsDir"])
+                self.integrator.writeState(self.blocks, self.nrt, io["resultsDir"])
 
             if checkNan and self.nrt % checkNan == 0 and self.checkForNan() > 0:
                 self.nrt = 99999999
@@ -264,12 +262,14 @@ class solver(restart):
     # What the ranks agree on
     ###########################################################################
     @property
+    def myCells(self):
+        """This rank's cell count, as the one-entry array the reductions take."""
+        return np.array([sum(b.nCells for b in self.blocks)], dtype=np.int32)
+
+    @property
     def numCells(self):
         comm, rank, size = getCommRankSize()
-        n = np.array(
-            [sum((b.ni - 1) * (b.nj - 1) * (b.nk - 1) for b in self.blocks)],
-            dtype=np.int32,
-        )
+        n = self.myCells
         comm.Allreduce(MPI.IN_PLACE, n, op=MPI.SUM)
         return n[0]
 
@@ -278,10 +278,7 @@ class solver(restart):
         """How far the slowest rank's cell count is from the mean, in percent,
         and which rank it is; None on the other ranks."""
         comm, rank, size = getCommRankSize()
-        mine = np.array(
-            [sum((b.ni - 1) * (b.nj - 1) * (b.nk - 1) for b in self.blocks)],
-            dtype=np.int32,
-        )
+        mine = self.myCells
         recv = np.empty(size, dtype=np.int32) if rank == 0 else None
         comm.Gather(mine, recv, root=0)
         if rank != 0:

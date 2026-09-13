@@ -41,10 +41,9 @@ class ConstantMassFluxSubsonicInlet(InletBC):
     def _constants(self, valueDict, qBcVals, QBcVals):
         super()._constants(valueDict, qBcVals, QBcVals)
         face, blk = self.face, self.face.blk
-        d = {1: "i", 2: "i", 3: "j", 4: "j", 5: "k", 6: "k"}[face.nface]
         # the normal has to point into the block
-        sign = 1.0 if face.nface in (1, 3, 5) else -1.0
+        sign = 1.0 if face.amILow else -1.0
         mDot = valueDict["mDotPerUnitArea"]
-        _, n = blk.faceNormals(d)
+        _, n = blk.faceNormals(face.direction)
         for m in range(3):
             QBcVals[:, :, m + 1] = sign * face.boundary(n[m]) * mDot

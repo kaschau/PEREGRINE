@@ -56,7 +56,6 @@ class RestartReader:
                         dest[blk.interior + tuple([i])] = resS[var][blk.baseCellSlab].T
 
                 blk.store("q", dest)
-                blk.fillHaloWithNearest("q")
                 bar.step(f"Reading in block {blk.nblki}")
 
         mb.nrt = self.nrt

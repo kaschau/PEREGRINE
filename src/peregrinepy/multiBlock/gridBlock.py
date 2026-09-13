@@ -1,10 +1,12 @@
 import numpy as np
+
+from ..abi import HostStorageMixin
 from .gridFace import gridFace
 from .metricsMixin import MetricsMixin
 from .topologyBlock import topologyBlock
 
 
-class gridBlock(topologyBlock, MetricsMixin):
+class gridBlock(topologyBlock, MetricsMixin, HostStorageMixin):
     """
     gridBlock object holds all the information that a grid
     would need to know about a block.
@@ -43,15 +45,6 @@ class gridBlock(topologyBlock, MetricsMixin):
     ###########################################################################
     # The arrays a block has, and how big they are
     ###########################################################################
-    def declare(self, *names, kind, components=None):
-        """Say an array exists and what shape it will take, before this block
-        knows its extents. Nothing else may be put in array."""
-        if isinstance(components, int):
-            components = (components,)
-        for name in names:
-            self.declared[name] = (kind, components)
-            setattr(self, name, None)
-
     @property
     def shapes(self):
         """What each kind of array is shaped, for this block's extents."""
@@ -63,10 +56,6 @@ class gridBlock(topologyBlock, MetricsMixin):
             "jface": (ni + 2 * ng - 1, nj + 2 * ng, nk + 2 * ng - 1),
             "kface": (ni + 2 * ng - 1, nj + 2 * ng - 1, nk + 2 * ng),
         }
-
-    def shapeOf(self, name):
-        kind, components = self.declared[name]
-        return self.shapes[kind] + (components or ())
 
     def setExtents(self, ni, nj, nk):
         """A grid block holds arrays shaped by its extents, so learning them
@@ -83,16 +72,11 @@ class gridBlock(topologyBlock, MetricsMixin):
             current = getattr(self, name)
             if current is not None and current.shape == shape:
                 continue
-            setattr(self, name, np.zeros(shape))
+            setattr(self, name, self._new(shape))
+            self._placed(name)
 
-    def hostCopy(self, name):
-        """One of this block's arrays for the host to read: the array itself
-        here, a snapshot on a block that lives on the device."""
-        return getattr(self, name)
-
-    def store(self, name, values):
-        """Write values into one of this block's arrays, wherever it lives."""
-        getattr(self, name)[...] = values
+    def _placed(self, name):
+        """What a kind of block does with an array it just made; nothing here."""
 
     @property
     def interior(self):

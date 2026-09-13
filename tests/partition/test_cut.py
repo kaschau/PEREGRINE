@@ -157,8 +157,7 @@ def test_everyPieceIsFoundInTheBlockItNames(mbDims, axis):
             ],
         )
     # the pieces of a base block tile it, so the cells add back up
-    cells = sum((b.ni - 1) * (b.nj - 1) * (b.nk - 1) for b in work.blocks)
-    assert cells == sum((b.ni - 1) * (b.nj - 1) * (b.nk - 1) for b in base.blocks)
+    assert sum(b.nCells for b in work.blocks) == sum(b.nCells for b in base.blocks)
 
 
 def test_provenanceSurvivesRepeatedCuts():

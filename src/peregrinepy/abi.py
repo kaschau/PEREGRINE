@@ -164,3 +164,46 @@ class DeviceArray:
         """Take another device array's contents, without the host."""
         assert other.shape == self.shape, (other.shape, self.shape)
         lib.pgCopy(self.ptr, other.ptr, self.nbytes)
+
+
+class HostStorageMixin:
+    """Arrays that are numpy arrays: the host reads and writes them in place."""
+
+    def declare(self, *names, kind, components=None):
+        """Say an array exists and what shape it will take. Nothing else may
+        be put in an array attribute."""
+        if isinstance(components, int):
+            components = (components,)
+        for name in names:
+            self.declared[name] = (kind, components)
+            setattr(self, name, None)
+
+    def shapeOf(self, name):
+        kind, components = self.declared[name]
+        return self.shapes[kind] + (components or ())
+
+    def _new(self, shape):
+        return np.zeros(shape)
+
+    def hostCopy(self, name):
+        """One of these arrays for the host to read: the array itself here, a
+        snapshot where it lives on the device."""
+        return getattr(self, name)
+
+    def store(self, name, values):
+        """Write values into one of these arrays, wherever it lives."""
+        getattr(self, name)[...] = values
+
+
+class DeviceStorageMixin(HostStorageMixin):
+    """Arrays that live where the kernels run: the host sees a snapshot and
+    writes one back."""
+
+    def _new(self, shape):
+        return DeviceArray(shape)
+
+    def hostCopy(self, name):
+        return getattr(self, name).get()
+
+    def store(self, name, values):
+        getattr(self, name).set(values)

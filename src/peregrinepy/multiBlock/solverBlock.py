@@ -1,19 +1,18 @@
 import numpy as np
 
-from ..abi import DeviceArray
+from ..abi import DeviceStorageMixin
 from .haloMixin import HaloMixin
 from .restartBlock import restartBlock
 from .solverMetricsMixin import SolverMetricsMixin
 from .solverFace import solverFace
 
 
-class solverBlock(restartBlock, SolverMetricsMixin, HaloMixin):
+class solverBlock(restartBlock, SolverMetricsMixin, HaloMixin, DeviceStorageMixin):
     def __init__(self, nblki, spNames, ng, config, mb, tableIndex):
         # the solver this block belongs to, and which slot of its table is this block's
         self.mb, self.tableIndex = mb, tableIndex
         restartBlock.__init__(self, nblki, spNames, ng)
         self.ne = 5 + self.ns - 1
-        self.config = config
 
         #######################################################################
         # Grid metrics only a solver needs
@@ -65,33 +64,9 @@ class solverBlock(restartBlock, SolverMetricsMixin, HaloMixin):
         super().setExtents(ni, nj, nk)
         self.mb.table.setDims(self.tableIndex, self)
 
-    def allocate(self):
-        """A solver block's arrays live where the kernels run. The host sees
-        one through get() and writes one through set()."""
-        for name in self.declared:
-            shape = self.shapeOf(name)
-            current = getattr(self, name)
-            if current is not None and current.shape == shape:
-                continue
-            setattr(self, name, DeviceArray(shape))
-            self.mb.table.register(self.tableIndex, name, getattr(self, name))
-
-    def hostCopy(self, name):
-        return getattr(self, name).get()
-
-    def store(self, name, values):
-        getattr(self, name).set(values)
-
-    def fillHaloWithNearest(self, name):
-        a = getattr(self, name).get()
-        ng = self.ng
-        a[0:ng] = a[[ng]]
-        a[-ng::] = a[[-ng - 1]]
-        a[:, 0:ng] = a[:, [ng]]
-        a[:, -ng::] = a[:, [-ng - 1]]
-        a[:, :, 0:ng] = a[:, :, [ng]]
-        a[:, :, -ng::] = a[:, :, [-ng - 1]]
-        getattr(self, name).set(a)
+    def _placed(self, name):
+        """A new array is a new record in the case's table."""
+        self.mb.table.register(self.tableIndex, name, getattr(self, name))
 
     def _newFace(self, nface):
         return solverFace(nface, self.ng, self)

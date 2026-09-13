@@ -1,9 +1,8 @@
-import numpy as np
-
+from ..abi import HostStorageMixin
 from .topologyFace import topologyFace
 
 
-class gridFace(topologyFace):
+class gridFace(topologyFace, HostStorageMixin):
     """
     gridFace object holds all the information that a grid
     would need to know about a face.
@@ -21,20 +20,10 @@ class gridFace(topologyFace):
     ###########################################################################
     # The arrays a face has, and how big they are
     ###########################################################################
-    def declare(self, *names, kind):
-        """Say an array exists and what shape it will take, before the block
-        this face bounds knows its extents. Nothing else may be put in array."""
-        for name in names:
-            self.declared[name] = kind
-            setattr(self, name, None)
-
     @property
     def shapes(self):
         """What each kind of array is shaped, for this face's block."""
         return {"rotation": (3, 3)}
-
-    def shapeOf(self, name):
-        return self.shapes[self.declared[name]]
 
     def allocate(self, *names, **values):
         """Give these arrays their memory now that their shapes are known,
@@ -42,13 +31,10 @@ class gridFace(topologyFace):
         than all at once, since an interior face never holds boundary values
         and a boundary face never holds halo buffers."""
         for name in names:
-            setattr(self, name, np.zeros(self.shapeOf(name)))
+            setattr(self, name, self._new(self.shapeOf(name)))
         for name, array in values.items():
-            setattr(
-                self,
-                name,
-                np.array(array, dtype=np.float64).reshape(self.shapeOf(name)),
-            )
+            setattr(self, name, self._new(self.shapeOf(name)))
+            self.store(name, array)
 
     ###########################################################################
     # How a halo arriving through this face is moved onto it
@@ -61,9 +47,3 @@ class gridFace(topologyFace):
         if rotation is None:
             return
         self.allocate(periodicRotMatrix=rotation)
-
-    def hostCopy(self, name):
-        return getattr(self, name)
-
-    def store(self, name, values):
-        getattr(self, name)[...] = values

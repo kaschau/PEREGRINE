@@ -16,7 +16,7 @@ from peregrinepy.readers import GridReader
 def analyzeGrid(mb):
     size = np.zeros(len(mb.blocks), dtype=np.int32)
     for blk in mb.blocks:
-        size[blk.nblki] = (blk.ni - 1) * (blk.nj - 1) * (blk.nk - 1)
+        size[blk.nblki] = blk.nCells
 
     assert np.min(size) > 0
 

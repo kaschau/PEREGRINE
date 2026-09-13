@@ -62,7 +62,6 @@ class Table:
         values, which side of its block it is, and which condition it has at
         this hook."""
         table = cls(faces[0].blk.ng if faces else 0)
-        areaVectors = {1: "iS", 2: "iS", 3: "jS", 4: "jS", 5: "kS", 6: "kS"}
         for index, face in enumerate(faces):
             blk = face.blk
             table.setDims(index, blk)
@@ -71,7 +70,7 @@ class Table:
             # what a condition's records name, whether or not this case has it
             for name in ("q", "Q", "qh", "grads"):
                 table.register(index, name, getattr(blk, name, None))
-            table.register(index, "S", getattr(blk, areaVectors[face.nface]))
+            table.register(index, "S", getattr(blk, f"{face.direction}S"))
             table.register(index, "rot", face.periodicRotMatrix)
             table.register(index, "qBcVals", face.qBcVals)
             table.register(index, "QBcVals", face.QBcVals)

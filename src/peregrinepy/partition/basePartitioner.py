@@ -56,7 +56,7 @@ class BasePartitioner(CutMixin, MergeMixin):
     ###########################################################################
     @staticmethod
     def blockCells(mb):
-        return np.array([(b.ni - 1) * (b.nj - 1) * (b.nk - 1) for b in mb.blocks])
+        return np.array([b.nCells for b in mb.blocks])
 
     def cellWeights(self, mb):
         """The work each block is: its interior cells."""
