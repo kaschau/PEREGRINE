@@ -25,7 +25,7 @@ def mechanismPath(name):
 T = (300.0, 3000.0)
 
 
-def cfgsect(mixture, **choices):
+def configSect(mixture, **choices):
     """An mcPhysics section as a case would write it: the config's defaults
     with the case's choices over them."""
     sect = dict(pg.files.configFile()["mcPhysics"])
@@ -34,7 +34,7 @@ def cfgsect(mixture, **choices):
 
 
 def test_speciesListFromLibrary():
-    m = Mixture(cfgsect(air, eos="tpg"))
+    m = Mixture(configSect(air, eos="tpg"))
     assert m.speciesNames == air
     assert m.ns == 3
     assert m.reactions == []
@@ -51,24 +51,24 @@ def test_everyEosAndTransportIsSelectable():
 
 def test_unknownModelIsRejected():
     with pytest.raises(KeyError):
-        Mixture(cfgsect(air, eos="notAnEos"))
+        Mixture(configSect(air, eos="notAnEos"))
     with pytest.raises(KeyError):
-        Mixture(cfgsect(air, eos="tpg", trans="notATransport"))
+        Mixture(configSect(air, eos="tpg", trans="notATransport"))
 
 
 def test_missingPropertyNamesTheSpecies():
     """A species the library cannot complete fails by name, not by
     AttributeError somewhere downstream."""
-    m = Mixture(cfgsect(air, eos="tpg"))
+    m = Mixture(configSect(air, eos="tpg"))
     broken = {k: Species(k, dict(sp.data)) for k, sp in m.species.items()}
     broken["N2"].data.pop("janaf")
     with pytest.raises(ValueError, match="janaf|NASA7 for N2"):
-        subclassWhere(BaseEosModel, name="tpg")(cfgsect(air)).check(broken)
+        subclassWhere(BaseEosModel, name="tpg")(configSect(air)).check(broken)
 
 
 def test_mechanismWinsOverLibrary():
     """A property the mechanism gives shadows the library's."""
-    m = Mixture(cfgsect("GRI30.yaml", eos="tpg"))
+    m = Mixture(configSect("GRI30.yaml", eos="tpg"))
     lib = Species.referenceData()
     gri = CanteraParser(mechanismPath("GRI30.yaml")).species
     # GRI30 carries its own Lennard-Jones well for H2O, and it differs from

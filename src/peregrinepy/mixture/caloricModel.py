@@ -15,8 +15,8 @@ class BaseCaloricModel:
     selectable: each eos names its own. One method per quantity, each for one
     species, in the order the eos stores them: cpPoly, hPoly, hRef, sPoly."""
 
-    def __init__(self, cfgsect):
-        self.cfgsect = cfgsect
+    def __init__(self, configSect):
+        self.configSect = configSect
         # what it reads off each species
         self.needs = ()
 
@@ -25,8 +25,8 @@ class ConstantCpModel(BaseCaloricModel):
     """One cp per species, stated by the case in J/kg/K: a degree-0 polynomial,
     so h and s are closed form."""
 
-    def __init__(self, cfgsect):
-        super().__init__(cfgsect)
+    def __init__(self, configSect):
+        super().__init__(configSect)
         self.needs += ("cp0",)
 
     def cpPoly(self, sp):
@@ -48,13 +48,13 @@ class ConstantCpModel(BaseCaloricModel):
 class TempDepCpModel(BaseCaloricModel, PolyFitMixin):
     """cp against temperature refit from whatever data the species carries."""
 
-    def __init__(self, cfgsect):
-        super().__init__(cfgsect)
+    def __init__(self, configSect):
+        super().__init__(configSect)
         self.needs += (anyOf(f.name for f in subclasses(BaseThermoData)),)
 
     def cpPoly(self, sp):
         T, cpR = self._sample(sp)
-        tol, deg = self.cfgsect["reFitTol"], self.cfgsect["reFitMaxDegree"]
+        tol, deg = self.configSect["reFitTol"], self.configSect["reFitMaxDegree"]
         return self.fitLowestDegree(np.log(T), cpR, tol, deg)[0]
 
     def hPoly(self, sp):
@@ -73,7 +73,7 @@ class TempDepCpModel(BaseCaloricModel, PolyFitMixin):
     def _sample(self, sp):
         """(T, cp/R) over the case's range, from the species' data extended
         past its ends where the case goes further."""
-        Tlow, Thigh = self.cfgsect["Trange"]
+        Tlow, Thigh = self.configSect["Trange"]
         T, cpR = BaseThermoData.findReferenceFormat(sp).cp(sp)
         if Tlow < T[0]:
             T, cpR = self._extendDown(sp, T, cpR, Tlow)

@@ -16,8 +16,8 @@ class BinaryModel(BaseSpeciesDiffusionModel, PolyFitMixin):
 
     name = "binary"
 
-    def __init__(self, cfgsect):
-        super().__init__(cfgsect)
+    def __init__(self, configSect):
+        super().__init__(configSect)
         self.fromSpecies += ("well", "diam", "dipole", "polarize")
         # the pair coefficients come off kinetic theory's machinery
         self.dependsOn = ("kineticTheory",)
@@ -28,7 +28,7 @@ class BinaryModel(BaseSpeciesDiffusionModel, PolyFitMixin):
         coefficient at unit pressure, D / T^1.5 fitted in ln T."""
         from .transportModel import KineticTheoryModel
 
-        m = KineticTheoryModel(self.cfgsect).collisionParameters(species)
+        m = KineticTheoryModel(self.configSect).collisionParameters(species)
         Ts, rMass, rWell, rDiam = m["Ts"], m["rMass"], m["rWell"], m["rDiam"]
         ns = len(rMass)
         k, j = np.triu_indices(ns)
@@ -48,7 +48,7 @@ class BinaryModel(BaseSpeciesDiffusionModel, PolyFitMixin):
             / (np.pi * rDiam[k, j] ** 2 * omega11)
         )
         diff = diff / Ts[:, None] ** 1.5
-        tol, deg = self.cfgsect["reFitTol"], self.cfgsect["reFitMaxDegree"]
+        tol, deg = self.configSect["reFitTol"], self.configSect["reFitMaxDegree"]
         rows = [[None] * ns for _ in range(ns)]
         for a, b, D in zip(k, j, diff.T):
             rows[a][b] = rows[b][a] = self.fitLowestDegree(np.log(Ts), D, tol, deg)[0]
@@ -60,8 +60,8 @@ class LewisModel(BaseSpeciesDiffusionModel):
 
     name = "lewis"
 
-    def __init__(self, cfgsect):
-        super().__init__(cfgsect)
+    def __init__(self, configSect):
+        super().__init__(configSect)
         self.provides["lewis"] = "lewis"
 
     def lewis(self, species):

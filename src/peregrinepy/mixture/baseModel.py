@@ -13,9 +13,9 @@ class BaseModel:
     # what the config calls it, on the class so subclassWhere can find it
     name = None
 
-    def __init__(self, cfgsect):
+    def __init__(self, configSect):
         # the case's mcPhysics section: what every fit is made over and to
-        self.cfgsect = cfgsect
+        self.configSect = configSect
         # what it reads off each species; everything needs MW
         self.fromSpecies = ("MW",)
         # what the case must state per species: modelling choices the library never carries

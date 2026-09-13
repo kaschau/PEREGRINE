@@ -21,8 +21,8 @@ class KineticTheoryModel(BaseTransportModel, PolyFitMixin):
 
     name = "kineticTheory"
 
-    def __init__(self, cfgsect):
-        super().__init__(cfgsect)
+    def __init__(self, configSect):
+        super().__init__(configSect)
         self.fromSpecies += ("well", "diam", "dipole", "polarize", "zrot", "geometry")
         # the conductivity needs cp against temperature, which these put on the species
         self.dependsOn = (anyOf(("tpg", "realGas")),)
@@ -32,7 +32,7 @@ class KineticTheoryModel(BaseTransportModel, PolyFitMixin):
     def collisionParameters(self, species):
         """The temperatures every fit is made over, the collision integral
         interpolants, and each species' and each pair's reduced quantities."""
-        Ts = np.linspace(*self.cfgsect["Trange"], 50)
+        Ts = np.linspace(*self.configSect["Trange"], 50)
 
         ci = database("collisionIntegrals")
         omega22 = intrp.RectBivariateSpline(
@@ -111,7 +111,7 @@ class KineticTheoryModel(BaseTransportModel, PolyFitMixin):
         )
 
         visc = np.sqrt(visc / np.sqrt(Ts)[:, None])
-        tol, deg = self.cfgsect["reFitTol"], self.cfgsect["reFitMaxDegree"]
+        tol, deg = self.configSect["reFitTol"], self.configSect["reFitMaxDegree"]
         return [self.fitLowestDegree(np.log(Ts), v, tol, deg)[0] for v in visc.T]
 
     def kappaPoly(self, species):
@@ -167,7 +167,7 @@ class KineticTheoryModel(BaseTransportModel, PolyFitMixin):
         cond = visc / MW * Ru * (fTrans * 1.5 + fRot * cvRot + fInt * cvInt)
 
         cond = cond / np.sqrt(Ts)[:, None]
-        tol, deg = self.cfgsect["reFitTol"], self.cfgsect["reFitMaxDegree"]
+        tol, deg = self.configSect["reFitTol"], self.configSect["reFitMaxDegree"]
         return [self.fitLowestDegree(logTs, c, tol, deg)[0] for c in cond.T]
 
 
@@ -176,8 +176,8 @@ class ChungDenseGasModel(BaseTransportModel):
 
     name = "chungDenseGas"
 
-    def __init__(self, cfgsect):
-        super().__init__(cfgsect)
+    def __init__(self, configSect):
+        super().__init__(configSect)
         self.fromSpecies += ("dipole",)
         # the same need as the real gas eos, which will have put the point on the species
         self.derivable[RealGasModel.critical] = ("well", "diam")
@@ -211,6 +211,6 @@ class ConstantPropsModel(BaseTransportModel):
 
     name = "constantProps"
 
-    def __init__(self, cfgsect):
-        super().__init__(cfgsect)
+    def __init__(self, configSect):
+        super().__init__(configSect)
         self.requiredInput += ("mu0", "kappa0")

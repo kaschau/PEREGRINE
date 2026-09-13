@@ -9,9 +9,9 @@ from .caloricModel import ConstantCpModel, TempDepCpModel
 class BaseEosModel(BaseModel):
     """One equation of state, with the caloric model it gets cp from."""
 
-    def __init__(self, cfgsect, caloricModel):
-        super().__init__(cfgsect)
-        self.caloric = caloricModel(cfgsect)
+    def __init__(self, configSect, caloricModel):
+        super().__init__(configSect)
+        self.caloric = caloricModel(configSect)
         self.fromSpecies += self.caloric.needs
         # ordered: each reads what the one before stored
         self.provides.update(cpPoly="cpPoly", hPoly="hPoly", hRef="hRef", sPoly="sPoly")
@@ -34,8 +34,8 @@ class CpgModel(BaseEosModel):
 
     name = "cpg"
 
-    def __init__(self, cfgsect):
-        super().__init__(cfgsect, ConstantCpModel)
+    def __init__(self, configSect):
+        super().__init__(configSect, ConstantCpModel)
 
 
 class TpgModel(BaseEosModel):
@@ -43,8 +43,8 @@ class TpgModel(BaseEosModel):
 
     name = "tpg"
 
-    def __init__(self, cfgsect):
-        super().__init__(cfgsect, TempDepCpModel)
+    def __init__(self, configSect):
+        super().__init__(configSect, TempDepCpModel)
 
 
 class RealGasModel(BaseEosModel):
@@ -53,8 +53,8 @@ class RealGasModel(BaseEosModel):
     name = "realGas"
     critical = ("Tcrit", "pcrit", "Vcrit", "acentric")
 
-    def __init__(self, cfgsect):
-        super().__init__(cfgsect, TempDepCpModel)
+    def __init__(self, configSect):
+        super().__init__(configSect, TempDepCpModel)
         self.fromSpecies += self.critical
         self.derivable[self.critical] = ("well", "diam")
         self.provides["criticalPoint"] = self.critical

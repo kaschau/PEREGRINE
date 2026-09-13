@@ -14,21 +14,21 @@ from .transportModel import BaseTransportModel
 class Mixture:
     """The gas a case is solving, from its mcPhysics section of the config."""
 
-    def __init__(self, cfgsect, root=None):
-        self.cfgsect = cfgsect
-        self.eos = subclassWhere(BaseEosModel, name=cfgsect["eos"])(cfgsect)
-        trans, diffusion = cfgsect["trans"], cfgsect["diffusion"]
+    def __init__(self, configSect, root=None):
+        self.configSect = configSect
+        self.eos = subclassWhere(BaseEosModel, name=configSect["eos"])(configSect)
+        trans, diffusion = configSect["trans"], configSect["diffusion"]
         self.trans = (
-            subclassWhere(BaseTransportModel, name=trans)(cfgsect) if trans else None
+            subclassWhere(BaseTransportModel, name=trans)(configSect) if trans else None
         )
         self.diffusion = (
-            subclassWhere(BaseSpeciesDiffusionModel, name=diffusion)(cfgsect)
+            subclassWhere(BaseSpeciesDiffusionModel, name=diffusion)(configSect)
             if trans
             else None
         )
         self._checkCombination()
 
-        usersp, self.reactions = self.readMixture(cfgsect["mixture"], root)
+        usersp, self.reactions = self.readMixture(configSect["mixture"], root)
         self.species = Species.build(usersp, self.models)
         self.speciesNames = list(self.species)
         self.ns = len(self.speciesNames)
