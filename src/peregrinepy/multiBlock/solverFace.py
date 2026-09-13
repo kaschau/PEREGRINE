@@ -28,20 +28,6 @@ class solverFace(gridFace):
         self.blockExtents = None
         self.ne = None
 
-        # Face slices: the halo planes this face owns, outermost first, the
-        # first plane inside the block, and the planes a halo reflects about it
-        if self.amILow:
-            s0 = range(ng - 1, -1, -1)
-            s1 = ng
-            s2 = range(ng + 1, 2 * ng + 1)
-        else:
-            s0 = range(-ng, 0)
-            s1 = -(ng + 1)
-            s2 = range(-(ng + 2), -(2 * ng + 2), -1)
-        self.s0_ = [self.plane(i) for i in s0]
-        self.s1_ = self.plane(s1)
-        self.s2_ = [self.plane(i) for i in s2]
-
         # arrays that faces save
         self.declare("qBcVals", "QBcVals", kind="bcValues")
         for var, kind in self.commVars.items():
@@ -56,8 +42,30 @@ class solverFace(gridFace):
         # the block that travel between us
         self._transposed = None
         self._flipped = None
-        self._sendSlices = None
-        self._recvSlices = None
+
+    ###########################################################################
+    # The planes of a block array either side of this face, as the kernels
+    # walk them: the layer first, layer 0 nearest the face
+    ###########################################################################
+    def halo(self, array):
+        """The halo planes, outward from the face."""
+        ng = self.ng
+        planes = np.moveaxis(array, self.myAxis, 0)
+        return planes[ng - 1 :: -1] if self.amILow else planes[-ng:]
+
+    def interior(self, array, skip=0):
+        """The interior planes, inward from the face; :skip: leaves out the
+        first, for a node array whose face plane both sides hold."""
+        ng = self.ng
+        planes = np.moveaxis(array, self.myAxis, 0)
+        if self.amILow:
+            return planes[ng + skip : 2 * ng + skip]
+        return planes[-(ng + 1 + skip) : -(2 * ng + 1 + skip) : -1]
+
+    def boundary(self, array):
+        """The one plane of a face array on the face itself."""
+        planes = np.moveaxis(array, self.myAxis, 0)
+        return planes[self.ng if self.amILow else -(self.ng + 1)]
 
     ###########################################################################
     # The arrays a face has, and how big they are
@@ -133,15 +141,13 @@ class solverFace(gridFace):
     ###########################################################################
     def setCommunication(self, nblki):
         """Everything this face needs to trade halos with its neighbor: how
-        the neighbor's plane lies against ours, which planes of the block go
-        out and where the ones that arrive are put, and the buffers they
-        travel in."""
+        the neighbor's plane lies against ours, and the buffers the trade
+        travels in."""
         assert (
             self.blockExtents is not None
         ), "Must get grid before setting block communications."
 
         self._setOrient()
-        self._setSlices()
         self.allocate(*self.commArrays)
 
         # Unique tags
@@ -154,78 +160,21 @@ class solverFace(gridFace):
             plane = np.moveaxis(plane, (0, 1), (1, 0))
         return np.flip(plane, self._flipped) if self._flipped else plane
 
-    def sendSlices(self, var):
-        """The planes of the block that go out in this face's send buffer."""
-        return self._sendSlices[self.commVars[var]]
-
-    def recvSlices(self, var):
-        """The planes of the block that what arrives is placed into."""
-        return self._recvSlices[self.commVars[var]]
+    def tradeLayers(self, var):
+        """How many planes of the block this face trades for an array, and
+        how far in the first one is: a node array's face plane is shared by
+        both sides, so its trade starts past it."""
+        kind = self.commVars[var]
+        if kind == "node":
+            return self.ng, 1
+        if kind == "state":
+            return self.ng, 0
+        return 1, 0
 
     def _setOrient(self):
         """How a plane of ours is laid out in our neighbor's frame: which of
         our two face axes it reads first, and which way round it reads each."""
         self._transposed, self._flipped = self.neighborPlaneAlignment
-
-    def _setSlices(self):
-        """Which planes of the block go out, and where the ones that arrive
-        are put.
-
-        The recv list always runs from the smallest index to the largest.
-        The send list starts out the same way, and is reversed when our
-        neighbor's axis runs against ours, so that what arrives is already
-        in the order it goes in.
-
-              index -------------------------->
-         o----------o----------o|x----------x----------x
-         |          |           |           |          |
-         | recv[0]  |  recv[1]  |  send[0]  |  send[1] |
-         |          |           |           |          |
-         o----------o----------o|x----------x----------x
-        """
-        ng = self.ng
-        # these index the compute side views as well as ours, so they count
-        # from the near end of the axis; Kokkos has no index from the far end
-        nNodes = self.blockExtents[self.myAxis] + 2 * ng
-        nCells = nNodes - 1
-        if self.amILow:
-            nodeOut, nodeIn = range(ng + 1, 2 * ng + 1), range(0, ng)
-            cellOut, cellIn = range(ng, 2 * ng), range(0, ng)
-        else:
-            nodeOut = range(nNodes - (2 * ng + 1), nNodes - (ng + 1))
-            nodeIn = range(nNodes - ng, nNodes)
-            cellOut = range(nCells - 2 * ng, nCells - ng)
-            cellIn = range(nCells - ng, nCells)
-
-        nodeSend = [self.plane(i) for i in nodeOut]
-        nodeRecv = [self.plane(i) for i in nodeIn]
-        cellSend = [self.plane(i) for i in cellOut]
-        cellRecv = [self.plane(i) for i in cellIn]
-
-        # which plane is the one nearest the block must be picked before the
-        # send order is reversed
-        if self.amILow:
-            firstSend, firstRecv = [cellSend[0]], [cellRecv[-1]]
-        else:
-            firstSend, firstRecv = [cellSend[-1]], [cellRecv[0]]
-
-        _, counterAligned = self.signedAxis(self.orientation[self.myAxis])
-        if counterAligned:
-            nodeSend.reverse()
-            cellSend.reverse()
-
-        self._sendSlices = {
-            "node": nodeSend,
-            "state": cellSend,
-            "gradient": firstSend,
-            "switch": firstSend,
-        }
-        self._recvSlices = {
-            "node": nodeRecv,
-            "state": cellRecv,
-            "gradient": firstRecv,
-            "switch": firstRecv,
-        }
 
     ###########################################################################
     # What a solver face keeps on the device

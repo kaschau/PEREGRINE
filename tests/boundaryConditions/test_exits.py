@@ -10,7 +10,7 @@ class Exit(BaseBC):
         """where the flow leaves the block, and where it re-enters"""
         n, sign = self.normals(face)
         velo = [self.q(c) for c in "uvw"]
-        uDotn = sum(c[face.s1_] * ni for c, ni in zip(velo, n)) * sign
+        uDotn = sum(face.interior(c)[0] * ni for c, ni in zip(velo, n)) * sign
         return uDotn >= 0.0, uDotn < 0.0
 
     def euler(self, face):
@@ -41,7 +41,7 @@ class SupersonicExit(Exit):
     bcType = "supersonicExit"
 
     def state(self, face):
-        self.extrapolate(face, "p", lo=0.0, hi=self.q("p")[face.s1_])
+        self.extrapolate(face, "p", lo=0.0, hi=face.interior(self.q("p"))[0])
         self.extrapolate(face, "T", lo=0.0)
         if self.blk.ns > 1:
             self.extrapolate(face, "Y", lo=0.0, hi=1.0)

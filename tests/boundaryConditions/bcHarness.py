@@ -73,7 +73,7 @@ class BaseBC:
         out of the block (faces 1, 3, 5 store the inward normal)"""
         d = {1: "i", 2: "i", 3: "j", 4: "j", 5: "k", 6: "k"}[face.nface]
         _, normals = self.blk.faceNormals(d)
-        n = tuple(c[face.s1_] for c in normals)
+        n = tuple(face.boundary(c) for c in normals)
         return n, (-1.0 if face.nface in (1, 3, 5) else 1.0)
 
     def _bcVals(self, face, name):
@@ -92,8 +92,8 @@ class BaseBC:
     def mirror(self, face, name, where=None, sign=1.0):
         """halo = +- the first interior cell"""
         a = self.q(name)
-        for s0_ in face.s0_:
-            self._close(a[s0_], sign * a[face.s1_], where)
+        for h in face.halo(a):
+            self._close(h, sign * face.interior(a)[0], where)
 
     def negate(self, face, name, where=None):
         self.mirror(face, name, where, sign=-1.0)
@@ -101,53 +101,55 @@ class BaseBC:
     def extrapolate(self, face, name, where=None, lo=None, hi=None):
         """halo = linear extrapolation through the first two interior cells"""
         a = self.q(name)
-        for s0_, s2_ in zip(face.s0_, face.s2_):
-            want = 2.0 * a[face.s1_] - a[s2_]
+        first = face.interior(a)[0]
+        for h, deeper in zip(face.halo(a), face.interior(a)[1:]):
+            want = 2.0 * first - deeper
             if lo is not None or hi is not None:
                 want = np.clip(
                     want,
                     lo if lo is not None else -np.inf,
                     hi if hi is not None else np.inf,
                 )
-            self._close(a[s0_], want, where)
+            self._close(h, want, where)
 
     def imposed(self, face, name, where=None):
         """halo = the value set on the face"""
         a = self.q(name)
-        for s0_ in face.s0_:
-            self._close(a[s0_], self._bcVals(face, name), where)
+        for h in face.halo(a):
+            self._close(h, self._bcVals(face, name), where)
 
     def straddles(self, face, name, where=None):
         """halo = 2 * the face value - interior, so the face sits at the value"""
         a = self.q(name)
-        for s0_ in face.s0_:
-            self._close(a[s0_], 2.0 * self._bcVals(face, name) - a[face.s1_], where)
+        for h in face.halo(a):
+            self._close(h, 2.0 * self._bcVals(face, name) - face.interior(a)[0], where)
 
     def reflect(self, face, where=None):
         """velocity mirrored about the face plane, so it carries no normal flux"""
         n, _ = self.normals(face)
         velo = [self.q(c) for c in "uvw"]
-        uDotn = sum(c[face.s1_] * ni for c, ni in zip(velo, n))
-        for s0_ in face.s0_:
-            for c, ni in zip(velo, n):
-                self._close(c[s0_], c[face.s1_] - 2.0 * uDotn * ni, where)
+        first = [face.interior(c)[0] for c in velo]
+        uDotn = sum(f * ni for f, ni in zip(first, n))
+        for g in range(self.blk.ng):
+            for c, f, ni in zip(velo, first, n):
+                self._close(face.halo(c)[g], f - 2.0 * uDotn * ni, where)
 
     def alongNormal(self, face):
         """the halo velocity lies entirely along the face normal"""
         n, _ = self.normals(face)
         velo = [self.q(c) for c in "uvw"]
-        for s0_ in face.s0_:
-            Vb = sum(c[s0_] * ni for c, ni in zip(velo, n))
+        for g in range(self.blk.ng):
+            Vb = sum(face.halo(c)[g] * ni for c, ni in zip(velo, n))
             for c, ni in zip(velo, n):
-                self._close(c[s0_], Vb * ni)
+                self._close(face.halo(c)[g], Vb * ni)
 
     def _gradients(self, face, rules):
         """the first halo layer of every gradient, one rule per variable"""
-        s0_ = face.s0_[0]
         d = self.host["grads"]
+        h, first = face.halo(d)[0], face.interior(d)[0]
         for name, rule in rules.items():
             sl = self._slice[name]
-            self._close(d[s0_][..., sl, :], self._sign[rule] * d[face.s1_][..., sl, :])
+            self._close(h[..., sl, :], self._sign[rule] * first[..., sl, :])
 
     @staticmethod
     def _close(got, want, where=None):

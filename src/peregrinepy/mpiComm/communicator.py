@@ -47,7 +47,7 @@ class Communicator:
         for blk, face in faces:
             if face.neighbor is None:
                 continue
-            self.trades.append((blk, face, self._planeIndices(face)))
+            self.trades.append((blk, face))
             if face.commRank != self.rank:
                 self.remote.append(face)
                 continue
@@ -57,20 +57,6 @@ class Communicator:
                 f" for neighbor {face.neighbor}, which is not on it"
             )
             self.local.append((face, neighbor.getFace(face.neighborNface)))
-
-    @staticmethod
-    def _planeIndices(face):
-        """Which plane of the block each buffer layer is, for everything this
-        face trades. The compute side indexes with them directly, so they are
-        pulled out of the slice objects once rather than on every exchange."""
-
-        def indices(slices):
-            return [s for plane in slices for s in plane if isinstance(s, int)]
-
-        return {
-            var: (indices(face.sendSlices(var)), indices(face.recvSlices(var)))
-            for var in face.commVars
-        }
 
     def exchange(self, varis):
         """Fill every block's halo from its neighbors."""
@@ -93,13 +79,14 @@ class Communicator:
 
         # the pack turns the plane onto the neighbor's frame as it goes, so
         # nothing here has to leave the device
-        for blk, face, planes in self.trades:
+        for blk, face in self.trades:
+            nLayer, skip = face.tradeLayers(var)
             self.pack(
                 view=getattr(blk, var),
                 buffer=getattr(face, send),
                 nface=face.nface,
-                slices=planes[var][0],
-                nLayer=len(planes[var][0]),
+                nLayer=nLayer,
+                skip=skip,
                 transpose=int(face._transposed),
                 flip0=int(0 in face._flipped),
                 flip1=int(1 in face._flipped),
@@ -121,13 +108,12 @@ class Communicator:
         for face in self.remote:
             getattr(face, recv).set(landing[face])
 
-        for blk, face, planes in self.trades:
+        for blk, face in self.trades:
             self.unpack(
                 view=getattr(blk, var),
                 buffer=getattr(face, recv),
                 nface=face.nface,
-                slices=planes[var][1],
-                nLayer=len(planes[var][1]),
+                nLayer=face.tradeLayers(var)[0],
             )
 
         # a face trades under the same tag whatever the variable, so one

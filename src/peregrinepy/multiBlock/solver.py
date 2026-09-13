@@ -349,11 +349,10 @@ class solver(restart):
             nodes = blk.nodes.get()
             for face in periodic:
                 R, t = face.periodicRotation, face.periodicTranslation
-                for s0 in face.s0_:
-                    # the halo came from the partner, so it lands where the
-                    # transform puts it, turned or moved or both
-                    p = nodes[s0]
-                    nodes[s0] = (p.reshape(-1, 3) @ R.T + t).reshape(p.shape)
+                # the halo came from the partner, so it lands where the
+                # transform puts it, turned or moved or both
+                h = face.halo(nodes)
+                h[...] = (h.reshape(-1, 3) @ R.T + t).reshape(h.shape)
             blk.nodes.set(nodes)
 
     def setBlockCommunication(self):

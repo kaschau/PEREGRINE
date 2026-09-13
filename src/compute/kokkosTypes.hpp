@@ -37,5 +37,6 @@ using threeDview = Kokkos::View<double ***, layout, viewSpace>;
 using MDRange2 = Kokkos::MDRangePolicy<execSpace, Kokkos::Rank<2>>;
 using MDRange3 = Kokkos::MDRangePolicy<execSpace, Kokkos::Rank<3>>;
 using MDRange4 = Kokkos::MDRangePolicy<execSpace, Kokkos::Rank<4>>;
+using MDRange5 = Kokkos::MDRangePolicy<execSpace, Kokkos::Rank<5>>;
 
 #endif

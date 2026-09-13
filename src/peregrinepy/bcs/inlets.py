@@ -47,4 +47,4 @@ class ConstantMassFluxSubsonicInlet(InletBC):
         mDot = valueDict["mDotPerUnitArea"]
         _, n = blk.faceNormals(d)
         for m in range(3):
-            QBcVals[:, :, m + 1] = sign * n[m][face.s1_] * mDot
+            QBcVals[:, :, m + 1] = sign * face.boundary(n[m]) * mDot

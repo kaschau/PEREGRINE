@@ -5,9 +5,11 @@ toolchain.json; every kernel is compiled the same way, into a cache keyed by
 its source, the headers it includes, the toolchain and its defines. A case
 loads only the libraries it will call."""
 
+import contextlib
 import fcntl
 import hashlib
 import os
+import re
 import shutil
 import subprocess
 import tempfile
@@ -23,8 +25,7 @@ class Jit:
 
     package = Path(__file__).parent
     compute = package.parent / "compute"
-    # what every kernel includes; a change to these is a change to every kernel
-    headers = ("abi.hpp", "kokkosTypes.hpp", "kernelUtils.hpp")
+    includeLine = re.compile(r'^\s*#\s*include\s+"([^"]+)"', re.M)
     cacheDir = Path(
         os.environ.get("PEREGRINE_CACHE", Path.home() / ".cache" / "peregrinepy")
     )
@@ -40,29 +41,48 @@ class Jit:
         assert self.ng is not None, "the halo depth is not known yet"
         return (f"NS={self.ns}", f"NE={5 + self.ns - 1}", f"NG={self.ng}")
 
-    def build(self, source, defines=(), includes=()):
-        """The library for one kernel source, compiled if the cache has no
-        current one. Returns its path. A source's own headers, in and under
-        its directory, are part of its key; :defines: and :includes: are its
-        own on top of the case's."""
+    def _headers(self, path, seen):
+        """Every header :path: reaches through its quoted includes that lives
+        in the compute tree, transitively; the rest are the toolchain's."""
+        for name in self.includeLine.findall(path.read_text()):
+            for header in (path.parent / name, self.compute / name):
+                if header.is_file():
+                    if header not in seen:
+                        seen.add(header)
+                        self._headers(header, seen)
+                    break
+        return seen
+
+    def library(self, source, defines=(), includes=()):
+        """Where the cache keeps the library for one kernel source: keyed on
+        the source and every header it or a forced include reaches, the
+        toolchain, and the case's defines and includes."""
         path = self.compute / source
         defines = self.defines + tuple(defines)
         includes = tuple(self.compute / i for i in includes)
+        headers = set()
+        for f in (path, *includes):
+            self._headers(f, headers)
         key = hashlib.sha256()
-        headers = [self.compute / h for h in self.headers] + sorted(
-            path.parent.rglob("*.hpp")
-        )
-        for f in (path, *headers, *includes):
+        for f in (path, *includes, *sorted(headers - {path, *includes})):
             key.update(f.read_bytes())
         key.update(repr(vars(self.toolchain)).encode())
         key.update(" ".join(sorted(defines)).encode())
         key.update(" ".join(str(i) for i in includes).encode())
-        out = (
+        return (
             self.cacheDir / f"{path.stem}-{key.hexdigest()[:16]}{self.toolchain.suffix}"
         )
+
+    def build(self, source, defines=(), includes=()):
+        """The library for one kernel source, compiled if the cache has no
+        current one. Returns its path."""
+        out = self.library(source, defines, includes)
         if out.exists():
             return out
 
+        path = self.compute / source
+        defines = self.defines + tuple(defines)
+        includes = tuple(self.compute / i for i in includes)
         out.parent.mkdir(parents=True, exist_ok=True)
         # ranks on one node race to the same file; the first to the lock builds it
         with open(out.with_suffix(".lock"), "w") as lock:
@@ -88,17 +108,19 @@ class Jit:
                             f"{source} did not compile:\n{result.stderr}"
                         )
                     shutil.move(built, out)
-        os.remove(out.with_suffix(".lock"))
+        # whoever built it removes the lock; a waiter finds it already gone
+        with contextlib.suppress(FileNotFoundError):
+            os.remove(out.with_suffix(".lock"))
         return out
 
     def compile(self, kernels):
         """Every one of :kernels: not yet compiled: built at once, since they
         are independent, then loaded."""
         pending = [k for k in kernels if not k.compiled]
+        # two kernels bound from one source build one library
+        requests = {(k.source, k.defines, k.includes) for k in pending}
         with ThreadPoolExecutor() as pool:
-            list(
-                pool.map(lambda k: self.build(k.source, k.defines, k.includes), pending)
-            )
+            list(pool.map(lambda r: self.build(*r), requests))
         for k in pending:
             lib.load(self.build(k.source, k.defines, k.includes))
             k.compiled = True

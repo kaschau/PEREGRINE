@@ -1,5 +1,5 @@
-// What the kernels share: the loop range Python states, and a face's normal,
-// its neighbouring cells and a slice of any view along it.
+// What the kernels share: the loop range Python states, a face's normal,
+// and the planes of any array either side of a face.
 #ifndef __kernelUtils_H__
 #define __kernelUtils_H__
 
@@ -32,38 +32,66 @@ void faceNormal(const double &sx, const double &sy, const double &sz, double &S,
 #define PG_STENCIL(n)                                                          \
   static_assert(NG >= (n), "this kernel needs " #n " halo layers")
 
-// T with R pointers on it: the data type of a rank-R view
-template <class T, int R> struct pointers {
-  using type = typename pointers<T, R - 1>::type *;
-};
-template <class T> struct pointers<T, 0> {
-  using type = T;
+// A stack of planes of a block array, as a face walks them: the layer first,
+// then the two in-plane indices, then the components. Layer 0 is the plane
+// nearest the face and the layer stride carries the direction, so a halo runs
+// outward and an interior inward with the same index.
+template <class T, int R> struct planes {
+  T *data;
+  long stride[R];
+  int extent[R];
+
+  template <class... I> KOKKOS_INLINE_FUNCTION T &operator()(I... index) const {
+    const long at[] = {static_cast<long>(index)...};
+    long offset = 0;
+    for (int d = 0; d < R; d++)
+      offset += at[d] * stride[d];
+    return data[offset];
+  }
 };
 
-// one subview argument: the fixed index on the face's axis, ALL elsewhere
-template <bool onAxis> auto sliceArg(const int slice) {
-  if constexpr (onAxis)
-    return slice;
-  else
-    return Kokkos::ALL;
-}
-template <int axis, class View, std::size_t... dim>
-auto sliceAlong(const View &view, const int slice,
-                std::index_sequence<dim...>) {
-  return Kokkos::subview(view, sliceArg<dim == axis>(slice)...);
-}
+// the axis a face is normal to, and whether it is the low end of it
+KOKKOS_INLINE_FUNCTION int faceAxis(const int nface) { return (nface - 1) / 2; }
+KOKKOS_INLINE_FUNCTION bool faceLow(const int nface) { return nface % 2 == 1; }
 
-// any view at one index along a face's normal, one rank lower
+// `count` planes of `view` from the one at `start`, stepping `step` along
+// the face's axis; the in-plane axes keep their order
 template <class View>
-auto getFaceSlice(const View &view, const int nface, const int slice) {
-  using out = strided<
-      typename pointers<typename View::value_type, View::rank - 1>::type>;
-  constexpr auto dims = std::make_index_sequence<View::rank>{};
-  if (nface <= 2)
-    return out(sliceAlong<0>(view, slice, dims));
-  if (nface <= 4)
-    return out(sliceAlong<1>(view, slice, dims));
-  return out(sliceAlong<2>(view, slice, dims));
+auto stackAlong(const View &view, const int nface, const int start,
+                const int step, const int count) {
+  constexpr int rank = View::rank;
+  const int axis = faceAxis(nface);
+  planes<typename View::value_type, rank> p;
+  p.data = view.data() + start * view.stride(axis);
+  p.stride[0] = step * static_cast<long>(view.stride(axis));
+  p.extent[0] = count;
+  int d = 1;
+  for (int a = 0; a < rank; a++) {
+    if (a == axis)
+      continue;
+    p.stride[d] = view.stride(a);
+    p.extent[d] = view.extent(a);
+    d++;
+  }
+  return p;
+}
+
+// the halo layers of an array, outward from the face
+template <class View>
+auto halo(const View &view, const int nface, const int count) {
+  const int n = view.extent(faceAxis(nface));
+  const bool low = faceLow(nface);
+  return stackAlong(view, nface, low ? ng - 1 : n - ng, low ? -1 : 1, count);
+}
+// the interior layers of an array, inward from the face; a node array's
+// start past the face plane itself, which both sides hold
+template <class View>
+auto interior(const View &view, const int nface, const int count,
+              const int skip = 0) {
+  const int n = view.extent(faceAxis(nface));
+  const bool low = faceLow(nface);
+  return stackAlong(view, nface, low ? ng + skip : n - ng - 1 - skip,
+                    low ? 1 : -1, count);
 }
 
 #endif
