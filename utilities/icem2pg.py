@@ -53,11 +53,11 @@ parser.add_argument(
     type=str,
 )
 parser.add_argument(
-    "-bcFam",
+    "-bcTypes",
     action="store",
-    metavar="<bcFam>",
-    dest="bcFam",
-    default="./bcFam.yaml",
+    metavar="<bcTypes>",
+    dest="bcTypes",
+    default="./bcTypes.yaml",
     help="""File to translate the labels given to boundary conditions in ICEM
             to PEREGRINE bcType (i.e. constantVelocitySubsonicInlet, adiabaticNoSlipWall, etc.)\n
             \n
@@ -145,9 +145,9 @@ orientationMapping = {"i": 1, "j": 2, "k": 3, "-i": 4, "-j": 5, "-k": 6}
 # ----------------------------------------------------------------- #
 # ------------- External Face Boundary Conditions ----------------- #
 # ----------------------------------------------------------------- #
-# Read in bcFam.yaml file so we know what the bcType is for each label.
-with open(args.bcFam, "r") as f:
-    bcFam2Type = yaml.load(f, Loader=yaml.FullLoader)
+# the bcType of each label ICEM gave a face
+with open(args.bcTypes, "r") as f:
+    bcTypeOf = yaml.load(f, Loader=yaml.FullLoader)
 
 
 # Set boundary conditions
@@ -176,8 +176,8 @@ with open(args.topoFileName, "r") as f:
                 if tag == "DEFAULT_SUBFACE":
                     continue
                 assert (
-                    tag in bcFam2Type.keys()
-                ), f"{tag} not found in {args.bcFam} file."
+                    tag in bcTypeOf.keys()
+                ), f"{tag} not found in {args.bcTypes} file."
                 mins = [line[2], line[3], line[4]]
                 maxs = [line[5], line[6], line[7]]
                 directions = ["i", "j", "k"]
@@ -191,7 +191,7 @@ with open(args.topoFileName, "r") as f:
                     else:
                         thisFace = None
                 blk.getFace(thisFace).bcName = tag
-                bcType = bcFam2Type[tag]["bcType"]
+                bcType = bcTypeOf[tag]["bcType"]
                 assert (
                     bcType in pg.bcs.validBcTypes()
                 ), f"{bcType} is not a valid PEREGRINE bcType."

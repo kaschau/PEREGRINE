@@ -2,7 +2,6 @@
 extents, a kernel is a C function that takes them."""
 
 import ctypes
-import re
 from pathlib import Path
 
 import numpy as np
@@ -152,6 +151,17 @@ class DeviceArray:
         """A fresh host copy."""
         host = np.empty(self.shape, self.dtype, order=self.order)
         lib.pgToHost(self.ptr, host.ctypes.data, self.nbytes)
+        return host
+
+    def component(self, l):
+        """A fresh host copy of one trailing component. In the device layout
+        a component is a contiguous run, so only it crosses the bus; on the
+        host the components interleave, and the whole array is read."""
+        if self.order != "F":
+            return np.ascontiguousarray(self.get()[..., l].T).T
+        shape = self.shape[:-1]
+        host = np.empty(shape, self.dtype, order="F")
+        lib.pgToHost(self.ptr + l * host.nbytes, host.ctypes.data, host.nbytes)
         return host
 
     def set(self, array):

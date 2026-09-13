@@ -156,11 +156,15 @@ class RestartWriter(BaseWriter):
                 shape = self.extraShapes[name][::-1] + cells
                 resS.create_dataset(name, shape=shape, dtype=self.fdtype)
 
-        # one snapshot of each block's state for the whole write
+        # one snapshot of each block's state for the whole write: q, the
+        # density alone out of Q when there is one, and the extras
         self._host = {
-            id(blk): {n: blk.hostCopy(n) for n in ("q", "Q", *self.extras)}
+            id(blk): {n: blk.hostCopy(n) for n in ("q", *self.extras)}
             for blk in mb.blocks
         }
+        if self.hasConservatives:
+            for blk in mb.blocks:
+                self._host[id(blk)]["rho"] = blk.Q.component(0)
 
         # which of my blocks are pieces of each block of the grid
         mine = {}
@@ -204,10 +208,14 @@ class RestartWriter(BaseWriter):
         array, j = self._sourceFor(blk, name)
         whole = self.fileOrder(array)
         count = (blk.nk - 1, blk.nj - 1, blk.ni - 1)
+        # a variable is one component of q, or a field of its own
+        picked = blk.interior + (j,) if j is not None else blk.interior
         if whole is None:
             # a CPU build's arrays are not in file order, so gather them first
-            whole = np.ascontiguousarray(array[blk.interior + (j,)].T)
+            whole = np.ascontiguousarray(array[picked].T)
             sourceSel = ((0, 0, 0), count)
+        elif j is None:
+            sourceSel = ((ng, ng, ng), count)
         else:
             sourceSel = ((j, ng, ng, ng), (1,) + count)
         self._writeSlab(dset, whole, sourceSel, (self._destStart(blk), count))
@@ -233,19 +241,18 @@ class RestartWriter(BaseWriter):
         self._writeSlab(dset, whole, sourceSel, (destStart, count))
 
     def _sourceFor(self, blk, name):
-        """Which array and component of it a named variable comes from."""
-        q, Q = self._host[id(blk)]["q"], self._host[id(blk)]["Q"]
+        """Where a named variable comes from: a component of q, or a field
+        of its own with no component."""
+        held = self._host[id(blk)]
+        q = held["q"]
         if name == "rho":
-            return Q, 0
-
+            return held["rho"], None
         if name == blk.speciesNames[-1]:
             if blk.ns == 1:
                 # a single species is all of it, and is not stored in q
-                return np.ones(q.shape[:3] + (1,)), 0
+                return np.ones(q.shape[:3], order="F"), None
             # the nth species is whatever the others leave
-            left = 1.0 - np.sum(q[..., 5:], axis=-1)
-            return left[..., np.newaxis], 0
-
+            return np.asfortranarray(1.0 - np.sum(q[..., 5:], axis=-1)), None
         return q, (["p", "u", "v", "w", "T"] + blk.speciesNames).index(name)
 
     def _refreshXdmf(self, mb):

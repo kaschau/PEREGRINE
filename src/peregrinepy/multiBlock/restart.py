@@ -1,3 +1,4 @@
+from ..readers import GridReader, RestartReader
 from .grid import grid
 from .restartBlock import restartBlock
 
@@ -11,6 +12,16 @@ class restart(grid):
 
     def _newBlock(self, nblki):
         return restartBlock(nblki, self.speciesNames)
+
+    @classmethod
+    def fromResult(cls, fileName, quiet=True):
+        """A restart from a result file, which says its own species and the
+        grid it sits on."""
+        reader = RestartReader(fileName, quiet=quiet)
+        mb = cls(reader.species)
+        GridReader(reader.grid, quiet=quiet).fill(mb)
+        reader.fill(mb)
+        return mb
 
     def __init__(self, spNames):
         super().__init__()

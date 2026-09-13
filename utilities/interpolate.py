@@ -20,11 +20,9 @@ interpolate.py --from </path/to/from-grid/and/restart> --to </path/to/to-grid/> 
 """
 
 import argparse
-from peregrinepy.readers import RestartReader
 import peregrinepy as pg
 from peregrinepy.multiBlock import restart as mbr
 from peregrinepy.writers import RestartWriter
-import yaml
 import os
 
 if __name__ == "__main__":
@@ -47,16 +45,6 @@ if __name__ == "__main__":
         dest="toDir",
         default="./to",
         help="Directory containing the g.*.h5 files to interpolate to. Default is ./to",
-        type=str,
-    )
-    parser.add_argument(
-        "-spdata",
-        "--speciesData",
-        required=True,
-        action="store",
-        metavar="<spdata>",
-        dest="spdata",
-        help="thtr yaml file, or comma separated list of species names (in order)",
         type=str,
     )
     parser.add_argument(
@@ -91,31 +79,20 @@ if __name__ == "__main__":
 
     fromDir = args.fromDir
     toDir = args.toDir
-    if os.path.isfile(args.spdata):
-        with open(args.spdata, "r") as f:
-            speciesNames = list(yaml.load(f, Loader=yaml.FullLoader).keys())
-    else:
-        speciesNames = [item for item in args.spdata.split(",") if item != ""]
-
     function = args.function
     smooth = args.smooth
     verboseSearch = args.verboseSearch
 
-    # Read in from data
-    mbFrom = mbr.fromGrid(f"{fromDir}/g.h5", speciesNames, quiet=False)
-
-    # results are numbered, so take the one the caller asked for or the newest
+    # the newest result there; it names its own species and grid
     nrts = sorted(
         int(f.split(".")[1])
         for f in os.listdir(fromDir)
-        if f.startswith("q.") and f.endswith(".xmf")
+        if f.startswith("q.") and f.endswith(".h5")
     )
     if not nrts:
         raise FileNotFoundError(f"No results found in {fromDir}")
-    RestartReader(f"{fromDir}/q.{nrts[-1]:08d}.h5", quiet=False).fill(mbFrom)
-
-    # Read in to data
-    mbTo = mbr.fromGrid(f"{toDir}/g.h5", speciesNames, quiet=False)
+    mbFrom = mbr.fromResult(f"{fromDir}/q.{nrts[-1]:08d}.h5", quiet=False)
+    mbTo = mbr.fromGrid(f"{toDir}/g.h5", mbFrom.speciesNames, quiet=False)
 
     pg.interpolation.getInterpolator(function, smooth, verboseSearch).interpolate(
         mbFrom, mbTo

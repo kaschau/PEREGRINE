@@ -11,7 +11,6 @@ from h5py import h5fd, h5p, h5s
 from lxml import etree
 
 from .._version import __version__
-from ..misc import Progress
 from ..mpiComm.mpiUtils import getCommRankSize
 
 
