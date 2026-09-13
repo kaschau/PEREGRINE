@@ -16,23 +16,7 @@ class pgConfigError(Exception):
 
 class configFile(frozenDict):
     def __init__(self):
-        self["io"] = frozenDict(
-            {
-                "gridDir": "./Grid",
-                "inputDir": "./Input",
-                "resultsDir": "./Results",
-                "niterOut": 10,
-                "niterPrint": 1,
-            }
-        )
-        self["simulation"] = frozenDict(
-            {
-                "niter": 1,
-                # which result to restart from; None starts from the initial conditions
-                "restartFrom": None,
-                "checkNan": False,
-            }
-        )
+        self["simulation"] = frozenDict({"niter": 1})
         # the uniform state a case starts from when it does not restart
         self["initialConditions"] = frozenDict(
             {
@@ -50,8 +34,9 @@ class configFile(frozenDict):
         self["timeIntegration"] = frozenDict(
             {
                 "integrator": "rk3",
+                # how each step is sized: fixed at dt, or cfl up to maxDt
+                "controller": "fixed",
                 "dt": 1e-3,
-                "variableTimeStep": False,
                 "maxDt": 1e-3,
                 "maxCFL": 0.1,
             }
@@ -85,15 +70,6 @@ class configFile(frozenDict):
             }
         )
 
-        self["coprocess"] = frozenDict(
-            {
-                "catalyst": False,
-                "catalystFile": "./Input/coproc.py",
-                "trace": False,
-                "niterTrace": 1,
-            },
-        )
-
         self["viscousSponge"] = frozenDict(
             {
                 "spongeON": False,
@@ -107,6 +83,9 @@ class configFile(frozenDict):
         # faces carry a name is the grid's business; what they read is the
         # case's, so the names here are the user's and not frozen.
         self["bcValues"] = {}
+        # What runs alongside the stepping, by plugin name, each with its own
+        # options and how often it acts. The names are the user's and not frozen.
+        self["plugins"] = {}
 
         for key in self.keys():
             if isinstance(self[key], frozenDict):

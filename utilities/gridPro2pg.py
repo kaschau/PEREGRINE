@@ -234,6 +234,6 @@ if verified and not verify(mb):
     raise ValueError("Conditioning invalidated the grid.")
 
 print("Writing out {} block PEREGRINE grid files".format(len(mb.blocks)))
-GridWriter(mb, "./").write(mb)
+GridWriter(mb, "./", quiet=False).write(mb)
 
 print("GridPro to PEREGRINE translation done.")

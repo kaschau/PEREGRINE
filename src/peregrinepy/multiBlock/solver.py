@@ -1,15 +1,18 @@
+from pathlib import Path
+
 import numpy as np
 from mpi4py import MPI
 
 from .restart import restart
 from .solverBlock import solverBlock
 from ..graph import Graph
-from ..integrators import getIntegrator
+from ..integrators import getController, getIntegrator
 from ..jit import Jit
 from ..kernel import BoundKernel
 from ..mixture import Mixture
 from ..mpiComm import Communicator
 from ..mpiComm.mpiUtils import getCommRankSize
+from ..plugins import pluginsOf
 from ..table import Table
 from ..files.configFile import pgConfigError
 from .thtrdat import thtrdat
@@ -36,7 +39,7 @@ class solver(restart):
         reader -- or is uniform at the config's initial conditions, and is
         made consistent."""
         self.config = config
-        self.mixture = Mixture(config["mcPhysics"], root=config["io"]["inputDir"])
+        self.mixture = Mixture(config["mcPhysics"])
         super().__init__(self.mixture.speciesNames)
 
         # what a step does
@@ -62,6 +65,7 @@ class solver(restart):
         self.integrator = getIntegrator(config["timeIntegration"]["integrator"])(
             self.table, self.thtrdat, self.graphs, config
         )
+        self.controller = getController(config["timeIntegration"])
         checks = [
             BoundKernel(self.table, self.thtrdat, f"utils/{name}.cpp")
             for name in ("allFinite", "CFLmax")
@@ -79,6 +83,8 @@ class solver(restart):
         # before the first step, and again whenever a face changes
         self.facesChanged = True
         mesh.fill(self)
+        # the grid file this case came from, if it came from one
+        self.meshFile = getattr(mesh, "fileName", None)
         self.setBlockCommunication()
         self.unifyGrid()
         self.computeMetrics()
@@ -93,6 +99,15 @@ class solver(restart):
             for blk in self.blocks:
                 blk.fillHaloWithNearest("q")
         self.consistifyFromPrims()
+        # what the integrator keeps beyond the state
+        if state is None:
+            self.integrator.initialize()
+        else:
+            self.integrator.restore(self.blocks, self.nrt, Path(state.fileName).parent)
+
+        # the step being taken
+        self.dt = config["timeIntegration"]["dt"]
+        self.plugins = pluginsOf(self, config)
 
     ###########################################################################
     # The kernels
@@ -195,68 +210,25 @@ class solver(restart):
     def step(self, dt):
         """One step of the integrator, and the clock and the count move on."""
         self._connectBcs()
-        report = self.nrt % self.config["io"]["niterPrint"] == 0
+        self.dt = dt
+        report = "report" in self.plugins and self.plugins["report"].due(self)
         self.integrator.step(self.tme, dt, report)
         self.nrt += 1
         self.tme += dt
 
     def run(self):
-        """The case, start to finish: every step the config asks for, with
-        the results written, the state checked and the coprocessor called as
-        often as it says."""
-        from ..coproc import coprocessor
-        from ..writers import RestartWriter
-
-        comm, rank, size = getCommRankSize()
-        config = self.config
-        io = config["io"]
-        writer = RestartWriter(
-            self,
-            quiet=True,
-            path=io["resultsDir"],
-            gridPath=f"../{io['gridDir']}",
-            precision="single",
-        )
-        coproc = coprocessor(self)
-        if self.nrt == 0:
-            self.integrator.initialize()
-        else:
-            self.integrator.restore(self.blocks, self.nrt, io["resultsDir"])
-
-        niterOut, niterPrint = io["niterOut"], io["niterPrint"]
-        checkNan = config["simulation"]["checkNan"]
-        for _ in range(config["simulation"]["niter"]):
-            dt, CFLmaxA, CFLmaxC, CFLmax = self.dtMaxCFL()
-            if self.nrt % niterPrint == 0 and rank == 0:
-                print(
-                    f" >>> --------- nrt: {self.nrt:<6} ---------- <<<\n",
-                    f"    tme: {self.tme:.6E} s\n"
-                    f"     dt : {dt:.6E} s\n"
-                    f"     MAX CFL       : {CFLmax*dt:.3f}\n"
-                    f"         Acoustic  : {CFLmaxA*dt:.3f}\n"
-                    f"         Convective: {CFLmaxC*dt:.3f}\n"
-                    " >>> -------------------------------- <<<\n",
-                )
-
-            self.step(dt)
-
-            if self.nrt % niterOut == 0:
-                if rank == 0:
-                    print("Saving results.\n")
-                writer.write(self)
-                self.integrator.writeState(self.blocks, self.nrt, io["resultsDir"])
-
-            if checkNan and self.nrt % checkNan == 0 and self.checkForNan() > 0:
-                self.nrt = 99999999
-                writer.write(self)
-                comm.Barrier()
-                if rank == 0:
-                    print("Nan/inf detected. Aborting.")
-                break
-
-            coproc(self)
-
-        coproc.finalize()
+        """The case, start to finish: every step the config asks for, each
+        sized by the controller, and every plugin acting as often as it
+        says."""
+        try:
+            for _ in range(self.config["simulation"]["niter"]):
+                self.step(self.controller.dt(self))
+                for plugin in self.plugins.values():
+                    if plugin.due(self):
+                        plugin(self)
+        finally:
+            for plugin in self.plugins.values():
+                plugin.finalize(self)
 
     ###########################################################################
     # What the ranks agree on
@@ -285,45 +257,16 @@ class solver(restart):
             return None, None
         return np.mean(recv) / np.max(recv) * 100.0, np.argmax(recv)
 
-    def dtMaxCFL(self):
-        """The time step, and the max acoustic, convective and combined CFL
-        speeds over every rank; the convective floor keeps the step finite in
-        a quiescent field."""
+    def maxCFL(self):
+        """The max acoustic, convective and combined CFL speeds over every
+        rank; the convective floor keeps a step sized from it finite in a
+        quiescent field."""
         comm, rank, size = getCommRankSize()
         cfl = np.zeros(3)
         self.CFLmax(cfl=cfl)
         cfl[1] = max(cfl[1], 1e-16)
         comm.Allreduce(MPI.IN_PLACE, cfl, op=MPI.MAX)
-        ti = self.config["timeIntegration"]
-        dt = (
-            min(ti["maxCFL"] / cfl[2], ti["maxDt"])
-            if ti["variableTimeStep"]
-            else ti["dt"]
-        )
-        return dt, cfl[0], cfl[1], cfl[2]
-
-    def checkForNan(self):
-        """How many ranks hold a non-finite conserved value; each such rank
-        logs where its are."""
-        comm, rank, size = getCommRankSize()
-        abort = np.array([0], np.int32)
-        abort[0] = not self.allFinite()
-        if abort[0]:
-            for blk in self.blocks:
-                Q = blk.Q.get()
-                ng = blk.ng
-                nans = np.where(
-                    np.sum(np.isnan(Q[ng:-ng, ng:-ng, ng:-ng, :]), axis=-1) > 0
-                )
-                if len(nans[0]) == 0:
-                    continue
-                cells = blk.cells.get()[ng:-ng, ng:-ng, ng:-ng]
-                with open(f"nans_{blk.nblki}.log", "w") as f:
-                    f.write(f"Nan Detection Log: Block {blk.nblki}\\n")
-                    for x, y, z in cells[nans]:
-                        f.write(f"x = {x} y = {y} z = {z}\\n")
-        comm.Allreduce(MPI.IN_PLACE, abort, op=MPI.SUM)
-        return abort[0]
+        return cfl
 
     ###########################################################################
     # The grid, once every block is on its rank
@@ -361,6 +304,7 @@ class solver(restart):
         string = f"  Blocks: {len(self.blocks)} of {self.totalBlocks}\n"
         string += f"  Species: {self.mixture.speciesNames}\n"
         string += f"  Time Integrator: {self.integrator.integratorName}\n"
+        string += f"  Step Size: {self.controller.name}\n"
         string += f"  Equation of State: {self.config['mcPhysics']['eos']}\n"
         if not self.config["RHS"]["diffusion"]:
             string += "  Diffusion terms not solved for\n"

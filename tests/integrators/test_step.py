@@ -19,7 +19,6 @@ def test_step(my_setup, integrator, diffusion):
     config["RHS"]["diffusion"] = diffusion
     config["timeIntegration"]["integrator"] = integrator
     config["timeIntegration"]["dt"] = 1e-6
-    config["io"]["niterPrint"] = 1000
     config["initialConditions"]["u"] = 10.0
     configure(config, "air")
 
@@ -34,9 +33,6 @@ def test_step(my_setup, integrator, diffusion):
     )
 
     blk = mb.blocks[0]
-    if mb.integrator.stepType == "dualTime":
-        mb.integrator.initialize()
-
     Q0 = blk.Q.get()
     for _ in range(3):
         mb.step(config["timeIntegration"]["dt"])

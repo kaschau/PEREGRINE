@@ -12,12 +12,12 @@ class topology:
         self.totalBlocks = None
 
     @classmethod
-    def fromGrid(cls, path="./", *args):
+    def fromGrid(cls, fileName, *args, quiet=True):
         """A multiBlock of this kind, filled in from the grid file. A
         topology takes only what it can hold, which is the cheapest read of
         a grid there is: no coordinate leaves the file."""
         mb = cls(*args)
-        GridReader(path).fill(mb)
+        GridReader(fileName, quiet=quiet).fill(mb)
         return mb
 
     def faces(self):

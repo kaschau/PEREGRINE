@@ -402,7 +402,7 @@ if verified and not verify(mb):
     raise ValueError("Conditioning invalidated the grid.")
 
 print("Writing out {} block PEREGRINE grid files".format(len(mb.blocks)))
-pg.writers.GridWriter(mb).write(mb)
+pg.writers.GridWriter(mb, quiet=False).write(mb)
 
 
 print("ICEM to PEREGRINE translation done.")

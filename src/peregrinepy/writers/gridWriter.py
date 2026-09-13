@@ -46,7 +46,7 @@ class GridWriter(BaseWriter):
     """Writes a multiBlock's coordinates, connectivity and partitions to the
     one file that is the grid."""
 
-    def __init__(self, mb, path="./", precision="single", quiet=False):
+    def __init__(self, mb, path="./", precision="single", quiet=True):
         # a grid's xdmf sits beside the grid it points at
         self.gridPath = "."
         super().__init__(mb, path, precision, quiet)

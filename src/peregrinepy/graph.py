@@ -216,11 +216,9 @@ class Graph:
                 raise pgConfigError(
                     "dualTime", mc["eos"], "only cpg and tpg are supported"
                 )
-            if ti["variableTimeStep"]:
+            if ti["controller"] != "fixed":
                 raise pgConfigError(
-                    "dualTime",
-                    "variableTimeStep",
-                    "only a fixed time step is supported",
+                    "dualTime", ti["controller"], "only a fixed time step is supported"
                 )
 
     @classmethod

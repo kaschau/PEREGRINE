@@ -14,17 +14,17 @@ from ..mpiComm.mpiUtils import getCommRankSize
 
 
 class GridReader:
-    """The grid file in :path:.
+    """The grid file :fileName:.
 
     Making one reads everything about the grid that is not block data: how
     many blocks it holds, and the rank counts it has been partitioned for.
     The file is opened again for the block reads of fill().
     """
 
-    def __init__(self, path="./", ranks=None, quiet=False):
+    def __init__(self, fileName, ranks=None, quiet=True):
         """Every block of the grid, or this rank's share of the partition for
         :ranks: = (size, ranksPerNode)."""
-        self.fileName = f"{path}/g.h5"
+        self.fileName = fileName
         self.quiet = quiet
         with h5py.File(self.fileName, "r") as self.f:
             self.totalBlocks = int(self.f.attrs["totalBlocks"])
@@ -79,8 +79,8 @@ class GridReader:
             raise ValueError(
                 f"this grid carries no {size} rank partition, only "
                 f"{['%dx%d' % p for p in self.partitions]}. Balance it with\n"
-                f"  loadBalancer.py -gridDir {self.fileName.removesuffix('/g.h5')}"
-                f" -numProcs {size} -ranksPerNode {ranksPerNode}"
+                f"  loadBalancer.py {self.fileName} -numProcs {size}"
+                f" -ranksPerNode {ranksPerNode}"
             )
         if ranksPerNode not in layouts:
             print(

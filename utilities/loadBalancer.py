@@ -90,7 +90,7 @@ if __name__ == "__main__":
     partitioner = getPartitioner(args.method)
 
     # balancing is all extents and connectivity, so no coordinate is read
-    mb = pg.multiBlock.topology.fromGrid(gridDir)
+    mb = pg.multiBlock.topology.fromGrid(f"{gridDir}/g.h5", quiet=False)
     before, beforeMax = len(mb.blocks), partitioner.blockCells(mb).max()
 
     blocksForProcs = partitioner.partition(mb, numProcs, ranksPerNode, granularity)
@@ -112,7 +112,9 @@ if __name__ == "__main__":
     maxBlksForProcs = max(len(g) for g in blocksForProcs)
     nNodes = numProcs // ranksPerNode
 
-    pg.writers.GridWriter(mb, gridDir).writePartition(mb, blocksForProcs, ranksPerNode)
+    pg.writers.GridWriter(mb, gridDir, quiet=False).writePartition(
+        mb, blocksForProcs, ranksPerNode
+    )
 
     print(
         f"Added a {numProcs}x{ranksPerNode} partition"

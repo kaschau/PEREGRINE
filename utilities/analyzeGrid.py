@@ -53,7 +53,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     gp = args.gridDir
 
-    mb = pg.multiBlock.grid.fromGrid(gp)
+    mb = pg.multiBlock.grid.fromGrid(f"{gp}/g.h5", quiet=False)
 
     results = analyzeGrid(mb)
 
@@ -71,7 +71,7 @@ if __name__ == "__main__":
     print(f"min block is {minNblki} with {minCells} cells, {ni = }, {nj = }, {nk = }.")
     print(f"{mean = }, {stdv = }")
 
-    partitions = GridReader(gp).partitions
+    partitions = GridReader(f"{gp}/g.h5").partitions
     if partitions:
         print(
             "partitioned for "

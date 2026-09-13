@@ -1,7 +1,8 @@
 """
 Writing a PEREGRINE result.
 
-A result is one numbered pair of files, q.<nrt>.h5 and its q.<nrt>.xmf, in
+A result is one pair of files, <name>.h5 and its <name>.xmf, named from the
+step or the time it was written at (q.<nrt> unless the case says), in
 the case's results directory. There is no distinction between a restart and
 a frame of an animation -- a run writes as many results as it is asked for,
 and any one of them can be restarted from or animated through.
@@ -31,21 +32,30 @@ class RestartWriter(BaseWriter):
     multiBlock, so a solver builds one at startup and writes it every time it
     is asked for output."""
 
-    def __init__(self, mb, path="./", gridPath="./", precision="single", quiet=False):
+    def __init__(
+        self,
+        mb,
+        path="./",
+        gridPath="./",
+        precision="single",
+        quiet=True,
+        basename="q.{n:08d}",
+    ):
         self.gridPath = gridPath
         self.speciesNames = mb.speciesNames
         self.hasConservatives = mb.hasConservatives
-        # which result this is, set by every write
-        self.nrt = mb.nrt
+        # what a result is called, from its step n and time t; set by every write
+        self.basename = basename
+        self.name = basename.format(n=mb.nrt, t=mb.tme)
         super().__init__(mb, path, precision, quiet)
 
     @property
     def h5FileName(self):
-        return f"q.{self.nrt:08d}.h5"
+        return f"{self.name}.h5"
 
     @property
     def xmfFileName(self):
-        return f"q.{self.nrt:08d}.xmf"
+        return f"{self.name}.xmf"
 
     def getVarFileH5Location(self, varName, nblki):
         return f"{self.h5FileName}:/results_{nblki:06d}/{varName}"
@@ -97,7 +107,7 @@ class RestartWriter(BaseWriter):
     # Writing
     ###########################################################################
     def write(self, mb):
-        self.nrt = mb.nrt
+        self.name = self.basename.format(n=mb.nrt, t=mb.tme)
         names = self.dataNames
 
         qf = self._openCollective(self.h5FileName)

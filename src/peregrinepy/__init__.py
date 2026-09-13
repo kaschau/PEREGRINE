@@ -1,7 +1,7 @@
 from . import abi
 from . import bcs
-from . import coproc
 from . import partition
+from . import plugins
 from . import files
 from . import interpolation
 from . import mesher
@@ -16,8 +16,8 @@ from ._version import __version__
 __all__ = [
     "abi",
     "bcs",
-    "coproc",
     "partition",
+    "plugins",
     "files",
     "interpolation",
     "mesher",

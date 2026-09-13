@@ -10,7 +10,7 @@ from ..mpiComm.mpiUtils import getCommRankSize
 
 class BaseWriter:
 
-    def __init__(self, mb, path="./", precision="single", quiet=False):
+    def __init__(self, mb, path="./", precision="single", quiet=True):
         self.path = path
         self.precision = precision
         self.quiet = quiet

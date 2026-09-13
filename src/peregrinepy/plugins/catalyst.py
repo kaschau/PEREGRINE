@@ -1,26 +1,36 @@
 import numpy as np
-from paraview.catalyst import bridge
-from paraview import vtk
-from paraview.modules import vtkPVCatalyst as catalyst
-from paraview.vtk.util import numpy_support
+
+from .base import BasePlugin
 
 
-class catalystCoprocessor:
-    def __init__(self, mb):
+class Catalyst(BasePlugin):
+    """ParaView Catalyst in situ processing, driven by the script the config
+    names."""
+
+    name = "catalyst"
+
+    def __init__(self, mb, cfgsect):
+        super().__init__(mb, cfgsect)
+        # only a case that asks for catalyst needs paraview importable
+        from paraview import vtk
+        from paraview.catalyst import bridge
+        from paraview.modules import vtkPVCatalyst as catalyst
+        from paraview.vtk.util import numpy_support
+
+        self.vtk, self.bridge, self.catalyst = vtk, bridge, catalyst
+        self.numpy_support = numpy_support
         bridge.initialize()
-        # Add the coproc script
-        fileName = mb.config["coprocess"]["catalystFile"]
-        bridge.add_pipeline(fileName)
+        bridge.add_pipeline(cfgsect["script"])
 
         self._coProcessor = bridge.coprocessor
 
         # Save the data descriptions
-        self.dataDescription = catalyst.vtkCPDataDescription()
+        self.dataDescription = self.catalyst.vtkCPDataDescription()
         # Add the input input
         self.dataDescription.AddInput("input")
 
         # Create the multiblockdataset
-        mbds = vtk.vtkMultiBlockDataSet()
+        mbds = self.vtk.vtkMultiBlockDataSet()
         mbds.SetNumberOfBlocks(mb.totalBlocks)
         for i in range(mb.totalBlocks):
             mbds.SetBlock(i, None)
@@ -29,14 +39,14 @@ class catalystCoprocessor:
         for blk in mb.blocks:
             ng = blk.ng
             q, Q = blk.q.get(), blk.Q.get()
-            grid = vtk.vtkStructuredGrid()
+            grid = self.vtk.vtkStructuredGrid()
             grid.SetDimensions(blk.ni, blk.nj, blk.nk)
             interior = blk.hostCopy("nodes")[ng:-ng, ng:-ng, ng:-ng]
             coords = np.column_stack(
                 [interior[..., n].ravel(order="F") for n in range(3)]
             )
-            points = vtk.vtkPoints()
-            points.SetData(numpy_support.numpy_to_vtk(coords))
+            points = self.vtk.vtkPoints()
+            points.SetData(self.numpy_support.numpy_to_vtk(coords))
             grid.SetPoints(points)
 
             # density arrays
@@ -72,7 +82,7 @@ class catalystCoprocessor:
                 )
 
             # Add nth species
-            array = numpy_support.numpy_to_vtk(
+            array = self.numpy_support.numpy_to_vtk(
                 1.0 - np.sum(q[ng:-ng, ng:-ng, ng:-ng, 5::], axis=-1).ravel(order="F")
             )
             self.addArray(grid, blk.speciesNames[-1], array)
@@ -83,14 +93,14 @@ class catalystCoprocessor:
 
     def addArray(self, grid, arrayName, npArray):
         # convert incoming numpy array to vtk
-        vtkArray = numpy_support.numpy_to_vtk(npArray)
+        vtkArray = self.numpy_support.numpy_to_vtk(npArray)
         vtkArray.SetName(arrayName)
         grid.GetCellData().AddArray(vtkArray)
 
     def swapArray(self, grid, arrayName, npArray):
         grid.GetCellData().RemoveArray(arrayName)
         # convert incoming numpy array to vtk
-        vtkArray = numpy_support.numpy_to_vtk(npArray)
+        vtkArray = self.numpy_support.numpy_to_vtk(npArray)
         vtkArray.SetName(arrayName)
         grid.GetCellData().AddArray(vtkArray)
 
@@ -140,5 +150,5 @@ class catalystCoprocessor:
         # Execute coprocessing
         self._coProcessor.CoProcess(self.dataDescription)
 
-    def finalize(self):
-        bridge.finalize()
+    def finalize(self, mb):
+        self.bridge.finalize()

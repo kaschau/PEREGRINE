@@ -32,13 +32,10 @@ def simulate():
     config["RHS"]["secondaryAdvFlux"] = "scalarDissipation"
     config["mcPhysics"]["mixture"] = air
 
-    config["io"]["niterRestart"] = 1000000
-    config["io"]["niterPrint"] = 1000000
-
     config["simulation"]["niter"] = 100
 
     config["timeIntegration"]["integrator"] = "rk3"
-    config["timeIntegration"]["variableTimeStep"] = True
+    config["timeIntegration"]["controller"] = "cfl"
     config.validateConfig()
 
     ni = 30

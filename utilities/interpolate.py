@@ -102,7 +102,7 @@ if __name__ == "__main__":
     verboseSearch = args.verboseSearch
 
     # Read in from data
-    mbFrom = mbr.fromGrid(fromDir, speciesNames)
+    mbFrom = mbr.fromGrid(f"{fromDir}/g.h5", speciesNames, quiet=False)
 
     # results are numbered, so take the one the caller asked for or the newest
     nrts = sorted(
@@ -112,13 +112,13 @@ if __name__ == "__main__":
     )
     if not nrts:
         raise FileNotFoundError(f"No results found in {fromDir}")
-    RestartReader(fromDir, nrt=nrts[-1]).fill(mbFrom)
+    RestartReader(f"{fromDir}/q.{nrts[-1]:08d}.h5", quiet=False).fill(mbFrom)
 
     # Read in to data
-    mbTo = mbr.fromGrid(toDir, speciesNames)
+    mbTo = mbr.fromGrid(f"{toDir}/g.h5", speciesNames, quiet=False)
 
     pg.interpolation.getInterpolator(function, smooth, verboseSearch).interpolate(
         mbFrom, mbTo
     )
 
-    RestartWriter(mbTo, toDir).write(mbTo)
+    RestartWriter(mbTo, toDir, quiet=False).write(mbTo)

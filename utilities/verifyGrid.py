@@ -202,7 +202,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     gp = args.gridPath
-    mb = pg.multiBlock.grid.fromGrid(gp)
+    mb = pg.multiBlock.grid.fromGrid(f"{gp}/g.h5", quiet=False)
 
     if verify(mb):
         print("Grid is valid!")

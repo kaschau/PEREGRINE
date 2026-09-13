@@ -76,7 +76,7 @@ if __name__ == "__main__":
             "nseg must be > 1 (it corresponds to the total number of output segments)"
         )
 
-    fromGrid = pg.multiBlock.grid.fromGrid(fromDir)
+    fromGrid = pg.multiBlock.grid.fromGrid(f"{fromDir}/g.h5", quiet=False)
     nblks = len(fromGrid.blocks)
 
     toGrid = pg.multiBlock.grid()
@@ -221,4 +221,4 @@ if __name__ == "__main__":
                         toFace.bcType = "interior"
                         toFace.bcName = None
 
-    pg.writers.GridWriter(toGrid, toDir).write(toGrid)
+    pg.writers.GridWriter(toGrid, toDir, quiet=False).write(toGrid)

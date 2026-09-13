@@ -45,18 +45,17 @@ class BaseBC:
         face = self.face
         qBcVals = np.zeros(face.shapeOf("qBcVals"))
         QBcVals = np.zeros(face.shapeOf("QBcVals"))
-        if valueDict.get("profile", False):
-            self._profile(qBcVals, QBcVals)
+        if valueDict.get("profile"):
+            self._profile(valueDict["profile"], qBcVals, QBcVals)
         else:
             self._constants(valueDict, qBcVals, QBcVals)
         face.allocate(qBcVals=qBcVals, QBcVals=QBcVals)
 
-    def _profile(self, qBcVals, QBcVals):
+    def _profile(self, directory, qBcVals, QBcVals):
+        """The face's values from :directory:/<bcName>_<nblki>_<nface>.npy."""
         face, blk = self.face, self.face.blk
         ng = blk.ng
-        with open(
-            f"./Input/profiles/{face.bcName}_{blk.nblki}_{face.nface}.npy", "rb"
-        ) as f:
+        with open(f"{directory}/{face.bcName}_{blk.nblki}_{face.nface}.npy", "rb") as f:
             qBcVals[ng:-ng, ng:-ng, :] = np.load(f)
             QBcVals[ng:-ng, ng:-ng, :] = np.load(f)
         # extend the profile out into the face's own halo

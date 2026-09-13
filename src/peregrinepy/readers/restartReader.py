@@ -10,14 +10,14 @@ from ..misc import Progress
 
 
 class RestartReader:
-    """The result numbered :nrt: in :path:.
+    """The result file :fileName:.
 
     Making one reads the step and time it was written at. The file is opened
     again for the block reads of fill().
     """
 
-    def __init__(self, path="./", nrt=0, quiet=False):
-        self.fileName = f"{path}/q.{nrt:08d}.h5"
+    def __init__(self, fileName, quiet=True):
+        self.fileName = fileName
         self.quiet = quiet
         with h5py.File(self.fileName, "r") as f:
             self.nrt = int(f["iter"]["nrt"][0])

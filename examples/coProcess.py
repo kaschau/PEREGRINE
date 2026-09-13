@@ -102,8 +102,7 @@ def simulate():
     config["RHS"]["diffusion"] = True
     config["mcPhysics"]["mixture"] = air
     config["mcPhysics"]["trans"] = "constantProps"
-    config["coprocess"]["catalyst"] = True
-    config["coprocess"]["catalystFile"] = "tempcoproc.py"
+    config["plugins"]["catalyst"] = {"script": "tempcoproc.py"}
     config["initialConditions"]["u"] = 10.0
     config.validateConfig()
 
@@ -168,19 +167,19 @@ def simulate():
 
     # the faces changed since the case was made, so its halos follow
     mb.consistify()
-    mb.coproc = pg.coproc.coprocessor(mb)
 
     if rank == 0:
         print(mb)
     dt = 1.44e-6
-    mb.coproc(mb)
+    catalyst = mb.plugins["catalyst"]
+    catalyst(mb)
     bar = pg.misc.Progress(100)
     while mb.nrt < 100:
         bar.at(mb.nrt)
         mb.step(dt)
-        mb.coproc(mb)
+        catalyst(mb)
 
-    mb.coproc.finalize()
+    catalyst.finalize(mb)
     if rank == 0:
         os.remove("./tempcoproc.py")
 

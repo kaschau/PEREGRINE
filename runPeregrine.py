@@ -1,4 +1,5 @@
 #!/usr/bin/env -S python -m mpi4py
+import argparse
 import sys
 from time import perf_counter
 
@@ -9,7 +10,7 @@ import peregrinepy as pg
 np.seterr(all="raise")
 
 
-def simulate(configFilePath):
+def simulate(args):
     comm, rank, size = pg.mpiComm.mpiUtils.getCommRankSize()
     if rank == 0:
         string = " >>> ******************************** <<<\n"
@@ -19,21 +20,11 @@ def simulate(configFilePath):
         string += "           All rights reserved.\n"
         print(string)
 
-    config = pg.readers.readConfigFile(configFilePath, parallel=True)
-    comm.Barrier()
-    if rank == 0:
-        print("Read config.")
-
-    io, sim = config["io"], config["simulation"]
+    config = pg.readers.readConfigFile(args.config)
     ranks = (size, pg.mpiComm.mpiUtils.getRanksPerNode())
-    mesh = pg.readers.GridReader(io["gridDir"], ranks, quiet=True)
-    if sim["restartFrom"] is None:
-        mb = pg.multiBlock.solver(config, mesh)
-    else:
-        state = pg.readers.RestartReader(
-            io["resultsDir"], sim["restartFrom"], quiet=True
-        )
-        mb = pg.multiBlock.solver(config, mesh, state)
+    mesh = pg.readers.GridReader(args.mesh, ranks)
+    state = pg.readers.RestartReader(args.restart) if args.restart else None
+    mb = pg.multiBlock.solver(config, mesh, state)
 
     # Get some stats about the simulation
     nCells = mb.numCells
@@ -65,14 +56,19 @@ def simulate(configFilePath):
 
 
 if __name__ == "__main__":
-    configFilePath = sys.argv[1]
+    parser = argparse.ArgumentParser(description="Run a PEREGRINE case.")
+    parser.add_argument("config", help="the case's yaml")
+    parser.add_argument("mesh", help="the grid file, g.h5")
+    parser.add_argument(
+        "restart", nargs="?", help="a result to restart from, q.<nrt>.h5"
+    )
+    args = parser.parse_args()
     try:
         pg.abi.lib.initialize()
-        simulate(configFilePath)
+        simulate(args)
         pg.abi.lib.finalize()
 
     except Exception as e:
-        import sys
         import traceback
 
         print(f"{e}")
