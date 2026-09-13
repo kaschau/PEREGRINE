@@ -18,20 +18,19 @@ def test_cubic(my_setup):
     config["mcPhysics"]["Trange"] = (300.0, 3500.0)
     config["RHS"]["diffusion"] = False
 
-    mb = pg.multiBlock.solver(config, 1)
-    p = np.random.uniform(low=10000, high=100000)
-    T = np.random.uniform(low=300, high=1000)
-    Y = np.random.uniform(low=0.0, high=1.0, size=mb[0].ns)
-    Y = Y / np.sum(Y)
-    pg.mesher.CubeMesher(
-        mbDims=[1, 1, 1], dimsPerBlock=[2, 2, 2], lengths=[1, 1, 1]
-    ).mesh(mb)
-
-    blk = mb[0]
+    mb = pg.multiBlock.solver(
+        config,
+        mesh=pg.mesher.CubeMesher(
+            mbDims=[1, 1, 1], dimsPerBlock=[2, 2, 2], lengths=[1, 1, 1]
+        ),
+    )
+    blk = mb.blocks[0]
     ng = blk.ng
 
-    mb.generateHalo()
-    mb.computeMetrics()
+    p = np.random.uniform(low=10000, high=100000)
+    T = np.random.uniform(low=300, high=1000)
+    Y = np.random.uniform(low=0.0, high=1.0, size=mb.ns)
+    Y = Y / np.sum(Y)
 
     q = blk.q.get()
     q[:, :, :, 0] = p
@@ -55,7 +54,7 @@ def test_cubic(my_setup):
     pd = []
     pd.append(print_diff("p", p, pgprim[0]))
     pd.append(print_diff("T", T, pgprim[4]))
-    for i, n in enumerate(mb[0].speciesNames[0:-1]):
+    for i, n in enumerate(mb.blocks[0].speciesNames[0:-1]):
         pd.append(print_diff(n, Y[i], pgprim[5 + i]))
 
     # every property is a refit to the case's tolerance, in percent here

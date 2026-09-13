@@ -14,8 +14,8 @@ from peregrinepy.readers import GridReader
 
 
 def analyzeGrid(mb):
-    size = np.zeros(mb.nblks, dtype=np.int32)
-    for blk in mb:
+    size = np.zeros(len(mb.blocks), dtype=np.int32)
+    for blk in mb.blocks:
         size[blk.nblki] = (blk.ni - 1) * (blk.nj - 1) * (blk.nk - 1)
 
     assert np.min(size) > 0
@@ -71,8 +71,7 @@ if __name__ == "__main__":
     print(f"min block is {minNblki} with {minCells} cells, {ni = }, {nj = }, {nk = }.")
     print(f"{mean = }, {stdv = }")
 
-    with GridReader(gp) as reader:
-        partitions = reader.partitions
+    partitions = GridReader(gp).partitions
     if partitions:
         print(
             "partitioned for "

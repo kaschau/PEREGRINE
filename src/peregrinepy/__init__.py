@@ -12,7 +12,6 @@ from . import multiBlock
 from . import readers
 from . import writers
 from ._version import __version__
-from .bootstrapCase import bootstrapCase
 
 __all__ = [
     "abi",
@@ -29,5 +28,4 @@ __all__ = [
     "readers",
     "writers",
     "__version__",
-    "bootstrapCase",
 ]

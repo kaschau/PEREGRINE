@@ -20,15 +20,14 @@ def test_constantProps(my_setup):
     config["mcPhysics"]["trans"] = "constantProps"
     config["RHS"]["diffusion"] = True
 
-    mb = pg.multiBlock.solver(config, 1)
-    pg.mesher.CubeMesher(
-        mbDims=[1, 1, 1], dimsPerBlock=[2, 2, 2], lengths=[1, 1, 1]
-    ).mesh(mb)
+    mb = pg.multiBlock.solver(
+        config,
+        mesh=pg.mesher.CubeMesher(
+            mbDims=[1, 1, 1], dimsPerBlock=[2, 2, 2], lengths=[1, 1, 1]
+        ),
+    )
 
-    blk = mb[0]
-
-    mb.generateHalo()
-    mb.computeMetrics()
+    blk = mb.blocks[0]
 
     p = np.random.uniform(low=10000, high=1000000)
     T = np.random.uniform(low=200, high=3500)

@@ -68,19 +68,18 @@ class MergeMixin(OrientMixin):
         """Every plane of the grid that can be removed, as its pairs. A plane is
         reported once."""
         planes, done = [], set()
-        for blk in mb:
-            for face in blk.faces:
-                if (blk.nblki, face.nface) in done or face.neighbor is None:
-                    continue
-                pairs = self._pairsOnPlane(mb, blk.nblki, face.nface)
-                if pairs is None:
-                    done.add((blk.nblki, face.nface))
-                    continue
-                for a, fa in pairs:
-                    far = mb.getBlock(a).getFace(fa)
-                    done.add((a, fa))
-                    done.add((far.neighbor, far.neighborNface))
-                planes.append(pairs)
+        for blk, face in mb.faces():
+            if (blk.nblki, face.nface) in done or face.neighbor is None:
+                continue
+            pairs = self._pairsOnPlane(mb, blk.nblki, face.nface)
+            if pairs is None:
+                done.add((blk.nblki, face.nface))
+                continue
+            for a, fa in pairs:
+                far = mb.getBlock(a).getFace(fa)
+                done.add((a, fa))
+                done.add((far.neighbor, far.neighborNface))
+            planes.append(pairs)
         return planes
 
     def mergePlane(self, mb, pairs):
@@ -114,15 +113,14 @@ class MergeMixin(OrientMixin):
             A.faces[fa - 1] = B.getFace(fa)
             merged[B.nblki] = A.nblki
 
-        for blk in mb:
-            for face in blk.faces:
-                if face.neighbor in merged:
-                    face.neighbor = merged[face.neighbor]
+        for blk, face in mb.faces():
+            if face.neighbor in merged:
+                face.neighbor = merged[face.neighbor]
         self._compact(mb, set(merged))
 
     def _compact(self, mb, gone):
         """Drop the merged away blocks and number what is left from zero."""
-        keep = [blk for blk in mb if blk.nblki not in gone]
+        keep = [blk for blk in mb.blocks if blk.nblki not in gone]
         renumber = {blk.nblki: n for n, blk in enumerate(keep)}
         for blk in keep:
             blk.nblki = renumber[blk.nblki]
@@ -131,7 +129,7 @@ class MergeMixin(OrientMixin):
             for face in blk.faces:
                 if face.neighbor is not None:
                     face.neighbor = renumber[face.neighbor]
-        mb.data = keep
+        mb.blocks = keep
         mb.totalBlocks = len(keep)
 
     def matchInterfaces(self, mb):
@@ -163,7 +161,7 @@ class MergeMixin(OrientMixin):
             return np.arange(np.prod(shape)).reshape(shape)
 
         links, seen = [], set()
-        for blk in mb:
+        for blk in mb.blocks:
             flatOf = flatIds(blk)
             for face in blk.faces:
                 if face.neighbor is None or face.periodicRotation is not None:
@@ -192,7 +190,7 @@ class MergeMixin(OrientMixin):
         graph = coo_matrix((np.ones(len(rows)), (rows, cols)), shape=(n, n))
         _, group = connected_components(graph, directed=False)
 
-        blocks = {blk.nblki: blk for blk in mb}
+        blocks = {blk.nblki: blk for blk in mb.blocks}
         at = np.array([w[1] for w in where])
         held = np.array([w[0] for w in where])
 

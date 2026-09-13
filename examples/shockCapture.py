@@ -343,7 +343,20 @@ def simulate(testnum, index="i"):
     config["RHS"]["switchAdvFlux"] = "vanLeer"
     config["timeIntegration"]["integrator"] = "rk3"
     config.validateConfig()
-    mb = pg.multiBlock.solver(config, 1)
+
+    rot = {"i": 0, "j": 1, "k": 2}
+
+    def rotate(li, index):
+        return li[-rot[index] :] + li[: -rot[index]]
+
+    dimsPerBlock = rotate([nx, 2, 2], index)
+    lengths = rotate([1, 0.1, 0.1], index)
+    mb = pg.multiBlock.solver(
+        config,
+        mesh=pg.mesher.CubeMesher(
+            mbDims=[1, 1, 1], dimsPerBlock=dimsPerBlock, lengths=lengths
+        ),
+    )
 
     Ru = mb.thtrdat.Ru
     MW = mb.thtrdat.MW.get()[0]
@@ -369,27 +382,11 @@ def simulate(testnum, index="i"):
     print("uR = {}".format(test.uR))
     print("--------------------------")
 
-    rot = {"i": 0, "j": 1, "k": 2}
-
-    def rotate(li, index):
-        return li[-rot[index] :] + li[: -rot[index]]
-
-    dimsPerBlock = rotate([nx, 2, 2], index)
-    lengths = rotate([1, 0.1, 0.1], index)
-
-    pg.mesher.CubeMesher(
-        mbDims=[1, 1, 1], dimsPerBlock=dimsPerBlock, lengths=lengths
-    ).mesh(mb)
-
-    blk = mb[0]
+    blk = mb.blocks[0]
     ng = blk.ng
 
     for face in blk.faces:
         face.bcType = "adiabaticSlipWall"
-
-    mb.setBlockCommunication()
-    mb.unifyGrid()
-    mb.computeMetrics()
 
     ccAxis = {"i": 0, "j": 1, "k": 2}
     uIndex = {"i": 1, "j": 2, "k": 3}
@@ -424,11 +421,11 @@ def simulate(testnum, index="i"):
             inputBcValues["v"] = bcVelo[1]
             inputBcValues["w"] = bcVelo[2]
             inputBcValues["T"] = test.TL
-            pg.bcs.getBc(face.bcType).setValues(face, inputBcValues)
+            face.bc.setValues(inputBcValues)
         elif test.uL < 0:
             face.bcType = "constantPressureSubsonicExit"
             inputBcValues["p"] = test.pL
-            pg.bcs.getBc(face.bcType).setValues(face, inputBcValues)
+            face.bc.setValues(inputBcValues)
 
     face = blk.getFace(highFace)
     if test.uR == 0.0:
@@ -442,17 +439,18 @@ def simulate(testnum, index="i"):
             inputBcValues["v"] = bcVelo[1]
             inputBcValues["w"] = bcVelo[2]
             inputBcValues["T"] = test.TR
-            pg.bcs.getBc(face.bcType).setValues(face, inputBcValues)
+            face.bc.setValues(inputBcValues)
         elif test.uR > 0:
             face.bcType = "constantPressureSubsonicExit"
             inputBcValues["p"] = test.pR
-            pg.bcs.getBc(face.bcType).setValues(face, inputBcValues)
+            face.bc.setValues(inputBcValues)
 
     # Update cons
     mb.stateFromPrims(nface=0)
     mb.consistify()
+    bar = pg.misc.Progress(test.t)
     while mb.tme < test.t:
-        pg.misc.progressBar(mb.tme, test.t)
+        bar.at(mb.tme)
         mb.step(test.dt)
 
     s_ = rotate(np.s_[ng:-ng, ng, ng], index)

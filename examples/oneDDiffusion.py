@@ -21,19 +21,16 @@ def simulate():
     config["RHS"]["diffusion"] = True
     config["RHS"]["primaryAdvFlux"] = "rusanov"
     config.validateConfig()
-    mb = pg.multiBlock.solver(config, 1)
-    pg.mesher.CubeMesher(
-        mbDims=[1, 1, 1], dimsPerBlock=[41, 2, 2], lengths=[1, 0.01, 0.01]
-    ).mesh(mb)
+    mb = pg.multiBlock.solver(
+        config,
+        mesh=pg.mesher.CubeMesher(
+            mbDims=[1, 1, 1], dimsPerBlock=[41, 2, 2], lengths=[1, 0.01, 0.01]
+        ),
+    )
 
-    blk = mb[0]
+    blk = mb.blocks[0]
     for face in blk.faces:
         face.bcType = "adiabaticSlipWall"
-
-    mb.setBlockCommunication()
-
-    mb.unifyGrid()
-    mb.computeMetrics()
 
     ng = blk.ng
     q = blk.q.get()
@@ -51,10 +48,11 @@ def simulate():
 
     dt = 1e-5
     nrt = 50000
+    bar = pg.misc.Progress(nrt)
     while mb.nrt < nrt:
         mb.step(dt)
         if mb.nrt % 100 == 0:
-            pg.misc.progressBar(mb.nrt, nrt)
+            bar.at(mb.nrt)
 
     q = blk.q.get()
     fig, ax1 = plt.subplots()

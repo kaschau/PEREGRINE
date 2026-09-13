@@ -36,7 +36,7 @@ class BaseBC:
 
     def __init__(self, adv, spdata):
         self.mb = create(self.bcType, adv, spdata)
-        self.blk = self.mb[0]
+        self.blk = self.mb.blocks[0]
         # the latest snapshot of each block array a stage wrote
         self.host = {}
 

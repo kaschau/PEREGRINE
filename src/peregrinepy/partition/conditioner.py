@@ -12,13 +12,15 @@ class Conditioner(MergeMixin):
         need, relabel every block so its longest extent is i, and make the
         interfaces that are left agree to the last digit."""
         print("Conditioning the grid...")
-        before = len(mb)
+        before = len(mb.blocks)
         found = mb.detectPeriodics()
         removed = self.mergeAll(mb)
         self.longestAxisFirst(mb)
         off = self.matchInterfaces(mb)
         for kind, n in sorted(found.items()):
             print(f"  found {n} {kind} face(s) among the interfaces")
-        print(f"  merged away {removed} interface(s), {before} blocks -> {len(mb)}")
+        print(
+            f"  merged away {removed} interface(s), {before} blocks -> {len(mb.blocks)}"
+        )
         print("  every block re-indexed so its longest extent is i")
         print(f"  interfaces matched exactly, closing a gap of up to {off:.3e}")

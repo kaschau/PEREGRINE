@@ -91,18 +91,18 @@ if __name__ == "__main__":
 
     # balancing is all extents and connectivity, so no coordinate is read
     mb = pg.multiBlock.topology.fromGrid(gridDir)
-    before, beforeMax = len(mb), partitioner.blockCells(mb).max()
+    before, beforeMax = len(mb.blocks), partitioner.blockCells(mb).max()
 
     blocksForProcs = partitioner.partition(mb, numProcs, ranksPerNode, granularity)
 
     if granularity is not None:
         print(
-            f"  {before} blocks -> {len(mb)} pieces,"
+            f"  {before} blocks -> {len(mb.blocks)} pieces,"
             f" largest {beforeMax} -> {partitioner.blockCells(mb).max()}"
         )
 
     weights, edges = partitioner.cellWeights(mb), partitioner.edgesFromMb(mb)
-    assign = np.empty(len(mb), dtype=np.int64)
+    assign = np.empty(len(mb.blocks), dtype=np.int64)
     for r, group in enumerate(blocksForProcs):
         assign[group] = r
     procLoad = np.bincount(assign, weights=weights, minlength=numProcs)
@@ -118,7 +118,7 @@ if __name__ == "__main__":
         f"Added a {numProcs}x{ranksPerNode} partition"
         f" ({nNodes} node(s)) to {gridDir}/g.h5\n\n",
         "Results of Load Balancing:\n",
-        f"Total Number of blocks = {len(mb)}\n",
+        f"Total Number of blocks = {len(mb.blocks)}\n",
         f"Total Number of cells  = {int(weights.sum())}\n\n",
         f"Maximum blocks on processor = {maxBlksForProcs}\n",
         f"Maximum load on processor = {int(procLoad.max())}\n",

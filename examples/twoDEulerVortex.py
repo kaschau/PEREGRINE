@@ -29,16 +29,18 @@ def simulate():
     config["mcPhysics"]["mixture"] = air
     config.validateConfig()
 
-    mb = pg.multiBlock.solver(config, 1)
     NE = NN = 41
-    pg.mesher.CubeMesher(
-        mbDims=[1, 1, 1],
-        dimsPerBlock=[NE, NN, 2],
-        lengths=[12, 12, 0.01],
-        periodic=[True, True, False],
-    ).mesh(mb)
+    mb = pg.multiBlock.solver(
+        config,
+        mesh=pg.mesher.CubeMesher(
+            mbDims=[1, 1, 1],
+            dimsPerBlock=[NE, NN, 2],
+            lengths=[12, 12, 0.01],
+            periodic=[True, True, False],
+        ),
+    )
 
-    blk = mb[0]
+    blk = mb.blocks[0]
     ng = blk.ng
 
     # SKEW THE GRID
@@ -63,17 +65,14 @@ def simulate():
                 + Ay * np.sin(2 * np.pi * kappa) * np.sin(lamY * np.pi * E * delX / Lx)
             )
     blk.store("nodes", nodes)
+    # the nodes moved, so the halos and metrics follow them
+    mb.unifyGrid()
+    mb.computeMetrics()
 
-    for face in blk.faces[0:4]:
-        face.commRank = 0
     for f in [5, 6]:
         face = blk.getFace(f)
         face.bcType = "adiabaticSlipWall"
 
-    mb.setBlockCommunication()
-
-    mb.unifyGrid()
-    mb.computeMetrics()
     print(mb)
 
     Rc = 1.0
@@ -115,9 +114,10 @@ def simulate():
     tEnd = Lx / uInf
 
     ts = perf_counter()
+    bar = pg.misc.Progress(tEnd)
     while mb.tme < tEnd:
         if mb.nrt % 50 == 0:
-            pg.misc.progressBar(mb.tme, tEnd)
+            bar.at(mb.tme)
         mb.step(dt)
     print(f"Time integration took {perf_counter()-ts} seconds.")
 

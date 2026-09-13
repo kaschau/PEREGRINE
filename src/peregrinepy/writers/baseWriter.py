@@ -4,14 +4,16 @@ from copy import deepcopy
 from h5py import h5fd, h5p, h5s
 from lxml import etree
 
+from ..misc import Progress
 from ..mpiComm.mpiUtils import getCommRankSize
 
 
 class BaseWriter:
 
-    def __init__(self, mb, path="./", precision="single"):
+    def __init__(self, mb, path="./", precision="single", quiet=False):
         self.path = path
         self.precision = precision
+        self.quiet = quiet
         self.fdtype = "float64" if precision == "double" else "float32"
 
         self.comm, self.rank, self.size = getCommRankSize()
@@ -27,7 +29,7 @@ class BaseWriter:
     ###########################################################################
     def _gatherExtents(self, mb):
         """Every block's ni,nj,nk indexed by block number, on every rank."""
-        mine = [(blk.nblki, blk.ni, blk.nj, blk.nk) for blk in mb]
+        mine = [(blk.nblki, blk.ni, blk.nj, blk.nk) for blk in mb.blocks]
         everyones = [blk for perRank in self.comm.allgather(mine) for blk in perRank]
 
         extents = np.zeros((len(everyones), 3), dtype=np.int32)

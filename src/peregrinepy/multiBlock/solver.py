@@ -1,88 +1,199 @@
 import numpy as np
+from mpi4py import MPI
 
 from .restart import restart
 from .solverBlock import solverBlock
-from ..bcs import getBc
+from ..graph import Graph
 from ..integrators import getIntegrator
 from ..jit import Jit
-from ..kernel import BoundKernel, NullKernel
+from ..kernel import BoundKernel
 from ..mixture import Mixture
 from ..mpiComm import Communicator
+from ..mpiComm.mpiUtils import getCommRankSize
 from ..table import Table
+from ..files.configFile import pgConfigError
+from ..writers.writeDualTimeQnm1 import writeDualTimeQnm1
 from .thtrdat import thtrdat
 
 
-class pgConfigError(Exception):
-    def __init__(self, setting, option, altMessage=""):
-        message = f"Unknown PEREGRINE config {setting} option: {option}. "
-        super().__init__(message + altMessage)
-
-
 class solver(restart):
-    """A list of peregrinepy.multiBlock.solver.
-    Inherits from peregrinepy.multiBlock.restart"""
+    """A runnable case: the blocks, the mixture and its species data, the
+    step's graphs, the boundary conditions, the time integrator, and every
+    kernel the config asks for, compiled and bound."""
 
     hasConservatives = True
 
     def _newBlock(self, nblki):
         return solverBlock(
-            nblki, self.speciesNames, self.ng, self.config, self, len(self)
+            nblki, self.speciesNames, self.ng, self.config, self, len(self.blocks)
         )
 
-    def progress(self, n, message):
-        """A running case reports through its own machinery, not a bar."""
-
-    def __init__(self, config, nblks=None, myblocks=None):
-        """A runnable case: the blocks, the mixture and its species data, the
-        time integrator, and every kernel the config asks for, compiled and
-        bound. :myblocks: are the block numbers this rank is responsible for,
-        which is also how many blocks it holds."""
-        if myblocks is not None:
-            nblks = len(myblocks)
-
+    def __init__(self, config, mesh, state=None):
+        """A case, ready to step. The step's graphs and every kernel they call
+        are compiled for the config; the blocks come from :mesh: -- a mesher
+        or a grid reader, anything that fills a multiBlock -- and are
+        connected, haloed and metricked, with the boundary values the config
+        names on their faces; the state comes from :state: -- a restart
+        reader -- or is uniform at the config's initial conditions, and is
+        made consistent."""
         self.config = config
         self.mixture = Mixture(config["mcPhysics"], root=config["io"]["inputDir"])
-        self.ng = solverBlock.haloDepth(config)
+        super().__init__(self.mixture.speciesNames)
 
-        # every block's records, which each block fills in as it allocates
-        self.table = Table(nblks, self.ng)
-        spNames = self.mixture.speciesNames
-        super().__init__(
-            nblks,
-            spNames,
-            [solverBlock(i, spNames, self.ng, config, self, i) for i in range(nblks)],
-        )
-
-        # in parallel the blocks are numbered by the partition, not by order
-        if myblocks is not None:
-            for blk, nblki in zip(self, myblocks):
-                blk.nblki = blk.baseNblki = nblki
-
+        # what a step does
+        self.graphs = {
+            "consistify": Graph.consistify(config, self.mixture),
+            "consistifyFromPrims": Graph.consistify(
+                config, self.mixture, fromPrims=True
+            ),
+            "rhs": Graph.rhs(config),
+        }
         # time integrator time
         self.titme = 0.0
+
+        # what every kernel runs with: the species data, the block table each
+        # block fills in as it allocates, and the jit; the last two learn the
+        # halo depth once every kernel is known
         self.thtrdat = thtrdat(self.mixture)
+        self.table = Table()
+        self.jit = Jit(self.mixture.ns)
 
-        # the kernels compiled for this case, by the name they are called by
-        self.jit = Jit(self.mixture.ns, self.ng)
-        self.kernels = {}
-
-        # Result output
-        self.resultsWriter = None
-        # Halo exchange, once the blocks know their neighbors
-        self.communicator = None
-        # the boundary conditions' kernels by hook, and their faces' records
-        self.bcHooks = {}
-        self._faceTables = {}
-
-        # what consistify and RHS call, from what the config picks
-        self.phiComm = False
-        self.setConsistify()
-        self.setRHS()
-        for name in ("allFinite", "CFLmax", "residual"):
-            setattr(self, name, self.kernel(f"utils/{name}.cpp"))
-        # how the case steps in time
+        # what calls kernels: the halo exchange, the graphs, the integrator,
+        # and the checks the run makes
+        self.communicator = Communicator(self.table, self.thtrdat)
+        for graph in self.graphs.values():
+            graph.bind(self.table, self.thtrdat, self.communicator)
         self.integrator = getIntegrator(config["timeIntegration"]["integrator"])(self)
-        self.compileKernels()
+        checks = [
+            BoundKernel(self.table, self.thtrdat, f"utils/{name}.cpp")
+            for name in ("allFinite", "CFLmax")
+        ]
+        owners = [self.communicator, *self.graphs.values(), self.integrator]
+        kernels = [k for o in owners for k in o.kernels] + checks
+        # every kernel the case calls, by the name it calls it
+        self.kernels = {k.role: k for k in kernels}
+
+        # the halo is as deep as the widest stencil among them
+        self.ng = self.table.ng = self.jit.ng = max(k.stencil for k in kernels)
+        self.jit.compile(kernels)
+
+        # the blocks, and what follows from them; the hooks find their faces
+        # before the first step, and again whenever a face changes
+        self.facesChanged = True
+        mesh.fill(self)
+        self.setBlockCommunication()
+        self.unifyGrid()
+        self.computeMetrics()
+        self._applyBcValues()
+
+        # the state, and what follows from it
+        if state is None:
+            self._setUniformState()
+        else:
+            state.fill(self)
+        self.consistifyFromPrims()
+
+    ###########################################################################
+    # The kernels
+    ###########################################################################
+    def __getattr__(self, name):
+        # a kernel is reached by the name it was registered under
+        kernels = self.__dict__.get("kernels", {})
+        if name in kernels:
+            return kernels[name]
+        raise AttributeError(name)
+
+    ###########################################################################
+    # The boundary conditions, on the faces
+    ###########################################################################
+    def _applyBcValues(self):
+        """Make every named face what its config entry says, and give it the
+        values that entry sets."""
+        bcValues = self.config["bcValues"]
+        for blk, face in self.faces():
+            if face.bcName is None:
+                continue
+            if face.bcName not in bcValues:
+                raise pgConfigError(
+                    "bcValues",
+                    face.bcName,
+                    f"block {blk.nblki} face {face.nface} carries this name,"
+                    f" which the config says nothing about; it knows {sorted(bcValues)}.",
+                )
+            entry = bcValues[face.bcName]
+            if "bcType" not in entry:
+                raise pgConfigError("bcValues", face.bcName, "names no bcType.")
+            face.bcType = entry["bcType"]
+            if face.bc.values:
+                face.bc.setValues(entry)
+
+    def applyBcs(self, hook, faces=None):
+        """One hook on the given faces, or on every face that has it, the way
+        the step does: after euler the faces' state follows, and a condition
+        with more to say once it has a density says it."""
+        self._connectBcs()
+        graph = self.graphs["consistify" if hook in ("euler", "postEos") else "rhs"]
+        node = graph.hook(hook)
+        if faces is None:
+            table = node.table
+        else:
+            faces = [f for f in faces if hook in f.bc.hooks]
+            table = Table.ofFaces(faces, hook) if faces else None
+        if table is None:
+            return
+        node.run(self.titme, table)
+        # a hook that sets primitives leaves the faces' state to follow
+        if hook in ("euler", "postEos"):
+            self.stateFromPrims(table=table)
+        if hook == "euler":
+            self.applyBcs("postEos", faces)
+
+    def _setUniformState(self):
+        """Every cell of q at the config's initial conditions."""
+        ic = self.config["initialConditions"]
+        Y = ic["Y"]
+        unknown = sorted(set(Y) - set(self.speciesNames))
+        if unknown:
+            raise pgConfigError(
+                "initialConditions",
+                "Y",
+                f"names {unknown}, which are not species of this mixture: "
+                f"{self.speciesNames}.",
+            )
+        if sum(Y.values()) > 1.0 + 1e-12:
+            raise pgConfigError(
+                "initialConditions", "Y", f"sums to {sum(Y.values())}, more than one."
+            )
+        values = [ic[k] for k in ("p", "u", "v", "w", "T")]
+        values += [Y.get(name, 0.0) for name in self.speciesNames[:-1]]
+        for blk in self.blocks:
+            q = blk.q.get()
+            q[...] = values
+            blk.q.set(q)
+
+    ###########################################################################
+    # Stepping
+    ###########################################################################
+    def _connectBcs(self):
+        """The faces each hook runs over, whenever a face's condition or
+        arrays have changed since the hooks last looked."""
+        if self.facesChanged:
+            faces = [f for _, f in self.faces()]
+            for graph in self.graphs.values():
+                graph.connect(faces)
+            self.facesChanged = False
+
+    def consistify(self):
+        self._connectBcs()
+        self.graphs["consistify"].run(self.titme)
+
+    def consistifyFromPrims(self):
+        self._connectBcs()
+        self.graphs["consistifyFromPrims"].run(self.titme)
+
+    def RHS(self):
+        self._connectBcs()
+        self.graphs["rhs"].run(self.titme)
 
     def step(self, dt):
         self.integrator.step(dt)
@@ -93,260 +204,135 @@ class solver(restart):
         self.tme += dt
         self.titme = self.tme
 
-    def kernel(self, source, table=None, defines=(), **fixed):
-        """One of this case's kernels, from its source: compiled with the
-        rest of them, or on its first call if it comes later."""
-        bound = BoundKernel(self, source, table, defines, **fixed)
-        self.kernels[bound.__name__] = bound
-        return bound
+    def run(self):
+        """The case, start to finish: every step the config asks for, with
+        the results written, the state checked and the coprocessor called as
+        often as it says."""
+        from ..coproc import coprocessor
+        from ..writers import RestartWriter
 
-    def compileKernels(self):
-        """Every kernel made so far that is not yet compiled, at once."""
-        pending = [k for k in self.kernels.values() if k.kernel is None]
-        self.jit.compile([(k.source, k.defines, k.includes) for k in pending])
-        for k in pending:
-            k.compile()
+        comm, rank, size = getCommRankSize()
+        config = self.config
+        io = config["io"]
+        writer = RestartWriter(
+            self,
+            quiet=True,
+            path=io["resultsDir"],
+            gridPath=f"../{io['gridDir']}",
+            precision="single",
+        )
+        coproc = coprocessor(self)
+        self.integrator.initialize()
 
-    def setConsistify(self):
-        """The kernels consistify calls, from what the config picks."""
-        eos = self.config["mcPhysics"]["eos"]
-        if eos not in ("cpg", "tpg", "realGas"):
-            raise pgConfigError("eos", eos)
-        self.stateFromPrims = self.kernel(f"thermo/{eos}FromPrims.cpp")
-        self.stateFromCons = self.kernel(f"thermo/{eos}FromCons.cpp")
+        niterOut, niterPrint = io["niterOut"], io["niterPrint"]
+        checkNan = config["simulation"]["checkNan"]
+        for _ in range(config["simulation"]["niter"]):
+            dt, CFLmaxA, CFLmaxC, CFLmax = self.dtMaxCFL()
+            if self.nrt % niterPrint == 0 and rank == 0:
+                print(
+                    f" >>> --------- nrt: {self.nrt:<6} ---------- <<<\n",
+                    f"    tme: {self.tme:.6E} s\n"
+                    f"     dt : {dt:.6E} s\n"
+                    f"     MAX CFL       : {CFLmax*dt:.3f}\n"
+                    f"         Acoustic  : {CFLmaxA*dt:.3f}\n"
+                    f"         Convective: {CFLmaxC*dt:.3f}\n"
+                    " >>> -------------------------------- <<<\n",
+                )
 
-        # Transport properties: the transport and species diffusion choices pick
-        # one kernel between them
-        if self.config["RHS"]["diffusion"]:
-            self.trans = self.kernel(f"transport/{self.mixture.transportKernel}.cpp")
-        else:
-            self.trans = NullKernel()
+            self.step(dt)
 
-        # Switching function between primary and secondary advective fluxes
-        #  If we aren't using a secondary flux function, we rely on the
-        #  initialization of the switch array "phi" = 0.0 and then
-        #  just never change it.
-        switch = self.config["RHS"]["switchAdvFlux"]
-        if switch is None:
-            self.switch = NullKernel()
-        else:
-            self.switch = self.kernel(f"switches/{switch}.cpp")
-            self.phiComm = True
+            if self.nrt % niterOut == 0:
+                if rank == 0:
+                    print("Saving results.\n")
+                writer.write(self)
+                if self.integrator.stepType == "dualTime":
+                    writeDualTimeQnm1(self, path=io["resultsDir"])
 
-    def setRHS(self):
-        """The kernels RHS calls, from what the config picks."""
-        rhs = self.config["RHS"]
+            if checkNan and self.nrt % checkNan == 0 and self.checkForNan() > 0:
+                self.nrt = 99999999
+                writer.write(self)
+                comm.Barrier()
+                if rank == 0:
+                    print("Nan/inf detected. Aborting.")
+                break
 
-        self.dQzero = self.kernel("utils/dQzero.cpp")
+            coproc(self)
 
-        # Primary advective fluxes, and how they are applied
-        self.primaryAdvFlux = self.kernel(f"advFlux/{rhs['primaryAdvFlux']}.cpp")
-        shock = rhs["shockHandling"]
-        if shock is None or shock == "artificialDissipation":
-            self.applyPrimaryAdvFlux = self.kernel("utils/applyFlux.cpp")
-        elif shock == "hybrid":
-            self.applyPrimaryAdvFlux = self.kernel(
-                "utils/applyHybridFlux.cpp", primary=1.0
-            )
-        else:
-            raise pgConfigError("shockHandling", shock)
-
-        # Secondary advective fluxes
-        secondary = rhs["secondaryAdvFlux"]
-        if secondary is None:
-            self.secondaryAdvFlux = NullKernel()
-        else:
-            assert (
-                shock is not None
-            ), "*** You set a secondary flux without a shock handler!"
-            self.secondaryAdvFlux = self.kernel(f"advFlux/{secondary}.cpp")
-        if shock is None:
-            self.applySecondaryAdvFlux = NullKernel()
-        elif shock == "artificialDissipation":
-            self.applySecondaryAdvFlux = self.kernel("utils/applyFlux.cpp")
-        elif shock == "hybrid":
-            self.applySecondaryAdvFlux = self.kernel(
-                "utils/applyHybridFlux.cpp", primary=0.0
-            )
-
-        # spatial derivatives, subgrid mode, diffusive fluxes
-        if rhs["diffusion"]:
-            self.dqdxyz = self.kernel("utils/dq2FD.cpp")
-            sgs = rhs["subgrid"]
-            self.sgs = (
-                NullKernel() if sgs is None else self.kernel(f"subgrid/{sgs}.cpp")
-            )
-            self.diffFlux = self.kernel("diffFlux/alphaDampingFlux.cpp")
-            self.applyDiffFlux = self.kernel("utils/applyFlux.cpp")
-        else:
-            self.dqdxyz = NullKernel()
-            self.sgs = NullKernel()
-            self.diffFlux = NullKernel()
-            self.applyDiffFlux = NullKernel()
-
-        sponge = self.config["viscousSponge"]
-        if sponge["spongeON"]:
-            self.viscousSponge = self.kernel(
-                "utils/viscousSponge.cpp",
-                origin=sponge["origin"],
-                ending=sponge["ending"],
-                mult=sponge["multiplier"],
-            )
-        else:
-            self.viscousSponge = NullKernel()
-
-        # Chemical source terms: parked until the mixture package carries reactions
-        if self.config["mcPhysics"]["chemistry"]:
-            raise pgConfigError("chemistry", True, "Chemistry is not available yet.")
-        self.expChem = NullKernel()
+        coproc.finalize()
 
     ###########################################################################
-    # The boundary faces: what the config makes them, one table, one kernel
-    # per hook in the step
+    # What the ranks agree on
     ###########################################################################
-    def applyBcValues(self):
-        """Make every named face what its config entry says, and give it the
-        values that entry sets."""
-        bcValues = self.config["bcValues"]
-
-        for blk in self:
-            for face in blk.faces:
-                if face.bcName is None:
-                    continue
-
-                if face.bcName not in bcValues:
-                    raise KeyError(
-                        f"block {blk.nblki} face {face.nface} carries the name"
-                        f" '{face.bcName}', which this config says nothing about."
-                        f" It knows {sorted(bcValues)}."
-                    )
-                entry = bcValues[face.bcName]
-                if "bcType" not in entry:
-                    raise KeyError(f"bcValues entry '{face.bcName}' names no bcType.")
-
-                face.bcType = entry["bcType"]
-                if not getBc(face.bcType).values:
-                    continue
-
-                getBc(face.bcType).setValues(face, entry)
-
-    hooks = ("euler", "postEos", "preDqDxyz", "postDqDxyz")
+    @property
+    def numCells(self):
+        comm, rank, size = getCommRankSize()
+        n = np.array(
+            [sum((b.ni - 1) * (b.nj - 1) * (b.nk - 1) for b in self.blocks)],
+            dtype=np.int32,
+        )
+        comm.Allreduce(MPI.IN_PLACE, n, op=MPI.SUM)
+        return n[0]
 
     @property
-    def boundaryFaces(self):
-        """Every face a boundary condition applies to, in a fixed order."""
-        return [face for blk in self for face in blk.faces if getBc(face.bcType).hooks]
-
-    def setBcs(self):
-        """A kernel per hook over the faces whose conditions have it: the
-        case's conditions are compiled in, and each face's kind at that hook
-        picks its own. A hook no condition has is null. Called once the
-        faces know their conditions."""
-        faces = self.boundaryFaces
-        for hook in self.hooks:
-            bcTypes = sorted({f.bcType for f in faces if hook in getBc(f.bcType).hooks})
-            for face in faces:
-                face.kind[hook] = (
-                    bcTypes.index(face.bcType) if face.bcType in bcTypes else -1
-                )
-            if not bcTypes:
-                self.bcHooks[hook] = NullKernel()
-                continue
-            self.bcHooks[hook] = self.kernel(
-                f"boundaryConditions/hooks/{hook}.cpp",
-                table=lambda hook=hook: self.faceTable(hook),
-                defines=("PG_BCS=" + " ".join(f"X({t})" for t in bcTypes),),
-                includes=tuple(getBc(t).header(hook) for t in bcTypes),
-            )
-        self._faceTables = {}
-        self.compileKernels()
-
-    def faceTable(self, hook):
-        """The records of the faces that have a hook, built once."""
-        if hook not in self._faceTables:
-            faces = [f for f in self.boundaryFaces if f.kind[hook] >= 0]
-            self._faceTables[hook] = Table.ofFaces(faces, hook)
-        return self._faceTables[hook]
-
-    def applyBcs(self, hook, faces=None):
-        """One hook of the step on every boundary face that has it. The
-        euler hook leaves primitives, so the halo's conservatives follow,
-        and a condition with more to say once it has a density says it."""
-        if not self.bcHooks:
-            self.setBcs()
-        table = (
-            None
-            if faces is None
-            else Table.ofFaces([f for f in faces if f.kind[hook] >= 0], hook)
+    def loadEfficiency(self):
+        """How far the slowest rank's cell count is from the mean, in percent,
+        and which rank it is; None on the other ranks."""
+        comm, rank, size = getCommRankSize()
+        mine = np.array(
+            [sum((b.ni - 1) * (b.nj - 1) * (b.nk - 1) for b in self.blocks)],
+            dtype=np.int32,
         )
-        if table is not None and len(table) == 0:
-            return
-        self.bcHooks[hook](table, tme=self.titme)
-        if hook == "euler":
-            self.stateFromPrims(
-                table=table if table is not None else self.faceTable(hook)
-            )
-            if not isinstance(self.bcHooks["postEos"], NullKernel):
-                self.applyBcs("postEos", faces)
-                self.stateFromPrims(
-                    table=table if table is not None else self.faceTable("postEos")
-                )
+        recv = np.empty(size, dtype=np.int32) if rank == 0 else None
+        comm.Gather(mine, recv, root=0)
+        if rank != 0:
+            return None, None
+        return np.mean(recv) / np.max(recv) * 100.0, np.argmax(recv)
 
-    ###########################################################################
-    # Making the state consistent, and building its right hand side
-    ###########################################################################
-    def consistify(self):
-        """From the conserved state: halos exchanged, primitives and every
-        derived array made consistent, boundary conditions applied."""
-        self.communicator.exchange(["Q"])
-        self.stateFromCons(nface=-1)
-        self._finishConsistify()
-
-    def consistifyFromPrims(self):
-        """The same, from the primitive state."""
-        self.communicator.exchange(["q"])
-        self.stateFromPrims(nface=-1)
-        self._finishConsistify()
-
-    def _finishConsistify(self):
-        self.applyBcs("euler")
-        self.trans(nface=-1)
-        self.switch()
-        self.viscousSponge()
-        if self.phiComm:
-            self.communicator.exchange(["phi"])
-
-    def RHS(self):
-        """dQ/dt from the current consistent state: every flux difference the
-        config asks for, then the chemical source."""
-        self.dQzero()
-
-        self.primaryAdvFlux()
-        self.applyPrimaryAdvFlux()
-
-        self.secondaryAdvFlux()
-        self.applySecondaryAdvFlux()
-
-        if self.config["RHS"]["diffusion"]:
-            self.applyBcs("preDqDxyz")
-            self.dqdxyz()
-            self.communicator.exchange("grads")
-            self.applyBcs("postDqDxyz")
-            # the subgrid model needs the gradients
-            self.sgs()
-            self.diffFlux()
-            self.applyDiffFlux()
-
-        self.expChem(
-            nChemSubSteps=self.config["mcPhysics"]["nChemSubSteps"],
-            dt=self.config["timeIntegration"]["dt"],
+    def dtMaxCFL(self):
+        """The time step, and the max acoustic, convective and combined CFL
+        speeds over every rank; the convective floor keeps the step finite in
+        a quiescent field."""
+        comm, rank, size = getCommRankSize()
+        cfl = np.zeros(3)
+        self.CFLmax(cfl=cfl)
+        cfl[1] = max(cfl[1], 1e-16)
+        comm.Allreduce(MPI.IN_PLACE, cfl, op=MPI.MAX)
+        ti = self.config["timeIntegration"]
+        dt = (
+            min(ti["maxCFL"] / cfl[2], ti["maxDt"])
+            if ti["variableTimeStep"]
+            else ti["dt"]
         )
+        return dt, cfl[0], cfl[1], cfl[2]
+
+    def checkForNan(self):
+        """How many ranks hold a non-finite conserved value; each such rank
+        logs where its are."""
+        comm, rank, size = getCommRankSize()
+        abort = np.array([0], np.int32)
+        abort[0] = not self.allFinite()
+        if abort[0]:
+            for blk in self.blocks:
+                Q = blk.Q.get()
+                ng = blk.ng
+                nans = np.where(
+                    np.sum(np.isnan(Q[ng:-ng, ng:-ng, ng:-ng, :]), axis=-1) > 0
+                )
+                if len(nans[0]) == 0:
+                    continue
+                cells = blk.cells.get()[ng:-ng, ng:-ng, ng:-ng]
+                with open(f"nans_{blk.nblki}.log", "w") as f:
+                    f.write(f"Nan Detection Log: Block {blk.nblki}\\n")
+                    for x, y, z in cells[nans]:
+                        f.write(f"x = {x} y = {y} z = {z}\\n")
+        comm.Allreduce(MPI.IN_PLACE, abort, op=MPI.SUM)
+        return abort[0]
 
     ###########################################################################
     # The grid, once every block is on its rank
     ###########################################################################
     def generateHalo(self):
-        for blk in self:
+        for blk in self.blocks:
             blk.generateHalo()
 
     def unifyGrid(self):
@@ -356,7 +342,7 @@ class solver(restart):
         for _ in range(3):
             self.communicator.exchange("nodes")
 
-        for blk in self:
+        for blk in self.blocks:
             periodic = [f for f in blk.faces if f.periodicRotation is not None]
             if not periodic:
                 continue
@@ -371,28 +357,17 @@ class solver(restart):
             blk.nodes.set(nodes)
 
     def setBlockCommunication(self):
-        for blk in self:
+        for blk in self.blocks:
             blk.setBlockCommunication()
-        self.communicator = Communicator(self)
+        self.communicator.connect(self.faces())
 
     def __repr__(self):
-        string = f"  Total blocks: {self.totalBlocks}\n"
-        string += f"  Species: {self.thtrdat.speciesNames}\n"
+        string = f"  Blocks: {len(self.blocks)} of {self.totalBlocks}\n"
+        string += f"  Species: {self.mixture.speciesNames}\n"
         string += f"  Time Integrator: {self.integrator.integratorName}\n"
-        string += f"  Shock Handling: {self.config['RHS']['shockHandling']}\n"
-        string += f"  Primary Advective Flux: {self.primaryAdvFlux.__name__}\n"
-        string += f"  Switching Function: {self.switch.__name__}\n"
-        string += f"  Secondary Advective Flux: {self.secondaryAdvFlux.__name__}\n"
         string += f"  Equation of State: {self.config['mcPhysics']['eos']}\n"
-        if self.config["RHS"]["diffusion"]:
-            string += f"  Transport Equation: {self.trans.__name__}\n"
-        else:
+        if not self.config["RHS"]["diffusion"]:
             string += "  Diffusion terms not solved for\n"
-        string += f"  Subgrid Model: {self.sgs.__name__}\n"
-        if self.config["mcPhysics"]["chemistry"]:
-            string += f"  Chemistry mechanism used: {self.expChem.__name__}\n"
-            if self.config["mcPhysics"]["nChemSubSteps"] > 1:
-                nSub = self.config["mcPhysics"]["nChemSubSteps"]
-                string += f"    Number chemical sub steps: {nSub}\n"
-
+        for graph in self.graphs.values():
+            string += "\n".join("  " + line for line in repr(graph).split("\n")) + "\n"
         return string

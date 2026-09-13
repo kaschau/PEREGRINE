@@ -36,7 +36,7 @@ class tracePointsCoprocessor:
 
         self.traces = []
 
-        for blk in mb:
+        for blk in mb.blocks:
             ng = blk.ng
             match = np.where((points[:, 0] == blk.nblki))[0]
             if len(match) == 0:

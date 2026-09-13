@@ -3,6 +3,8 @@
 #include "math.h"
 #include <Kokkos_Core.hpp>
 
+PG_STENCIL(2);
+
 // Compute the flux at a face using 2nd order MUSCL reconstruction with rusanov
 // flux at face
 //
@@ -19,11 +21,9 @@
 //      where we can adjust theta E[1,2] where theta=1 is most dissipative
 //      and theta=2 is least dissipative (according to wikipedia)
 
-PG_ABI void pgMuscl2rusanov(int count, const pgView *Q_, const pgView *iF_,
-                            const pgView *iS_, const pgView *jF_,
-                            const pgView *jS_, const pgView *kF_,
-                            const pgView *kS_, const pgView *q_,
-                            const pgView *qh_, const pgDims *d) {
+PG_ABI void pgMuscl2rusanov(int count, pgIn *Q_, pgOut *iF_, pgIn *iS_,
+                            pgOut *jF_, pgIn *jS_, pgOut *kF_, pgIn *kS_,
+                            pgIn *q_, pgIn *qh_, const pgDims *d) {
   for (int e = 0; e < count; e++) {
     auto Q = as4(Q_[e]);
     auto iF = as4(iF_[e]);
@@ -53,10 +53,10 @@ PG_ABI void pgMuscl2rusanov(int count, const pgView *Q_, const pgView *iF_,
           // Reconstruct density
           // We store density reconstrution values for species
           double phiRhoR, phiRhoL;
-          double &rhoi = Q(i, j, k, 0);
-          double &rhoim1 = Q(i - 1, j, k, 0);
-          double &rhoim2 = Q(i - 2, j, k, 0);
-          double &rhoip1 = Q(i + 1, j, k, 0);
+          const double &rhoi = Q(i, j, k, 0);
+          const double &rhoim1 = Q(i - 1, j, k, 0);
+          const double &rhoim2 = Q(i - 2, j, k, 0);
+          const double &rhoip1 = Q(i + 1, j, k, 0);
           rR = (rhoi - rhoim1) / (rhoip1 - rhoi);
           rL = (rhoim1 - rhoim2) / (rhoi - rhoim1);
           phiRhoR = fmax(0.0, fmin(fmin(theta * rR, (1.0 + rR) / 2.0), theta));
@@ -66,10 +66,10 @@ PG_ABI void pgMuscl2rusanov(int count, const pgView *Q_, const pgView *iF_,
           double rhoL = rhoim1 + 0.5 * phiRhoL * (rhoi - rhoim1);
 
           // Reconstruct u
-          double &ui = q(i, j, k, 1);
-          double &uim1 = q(i - 1, j, k, 1);
-          double &uim2 = q(i - 2, j, k, 1);
-          double &uip1 = q(i + 1, j, k, 1);
+          const double &ui = q(i, j, k, 1);
+          const double &uim1 = q(i - 1, j, k, 1);
+          const double &uim2 = q(i - 2, j, k, 1);
+          const double &uip1 = q(i + 1, j, k, 1);
           rR = (ui - uim1) / (uip1 - ui);
           rL = (uim1 - uim2) / (ui - uim1);
           phiR = fmax(0.0, fmin(fmin(theta * rR, (1.0 + rR) / 2.0), theta));
@@ -79,10 +79,10 @@ PG_ABI void pgMuscl2rusanov(int count, const pgView *Q_, const pgView *iF_,
           double ufL = uim1 + 0.5 * phiL * (ui - uim1);
 
           // Reconstruct v
-          double &vi = q(i, j, k, 2);
-          double &vim1 = q(i - 1, j, k, 2);
-          double &vim2 = q(i - 2, j, k, 2);
-          double &vip1 = q(i + 1, j, k, 2);
+          const double &vi = q(i, j, k, 2);
+          const double &vim1 = q(i - 1, j, k, 2);
+          const double &vim2 = q(i - 2, j, k, 2);
+          const double &vip1 = q(i + 1, j, k, 2);
           rR = (vi - vim1) / (vip1 - vi);
           rL = (vim1 - vim2) / (vi - vim1);
           phiR = fmax(0.0, fmin(fmin(theta * rR, (1.0 + rR) / 2.0), theta));
@@ -92,10 +92,10 @@ PG_ABI void pgMuscl2rusanov(int count, const pgView *Q_, const pgView *iF_,
           double vfL = vim1 + 0.5 * phiL * (vi - vim1);
 
           // Reconstruct w
-          double &wi = q(i, j, k, 3);
-          double &wim1 = q(i - 1, j, k, 3);
-          double &wim2 = q(i - 2, j, k, 3);
-          double &wip1 = q(i + 1, j, k, 3);
+          const double &wi = q(i, j, k, 3);
+          const double &wim1 = q(i - 1, j, k, 3);
+          const double &wim2 = q(i - 2, j, k, 3);
+          const double &wip1 = q(i + 1, j, k, 3);
           rR = (wi - wim1) / (wip1 - wi);
           rL = (wim1 - wim2) / (wi - wim1);
           phiR = fmax(0.0, fmin(fmin(theta * rR, (1.0 + rR) / 2.0), theta));
@@ -122,17 +122,17 @@ PG_ABI void pgMuscl2rusanov(int count, const pgView *Q_, const pgView *iF_,
           double eL = eim1 + 0.5 * phiL * (ei - eim1);
 
           // Reuse reconstruction for p, c
-          double &pi = q(i, j, k, 0);
-          double &pim1 = q(i - 1, j, k, 0);
-          // double &pim2 = q(i-2,j ,k ,0);
-          double &pip1 = q(i + 1, j, k, 0);
+          const double &pi = q(i, j, k, 0);
+          const double &pim1 = q(i - 1, j, k, 0);
+          // const double &pim2 = q(i-2,j ,k ,0);
+          const double &pip1 = q(i + 1, j, k, 0);
           double pR = pi - 0.5 * phiR * (pip1 - pi);
           double pL = pim1 + 0.5 * phiL * (pi - pim1);
 
-          double &ci = qh(i, j, k, 3);
-          double &cim1 = qh(i - 1, j, k, 3);
-          // double &cim2 = qh(i-2,j ,k ,3);
-          double &cip1 = qh(i + 1, j, k, 3);
+          const double &ci = qh(i, j, k, 3);
+          const double &cim1 = qh(i - 1, j, k, 3);
+          // const double &cim2 = qh(i-2,j ,k ,3);
+          const double &cip1 = qh(i + 1, j, k, 3);
           double cR = ci - 0.5 * phiR * (cip1 - ci);
           double cL = cim1 + 0.5 * phiL * (ci - cim1);
 
@@ -181,9 +181,9 @@ PG_ABI void pgMuscl2rusanov(int count, const pgView *Q_, const pgView *iF_,
             double FYiR, FYiL;
             double rhoYiR, rhoYiL;
             // Reconstruct Y
-            double &rhoYi = Q(i, j, k, 5 + n);
-            double &rhoYim1 = Q(i - 1, j, k, 5 + n);
-            double &rhoYip1 = Q(i + 1, j, k, 5 + n);
+            const double &rhoYi = Q(i, j, k, 5 + n);
+            const double &rhoYim1 = Q(i - 1, j, k, 5 + n);
+            const double &rhoYip1 = Q(i + 1, j, k, 5 + n);
             rhoYiR = rhoYi - 0.5 * phiRhoR * (rhoYip1 - rhoYi);
             rhoYiL = rhoYim1 + 0.5 * phiRhoL * (rhoYi - rhoYim1);
             FYiR = rhoYiR * UR;
@@ -208,10 +208,10 @@ PG_ABI void pgMuscl2rusanov(int count, const pgView *Q_, const pgView *iF_,
           // Reconstruct density
           // We store density reconstrution values for species
           double phiRhoR, phiRhoL;
-          double &rhoi = Q(i, j, k, 0);
-          double &rhoim1 = Q(i, j - 1, k, 0);
-          double &rhoim2 = Q(i, j - 2, k, 0);
-          double &rhoip1 = Q(i, j + 1, k, 0);
+          const double &rhoi = Q(i, j, k, 0);
+          const double &rhoim1 = Q(i, j - 1, k, 0);
+          const double &rhoim2 = Q(i, j - 2, k, 0);
+          const double &rhoip1 = Q(i, j + 1, k, 0);
           rR = (rhoi - rhoim1) / (rhoip1 - rhoi);
           rL = (rhoim1 - rhoim2) / (rhoi - rhoim1);
           phiRhoR = fmax(0.0, fmin(fmin(theta * rR, (1.0 + rR) / 2.0), theta));
@@ -221,10 +221,10 @@ PG_ABI void pgMuscl2rusanov(int count, const pgView *Q_, const pgView *iF_,
           double rhoL = rhoim1 + 0.5 * phiRhoL * (rhoi - rhoim1);
 
           // Reconstruct u
-          double &ui = q(i, j, k, 1);
-          double &uim1 = q(i, j - 1, k, 1);
-          double &uim2 = q(i, j - 2, k, 1);
-          double &uip1 = q(i, j + 1, k, 1);
+          const double &ui = q(i, j, k, 1);
+          const double &uim1 = q(i, j - 1, k, 1);
+          const double &uim2 = q(i, j - 2, k, 1);
+          const double &uip1 = q(i, j + 1, k, 1);
           rR = (ui - uim1) / (uip1 - ui);
           rL = (uim1 - uim2) / (ui - uim1);
           phiR = fmax(0.0, fmin(fmin(theta * rR, (1.0 + rR) / 2.0), theta));
@@ -234,10 +234,10 @@ PG_ABI void pgMuscl2rusanov(int count, const pgView *Q_, const pgView *iF_,
           double ufL = uim1 + 0.5 * phiL * (ui - uim1);
 
           // Reconstruct v
-          double &vi = q(i, j, k, 2);
-          double &vim1 = q(i, j - 1, k, 2);
-          double &vim2 = q(i, j - 2, k, 2);
-          double &vip1 = q(i, j + 1, k, 2);
+          const double &vi = q(i, j, k, 2);
+          const double &vim1 = q(i, j - 1, k, 2);
+          const double &vim2 = q(i, j - 2, k, 2);
+          const double &vip1 = q(i, j + 1, k, 2);
           rR = (vi - vim1) / (vip1 - vi);
           rL = (vim1 - vim2) / (vi - vim1);
           phiR = fmax(0.0, fmin(fmin(theta * rR, (1.0 + rR) / 2.0), theta));
@@ -247,10 +247,10 @@ PG_ABI void pgMuscl2rusanov(int count, const pgView *Q_, const pgView *iF_,
           double vfL = vim1 + 0.5 * phiL * (vi - vim1);
 
           // Reconstruct w
-          double &wi = q(i, j, k, 3);
-          double &wim1 = q(i, j - 1, k, 3);
-          double &wim2 = q(i, j - 2, k, 3);
-          double &wip1 = q(i, j + 1, k, 3);
+          const double &wi = q(i, j, k, 3);
+          const double &wim1 = q(i, j - 1, k, 3);
+          const double &wim2 = q(i, j - 2, k, 3);
+          const double &wip1 = q(i, j + 1, k, 3);
           rR = (wi - wim1) / (wip1 - wi);
           rL = (wim1 - wim2) / (wi - wim1);
           phiR = fmax(0.0, fmin(fmin(theta * rR, (1.0 + rR) / 2.0), theta));
@@ -277,17 +277,17 @@ PG_ABI void pgMuscl2rusanov(int count, const pgView *Q_, const pgView *iF_,
           double eL = eim1 + 0.5 * phiL * (ei - eim1);
 
           // Reuse reconstruction for p, c
-          double &pi = q(i, j, k, 0);
-          double &pim1 = q(i, j - 1, k, 0);
-          // double &pim2 = q(i ,j-2 ,k ,0);
-          double &pip1 = q(i, j + 1, k, 0);
+          const double &pi = q(i, j, k, 0);
+          const double &pim1 = q(i, j - 1, k, 0);
+          // const double &pim2 = q(i ,j-2 ,k ,0);
+          const double &pip1 = q(i, j + 1, k, 0);
           double pR = pi - 0.5 * phiR * (pip1 - pi);
           double pL = pim1 + 0.5 * phiL * (pi - pim1);
 
-          double &ci = qh(i, j, k, 3);
-          double &cim1 = qh(i, j - 1, k, 3);
-          // double &cim2 = qh(i ,j-2 ,k ,3);
-          double &cip1 = qh(i, j + 1, k, 3);
+          const double &ci = qh(i, j, k, 3);
+          const double &cim1 = qh(i, j - 1, k, 3);
+          // const double &cim2 = qh(i ,j-2 ,k ,3);
+          const double &cip1 = qh(i, j + 1, k, 3);
           double cR = ci - 0.5 * phiR * (cip1 - ci);
           double cL = cim1 + 0.5 * phiL * (ci - cim1);
 
@@ -336,9 +336,9 @@ PG_ABI void pgMuscl2rusanov(int count, const pgView *Q_, const pgView *iF_,
             double FYiR, FYiL;
             double rhoYiR, rhoYiL;
             // Reconstruct Y
-            double &rhoYi = Q(i, j, k, 5 + n);
-            double &rhoYim1 = Q(i, j - 1, k, 5 + n);
-            double &rhoYip1 = Q(i, j + 1, k, 5 + n);
+            const double &rhoYi = Q(i, j, k, 5 + n);
+            const double &rhoYim1 = Q(i, j - 1, k, 5 + n);
+            const double &rhoYip1 = Q(i, j + 1, k, 5 + n);
             rhoYiR = rhoYi - 0.5 * phiRhoR * (rhoYip1 - rhoYi);
             rhoYiL = rhoYim1 + 0.5 * phiRhoL * (rhoYi - rhoYim1);
             FYiR = rhoYiR * UR;
@@ -362,10 +362,10 @@ PG_ABI void pgMuscl2rusanov(int count, const pgView *Q_, const pgView *iF_,
           // Reconstruct density
           // We store density reconstrution values for species
           double phiRhoR, phiRhoL;
-          double &rhoi = Q(i, j, k, 0);
-          double &rhoim1 = Q(i, j, k - 1, 0);
-          double &rhoim2 = Q(i, j, k - 2, 0);
-          double &rhoip1 = Q(i, j, k + 1, 0);
+          const double &rhoi = Q(i, j, k, 0);
+          const double &rhoim1 = Q(i, j, k - 1, 0);
+          const double &rhoim2 = Q(i, j, k - 2, 0);
+          const double &rhoip1 = Q(i, j, k + 1, 0);
           rR = (rhoi - rhoim1) / (rhoip1 - rhoi);
           rL = (rhoim1 - rhoim2) / (rhoi - rhoim1);
           phiRhoR = fmax(0.0, fmin(fmin(theta * rR, (1.0 + rR) / 2.0), theta));
@@ -375,10 +375,10 @@ PG_ABI void pgMuscl2rusanov(int count, const pgView *Q_, const pgView *iF_,
           double rhoL = rhoim1 + 0.5 * phiRhoL * (rhoi - rhoim1);
 
           // Reconstruct u
-          double &ui = q(i, j, k, 1);
-          double &uim1 = q(i, j, k - 1, 1);
-          double &uim2 = q(i, j, k - 2, 1);
-          double &uip1 = q(i, j, k + 1, 1);
+          const double &ui = q(i, j, k, 1);
+          const double &uim1 = q(i, j, k - 1, 1);
+          const double &uim2 = q(i, j, k - 2, 1);
+          const double &uip1 = q(i, j, k + 1, 1);
           rR = (ui - uim1) / (uip1 - ui);
           rL = (uim1 - uim2) / (ui - uim1);
           phiR = fmax(0.0, fmin(fmin(theta * rR, (1.0 + rR) / 2.0), theta));
@@ -388,10 +388,10 @@ PG_ABI void pgMuscl2rusanov(int count, const pgView *Q_, const pgView *iF_,
           double ufL = uim1 + 0.5 * phiL * (ui - uim1);
 
           // Reconstruct v
-          double &vi = q(i, j, k, 2);
-          double &vim1 = q(i, j, k - 1, 2);
-          double &vim2 = q(i, j, k - 2, 2);
-          double &vip1 = q(i, j, k + 1, 2);
+          const double &vi = q(i, j, k, 2);
+          const double &vim1 = q(i, j, k - 1, 2);
+          const double &vim2 = q(i, j, k - 2, 2);
+          const double &vip1 = q(i, j, k + 1, 2);
           rR = (vi - vim1) / (vip1 - vi);
           rL = (vim1 - vim2) / (vi - vim1);
           phiR = fmax(0.0, fmin(fmin(theta * rR, (1.0 + rR) / 2.0), theta));
@@ -401,10 +401,10 @@ PG_ABI void pgMuscl2rusanov(int count, const pgView *Q_, const pgView *iF_,
           double vfL = vim1 + 0.5 * phiL * (vi - vim1);
 
           // Reconstruct w
-          double &wi = q(i, j, k, 3);
-          double &wim1 = q(i, j, k - 1, 3);
-          double &wim2 = q(i, j, k - 2, 3);
-          double &wip1 = q(i, j, k + 1, 3);
+          const double &wi = q(i, j, k, 3);
+          const double &wim1 = q(i, j, k - 1, 3);
+          const double &wim2 = q(i, j, k - 2, 3);
+          const double &wip1 = q(i, j, k + 1, 3);
           rR = (wi - wim1) / (wip1 - wi);
           rL = (wim1 - wim2) / (wi - wim1);
           phiR = fmax(0.0, fmin(fmin(theta * rR, (1.0 + rR) / 2.0), theta));
@@ -431,17 +431,17 @@ PG_ABI void pgMuscl2rusanov(int count, const pgView *Q_, const pgView *iF_,
           double eL = eim1 + 0.5 * phiL * (ei - eim1);
 
           // Reuse reconstruction for p, c
-          double &pi = q(i, j, k, 0);
-          double &pim1 = q(i, j, k - 1, 0);
-          // double &pim2 = q(i ,j ,k-2 ,0);
-          double &pip1 = q(i, j, k + 1, 0);
+          const double &pi = q(i, j, k, 0);
+          const double &pim1 = q(i, j, k - 1, 0);
+          // const double &pim2 = q(i ,j ,k-2 ,0);
+          const double &pip1 = q(i, j, k + 1, 0);
           double pR = pi - 0.5 * phiR * (pip1 - pi);
           double pL = pim1 + 0.5 * phiL * (pi - pim1);
 
-          double &ci = qh(i, j, k, 3);
-          double &cim1 = qh(i, j, k - 1, 3);
-          // double &cim2 = qh(i ,j ,k-2 ,3);
-          double &cip1 = qh(i, j, k + 1, 3);
+          const double &ci = qh(i, j, k, 3);
+          const double &cim1 = qh(i, j, k - 1, 3);
+          // const double &cim2 = qh(i ,j ,k-2 ,3);
+          const double &cip1 = qh(i, j, k + 1, 3);
           double cR = ci - 0.5 * phiR * (cip1 - ci);
           double cL = cim1 + 0.5 * phiL * (ci - cim1);
 
@@ -490,9 +490,9 @@ PG_ABI void pgMuscl2rusanov(int count, const pgView *Q_, const pgView *iF_,
             double FYiR, FYiL;
             double rhoYiR, rhoYiL;
             // Reconstruct Y
-            double &rhoYi = Q(i, j, k, 5 + n);
-            double &rhoYim1 = Q(i, j, k - 1, 5 + n);
-            double &rhoYip1 = Q(i, j, k + 1, 5 + n);
+            const double &rhoYi = Q(i, j, k, 5 + n);
+            const double &rhoYim1 = Q(i, j, k - 1, 5 + n);
+            const double &rhoYip1 = Q(i, j, k + 1, 5 + n);
             rhoYiR = rhoYi - 0.5 * phiRhoR * (rhoYip1 - rhoYi);
             rhoYiL = rhoYim1 + 0.5 * phiRhoL * (rhoYi - rhoYim1);
             FYiR = rhoYiR * UR;

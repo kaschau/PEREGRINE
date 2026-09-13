@@ -35,18 +35,20 @@ def simulate():
     config["mcPhysics"]["mixture"] = air
     config.validateConfig()
 
-    mb = pg.multiBlock.solver(config, 1)
     NE = 64
     NN = 64
     NX = 64
-    pg.mesher.CubeMesher(
-        mbDims=[1, 1, 1],
-        dimsPerBlock=[NE, NN, NX],
-        lengths=[2 * np.pi for _ in range(3)],
-        periodic=[True, True, True],
-    ).mesh(mb)
+    mb = pg.multiBlock.solver(
+        config,
+        mesh=pg.mesher.CubeMesher(
+            mbDims=[1, 1, 1],
+            dimsPerBlock=[NE, NN, NX],
+            lengths=[2 * np.pi for _ in range(3)],
+            periodic=[True, True, True],
+        ),
+    )
 
-    blk = mb[0]
+    blk = mb.blocks[0]
     ng = blk.ng
 
     # SKEW THE GRID
@@ -87,9 +89,6 @@ def simulate():
                 )
     blk.store("nodes", nodes)
 
-    for face in blk.faces:
-        face.commRank = 0
-
     mb.setBlockCommunication()
 
     mb.unifyGrid()
@@ -121,9 +120,10 @@ def simulate():
     s = []
     t = []
     tEnd = 120 / M0
+    bar = pg.misc.Progress(tEnd)
     while mb.tme < tEnd:
         if mb.nrt % 50 == 0:
-            pg.misc.progressBar(mb.tme, tEnd)
+            bar.at(mb.tme)
             q, Q, J = blk.q.get(), blk.Q.get(), 1.0 / blk.Jinv.get()
 
             rke = np.sum(

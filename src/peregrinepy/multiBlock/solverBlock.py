@@ -5,7 +5,6 @@ from .haloMixin import HaloMixin
 from .restartBlock import restartBlock
 from .solverMetricsMixin import SolverMetricsMixin
 from .solverFace import solverFace
-from ..integrators import getIntegrator
 
 
 class solverBlock(restartBlock, SolverMetricsMixin, HaloMixin):
@@ -45,7 +44,7 @@ class solverBlock(restartBlock, SolverMetricsMixin, HaloMixin):
         if config["mcPhysics"]["chemistry"]:
             self.declare("omega", kind="cell", components=1 + self.ns - 1)
 
-        integrator = getIntegrator(config["timeIntegration"]["integrator"])
+        integrator = mb.integrator
         self.declare(
             *(f"Q{n}" for n in range(integrator.nStorage)),
             kind="cell",
@@ -54,6 +53,9 @@ class solverBlock(restartBlock, SolverMetricsMixin, HaloMixin):
         if integrator.stepType == "dualTime":
             self.declare("Qn", "Qnm1", kind="cell", components=self.ne)
             self.declare("dtau", kind="cell")
+            # the preconditioning reads the transport properties when there are any
+            if not config["RHS"]["diffusion"]:
+                self.declare("qt", kind="cell", components=2 + self.ns)
 
     def setExtents(self, ni, nj, nk):
         """A face is shaped by the block it bounds, so it learns how big that
@@ -93,30 +95,6 @@ class solverBlock(restartBlock, SolverMetricsMixin, HaloMixin):
 
     def _newFace(self, nface):
         return solverFace(nface, self.ng, self)
-
-    @staticmethod
-    def haloDepth(config):
-        """How many ghost layers the case's stencils need."""
-        advFluxNG = {
-            "KEEP": 1,
-            "KEEPpe": 1,
-            "KEPaEC": 1,
-            "centralDifference": 1,
-            "fourthOrderKEEP": 2,
-            "hllc": 1,
-            "rusanov": 1,
-            "muscl2hllc": 2,
-            "muscl2rusanov": 2,
-            "scalarDissipation": 2,
-            None: 1,
-        }
-        subgridNG = {"smagorinsky": 1, None: 1}
-        rhs = config["RHS"]
-        return max(
-            advFluxNG[rhs["primaryAdvFlux"]],
-            advFluxNG[rhs["secondaryAdvFlux"]],
-            subgridNG[rhs["subgrid"]],
-        )
 
     @property
     def interior(self):

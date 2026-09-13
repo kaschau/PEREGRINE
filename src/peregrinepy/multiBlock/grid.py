@@ -5,22 +5,11 @@ from .gridBlock import gridBlock
 
 
 class grid(topology):
-    """A list of peregrinepy.multiBlock.grid objects.
-    Inherits from peregrinepy.multiBlock.topology"""
+    """A topology with coordinates: every block's nodes, and the metrics and
+    halos that follow from them."""
 
     def _newBlock(self, nblki):
         return gridBlock(nblki)
-
-    def __init__(self, nblks, ls=None):
-        if ls is None:
-            temp = [gridBlock(i) for i in range(nblks)]
-            super().__init__(nblks, temp)
-        else:
-            super().__init__(nblks, ls)
-
-    def _readBlocks(self, reader):
-        """Where every block's nodes are, and so how big it is."""
-        reader.readGrid(self)
 
     def detectPeriodics(self, tol=1e-8):
         """Find the interfaces that are really periodic, and how they move.
@@ -35,25 +24,24 @@ class grid(topology):
         Returns how many of each kind were found.
         """
         found = {}
-        for blk in self:
-            for face in blk.faces:
-                if face.neighbor is None or face.periodicRotation is not None:
-                    continue
-                other = self.getBlock(face.neighbor)
-                mine = blk.hostCopy("nodes")[face.firstPlane].reshape(-1, 3)
-                theirs = face.alignToMe(
-                    other.nodes[other.getFace(face.neighborNface).firstPlane]
-                ).reshape(-1, 3)
+        for blk, face in self.faces():
+            if face.neighbor is None or face.periodicRotation is not None:
+                continue
+            other = self.getBlock(face.neighbor)
+            mine = blk.hostCopy("nodes")[face.firstPlane].reshape(-1, 3)
+            theirs = face.alignToMe(
+                other.nodes[other.getFace(face.neighborNface).firstPlane]
+            ).reshape(-1, 3)
 
-                moved = self._transformOnto(theirs, mine, tol)
-                if moved is None:
-                    continue
-                rotation, translation = moved
-                # a rotation of the identity is a face that was only carried
-                turned = not np.allclose(rotation, np.eye(3), atol=tol)
-                face.bcType = "periodicRot" if turned else "periodicTrans"
-                face.setPeriodic(rotation=rotation, translation=translation)
-                found[face.bcType] = found.get(face.bcType, 0) + 1
+            moved = self._transformOnto(theirs, mine, tol)
+            if moved is None:
+                continue
+            rotation, translation = moved
+            # a rotation of the identity is a face that was only carried
+            turned = not np.allclose(rotation, np.eye(3), atol=tol)
+            face.bcType = "periodicRot" if turned else "periodicTrans"
+            face.setPeriodic(rotation=rotation, translation=translation)
+            found[face.bcType] = found.get(face.bcType, 0) + 1
         return found
 
     @staticmethod
@@ -82,9 +70,5 @@ class grid(topology):
         return rotation, np.zeros(3)
 
     def computeMetrics(self):
-        for blk in self:
+        for blk in self.blocks:
             blk.computeMetrics()
-
-    def generateHalo(self):
-        for blk in self:
-            blk.generateHalo()

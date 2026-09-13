@@ -40,8 +40,7 @@ class CutMixin:
             f"cannot cut block {nblki} along {cutAxis} at {cutIndex}:"
             f" n{cutAxis} is {nNodes}, so the last cut is at {nNodes - 2}"
         )
-        mb.appendBlock()
-        newBlk = mb[-1]
+        newBlk = mb.addBlock()
 
         newCutNface = 2 * axis + 1
         oldCutNface = 2 * axis + 2
@@ -112,8 +111,8 @@ class CutMixin:
         """Which base block each block is a piece of, and which slab of it, as a
         (nblks, 7) table of baseNblki and inclusive node bounds i0, i1, j0, j1,
         k0, k1. A decomposition is this table plus which rank owns each row."""
-        table = np.empty((len(mb), 7), dtype=np.int32)
-        for n, blk in enumerate(mb):
+        table = np.empty((len(mb.blocks), 7), dtype=np.int32)
+        for n, blk in enumerate(mb.blocks):
             table[n, 0] = blk.baseNblki
             table[n, 1:] = blk.baseSlice or (
                 0,
@@ -170,6 +169,6 @@ class CutMixin:
                     assert getattr(mb.getBlock(cutNblki), f"n{cutAxis}") == cutNx
                     index = switchCutIndex if switch else cutIndex
                     pending += self.cutBlock(mb, cutNblki, cutAxis, index)
-                    pieces[cutNblki] = (cutNblki, mb[-1].nblki)
+                    pieces[cutNblki] = (cutNblki, mb.blocks[-1].nblki)
 
                 self._pairCutPieces(pieces, pending)

@@ -13,45 +13,42 @@
 inline void adiabaticNoSlipWall_postDqDxyz(const faceRecords &face,
                                            double tme) {
   auto grads = face.grads;
-  const int nface = face.nface;
-  const faceCells cells = faceCellsOf(face.d, nface);
-  int firstHaloIdx = cells.halo, firstInteriorCellIdx = cells.interior;
 
   // Only applied to first halo slice
-  auto grads0 = getFaceSlice(grads, nface, firstHaloIdx);
+  auto grads0 = face.halo(grads);
 
-  auto grads1 = getFaceSlice(grads, nface, firstInteriorCellIdx);
+  auto grads1 = face.interior(grads);
 
-  MDRange2 range_face = MDRange2({0, 0}, {grads1.extent(0), grads1.extent(1)});
+  MDRange3 range_face = face.range(1);
   Kokkos::parallel_for(
       "Adia no slip postDqDxyz terms", range_face,
-      KOKKOS_LAMBDA(const int i, const int j) {
+      KOKKOS_LAMBDA(const int g, const int i, const int j) {
         // negate pressure,  neumann velocity gradients
-        grads0(i, j, 0, 0) = -grads1(i, j, 0, 0);
-        grads0(i, j, 1, 0) = grads1(i, j, 1, 0);
-        grads0(i, j, 2, 0) = grads1(i, j, 2, 0);
-        grads0(i, j, 3, 0) = grads1(i, j, 3, 0);
+        grads0(0, i, j, 0, 0) = -grads1(0, i, j, 0, 0);
+        grads0(0, i, j, 1, 0) = grads1(0, i, j, 1, 0);
+        grads0(0, i, j, 2, 0) = grads1(0, i, j, 2, 0);
+        grads0(0, i, j, 3, 0) = grads1(0, i, j, 3, 0);
 
-        grads0(i, j, 0, 1) = -grads1(i, j, 0, 1);
-        grads0(i, j, 1, 1) = grads1(i, j, 1, 1);
-        grads0(i, j, 2, 1) = grads1(i, j, 2, 1);
-        grads0(i, j, 3, 1) = grads1(i, j, 3, 1);
+        grads0(0, i, j, 0, 1) = -grads1(0, i, j, 0, 1);
+        grads0(0, i, j, 1, 1) = grads1(0, i, j, 1, 1);
+        grads0(0, i, j, 2, 1) = grads1(0, i, j, 2, 1);
+        grads0(0, i, j, 3, 1) = grads1(0, i, j, 3, 1);
 
-        grads0(i, j, 0, 2) = -grads1(i, j, 0, 2);
-        grads0(i, j, 1, 2) = grads1(i, j, 1, 2);
-        grads0(i, j, 2, 2) = grads1(i, j, 2, 2);
-        grads0(i, j, 3, 2) = grads1(i, j, 3, 2);
+        grads0(0, i, j, 0, 2) = -grads1(0, i, j, 0, 2);
+        grads0(0, i, j, 1, 2) = grads1(0, i, j, 1, 2);
+        grads0(0, i, j, 2, 2) = grads1(0, i, j, 2, 2);
+        grads0(0, i, j, 3, 2) = grads1(0, i, j, 3, 2);
 
         // negate temp and species gradient (so gradient evaluates to zero
         // on wall)
-        grads0(i, j, 4, 0) = -grads1(i, j, 4, 0);
-        grads0(i, j, 4, 1) = -grads1(i, j, 4, 1);
-        grads0(i, j, 4, 2) = -grads1(i, j, 4, 2);
+        grads0(0, i, j, 4, 0) = -grads1(0, i, j, 4, 0);
+        grads0(0, i, j, 4, 1) = -grads1(0, i, j, 4, 1);
+        grads0(0, i, j, 4, 2) = -grads1(0, i, j, 4, 2);
 
         for (int n = 5; n < ne; n++) {
-          grads0(i, j, n, 0) = -grads1(i, j, n, 0);
-          grads0(i, j, n, 1) = -grads1(i, j, n, 1);
-          grads0(i, j, n, 2) = -grads1(i, j, n, 2);
+          grads0(0, i, j, n, 0) = -grads1(0, i, j, n, 0);
+          grads0(0, i, j, n, 1) = -grads1(0, i, j, n, 1);
+          grads0(0, i, j, n, 2) = -grads1(0, i, j, n, 2);
         }
       });
 }

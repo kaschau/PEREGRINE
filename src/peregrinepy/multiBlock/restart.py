@@ -3,8 +3,8 @@ from .restartBlock import restartBlock
 
 
 class restart(grid):
-    """A list of peregrinepy.multiBlock.restart block.
-    Inherits from peregrinepy.multiBlock.grid"""
+    """A grid with a state on it: the primitives of every block at one
+    time, and the species they are of."""
 
     # a restart holds the primatives it was written with, not conserved variables
     hasConservatives = False
@@ -12,15 +12,10 @@ class restart(grid):
     def _newBlock(self, nblki):
         return restartBlock(nblki, self.speciesNames)
 
-    def __init__(self, nblks, spNames, ls=None):
+    def __init__(self, spNames):
+        super().__init__()
         self.speciesNames = spNames
         self.ns = len(spNames)
-
-        if ls is None:
-            temp = [restartBlock(i, spNames) for i in range(nblks)]
-            super().__init__(nblks, temp)
-        else:
-            super().__init__(nblks, ls)
 
         self.__nrt = 0
         self.__tme = 0.0
@@ -35,7 +30,7 @@ class restart(grid):
     @nrt.setter
     def nrt(self, val):
         self.__nrt = val
-        for blk in self:
+        for blk in self.blocks:
             blk.nrt = val
 
     @property
@@ -45,7 +40,7 @@ class restart(grid):
     @tme.setter
     def tme(self, val):
         self.__tme = val
-        for blk in self:
+        for blk in self.blocks:
             blk.tme = val
 
     def checkSpeciesSum(self, normalize=False):
@@ -53,7 +48,7 @@ class restart(grid):
         species does not exceed 1.0 anywhere in the domain."""
 
         anyBad = False
-        for blk in self:
+        for blk in self.blocks:
             goodSum = blk.verifySpeciesSum(normalize)
             if not goodSum:
                 anyBad = True

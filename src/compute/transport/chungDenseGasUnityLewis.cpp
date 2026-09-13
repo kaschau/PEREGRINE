@@ -20,11 +20,10 @@
 //     5th Edition, 2001
 
 PG_ABI void pgChungDenseGasUnityLewis(
-    int count, const pgView *Q_, const pgView *q_, const pgView *qh_,
-    const pgView *qt_, const pgView &MW_, const pgView &Tcrit_,
-    const pgView &Vcrit_, const pgView &acentric_, const pgView &chungA_,
-    const pgView &chungB_, const pgView &lewis_, const pgView &redDipole_,
-    double Ru, const pgRange *r) {
+    int count, pgIn *Q_, pgIn *q_, pgIn *qh_, pgOut *qt_, const pgIn &MW_,
+    const pgIn &Tcrit_, const pgIn &Vcrit_, const pgIn &acentric_,
+    const pgIn &chungA_, const pgIn &chungB_, const pgIn &lewis_,
+    const pgIn &redDipole_, double Ru, const pgRange *r) {
   for (int e = 0; e < count; e++) {
     auto Q = as4(Q_[e]);
     auto q = as4(q_[e]);
@@ -43,7 +42,7 @@ PG_ABI void pgChungDenseGasUnityLewis(
     Kokkos::parallel_for(
         "Chung trans props unity Lewis", range,
         KOKKOS_LAMBDA(const int i, const int j, const int k) {
-          double &T = q(i, j, k, 4);
+          const double &T = q(i, j, k, 4);
           double Y[ns];
           double X[ns];
           double mu_sp[ns];
@@ -93,16 +92,16 @@ PG_ABI void pgChungDenseGasUnityLewis(
                         0.059035 * pow(redDipole(n), 4.0); // + kij??
 
             // Viscosity for dense fluids
-            double &A1 = chungA(n, 0);
-            double &A2 = chungA(n, 1);
-            double &A3 = chungA(n, 2);
-            double &A4 = chungA(n, 3);
-            double &A5 = chungA(n, 4);
-            double &A6 = chungA(n, 5);
-            double &A7 = chungA(n, 6);
-            double &A8 = chungA(n, 7);
-            double &A9 = chungA(n, 8);
-            double &A10 = chungA(n, 9);
+            const double &A1 = chungA(n, 0);
+            const double &A2 = chungA(n, 1);
+            const double &A3 = chungA(n, 2);
+            const double &A4 = chungA(n, 3);
+            const double &A5 = chungA(n, 4);
+            const double &A6 = chungA(n, 5);
+            const double &A7 = chungA(n, 6);
+            const double &A8 = chungA(n, 7);
+            const double &A9 = chungA(n, 8);
+            const double &A10 = chungA(n, 9);
 
             double rhocm = Q(i, j, k, 0) / MW(n) * 1e-3;
             double Yy = rhocm * Vc / 6.0;
@@ -136,13 +135,13 @@ PG_ABI void pgChungDenseGasUnityLewis(
             double lambda0 = 7.452 * eta0 / MW(n) * Psi;
 
             // Dilute thermal conductivity, in cal/(cm.s.K) so need to convert
-            double &B1 = chungB(n, 0);
-            double &B2 = chungB(n, 1);
-            double &B3 = chungB(n, 2);
-            double &B4 = chungB(n, 3);
-            double &B5 = chungB(n, 4);
-            double &B6 = chungB(n, 5);
-            double &B7 = chungB(n, 6);
+            const double &B1 = chungB(n, 0);
+            const double &B2 = chungB(n, 1);
+            const double &B3 = chungB(n, 2);
+            const double &B4 = chungB(n, 3);
+            const double &B5 = chungB(n, 4);
+            const double &B6 = chungB(n, 5);
+            const double &B7 = chungB(n, 6);
 
             double H2 = (B1 * (1.0 - exp(-B4 * Yy)) / Yy +
                          B2 * G1 * exp(B5 * Yy) + B3 * G1) /

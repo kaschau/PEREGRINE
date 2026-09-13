@@ -176,8 +176,7 @@ def generateTracePoints(mb, points, tags):
 
     found = [False for _ in range(points.shape[0])]
     maxDist = 0.0
-    for blk in mb:
-        # pg.misc.progressBar(blk.nblki, nb, "Searching blocks")
+    for blk in mb.blocks:
         inside = pg.interpolation.BaseInterpolator.ptsInBlkBounds(blk, points)
         for index in np.where(inside)[0]:
             x = points[index][0]
@@ -267,7 +266,7 @@ if __name__ == "__main__":
 
     gp = args.gridPath
     mb = pg.multiBlock.grid.fromGrid(gp)
-    assert len(mb) > 0
+    assert len(mb.blocks) > 0
 
     points, tags = getPointsTagsFromInput(inp)
     generateTracePoints(mb, points, tags)

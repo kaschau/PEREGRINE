@@ -38,6 +38,7 @@ transform, and one with neither is an adiabatic slip wall.
 import numpy as np
 
 from ..partition import BasePartitioner
+from ..misc import Progress
 from .baseWriter import BaseWriter
 
 
@@ -45,10 +46,10 @@ class GridWriter(BaseWriter):
     """Writes a multiBlock's coordinates, connectivity and partitions to the
     one file that is the grid."""
 
-    def __init__(self, mb, path="./", precision="single"):
+    def __init__(self, mb, path="./", precision="single", quiet=False):
         # a grid's xdmf sits beside the grid it points at
         self.gridPath = "."
-        super().__init__(mb, path, precision)
+        super().__init__(mb, path, precision, quiet)
 
     @property
     def h5FileName(self):
@@ -68,12 +69,13 @@ class GridWriter(BaseWriter):
             for name in ("x", "y", "z"):
                 coordS.create_dataset(name, shape=(nk, nj, ni), dtype=self.fdtype)
 
-        for blk in mb:
-            coordS = gf[f"coordinates_{blk.nblki:06d}"]
-            nodes = blk.hostCopy("nodes")
-            for n, name in enumerate(("x", "y", "z")):
-                coordS[name][:] = np.ascontiguousarray(nodes[blk.interior + (n,)].T)
-            mb.progress(blk.nblki + 1, f"Writing out gridBlock {blk.nblki}")
+        with Progress(len(mb.blocks), self.quiet) as bar:
+            for blk in mb.blocks:
+                coordS = gf[f"coordinates_{blk.nblki:06d}"]
+                nodes = blk.hostCopy("nodes")
+                for c, name in enumerate(("x", "y", "z")):
+                    coordS[name][:] = np.ascontiguousarray(nodes[blk.interior + (c,)].T)
+                bar.step(f"Writing out block {blk.nblki}")
 
         self._writeConnectivity(gf, mb)
         # the base grid is a partition like any other: one rank owning all of it
@@ -108,7 +110,7 @@ class GridWriter(BaseWriter):
         group = gf.create_group(f"partitions/{name}")
         group.create_dataset("rank", data=rank)
 
-        if any(blk.baseSlice is not None for blk in mb):
+        if any(blk.baseSlice is not None for blk in mb.blocks):
             group.create_dataset("cuts", data=BasePartitioner.cutTable(mb))
             self._writeConnectivity(group, mb)
         gf.close()
@@ -127,17 +129,16 @@ class GridWriter(BaseWriter):
         bcName = np.zeros(shape, dtype=object)
         periodicRotation = np.zeros(shape + (3, 3), dtype=np.float64)
         periodicTranslation = np.zeros(shape + (3,), dtype=np.float64)
-        for blk in mb:
-            for face in blk.faces:
-                # a face's cell in the tables; nface counts from one
-                mine = blk.nblki, face.nface - 1
-                if face.neighbor is not None:
-                    neighbor[mine] = face.neighbor
-                orientation[mine] = face.orientation or ""
-                bcName[mine] = face.bcName or ""
-                if face.periodicRotation is not None:
-                    periodicRotation[mine] = face.periodicRotation
-                    periodicTranslation[mine] = face.periodicTranslation
+        for blk, face in mb.faces():
+            # a face's cell in the tables; nface counts from one
+            mine = blk.nblki, face.nface - 1
+            if face.neighbor is not None:
+                neighbor[mine] = face.neighbor
+            orientation[mine] = face.orientation or ""
+            bcName[mine] = face.bcName or ""
+            if face.periodicRotation is not None:
+                periodicRotation[mine] = face.periodicRotation
+                periodicTranslation[mine] = face.periodicTranslation
 
         if "connectivity" in group:
             del group["connectivity"]

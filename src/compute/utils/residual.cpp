@@ -9,12 +9,13 @@
 // 0 if any conserved quantity in the interior is not finite
 
 // and Q0 (which holds primitives under dual time), into rMax[ne], rSum[ne]
-PG_ABI void pgResidual(int count, const pgView *q_, const pgView *Q0_,
-                       const pgDims *d, double *rMax, double *rSum) {
+PG_ABI void pgResidual(int count, pgIn *q_, pgIn *Q0_, const pgDims *d,
+                       double *rMax, double *rSum) {
   for (int m = 0; m < ne; m++)
     rMax[m] = rSum[m] = 0.0;
   for (int e = 0; e < count; e++) {
-    auto q = as4(q_[e]), Q0 = as4(Q0_[e]);
+    auto q = as4(q_[e]);
+    auto Q0 = as4(Q0_[e]);
     const int ni = d[e].ni, nj = d[e].nj, nk = d[e].nk;
     MDRange3 range_cc({ng, ng, ng}, {ni + ng - 1, nj + ng - 1, nk + ng - 1});
     for (int m = 0; m < ne; m++) {

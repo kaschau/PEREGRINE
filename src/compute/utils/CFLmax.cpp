@@ -9,13 +9,16 @@
 // 0 if any conserved quantity in the interior is not finite
 
 // into cfl[3]
-PG_ABI void pgCFLmax(int count, const pgView *dIJK_, const pgView *iS_,
-                     const pgView *jS_, const pgView *kS_, const pgView *q_,
-                     const pgView *qh_, const pgDims *d, double *cfl) {
+PG_ABI void pgCFLmax(int count, pgIn *dIJK_, pgIn *iS_, pgIn *jS_, pgIn *kS_,
+                     pgIn *q_, pgIn *qh_, const pgDims *d, double *cfl) {
   cfl[0] = cfl[1] = cfl[2] = 0.0;
   for (int e = 0; e < count; e++) {
-    auto dIJK = as4(dIJK_[e]), iS = as4(iS_[e]), jS = as4(jS_[e]),
-         kS = as4(kS_[e]), q = as4(q_[e]), qh = as4(qh_[e]);
+    auto dIJK = as4(dIJK_[e]);
+    auto iS = as4(iS_[e]);
+    auto jS = as4(jS_[e]);
+    auto kS = as4(kS_[e]);
+    auto q = as4(q_[e]);
+    auto qh = as4(qh_[e]);
     const int ni = d[e].ni, nj = d[e].nj, nk = d[e].nk;
     // a direction one cell thick is not marched in
     const double iMult = ni == 2 ? 0.0 : 1.0;

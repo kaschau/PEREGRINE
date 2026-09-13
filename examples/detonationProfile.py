@@ -38,25 +38,23 @@ def simulate():
     config["mcPhysics"]["eos"] = "tpg"
     config["mcPhysics"]["mixture"] = "thtr_CH4_O2_FFCMY.yaml"
     config.validateConfig()
-    mb = pg.multiBlock.solver(config, 1)
 
     nx = 300
     dx = 0.005 / 50.0  # Aproximate rde resolution
     lx = nx * dx
-    pg.mesher.CubeMesher(
-        mbDims=[1, 1, 1],
-        dimsPerBlock=[nx, 2, 2],
-        lengths=[lx, 0.01, 0.01],
-        periodic=[False, False, False],
-    ).mesh(mb)
+    mb = pg.multiBlock.solver(
+        config,
+        mesh=pg.mesher.CubeMesher(
+            mbDims=[1, 1, 1],
+            dimsPerBlock=[nx, 2, 2],
+            lengths=[lx, 0.01, 0.01],
+            periodic=[False, False, False],
+        ),
+    )
 
-    blk = mb[0]
+    blk = mb.blocks[0]
     for face in blk.faces:
         face.bcType = "adiabaticSlipWall"
-
-    mb.setBlockCommunication()
-    mb.unifyGrid()
-    mb.computeMetrics()
 
     ng = blk.ng
 
@@ -86,12 +84,13 @@ def simulate():
     config["timeIntegration"]["dt"] = dt
     testIndex = int(nx / 2)
     print(mb)
+    bar = pg.misc.Progress(testIndex)
     while blk.q.get()[testIndex, ng, ng, 4] < 350.0:
         if mb.nrt % 10 == 0:
             detLoc = np.where((blk.q.get()[:, ng, ng, 4] > 350.0))[0][-1]
-            pg.misc.progressBar(detLoc, testIndex)
+            bar.at(detLoc)
 
-        abort = pg.mpiComm.mpiUtils.checkForNan(mb)
+        abort = mb.checkForNan()
         if abort > 0:
             print("Nan")
             break

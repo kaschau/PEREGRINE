@@ -6,9 +6,8 @@
 #include "vector"
 #include <Kokkos_Core.hpp>
 
-PG_ABI void pgDQdt(int count, const pgView *Q_, const pgView *Qn_,
-                   const pgView *Qnm1_, const pgView *dQ_, const pgDims *d,
-                   double dt) {
+PG_ABI void pgDQdt(int count, pgIn *Q_, pgIn *Qn_, pgIn *Qnm1_, pgOut *dQ_,
+                   const pgDims *d, double dt) {
   for (int e = 0; e < count; e++) {
     auto Q = as4(Q_[e]);
     auto Qn = as4(Qn_[e]);

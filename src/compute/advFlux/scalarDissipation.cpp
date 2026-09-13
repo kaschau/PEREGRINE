@@ -3,13 +3,12 @@
 #include "math.h"
 #include <Kokkos_Core.hpp>
 
-static void computeFlux(const unmanaged<double ****> &Q,
-                        const unmanaged<double ****> &phi,
-                        const unmanaged<double ****> &q,
-                        const unmanaged<double ****> &qh, const pgDims &d,
-                        unmanaged<double ****> &iF,
-                        const unmanaged<double ****> &iS, const int iMod,
-                        const int jMod, const int kMod) {
+PG_STENCIL(2);
+
+static void computeFlux(const in4 &Q, const in4 &phi, const in4 &q,
+                        const in4 &qh, const pgDims &d, const out4 &iF,
+                        const in4 &iS, const int iMod, const int jMod,
+                        const int kMod) {
 
   const double kappa2 = 0.5;
   const double kappa4 = 0.005;
@@ -109,11 +108,9 @@ static void computeFlux(const unmanaged<double ****> &Q,
       });
 }
 
-PG_ABI void pgScalarDissipation(int count, const pgView *Q_, const pgView *iF_,
-                                const pgView *iS_, const pgView *jF_,
-                                const pgView *jS_, const pgView *kF_,
-                                const pgView *kS_, const pgView *phi_,
-                                const pgView *q_, const pgView *qh_,
+PG_ABI void pgScalarDissipation(int count, pgIn *Q_, pgOut *iF_, pgIn *iS_,
+                                pgOut *jF_, pgIn *jS_, pgOut *kF_, pgIn *kS_,
+                                pgIn *phi_, pgIn *q_, pgIn *qh_,
                                 const pgDims *d) {
   for (int e = 0; e < count; e++) {
     auto Q = as4(Q_[e]);

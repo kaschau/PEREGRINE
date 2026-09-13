@@ -4,14 +4,16 @@
 #include <Kokkos_Core.hpp>
 #include <math.h>
 
-PG_ABI void pgRealGasFromPrims(int count, const pgView *Q_, const pgView *q_,
-                               const pgView *qh_, const pgView &MW_,
-                               const pgView &cpPoly_, const pgView &hPoly_,
-                               const pgView &hRef_, const pgView &Tcrit_,
-                               const pgView &pcrit_, const pgView &acentric_,
-                               double Ru, const pgRange *r) {
+PG_ABI void pgRealGasFromPrims(int count, pgOut *Q_, pgOut *q_, pgOut *qh_,
+                               const pgIn &MW_, const pgIn &cpPoly_,
+                               const pgIn &hPoly_, const pgIn &hRef_,
+                               const pgIn &Tcrit_, const pgIn &pcrit_,
+                               const pgIn &acentric_, double Ru,
+                               const pgRange *r) {
   for (int e = 0; e < count; e++) {
-    auto Q = as4(Q_[e]), q = as4(q_[e]), qh = as4(qh_[e]);
+    auto Q = as4(Q_[e]);
+    auto q = as4(q_[e]);
+    auto qh = as4(qh_[e]);
     auto MW = as1(MW_);
     auto cpPoly = as2(cpPoly_);
     auto hPoly = as2(hPoly_);

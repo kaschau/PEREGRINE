@@ -13,6 +13,17 @@ using hostSpace = Kokkos::HostSpace;
 template <class T>
 using unmanaged =
     Kokkos::View<T, layout, viewSpace, Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
+// by rank, what a kernel reads and what it writes
+using in1 = unmanaged<const double *>;
+using in2 = unmanaged<const double **>;
+using in3 = unmanaged<const double ***>;
+using in4 = unmanaged<const double ****>;
+using in5 = unmanaged<const double *****>;
+using out1 = unmanaged<double *>;
+using out2 = unmanaged<double **>;
+using out3 = unmanaged<double ***>;
+using out4 = unmanaged<double ****>;
+using out5 = unmanaged<double *****>;
 // a slice of one: strided whichever index is fixed
 template <class T>
 using strided = Kokkos::View<T, Kokkos::LayoutStride, viewSpace,

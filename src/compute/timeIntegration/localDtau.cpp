@@ -6,11 +6,9 @@
 #include "vector"
 #include <Kokkos_Core.hpp>
 
-PG_ABI void pgLocalDtau(int count, const pgView *Q_, const pgView *dIJK_,
-                        const pgView *dtau_, const pgView *iS_,
-                        const pgView *jS_, const pgView *kS_, const pgView *q_,
-                        const pgView *qh_, const pgView *qt_, const pgDims *d,
-                        bool viscous) {
+PG_ABI void pgLocalDtau(int count, pgIn *Q_, pgIn *dIJK_, pgOut *dtau_,
+                        pgIn *iS_, pgIn *jS_, pgIn *kS_, pgIn *q_, pgIn *qh_,
+                        pgIn *qt_, const pgDims *d, bool viscous) {
   for (int e = 0; e < count; e++) {
     auto Q = as4(Q_[e]);
     auto dIJK = as4(dIJK_[e]);

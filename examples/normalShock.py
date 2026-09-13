@@ -43,19 +43,20 @@ def simulate():
     config["mcPhysics"]["mixture"] = air
     config.validateConfig()
 
-    mb = pg.multiBlock.solver(config, 1)
-
     nx = 300
     lx = 1.0
     dx = lx / nx
-    pg.mesher.CubeMesher(
-        mbDims=[1, 1, 1],
-        dimsPerBlock=[nx, 2, 2],
-        lengths=[lx, 0.01, 0.01],
-        periodic=[False, False, False],
-    ).mesh(mb)
+    mb = pg.multiBlock.solver(
+        config,
+        mesh=pg.mesher.CubeMesher(
+            mbDims=[1, 1, 1],
+            dimsPerBlock=[nx, 2, 2],
+            lengths=[lx, 0.01, 0.01],
+            periodic=[False, False, False],
+        ),
+    )
 
-    blk = mb[0]
+    blk = mb.blocks[0]
     for face in blk.faces[1::]:
         face.bcType = "adiabaticSlipWall"
     blk.getFace(1).bcType = "constantVelocitySubsonicInlet"
@@ -91,11 +92,7 @@ def simulate():
     # Inlet
     valueDict = {"u": u2, "v": 0.0, "w": 0.0, "T": T2}
     face1 = blk.getFace(1)
-    pg.bcs.getBc(face1.bcType).setValues(face1, valueDict)
-
-    mb.setBlockCommunication()
-    mb.unifyGrid()
-    mb.computeMetrics()
+    face1.bc.setValues(valueDict)
 
     # Set upstream state
     q[ng:-ng, ng:-ng, ng:-ng, 0] = p1
@@ -126,12 +123,13 @@ def simulate():
     dt = 0.25 * dx / (c2 + u2)
     testIndex = int(nx / 2)
     print(mb)
+    bar = pg.misc.Progress(testIndex)
     while blk.q.get()[testIndex, ng, ng, 4] < 301.0:
         if mb.nrt % 10 == 0:
             shockLoc = np.where((blk.q.get()[:, ng, ng, 4] > 301.0))[0][-1]
-            pg.misc.progressBar(shockLoc, testIndex)
+            bar.at(shockLoc)
 
-        abort = pg.mpiComm.mpiUtils.checkForNan(mb)
+        abort = mb.checkForNan()
         if abort > 0:
             print("Nan")
             break

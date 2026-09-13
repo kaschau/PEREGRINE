@@ -8,10 +8,10 @@
 // the test is on a value that is the same for every element, so the branch
 // costs nothing. Rank four, any extents.
 
-PG_ABI void pgAxpby(int count, const pgView *A_, double a, double b,
-                    const pgView *B_) {
+PG_ABI void pgAxpby(int count, pgOut *A_, double a, double b, pgIn *B_) {
   for (int e = 0; e < count; e++) {
-    auto A = as4(A_[e]), B = as4(B_[e]);
+    auto A = as4(A_[e]);
+    auto B = as4(B_[e]);
     MDRange4 range({0, 0, 0, 0},
                    {A.extent(0), A.extent(1), A.extent(2), A.extent(3)});
     Kokkos::parallel_for(

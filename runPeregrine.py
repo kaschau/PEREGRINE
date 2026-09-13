@@ -24,11 +24,20 @@ def simulate(configFilePath):
     if rank == 0:
         print("Read config.")
 
-    mb = pg.bootstrapCase(config)
+    io, sim = config["io"], config["simulation"]
+    ranks = (size, pg.mpiComm.mpiUtils.getRanksPerNode())
+    mesh = pg.readers.GridReader(io["gridDir"], ranks, quiet=True)
+    if sim["restartFrom"] is None:
+        mb = pg.multiBlock.solver(config, mesh)
+    else:
+        state = pg.readers.RestartReader(
+            io["resultsDir"], sim["restartFrom"], quiet=True
+        )
+        mb = pg.multiBlock.solver(config, mesh, state)
 
     # Get some stats about the simulation
-    nCells = pg.mpiComm.mpiUtils.getNumCells(mb)
-    efficiency, slowestProc = pg.mpiComm.mpiUtils.getLoadEfficiency(mb)
+    nCells = mb.numCells
+    efficiency, slowestProc = mb.loadEfficiency
     if rank == 0:
         string = " Simulation Summary:\n"
         string += f"  Total cells: {nCells}"
@@ -42,52 +51,7 @@ def simulate(configFilePath):
         print(mb)
         ts = perf_counter()
 
-    # Time integration
-    niter = config["simulation"]["niter"]
-    niterOut = config["io"]["niterOut"]
-    niterPrint = config["io"]["niterPrint"]
-    checkNan = config["simulation"]["checkNan"]
-    for niter in range(niter):
-        dt, CFLmaxA, CFLmaxC, CFLmax = pg.mpiComm.mpiUtils.getDtMaxCFL(mb)
-        mb.config["timeIntegration"]["dt"] = dt
-        if mb.nrt % niterPrint == 0 and rank == 0:
-            print(
-                f" >>> --------- nrt: {mb.nrt:<6} ---------- <<<\n",
-                f"    tme: {mb.tme:.6E} s\n"
-                f"     dt : {dt:.6E} s\n"
-                f"     MAX CFL       : {CFLmax*dt:.3f}\n"
-                f"         Acoustic  : {CFLmaxA*dt:.3f}\n"
-                f"         Convective: {CFLmaxC*dt:.3f}\n"
-                " >>> -------------------------------- <<<\n",
-            )
-
-        mb.step(dt)
-
-        # Check if we need to write results
-        if mb.nrt % niterOut == 0:
-            if rank == 0:
-                print("Saving results.\n")
-            mb.resultsWriter.write(mb)
-            if mb.config["timeIntegration"]["integrator"] == "dualTime":
-                pg.writers.writeDualTimeQnm1(mb, path=config["io"]["resultsDir"])
-
-        # Check if we need to check for Nan
-        if checkNan:
-            if mb.nrt % checkNan == 0:
-                abort = pg.mpiComm.mpiUtils.checkForNan(mb)
-                if abort > 0:
-                    mb.nrt = 99999999
-                    mb.resultsWriter.write(mb)
-                    comm.Barrier()
-                    if rank == 0:
-                        print("Nan/inf detected. Aborting.")
-                    break
-
-        # CoProcess
-        mb.coproc(mb)
-
-    # Finalize coprocessor
-    mb.coproc.finalize()
+    mb.run()
 
     if rank == 0:
         elapsed = perf_counter() - ts

@@ -3,48 +3,68 @@ Reading a PEREGRINE grid.
 
 One g.h5 holds the coordinates of every block, the connectivity between them,
 and any partitions the grid has been balanced into. See
-peregrinepy/writers/writeGrid.py for the layout. Open it once and ask it for
-what you need.
+peregrinepy/writers/writeGrid.py for the layout.
 """
 
 import h5py
 import numpy as np
 
+from ..misc import Progress
 from ..mpiComm.mpiUtils import getCommRankSize
 
 
 class GridReader:
     """The grid file in :path:.
 
-    Opening one reads everything about the grid that is not block data: how
-    many blocks it holds, and the rank counts it has been partitioned for. The
-    file stays open for the block reads until it is closed.
+    Making one reads everything about the grid that is not block data: how
+    many blocks it holds, and the rank counts it has been partitioned for.
+    The file is opened again for the block reads of fill().
     """
 
-    def __init__(self, path="./"):
-        self.path = path
-        self.f = h5py.File(f"{path}/g.h5", "r")
+    def __init__(self, path="./", ranks=None, quiet=False):
+        """Every block of the grid, or this rank's share of the partition for
+        :ranks: = (size, ranksPerNode)."""
+        self.fileName = f"{path}/g.h5"
+        self.quiet = quiet
+        with h5py.File(self.fileName, "r") as self.f:
+            self.totalBlocks = int(self.f.attrs["totalBlocks"])
+            # (ranks, ranksPerNode) of every partition the grid carries
+            self.partitions = (
+                sorted(
+                    tuple(int(x) for x in n.split("x")) for n in self.f["partitions"]
+                )
+                if "partitions" in self.f
+                else []
+            )
+            # which partition we picked, and what the rest of the reads follow
+            self._partitionName, self._cuts, self._rankOfNblki = None, None, None
+            self.mine = (
+                range(self.totalBlocks) if ranks is None else self._partition(*ranks)
+            )
 
-        self.totalBlocks = int(self.f.attrs["totalBlocks"])
-        # (ranks, ranksPerNode) of every partition the grid carries
-        self.partitions = (
-            sorted(tuple(int(x) for x in n.split("x")) for n in self.f["partitions"])
-            if "partitions" in self.f
-            else []
-        )
-        # which partition we picked, and what the rest of the reads follow
-        self._partitionName, self._cuts, self._rankOfNblki = None, None, None
+    def fill(self, mb):
+        """Fill mb from the file: its blocks, how big each is, its coordinates
+        when the block has somewhere to hold them, and the connectivity of
+        their faces."""
+        with h5py.File(self.fileName, "r") as self.f, Progress(
+            len(self.mine), self.quiet
+        ) as bar:
+            for nblki in self.mine:
+                blk = mb.addBlock(nblki)
+                coordS, extents = self._blockBaseInfo(blk)
+                blk.setExtents(*extents)
+                # a topology's block is only as big as the file says; a grid's
+                # takes the coordinates, a dataset each in the file and one
+                # array in the block
+                if "nodes" in getattr(blk, "declared", ()):
+                    nodes = blk.hostCopy("nodes")
+                    for c, name in enumerate(("x", "y", "z")):
+                        nodes[blk.interior + (c,)] = coordS[name][blk.baseNodeSlab].T
+                    blk.store("nodes", nodes)
+                bar.step(f"Reading in block {nblki}")
+            self._readConnectivity(mb)
 
-    def close(self):
-        self.f.close()
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, *_):
-        self.close()
-
-    def partition(self, size, ranksPerNode):
+    def _partition(self, size, ranksPerNode):
         """Pick the partition for :size: ranks, placed for :ranksPerNode: of
         them sharing a node, and return the blocks this rank owns. Everything
         read afterwards follows it: the coordinates each block pulls, the
@@ -59,8 +79,8 @@ class GridReader:
             raise ValueError(
                 f"this grid carries no {size} rank partition, only "
                 f"{['%dx%d' % p for p in self.partitions]}. Balance it with\n"
-                f"  loadBalancer.py -gridDir {self.path} -numProcs {size}"
-                f" -ranksPerNode {ranksPerNode}"
+                f"  loadBalancer.py -gridDir {self.fileName.removesuffix('/g.h5')}"
+                f" -numProcs {size} -ranksPerNode {ranksPerNode}"
             )
         if ranksPerNode not in layouts:
             print(
@@ -105,13 +125,6 @@ class GridReader:
             ni, nj, nk = i1 - i0 + 1, j1 - j0 + 1, k1 - k0 + 1
         return coordS, (int(ni), int(nj), int(nk))
 
-    def readExtents(self, mb):
-        """How big each block is, without reading a coordinate. Enough to
-        weigh the blocks and plan how to cut them."""
-        for blk in mb:
-            _, extents = self._blockBaseInfo(blk)
-            blk.setExtents(*extents)
-
     @staticmethod
     def _bcTypeOf(face):
         """What a face the grid did not name is. One with a neighbor is an
@@ -130,21 +143,7 @@ class GridReader:
             else "periodicRot"
         )
 
-    def readGrid(self, mb):
-        """Add the coordinate data to a supplied peregrinepy.multiBlock.grid
-        (or one of its descendants)."""
-        for blk in mb:
-            coordS, extents = self._blockBaseInfo(blk)
-            blk.setExtents(*extents)
-            # the file keeps a dataset per coordinate, a block one array of them
-            nodes = blk.hostCopy("nodes")
-            for n, name in enumerate(("x", "y", "z")):
-                nodes[blk.interior + (n,)] = coordS[name][blk.baseNodeSlab].T
-            blk.store("nodes", nodes)
-
-            mb.progress(blk.nblki + 1, f"Reading in gridBlock {blk.nblki}")
-
-    def readConnectivity(self, mb):
+    def _readConnectivity(self, mb):
         """Add the stored connectivity to the faces of the blocks in mb. A
         partition whose blocks are pieces connects them its own way, so it
         carries its own."""
@@ -158,25 +157,29 @@ class GridReader:
         periodicRotation = np.array(group["periodicRotation"])
         periodicTranslation = np.array(group["periodicTranslation"])
 
-        for blk in mb:
-            for face in blk.faces:
-                mine = blk.nblki, face.nface - 1
-                # the connectivity is python types, not the numpy scalars
-                # hdf5 hands back
-                face.bcName = str(bcName[mine]) or None
-                face.orientation = str(orientation[mine]) or None
-                n = int(neighbor[mine])
-                face.neighbor = None if n == -1 else n
-                # a periodic knows how to reach its partner; a rotation of
-                # all zeros is a face that is not periodic
-                if periodicRotation[mine].any():
-                    face.setPeriodic(
-                        rotation=periodicRotation[mine],
-                        translation=periodicTranslation[mine],
-                    )
-                face.bcType = self._bcTypeOf(face)
-                if self._rankOfNblki is not None:
-                    face.commRank = None if n == -1 else int(self._rankOfNblki[n])
+        for blk, face in mb.faces():
+            mine = blk.nblki, face.nface - 1
+            # the connectivity is python types, not the numpy scalars
+            # hdf5 hands back
+            face.bcName = str(bcName[mine]) or None
+            face.orientation = str(orientation[mine]) or None
+            n = int(neighbor[mine])
+            face.neighbor = None if n == -1 else n
+            # a periodic knows how to reach its partner; a rotation of
+            # all zeros is a face that is not periodic
+            if periodicRotation[mine].any():
+                face.setPeriodic(
+                    rotation=periodicRotation[mine],
+                    translation=periodicTranslation[mine],
+                )
+            face.bcType = self._bcTypeOf(face)
+            # without a partition every block is on this rank
+            if n == -1:
+                face.commRank = None
+            elif self._rankOfNblki is None:
+                face.commRank = 0
+            else:
+                face.commRank = int(self._rankOfNblki[n])
 
         # a cut partition's blocks are its pieces, not the base grid's blocks
         mb.totalBlocks = self.totalBlocks if self._cuts is None else len(self._cuts)

@@ -20,7 +20,7 @@ interpolate.py --from </path/to/from-grid/and/restart> --to </path/to/to-grid/> 
 """
 
 import argparse
-from peregrinepy.readers import readRestart
+from peregrinepy.readers import RestartReader
 import peregrinepy as pg
 from peregrinepy.multiBlock import restart as mbr
 from peregrinepy.writers import RestartWriter
@@ -112,7 +112,7 @@ if __name__ == "__main__":
     )
     if not nrts:
         raise FileNotFoundError(f"No results found in {fromDir}")
-    readRestart(mbFrom, fromDir, nrt=nrts[-1])
+    RestartReader(fromDir, nrt=nrts[-1]).fill(mbFrom)
 
     # Read in to data
     mbTo = mbr.fromGrid(toDir, speciesNames)

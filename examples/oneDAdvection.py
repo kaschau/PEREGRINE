@@ -27,9 +27,6 @@ def simulate(index="i"):
     config["RHS"]["primaryAdvFlux"] = "KEPaEC"
     config["RHS"]["diffusion"] = False
     config.validateConfig()
-    mb = pg.multiBlock.solver(config, 1)
-    print(mb)
-
     rot = {"i": 0, "j": 1, "k": 2}
 
     def rotate(li, index):
@@ -40,27 +37,21 @@ def simulate(index="i"):
     lengths = rotate([1, 0.1, 0.1], index)
     periodic = rotate([True, False, False], index)
 
-    pg.mesher.CubeMesher(
-        mbDims=[1, 1, 1], dimsPerBlock=dimsPerBlock, lengths=lengths, periodic=periodic
-    ).mesh(mb)
+    mb = pg.multiBlock.solver(
+        config,
+        mesh=pg.mesher.CubeMesher(
+            mbDims=[1, 1, 1],
+            dimsPerBlock=dimsPerBlock,
+            lengths=lengths,
+            periodic=periodic,
+        ),
+    )
+    print(mb)
 
-    blk = mb[0]
+    blk = mb.blocks[0]
     for face in blk.faces:
         if face.bcType.endswith("Wall"):
             face.bcType = "adiabaticSlipWall"
-    if index == "i":
-        blk.getFace(1).commRank = 0
-        blk.getFace(2).commRank = 0
-    elif index == "j":
-        blk.getFace(3).commRank = 0
-        blk.getFace(4).commRank = 0
-    elif index == "k":
-        blk.getFace(5).commRank = 0
-        blk.getFace(6).commRank = 0
-
-    mb.setBlockCommunication()
-    mb.unifyGrid()
-    mb.computeMetrics()
 
     ng = blk.ng
     R = 287.002507
@@ -81,9 +72,10 @@ def simulate(index="i"):
 
     dt = 0.1 * 0.025
     tEnd = 11.0
+    bar = pg.misc.Progress(tEnd)
     while mb.tme < tEnd:
         if mb.nrt % 50 == 0:
-            pg.misc.progressBar(mb.tme, tEnd)
+            bar.at(mb.tme)
 
         mb.step(dt)
 

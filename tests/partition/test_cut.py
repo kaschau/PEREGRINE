@@ -15,25 +15,24 @@ partitioner = getPartitioner()
 
 
 def cube(mbDims=(1, 1, 1), dims=(13, 11, 9), lengths=(1, 1, 1), periodic=(False,) * 3):
-    mb = pg.multiBlock.grid(int(np.prod(mbDims)))
+    mb = pg.multiBlock.grid()
     pg.mesher.CubeMesher(
         mbDims=list(mbDims),
         dimsPerBlock=list(dims),
         lengths=list(lengths),
         periodic=list(periodic),
-    ).mesh(mb)
+    ).fill(mb)
     return mb
 
 
 def connectionsAreMutual(mb):
     """Every face that names a neighbor is named back by it."""
-    for blk in mb:
-        for face in blk.faces:
-            if face.neighbor is None:
-                continue
-            partner = mb.getBlock(face.neighbor).getFace(face.neighborNface)
-            if partner.neighbor != blk.nblki:
-                return False
+    for blk, face in mb.faces():
+        if face.neighbor is None:
+            continue
+        partner = mb.getBlock(face.neighbor).getFace(face.neighborNface)
+        if partner.neighbor != blk.nblki:
+            return False
     return True
 
 
@@ -52,13 +51,15 @@ def test_cutTilesTheBlock(axis, nCuts):
     base = cube()
     work = cube()
     partitioner.performCutOperations(work, [[0, axis, nCuts]])
-    assert len(work) == nCuts + 1
+    assert len(work.blocks) == nCuts + 1
     assert connectionsAreMutual(work)
 
     myAxis = "ijk".index(axis)
     # the cube is axis aligned, so the pieces sort along the coordinate the
     # cut axis runs on
-    pieces = sorted(work, key=lambda blk: blk.hostCopy("nodes")[..., myAxis].min())
+    pieces = sorted(
+        work.blocks, key=lambda blk: blk.hostCopy("nodes")[..., myAxis].min()
+    )
     dropShared = [slice(None)] * 3
     dropShared[myAxis] = slice(1, None)
     joined = np.concatenate(
@@ -66,7 +67,7 @@ def test_cutTilesTheBlock(axis, nCuts):
         + [p.hostCopy("nodes")[tuple(dropShared)] for p in pieces[1:]],
         axis=myAxis,
     )
-    assert np.array_equal(joined, base[0].hostCopy("nodes"))
+    assert np.array_equal(joined, base.blocks[0].hostCopy("nodes"))
 
 
 @pytest.mark.parametrize("axis", ("i", "j", "k"))
@@ -76,15 +77,17 @@ def test_mergeUndoesCut(axis):
     partitioner.performCutOperations(work, [[0, axis, 3]])
 
     assert partitioner.mergeAll(work) == 3
-    assert len(work) == 1
-    assert np.array_equal(work[0].hostCopy("nodes"), base[0].hostCopy("nodes"))
+    assert len(work.blocks) == 1
+    assert np.array_equal(
+        work.blocks[0].hostCopy("nodes"), base.blocks[0].hostCopy("nodes")
+    )
 
 
 def test_evenlySpacedCuts():
     work = cube()
     partitioner.performCutOperations(work, [[0, "j", 2]])
     # nj = 11, so the cuts land at int(11*2/3) = 7 then int(11/3) = 3
-    assert sorted(blk.nj for blk in work) == [4, 4, 5]
+    assert sorted(blk.nj for blk in work.blocks) == [4, 4, 5]
 
 
 @pytest.mark.parametrize("perm,flips", list(properRelabelings()))
@@ -109,21 +112,22 @@ def test_cutRunsThroughPeriodic():
     mb = cube(mbDims=(2, 1, 1), dims=(9, 8, 7), lengths=(2, 1, 1), periodic=(True,) * 3)
     partitioner.performCutOperations(mb, [[0, "j", 1]])
 
-    assert len(mb) == 4
+    assert len(mb.blocks) == 4
     assert connectionsAreMutual(mb)
     # both halves of a split periodic need its span and axis to find a partner
-    for blk in mb:
-        for face in blk.faces:
-            if not face.bcType.startswith("periodic"):
-                continue
-            assert face.neighbor is not None
-            assert face.periodicRotation is not None
-            assert face.periodicTranslation is not None
+    for blk, face in mb.faces():
+        if not face.bcType.startswith("periodic"):
+            continue
+        assert face.neighbor is not None
+        assert face.periodicRotation is not None
+        assert face.periodicTranslation is not None
 
 
 def test_uncutGridIsItsOwnBase():
     mb = cube(mbDims=(2, 2, 1), dims=(9, 8, 7))
-    for blk, (baseNblki, i0, i1, j0, j1, k0, k1) in zip(mb, partitioner.cutTable(mb)):
+    for blk, (baseNblki, i0, i1, j0, j1, k0, k1) in zip(
+        mb.blocks, partitioner.cutTable(mb)
+    ):
         assert baseNblki == blk.nblki
         assert (i0, i1, j0, j1, k0, k1) == (
             0,
@@ -143,8 +147,8 @@ def test_everyPieceIsFoundInTheBlockItNames(mbDims, axis):
     partitioner.performCutOperations(work, [[0, axis, 3]])
 
     table = partitioner.cutTable(work)
-    assert len(table) == len(work)
-    for blk, (baseNblki, i0, i1, j0, j1, k0, k1) in zip(work, table):
+    assert len(table) == len(work.blocks)
+    for blk, (baseNblki, i0, i1, j0, j1, k0, k1) in zip(work.blocks, table):
         assert (blk.ni, blk.nj, blk.nk) == (i1 - i0 + 1, j1 - j0 + 1, k1 - k0 + 1)
         assert np.array_equal(
             blk.hostCopy("nodes"),
@@ -153,8 +157,8 @@ def test_everyPieceIsFoundInTheBlockItNames(mbDims, axis):
             ],
         )
     # the pieces of a base block tile it, so the cells add back up
-    cells = sum((b.ni - 1) * (b.nj - 1) * (b.nk - 1) for b in work)
-    assert cells == sum((b.ni - 1) * (b.nj - 1) * (b.nk - 1) for b in base)
+    cells = sum((b.ni - 1) * (b.nj - 1) * (b.nk - 1) for b in work.blocks)
+    assert cells == sum((b.ni - 1) * (b.nj - 1) * (b.nk - 1) for b in base.blocks)
 
 
 def test_provenanceSurvivesRepeatedCuts():
@@ -165,10 +169,10 @@ def test_provenanceSurvivesRepeatedCuts():
     partitioner.performCutOperations(work, [[0, "k", 1]])
 
     for blk, (baseNblki, i0, i1, j0, j1, k0, k1) in zip(
-        work, partitioner.cutTable(work)
+        work.blocks, partitioner.cutTable(work)
     ):
         assert baseNblki == 0
         assert np.array_equal(
             blk.hostCopy("nodes"),
-            base[0].hostCopy("nodes")[i0 : i1 + 1, j0 : j1 + 1, k0 : k1 + 1],
+            base.blocks[0].hostCopy("nodes")[i0 : i1 + 1, j0 : j1 + 1, k0 : k1 + 1],
         )

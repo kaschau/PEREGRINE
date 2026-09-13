@@ -67,15 +67,6 @@ SetActiveSource(vTM1)
 # Catalyst options
 from paraview import catalyst
 
-# a calorically perfect air, stated in full: the library carries no such species
-air = {
-    "Air": {
-        "MW": 28.97,
-        "cp0": 1002.838449439523,
-        "mu0": 1.8591191080521142e-05,
-        "kappa0": 0.02625394405190068,
-    }
-}
 
 
 options = catalyst.Options()
@@ -95,6 +86,16 @@ if __name__ == "__main__":
     SaveExtractsUsingCatalystOptions(options)
 """
 
+# a calorically perfect air, stated in full: the library carries no such species
+air = {
+    "Air": {
+        "MW": 28.97,
+        "cp0": 1002.838449439523,
+        "mu0": 1.8591191080521142e-05,
+        "kappa0": 0.02625394405190068,
+    }
+}
+
 
 def simulate():
     config = pg.files.configFile()
@@ -103,19 +104,29 @@ def simulate():
     config["mcPhysics"]["trans"] = "constantProps"
     config["coprocess"]["catalyst"] = True
     config["coprocess"]["catalystFile"] = "tempcoproc.py"
+    config["initialConditions"]["u"] = 10.0
     config.validateConfig()
 
     comm, rank, size = pg.mpiComm.mpiUtils.getCommRankSize()
     if rank == 0:
         with open("tempcoproc.py", "w") as f:
             f.write(fname)
-    mb = pg.multiBlock.solver(config, 1)
-    blk = mb[0]
+    # each rank meshes its own block, then the two are wired together by hand
     if rank == 0:
-        pg.mesher.CubeMesher(
+        mesh = pg.mesher.CubeMesher(
             mbDims=[1, 1, 1], dimsPerBlock=[100, 40, 2], lengths=[0.1, 0.02, 0.001]
-        ).mesh(mb)
-        mb.totalBlocks = 2
+        )
+    else:
+        mesh = pg.mesher.CubeMesher(
+            origin=[0.1, 0.0, 0.0],
+            mbDims=[1, 1, 1],
+            dimsPerBlock=[100, 40, 2],
+            lengths=[0.1, 0.02, 0.001],
+        )
+    mb = pg.multiBlock.solver(config, mesh)
+    blk = mb.blocks[0]
+    mb.totalBlocks = 2
+    if rank == 0:
         face = blk.getFace(1)
         face.bcType = "constantVelocitySubsonicInlet"
         inputBcValues = {}
@@ -124,7 +135,7 @@ def simulate():
         inputBcValues["v"] = 0.0
         inputBcValues["w"] = 0.0
         inputBcValues["T"] = 300.0
-        pg.bcs.getBc(face.bcType).setValues(face, inputBcValues)
+        face.bc.setValues(inputBcValues)
 
         face = blk.getFace(2)
         face.commRank = 1
@@ -133,19 +144,12 @@ def simulate():
         face.orientation = "123"
 
     else:
-        pg.mesher.CubeMesher(
-            origin=[0.1, 0.0, 0.0],
-            mbDims=[1, 1, 1],
-            dimsPerBlock=[100, 40, 2],
-            lengths=[0.1, 0.02, 0.001],
-        ).mesh(mb)
-        mb.totalBlocks = 2
         blk.nblki = 1
         face = blk.getFace(2)
         face.bcType = "constantPressureSubsonicExit"
         inputBcValues = {}
         inputBcValues["p"] = 101325.0
-        pg.bcs.getBc(face.bcType).setValues(face, inputBcValues)
+        face.bc.setValues(inputBcValues)
 
         face = blk.getFace(1)
         face.commRank = 0
@@ -162,12 +166,7 @@ def simulate():
     mb.generateHalo()
     mb.computeMetrics()
 
-    q = blk.q.get()
-    q[:, :, :, 0] = 101325.0
-    q[:, :, :, 1] = 10.0
-    q[:, :, :, 4] = 300.0
-    blk.q.set(q)
-    mb.stateFromPrims(nface=0)
+    # the faces changed since the case was made, so its halos follow
     mb.consistify()
     mb.coproc = pg.coproc.coprocessor(mb)
 
@@ -175,8 +174,9 @@ def simulate():
         print(mb)
     dt = 1.44e-6
     mb.coproc(mb)
+    bar = pg.misc.Progress(100)
     while mb.nrt < 100:
-        pg.misc.progressBar(mb.nrt, 100)
+        bar.at(mb.nrt)
         mb.step(dt)
         mb.coproc(mb)
 

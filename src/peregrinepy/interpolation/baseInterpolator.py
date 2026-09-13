@@ -10,7 +10,7 @@ is the only part a kind of interpolator writes.
 import numpy as np
 from scipy import spatial
 
-from ..misc import progressBar
+from ..misc import Progress
 
 
 class BaseInterpolator:
@@ -42,9 +42,10 @@ class BaseInterpolator:
     def interpolate(self, mbFrom, mbTo):
         """Fill every block of mbTo from the blocks of mbFrom it lies in."""
         bounds = self.boundingBlocks(mbTo, mbFrom)
-        for n, (blkTo, blksFrom) in enumerate(zip(mbTo, bounds), start=1):
-            self.blocksToBlock(blksFrom, blkTo)
-            progressBar(n, len(mbTo), f"Interpolating block {blkTo.nblki}")
+        with Progress(len(mbTo.blocks)) as bar:
+            for blkTo, blksFrom in zip(mbTo.blocks, bounds):
+                self.blocksToBlock(blksFrom, blkTo)
+                bar.step(f"Interpolating block {blkTo.nblki}")
 
         mbTo.nrt, mbTo.tme = mbFrom.nrt, mbFrom.tme
         if mbTo.ns > 1:
@@ -108,7 +109,7 @@ class BaseInterpolator:
         Returns
         -------
         bounding_blocks : list
-           List of length len(mbTo) where each entry is itself a list of the blocks
+           List of length len(mbTo.blocks) where each entry is itself a list of the blocks
            from mbFrom that each block in mbTo resides in, spatially.
         """
 
@@ -125,18 +126,19 @@ class BaseInterpolator:
                 ],
                 axis=-1,
             )
-            for blk in mbFrom
+            for blk in mbFrom.blocks
         }
-        fromHulls = {blk.nblki: self.surfaceHull(blk) for blk in mbFrom}
+        fromHulls = {blk.nblki: self.surfaceHull(blk) for blk in mbFrom.blocks}
 
         boundingBlocks = []
-        for blkTo in mbTo:
+        bar = Progress(len(mbTo.blocks))
+        for blkTo in mbTo.blocks:
             centers = blkTo.cells.reshape(-1, 3)
             toLo, toHi = centers.min(axis=0), centers.max(axis=0)
 
             found = np.zeros(len(centers), dtype=bool)
             inside = []
-            for blkFrom in mbFrom:
+            for blkFrom in mbFrom.blocks:
                 lo, hi = fromBounds[blkFrom.nblki].T
                 # a block whose box does not reach this one cannot hold any of
                 # its cells, whatever its shape
@@ -158,9 +160,7 @@ class BaseInterpolator:
                     " entirely outside the grid being interpolated from"
                 )
             boundingBlocks.append(inside)
-            progressBar(
-                blkTo.nblki + 1, mbTo.nblks, f"Finding block {blkTo.nblki} bounds"
-            )
+            bar.step(f"Finding block {blkTo.nblki} bounds")
 
         return boundingBlocks
 

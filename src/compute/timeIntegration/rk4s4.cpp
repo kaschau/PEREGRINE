@@ -2,9 +2,8 @@
 #include "kokkosTypes.hpp"
 #include <Kokkos_Core.hpp>
 
-PG_ABI void pgRk4s4(int count, const pgView *Q_, const pgView *Q0_,
-                    const pgView *Q1_, const pgView *Q2_, const pgView *Q3_,
-                    const pgView *dQ_, const pgDims *d, double dt) {
+PG_ABI void pgRk4s4(int count, pgOut *Q_, pgIn *Q0_, pgIn *Q1_, pgIn *Q2_,
+                    pgIn *Q3_, pgIn *dQ_, const pgDims *d, double dt) {
   for (int e = 0; e < count; e++) {
     auto Q = as4(Q_[e]);
     auto Q0 = as4(Q0_[e]);

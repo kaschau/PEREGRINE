@@ -12,7 +12,7 @@ from ..misc import subclasses, subclassWhere
 from . import exits, inlets, periodics, walls  # noqa: F401  (registers the bcs)
 from .base import BaseBC
 
-__all__ = ["BaseBC", "getBc", "validBcTypes"]
+__all__ = ["BaseBC", "getBc", "validBcTypes", "conditionsOf"]
 
 
 # called once per face of every block; the registry is fixed after import
@@ -25,3 +25,16 @@ def getBc(bcType):
 @cache
 def validBcTypes():
     return tuple(sorted(c.bcType for c in subclasses(BaseBC) if c.bcType))
+
+
+@cache
+def conditionsOf(hook):
+    """Every condition with a kernel at :hook:, in the order the hook's
+    kernel holds them."""
+    return tuple(t for t in validBcTypes() if hook in getBc(t).hooks)
+
+
+# which case of each hook's kernel a condition is, fixed with the registry
+for _bcType in validBcTypes():
+    _cls = getBc(_bcType)
+    _cls.kind = {hook: conditionsOf(hook).index(_bcType) for hook in _cls.hooks}

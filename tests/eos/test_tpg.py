@@ -41,16 +41,15 @@ def test_tpg(my_setup, ctfile):
     config["mcPhysics"]["Trange"] = (300.0, 3500.0)
     config["RHS"]["diffusion"] = False
 
-    mb = pg.multiBlock.solver(config, 1)
-    pg.mesher.CubeMesher(
-        mbDims=[1, 1, 1], dimsPerBlock=[2, 2, 2], lengths=[1, 1, 1]
-    ).mesh(mb)
+    mb = pg.multiBlock.solver(
+        config,
+        mesh=pg.mesher.CubeMesher(
+            mbDims=[1, 1, 1], dimsPerBlock=[2, 2, 2], lengths=[1, 1, 1]
+        ),
+    )
 
-    blk = mb[0]
+    blk = mb.blocks[0]
     ng = blk.ng
-
-    mb.generateHalo()
-    mb.computeMetrics()
 
     q = blk.q.get()
     q[:, :, :, 0] = p

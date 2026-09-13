@@ -26,7 +26,7 @@ class catalystCoprocessor:
             mbds.SetBlock(i, None)
 
         # Create the grid and data arrays
-        for blk in mb:
+        for blk in mb.blocks:
             ng = blk.ng
             q, Q = blk.q.get(), blk.Q.get()
             grid = vtk.vtkStructuredGrid()
@@ -101,7 +101,7 @@ class catalystCoprocessor:
             return
 
         mbds = self.dataDescription.GetInputDescriptionByName("input").GetGrid()
-        for blk in mb:
+        for blk in mb.blocks:
             q, Q = blk.q.get(), blk.Q.get()
             ng = blk.ng
             grid = mbds.GetBlock(blk.nblki)

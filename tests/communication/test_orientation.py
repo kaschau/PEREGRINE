@@ -66,7 +66,7 @@ def reorientBlock1(mb, S, varList):
     storage laid out per S, holding the same physical data."""
     if S == "123":
         return
-    blk0, blk1 = mb[0], mb[1]
+    blk0, blk1 = mb.blocks[0], mb.blocks[1]
     data = {var: reorient(blk1.hostCopy(var), S) for var in varList}
 
     # storage axis axes[m] now holds reference axis m
@@ -115,22 +115,17 @@ def buildAndCommunicate(S, adv, gas, seed):
 
     config = pg.files.configFile()
     config["RHS"]["primaryAdvFlux"] = adv
-    config["RHS"]["shockHandling"] = "hybrid"
-    config["RHS"]["secondaryAdvFlux"] = "rusanov"
     config["RHS"]["diffusion"] = True
     configure(config, gas)
 
-    mb = pg.multiBlock.solver(config, 2)
-    pg.mesher.CubeMesher(
-        mbDims=[2, 1, 1], dimsPerBlock=[6, 3, 2], lengths=[2, 1, 1]
-    ).mesh(mb)
-    mb.generateHalo()
-    mb.computeMetrics()
+    mb = pg.multiBlock.solver(
+        config,
+        mesh=pg.mesher.CubeMesher(
+            mbDims=[2, 1, 1], dimsPerBlock=[6, 3, 2], lengths=[2, 1, 1]
+        ),
+    )
 
-    mb[0].getFace(2).commRank = 0
-    mb[1].getFace(1).commRank = 0
-
-    for blk in mb:
+    for blk in mb.blocks:
         for var in VARLIST:
             blk.store(var, np.random.random(blk.shapeOf(var)))
 
@@ -151,8 +146,8 @@ def _reference(adv, gas, seed):
     if key not in _refCache:
         mb = buildAndCommunicate("123", adv, gas, seed)
         _refCache[key] = (
-            {v: mb[0].hostCopy(v) for v in VARLIST},
-            {v: mb[1].hostCopy(v) for v in VARLIST},
+            {v: mb.blocks[0].hostCopy(v) for v in VARLIST},
+            {v: mb.blocks[1].hostCopy(v) for v in VARLIST},
         )
     return _refCache[key]
 
@@ -164,8 +159,8 @@ def test_orientation(my_setup, adv, gas, S):
 
     mb = buildAndCommunicate(S, adv, gas, seed)
     for var in VARLIST:
-        assert np.array_equal(mb[0].hostCopy(var), ref0[var]), (S, var, "blk0")
-        assert np.array_equal(mb[1].hostCopy(var), reorient(ref1[var], S)), (
+        assert np.array_equal(mb.blocks[0].hostCopy(var), ref0[var]), (S, var, "blk0")
+        assert np.array_equal(mb.blocks[1].hostCopy(var), reorient(ref1[var], S)), (
             S,
             var,
             "blk1",

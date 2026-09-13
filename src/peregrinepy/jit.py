@@ -15,7 +15,6 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from .abi import lib
-from .kernel import Kernel
 from .toolchain import Toolchain
 
 
@@ -30,10 +29,16 @@ class Jit:
         os.environ.get("PEREGRINE_CACHE", Path.home() / ".cache" / "peregrinepy")
     )
 
-    def __init__(self, ns, ng):
-        # a kernel is compiled for one species count and halo depth
-        self.defines = (f"NS={ns}", f"NE={5 + ns - 1}", f"NG={ng}")
+    def __init__(self, ns):
+        # a kernel is compiled for one species count and halo depth; the depth
+        # is known once every kernel of the case is
+        self.ns, self.ng = ns, None
         self.toolchain = Toolchain.read(self.package / "toolchain.json")
+
+    @property
+    def defines(self):
+        assert self.ng is not None, "the halo depth is not known yet"
+        return (f"NS={self.ns}", f"NE={5 + self.ns - 1}", f"NG={self.ng}")
 
     def build(self, source, defines=(), includes=()):
         """The library for one kernel source, compiled if the cache has no
@@ -86,12 +91,14 @@ class Jit:
         os.remove(out.with_suffix(".lock"))
         return out
 
-    def kernel(self, source, defines=(), includes=()):
-        """The one kernel a source declares, built and loaded."""
-        lib.load(self.build(source, defines, includes))
-        return Kernel.parse((self.compute / source).read_text())
-
-    def compile(self, requests):
-        """Build many (source, defines) at once; they are independent."""
+    def compile(self, kernels):
+        """Every one of :kernels: not yet compiled: built at once, since they
+        are independent, then loaded."""
+        pending = [k for k in kernels if not k.compiled]
         with ThreadPoolExecutor() as pool:
-            list(pool.map(lambda r: self.build(*r), requests))
+            list(
+                pool.map(lambda k: self.build(k.source, k.defines, k.includes), pending)
+            )
+        for k in pending:
+            lib.load(self.build(k.source, k.defines, k.includes))
+            k.compiled = True

@@ -22,8 +22,8 @@ class solverFace(gridFace):
         self.ng = ng
         # the block this face bounds
         self.blk = blk
-        # which of the case's conditions this face is, at each hook
-        self.kind = {}
+        # its boundary condition, an object of the type it carries
+        self.bc = bcs.getBc(self.bcType)(self)
         # the block this face bounds, once it knows how big it is
         self.blockExtents = None
         self.ne = None
@@ -49,7 +49,6 @@ class solverFace(gridFace):
             self.declare(f"recvBuffer_{var}", kind=kind)
 
         # MPI variables
-        self.commRank = None
         self.tagS = None
         self.tagR = None
 
@@ -106,6 +105,8 @@ class solverFace(gridFace):
         for name, array in values.items():
             setattr(self, name, DeviceArray(self.shapeOf(name)))
             getattr(self, name).set(array)
+        # a new array is a new record for the hooks that run over this face
+        self.blk.mb.facesChanged = True
 
     def hostCopy(self, name):
         return getattr(self, name).get()
@@ -232,3 +233,6 @@ class solverFace(gridFace):
     @topologyFace.bcType.setter
     def bcType(self, value):
         topologyFace.bcType.fset(self, value)
+        self.bc = bcs.getBc(value)(self)
+        # the hooks that run over this face follow its condition
+        self.blk.mb.facesChanged = True

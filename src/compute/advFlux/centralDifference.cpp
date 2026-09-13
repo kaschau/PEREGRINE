@@ -2,10 +2,8 @@
 #include "kokkosTypes.hpp"
 #include <Kokkos_Core.hpp>
 
-static void computeFlux(const unmanaged<double ****> &Q,
-                        const unmanaged<double ****> &q, const pgDims &d,
-                        unmanaged<double ****> &iF,
-                        const unmanaged<double ****> &iS, const int iMod,
+static void computeFlux(const in4 &Q, const in4 &q, const pgDims &d,
+                        const out4 &iF, const in4 &iS, const int iMod,
                         const int jMod, const int kMod) {
 
   const int ni = d.ni, nj = d.nj, nk = d.nk;
@@ -73,11 +71,9 @@ static void computeFlux(const unmanaged<double ****> &Q,
       });
 }
 
-PG_ABI void pgCentralDifference(int count, const pgView *Q_, const pgView *iF_,
-                                const pgView *iS_, const pgView *jF_,
-                                const pgView *jS_, const pgView *kF_,
-                                const pgView *kS_, const pgView *q_,
-                                const pgDims *d) {
+PG_ABI void pgCentralDifference(int count, pgIn *Q_, pgOut *iF_, pgIn *iS_,
+                                pgOut *jF_, pgIn *jS_, pgOut *kF_, pgIn *kS_,
+                                pgIn *q_, const pgDims *d) {
   for (int e = 0; e < count; e++) {
     auto Q = as4(Q_[e]);
     auto iF = as4(iF_[e]);

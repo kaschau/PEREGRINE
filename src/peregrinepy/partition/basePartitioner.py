@@ -56,7 +56,7 @@ class BasePartitioner(CutMixin, MergeMixin):
     ###########################################################################
     @staticmethod
     def blockCells(mb):
-        return np.array([(b.ni - 1) * (b.nj - 1) * (b.nk - 1) for b in mb])
+        return np.array([(b.ni - 1) * (b.nj - 1) * (b.nk - 1) for b in mb.blocks])
 
     def cellWeights(self, mb):
         """The work each block is: its interior cells."""
@@ -72,7 +72,9 @@ class BasePartitioner(CutMixin, MergeMixin):
     def edgesFromMb(self, mb):
         """Edge weights {(a, b): plane cells} from a multiBlock's connectivity."""
         edges = {}
-        for blk, face in mb.connections():
+        for blk, face in mb.faces():
+            if face.neighbor is None:
+                continue
             key = tuple(sorted((blk.nblki, face.neighbor)))
             # a connection shows up from both sides, count it once
             if blk.nblki > face.neighbor and key in edges:
@@ -96,7 +98,7 @@ class BasePartitioner(CutMixin, MergeMixin):
             worst = int(sizes.argmax())
             if sizes[worst] <= maxCells:
                 return
-            blk = mb[worst]
+            blk = mb.blocks[worst]
 
             best = None
             for axis, nNodes in zip("ijk", (blk.ni, blk.nj, blk.nk)):

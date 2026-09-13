@@ -188,7 +188,7 @@ while go:
 
 go = True
 
-for blk in mb:
+for blk in mb.blocks:
     gpBlkFile.seek(blockStart)
     blkShape = tuple([int(b) for b in gpBlkFile.readline().strip().split()])
 
@@ -233,7 +233,7 @@ Conditioner().condition(mb)
 if verified and not verify(mb):
     raise ValueError("Conditioning invalidated the grid.")
 
-print("Writing out {} block PEREGRINE grid files".format(len(mb)))
+print("Writing out {} block PEREGRINE grid files".format(len(mb.blocks)))
 GridWriter(mb, "./").write(mb)
 
 print("GridPro to PEREGRINE translation done.")

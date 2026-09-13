@@ -9,14 +9,15 @@ def create(bc, adv, gas):
     config["RHS"]["diffusion"] = True
     configure(config, gas)
 
-    mb = pg.multiBlock.solver(config, 1)
-
-    pg.mesher.CubeMesher(
-        mbDims=[1, 1, 1], dimsPerBlock=[8, 6, 4], lengths=[1, 1, 1]
-    ).mesh(mb)
+    mb = pg.multiBlock.solver(
+        config,
+        mesh=pg.mesher.CubeMesher(
+            mbDims=[1, 1, 1], dimsPerBlock=[8, 6, 4], lengths=[1, 1, 1]
+        ),
+    )
 
     # perturb the ineterio points a bit
-    for blk in mb:
+    for blk in mb.blocks:
         i = blk.ng + 1
         nodes = blk.hostCopy("nodes")
         size = nodes[i:-i, i:-i, i:-i].shape
@@ -26,7 +27,7 @@ def create(bc, adv, gas):
     mb.generateHalo()
     mb.computeMetrics()
 
-    blk = mb[0]
+    blk = mb.blocks[0]
     for face in blk.faces:
         face.bcType = bc
 
@@ -82,7 +83,7 @@ def create(bc, adv, gas):
 
         # Conservative like bcs
         inputBcValues["mDotPerUnitArea"] = mDotPerAbc
-        pg.bcs.getBc(face.bcType).setValues(face, inputBcValues)
+        face.bc.setValues(inputBcValues)
         # the target mdot goes in the zeroth (unused) index of QBcVals, for the check
         QBcVals = face.hostCopy("QBcVals")
         QBcVals[:, :, 0] = mDotPerAbc

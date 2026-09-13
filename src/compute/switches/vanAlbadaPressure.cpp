@@ -4,7 +4,7 @@
 #include <math.h>
 #include <numeric>
 
-PG_ABI void pgVanAlbadaPressure(int count, const pgView *phi_, const pgView *q_,
+PG_ABI void pgVanAlbadaPressure(int count, pgOut *phi_, pgIn *q_,
                                 const pgDims *d) {
   for (int e = 0; e < count; e++) {
     auto phi = as4(phi_[e]);
@@ -16,16 +16,16 @@ PG_ABI void pgVanAlbadaPressure(int count, const pgView *phi_, const pgView *q_,
     Kokkos::parallel_for(
         "Compute switch from entropy", range_cc,
         KOKKOS_LAMBDA(const int i, const int j, const int k) {
-          double &p = q(i, j, k, 0);
+          const double &p = q(i, j, k, 0);
 
-          double &pip = q(i + 1, j, k, 0);
-          double &pim = q(i - 1, j, k, 0);
+          const double &pip = q(i + 1, j, k, 0);
+          const double &pim = q(i - 1, j, k, 0);
 
-          double &pjp = q(i, j + 1, k, 0);
-          double &pjm = q(i, j - 1, k, 0);
+          const double &pjp = q(i, j + 1, k, 0);
+          const double &pjm = q(i, j - 1, k, 0);
 
-          double &pkp = q(i, j, k + 1, 0);
-          double &pkm = q(i, j, k - 1, 0);
+          const double &pkp = q(i, j, k + 1, 0);
+          const double &pkm = q(i, j, k - 1, 0);
 
           double ri = (p - pim + 1e-16) / (pip - p + 1e-16);
           phi(i, j, k, 0) = 1.0 - (ri + abs(ri)) / (1.0 + pow(ri, 2.0));

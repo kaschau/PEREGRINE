@@ -6,10 +6,9 @@ class InletBC(BaseBC):
 
     family = "inlets"
 
-    @classmethod
-    def _constants(cls, blk, face, valueDict, qBcVals, QBcVals):
-        super()._constants(blk, face, valueDict, qBcVals, QBcVals)
-        for i, spn in enumerate(blk.speciesNames[0:-1]):
+    def _constants(self, valueDict, qBcVals, QBcVals):
+        super()._constants(valueDict, qBcVals, QBcVals)
+        for i, spn in enumerate(self.face.blk.speciesNames[0:-1]):
             if spn in valueDict:
                 qBcVals[:, :, 5 + i] = valueDict[spn]
 
@@ -39,9 +38,9 @@ class ConstantMassFluxSubsonicInlet(InletBC):
     hooks = ("euler", "postEos", "postDqDxyz")
     values = {"T": 4}
 
-    @classmethod
-    def _constants(cls, blk, face, valueDict, qBcVals, QBcVals):
-        super()._constants(blk, face, valueDict, qBcVals, QBcVals)
+    def _constants(self, valueDict, qBcVals, QBcVals):
+        super()._constants(valueDict, qBcVals, QBcVals)
+        face, blk = self.face, self.face.blk
         d = {1: "i", 2: "i", 3: "j", 4: "j", 5: "k", 6: "k"}[face.nface]
         # the normal has to point into the block
         sign = 1.0 if face.nface in (1, 3, 5) else -1.0

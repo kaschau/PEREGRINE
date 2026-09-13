@@ -2,11 +2,11 @@
 #include "kokkosTypes.hpp"
 #include <Kokkos_Core.hpp>
 
-PG_ABI void pgFourthOrderKEEP(int count, const pgView *Q_, const pgView *iF_,
-                              const pgView *iS_, const pgView *jF_,
-                              const pgView *jS_, const pgView *kF_,
-                              const pgView *kS_, const pgView *q_,
-                              const pgView *qh_, const pgDims *d) {
+PG_STENCIL(2);
+
+PG_ABI void pgFourthOrderKEEP(int count, pgIn *Q_, pgOut *iF_, pgIn *iS_,
+                              pgOut *jF_, pgIn *jS_, pgOut *kF_, pgIn *kS_,
+                              pgIn *q_, pgIn *qh_, const pgDims *d) {
   for (int e = 0; e < count; e++) {
     auto Q = as4(Q_[e]);
     auto iF = as4(iF_[e]);

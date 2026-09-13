@@ -15,6 +15,8 @@ class topologyFace:
 
         self.bcName = None
         self.neighbor = None
+        # which rank holds the neighbor
+        self.commRank = None
         self.orientation = None
         self.periodicTranslation = None
 

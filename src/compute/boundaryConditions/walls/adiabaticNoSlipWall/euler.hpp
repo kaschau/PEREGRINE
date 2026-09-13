@@ -13,43 +13,36 @@
 inline void adiabaticNoSlipWall_euler(const faceRecords &face, double tme) {
   auto q = face.q;
   auto S = face.S;
-  const int nface = face.nface;
-  const faceCells cells = faceCellsOf(face.d, nface);
-  int firstHaloIdx = cells.halo, firstInteriorCellIdx = cells.interior,
-      blockFaceIdx = cells.face, plus = cells.plus;
 
-  auto q1 = getFaceSlice(q, nface, firstInteriorCellIdx);
-  auto sVec = getFaceSlice(S, nface, blockFaceIdx);
+  auto q1 = face.interior(q);
+  auto sVec = face.boundary(S);
 
-  MDRange2 range_face = MDRange2({0, 0}, {q1.extent(0), q1.extent(1)});
-  for (int g = 0; g < ng; g++) {
-    firstHaloIdx -= plus * g;
-    auto q0 = getFaceSlice(q, nface, firstHaloIdx);
+  MDRange3 range_face = face.range(ng);
+  auto q0 = face.halo(q);
 
-    Kokkos::parallel_for(
-        "Adia no slip wall euler terms", range_face,
-        KOKKOS_LAMBDA(const int i, const int j) {
-          double S, nx, ny, nz;
-          faceNormal(sVec(i, j, 0), sVec(i, j, 1), sVec(i, j, 2), S, nx, ny,
-                     nz);
+  Kokkos::parallel_for(
+      "Adia no slip wall euler terms", range_face,
+      KOKKOS_LAMBDA(const int g, const int i, const int j) {
+        double S, nx, ny, nz;
+        faceNormal(sVec(i, j, 0), sVec(i, j, 1), sVec(i, j, 2), S, nx, ny, nz);
 
-          // match pressure
-          q0(i, j, 0) = q1(i, j, 0);
+        // match pressure
+        q0(g, i, j, 0) = q1(0, i, j, 0);
 
-          // mirror velo on wall
-          double uDotn = q1(i, j, 1) * nx + q1(i, j, 2) * ny + q1(i, j, 3) * nz;
-          q0(i, j, 1) = q1(i, j, 1) - 2.0 * uDotn * nx;
-          q0(i, j, 2) = q1(i, j, 2) - 2.0 * uDotn * ny;
-          q0(i, j, 3) = q1(i, j, 3) - 2.0 * uDotn * nz;
+        // mirror velo on wall
+        double uDotn =
+            q1(0, i, j, 1) * nx + q1(0, i, j, 2) * ny + q1(0, i, j, 3) * nz;
+        q0(g, i, j, 1) = q1(0, i, j, 1) - 2.0 * uDotn * nx;
+        q0(g, i, j, 2) = q1(0, i, j, 2) - 2.0 * uDotn * ny;
+        q0(g, i, j, 3) = q1(0, i, j, 3) - 2.0 * uDotn * nz;
 
-          // match temperature
-          q0(i, j, 4) = q1(i, j, 4);
-          // match species
-          for (int n = 5; n < ne; n++) {
-            q0(i, j, n) = q1(i, j, n);
-          }
-        });
-  }
+        // match temperature
+        q0(g, i, j, 4) = q1(0, i, j, 4);
+        // match species
+        for (int n = 5; n < ne; n++) {
+          q0(g, i, j, n) = q1(0, i, j, n);
+        }
+      });
 }
 
 #endif

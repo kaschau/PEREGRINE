@@ -3,10 +3,11 @@
 #include <Kokkos_Core.hpp>
 #include <math.h>
 
-PG_ABI void pgKineticTheoryUnityLewis(
-    int count, const pgView *Q_, const pgView *q_, const pgView *qh_,
-    const pgView *qt_, const pgView &MW_, const pgView &kappaPoly_,
-    const pgView &lewis_, const pgView &muPoly_, double Ru, const pgRange *r) {
+PG_ABI void pgKineticTheoryUnityLewis(int count, pgIn *Q_, pgIn *q_, pgIn *qh_,
+                                      pgOut *qt_, const pgIn &MW_,
+                                      const pgIn &kappaPoly_,
+                                      const pgIn &lewis_, const pgIn &muPoly_,
+                                      double Ru, const pgRange *r) {
   for (int e = 0; e < count; e++) {
     auto Q = as4(Q_[e]);
     auto q = as4(q_[e]);
@@ -23,7 +24,7 @@ PG_ABI void pgKineticTheoryUnityLewis(
     Kokkos::parallel_for(
         "Kinetic theory unity lewis", range,
         KOKKOS_LAMBDA(const int i, const int j, const int k) {
-          double &T = q(i, j, k, 4);
+          const double &T = q(i, j, k, 4);
           double Y[ns];
           double X[ns];
           double mu_sp[ns] = {};

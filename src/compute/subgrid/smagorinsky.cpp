@@ -13,9 +13,8 @@
 // FLUIDSInt.J.Numer.Meth.Fluids2000;32: 369 – 406 E. Lenormand,  P. Sagautb,
 // and  L. Ta Phuoc
 
-PG_ABI void pgSmagorinsky(int count, const pgView *Jinv_, const pgView *Q_,
-                          const pgView *grads_, const pgView *qh_,
-                          const pgView *qt_, const pgDims *d) {
+PG_ABI void pgSmagorinsky(int count, pgIn *Jinv_, pgIn *Q_, pgIn *grads_,
+                          pgIn *qh_, pgOut *qt_, const pgDims *d) {
   for (int e = 0; e < count; e++) {
     auto Jinv = as3(Jinv_[e]);
     auto Q = as4(Q_[e]);
@@ -33,17 +32,17 @@ PG_ABI void pgSmagorinsky(int count, const pgView *Jinv_, const pgView *Q_,
           const double Prt = 0.4;
           const double Sct = 1.0;
 
-          double &dudx = grads(i, j, k, 1, 0);
-          double &dudy = grads(i, j, k, 1, 1);
-          double &dudz = grads(i, j, k, 1, 2);
+          const double &dudx = grads(i, j, k, 1, 0);
+          const double &dudy = grads(i, j, k, 1, 1);
+          const double &dudz = grads(i, j, k, 1, 2);
 
-          double &dvdx = grads(i, j, k, 2, 0);
-          double &dvdy = grads(i, j, k, 2, 1);
-          double &dvdz = grads(i, j, k, 2, 2);
+          const double &dvdx = grads(i, j, k, 2, 0);
+          const double &dvdy = grads(i, j, k, 2, 1);
+          const double &dvdz = grads(i, j, k, 2, 2);
 
-          double &dwdx = grads(i, j, k, 3, 0);
-          double &dwdy = grads(i, j, k, 3, 1);
-          double &dwdz = grads(i, j, k, 3, 2);
+          const double &dwdx = grads(i, j, k, 3, 0);
+          const double &dwdy = grads(i, j, k, 3, 1);
+          const double &dwdz = grads(i, j, k, 3, 2);
 
           double S[3][3];
           S[0][0] = dudx;

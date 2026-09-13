@@ -55,7 +55,7 @@ def extractFace(blk, nface):
 def verify(mb):
     warn = False
     tol = 1e-7
-    for blk in mb:
+    for blk in mb.blocks:
         for face in blk.faces:
             nface = face.nface
             neighbor = face.neighbor

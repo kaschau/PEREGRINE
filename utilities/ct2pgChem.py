@@ -121,9 +121,7 @@ def ct2pgChem(ctyaml, cpp):
     for line in gas.input_header["description"].split("\n"):
         pgMech.write("// " + line + "\n")
     pgMech.write("")
-    pgMech.write(
-        "// ========================================================== //\n"
-    )
+    pgMech.write("// ========================================================== //\n")
     for i, sp in enumerate(gas.species_names):
         pgMech.write(f"// Y({i:>3d}) = {sp}\n")
     pgMech.write(
@@ -288,9 +286,7 @@ def ct2pgChem(ctyaml, cpp):
     for i in range(nr):
         pgMech.write(f"  // Reaction #{i}\n")
         outString = (
-            "  k_f = "
-            + rateConstString(A_f[i], intOrFloat(m_f[i]), Ea_f[i])
-            + ";\n"
+            "  k_f = " + rateConstString(A_f[i], intOrFloat(m_f[i]), Ea_f[i]) + ";\n"
         )
 
         pgMech.write(outString)
@@ -350,14 +346,10 @@ def ct2pgChem(ctyaml, cpp):
             pgMech.write(f"  //  Lindeman Reaction #{i}\n")
             pgMech.write("  Fcent = 1.0;\n")
             pgMech.write(
-                "  k0 = "
-                + rateConstString(A_o[i], intOrFloat(m_o[i]), Ea_o[i])
-                + ";\n"
+                "  k0 = " + rateConstString(A_o[i], intOrFloat(m_o[i]), Ea_o[i]) + ";\n"
             )
             outString = (
-                "  Pr = cTBC*k0/k_f;\n"
-                "  pmod = Pr/(1.0 + Pr);\n"
-                "  k_f *= pmod;\n"
+                "  Pr = cTBC*k0/k_f;\n" "  pmod = Pr/(1.0 + Pr);\n" "  k_f *= pmod;\n"
             )
             pgMech.write(outString)
 
@@ -381,9 +373,7 @@ def ct2pgChem(ctyaml, cpp):
             )
             pgMech.write(outString)
             pgMech.write(
-                "  k0 = "
-                + rateConstString(A_o[i], intOrFloat(m_o[i]), Ea_o[i])
-                + ";\n"
+                "  k0 = " + rateConstString(A_o[i], intOrFloat(m_o[i]), Ea_o[i]) + ";\n"
             )
             outString = (
                 "  Pr = cTBC*k0/k_f;\n"
@@ -524,9 +514,7 @@ if __name__ == "__main__":
 
     ctFileName = args.ctFileName
 
-    cppFileName = f'chem_{ctFileName.replace(".yaml",".cpp")}'.replace(
-        "-", "_"
-    )
+    cppFileName = f'chem_{ctFileName.replace(".yaml",".cpp")}'.replace("-", "_")
 
     ct2pgChem(ctFileName, cppFileName)
 

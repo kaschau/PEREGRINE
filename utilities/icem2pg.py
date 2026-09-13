@@ -90,7 +90,9 @@ if args.fmt == "tns3dmb":
     fileName = "tns3dmb.dat"
     with FortranFile(fileName, "r") as f90:
         nblks = f90.read_ints(dtype=np.int32)[0]
-        mb = pg.multiBlock.grid(nblks)
+        mb = pg.multiBlock.grid()
+        for _ in range(nblks):
+            mb.addBlock()
 
         nijks = np.array_split(f90.read_ints(dtype=np.int32), nblks)
 
@@ -107,9 +109,11 @@ elif args.fmt == "mbi":
     nblks = len([f for f in os.listdir() if f.startswith("info.dom")])
     print(f"Reading in {nblks} ICEM domain files")
     print("    {}".format(args.topoFileName))
-    mb = pg.multiBlock.grid(nblks)
+    mb = pg.multiBlock.grid()
+    for _ in range(nblks):
+        mb.addBlock()
 
-    for blk in mb:
+    for blk in mb.blocks:
         fileName = "info.dom{}".format(blk.nblki)
         with open(fileName, "r") as f:
             line = f.readline().strip().split()
@@ -125,9 +129,8 @@ else:
     raise ValueError("Unknown file format given, see help menu")
 
 # Set all bc types to internal... we will set the external bc's later
-for blk in mb:
-    for face in blk.faces:
-        face.bcType = "interior"
+for blk, face in mb.faces():
+    face.bcType = "interior"
 
 faceMapping = {
     "small_i": 1,
@@ -398,7 +401,7 @@ pg.partition.Conditioner().condition(mb)
 if verified and not verify(mb):
     raise ValueError("Conditioning invalidated the grid.")
 
-print("Writing out {} block PEREGRINE grid files".format(mb.nblks))
+print("Writing out {} block PEREGRINE grid files".format(len(mb.blocks)))
 pg.writers.GridWriter(mb).write(mb)
 
 

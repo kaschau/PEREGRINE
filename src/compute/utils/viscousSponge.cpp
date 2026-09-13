@@ -2,7 +2,7 @@
 #include "kokkosTypes.hpp"
 #include <Kokkos_Core.hpp>
 
-PG_ABI void pgViscousSponge(int count, const pgView *cells_, const pgView *qt_,
+PG_ABI void pgViscousSponge(int count, pgIn *cells_, pgOut *qt_,
                             const pgDims *d, const double *origin,
                             const double *ending, double mult) {
   for (int e = 0; e < count; e++) {
@@ -14,9 +14,9 @@ PG_ABI void pgViscousSponge(int count, const pgView *cells_, const pgView *qt_,
     Kokkos::parallel_for(
         "Apply viscous sponge", range_cc,
         KOKKOS_LAMBDA(const int i, const int j, const int k) {
-          double &xc = cells(i, j, k, 0);
-          double &yc = cells(i, j, k, 1);
-          double &zc = cells(i, j, k, 2);
+          const double &xc = cells(i, j, k, 0);
+          const double &yc = cells(i, j, k, 1);
+          const double &zc = cells(i, j, k, 2);
 
           double vectorX = xc - origin[0];
           double vectorY = yc - origin[1];

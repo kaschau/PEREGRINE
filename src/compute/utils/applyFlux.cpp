@@ -3,9 +3,8 @@
 #include "math.h"
 #include <Kokkos_Core.hpp>
 
-PG_ABI void pgApplyFlux(int count, const pgView *Jinv_, const pgView *dQ_,
-                        const pgView *iF_, const pgView *jF_, const pgView *kF_,
-                        const pgDims *d) {
+PG_ABI void pgApplyFlux(int count, pgIn *Jinv_, pgOut *dQ_, pgIn *iF_,
+                        pgIn *jF_, pgIn *kF_, const pgDims *d) {
   for (int e = 0; e < count; e++) {
     auto Jinv = as3(Jinv_[e]);
     auto dQ = as4(dQ_[e]);

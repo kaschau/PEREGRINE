@@ -34,15 +34,14 @@ def test_kineticTheoryUnityLewis(my_setup, ctfile):
     config["mcPhysics"]["diffusion"] = "lewis"
     config["RHS"]["diffusion"] = True
 
-    mb = pg.multiBlock.solver(config, 1)
-    pg.mesher.CubeMesher(
-        mbDims=[1, 1, 1], dimsPerBlock=[2, 2, 2], lengths=[1, 1, 1]
-    ).mesh(mb)
+    mb = pg.multiBlock.solver(
+        config,
+        mesh=pg.mesher.CubeMesher(
+            mbDims=[1, 1, 1], dimsPerBlock=[2, 2, 2], lengths=[1, 1, 1]
+        ),
+    )
 
-    blk = mb[0]
-
-    mb.generateHalo()
-    mb.computeMetrics()
+    blk = mb.blocks[0]
 
     gas.TPY = T, p, Y
     q = blk.q.get()

@@ -19,21 +19,17 @@ def simulate():
     config["mcPhysics"]["trans"] = "chungDenseGas"
     config["mcPhysics"]["Trange"] = (300.0, 2000.0)
     config.validateConfig()
-    mb = pg.multiBlock.solver(config, 1)
-    pg.mesher.CubeMesher(
-        mbDims=[1, 1, 1], dimsPerBlock=[2, 2, 2], lengths=[0.01, 0.01, 0.01]
-    ).mesh(mb)
+    mb = pg.multiBlock.solver(
+        config,
+        mesh=pg.mesher.CubeMesher(
+            mbDims=[1, 1, 1], dimsPerBlock=[2, 2, 2], lengths=[0.01, 0.01, 0.01]
+        ),
+    )
 
-    blk = mb[0]
+    blk = mb.blocks[0]
     ng = blk.ng
     for face in blk.faces:
         face.bcType = "adiabaticNoSlipWall"
-
-    mb.setBlockCommunication()
-
-    mb.unifyGrid()
-
-    mb.computeMetrics()
 
     ps = np.linspace(25, 35, 3)
     Ts = np.linspace(600, 1600, 100)

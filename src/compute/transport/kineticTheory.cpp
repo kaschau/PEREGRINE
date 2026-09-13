@@ -3,10 +3,9 @@
 #include <Kokkos_Core.hpp>
 #include <math.h>
 
-PG_ABI void pgKineticTheory(int count, const pgView *q_, const pgView *qt_,
-                            const pgView &MW_, const pgView &dij_,
-                            const pgView &kappaPoly_, const pgView &muPoly_,
-                            double Ru, const pgRange *r) {
+PG_ABI void pgKineticTheory(int count, pgIn *q_, pgOut *qt_, const pgIn &MW_,
+                            const pgIn &dij_, const pgIn &kappaPoly_,
+                            const pgIn &muPoly_, double Ru, const pgRange *r) {
   for (int e = 0; e < count; e++) {
     auto q = as4(q_[e]);
     auto qt = as4(qt_[e]);
@@ -21,8 +20,8 @@ PG_ABI void pgKineticTheory(int count, const pgView *q_, const pgView *qt_,
     Kokkos::parallel_for(
         "Kinetic Theory trans props", range,
         KOKKOS_LAMBDA(const int i, const int j, const int k) {
-          double &p = q(i, j, k, 0);
-          double &T = q(i, j, k, 4);
+          const double &p = q(i, j, k, 0);
+          const double &T = q(i, j, k, 4);
           double Y[ns];
           double X[ns];
           double mu_sp[ns] = {};

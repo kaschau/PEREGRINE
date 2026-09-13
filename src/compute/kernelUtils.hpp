@@ -28,21 +28,9 @@ void faceNormal(const double &sx, const double &sy, const double &sz, double &S,
   nz = sz * Sinv;
 }
 
-// the cells either side of a block face: the face index, the first halo
-// cell, the first interior cell, and the step from the halo into the interior
-struct faceCells {
-  int face, halo, interior, plus;
-};
-inline faceCells faceCellsOf(const pgDims &d, const int nface) {
-  const int n = nface <= 2 ? d.ni : nface <= 4 ? d.nj : d.nk;
-  const bool low = nface % 2;
-  const int plus = low ? 1 : -1;
-  const int face = low ? ng : n + ng - 1;
-  // cell `face` is the first interior cell of a low face and the first halo of
-  // a high one
-  const int halo = low ? face - 1 : face;
-  return {face, halo, halo + plus, plus};
-}
+// a kernel with a wider stencil says so; the jit sizes the halo to the widest
+#define PG_STENCIL(n)                                                          \
+  static_assert(NG >= (n), "this kernel needs " #n " halo layers")
 
 // T with R pointers on it: the data type of a rank-R view
 template <class T, int R> struct pointers {
@@ -68,7 +56,8 @@ auto sliceAlong(const View &view, const int slice,
 // any view at one index along a face's normal, one rank lower
 template <class View>
 auto getFaceSlice(const View &view, const int nface, const int slice) {
-  using out = strided<typename pointers<double, View::rank - 1>::type>;
+  using out = strided<
+      typename pointers<typename View::value_type, View::rank - 1>::type>;
   constexpr auto dims = std::make_index_sequence<View::rank>{};
   if (nface <= 2)
     return out(sliceAlong<0>(view, slice, dims));

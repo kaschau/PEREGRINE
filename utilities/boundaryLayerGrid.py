@@ -181,14 +181,14 @@ if __name__ == "__main__":
     dXplus = defXplus if inp.dXplus == "default" else float(inp.dXplus)
     dZplus = defZplus if inp.dZplus == "default" else float(inp.dZplus)
 
-    grid = pg.multiBlock.grid(1)
+    grid = pg.multiBlock.grid()
     Lx, Ly, Lz = xLength * delta, endY, zWidth * delta
     nx, ny, nz = int(Lx / (dXplus * yp1)), len(totalYs), int(Lz / (dZplus * yp1))
 
-    pg.mesher.CubeMesher(lengths=[Lx, Ly, Lz], dimsPerBlock=[nx, ny, nz]).mesh(grid)
+    pg.mesher.CubeMesher(lengths=[Lx, Ly, Lz], dimsPerBlock=[nx, ny, nz]).fill(grid)
 
     # Overwrite the y values with the BL values
-    grid[0].array["nodes"][:, :, :, 1] = totalYs[np.newaxis, :, np.newaxis] * yp1
+    grid.blocks[0].array["nodes"][:, :, :, 1] = totalYs[np.newaxis, :, np.newaxis] * yp1
 
     string = "Summary:\n"
     string += f"Domain type: {inp.domainType}\n"

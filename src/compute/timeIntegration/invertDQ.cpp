@@ -6,10 +6,10 @@
 #include "vector"
 #include <Kokkos_Core.hpp>
 
-PG_ABI void pgInvertDQ(int count, const pgView *Q_, const pgView *dIJK_,
-                       const pgView *dQ_, const pgView *dtau_, const pgView *q_,
-                       const pgView *qh_, const pgView *qt_, const pgView &MW_,
-                       double Ru, const pgDims *d, double dt, bool viscous) {
+PG_ABI void pgInvertDQ(int count, pgIn *Q_, pgIn *dIJK_, pgOut *dQ_,
+                       pgIn *dtau_, pgIn *q_, pgIn *qh_, pgIn *qt_,
+                       const pgIn &MW_, double Ru, const pgDims *d, double dt,
+                       bool viscous) {
   for (int e = 0; e < count; e++) {
     auto Q = as4(Q_[e]);
     auto dIJK = as4(dIJK_[e]);

@@ -30,7 +30,7 @@ class OrientMixin:
         newAxis = {old: new for new, old in enumerate(perm)}
 
         # their strings name our axes, so each character becomes our new label
-        for other in mb:
+        for other in mb.blocks:
             if other is blk:
                 continue
             for theirs in other.faces:
@@ -85,5 +85,5 @@ class OrientMixin:
     def longestAxisFirst(self, mb):
         """Relabel every block so its longest extent is i, the axis a launch walks
         innermost."""
-        for blk in mb:
+        for blk in mb.blocks:
             self.reorientBlock(mb, blk, *self._longestFirst(blk))

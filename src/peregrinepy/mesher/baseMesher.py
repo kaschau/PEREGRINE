@@ -1,9 +1,9 @@
 """
 Meshing a multiBlock.
 
-A mesher describes a shape and how finely to cut it up; handing it a
-multiBlock fills in every block's coordinates and wires the faces between
-them. The blocks of a mesh are laid out as a cubic i,j,k lattice whatever the
+A mesher describes a shape and how finely to cut it up; handing it an empty
+multiBlock fills it with blocks, their coordinates, and the wiring between
+their faces. The blocks of a mesh are laid out as a cubic i,j,k lattice whatever the
 shape is, so the connectivity between them is the same for every kind and
 only the coordinates of a single block differ.
 """
@@ -22,13 +22,15 @@ class BaseMesher:
     def nblks(self):
         return int(np.prod(self.mbDims))
 
-    def mesh(self, mb):
-        """Fill in mb's coordinates and connectivity."""
-        if self.nblks != len(mb):
+    def fill(self, mb):
+        """Make mb's blocks, and fill in their coordinates and connectivity."""
+        if mb.blocks:
             raise ValueError(
-                f"a {'x'.join(str(n) for n in self.mbDims)} mesh is "
-                f"{self.nblks} blocks, but this multiBlock has {len(mb)}"
+                f"a mesher fills an empty multiBlock, this one already has "
+                f"{len(mb.blocks)} blocks"
             )
+        for _ in range(self.nblks):
+            mb.addBlock()
         mb.totalBlocks = self.nblks
 
         mbDims = self.mbDims
@@ -36,13 +38,15 @@ class BaseMesher:
             for j in range(mbDims[1]):
                 for i in range(mbDims[0]):
                     blkNum = k * mbDims[1] * mbDims[0] + j * mbDims[0] + i
-                    blk = mb[blkNum]
-                    blk.nblki = blkNum
+                    blk = mb.blocks[blkNum]
 
                     self.shapeBlock(blk, i, j, k)
                     self.cubicConnectivity(
                         blk, mbDims, blkNum, i, j, k, *self.periodicAxes
                     )
+                    # a mesher builds every block on this rank
+                    for face in blk.faces:
+                        face.commRank = 0 if face.neighbor is not None else None
                     self.setPeriodicFaces(blk, i, j, k)
 
     ###########################################################################

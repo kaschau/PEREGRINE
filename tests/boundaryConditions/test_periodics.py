@@ -35,8 +35,6 @@ class TestPeriodics:
         config["RHS"]["diffusion"] = True
         configure(config, gas)
 
-        mb = pg.multiBlock.solver(config, 1)
-
         axis = np.random.random(3)
         axis /= np.linalg.norm(axis)
         sweep = np.random.randint(1, 90)
@@ -44,15 +42,11 @@ class TestPeriodics:
         p3 /= np.linalg.norm(axis)
         p3[0] = (-axis[1] * p3[1] - axis[2] * p3[2]) / axis[0]
 
-        pg.mesher.AnnulusMesher(sweep=sweep, p2=axis, p3=p3, periodic=True).mesh(mb)
-        blk = mb[0]
-        blk.getFace(5).commRank = 0
-        blk.getFace(6).commRank = 0
-
-        mb.setBlockCommunication()
-
-        mb.unifyGrid()
-        mb.computeMetrics()
+        mb = pg.multiBlock.solver(
+            config,
+            mesh=pg.mesher.AnnulusMesher(sweep=sweep, p2=axis, p3=p3, periodic=True),
+        )
+        blk = mb.blocks[0]
 
         q = blk.q.get()
         qshape = q.shape[:3]

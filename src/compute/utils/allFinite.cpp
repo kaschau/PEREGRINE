@@ -8,7 +8,7 @@
 
 // 0 if any conserved quantity in the interior is not finite
 
-PG_ABI int pgAllFinite(int count, const pgView *Q_, const pgDims *d) {
+PG_ABI int pgAllFinite(int count, pgIn *Q_, const pgDims *d) {
   int all = 1;
   for (int e = 0; e < count; e++) {
     auto Q = as4(Q_[e]);

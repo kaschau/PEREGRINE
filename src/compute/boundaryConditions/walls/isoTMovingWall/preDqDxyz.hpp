@@ -13,27 +13,19 @@
 inline void isoTMovingWall_preDqDxyz(const faceRecords &face, double tme) {
   auto q = face.q;
   auto qBcVals = face.qBcVals;
-  const int nface = face.nface;
-  const faceCells cells = faceCellsOf(face.d, nface);
-  int firstHaloIdx = cells.halo, firstInteriorCellIdx = cells.interior,
-      plus = cells.plus;
 
-  auto q1 = getFaceSlice(q, nface, firstInteriorCellIdx);
-  MDRange2 range_face = MDRange2({0, 0}, {q1.extent(0), q1.extent(1)});
-  for (int g = 0; g < ng; g++) {
-    firstHaloIdx -= plus * g;
+  auto q1 = face.interior(q);
+  MDRange3 range_face = face.range(ng);
+  auto q0 = face.halo(q);
 
-    auto q0 = getFaceSlice(q, nface, firstHaloIdx);
-
-    Kokkos::parallel_for(
-        "Iso T moving wall preDqDxyz terms", range_face,
-        KOKKOS_LAMBDA(const int i, const int j) {
-          // apply velo on wall
-          q0(i, j, 1) = 2.0 * qBcVals(i, j, 1) - q1(i, j, 1);
-          q0(i, j, 2) = 2.0 * qBcVals(i, j, 2) - q1(i, j, 2);
-          q0(i, j, 3) = 2.0 * qBcVals(i, j, 3) - q1(i, j, 3);
-        });
-  }
+  Kokkos::parallel_for(
+      "Iso T moving wall preDqDxyz terms", range_face,
+      KOKKOS_LAMBDA(const int g, const int i, const int j) {
+        // apply velo on wall
+        q0(g, i, j, 1) = 2.0 * qBcVals(i, j, 1) - q1(0, i, j, 1);
+        q0(g, i, j, 2) = 2.0 * qBcVals(i, j, 2) - q1(0, i, j, 2);
+        q0(g, i, j, 3) = 2.0 * qBcVals(i, j, 3) - q1(0, i, j, 3);
+      });
 }
 
 #endif

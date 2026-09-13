@@ -28,8 +28,22 @@ class configFile(frozenDict):
         self["simulation"] = frozenDict(
             {
                 "niter": 1,
-                "restartFrom": 0,
+                # which result to restart from; None starts from the initial conditions
+                "restartFrom": None,
                 "checkNan": False,
+            }
+        )
+        # the uniform state a case starts from when it does not restart
+        self["initialConditions"] = frozenDict(
+            {
+                "p": 101325.0,
+                "u": 0.0,
+                "v": 0.0,
+                "w": 0.0,
+                "T": 300.0,
+                # mass fraction by species name; the rest are zero, and the
+                # last species takes the remainder
+                "Y": {},
             }
         )
 
@@ -102,87 +116,7 @@ class configFile(frozenDict):
         self._freeze()
 
     def validateConfig(self):
-        #######################################################################
-        # Sanity checks go here
-        #######################################################################
-
-        # ---------------------------------------------------------------------#
-        # io checks
-        # ---------------------------------------------------------------------#
-        # ---------------------------------------------------------------------#
-        # timeIntegration Checks
-        # ---------------------------------------------------------------------#
-        ti = self["timeIntegration"]["integrator"]
-        eos = self["mcPhysics"]["eos"]
-
+        """What the file's values have to be; whether they make a step is the
+        step graph's to say."""
         self["timeIntegration"]["dt"] = float(self["timeIntegration"]["dt"])
-        if ti == "dualTime" and eos not in [
-            "cpg",
-            "tpg",
-        ]:
-            raise pgConfigError(ti, eos, "Only cpg and tpg currently supported.")
-
-        if ti == "dualTime" and self["timeIntegration"]["variableTimeStep"]:
-            raise pgConfigError(
-                "dualTime",
-                "variableTimeStep",
-                "Only fixed time step currently supported.",
-            )
-
-        # ---------------------------------------------------------------------#
-        # RHS checks
-        # ---------------------------------------------------------------------#
-        primaryAdvFlux = self["RHS"]["primaryAdvFlux"]
-        secondaryAdvFlux = self["RHS"]["secondaryAdvFlux"]
-        switch = self["RHS"]["switchAdvFlux"]
-        shock = self["RHS"]["shockHandling"]
-        if primaryAdvFlux is None:
-            raise pgConfigError(
-                "primaryAdvFlux", primaryAdvFlux, "primaryAdvFlux cannot be none."
-            )
-
-        if shock == "artificialDissipation" and secondaryAdvFlux not in [
-            "scalarDissipation"
-        ]:
-            raise pgConfigError(shock, secondaryAdvFlux)
-        if shock == "hybrid" and secondaryAdvFlux in ["scalarDissipation"]:
-            raise pgConfigError(shock, secondaryAdvFlux)
-
-        if shock is not None:
-            if secondaryAdvFlux is None:
-                raise pgConfigError(
-                    shock,
-                    secondaryAdvFlux,
-                    "\nYou set a shock handlind without a secondary adv flux.",
-                )
-
-        if switch is None:
-            if secondaryAdvFlux is not None:
-                raise pgConfigError(
-                    switch,
-                    secondaryAdvFlux,
-                    "\nYou set a secondaryAdvFlux without setting switchAdvFlux.",
-                )
-        else:
-            if secondaryAdvFlux is None:
-                raise pgConfigError(
-                    switch,
-                    secondaryAdvFlux,
-                    "\nYou set an flux switching option without a secondary flux.",
-                )
-
-        # ---------------------------------------------------------------------#
-        # viscousSponge check
-        # ---------------------------------------------------------------------#
-        if self["viscousSponge"]["spongeON"]:
-            if not self["RHS"]["diffusion"]:
-                raise pgConfigError(
-                    True,
-                    False,
-                    "\nYou turned on viscousSponge without solving for diffusion.",
-                )
-
-        # ---------------------------------------------------------------------#
-        # mcPhysics checks
-        # ---------------------------------------------------------------------#
         self["mcPhysics"]["nChemSubSteps"] = max(1, self["mcPhysics"]["nChemSubSteps"])

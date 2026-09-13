@@ -23,16 +23,10 @@ class dualTime(BaseIntegrator):
     # the inner pseudo time loop is rk3 like
     nStorage = 2
     # the kernels the pseudo time stages call
-    sources = (
-        "timeIntegration/dualTime.cpp",
-        "utils/axpby.cpp",
-        "utils/reductions.cpp",
-    )
-
-    def setKernels(self):
-        """Each kernel the stages call, bound to this solver under its own name."""
-        for symbol, kernel in self.jit.load(*self.sources).items():
-            setattr(self, symbol[2].lower() + symbol[3:], kernel.bind(self))
+    sources = tuple(
+        f"timeIntegration/{k}.cpp"
+        for k in ("dQdt", "localDtau", "dTrk3s1", "dTrk3s2", "dTrk3s3", "invertDQ")
+    ) + ("utils/axpby.cpp", "utils/residual.cpp")
 
     def _stage(self, stage, dt):
         """One pseudo time rk3 stage: the RHS at its time, the physical time
@@ -76,7 +70,7 @@ class dualTime(BaseIntegrator):
 
             # Compute residual
             if mb.nrt % mb.config["io"]["niterPrint"] == 0:
-                ne = mb[0].ne
+                ne = mb.blocks[0].ne
                 resid = np.zeros((2, ne))
                 self.residual(rMax=resid[0], rSum=resid[1])
                 comm.Allreduce(MPI.IN_PLACE, resid[0, :], op=MPI.MAX)
@@ -99,7 +93,7 @@ class dualTime(BaseIntegrator):
         mb = self.mb
         if mb.nrt != 0:
             path = mb.config["io"]["resultsDir"]
-            for blk in mb:
+            for blk in mb.blocks:
                 ng = blk.ng
                 fileName = f"{path}/Qnm1.{mb.nrt:08d}.{blk.nblki:06d}.npy"
                 try:

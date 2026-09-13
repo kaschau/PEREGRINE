@@ -2,12 +2,9 @@
 #include "kokkosTypes.hpp"
 #include <Kokkos_Core.hpp>
 
-static void computeFlux(const unmanaged<double ****> &Q,
-                        const unmanaged<double ****> &q,
-                        const unmanaged<double ****> &qh, const pgDims &d,
-                        unmanaged<double ****> &iF,
-                        const unmanaged<double ****> &iS, const int iMod,
-                        const int jMod, const int kMod) {
+static void computeFlux(const in4 &Q, const in4 &q, const in4 &qh,
+                        const pgDims &d, const out4 &iF, const in4 &iS,
+                        const int iMod, const int jMod, const int kMod) {
 
   const int ni = d.ni, nj = d.nj, nk = d.nk;
   // face flux range
@@ -21,35 +18,35 @@ static void computeFlux(const unmanaged<double ****> &Q,
         faceNormal(iS(i, j, k, 0), iS(i, j, k, 1), iS(i, j, k, 2), S, nx, ny,
                    nz);
 
-        double &ufR = q(i, j, k, 1);
-        double &vfR = q(i, j, k, 2);
-        double &wfR = q(i, j, k, 3);
+        const double &ufR = q(i, j, k, 1);
+        const double &vfR = q(i, j, k, 2);
+        const double &wfR = q(i, j, k, 3);
 
-        double &ufL = q(i - iMod, j - jMod, k - kMod, 1);
-        double &vfL = q(i - iMod, j - jMod, k - kMod, 2);
-        double &wfL = q(i - iMod, j - jMod, k - kMod, 3);
+        const double &ufL = q(i - iMod, j - jMod, k - kMod, 1);
+        const double &vfL = q(i - iMod, j - jMod, k - kMod, 2);
+        const double &wfL = q(i - iMod, j - jMod, k - kMod, 3);
 
         double UR = nx * ufR + ny * vfR + nz * wfR;
         double UL = nx * ufL + ny * vfL + nz * wfL;
 
-        double &rhoR = Q(i, j, k, 0);
-        double &rhoL = Q(i - iMod, j - jMod, k - kMod, 0);
+        const double &rhoR = Q(i, j, k, 0);
+        const double &rhoL = Q(i - iMod, j - jMod, k - kMod, 0);
 
-        double &rhouR = Q(i, j, k, 1);
-        double &rhouL = Q(i - iMod, j - jMod, k - kMod, 1);
-        double &rhovR = Q(i, j, k, 2);
-        double &rhovL = Q(i - iMod, j - jMod, k - kMod, 2);
-        double &rhowR = Q(i, j, k, 3);
-        double &rhowL = Q(i - iMod, j - jMod, k - kMod, 3);
+        const double &rhouR = Q(i, j, k, 1);
+        const double &rhouL = Q(i - iMod, j - jMod, k - kMod, 1);
+        const double &rhovR = Q(i, j, k, 2);
+        const double &rhovL = Q(i - iMod, j - jMod, k - kMod, 2);
+        const double &rhowR = Q(i, j, k, 3);
+        const double &rhowL = Q(i - iMod, j - jMod, k - kMod, 3);
 
-        double &pR = q(i, j, k, 0);
-        double &pL = q(i - iMod, j - jMod, k - kMod, 0);
+        const double &pR = q(i, j, k, 0);
+        const double &pL = q(i - iMod, j - jMod, k - kMod, 0);
 
-        double &ER = Q(i, j, k, 4);
-        double &EL = Q(i - iMod, j - jMod, k - kMod, 4);
+        const double &ER = Q(i, j, k, 4);
+        const double &EL = Q(i - iMod, j - jMod, k - kMod, 4);
 
-        double &cR = qh(i, j, k, 3);
-        double &cL = qh(i - iMod, j - jMod, k - kMod, 3);
+        const double &cR = qh(i, j, k, 3);
+        const double &cL = qh(i - iMod, j - jMod, k - kMod, 3);
 
         double pstar = 0.5 * (pL + pR) -
                        0.5 * (UR - UL) * 0.5 * (rhoL + rhoR) * 0.5 * (cL + cR);
@@ -140,10 +137,9 @@ static void computeFlux(const unmanaged<double ****> &Q,
       });
 }
 
-PG_ABI void pgHllc(int count, const pgView *Q_, const pgView *iF_,
-                   const pgView *iS_, const pgView *jF_, const pgView *jS_,
-                   const pgView *kF_, const pgView *kS_, const pgView *q_,
-                   const pgView *qh_, const pgDims *d) {
+PG_ABI void pgHllc(int count, pgIn *Q_, pgOut *iF_, pgIn *iS_, pgOut *jF_,
+                   pgIn *jS_, pgOut *kF_, pgIn *kS_, pgIn *q_, pgIn *qh_,
+                   const pgDims *d) {
   for (int e = 0; e < count; e++) {
     auto Q = as4(Q_[e]);
     auto iF = as4(iF_[e]);

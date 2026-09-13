@@ -1,3 +1,6 @@
+from ..kernel import BoundKernel
+
+
 def cppStage(name):
     """A compute kernel used as a stage of its own."""
 
@@ -13,13 +16,15 @@ def ssp(wQ0, wQ, wdQ, storeQ0=False):
     state it began from, since later stages combine with it."""
 
     def stage(ti, dt):
-        Q, Q0, dQ = (ti.mb.table.views(n) for n in ("Q", "Q0", "dQ"))
+        views = ti.mb.table.views
         if storeQ0:
-            ti.axpby(A=Q0, a=0.0, b=1.0, B=Q)
+            ti.axpby(A=views("Q0"), a=0.0, b=1.0, B=views("Q"))
         if wQ0 == 0.0:
-            ti.axpby(A=Q, a=wQ, b=wdQ * dt, B=dQ)
+            ti.axpby(A=views("Q"), a=wQ, b=wdQ * dt, B=views("dQ"))
         else:
-            ti.axpbypcz(A=Q, a=wQ, b=wQ0, B=Q0, c=wdQ * dt, C=dQ)
+            ti.axpbypcz(
+                A=views("Q"), a=wQ, b=wQ0, B=views("Q0"), c=wdQ * dt, C=views("dQ")
+            )
 
     return stage
 
@@ -38,9 +43,14 @@ class BaseIntegrator:
 
     def __init__(self, mb):
         self.mb = mb
-        for source in self.sources:
-            kernel = mb.kernel(source)
+        self.kernels = [
+            BoundKernel(mb.table, mb.thtrdat, source) for source in self.sources
+        ]
+        for kernel in self.kernels:
             setattr(self, kernel.__name__, kernel)
+
+    def initialize(self):
+        """What a run does before its first step; nothing, for most."""
 
     def step(self, dt):
         raise NotImplementedError

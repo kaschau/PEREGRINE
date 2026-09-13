@@ -22,6 +22,7 @@ import numpy as np
 from copy import deepcopy
 from lxml import etree
 
+from ..misc import Progress
 from .baseWriter import BaseWriter
 
 
@@ -30,13 +31,13 @@ class RestartWriter(BaseWriter):
     multiBlock, so a solver builds one at startup and writes it every time it
     is asked for output."""
 
-    def __init__(self, mb, path="./", gridPath="./", precision="single"):
+    def __init__(self, mb, path="./", gridPath="./", precision="single", quiet=False):
         self.gridPath = gridPath
         self.speciesNames = mb.speciesNames
         self.hasConservatives = mb.hasConservatives
         # which result this is, set by every write
         self.nrt = mb.nrt
-        super().__init__(mb, path, precision)
+        super().__init__(mb, path, precision, quiet)
 
     @property
     def h5FileName(self):
@@ -61,7 +62,9 @@ class RestartWriter(BaseWriter):
         """Every base block's ni,nj,nk indexed by its number in the grid. A
         result is written in the grid's blocks so that the partition that
         wrote it is not baked into it."""
-        mine = [(blk.baseNblki, blk.ni, blk.nj, blk.nk, blk.baseSlice) for blk in mb]
+        mine = [
+            (blk.baseNblki, blk.ni, blk.nj, blk.nk, blk.baseSlice) for blk in mb.blocks
+        ]
         perRankLists = self.comm.allgather(mine)
         everyones = [b for perRank in perRankLists for b in perRank]
 
@@ -114,23 +117,25 @@ class RestartWriter(BaseWriter):
                 )
 
         # one snapshot of each block's state for the whole write
-        self._host = {id(blk): (blk.hostCopy("q"), blk.hostCopy("Q")) for blk in mb}
+        self._host = {
+            id(blk): (blk.hostCopy("q"), blk.hostCopy("Q")) for blk in mb.blocks
+        }
 
         # which of my blocks are pieces of each block of the grid
         mine = {}
-        for blk in mb:
+        for blk in mb.blocks:
             mine.setdefault(blk.baseNblki, []).append(blk)
 
         # the writes are collective, so every rank walks every dataset
-        for nblki in range(len(self.extents)):
-            resS = qf[f"results_{nblki:06d}"]
-            for name in names:
-                for myRound in range(self.rounds):
-                    pieces = mine.get(nblki, ())
-                    blk = pieces[myRound] if myRound < len(pieces) else None
-                    self._writeVariable(resS[name], blk, name)
-
-            mb.progress(nblki + 1, f"Writing out results for block {nblki}")
+        with Progress(len(self.extents), self.quiet) as bar:
+            for nblki in range(len(self.extents)):
+                resS = qf[f"results_{nblki:06d}"]
+                for name in names:
+                    for myRound in range(self.rounds):
+                        pieces = mine.get(nblki, ())
+                        blk = pieces[myRound] if myRound < len(pieces) else None
+                        self._writeVariable(resS[name], blk, name)
+                bar.step(f"Writing out block {nblki}")
 
         qf.close()
         self._host = None

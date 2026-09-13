@@ -3,10 +3,9 @@
 #include "math.h"
 #include <Kokkos_Core.hpp>
 
-PG_ABI void pgApplyHybridFlux(int count, const pgView *Jinv_, const pgView *dQ_,
-                              const pgView *iF_, const pgView *jF_,
-                              const pgView *kF_, const pgView *phi_,
-                              const pgDims *d, double primary) {
+PG_ABI void pgApplyHybridFlux(int count, pgIn *Jinv_, pgOut *dQ_, pgIn *iF_,
+                              pgIn *jF_, pgIn *kF_, pgIn *phi_, const pgDims *d,
+                              double primary) {
   for (int e = 0; e < count; e++) {
     auto Jinv = as3(Jinv_[e]);
     auto dQ = as4(dQ_[e]);

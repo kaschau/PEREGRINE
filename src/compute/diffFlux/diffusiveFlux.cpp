@@ -5,13 +5,9 @@
 
 // This should basically never be used. It always worse than alpha damping.
 
-static void computeFlux(const unmanaged<double ****> &Q,
-                        const unmanaged<double *****> &grads,
-                        const unmanaged<double ****> &q,
-                        const unmanaged<double ****> &qh,
-                        const unmanaged<double ****> &qt, const pgDims &d,
-                        unmanaged<double ****> &iF,
-                        const unmanaged<double ****> &iS, const int iMod,
+static void computeFlux(const in4 &Q, const in5 &grads, const in4 &q,
+                        const in4 &qh, const in4 &qt, const pgDims &d,
+                        const out4 &iF, const in4 &iS, const int iMod,
                         const int jMod, const int kMod) {
 
   // Stokes hypothesis
@@ -152,12 +148,10 @@ static void computeFlux(const unmanaged<double ****> &Q,
       });
 }
 
-PG_ABI void pgDiffusiveFlux(int count, const pgView *Q_, const pgView *grads_,
-                            const pgView *iF_, const pgView *iS_,
-                            const pgView *jF_, const pgView *jS_,
-                            const pgView *kF_, const pgView *kS_,
-                            const pgView *q_, const pgView *qh_,
-                            const pgView *qt_, const pgDims *d) {
+PG_ABI void pgDiffusiveFlux(int count, pgIn *Q_, pgIn *grads_, pgOut *iF_,
+                            pgIn *iS_, pgOut *jF_, pgIn *jS_, pgOut *kF_,
+                            pgIn *kS_, pgIn *q_, pgIn *qh_, pgIn *qt_,
+                            const pgDims *d) {
   for (int e = 0; e < count; e++) {
     auto Q = as4(Q_[e]);
     auto grads = as5(grads_[e]);

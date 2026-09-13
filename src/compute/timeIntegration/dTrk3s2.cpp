@@ -6,8 +6,8 @@
 #include "vector"
 #include <Kokkos_Core.hpp>
 
-PG_ABI void pgDTrk3s2(int count, const pgView *Q0_, const pgView *dQ_,
-                      const pgView *dtau_, const pgView *q_, const pgDims *d) {
+PG_ABI void pgDTrk3s2(int count, pgIn *Q0_, pgIn *dQ_, pgIn *dtau_, pgOut *q_,
+                      const pgDims *d) {
   for (int e = 0; e < count; e++) {
     auto Q0 = as4(Q0_[e]);
     auto dQ = as4(dQ_[e]);

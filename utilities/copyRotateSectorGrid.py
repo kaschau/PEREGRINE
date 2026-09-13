@@ -77,16 +77,18 @@ if __name__ == "__main__":
         )
 
     fromGrid = pg.multiBlock.grid.fromGrid(fromDir)
-    nblks = len(fromGrid)
+    nblks = len(fromGrid.blocks)
 
-    toGrid = pg.multiBlock.grid(nblks * nseg)
+    toGrid = pg.multiBlock.grid()
+    for _ in range(nblks * nseg):
+        toGrid.addBlock()
 
     # Copy the original grid to new grid's first sector
     # Also collect "high" and "low" faces.
     lowside = []
     highside = []
-    for i, fromBlk in enumerate(fromGrid):
-        toBlk = toGrid[i]
+    for i, fromBlk in enumerate(fromGrid.blocks):
+        toBlk = toGrid.blocks[i]
         # Copy coordinates
         toBlk.array = fromBlk.array
         toBlk.ni = fromBlk.ni
@@ -130,10 +132,10 @@ if __name__ == "__main__":
         rotM[2, 2] = ct + uz**2 * (1 - ct)
 
         for j in range(nblks):
-            fromBlk = fromGrid[j]
+            fromBlk = fromGrid.blocks[j]
 
             rotNblki = (i + 1) * nblks + j
-            rotBlk = toGrid[rotNblki]
+            rotBlk = toGrid.blocks[rotNblki]
 
             # copy/rotate block coordinates
             rotBlk.setExtents(fromBlk.ni, fromBlk.nj, fromBlk.nk)
@@ -188,10 +190,10 @@ if __name__ == "__main__":
     else:
         is360 = False
 
-    for i, fromBlk in enumerate(fromGrid):
+    for i, fromBlk in enumerate(fromGrid.blocks):
         # lowside
         if fromBlk.nblki in lowside:
-            rotBlk = toGrid[i]
+            rotBlk = toGrid.blocks[i]
             for toFace, fromFace in zip(rotBlk.faces, fromBlk.faces):
                 if fromFace.amILow:
                     # set neighbor to new high side
@@ -203,7 +205,7 @@ if __name__ == "__main__":
         # original and far highside
         elif fromBlk.nblki in highside:
             # original
-            rotBlk = toGrid[i]
+            rotBlk = toGrid.blocks[i]
             for toFace, fromFace in zip(rotBlk.faces, fromBlk.faces):
                 # set to internal with new neighbor
                 if not fromFace.amILow:
@@ -211,7 +213,7 @@ if __name__ == "__main__":
                     toFace.neighbor = fromFace.neighbor + nblks
                     toFace.bcName = None
             # new far high side
-            rotBlk = toGrid[i + nblks * (nseg - 1)]
+            rotBlk = toGrid.blocks[i + nblks * (nseg - 1)]
             for toFace, fromFace in zip(rotBlk.faces, fromBlk.faces):
                 # if360, the new high side is an internal face
                 if not fromFace.amILow:

@@ -24,16 +24,15 @@ def test_cpg(my_setup):
     config["mcPhysics"]["eos"] = "cpg"
     config["RHS"]["diffusion"] = False
 
-    mb = pg.multiBlock.solver(config, 1)
-    pg.mesher.CubeMesher(
-        mbDims=[1, 1, 1], dimsPerBlock=[2, 2, 2], lengths=[1, 1, 1]
-    ).mesh(mb)
+    mb = pg.multiBlock.solver(
+        config,
+        mesh=pg.mesher.CubeMesher(
+            mbDims=[1, 1, 1], dimsPerBlock=[2, 2, 2], lengths=[1, 1, 1]
+        ),
+    )
 
-    blk = mb[0]
+    blk = mb.blocks[0]
     ng = blk.ng
-
-    mb.generateHalo()
-    mb.computeMetrics()
 
     q = blk.q.get()
     q[:, :, :, 0] = p

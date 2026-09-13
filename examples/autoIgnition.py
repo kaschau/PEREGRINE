@@ -35,32 +35,24 @@ def simulate():
     config["mcPhysics"]["nChemSubSteps"] = 10
     config["mcPhysics"]["eos"] = "tpg"
     config["mcPhysics"]["mixture"] = "thtr_CH4_O2_FFCMY.yaml"
+    # the reactor's state, uniform over the block
+    config["initialConditions"]["p"] = gas.P
+    config["initialConditions"]["T"] = gas.T
+    config["initialConditions"]["Y"] = {
+        s: y for s, y in zip(gas.species_names, gas.Y) if y > 0.0
+    }
     config.validateConfig()
-    mb = pg.multiBlock.solver(config, 1)
-    pg.mesher.CubeMesher(
-        mbDims=[1, 1, 1], dimsPerBlock=[2, 2, 2], lengths=[0.01, 0.01, 0.01]
-    ).mesh(mb)
+    mb = pg.multiBlock.solver(
+        config,
+        mesh=pg.mesher.CubeMesher(
+            mbDims=[1, 1, 1], dimsPerBlock=[2, 2, 2], lengths=[0.01, 0.01, 0.01]
+        ),
+    )
 
-    blk = mb[0]
+    blk = mb.blocks[0]
     ng = blk.ng
     for face in blk.faces:
         face.bcType = "adiabaticNoSlipWall"
-
-    mb.setBlockCommunication()
-
-    mb.unifyGrid()
-
-    mb.computeMetrics()
-
-    q = blk.q.get()
-    q[:, :, :, 0] = gas.P
-    q[:, :, :, 4] = gas.T
-    q[:, :, :, 5::] = gas.Y[0:-1]
-    blk.q.set(q)
-
-    # Update cons
-    mb.stateFromPrims(nface=0)
-    mb.consistify()
 
     dt = 1e-9
     config["timeIntegration"]["dt"] = dt

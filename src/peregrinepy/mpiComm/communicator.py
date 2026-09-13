@@ -12,6 +12,7 @@ import numpy as np
 from mpi4py.MPI import DOUBLE as MPIDOUBLE
 from mpi4py.MPI import Request
 
+from ..kernel import BoundKernel
 from .mpiUtils import getCommRankSize
 
 
@@ -23,10 +24,11 @@ class Communicator:
     packed partition is the former.
     """
 
-    def __init__(self, mb):
+    def __init__(self, table, thtrdat):
         # the pack and unpack, one face at a time
-        self.pack = mb.jit.kernel("utils/extractSendBuffer.cpp")
-        self.unpack = mb.jit.kernel("utils/placeRecvBuffer.cpp")
+        self.pack = BoundKernel(table, thtrdat, "utils/extractSendBuffer.cpp")
+        self.unpack = BoundKernel(table, thtrdat, "utils/placeRecvBuffer.cpp")
+        self.kernels = [self.pack, self.unpack]
         self.comm, self.rank, self.size = getCommRankSize()
 
         # every face that trades, with the block planes it trades through
@@ -36,20 +38,25 @@ class Communicator:
         # a neighbor we have to send to
         self.remote = []
 
-        for blk in mb:
-            for face in blk.faces:
-                if face.neighbor is None:
-                    continue
-                self.trades.append((blk, face, self._planeIndices(face)))
-                if face.commRank != self.rank:
-                    self.remote.append(face)
-                    continue
-                neighbor = mb.getBlock(face.neighbor)
-                assert neighbor is not None, (
-                    f"block {blk.nblki} face {face.nface} names rank {self.rank}"
-                    f" for neighbor {face.neighbor}, which is not on it"
-                )
-                self.local.append((face, neighbor.getFace(face.neighborNface)))
+    def connect(self, faces):
+        """Which of the (block, face) pairs trade and with whom, once the
+        blocks know their neighbors."""
+        faces = list(faces)
+        blocks = {blk.nblki: blk for blk, _ in faces}
+        self.trades, self.local, self.remote = [], [], []
+        for blk, face in faces:
+            if face.neighbor is None:
+                continue
+            self.trades.append((blk, face, self._planeIndices(face)))
+            if face.commRank != self.rank:
+                self.remote.append(face)
+                continue
+            neighbor = blocks.get(face.neighbor)
+            assert neighbor is not None, (
+                f"block {blk.nblki} face {face.nface} names rank {self.rank}"
+                f" for neighbor {face.neighbor}, which is not on it"
+            )
+            self.local.append((face, neighbor.getFace(face.neighborNface)))
 
     @staticmethod
     def _planeIndices(face):

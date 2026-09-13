@@ -60,7 +60,6 @@ def simulate(index, velo):
     config["mcPhysics"]["mixture"] = air
     config.validateConfig()
 
-    mb = pg.multiBlock.solver(config, 1)
     rot = {"i": 0, "j": 1, "k": 2}
 
     def rotate(li, index):
@@ -76,49 +75,43 @@ def simulate(index, velo):
     elif "z" in velo:
         periodic = [False, False, True]
 
-    pg.mesher.CubeMesher(
-        mbDims=[1, 1, 1], dimsPerBlock=dimsPerBlock, lengths=lengths, periodic=periodic
-    ).mesh(mb)
+    mb = pg.multiBlock.solver(
+        config,
+        mesh=pg.mesher.CubeMesher(
+            mbDims=[1, 1, 1],
+            dimsPerBlock=dimsPerBlock,
+            lengths=lengths,
+            periodic=periodic,
+        ),
+    )
 
-    blk = mb[0]
+    blk = mb.blocks[0]
 
     if index == "i":
         blk.getFace(1).bcType = "adiabaticNoSlipWall"
         blk.getFace(2).bcType = "adiabaticMovingWall"
         if "y" in velo:
-            blk.getFace(3).commRank = 0
-            blk.getFace(4).commRank = 0
             for face in [5, 6]:
                 blk.getFace(face).bcType = "adiabaticSlipWall"
         else:
-            blk.getFace(5).commRank = 0
-            blk.getFace(6).commRank = 0
             for face in [3, 4]:
                 blk.getFace(face).bcType = "adiabaticSlipWall"
     elif index == "j":
         blk.getFace(3).bcType = "adiabaticNoSlipWall"
         blk.getFace(4).bcType = "adiabaticMovingWall"
         if "x" in velo:
-            blk.getFace(1).commRank = 0
-            blk.getFace(2).commRank = 0
             for face in [5, 6]:
                 blk.getFace(face).bcType = "adiabaticSlipWall"
         else:
-            blk.getFace(5).commRank = 0
-            blk.getFace(6).commRank = 0
             for face in [1, 2]:
                 blk.getFace(face).bcType = "adiabaticSlipWall"
     elif index == "k":
         blk.getFace(5).bcType = "adiabaticNoSlipWall"
         blk.getFace(6).bcType = "adiabaticMovingWall"
         if "x" in velo:
-            blk.getFace(1).commRank = 0
-            blk.getFace(2).commRank = 0
             for face in [3, 4]:
                 blk.getFace(face).bcType = "adiabaticSlipWall"
         else:
-            blk.getFace(3).commRank = 0
-            blk.getFace(4).commRank = 0
             for face in [1, 2]:
                 blk.getFace(face).bcType = "adiabaticSlipWall"
     else:
@@ -134,21 +127,11 @@ def simulate(index, velo):
         raise ValueError()
     for face in blk.faces:
         if face.bcType == "adiabaticMovingWall":
-            pg.bcs.getBc(face.bcType).setValues(face, valueDict)
+            face.bc.setValues(valueDict)
             break
 
-    mb.setBlockCommunication()
-
-    mb.unifyGrid()
-    mb.computeMetrics()
-
     ng = blk.ng
-    q = blk.q.get()
-    q[:, :, :, 0] = 101325.0
-    q[:, :, :, 1:4] = 0.0
-    q[:, :, :, 4] = 300.0
-    blk.q.set(q)
-    mb.stateFromPrims(nface=0)
+    # the wall's values changed since the case was made, so its halos follow
     mb.consistify()
 
     mu = np.unique(mb.thtrdat.mu0.get())[0]
@@ -178,11 +161,12 @@ def simulate(index, velo):
     doneOutput = [False for _ in range(len(outputTimes))]
     outputU = []
     simTme = max(outputTimes) * h**2 / nu
+    bar = pg.misc.Progress(simTme)
     while mb.tme < simTme:
         mb.step(config["timeIntegration"]["dt"])
 
         if mb.nrt % 200 == 0:
-            pg.misc.progressBar(mb.tme, simTme)
+            bar.at(mb.tme)
             if np.any(np.isnan(blk.Q.get())):
                 raise ValueError("Nan detected")
 

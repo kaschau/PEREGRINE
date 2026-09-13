@@ -2,8 +2,8 @@
 #include "kokkosTypes.hpp"
 #include <Kokkos_Core.hpp>
 
-PG_ABI void pgDq2FD(int count, const pgView *dENCdxyz_, const pgView *grads_,
-                    const pgView *q_, const pgDims *d) {
+PG_ABI void pgDq2FD(int count, pgIn *dENCdxyz_, pgOut *grads_, pgIn *q_,
+                    const pgDims *d) {
   for (int e = 0; e < count; e++) {
     auto dENCdxyz = as5(dENCdxyz_[e]);
     auto grads = as5(grads_[e]);
