@@ -1,11 +1,33 @@
+import socket
+import subprocess
+import sys
+from copy import deepcopy
+from datetime import datetime, timezone
+from pathlib import Path
+
 import h5py
 import numpy as np
-from copy import deepcopy
 from h5py import h5fd, h5p, h5s
 from lxml import etree
 
+from .._version import __version__
 from ..misc import Progress
 from ..mpiComm.mpiUtils import getCommRankSize
+
+
+def commit():
+    """The checkout this package runs from, with a + if it has been edited;
+    empty when it is not a checkout."""
+    here = Path(__file__).parent
+    try:
+        git = lambda *a: subprocess.run(
+            ["git", "-C", str(here), *a], capture_output=True, text=True, check=True
+        ).stdout.strip()
+        return git("rev-parse", "--short", "HEAD") + (
+            "+" if git("status", "--porcelain") else ""
+        )
+    except (OSError, subprocess.CalledProcessError):
+        return ""
 
 
 class BaseWriter:
@@ -18,6 +40,14 @@ class BaseWriter:
 
         self.comm, self.rank, self.size = getCommRankSize()
         self.extents = self._gatherExtents(mb)
+        # where a file this writer makes came from
+        self.provenance = {
+            "peregrine": __version__,
+            "commit": commit(),
+            "host": socket.gethostname(),
+            "ranks": self.size,
+            "command": " ".join(sys.argv),
+        }
 
         self._dxpl = h5p.create(h5p.DATASET_XFER)
         self._dxpl.set_dxpl_mpio(h5fd.MPIO_COLLECTIVE)
@@ -47,6 +77,12 @@ class BaseWriter:
     ###########################################################################
     def _openCollective(self, fileName, mode="w"):
         return h5py.File(f"{self.path}/{fileName}", mode, driver="mpio", comm=self.comm)
+
+    def _stamp(self, f):
+        """The provenance, and when this was written, on a file."""
+        for key, value in self.provenance.items():
+            f.attrs[key] = value
+        f.attrs["written"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
 
     def _writeSlab(self, dset, source=None, sourceSel=None, destSel=None):
         """One collective write of one rank's slab of one dataset.

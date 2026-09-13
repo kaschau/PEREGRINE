@@ -1,11 +1,16 @@
 """
 Reading a PEREGRINE restart.
 
-One q.<nrt>.h5 holds the primitives of every block at one time.
+One q.<nrt>.h5 holds the primitives of every block at one time, and says
+what case wrote it and on which grid.
 """
 
-import h5py
+from pathlib import Path
 
+import h5py
+import yaml
+
+from ..files import configFile
 from ..misc import Progress
 
 
@@ -20,12 +25,22 @@ class RestartReader:
         self.fileName = fileName
         self.quiet = quiet
         with h5py.File(self.fileName, "r") as f:
-            self.nrt = int(f["iter"]["nrt"][0])
-            self.tme = float(f["iter"]["tme"][0])
+            self.nrt, self.tme = int(f.attrs["nrt"]), float(f.attrs["tme"])
+            names = lambda key: [s.decode() for s in f.attrs[key]]
+            self.species, self.variables = names("species"), names("variables")
+            # what the result stores per block beyond the state
+            self.extras = names("extras")
+            # the grid it sits on, and the case that wrote it, when it was one
+            self.grid = str(Path(fileName).parent / f.attrs["grid"])
+            text = f.attrs["config"]
+            self.config = configFile.fromDict(yaml.safe_load(text)) if text else None
+        # what fill() read beyond the state
+        self.found = set()
 
     def fill(self, mb):
         """Fill in the primitives of every block of mb, and the step and time
-        they are at."""
+        they are at; and any array a block declares that the result stores
+        beyond the state, an integrator's."""
         with h5py.File(self.fileName, "r") as f, Progress(
             len(mb.blocks), self.quiet
         ) as bar:
@@ -56,6 +71,22 @@ class RestartReader:
                         dest[blk.interior + tuple([i])] = resS[var][blk.baseCellSlab].T
 
                 blk.store("q", dest)
+
+                for name in self.extras:
+                    if name not in getattr(blk, "declared", ()):
+                        continue
+                    self.found.add(name)
+                    dest = blk.hostCopy(name)
+                    comps = (slice(None),) * (dest.ndim - 3)
+                    if dest.flags["F_CONTIGUOUS"]:
+                        resS[name].read_direct(
+                            dest.T,
+                            source_sel=comps + blk.baseCellSlab,
+                            dest_sel=comps + blk.interior,
+                        )
+                    else:
+                        dest[blk.interior] = resS[name][comps + blk.baseCellSlab].T
+                    blk.store(name, dest)
                 bar.step(f"Reading in block {blk.nblki}")
 
         mb.nrt = self.nrt

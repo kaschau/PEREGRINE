@@ -20,10 +20,11 @@ def simulate(args):
         string += "           All rights reserved.\n"
         print(string)
 
-    config = pg.readers.readConfigFile(args.config)
-    ranks = (size, pg.mpiComm.mpiUtils.getRanksPerNode())
-    mesh = pg.readers.GridReader(args.mesh, ranks)
+    # a result carries the case and the grid it came from; either given here wins
     state = pg.readers.RestartReader(args.restart) if args.restart else None
+    config = pg.readers.readConfigFile(args.config) if args.config else state.config
+    ranks = (size, pg.mpiComm.mpiUtils.getRanksPerNode())
+    mesh = pg.readers.GridReader(args.mesh or state.grid, ranks)
     mb = pg.multiBlock.solver(config, mesh, state)
 
     # Get some stats about the simulation
@@ -56,13 +57,16 @@ def simulate(args):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Run a PEREGRINE case.")
-    parser.add_argument("config", help="the case's yaml")
-    parser.add_argument("mesh", help="the grid file, g.h5")
-    parser.add_argument(
-        "restart", nargs="?", help="a result to restart from, q.<nrt>.h5"
+    parser = argparse.ArgumentParser(
+        description="Run a PEREGRINE case: from a config and a grid, or from a "
+        "result, which carries both."
     )
+    parser.add_argument("config", nargs="?", help="the case's yaml")
+    parser.add_argument("mesh", nargs="?", help="the grid file, g.h5")
+    parser.add_argument("-r", "--restart", help="a result to restart from, q.<nrt>.h5")
     args = parser.parse_args()
+    if not args.restart and not (args.config and args.mesh):
+        parser.error("a config and a grid file, or a result to restart from")
     try:
         pg.abi.lib.initialize()
         simulate(args)

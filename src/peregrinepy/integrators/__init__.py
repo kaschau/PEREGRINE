@@ -1,7 +1,8 @@
 from ..misc import subclassWhere
 from .controllers import BaseController
 from .dualTime import dualTime
-from .explicit import BaseIntegrator, maccormack, rk1, rk2, rk3, rk34, rk4
+from .base import BaseIntegrator
+from .rungeKutta import maccormack, rk1, rk2, rk3, rk34, rk4
 
 _integrators = {
     i.integratorName: i for i in (rk1, rk2, rk3, rk34, rk4, maccormack, dualTime)

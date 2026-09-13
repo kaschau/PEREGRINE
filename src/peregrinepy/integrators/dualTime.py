@@ -2,7 +2,7 @@ import numpy as np
 from mpi4py import MPI
 
 from ..mpiComm.mpiUtils import getCommRankSize
-from .explicit import BaseIntegrator
+from .rungeKutta import RKIntegrator, rk3
 
 
 def printResidual(resid, nrt, ne):
@@ -17,32 +17,39 @@ def printResidual(resid, nrt, ne):
     print(string)
 
 
-class dualTime(BaseIntegrator):
+class dualTime(RKIntegrator):
+    """Each physical step converged in pseudo time: rk3's stages on the
+    primitives, each stepping by the preconditioned increment invertDQ
+    leaves in dQ, with the physical time derivative as a source."""
+
     integratorName = "dualTime"
     stepType = "dualTime"
-    # the inner pseudo time loop is rk3 like
-    nStorage = 2
-    # the kernels the pseudo time stages call
-    sources = tuple(
-        f"timeIntegration/{k}.cpp"
-        for k in ("dQdt", "localDtau", "dTrk3s1", "dTrk3s2", "dTrk3s3", "invertDQ")
-    ) + ("utils/axpby.cpp", "utils/residual.cpp")
+    nStorage = 1
+    sources = (
+        RKIntegrator.sources
+        + tuple(f"timeIntegration/{k}.cpp" for k in ("dQdt", "localDtau", "invertDQ"))
+        + ("utils/residual.cpp",)
+    )
+    state = "q"
+    stages = rk3.stages
     # pseudo time steps per physical step
     subIterations = 20
+    stateArrays = ("Qnm1",)
 
     def __init__(self, table, thtrdat, graphs, config):
         super().__init__(table, thtrdat, graphs, config)
         self.viscous = config["RHS"]["diffusion"]
         self.ne = 5 + thtrdat.ns - 1
 
-    def _stage(self, stage, tme, dt):
-        """One pseudo time rk3 stage: the RHS at its time, the physical time
+    def _stage(self, n, tme, dt):
+        """One pseudo time stage: the RHS at its time, the physical time
         derivative, the preconditioned update."""
-        self.rhs.run(tme)
+        frac, *weights = self.stages[n]
+        self.rhs.run(tme + frac * dt)
         self.dQdt(dt=dt)
         self.invertDQ(dt=dt, viscous=self.viscous)
-        stage()
-        self.consistifyFromPrims.run(tme)
+        self.combine(*weights, dt=1.0, first=n == 0)
+        self.consistifyFromPrims.run(tme + frac * dt)
 
     def _copy(self, dst, src):
         views = self.table.views
@@ -54,9 +61,8 @@ class dualTime(BaseIntegrator):
         comm, rank, size = getCommRankSize()
         for n in range(self.subIterations):
             self.localDtau(viscous=self.viscous)
-            self._stage(self.dTrk3s1, tme, dt)
-            self._stage(self.dTrk3s2, tme + dt, dt)
-            self._stage(self.dTrk3s3, tme + dt / 2.0, dt)
+            for n in range(len(self.stages)):
+                self._stage(n, tme, dt)
 
             if report:
                 resid = np.zeros((2, self.ne))
@@ -75,23 +81,9 @@ class dualTime(BaseIntegrator):
         self._copy("Qn", "Q")
         self._copy("Qnm1", "Q")
 
-    def restore(self, blocks, nrt, path):
-        """Qnm1 as the result was written with, or this state when the result
-        carries none; Qn is this state."""
-        for blk in blocks:
-            ng = blk.ng
-            try:
-                with open(f"{path}/Qnm1.{nrt:08d}.{blk.nblki:06d}.npy", "rb") as f:
-                    Qnm1 = blk.Qnm1.get()
-                    Qnm1[ng:-ng, ng:-ng, ng:-ng, :] = np.load(f)
-                    blk.Qnm1.set(Qnm1)
-            except FileNotFoundError:
-                blk.Qnm1.copyFrom(blk.Q)
+    def restore(self, found):
+        """Qn is this state; Qnm1 is what the result carried, or this state
+        when it carried none."""
         self._copy("Qn", "Q")
-
-    def writeState(self, blocks, nrt, path):
-        """Qnm1 beside the result, so a restart from it steps as this run did."""
-        for blk in blocks:
-            ng = blk.ng
-            with open(f"{path}/Qnm1.{nrt:08d}.{blk.nblki:06d}.npy", "wb") as f:
-                np.save(f, blk.Qnm1.get()[ng:-ng, ng:-ng, ng:-ng, :])
+        if "Qnm1" not in found:
+            self._copy("Qnm1", "Q")

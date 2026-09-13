@@ -8,8 +8,13 @@ a frame of an animation -- a run writes as many results as it is asked for,
 and any one of them can be restarted from or animated through.
 
     q.00000042.h5
-      iter/{nrt,tme}                                     when this is from
+      nrt, tme                                           attributes: when this is from
+      species, variables, extras                         attributes: what each block group holds
+      grid                                               attribute: the grid file, relative to this one
+      config                                             attribute: the case, as its yaml
+      peregrine, commit, host, ranks, command, written   attributes: where it came from
       results_000000/{rho,p,u,v,w,T,<species>}           one group per block
+      results_000000/<array>                             one dataset per extra
 
 Each variable is stored (nk-1, nj-1, ni-1) over the cells of a block of the
 *grid*, not of the partition that wrote it, so a rank holding a piece of a
@@ -20,6 +25,7 @@ run on for that, which is why the blocks here have to be the grid's.
 """
 
 import numpy as np
+import yaml
 from copy import deepcopy
 from lxml import etree
 
@@ -40,14 +46,23 @@ class RestartWriter(BaseWriter):
         precision="single",
         quiet=True,
         basename="q.{n:08d}",
+        extras=(),
+        config=None,
     ):
         self.gridPath = gridPath
+        # the case that writes, as its yaml, when there is one
+        self.config = yaml.safe_dump(config.toDict()) if config is not None else ""
+        # block arrays written beside the state
+        self.extras = tuple(extras)
         self.speciesNames = mb.speciesNames
         self.hasConservatives = mb.hasConservatives
         # what a result is called, from its step n and time t; set by every write
         self.basename = basename
         self.name = basename.format(n=mb.nrt, t=mb.tme)
         super().__init__(mb, path, precision, quiet)
+        # the shape each extra has past its cells, which every rank needs to
+        # create the datasets
+        self.extraShapes = self._gatherExtraShapes(mb)
 
     @property
     def h5FileName(self):
@@ -67,6 +82,17 @@ class RestartWriter(BaseWriter):
         if self.hasConservatives:
             names.insert(0, "rho")
         return names
+
+    def _gatherExtraShapes(self, mb):
+        """The shape past the cells of each extra array, from whichever rank
+        holds a block."""
+        mine = (
+            {n: mb.blocks[0].shapeOf(n)[3:] for n in self.extras} if mb.blocks else {}
+        )
+        shapes = {}
+        for theirs in self.comm.allgather(mine):
+            shapes.update(theirs)
+        return shapes
 
     def _gatherExtents(self, mb):
         """Every base block's ni,nj,nk indexed by its number in the grid. A
@@ -111,24 +137,29 @@ class RestartWriter(BaseWriter):
         names = self.dataNames
 
         qf = self._openCollective(self.h5FileName)
-        qf.create_group("iter")
-        qf["iter"].create_dataset("nrt", shape=(1,), dtype="int32")
-        qf["iter"].create_dataset("tme", shape=(1,), dtype="float64")
-        if self.rank == 0:
-            qf["iter"]["nrt"][0] = mb.nrt
-            qf["iter"]["tme"][0] = mb.tme
+        self._stamp(qf)
+        qf.attrs["nrt"], qf.attrs["tme"] = mb.nrt, mb.tme
+        qf.attrs["species"] = np.array(self.speciesNames, dtype="S")
+        qf.attrs["variables"] = np.array(names, dtype="S")
+        qf.attrs["extras"] = np.array(self.extras, dtype="S")
+        qf.attrs["grid"] = f"{self.gridPath}/g.h5"
+        qf.attrs["config"] = self.config
 
-        # the file is collective, so every rank creates every block's datasets
+        # the file is collective, so every rank creates every block's datasets;
+        # an extra is stored components first, the way the device holds it
         for nblki, (ni, nj, nk) in enumerate(self.extents):
             resS = qf.create_group(f"results_{nblki:06d}")
+            cells = (nk - 1, nj - 1, ni - 1)
             for name in names:
-                resS.create_dataset(
-                    name, shape=(nk - 1, nj - 1, ni - 1), dtype=self.fdtype
-                )
+                resS.create_dataset(name, shape=cells, dtype=self.fdtype)
+            for name in self.extras:
+                shape = self.extraShapes[name][::-1] + cells
+                resS.create_dataset(name, shape=shape, dtype=self.fdtype)
 
         # one snapshot of each block's state for the whole write
         self._host = {
-            id(blk): (blk.hostCopy("q"), blk.hostCopy("Q")) for blk in mb.blocks
+            id(blk): {n: blk.hostCopy(n) for n in ("q", "Q", *self.extras)}
+            for blk in mb.blocks
         }
 
         # which of my blocks are pieces of each block of the grid
@@ -140,11 +171,13 @@ class RestartWriter(BaseWriter):
         with Progress(len(self.extents), self.quiet) as bar:
             for nblki in range(len(self.extents)):
                 resS = qf[f"results_{nblki:06d}"]
-                for name in names:
-                    for myRound in range(self.rounds):
-                        pieces = mine.get(nblki, ())
-                        blk = pieces[myRound] if myRound < len(pieces) else None
+                for myRound in range(self.rounds):
+                    pieces = mine.get(nblki, ())
+                    blk = pieces[myRound] if myRound < len(pieces) else None
+                    for name in names:
                         self._writeVariable(resS[name], blk, name)
+                    for name in self.extras:
+                        self._writeArray(resS[name], blk, name)
                 bar.step(f"Writing out block {nblki}")
 
         qf.close()
@@ -152,6 +185,14 @@ class RestartWriter(BaseWriter):
 
         self._refreshXdmf(mb)
         self.saveXdmf()
+
+    @staticmethod
+    def _destStart(blk):
+        """Where this block's cells begin in its base block, in file order."""
+        if blk.baseSlice is None:
+            return (0, 0, 0)
+        i0, _, j0, _, k0, _ = blk.baseSlice
+        return (k0, j0, i0)
 
     def _writeVariable(self, dset, blk, name):
         """This rank's slab of one variable of one block, or nothing at all."""
@@ -169,18 +210,31 @@ class RestartWriter(BaseWriter):
             sourceSel = ((0, 0, 0), count)
         else:
             sourceSel = ((j, ng, ng, ng), (1,) + count)
+        self._writeSlab(dset, whole, sourceSel, (self._destStart(blk), count))
 
-        if blk.baseSlice is None:
-            destStart = (0, 0, 0)
+    def _writeArray(self, dset, blk, name):
+        """This rank's slab of one whole block array, every component at
+        once, or nothing at all."""
+        if blk is None:
+            self._writeSlab(dset)
+            return
+
+        ng = blk.ng
+        array = self._host[id(blk)][name]
+        comps = array.shape[3:][::-1]
+        whole = self.fileOrder(array)
+        count = comps + (blk.nk - 1, blk.nj - 1, blk.ni - 1)
+        if whole is None:
+            whole = np.ascontiguousarray(array[blk.interior].T)
+            sourceSel = ((0,) * len(count), count)
         else:
-            i0, _, j0, _, k0, _ = blk.baseSlice
-            destStart = (k0, j0, i0)
-
+            sourceSel = ((0,) * len(comps) + (ng, ng, ng), count)
+        destStart = (0,) * len(comps) + self._destStart(blk)
         self._writeSlab(dset, whole, sourceSel, (destStart, count))
 
     def _sourceFor(self, blk, name):
         """Which array and component of it a named variable comes from."""
-        q, Q = self._host[id(blk)]
+        q, Q = self._host[id(blk)]["q"], self._host[id(blk)]["Q"]
         if name == "rho":
             return Q, 0
 

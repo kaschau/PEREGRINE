@@ -8,8 +8,8 @@ from .base import BasePlugin
 
 class Writer(BasePlugin):
     """Results into a directory, made if need be, named from the step n or
-    the time t (`basename`, q.{n:08d} unless said), with whatever the
-    integrator keeps beyond the state beside them. The xdmf points at the
+    the time t (`basename`, q.{n:08d} unless said), carrying whatever the
+    integrator keeps beyond the state. The xdmf points at the
     grid file the case came from; a case meshed in a script gets one written
     into the directory first."""
 
@@ -31,9 +31,14 @@ class Writer(BasePlugin):
         gridDir = os.path.relpath(Path(gridFile).parent, self.dir)
         basename = cfgsect.get("basename", "q.{n:08d}")
         self.restart = RestartWriter(
-            solver, str(self.dir), gridDir, precision, basename=basename
+            solver,
+            str(self.dir),
+            gridDir,
+            precision,
+            basename=basename,
+            extras=solver.integrator.stateArrays,
+            config=solver.config,
         )
 
     def __call__(self, solver):
         self.restart.write(solver)
-        solver.integrator.writeState(solver.blocks, solver.nrt, str(self.dir))

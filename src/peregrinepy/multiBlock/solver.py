@@ -1,5 +1,3 @@
-from pathlib import Path
-
 import numpy as np
 from mpi4py import MPI
 
@@ -103,7 +101,7 @@ class solver(restart):
         if state is None:
             self.integrator.initialize()
         else:
-            self.integrator.restore(self.blocks, self.nrt, Path(state.fileName).parent)
+            self.integrator.restore(state.found)
 
         # the step being taken
         self.dt = config["timeIntegration"]["dt"]

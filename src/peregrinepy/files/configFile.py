@@ -94,6 +94,23 @@ class configFile(frozenDict):
         # Freeze input file from adding new keys
         self._freeze()
 
+    @classmethod
+    def fromDict(cls, given):
+        """A config with :given: over the defaults, section by section."""
+        config = cls()
+        for section, entries in (given or {}).items():
+            for key, value in (entries or {}).items():
+                config[section][key] = value
+        config.validateConfig()
+        return config
+
+    def toDict(self):
+        """The config as plain dicts, which is what yaml writes."""
+        return {
+            section: dict(entries) if isinstance(entries, dict) else entries
+            for section, entries in self.items()
+        }
+
     def validateConfig(self):
         """What the file's values have to be; whether they make a step is the
         step graph's to say."""

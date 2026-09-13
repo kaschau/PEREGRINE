@@ -61,6 +61,7 @@ class GridWriter(BaseWriter):
 
     def write(self, mb):
         gf = self._openCollective(self.h5FileName)
+        self._stamp(gf)
         gf.attrs["totalBlocks"] = self.totalBlocks
 
         # the file is collective, so every rank creates every block's datasets

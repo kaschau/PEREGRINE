@@ -295,6 +295,10 @@ PG_ABI void pgInvertDQ(int count, pgIn *Q_, pgIn *dIJK_, pgOut *dQ_,
             }
             dQ(i, j, k, l) /= GdQ[l][l];
           }
+          // scaled by the cell's pseudo step, so a stage adds it as it is
+          for (int l = 0; l < ne; l++) {
+            dQ(i, j, k, l) *= dtau(i, j, k);
+          }
         });
   }
 }
