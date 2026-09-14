@@ -282,14 +282,13 @@ class Graph:
         cls._nominal(config)
         rhs = config["RHS"]
         g = cls("rhs")
-        g.add(KernelNode("utils/dQzero.cpp"))
+        # every flux accumulates on the faces, and one apply makes dQ of them
         g.add(KernelNode(f"advFlux/{rhs['primaryAdvFlux']}.cpp", role="primaryAdvFlux"))
-        g.add(KernelNode("utils/applyFlux.cpp"))
         if rhs["diffusion"]:
             g.add(Hook("preDqDxyz"))
             g.add(KernelNode("utils/dq2FD.cpp", role="dqdxyz"))
             g.add(Exchange("grads"))
             g.add(Hook("postDqDxyz"))
             g.add(KernelNode("diffFlux/alphaDampingFlux.cpp", role="diffFlux"))
-            g.add(KernelNode("utils/applyFlux.cpp"))
+        g.add(KernelNode("utils/applyFlux.cpp"))
         return g

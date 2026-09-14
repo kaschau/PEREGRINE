@@ -72,8 +72,13 @@ lib.declare("pgFinalize", [])
 lib.declare("pgLayoutLeft", [], ctypes.c_int)
 lib.declare("pgAllocate", [ctypes.c_size_t], ctypes.c_void_p)
 lib.declare("pgFree", [ctypes.c_void_p])
-lib.declare("pgToHost", [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_size_t])
-lib.declare("pgToDevice", [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_size_t])
+lib.declare(
+    "pgToHost", [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_size_t, ctypes.c_int]
+)
+lib.declare(
+    "pgToDevice", [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_size_t, ctypes.c_int]
+)
+lib.declare("pgFence", [])
 lib.declare("pgCopy", [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_size_t])
 
 
@@ -154,10 +159,11 @@ class DeviceArray:
     def __repr__(self):
         return f"<DeviceArray {self.shape}>"
 
-    def get(self):
-        """A fresh host copy."""
+    def get(self, wait=True):
+        """A fresh host copy; one asked for without waiting is only there
+        after lib.pgFence()."""
         host = np.empty(self.shape, self.dtype, order=self.order)
-        lib.pgToHost(self.ptr, host.ctypes.data, self.nbytes)
+        lib.pgToHost(self.ptr, host.ctypes.data, self.nbytes, wait)
         return host
 
     def component(self, l):
@@ -168,17 +174,19 @@ class DeviceArray:
             return np.ascontiguousarray(self.get()[..., l].T).T
         shape = self.shape[:-1]
         host = np.empty(shape, self.dtype, order="F")
-        lib.pgToHost(self.ptr + l * host.nbytes, host.ctypes.data, host.nbytes)
+        lib.pgToHost(self.ptr + l * host.nbytes, host.ctypes.data, host.nbytes, True)
         return host
 
-    def set(self, array):
-        """Write a host array to the device."""
+    def set(self, array, wait=True):
+        """Write a host array to the device; without waiting, the array has to
+        outlive the copy."""
         host = np.require(array, self.dtype, self.order)
         assert host.shape == self.shape, (host.shape, self.shape)
-        lib.pgToDevice(host.ctypes.data, self.ptr, self.nbytes)
+        lib.pgToDevice(host.ctypes.data, self.ptr, self.nbytes, wait)
 
     def copyFrom(self, other):
-        """Take another device array's contents, without the host."""
+        """Take another device array's contents, without the host, in order
+        with the kernels."""
         assert other.shape == self.shape, (other.shape, self.shape)
         lib.pgCopy(self.ptr, other.ptr, self.nbytes)
 

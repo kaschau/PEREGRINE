@@ -34,24 +34,29 @@ PG_ABI void pgFree(void *device) {
     Kokkos::kokkos_free<viewSpace>(device);
 }
 
-PG_ABI void pgToHost(const void *device, void *host, size_t bytes) {
+// A copy is queued on the execution space like a kernel, so a device-side
+// consumer follows it in order; only a host-side reader has to wait.
+PG_ABI void pgToHost(const void *device, void *host, size_t bytes, int wait) {
   using deviceBytes = Kokkos::View<const char *, viewSpace,
                                    Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
   using hostBytes =
       Kokkos::View<char *, hostSpace, Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
-  Kokkos::deep_copy(hostBytes(static_cast<char *>(host), bytes),
+  Kokkos::deep_copy(execSpace(), hostBytes(static_cast<char *>(host), bytes),
                     deviceBytes(static_cast<const char *>(device), bytes));
-  Kokkos::fence();
+  if (wait)
+    Kokkos::fence();
 }
 
-PG_ABI void pgToDevice(const void *host, void *device, size_t bytes) {
+PG_ABI void pgToDevice(const void *host, void *device, size_t bytes, int wait) {
   using hostBytes = Kokkos::View<const char *, hostSpace,
                                  Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
   using deviceBytes =
       Kokkos::View<char *, viewSpace, Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
-  Kokkos::deep_copy(deviceBytes(static_cast<char *>(device), bytes),
+  Kokkos::deep_copy(execSpace(),
+                    deviceBytes(static_cast<char *>(device), bytes),
                     hostBytes(static_cast<const char *>(host), bytes));
-  Kokkos::fence();
+  if (wait)
+    Kokkos::fence();
 }
 
 PG_ABI void pgCopy(void *dst, const void *src, size_t bytes) {
@@ -59,7 +64,8 @@ PG_ABI void pgCopy(void *dst, const void *src, size_t bytes) {
       Kokkos::View<char *, viewSpace, Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
   using srcBytes = Kokkos::View<const char *, viewSpace,
                                 Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
-  Kokkos::deep_copy(dstBytes(static_cast<char *>(dst), bytes),
+  Kokkos::deep_copy(execSpace(), dstBytes(static_cast<char *>(dst), bytes),
                     srcBytes(static_cast<const char *>(src), bytes));
-  Kokkos::fence();
 }
+
+PG_ABI void pgFence() { Kokkos::fence(); }

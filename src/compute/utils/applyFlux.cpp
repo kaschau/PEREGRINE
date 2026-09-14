@@ -13,20 +13,15 @@ PG_ABI void pgApplyFlux(int count, pgIn *Jinv_, pgOut *dQ_, pgIn *iF_,
     auto kF = as4(kF_[e]);
     const int ni = d[e].ni, nj = d[e].nj, nk = d[e].nk;
 
-    //-------------------------------------------------------------------------------------------|
-    // Apply fluxes to cc range
-    //-------------------------------------------------------------------------------------------|
+    // dQ is the flux difference of every face, from the accumulated fluxes
     MDRange4 range_cc({ng, ng, ng, 0},
                       {ni + ng - 1, nj + ng - 1, nk + ng - 1, ne});
     Kokkos::parallel_for(
         "Apply current fluxes to RHS", range_cc,
         KOKKOS_LAMBDA(const int i, const int j, const int k, const int l) {
-          // Add fluxes to RHS
-          dQ(i, j, k, l) += (iF(i, j, k, l) + jF(i, j, k, l) + kF(i, j, k, l)) *
-                            Jinv(i, j, k);
-
-          dQ(i, j, k, l) -=
-              (iF(i + 1, j, k, l) + jF(i, j + 1, k, l) + kF(i, j, k + 1, l)) *
+          dQ(i, j, k, l) =
+              (iF(i, j, k, l) + jF(i, j, k, l) + kF(i, j, k, l) -
+               iF(i + 1, j, k, l) - jF(i, j + 1, k, l) - kF(i, j, k + 1, l)) *
               Jinv(i, j, k);
         });
   }

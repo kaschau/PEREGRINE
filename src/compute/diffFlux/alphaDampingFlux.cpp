@@ -41,8 +41,7 @@ static void computeFlux(const in4 &Q, const in4 &cells, const in5 &grads,
             0.5 * (qt(i, j, k, 1) + qt(i - iMod, j - jMod, k - kMod, 1));
         double lambda = bulkVisc - 2.0 / 3.0 * mu;
 
-        // continuity
-        iF(i, j, k, 0) = 0.0;
+        // no mass diffuses, so the continuity flux is left alone
 
         // Geometric terms
         double e[3] = {
@@ -127,7 +126,7 @@ static void computeFlux(const in4 &Q, const in4 &cells, const in5 &grads,
         double txy = -mu * (dvdx + dudy);
         double txz = -mu * (dwdx + dudz);
 
-        iF(i, j, k, 1) =
+        iF(i, j, k, 1) +=
             txx * iS(i, j, k, 0) + txy * iS(i, j, k, 1) + txz * iS(i, j, k, 2);
 
         // y momentum
@@ -135,7 +134,7 @@ static void computeFlux(const in4 &Q, const in4 &cells, const in5 &grads,
         double tyy = -2.0 * mu * dvdy - lambda * div;
         double tyz = -mu * (dwdy + dvdz);
 
-        iF(i, j, k, 2) =
+        iF(i, j, k, 2) +=
             tyx * iS(i, j, k, 0) + tyy * iS(i, j, k, 1) + tyz * iS(i, j, k, 2);
 
         // z momentum
@@ -143,7 +142,7 @@ static void computeFlux(const in4 &Q, const in4 &cells, const in5 &grads,
         double &tzy = tyz;
         double tzz = -2.0 * mu * dwdz - lambda * div;
 
-        iF(i, j, k, 3) =
+        iF(i, j, k, 3) +=
             tzx * iS(i, j, k, 0) + tzy * iS(i, j, k, 1) + tzz * iS(i, j, k, 2);
 
         // energy
@@ -176,10 +175,10 @@ static void computeFlux(const in4 &Q, const in4 &cells, const in5 &grads,
         double vf = 0.5 * (q(i, j, k, 2) + q(i - iMod, j - jMod, k - kMod, 2));
         double wf = 0.5 * (q(i, j, k, 3) + q(i - iMod, j - jMod, k - kMod, 3));
 
-        iF(i, j, k, 4) = -(uf * txx + vf * txy + wf * txz) * iS(i, j, k, 0) -
-                         (uf * tyx + vf * tyy + wf * tyz) * iS(i, j, k, 1) -
-                         (uf * tzx + vf * tzy + wf * tzz) * iS(i, j, k, 2) +
-                         heatFlux;
+        iF(i, j, k, 4) += -(uf * txx + vf * txy + wf * txz) * iS(i, j, k, 0) -
+                          (uf * tyx + vf * tyy + wf * tyz) * iS(i, j, k, 1) -
+                          (uf * tzx + vf * tzy + wf * tzz) * iS(i, j, k, 2) +
+                          heatFlux;
 
         // Species
         double Dk, Vc = 0.0;
@@ -211,7 +210,12 @@ static void computeFlux(const in4 &Q, const in4 &cells, const in5 &grads,
                            dYdz * iS(i, j, k, 2));
           gradYns -= gradYk;
           Vc += Dk * gradYk;
-          iF(i, j, k, 5 + n) = -rho * Dk * gradYk;
+          // the species flux before its correction, and its enthalpy with it
+          double Jk = -rho * Dk * gradYk;
+          double hk = 0.5 * (qh(i, j, k, 5 + n) +
+                             qh(i - iMod, j - jMod, k - kMod, 5 + n));
+          iF(i, j, k, 5 + n) += Jk;
+          iF(i, j, k, 4) += Jk * hk;
         }
         // Apply n=ns species to correction
         Dk = 0.5 * (qt(i, j, k, 2 + ne - 5) +
@@ -225,11 +229,12 @@ static void computeFlux(const in4 &Q, const in4 &cells, const in5 &grads,
           double Yk = 0.5 * (q(i, j, k, 5 + n) +
                              q(i - iMod, j - jMod, k - kMod, 5 + n));
           Yns -= Yk;
-          iF(i, j, k, 5 + n) += Yk * rho * Vc;
-          // Species thermal diffusion
+          // the correction, and its enthalpy with it
+          double corr = Yk * rho * Vc;
           hk = 0.5 *
                (qh(i, j, k, 5 + n) + qh(i - iMod, j - jMod, k - kMod, 5 + n));
-          iF(i, j, k, 4) += iF(i, j, k, 5 + n) * hk;
+          iF(i, j, k, 5 + n) += corr;
+          iF(i, j, k, 4) += corr * hk;
         }
         // Apply the n=ns species to thermal diffusion
         // If we are single species, this should be zero,
