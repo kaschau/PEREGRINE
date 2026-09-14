@@ -148,17 +148,14 @@ class solver(restart):
         self._connectBcs()
         graph = self.graphs["consistify" if hook in ("euler", "postEos") else "rhs"]
         node = graph.hook(hook)
-        if faces is None:
-            table = node.table
-        else:
-            faces = [f for f in faces if hook in f.bc.hooks]
-            table = Table.ofFaces(faces, hook) if faces else None
-        if table is None:
+        tables = node.tables if faces is None else node.tablesOf(faces)
+        if not tables:
             return
-        node.run(self.tme, table)
+        node.run(self.tme, tables)
         # a hook that sets primitives leaves the faces' state to follow
         if hook in ("euler", "postEos"):
-            self.stateFromPrims(table=table)
+            for table in tables.values():
+                self.stateFromPrims(table=table)
         if hook == "euler":
             self.applyBcs("postEos", faces)
 

@@ -21,6 +21,11 @@ class BaseNode:
         """What a node runs with: the case's block table, species data and
         halo exchange; each takes what it needs."""
 
+    @property
+    def kernels(self):
+        """The bound kernels this node calls."""
+        return []
+
     def run(self, tme):
         raise NotImplementedError
 
@@ -46,16 +51,21 @@ class KernelNode(BaseNode):
         )
         self.reads, self.writes = tuple(self.kernel.reads), tuple(self.kernel.writes)
 
+    @property
+    def kernels(self):
+        return [self.kernel] if self.kernel else []
+
     def run(self, tme):
         self.kernel()
 
 
 class Hook(BaseNode):
-    """A boundary condition hook: every face whose condition has it, in one
-    call. Every condition with the hook is compiled into the kernel and each
-    face's kind picks its own, so the kernel is fixed from the start and only
-    the faces are found on the first run, once they know their conditions. It
-    reads what any condition may and writes the halos of the state it sets."""
+    """A boundary condition hook: every face whose condition has it, a call
+    per condition. Every condition with the hook has a kernel of its own,
+    compiled and cached on its own, so the kernels are fixed from the start
+    and only the faces are found on the first run, once they know their
+    conditions. It reads what any condition may and writes the halos of the
+    state it sets."""
 
     writesOf = {
         "euler": ("q",),
@@ -71,33 +81,45 @@ class Hook(BaseNode):
             writes=self.writesOf[hook],
         )
         self.hook = hook
-        self.kernel = None
-        self.faces = []
-        self.table = None
+        # condition -> its kernel, and -> the table of the case's faces with it
+        self.conditions = {}
+        self.tables = {}
 
     def bind(self, table, thtrdat, communicator):
-        conditions = conditionsOf(self.hook)
-        self.kernel = BoundKernel(
-            table,
-            thtrdat,
-            f"boundaryConditions/hooks/{self.hook}.cpp",
-            tableOf=lambda: self.table,
-            role=f"{self.hook}Hook",
-            defines=("PG_BCS=" + " ".join(f"X({t})" for t in conditions),),
-            includes=tuple(getBc(t).header(self.hook) for t in conditions),
-        )
+        self.conditions = {
+            t: BoundKernel(
+                table,
+                thtrdat,
+                "boundaryConditions/hooks/hook.cpp",
+                tableOf=lambda t=t: self.tables.get(t),
+                role=f"{t}@{self.hook}",
+                defines=(f"PG_CONDITION={t}", f"PG_HOOK={self.hook}"),
+                includes=(getBc(t).header(self.hook),),
+            )
+            for t in conditionsOf(self.hook)
+        }
+
+    @property
+    def kernels(self):
+        return list(self.conditions.values())
+
+    def tablesOf(self, faces):
+        """The faces among :faces: this hook runs over, grouped by condition
+        into a table each."""
+        groups = {}
+        for f in faces:
+            if self.hook in f.bc.hooks:
+                groups.setdefault(f.bc.bcType, []).append(f)
+        return {t: Table.ofFaces(fs) for t, fs in groups.items()}
 
     def connect(self, faces):
-        """Which of the case's faces this hook runs over, and their table;
-        none, no table."""
-        self.faces = [f for f in faces if self.hook in f.bc.hooks]
-        self.table = Table.ofFaces(self.faces, self.hook) if self.faces else None
+        self.tables = self.tablesOf(faces)
 
-    def run(self, tme, table=None):
-        if table is None:
-            table = self.table
-        if table is not None:
-            self.kernel(table, tme=tme)
+    def run(self, tme, tables=None):
+        if tables is None:
+            tables = self.tables
+        for t, table in tables.items():
+            self.conditions[t](table, tme=tme)
 
 
 class FaceState(KernelNode):
@@ -107,10 +129,10 @@ class FaceState(KernelNode):
         super().__init__(source, role=role)
         self.name, self.hook = f"{role}@{hook.hook}", hook
 
-    def run(self, tme, table=None):
-        if table is None:
-            table = self.hook.table
-        if table is not None:
+    def run(self, tme, tables=None):
+        if tables is None:
+            tables = self.hook.tables
+        for table in tables.values():
             self.kernel(table=table)
 
 
@@ -147,7 +169,7 @@ class Graph:
     @property
     def kernels(self):
         """Every kernel this graph's nodes call."""
-        return [n.kernel for n in self.nodes if getattr(n, "kernel", None)]
+        return [k for n in self.nodes for k in n.kernels]
 
     def hook(self, hook):
         """This graph's node for a boundary condition hook."""

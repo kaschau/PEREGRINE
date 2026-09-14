@@ -27,8 +27,6 @@ class BaseBC:
     values = {}
     # whether the face is shared with another block rather than standing alone
     hasNeighbor = False
-    # hook -> which case of that hook's kernel this condition is; set with the registry
-    kind = {}
 
     def __init__(self, face):
         self.face = face

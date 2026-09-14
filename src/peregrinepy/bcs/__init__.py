@@ -32,9 +32,3 @@ def conditionsOf(hook):
     """Every condition with a kernel at :hook:, in the order the hook's
     kernel holds them."""
     return tuple(t for t in validBcTypes() if hook in getBc(t).hooks)
-
-
-# which case of each hook's kernel a condition is, fixed with the registry
-for _bcType in validBcTypes():
-    _cls = getBc(_bcType)
-    _cls.kind = {hook: conditionsOf(hook).index(_bcType) for hook in _cls.hooks}

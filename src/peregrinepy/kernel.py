@@ -129,9 +129,10 @@ class Kernel:
 
         return resolve
 
-    def __call__(self, table=None, th=None, nface=None, **given):
+    def __call__(self, table=None, th=None, nface=None, library=None, **given):
         """Run over a table's entries; :given: supplies the scalars, and any
-        array by its parameter name."""
+        array by its parameter name. :library: is the one to call, when the
+        name is not enough to say."""
         keep = []
         try:
             args = [r(table, th, nface, given, keep) for r in self.resolvers]
@@ -139,7 +140,12 @@ class Kernel:
             raise TypeError(f"{self.name}: {e}") from None
         if given:
             raise TypeError(f"{self.name} takes no {', '.join(given)}")
-        return getattr(lib, self.name)(*args)
+        function = (
+            getattr(lib, self.name)
+            if library is None
+            else lib.function(library, self.name)
+        )
+        return function(*args)
 
 
 class BoundKernel:
@@ -166,6 +172,8 @@ class BoundKernel:
         # None is the case's block table; otherwise what to call for the table
         self.tableOf = tableOf
         self.kernel = Kernel.parse((Jit.compute / source).read_text())
+        # the library the jit compiled it into, once it has
+        self.library = None
         self.compiled = False
         # the name the config knows it by, and the one the case calls it by
         self.__name__ = source.rsplit("/", 1)[-1].removesuffix(".cpp")
@@ -188,4 +196,6 @@ class BoundKernel:
             raise RuntimeError(f"{self.role} is not compiled")
         if table is None:
             table = self.table if self.tableOf is None else self.tableOf()
-        return self.kernel(table, self.thtrdat, **{**self.fixed, **given})
+        return self.kernel(
+            table, self.thtrdat, library=self.library, **{**self.fixed, **given}
+        )

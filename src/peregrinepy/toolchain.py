@@ -14,9 +14,11 @@ class Toolchain:
     """A compiler, its flags, and how it links one source into one library."""
 
     def __init__(self, compiler, flags, link, suffix):
+        # debug info in a kernel is only wanted when looking for a problem
+        debug = ["-g"] if os.environ.get("PEREGRINE_JIT_DEBUG") else []
         self.compiler, self.flags, self.link, self.suffix = (
             compiler,
-            flags,
+            [f for f in flags if f != "-g"] + debug,
             link,
             suffix,
         )
@@ -65,7 +67,8 @@ class Toolchain:
             self.compiler,
             *self.flags,
             *(f"-D{d}" for d in defines),
-            *(f"-include{i}" for i in includes),
+            # two words: nvcc_wrapper only recognizes the flag on its own
+            *(w for i in includes for w in ("-include", str(i))),
             *self.sanitize,
             *self.link,
             str(source),

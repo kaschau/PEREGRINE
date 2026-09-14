@@ -38,6 +38,13 @@ class Library:
     def finalize(self):
         self.pgFinalize()
 
+    def function(self, path, name):
+        """:name: out of the library at :path: alone, for a symbol that more
+        than one library exports."""
+        function = getattr(self._libs[path], name)
+        function.argtypes, function.restype = self._declared.get(name, (None, None))
+        return function
+
     def declare(self, name, argtypes, restype=None):
         self._declared[name] = (argtypes, restype)
         self._resolved.pop(name, None)

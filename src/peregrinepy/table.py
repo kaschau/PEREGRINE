@@ -57,16 +57,14 @@ class Table:
         self._ranges.clear()
 
     @classmethod
-    def ofFaces(cls, faces, hook):
+    def ofFaces(cls, faces):
         """A table over boundary faces: each one's block arrays, its own
-        values, which side of its block it is, and which condition it has at
-        this hook."""
+        values, and which side of its block it is."""
         table = cls(faces[0].blk.ng if faces else 0)
         for index, face in enumerate(faces):
             blk = face.blk
             table.setDims(index, blk)
             table.setInt(index, "nface", face.nface)
-            table.setInt(index, "kind", face.bc.kind[hook])
             # what a condition's records name, whether or not this case has it
             for name in ("q", "Q", "qh", "grads"):
                 table.register(index, name, getattr(blk, name, None))

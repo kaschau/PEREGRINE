@@ -122,5 +122,6 @@ class Jit:
         with ThreadPoolExecutor() as pool:
             list(pool.map(lambda r: self.build(*r), requests))
         for k in pending:
-            lib.load(self.build(k.source, k.defines, k.includes))
+            k.library = self.build(k.source, k.defines, k.includes)
+            lib.load(k.library)
             k.compiled = True
