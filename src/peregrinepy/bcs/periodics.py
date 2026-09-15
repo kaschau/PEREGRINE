@@ -23,4 +23,3 @@ class PeriodicRot(BaseBC):
     bcType = "periodicRot"
     hasNeighbor = True
     family = "periodics"
-    hooks = ("euler", "postDqDxyz")

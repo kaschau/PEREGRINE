@@ -23,14 +23,13 @@ class RKIntegrator(BaseIntegrator):
     def combine(self, wQ0, wQ, wdQ, dt, first):
         """One stage's update of the state; a strong stability preserving
         combination unless a scheme says otherwise."""
-        views = self.table.views
-        Q, dQ = views(self.state), views("dQ")
+        Q, dQ = self.state, "dQ"
         if first and self.nStorage:
-            self.axpby(A=views("Q0"), a=0.0, b=1.0, B=Q)
+            self.axpby(A="Q0", a=0.0, b=1.0, B=Q)
         if wQ0 == 0.0:
             self.axpby(A=Q, a=wQ, b=wdQ * dt, B=dQ)
         else:
-            self.axpbypcz(A=Q, a=wQ, b=wQ0, B=views("Q0"), c=wdQ * dt, C=dQ)
+            self.axpbypcz(A=Q, a=wQ, b=wQ0, B="Q0", c=wdQ * dt, C=dQ)
 
 
 class rk1(RKIntegrator):
@@ -96,8 +95,7 @@ class rk4(RKIntegrator):
     )
 
     def combine(self, wdQ, wSum, dt, first):
-        views = self.table.views
-        Q, Q0, S, dQ = views("Q"), views("Q0"), views("Q1"), views("dQ")
+        Q, Q0, S, dQ = "Q", "Q0", "Q1", "dQ"
         if first:
             self.axpby(A=Q0, a=0.0, b=1.0, B=Q)
         self.axpby(A=S, a=0.0 if first else 1.0, b=wSum * dt, B=dQ)

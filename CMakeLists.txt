@@ -65,7 +65,7 @@ set_target_properties(pgruntime PROPERTIES
 Find_Package(Kokkos REQUIRED)
 target_link_libraries(pgruntime PUBLIC
     "$<LINK_LIBRARY:WHOLE_ARCHIVE,Kokkos::kokkoscore,Kokkos::kokkoscontainers,Kokkos::kokkossimd>")
-set_property(TARGET pgruntime PROPERTY CXX_STANDARD 17)
+set_property(TARGET pgruntime PROPERTY CXX_STANDARD 20)
 
 set(package_dir ${PROJECT_SOURCE_DIR}/src/peregrinepy)
 install(TARGETS pgruntime LIBRARY DESTINATION ${package_dir})

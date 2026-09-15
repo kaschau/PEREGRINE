@@ -4,8 +4,7 @@
 #define __dualTime_H__
 
 #include "array"
-#include "kernelUtils.hpp"
-#include "kokkosTypes.hpp"
+#include "kernel.hpp"
 #include "math.h"
 #include "vector"
 #include <Kokkos_Core.hpp>

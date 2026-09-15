@@ -15,7 +15,7 @@ from ..gases import configure
 @pytest.mark.parametrize("diffusion", [False, True])
 def test_step(my_setup, integrator, diffusion):
     config = pg.files.configFile()
-    config["RHS"]["primaryAdvFlux"] = "KEEPpe"
+    config["RHS"]["primaryAdvFlux"] = "KEPaEC"
     config["RHS"]["diffusion"] = diffusion
     config["timeIntegration"]["integrator"] = integrator
     config["timeIntegration"]["dt"] = 1e-6

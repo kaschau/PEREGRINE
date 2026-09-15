@@ -14,11 +14,13 @@ class Toolchain:
     """A compiler, its flags, and how it links one source into one library."""
 
     def __init__(self, compiler, flags, link, suffix):
-        # debug info in a kernel is only wanted when looking for a problem
-        debug = ["-g"] if os.environ.get("PEREGRINE_JIT_DEBUG") else []
+        # debug info and the asserts in a kernel are only wanted when looking
+        # for a problem
+        debug = bool(os.environ.get("PEREGRINE_JIT_DEBUG"))
+        dropped = ("-g", "-DNDEBUG") if debug else ("-g",)
         self.compiler, self.flags, self.link, self.suffix = (
             compiler,
-            [f for f in flags if f != "-g"] + debug,
+            [f for f in flags if f not in dropped] + (["-g"] if debug else []),
             link,
             suffix,
         )

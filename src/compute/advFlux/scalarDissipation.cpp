@@ -1,130 +1,83 @@
-#include "kernelUtils.hpp"
-#include "kokkosTypes.hpp"
-#include "math.h"
-#include <Kokkos_Core.hpp>
+#include "faces.hpp"
 
 PG_STENCIL(2);
 
-static void computeFlux(const in4 &Q, const in4 &phi, const in4 &q,
-                        const in4 &qh, const pgDims &d, const out4 &iF,
-                        const in4 &iS, const int iMod, const int jMod,
-                        const int kMod) {
+PG_RANGE(faces)
+struct scalarDissipation {
+  inL QL, phiL, qL, qhL;
+  inR QR, phiR, qR, qhR;
+  inLL QLL;
+  inRR QRR;
+  out F;
+  in A;
+  static constexpr double kappa2 = 0.5;
+  static constexpr double kappa4 = 0.005;
+  KOKKOS_INLINE_FUNCTION void operator()() const {
+    double S, nx, ny, nz;
+    faceNormal(A(0), A(1), A(2), S, nx, ny, nz);
 
-  const double kappa2 = 0.5;
-  const double kappa4 = 0.005;
+    // The weird mod indexing math is so we grab the correct last
+    // phi index for each dimension
+    const int phiIndex = (iMod - 1) * iMod + (jMod)*jMod + (kMod + 1) * kMod;
+    const double eps2 = kappa2 * fmax(phiR(phiIndex), phiL(phiIndex));
+    const double eps4 = fmax(0.0, kappa4 - eps2);
 
-  const int ni = d.ni, nj = d.nj, nk = d.nk;
-  // face flux range
-  MDRange3 range({ng, ng, ng},
-                 {ni + ng - 1 + iMod, nj + ng - 1 + jMod, nk + ng - 1 + kMod});
+    // Compute face normal volume flux vector
+    const double uf = 0.5 * (qR(1) + qL(1));
+    const double vf = 0.5 * (qR(2) + qL(2));
+    const double wf = 0.5 * (qR(3) + qL(3));
 
-  Kokkos::parallel_for(
-      "Scalar Dissipation face conv fluxes", range,
-      KOKKOS_LAMBDA(const int i, const int j, const int k) {
-        double S, nx, ny, nz;
-        faceNormal(iS(i, j, k, 0), iS(i, j, k, 1), iS(i, j, k, 2), S, nx, ny,
-                   nz);
+    const double U = nx * uf + ny * vf + nz * wf;
 
-        // The weird mod indexing math is so we grab the correct last
-        // phi index for each dimension
-        const int phiIndex =
-            (iMod - 1) * iMod + (jMod)*jMod + (kMod + 1) * kMod;
-        const double eps2 =
-            kappa2 * fmax(phi(i, j, k, phiIndex),
-                          phi(i - iMod, j - jMod, k - kMod, phiIndex));
-        const double eps4 = fmax(0.0, kappa4 - eps2);
+    // negative: this flux leaves the state, and is applied like any
+    // other
+    const double a = -(abs(U) + 0.5 * (qhR(3) + qhL(3))) * S;
 
-        // Compute face normal volume flux vector
-        const double uf =
-            0.5 * (q(i, j, k, 1) + q(i - iMod, j - jMod, k - kMod, 1));
-        const double vf =
-            0.5 * (q(i, j, k, 2) + q(i - iMod, j - jMod, k - kMod, 2));
-        const double wf =
-            0.5 * (q(i, j, k, 3) + q(i - iMod, j - jMod, k - kMod, 3));
+    double rho2, rho4;
+    rho2 = QR(0) - QL(0);
+    rho4 = QRR(0) - 3.0 * QR(0) + 3.0 * QL(0) - QLL(0);
 
-        const double U = nx * uf + ny * vf + nz * wf;
+    // Continuity dissipation
+    F(0) = a * (eps2 * rho2 - eps4 * rho4);
 
-        // negative: this flux leaves the state, and is applied like any other
-        const double a =
-            -(abs(U) +
-              0.5 * (qh(i, j, k, 3) + qh(i - iMod, j - jMod, k - kMod, 3))) *
-            S;
+    // u momentum dissipation
+    double u2, u4;
+    u2 = QR(1) - QL(1);
+    u4 = QRR(1) - 3.0 * QR(1) + 3.0 * QL(1) - QLL(1);
 
-        double rho2, rho4;
-        rho2 = Q(i, j, k, 0) - Q(i - iMod, j - jMod, k - kMod, 0);
-        rho4 = Q(i + iMod, j + jMod, k + kMod, 0) - 3.0 * Q(i, j, k, 0) +
-               3.0 * Q(i - iMod, j - jMod, k - kMod, 0) -
-               Q(i - iMod * 2, j - jMod * 2, k - kMod * 2, 0);
+    F(1) = a * (eps2 * u2 - eps4 * u4);
 
-        // Continuity dissipation
-        iF(i, j, k, 0) = a * (eps2 * rho2 - eps4 * rho4);
+    // v momentum dissipation
+    double v2, v4;
+    v2 = QR(2) - QL(2);
+    v4 = QRR(2) - 3.0 * QR(2) + 3.0 * QL(2) - QLL(2);
 
-        // u momentum dissipation
-        double u2, u4;
-        u2 = Q(i, j, k, 1) - Q(i - iMod, j - jMod, k - kMod, 1);
-        u4 = Q(i + iMod, j + jMod, k + kMod, 1) - 3.0 * Q(i, j, k, 1) +
-             3.0 * Q(i - iMod, j - jMod, k - kMod, 1) -
-             Q(i - iMod * 2, j - jMod * 2, k - kMod * 2, 1);
+    F(2) = a * (eps2 * v2 - eps4 * v4);
 
-        iF(i, j, k, 1) = a * (eps2 * u2 - eps4 * u4);
+    // w momentum dissipation
+    double w2, w4;
+    w2 = QR(3) - QL(3);
+    w4 = QRR(3) - 3.0 * QR(3) + 3.0 * QL(3) - QLL(3);
 
-        // v momentum dissipation
-        double v2, v4;
-        v2 = Q(i, j, k, 2) - Q(i - iMod, j - jMod, k - kMod, 2);
-        v4 = Q(i + iMod, j + jMod, k + kMod, 2) - 3.0 * Q(i, j, k, 2) +
-             3.0 * Q(i - iMod, j - jMod, k - kMod, 2) -
-             Q(i - iMod * 2, j - jMod * 2, k - kMod * 2, 2);
+    F(3) = a * (eps2 * w2 - eps4 * w4);
 
-        iF(i, j, k, 2) = a * (eps2 * v2 - eps4 * v4);
+    // total energy dissipation
+    double e2, e4;
+    e2 = QR(4) - QL(4);
+    e4 = QRR(4) - 3.0 * QR(4) + 3.0 * QL(4) - QLL(4);
 
-        // w momentum dissipation
-        double w2, w4;
-        w2 = Q(i, j, k, 3) - Q(i - iMod, j - jMod, k - kMod, 3);
-        w4 = Q(i + iMod, j + jMod, k + kMod, 3) - 3.0 * Q(i, j, k, 3) +
-             3.0 * Q(i - iMod, j - jMod, k - kMod, 3) -
-             Q(i - iMod * 2, j - jMod * 2, k - kMod * 2, 3);
+    F(4) = a * (eps2 * e2 - eps4 * e4);
 
-        iF(i, j, k, 3) = a * (eps2 * w2 - eps4 * w4);
-
-        // total energy dissipation
-        double e2, e4;
-        e2 = Q(i, j, k, 4) - Q(i - iMod, j - jMod, k - kMod, 4);
-        e4 = Q(i + iMod, j + jMod, k + kMod, 4) - 3.0 * Q(i, j, k, 4) +
-             3.0 * Q(i - iMod, j - jMod, k - kMod, 4) -
-             Q(i - iMod * 2, j - jMod * 2, k - kMod * 2, 4);
-
-        iF(i, j, k, 4) = a * (eps2 * e2 - eps4 * e4);
-
-        // Species
-        for (int n = 0; n < ne - 5; n++) {
-          double Y2, Y4;
-          Y2 = Q(i, j, k, 5 + n) - Q(i - iMod, j - jMod, k - kMod, 5 + n);
-          Y4 = Q(i + iMod, j + jMod, k + kMod, 5 + n) -
-               3.0 * Q(i, j, k, 5 + n) +
-               3.0 * Q(i - iMod, j - jMod, k - kMod, 5 + n) -
-               Q(i - iMod * 2, j - jMod * 2, k - kMod * 2, 5 + n);
-          iF(i, j, k, 5 + n) = a * (eps2 * Y2 - eps4 * Y4);
-        }
-      });
-}
-
-PG_ABI void pgScalarDissipation(int count, pgIn *Q_, pgOut *iF_, pgIn *iS_,
-                                pgOut *jF_, pgIn *jS_, pgOut *kF_, pgIn *kS_,
-                                pgIn *phi_, pgIn *q_, pgIn *qh_,
-                                const pgDims *d) {
-  for (int e = 0; e < count; e++) {
-    auto Q = as4(Q_[e]);
-    auto iF = as4(iF_[e]);
-    auto iS = as4(iS_[e]);
-    auto jF = as4(jF_[e]);
-    auto jS = as4(jS_[e]);
-    auto kF = as4(kF_[e]);
-    auto kS = as4(kS_[e]);
-    auto phi = as4(phi_[e]);
-    auto q = as4(q_[e]);
-    auto qh = as4(qh_[e]);
-    computeFlux(Q, phi, q, qh, d[e], iF, iS, 1, 0, 0);
-    computeFlux(Q, phi, q, qh, d[e], jF, jS, 0, 1, 0);
-    computeFlux(Q, phi, q, qh, d[e], kF, kS, 0, 0, 1);
+    // Species
+    for (int n = 0; n < ne - 5; n++) {
+      double Y2, Y4;
+      Y2 = QR(5 + n) - QL(5 + n);
+      Y4 = QRR(5 + n) - 3.0 * QR(5 + n) + 3.0 * QL(5 + n) - QLL(5 + n);
+      F(5 + n) = a * (eps2 * Y2 - eps4 * Y4);
+    }
   }
+};
+
+PG_ABI void pgScalarDissipation(const scalarDissipation &k, const pgTiling &t) {
+  forCells("Scalar Dissipation face conv fluxes", t, k);
 }

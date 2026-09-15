@@ -1,52 +1,42 @@
-#include "kernelUtils.hpp"
-#include "kokkosTypes.hpp"
-#include "math.h"
-#include <Kokkos_Core.hpp>
+#include "kernel.hpp"
 
-PG_ABI void pgApplyHybridFlux(int count, pgIn *Jinv_, pgOut *dQ_, pgIn *iF_,
-                              pgIn *jF_, pgIn *kF_, pgIn *phi_, const pgDims *d,
-                              double primary) {
-  for (int e = 0; e < count; e++) {
-    auto Jinv = as3(Jinv_[e]);
-    auto dQ = as4(dQ_[e]);
-    auto iF = as4(iF_[e]);
-    auto jF = as4(jF_[e]);
-    auto kF = as4(kF_[e]);
-    auto phi = as4(phi_[e]);
-    const int ni = d[e].ni, nj = d[e].nj, nk = d[e].nk;
-
+PG_RANGE(interior, ne)
+struct applyHybridFlux {
+  in Jinv, iF, jF, kF, phi;
+  inout dQ;
+  dims d;
+  double primary;
+  KOKKOS_INLINE_FUNCTION void operator()(const int l) const {
+    const int ni = d->ni, nj = d->nj, nk = d->nk;
     //-------------------------------------------------------------------------------------------|
-    // Apply fluxes to cc range
     //-------------------------------------------------------------------------------------------|
-    MDRange4 range_cc({ng, ng, ng, 0},
-                      {ni + ng - 1, nj + ng - 1, nk + ng - 1, ne});
-    Kokkos::parallel_for(
-        "Apply hybrid fluxes to RHS", range_cc,
-        KOKKOS_LAMBDA(const int i, const int j, const int k, const int l) {
-          // Compute switch on face
-          double iFphi = fmax(phi(i, j, k, 0), phi(i - 1, j, k, 0));
-          double iFphi1 = fmax(phi(i, j, k, 0), phi(i + 1, j, k, 0));
-          double jFphi = fmax(phi(i, j, k, 1), phi(i, j - 1, k, 1));
-          double jFphi1 = fmax(phi(i, j, k, 1), phi(i, j + 1, k, 1));
-          double kFphi = fmax(phi(i, j, k, 2), phi(i, j, k - 1, 2));
-          double kFphi1 = fmax(phi(i, j, k, 2), phi(i, j, k + 1, 2));
 
-          double dPrimary = 2.0 * primary - 1.0;
+    // Compute switch on face
+    double iFphi = fmax(phi(0), phi(-I, 0));
+    double iFphi1 = fmax(phi(0), phi(+I, 0));
+    double jFphi = fmax(phi(1), phi(-J, 1));
+    double jFphi1 = fmax(phi(1), phi(+J, 1));
+    double kFphi = fmax(phi(2), phi(-K, 2));
+    double kFphi1 = fmax(phi(2), phi(+K, 2));
 
-          // Add fluxes to RHS
-          // format is F_primary*(1-switch) + F_secondary*(switch)
-          // so when switch == 0, we dont switch from primary
-          //    when switch == 1 we completely switch
-          dQ(i, j, k, l) += (iF(i, j, k, l) * (primary - iFphi * dPrimary) +
-                             jF(i, j, k, l) * (primary - jFphi * dPrimary) +
-                             kF(i, j, k, l) * (primary - kFphi * dPrimary)) *
-                            Jinv(i, j, k);
+    double dPrimary = 2.0 * primary - 1.0;
 
-          dQ(i, j, k, l) -=
-              (iF(i + 1, j, k, l) * (primary - iFphi1 * dPrimary) +
-               jF(i, j + 1, k, l) * (primary - jFphi1 * dPrimary) +
-               kF(i, j, k + 1, l) * (primary - kFphi1 * dPrimary)) *
-              Jinv(i, j, k);
-        });
+    // Add fluxes to RHS
+    // format is F_primary*(1-switch) + F_secondary*(switch)
+    // so when switch == 0, we dont switch from primary
+    //    when switch == 1 we completely switch
+    dQ(l) += (iF(l) * (primary - iFphi * dPrimary) +
+              jF(l) * (primary - jFphi * dPrimary) +
+              kF(l) * (primary - kFphi * dPrimary)) *
+             Jinv();
+
+    dQ(l) -= (iF(+I, l) * (primary - iFphi1 * dPrimary) +
+              jF(+J, l) * (primary - jFphi1 * dPrimary) +
+              kF(+K, l) * (primary - kFphi1 * dPrimary)) *
+             Jinv();
   }
+};
+
+PG_ABI void pgApplyHybridFlux(const applyHybridFlux &k, const pgTiling &t) {
+  forCellsAndComponents("Apply hybrid fluxes to RHS", t, k);
 }

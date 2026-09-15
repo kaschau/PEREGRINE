@@ -52,8 +52,7 @@ class dualTime(RKIntegrator):
         self.consistifyFromPrims.run(tme + frac * dt)
 
     def _copy(self, dst, src):
-        views = self.table.views
-        self.axpby(A=views(dst), a=0.0, b=1.0, B=views(src))
+        self.axpby(A=dst, a=0.0, b=1.0, B=src)
 
     def step(self, tme, dt, report=False):
         """Qn and Qnm1 are the two states before :tme:; the pseudo time loop
@@ -73,7 +72,9 @@ class dualTime(RKIntegrator):
                 if rank == 0:
                     printResidual(resid[1, :], n, self.ne)
 
-        self._copy("Qnm1", "Qn")
+        # the two earlier states shift: Qn's storage becomes Qnm1's, and only
+        # the new state is copied
+        self.table.swap("Qn", "Qnm1")
         self._copy("Qn", "Q")
 
     def initialize(self):

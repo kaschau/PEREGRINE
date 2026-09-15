@@ -1,35 +1,31 @@
-#include "kernelUtils.hpp"
-#include "kokkosTypes.hpp"
-#include <Kokkos_Core.hpp>
+#include "kernel.hpp"
 
-PG_ABI void pgDq2FD(int count, pgIn *dENCdxyz_, pgOut *grads_, pgIn *q_,
-                    const pgDims *d) {
-  for (int e = 0; e < count; e++) {
-    auto dENCdxyz = as5(dENCdxyz_[e]);
-    auto grads = as5(grads_[e]);
-    auto q = as4(q_[e]);
-    const int ni = d[e].ni, nj = d[e].nj, nk = d[e].nk;
-
+PG_RANGE(interior, ne)
+struct dq2FD {
+  in dENCdxyz, q;
+  out grads;
+  dims d;
+  KOKKOS_INLINE_FUNCTION void operator()(const int l) const {
+    const int ni = d->ni, nj = d->nj, nk = d->nk;
     //-------------------------------------------------------------------------------------------|
     // Spatial derivatices of primative variables
     // estimated via second order finite difference
     //-------------------------------------------------------------------------------------------|
-    MDRange4 range_cc({ng, ng, ng, 0},
-                      {ni + ng - 1, nj + ng - 1, nk + ng - 1, ne});
-    Kokkos::parallel_for(
-        "2nd order spatial deriv", range_cc,
-        KOKKOS_LAMBDA(const int i, const int j, const int k, const int l) {
-          double dqdENC[3] = {0.5 * (q(i + 1, j, k, l) - q(i - 1, j, k, l)),
-                              0.5 * (q(i, j + 1, k, l) - q(i, j - 1, k, l)),
-                              0.5 * (q(i, j, k + 1, l) - q(i, j, k - 1, l))};
 
-          for (int d = 0; d < 3; d++) {
-            double grad = 0.0;
-            for (int e = 0; e < 3; e++) {
-              grad += dqdENC[e] * dENCdxyz(i, j, k, e, d);
-            }
-            grads(i, j, k, l, d) = grad;
-          }
-        });
+    double dqdENC[3] = {0.5 * (q(+I, l) - q(-I, l)),
+                        0.5 * (q(+J, l) - q(-J, l)),
+                        0.5 * (q(+K, l) - q(-K, l))};
+
+    for (int d = 0; d < 3; d++) {
+      double grad = 0.0;
+      for (int e = 0; e < 3; e++) {
+        grad += dqdENC[e] * dENCdxyz(e, d);
+      }
+      grads(l, d) = grad;
+    }
   }
+};
+
+PG_ABI void pgDq2FD(const dq2FD &k, const pgTiling &t) {
+  forCellsAndComponents("2nd order spatial deriv", t, k);
 }

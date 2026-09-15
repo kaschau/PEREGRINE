@@ -1,47 +1,44 @@
-#include "kernelUtils.hpp"
-#include "kokkosTypes.hpp"
-#include <Kokkos_Core.hpp>
-#include <math.h>
+#include "kernel.hpp"
 #include <numeric>
 
-PG_ABI void pgVanLeer(int count, pgOut *phi_, pgIn *q_, const pgDims *d) {
-  for (int e = 0; e < count; e++) {
-    auto phi = as4(phi_[e]);
-    auto q = as4(q_[e]);
-    const int ni = d[e].ni, nj = d[e].nj, nk = d[e].nk;
+PG_RANGE(interior)
+struct vanLeer {
+  out phi;
+  in q;
+  dims d;
+  KOKKOS_INLINE_FUNCTION void operator()() const {
+    const int ni = d->ni, nj = d->nj, nk = d->nk;
 
-    MDRange3 range_cc({ng, ng, ng}, {ni + ng - 1, nj + ng - 1, nk + ng - 1});
+    double eps = 0.001;
 
-    Kokkos::parallel_for(
-        "Compute switch from pressure", range_cc,
-        KOKKOS_LAMBDA(const int i, const int j, const int k) {
-          double eps = 0.001;
+    const double &p = q(0);
 
-          const double &p = q(i, j, k, 0);
+    const double &pip = q(+I, 0);
+    const double &pim = q(-I, 0);
 
-          const double &pip = q(i + 1, j, k, 0);
-          const double &pim = q(i - 1, j, k, 0);
+    const double &pjp = q(+J, 0);
+    const double &pjm = q(-J, 0);
 
-          const double &pjp = q(i, j + 1, k, 0);
-          const double &pjm = q(i, j - 1, k, 0);
+    const double &pkp = q(+K, 0);
+    const double &pkm = q(-K, 0);
 
-          const double &pkp = q(i, j, k + 1, 0);
-          const double &pkm = q(i, j, k - 1, 0);
+    double ri = abs(pip - 2.0 * p + pim) /
+                ((1.0 - eps) * (abs(pip - p) + abs(p - pim)) +
+                 eps * (pip + 2.0 * p + pim));
+    phi(0) = ri;
 
-          double ri = abs(pip - 2.0 * p + pim) /
-                      ((1.0 - eps) * (abs(pip - p) + abs(p - pim)) +
-                       eps * (pip + 2.0 * p + pim));
-          phi(i, j, k, 0) = ri;
+    double rj = abs(pjp - 2.0 * p + pjm) /
+                ((1.0 - eps) * (abs(pjp - p) + abs(p - pjm)) +
+                 eps * (pjp + 2.0 * p + pjm));
+    phi(1) = rj;
 
-          double rj = abs(pjp - 2.0 * p + pjm) /
-                      ((1.0 - eps) * (abs(pjp - p) + abs(p - pjm)) +
-                       eps * (pjp + 2.0 * p + pjm));
-          phi(i, j, k, 1) = rj;
-
-          double rk = abs(pkp - 2.0 * p + pkm) /
-                      ((1.0 - eps) * (abs(pkp - p) + abs(p - pkm)) +
-                       eps * (pkp + 2.0 * p + pkm));
-          phi(i, j, k, 2) = rk;
-        });
+    double rk = abs(pkp - 2.0 * p + pkm) /
+                ((1.0 - eps) * (abs(pkp - p) + abs(p - pkm)) +
+                 eps * (pkp + 2.0 * p + pkm));
+    phi(2) = rk;
   }
+};
+
+PG_ABI void pgVanLeer(const vanLeer &k, const pgTiling &t) {
+  forCells("Compute switch from pressure", t, k);
 }

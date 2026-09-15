@@ -1,0 +1,287 @@
+// The launch: an item of a tile turned into a cell, a plane cell or a trade
+// cell, a kernel struct pinned to it, and the shapes that run a body over
+// every entry of a table. A
+// kernel gets this through kernel.hpp.
+#ifndef __launch_H__
+#define __launch_H__
+
+#include "arrays.hpp"
+
+// an item as indices; the layout's fastest index runs fastest
+template <int R>
+KOKKOS_INLINE_FUNCTION void unravel(int item, const int *extent, int *index) {
+  if constexpr (std::is_same_v<layout, Kokkos::LayoutLeft>) {
+    for (int d = 0; d < R; d++) {
+      index[d] = item % extent[d];
+      item /= extent[d];
+    }
+  } else {
+    for (int d = R - 1; d >= 0; d--) {
+      index[d] = item % extent[d];
+      item /= extent[d];
+    }
+  }
+}
+
+// an item as indices in a fixed axis order, the first running fastest; the
+// order is compiled in, so every index stays in a register
+template <int R, int... O>
+KOKKOS_INLINE_FUNCTION void unravelAs(int item, const int *extent, int *index) {
+  constexpr int order[] = {O...};
+  for (int d = 0; d < R; d++) {
+    index[order[d]] = item % extent[order[d]];
+    item /= extent[order[d]];
+  }
+}
+
+// an item of a face's planes as its cell (layer, a, b), walking the block's
+// memory contiguously: on the left layout that is the block's first axis,
+// which is the layer on an i face and `a` on a j or k face; on the right
+// layout the natural order backwards. The components are looped in the
+// thread, so the decode is paid once per cell, not once per value.
+KOKKOS_INLINE_FUNCTION void unravelPlanes(int item, const int *extent,
+                                          const int axis, int *index) {
+  if constexpr (std::is_same_v<layout, Kokkos::LayoutLeft>) {
+    if (axis == 0)
+      unravelAs<3, 0, 1, 2>(item, extent, index);
+    else if (axis == 1)
+      unravelAs<3, 1, 0, 2>(item, extent, index);
+    else
+      unravelAs<3, 1, 2, 0>(item, extent, index);
+  } else {
+    unravelAs<3, 2, 1, 0>(item, extent, index);
+  }
+}
+
+// an item of one entry's cells turned back into indices
+KOKKOS_INLINE_FUNCTION void cellAt(const pgCells &c, const int item, int &i,
+                                   int &j, int &k) {
+  int a[3];
+  unravel<3>(item, c.extent, a);
+  i = c.start[0] + a[0], j = c.start[1] + a[1], k = c.start[2] + a[2];
+}
+KOKKOS_INLINE_FUNCTION void cellAt(const pgCells &c, const int item, int &i,
+                                   int &j, int &k, int &l) {
+  int a[4];
+  unravel<4>(item, c.extent, a);
+  i = c.start[0] + a[0], j = c.start[1] + a[1], k = c.start[2] + a[2], l = a[3];
+}
+
+// A kernel is an aggregate of its members. The launch shape pins every
+// column and dims member to the cell before calling the body, walking the
+// members by count with a structured binding; there is no other way to
+// reach a struct's members generically before C++26.
+struct anything {
+  template <class T> operator T() const;
+};
+template <class K, class... A> constexpr int arityFrom() {
+  if constexpr (requires { K{A{}..., anything{}}; })
+    return arityFrom<K, A..., anything>();
+  else
+    return sizeof...(A);
+}
+template <class K> constexpr int arity = arityFrom<K>();
+
+// what pins, and what does not; a member pins to the position its kind
+// takes (a block column to a cell, a face column to a plane)
+template <class M, class P> KOKKOS_INLINE_FUNCTION void pin(M &, const P &) {}
+template <class M, class P>
+  requires requires(M &m, const P &p) { m.pin(p); }
+KOKKOS_INLINE_FUNCTION void pin(M &m, const P &p) {
+  m.pin(p);
+}
+template <class P, class... M>
+KOKKOS_INLINE_FUNCTION void pinEach(const P &at, M &...m) {
+  (pin(m, at), ...);
+}
+template <class K, class P>
+KOKKOS_INLINE_FUNCTION void pinAll(K &kernel, const P &at) {
+  constexpr int n = arity<K>;
+  static_assert(n <= 16, "a kernel has at most 16 members");
+  if constexpr (n == 1) {
+    auto &[m1] = kernel;
+    pinEach(at, m1);
+  } else if constexpr (n == 2) {
+    auto &[m1, m2] = kernel;
+    pinEach(at, m1, m2);
+  } else if constexpr (n == 3) {
+    auto &[m1, m2, m3] = kernel;
+    pinEach(at, m1, m2, m3);
+  } else if constexpr (n == 4) {
+    auto &[m1, m2, m3, m4] = kernel;
+    pinEach(at, m1, m2, m3, m4);
+  } else if constexpr (n == 5) {
+    auto &[m1, m2, m3, m4, m5] = kernel;
+    pinEach(at, m1, m2, m3, m4, m5);
+  } else if constexpr (n == 6) {
+    auto &[m1, m2, m3, m4, m5, m6] = kernel;
+    pinEach(at, m1, m2, m3, m4, m5, m6);
+  } else if constexpr (n == 7) {
+    auto &[m1, m2, m3, m4, m5, m6, m7] = kernel;
+    pinEach(at, m1, m2, m3, m4, m5, m6, m7);
+  } else if constexpr (n == 8) {
+    auto &[m1, m2, m3, m4, m5, m6, m7, m8] = kernel;
+    pinEach(at, m1, m2, m3, m4, m5, m6, m7, m8);
+  } else if constexpr (n == 9) {
+    auto &[m1, m2, m3, m4, m5, m6, m7, m8, m9] = kernel;
+    pinEach(at, m1, m2, m3, m4, m5, m6, m7, m8, m9);
+  } else if constexpr (n == 10) {
+    auto &[m1, m2, m3, m4, m5, m6, m7, m8, m9, m10] = kernel;
+    pinEach(at, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10);
+  } else if constexpr (n == 11) {
+    auto &[m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11] = kernel;
+    pinEach(at, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11);
+  } else if constexpr (n == 12) {
+    auto &[m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12] = kernel;
+    pinEach(at, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12);
+  } else if constexpr (n == 13) {
+    auto &[m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, m13] = kernel;
+    pinEach(at, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, m13);
+  } else if constexpr (n == 14) {
+    auto &[m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, m13, m14] =
+        kernel;
+    pinEach(at, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, m13, m14);
+  } else if constexpr (n == 15) {
+    auto &[m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, m13, m14, m15] =
+        kernel;
+    pinEach(at, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, m13, m14,
+            m15);
+  } else if constexpr (n == 16) {
+    auto &[m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, m13, m14, m15,
+           m16] = kernel;
+    pinEach(at, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, m13, m14,
+            m15, m16);
+  }
+}
+// a copy of the kernel pinned to a position
+template <class K, class P>
+KOKKOS_INLINE_FUNCTION K pinned(const K &k, const P &at) {
+  K p = k;
+  pinAll(p, at);
+  return p;
+}
+
+// The launch shapes. A kernel is a struct: its arguments as members and its
+// body on one item as operator(); the entry point hands it to the shape it
+// is. Each shape is the same ten lines, written once, with no branch in it.
+// The struct has to be a named type: the NVIDIA compiler will not put a
+// kernel lambda in a template instantiated with another lambda's type.
+
+// a body on every cell of every entry, its columns pinned to the cell
+template <class F>
+void forCells(const char *name, const pgTiling &t, const F &f) {
+  Kokkos::parallel_for(
+      name, t.policy(), KOKKOS_LAMBDA(const team &team) {
+        const auto r = t.of(team);
+        Kokkos::parallel_for(Kokkos::TeamThreadRange(team, r.begin, r.end),
+                             [&](const int item) {
+                               cell c{r.e};
+                               cellAt(t.cells[r.e], item, c.i, c.j, c.k);
+                               pinned(f, c)();
+                             });
+      });
+}
+
+// a body on every cell and component: f(l)
+template <class F>
+void forCellsAndComponents(const char *name, const pgTiling &t, const F &f) {
+  Kokkos::parallel_for(
+      name, t.policy(), KOKKOS_LAMBDA(const team &team) {
+        const auto r = t.of(team);
+        Kokkos::parallel_for(Kokkos::TeamThreadRange(team, r.begin, r.end),
+                             [&](const int item) {
+                               cell c{r.e};
+                               int l;
+                               cellAt(t.cells[r.e], item, c.i, c.j, c.k, l);
+                               pinned(f, c)(l);
+                             });
+      });
+}
+
+// a reduction over every cell: f(value &), joined within each team and then
+// across them, into what the reducer holds
+template <class F, class R>
+void reduceCells(const char *name, const pgTiling &t, const F &f,
+                 const R &reducer) {
+  using value = typename R::value_type;
+  Kokkos::parallel_reduce(
+      name, t.policy(),
+      KOKKOS_LAMBDA(const team &team, value &upd) {
+        const auto r = t.of(team);
+        value mine;
+        reducer.init(mine);
+        Kokkos::parallel_reduce(
+            Kokkos::TeamThreadRange(team, r.begin, r.end),
+            [&](const int item, value &v) {
+              cell c{r.e};
+              cellAt(t.cells[r.e], item, c.i, c.j, c.k);
+              pinned(f, c)(v);
+            },
+            R(mine));
+        Kokkos::single(Kokkos::PerTeam(team),
+                       [&]() { reducer.join(upd, mine); });
+      },
+      reducer);
+}
+
+// the same over every cell and component: f(l, value &)
+template <class F, class R>
+void reduceCellsAndComponents(const char *name, const pgTiling &t, const F &f,
+                              const R &reducer) {
+  using value = typename R::value_type;
+  Kokkos::parallel_reduce(
+      name, t.policy(),
+      KOKKOS_LAMBDA(const team &team, value &upd) {
+        const auto r = t.of(team);
+        value mine;
+        reducer.init(mine);
+        Kokkos::parallel_reduce(
+            Kokkos::TeamThreadRange(team, r.begin, r.end),
+            [&](const int item, value &v) {
+              cell c{r.e};
+              int l;
+              cellAt(t.cells[r.e], item, c.i, c.j, c.k, l);
+              pinned(f, c)(l, v);
+            },
+            R(mine));
+        Kokkos::single(Kokkos::PerTeam(team),
+                       [&]() { reducer.join(upd, mine); });
+      },
+      reducer);
+}
+
+// one condition's body on every halo cell of every face in the table
+template <class F>
+void forFacePlanes(const char *name, const pgTiling &t, const F &f,
+                   const int *nface) {
+  Kokkos::parallel_for(
+      name, t.policy(), KOKKOS_LAMBDA(const team &team) {
+        const auto r = t.of(team);
+        Kokkos::parallel_for(Kokkos::TeamThreadRange(team, r.begin, r.end),
+                             [&](const int item) {
+                               plane p{r.e, 0, 0, 0, nface[r.e]};
+                               cellAt(t.cells[r.e], item, p.g, p.i, p.j);
+                               pinned(f, p)();
+                             });
+      });
+}
+
+// one trade's body on every plane cell of every layer of every face in the
+// table, walked in the block's memory order
+template <class F>
+void forTrades(const char *name, const pgTiling &t, const F &f,
+               const int *nface) {
+  Kokkos::parallel_for(
+      name, t.policy(), KOKKOS_LAMBDA(const team &team) {
+        const auto r = t.of(team);
+        Kokkos::parallel_for(
+            Kokkos::TeamThreadRange(team, r.begin, r.end), [&](const int item) {
+              int at[3];
+              unravelPlanes(item, t.cells[r.e].extent, faceAxis(nface[r.e]),
+                            at);
+              pinned(f, plane{r.e, at[0], at[1], at[2], nface[r.e]})();
+            });
+      });
+}
+
+#endif

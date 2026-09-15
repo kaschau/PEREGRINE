@@ -31,4 +31,4 @@ def validBcTypes():
 def conditionsOf(hook):
     """Every condition with a kernel at :hook:, in the order the hook's
     kernel holds them."""
-    return tuple(t for t in validBcTypes() if hook in getBc(t).hooks)
+    return tuple(t for t in validBcTypes() if hook in getBc(t).hooks())

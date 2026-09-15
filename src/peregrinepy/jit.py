@@ -41,15 +41,16 @@ class Jit:
         assert self.ng is not None, "the halo depth is not known yet"
         return (f"NS={self.ns}", f"NE={5 + self.ns - 1}", f"NG={self.ng}")
 
-    def _headers(self, path, seen):
+    @classmethod
+    def _headers(cls, path, seen):
         """Every header :path: reaches through its quoted includes that lives
         in the compute tree, transitively; the rest are the toolchain's."""
-        for name in self.includeLine.findall(path.read_text()):
-            for header in (path.parent / name, self.compute / name):
+        for name in cls.includeLine.findall(path.read_text()):
+            for header in (path.parent / name, cls.compute / name):
                 if header.is_file():
                     if header not in seen:
                         seen.add(header)
-                        self._headers(header, seen)
+                        cls._headers(header, seen)
                     break
         return seen
 

@@ -1,24 +1,22 @@
-#include "kernelUtils.hpp"
-#include "kokkosTypes.hpp"
-#include <Kokkos_Core.hpp>
+#include "kernel.hpp"
 
 // The linear combinations of solution registers every time integration stage
 // is built from: A = a*A + b*B [+ c*C]. A leading coefficient of zero means
 // the stage starts from somewhere else, so A is written without being read;
 // the test is on a value that is the same for every element, so the branch
-// costs nothing. Rank four, any extents.
+// costs nothing. The interior only: every halo a stage reads is rebuilt by
+// the consistify that follows it.
 
-PG_ABI void pgAxpby(int count, pgOut *A_, double a, double b, pgIn *B_) {
-  for (int e = 0; e < count; e++) {
-    auto A = as4(A_[e]);
-    auto B = as4(B_[e]);
-    MDRange4 range({0, 0, 0, 0},
-                   {A.extent(0), A.extent(1), A.extent(2), A.extent(3)});
-    Kokkos::parallel_for(
-        "axpby", range,
-        KOKKOS_LAMBDA(const int i, const int j, const int k, const int l) {
-          A(i, j, k, l) = a == 0.0 ? b * B(i, j, k, l)
-                                   : a * A(i, j, k, l) + b * B(i, j, k, l);
-        });
+PG_RANGE(interior, ne)
+struct axpby {
+  inout A;
+  double a, b;
+  in B;
+  KOKKOS_INLINE_FUNCTION void operator()(const int l) const {
+    A(l) = a == 0.0 ? b * B(l) : a * A(l) + b * B(l);
   }
+};
+
+PG_ABI void pgAxpby(const axpby &k, const pgTiling &t) {
+  forCellsAndComponents("axpby", t, k);
 }

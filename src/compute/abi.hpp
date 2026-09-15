@@ -1,21 +1,36 @@
-// PEREGRINE's C ABI. Python holds every array as a pointer and its extents;
-// a kernel is a C function that takes the records of the arrays it reads and
-// writes and unpacks each into an unmanaged Kokkos view.
+// PEREGRINE's C ABI: what Python and the kernels agree on. Every struct
+// here has a twin in python (abi.View, abi.pgCells, table.Tiling, and the
+// kernel record python builds from a kernel's members), laid out the same.
+// The runtime and the kernels include this; a kernel gets it through
+// kernel.hpp.
 #ifndef __abi_H__
 #define __abi_H__
 
-#include "kokkosTypes.hpp"
-#include <cassert>
+#include <Kokkos_Core.hpp>
+
+// where kernels run, and the memory and layout Kokkos picks for it
+using execSpace = Kokkos::DefaultExecutionSpace;
+using viewSpace = execSpace::memory_space;
+using layout = execSpace::array_layout;
+using hostSpace = Kokkos::HostSpace;
 
 // the module is built with hidden visibility; the ABI is what is not hidden
 #define PG_ABI extern "C" __attribute__((visibility("default")))
 
 extern "C" {
-// one array as Python holds it
+// one array as Python holds it: where, how big, and its strides in
+// elements, which Python works out from the device layout
 struct pgView {
   double *data;
   int rank;
   int extent[5];
+  long stride[5];
+};
+
+// the cells of one entry a launch does: a start and an extent per axis, the
+// components, and the item count
+struct pgCells {
+  int start[3], extent[4], n;
 };
 }
 
@@ -30,56 +45,36 @@ extern "C" {
 struct pgDims {
   int ni, nj, nk;
 };
+}
 
-// the cells a kernel does, as Python states them
-struct pgRange {
-  int i0, i1, j0, j1, k0, k1;
+// One launch over every entry of a table. Each entry has some items -- its
+// cells, or the elements of its planes -- and a team does `tileSize` of one
+// entry's, so a rank of thousands of small entries and one of a few huge
+// ones both fill the device. Python tiles the range a kernel declares and
+// hands the tiling over with the columns.
+constexpr int tileSize = 128; // as Tiling.tileSize in python
+using teams = Kokkos::TeamPolicy<execSpace>;
+using team = teams::member_type;
+
+// the tiling python made: the entry of each tile, the first tile and the
+// items of each entry, and each entry's cells; laid out as python's Tiling
+struct pgTiling {
+  const int *entry, *first, *items;
+  const pgCells *cells;
+  int count, tiles;
+
+  struct tile {
+    int e, begin, end;
+  };
+  // the entry and item range of this team's tile
+  KOKKOS_INLINE_FUNCTION tile of(const team &t) const {
+    const int rank = t.league_rank();
+    const int lo = entry[rank];
+    const int begin = (rank - first[lo]) * tileSize;
+    const int n = items[lo];
+    return {lo, begin, begin + tileSize < n ? begin + tileSize : n};
+  }
+  teams policy() const { return teams(tiles, Kokkos::AUTO); }
 };
-}
-
-// the record as a view of the rank the kernel expects, read-only or writable
-// by what the kernel said
-inline in1 as1(const pgIn &v) {
-  assert(v.rank == 1);
-  return in1(v.data, v.extent[0]);
-}
-inline out1 as1(const pgOut &v) {
-  assert(v.rank == 1);
-  return out1(v.data, v.extent[0]);
-}
-inline in2 as2(const pgIn &v) {
-  assert(v.rank == 2);
-  return in2(v.data, v.extent[0], v.extent[1]);
-}
-inline out2 as2(const pgOut &v) {
-  assert(v.rank == 2);
-  return out2(v.data, v.extent[0], v.extent[1]);
-}
-inline in3 as3(const pgIn &v) {
-  assert(v.rank == 3);
-  return in3(v.data, v.extent[0], v.extent[1], v.extent[2]);
-}
-inline out3 as3(const pgOut &v) {
-  assert(v.rank == 3);
-  return out3(v.data, v.extent[0], v.extent[1], v.extent[2]);
-}
-inline in4 as4(const pgIn &v) {
-  assert(v.rank == 4);
-  return in4(v.data, v.extent[0], v.extent[1], v.extent[2], v.extent[3]);
-}
-inline out4 as4(const pgOut &v) {
-  assert(v.rank == 4);
-  return out4(v.data, v.extent[0], v.extent[1], v.extent[2], v.extent[3]);
-}
-inline in5 as5(const pgIn &v) {
-  assert(v.rank == 5);
-  return in5(v.data, v.extent[0], v.extent[1], v.extent[2], v.extent[3],
-             v.extent[4]);
-}
-inline out5 as5(const pgOut &v) {
-  assert(v.rank == 5);
-  return out5(v.data, v.extent[0], v.extent[1], v.extent[2], v.extent[3],
-              v.extent[4]);
-}
 
 #endif

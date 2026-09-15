@@ -101,6 +101,11 @@ class Communicator:
             self.tables[var] = (pack, unpack)
         return self.tables[var]
 
+    def _ndim(self, var):
+        """How many dimensions a variable's arrays have, which its trades are
+        all of; not an MPI rank."""
+        return len(getattr(self.trades[0][0], var).shape)
+
     def _landing(self, face, var):
         key = (face, var)
         if key not in self.landings:
@@ -126,7 +131,7 @@ class Communicator:
         # nothing here has to leave the device; a rank with nothing to trade
         # still meets the others at the barrier
         if self.trades:
-            self.pack(pack)
+            self.pack(pack, ndim=self._ndim(var))
 
         # only a message has to go through the host: every snapshot is asked
         # for, one wait covers them all, and what lands is set back in with
@@ -144,7 +149,7 @@ class Communicator:
             getattr(face, recv).set(landing[face], wait=False)
 
         if self.trades:
-            self.unpack(unpack)
+            self.unpack(unpack, ndim=self._ndim(var))
 
         # a face trades under the same tag whatever the variable, so one
         # variable has to land everywhere before the next one goes out

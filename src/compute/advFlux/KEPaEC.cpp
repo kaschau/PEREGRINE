@@ -1,92 +1,57 @@
-#include "kernelUtils.hpp"
-#include "kokkosTypes.hpp"
+#include "faces.hpp"
 
-static void computeFlux(const in4 &Q, const in4 &q, const in4 &qh,
-                        const pgDims &d, const out4 &iF, const in4 &iS,
-                        const int iMod, const int jMod, const int kMod) {
+PG_RANGE(faces)
+struct KEPaEC {
+  inL QL, qL, qhL;
+  inR QR, qR, qhR;
+  out F;
+  in A;
+  KOKKOS_INLINE_FUNCTION void operator()() const {
+    // Compute face normal volume flux vector
+    double uf = 0.5 * (qR(1) + qL(1));
+    double vf = 0.5 * (qR(2) + qL(2));
+    double wf = 0.5 * (qR(3) + qL(3));
 
-  const int ni = d.ni, nj = d.nj, nk = d.nk;
-  // face flux range
-  MDRange3 range({ng, ng, ng},
-                 {ni + ng - 1 + iMod, nj + ng - 1 + jMod, nk + ng - 1 + kMod});
+    double U = A(0) * uf + A(1) * vf + A(2) * wf;
 
-  Kokkos::parallel_for(
-      "2nd order KEPaEC conv fluxes", range,
-      KOKKOS_LAMBDA(const int i, const int j, const int k) {
-        // Compute face normal volume flux vector
-        double uf = 0.5 * (q(i, j, k, 1) + q(i - iMod, j - jMod, k - kMod, 1));
-        double vf = 0.5 * (q(i, j, k, 2) + q(i - iMod, j - jMod, k - kMod, 2));
-        double wf = 0.5 * (q(i, j, k, 3) + q(i - iMod, j - jMod, k - kMod, 3));
+    double pf = 0.5 * (qR(0) + qL(0));
 
-        double U =
-            iS(i, j, k, 0) * uf + iS(i, j, k, 1) * vf + iS(i, j, k, 2) * wf;
+    // Compute fluxes
+    double rho = 0.5 * (QR(0) + QL(0));
 
-        double pf = 0.5 * (q(i, j, k, 0) + q(i - iMod, j - jMod, k - kMod, 0));
+    // Continuity rho*Ui
+    double C = rho * U;
+    F(0) = C;
 
-        // Compute fluxes
-        double rho = 0.5 * (Q(i, j, k, 0) + Q(i - iMod, j - jMod, k - kMod, 0));
+    // x momentum rho*u*Ui+ p*Ax
+    F(1) = C * uf + pf * A(0);
 
-        // Continuity rho*Ui
-        double C = rho * U;
-        iF(i, j, k, 0) = C;
+    // y momentum rho*v*Ui+ p*Ay
+    F(2) = C * vf + pf * A(1);
 
-        // x momentum rho*u*Ui+ p*Ax
-        iF(i, j, k, 1) = C * uf + pf * iS(i, j, k, 0);
+    // w momentum rho*w*Ui+ p*Az
+    F(3) = C * wf + pf * A(2);
 
-        // y momentum rho*v*Ui+ p*Ay
-        iF(i, j, k, 2) = C * vf + pf * iS(i, j, k, 1);
+    // Total energy (rhoE+ p)*Ui)
+    double Kj = C * 0.5 * (qR(1) * qL(1) + qR(2) * qL(2) + qR(3) * qL(3));
 
-        // w momentum rho*w*Ui+ p*Az
-        iF(i, j, k, 3) = C * wf + pf * iS(i, j, k, 2);
+    double Pj = 0.5 * (qL(0) * (qR(1) * A(0) + qR(2) * A(1) + qR(3) * A(2)) +
+                       qR(0) * (qL(1) * A(0) + qL(2) * A(1) + qL(3) * A(2)));
 
-        // Total energy (rhoE+ p)*Ui)
-        double Kj = C * 0.5 *
-                    (q(i, j, k, 1) * q(i - iMod, j - jMod, k - kMod, 1) +
-                     q(i, j, k, 2) * q(i - iMod, j - jMod, k - kMod, 2) +
-                     q(i, j, k, 3) * q(i - iMod, j - jMod, k - kMod, 3));
+    // solve for internal energy flux
+    double eR = qhR(4) / QR(0);
+    double eL = qhL(4) / QL(0);
+    double Ij = 2.0 * (eL * eR) / (eL + eR) * C;
 
-        double Pj =
-            0.5 * (q(i - iMod, j - jMod, k - kMod, 0) *
-                       (q(i, j, k, 1) * iS(i, j, k, 0) +
-                        q(i, j, k, 2) * iS(i, j, k, 1) +
-                        q(i, j, k, 3) * iS(i, j, k, 2)) +
-                   q(i, j, k, 0) *
-                       (q(i - iMod, j - jMod, k - kMod, 1) * iS(i, j, k, 0) +
-                        q(i - iMod, j - jMod, k - kMod, 2) * iS(i, j, k, 1) +
-                        q(i - iMod, j - jMod, k - kMod, 3) * iS(i, j, k, 2)));
+    F(4) = Ij + Kj + Pj;
 
-        // solve for internal energy flux
-        double eR = qh(i, j, k, 4) / Q(i, j, k, 0);
-        double eL = qh(i - iMod, j - jMod, k - kMod, 4) /
-                    Q(i - iMod, j - jMod, k - kMod, 0);
-        double Ij = 2.0 * (eL * eR) / (eL + eR) * C;
-
-        iF(i, j, k, 4) = Ij + Kj + Pj;
-
-        // Species
-        for (int n = 0; n < ne - 5; n++) {
-          iF(i, j, k, 5 + n) =
-              0.5 *
-              (q(i, j, k, 5 + n) + q(i - iMod, j - jMod, k - kMod, 5 + n)) * C;
-        }
-      });
-}
-
-PG_ABI void pgKEPaEC(int count, pgIn *Q_, pgOut *iF_, pgIn *iS_, pgOut *jF_,
-                     pgIn *jS_, pgOut *kF_, pgIn *kS_, pgIn *q_, pgIn *qh_,
-                     const pgDims *d) {
-  for (int e = 0; e < count; e++) {
-    auto Q = as4(Q_[e]);
-    auto iF = as4(iF_[e]);
-    auto iS = as4(iS_[e]);
-    auto jF = as4(jF_[e]);
-    auto jS = as4(jS_[e]);
-    auto kF = as4(kF_[e]);
-    auto kS = as4(kS_[e]);
-    auto q = as4(q_[e]);
-    auto qh = as4(qh_[e]);
-    computeFlux(Q, q, qh, d[e], iF, iS, 1, 0, 0);
-    computeFlux(Q, q, qh, d[e], jF, jS, 0, 1, 0);
-    computeFlux(Q, q, qh, d[e], kF, kS, 0, 0, 1);
+    // Species
+    for (int n = 0; n < ne - 5; n++) {
+      F(5 + n) = 0.5 * (qR(5 + n) + qL(5 + n)) * C;
+    }
   }
+};
+
+PG_ABI void pgKEPaEC(const KEPaEC &k, const pgTiling &t) {
+  forCells("2nd order KEPaEC conv fluxes", t, k);
 }

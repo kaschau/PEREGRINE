@@ -37,17 +37,30 @@ class BaseNode:
 
 class KernelNode(BaseNode):
     """A kernel over the solver's blocks. Its reads and writes are its
-    prototype's; :role: is the name the solver knows it by."""
+    prototype's; :role: is the name the solver knows it by. A flux scheme
+    is compiled once per :direction:, each a node of its own: the source
+    names one direction's flux F and area vector A, the direction says which."""
 
-    def __init__(self, source, role=None, **fixed):
+    def __init__(self, source, role=None, direction=None, **fixed):
         stem = source.rsplit("/", 1)[-1].removesuffix(".cpp")
-        super().__init__(role or stem)
+        if direction is not None:
+            super().__init__(f"{stem} {'ijk'[direction]}")
+        else:
+            super().__init__(role or stem)
         self.source, self.role, self.fixed = source, role, fixed
+        self.direction = direction
         self.kernel = None
 
     def bind(self, table, thtrdat, communicator):
+        setup = {}
+        if self.direction is not None:
+            axis = "ijk"[self.direction]
+            setup = dict(
+                defines=(f"PG_DIRECTION={self.direction}",),
+                columns={"F": f"{axis}F", "A": f"{axis}S", "Faces": f"{axis}Faces"},
+            )
         self.kernel = BoundKernel(
-            table, thtrdat, self.source, role=self.role, **self.fixed
+            table, thtrdat, self.source, role=self.role, **setup, **self.fixed
         )
         self.reads, self.writes = tuple(self.kernel.reads), tuple(self.kernel.writes)
 
@@ -64,22 +77,10 @@ class Hook(BaseNode):
     per condition. Every condition with the hook has a kernel of its own,
     compiled and cached on its own, so the kernels are fixed from the start
     and only the faces are found on the first run, once they know their
-    conditions. It reads what any condition may and writes the halos of the
-    state it sets."""
-
-    writesOf = {
-        "euler": ("q",),
-        "postEos": ("q", "Q"),
-        "preDqDxyz": ("q",),
-        "postDqDxyz": ("grads",),
-    }
+    conditions. It reads and writes what its conditions declare."""
 
     def __init__(self, hook):
-        super().__init__(
-            f"{hook} hook",
-            reads=("q", "Q", "qh", "grads", "S", "qBcVals", "QBcVals"),
-            writes=self.writesOf[hook],
-        )
+        super().__init__(f"{hook} hook")
         self.hook = hook
         # condition -> its kernel, and -> the table of the case's faces with it
         self.conditions = {}
@@ -94,10 +95,13 @@ class Hook(BaseNode):
                 tableOf=lambda t=t: self.tables.get(t),
                 role=f"{t}@{self.hook}",
                 defines=(f"PG_CONDITION={t}", f"PG_HOOK={self.hook}"),
-                includes=(getBc(t).header(self.hook),),
+                includes=(getBc(t).header(),),
             )
             for t in conditionsOf(self.hook)
         }
+        # what any of its conditions reads and writes
+        self.reads = tuple(dict.fromkeys(r for k in self.kernels for r in k.reads))
+        self.writes = tuple(dict.fromkeys(w for k in self.kernels for w in k.writes))
 
     @property
     def kernels(self):
@@ -108,7 +112,7 @@ class Hook(BaseNode):
         into a table each."""
         groups = {}
         for f in faces:
-            if self.hook in f.bc.hooks:
+            if self.hook in f.bc.hooks():
                 groups.setdefault(f.bc.bcType, []).append(f)
         return {t: Table.ofFaces(fs) for t, fs in groups.items()}
 
@@ -119,7 +123,7 @@ class Hook(BaseNode):
         if tables is None:
             tables = self.tables
         for t, table in tables.items():
-            self.conditions[t](table, tme=tme)
+            self.conditions[t](table)
 
 
 class FaceState(KernelNode):
@@ -263,8 +267,6 @@ class Graph:
             )
         euler = g.add(Hook("euler"))
         g.add(FaceState(fromPrimsSource, euler, role="stateFromPrims"))
-        postEos = g.add(Hook("postEos"))
-        g.add(FaceState(fromPrimsSource, postEos, role="stateFromPrims"))
         if config["RHS"]["diffusion"]:
             g.add(
                 KernelNode(
@@ -282,13 +284,26 @@ class Graph:
         cls._nominal(config)
         rhs = config["RHS"]
         g = cls("rhs")
-        # every flux accumulates on the faces, and one apply makes dQ of them
-        g.add(KernelNode(f"advFlux/{rhs['primaryAdvFlux']}.cpp", role="primaryAdvFlux"))
+        # every flux accumulates on the faces, a direction at a time and each
+        # its own node, and one apply makes dQ of them
+        for d in range(3):
+            g.add(
+                KernelNode(
+                    f"advFlux/{rhs['primaryAdvFlux']}.cpp",
+                    role="primaryAdvFlux",
+                    direction=d,
+                )
+            )
         if rhs["diffusion"]:
             g.add(Hook("preDqDxyz"))
             g.add(KernelNode("utils/dq2FD.cpp", role="dqdxyz"))
             g.add(Exchange("grads"))
             g.add(Hook("postDqDxyz"))
-            g.add(KernelNode("diffFlux/alphaDampingFlux.cpp", role="diffFlux"))
+            for d in range(3):
+                g.add(
+                    KernelNode(
+                        "diffFlux/alphaDampingFlux.cpp", role="diffFlux", direction=d
+                    )
+                )
         g.add(KernelNode("utils/applyFlux.cpp"))
         return g

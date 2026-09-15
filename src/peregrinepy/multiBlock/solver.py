@@ -6,7 +6,7 @@ from .solverBlock import solverBlock
 from ..graph import Graph
 from ..integrators import getController, getIntegrator
 from ..jit import Jit
-from ..kernel import BoundKernel
+from ..kernel import BoundKernel, byRole
 from ..mixture import Mixture
 from ..mpiComm import Communicator
 from ..mpiComm.mpiUtils import getCommRankSize
@@ -52,7 +52,7 @@ class solver(restart):
         # block fills in as it allocates, and the jit; the last two learn the
         # halo depth once every kernel is known
         self.thtrdat = thtrdat(self.mixture)
-        self.table = Table()
+        self.table = Table(ne=5 + self.mixture.ns - 1)
         self.jit = Jit(self.mixture.ns)
 
         # what calls kernels: the halo exchange, the graphs, the integrator,
@@ -70,8 +70,10 @@ class solver(restart):
         ]
         owners = [self.communicator, *self.graphs.values(), self.integrator]
         kernels = [k for o in owners for k in o.kernels] + checks
-        # every kernel the case calls, by the name it calls it
-        self.kernels = {k.role: k for k in kernels}
+        # every kernel the case calls, by the name it calls it; a flux
+        # scheme's directions, one source compiled several ways under one
+        # name, are called together
+        self.kernels = byRole(kernels)
 
         # the halo is as deep as the widest stencil among them
         self.ng = self.table.ng = self.jit.ng = max(k.stencil for k in kernels)
@@ -143,21 +145,18 @@ class solver(restart):
 
     def applyBcs(self, hook, faces=None):
         """One hook on the given faces, or on every face that has it, the way
-        the step does: after euler the faces' state follows, and a condition
-        with more to say once it has a density says it."""
+        the step does: after euler the faces' state follows."""
         self._connectBcs()
-        graph = self.graphs["consistify" if hook in ("euler", "postEos") else "rhs"]
+        graph = self.graphs["consistify" if hook == "euler" else "rhs"]
         node = graph.hook(hook)
         tables = node.tables if faces is None else node.tablesOf(faces)
         if not tables:
             return
         node.run(self.tme, tables)
         # a hook that sets primitives leaves the faces' state to follow
-        if hook in ("euler", "postEos"):
+        if hook == "euler":
             for table in tables.values():
                 self.stateFromPrims(table=table)
-        if hook == "euler":
-            self.applyBcs("postEos", faces)
 
     def _setUniformState(self):
         """Every cell of q at the config's initial conditions."""

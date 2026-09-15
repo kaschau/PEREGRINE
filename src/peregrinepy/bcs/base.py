@@ -1,4 +1,9 @@
+import re
+from functools import cache
+
 import numpy as np
+
+from ..jit import Jit
 
 
 class BaseBC:
@@ -21,8 +26,6 @@ class BaseBC:
     bcType = None
     # which folder of boundaryConditions/ holds it
     family = None
-    # the hooks in the step it has a kernel for; an interior face has none
-    hooks = ()
     # input key -> index into the face's qBcVals
     values = {}
     # whether the face is shared with another block rather than standing alone
@@ -32,9 +35,19 @@ class BaseBC:
         self.face = face
 
     @classmethod
-    def header(cls, hook):
-        """The header applying this bc at one hook, relative to src/compute."""
-        return f"boundaryConditions/{cls.family}/{cls.bcType}/{hook}.hpp"
+    def header(cls):
+        """The header holding this bc's hooks, relative to src/compute."""
+        return f"boundaryConditions/{cls.family}/{cls.bcType}.hpp"
+
+    @classmethod
+    @cache
+    def hooks(cls):
+        """The hooks in the step this bc has a kernel for, as its header
+        declares them; an interior face has none."""
+        if cls.family is None:
+            return ()
+        text = (Jit.compute / cls.header()).read_text()
+        return tuple(re.findall(r"^struct (\w+) \{", text, re.M))
 
     def setValues(self, valueDict):
         """Give the face the values its config entry sets, where the kernels

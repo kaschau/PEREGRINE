@@ -1,25 +1,19 @@
 #include "array"
 #include "dualTime.hpp"
-#include "kernelUtils.hpp"
-#include "kokkosTypes.hpp"
-#include "math.h"
+#include "kernel.hpp"
 #include "vector"
-#include <Kokkos_Core.hpp>
 
-PG_ABI void pgInvertDQ(int count, pgIn *Q_, pgIn *dIJK_, pgOut *dQ_,
-                       pgIn *dtau_, pgIn *q_, pgIn *qh_, pgIn *qt_,
-                       const pgIn &MW_, double Ru, const pgDims *d, double dt,
-                       bool viscous) {
-  for (int e = 0; e < count; e++) {
-    auto Q = as4(Q_[e]);
-    auto dIJK = as4(dIJK_[e]);
-    auto dQ = as4(dQ_[e]);
-    auto dtau = as3(dtau_[e]);
-    auto q = as4(q_[e]);
-    auto qh = as4(qh_[e]);
-    auto qt = as4(qt_[e]);
-    auto MW = as1(MW_);
-    const int ni = d[e].ni, nj = d[e].nj, nk = d[e].nk;
+PG_RANGE(interior)
+struct invertDQ {
+  in Q, dIJK, dtau, q, qh, qt;
+  record MW;
+  inout dQ;
+  dims d;
+  double Ru;
+  double dt;
+  bool viscous;
+  KOKKOS_INLINE_FUNCTION void operator()() const {
+    const int ni = d->ni, nj = d->nj, nk = d->nk;
     //-------------------------------------------------------------------------------------------|
     // Solve (\Gamma + dqdQ) dq = dQ to solver for dqdt
     //
@@ -44,261 +38,258 @@ PG_ABI void pgInvertDQ(int count, pgIn *Q_, pgIn *dIJK_, pgOut *dQ_,
       kMult = Kokkos::Experimental::infinity<double>::value;
     }
 
-    MDRange3 range_cc({ng, ng, ng}, {ni + ng - 1, nj + ng - 1, nk + ng - 1});
+    double GdQ[ne][ne];
+    int perm[ne];
+    double tempRow[ne];
 
-    Kokkos::parallel_for(
-        "dq = (Gamma + dqdQ)^{-1} dQ", range_cc,
-        KOKKOS_LAMBDA(const int i, const int j, const int k) {
-          double GdQ[ne][ne];
-          int perm[ne];
-          double tempRow[ne];
+    ////////////////////////////////////////////////
+    ///// COMPUTE GdQ MATRIX
+    ///// Sum of Preconditioning matrix and
+    ///// convservative to primative variable
+    ///// transformation
+    /////
+    /////  \Gamma + 3d[e]tau / (2d[e]t) dQdq
+    /////
+    ////////////////////////////////////////////////
+    const double &p = q(0);
+    const double &u = q(1);
+    const double &v = q(2);
+    const double &w = q(3);
+    const double &T = q(4);
+    const double &rho = Q(0);
+    double Y[ns];
+    double rho_Y[ns];
+    double cp = qh(1);
+    double H = qh(2) / rho + 0.5 * (pow(u, 2.0) + pow(v, 2.0) + pow(w, 2.0));
+    double c = qh(3);
+    // Compute nth species Y
+    Y[ns - 1] = 1.0;
+    double denom = 0.0;
+    for (int n = 0; n < ns - 1; n++) {
+      Y[n] = q(5 + n);
+      Y[ns - 1] -= Y[n];
+      denom += Y[n] / MW(n);
+    }
+    denom += Y[ns - 1] / MW(ns - 1);
 
-          ////////////////////////////////////////////////
-          ///// COMPUTE GdQ MATRIX
-          ///// Sum of Preconditioning matrix and
-          ///// convservative to primative variable
-          ///// transformation
-          /////
-          /////  \Gamma + 3d[e]tau / (2d[e]t) dQdq
-          /////
-          ////////////////////////////////////////////////
-          const double &p = q(i, j, k, 0);
-          const double &u = q(i, j, k, 1);
-          const double &v = q(i, j, k, 2);
-          const double &w = q(i, j, k, 3);
-          const double &T = q(i, j, k, 4);
-          const double &rho = Q(i, j, k, 0);
-          double Y[ns];
-          double rho_Y[ns];
-          double cp = qh(i, j, k, 1);
-          double H = qh(i, j, k, 2) / rho +
-                     0.5 * (pow(u, 2.0) + pow(v, 2.0) + pow(w, 2.0));
-          double c = qh(i, j, k, 3);
-          // Compute nth species Y
-          Y[ns - 1] = 1.0;
-          double denom = 0.0;
-          for (int n = 0; n < ns - 1; n++) {
-            Y[n] = q(i, j, k, 5 + n);
-            Y[ns - 1] -= Y[n];
-            denom += Y[n] / MW(n);
-          }
-          denom += Y[ns - 1] / MW(ns - 1);
+    // Compute MWmix
+    double MWmix = 0.0;
+    for (int n = 0; n <= ns - 1; n++) {
+      double X = Y[n] / MW(n) / denom;
+      MWmix += MW(n) * X;
+    }
 
-          // Compute MWmix
-          double MWmix = 0.0;
-          for (int n = 0; n <= ns - 1; n++) {
-            double X = Y[n] / MW(n) / denom;
-            MWmix += MW(n) * X;
-          }
+    // Compute required derivatives
+    double rho_p = rho / p;
+    double rho_T = -rho / T;
 
-          // Compute required derivatives
-          double rho_p = rho / p;
-          double rho_T = -rho / T;
+    for (int n = 0; n < ns - 1; n++) {
+      rho_Y[n] = -rho * (MWmix * (1.0 / MW(n) - 1.0 / MW(ns - 1)));
+    }
 
-          for (int n = 0; n < ns - 1; n++) {
-            rho_Y[n] = -rho * (MWmix * (1.0 / MW(n) - 1.0 / MW(ns - 1)));
-          }
+    /////////////////////////////////////////////////
+    // The preconditioning and transformation matrix
+    // share a very similar form, only differing by
+    // the multiplier of the first column, and the
+    // multiplication of the time derivatives for
+    // the prim/cons transformation matrix.
+    /////////////////////////////////////////////////
+    for (int l = 0; l < ne; l++) {
+      for (int m = 0; m < ne; m++) {
+        GdQ[l][m] = 0.0;
+      }
+    }
+    double Thetas[2];
+    double mults[2];
 
-          /////////////////////////////////////////////////
-          // The preconditioning and transformation matrix
-          // share a very similar form, only differing by
-          // the multiplier of the first column, and the
-          // multiplication of the time derivatives for
-          // the prim/cons transformation matrix.
-          /////////////////////////////////////////////////
-          for (int l = 0; l < ne; l++) {
-            for (int m = 0; m < ne; m++) {
-              GdQ[l][m] = 0.0;
-            }
-          }
-          double Thetas[2];
-          double mults[2];
+    // Prematrix multipliers (constants)
+    mults[0] = 1.0;
+    mults[1] = 3.0 / 2.0 * dtau() / dt;
 
-          // Prematrix multipliers (constants)
-          mults[0] = 1.0;
-          mults[1] = 3.0 / 2.0 * dtau(i, j, k) / dt;
+    // Reference velocity for preconditioning theta
+    const double U = sqrt(u * u + v * v + w * w);
+    const double nu = viscous ? qt(0) / Q(0) : 0.0;
+    const double &dI = dIJK(0);
+    const double &dJ = dIJK(1);
+    const double &dK = dIJK(2);
+    const double Ur =
+        referenceVelocity(U, c, nu, iMult * dI, jMult * dJ, kMult * dK);
 
-          // Reference velocity for preconditioning theta
-          const double U = sqrt(u * u + v * v + w * w);
-          const double nu = viscous ? qt(i, j, k, 0) / Q(i, j, k, 0) : 0.0;
-          const double &dI = dIJK(i, j, k, 0);
-          const double &dJ = dIJK(i, j, k, 1);
-          const double &dK = dIJK(i, j, k, 2);
-          const double Ur =
-              referenceVelocity(U, c, nu, iMult * dI, jMult * dJ, kMult * dK);
+    // Thetas (just rho_p for dQdq)
+    Thetas[0] = 1.0 / pow(Ur, 2.0) - rho_T / (rho * cp);
+    Thetas[1] = rho_p;
 
-          // Thetas (just rho_p for dQdq)
-          Thetas[0] = 1.0 / pow(Ur, 2.0) - rho_T / (rho * cp);
-          Thetas[1] = rho_p;
+    ///////////////////////////////////////////////////////////////////
+    // Gamma and dQdq are constricted in the following blocks
+    // |-----------------------|------------------|
+    // |                       |                  |
+    // |         (1)           |       (2)        |
+    // |      Single Comp      |  Prims/Species   |
+    // |       Primatives      |                  |
+    // |                       |                  |
+    // |-----------------------|------------------|
+    // |                       |                  |
+    // |         (3)           |       (4)        |
+    // |     Species/Prims     | Species/Species  |
+    // |                       |                  |
+    // |                       |                  |
+    // |-----------------------|------------------|
+    //
+    // In a column by column manner
+    ///////////////////////////////////////////////////////////////////
 
-          ///////////////////////////////////////////////////////////////////
-          // Gamma and dQdq are constricted in the following blocks
-          // |-----------------------|------------------|
-          // |                       |                  |
-          // |         (1)           |       (2)        |
-          // |      Single Comp      |  Prims/Species   |
-          // |       Primatives      |                  |
-          // |                       |                  |
-          // |-----------------------|------------------|
-          // |                       |                  |
-          // |         (3)           |       (4)        |
-          // |     Species/Prims     | Species/Species  |
-          // |                       |                  |
-          // |                       |                  |
-          // |-----------------------|------------------|
-          //
-          // In a column by column manner
-          ///////////////////////////////////////////////////////////////////
+    for (int p = 0; p < 2; p++) {
+      double Theta = Thetas[p];
+      double mult = mults[p];
 
-          for (int p = 0; p < 2; p++) {
-            double Theta = Thetas[p];
-            double mult = mults[p];
+      // Block (1)
+      // First column
+      GdQ[0][0] += mult * Theta;
+      GdQ[1][0] += mult * Theta * u;
+      GdQ[2][0] += mult * Theta * v;
+      GdQ[3][0] += mult * Theta * w;
+      GdQ[4][0] += mult * (Theta * H + T * rho_T / rho);
 
-            // Block (1)
-            // First column
-            GdQ[0][0] += mult * Theta;
-            GdQ[1][0] += mult * Theta * u;
-            GdQ[2][0] += mult * Theta * v;
-            GdQ[3][0] += mult * Theta * w;
-            GdQ[4][0] += mult * (Theta * H + T * rho_T / rho);
+      // Second column
+      GdQ[0][1] += mult * 0.0;
+      GdQ[1][1] += mult * rho;
+      GdQ[2][1] += mult * 0.0;
+      GdQ[3][1] += mult * 0.0;
+      GdQ[4][1] += mult * rho * u;
 
-            // Second column
-            GdQ[0][1] += mult * 0.0;
-            GdQ[1][1] += mult * rho;
-            GdQ[2][1] += mult * 0.0;
-            GdQ[3][1] += mult * 0.0;
-            GdQ[4][1] += mult * rho * u;
+      // Third column
+      GdQ[0][2] += mult * 0.0;
+      GdQ[1][2] += mult * 0.0;
+      GdQ[2][2] += mult * rho;
+      GdQ[3][2] += mult * 0.0;
+      GdQ[4][2] += mult * rho * v;
 
-            // Third column
-            GdQ[0][2] += mult * 0.0;
-            GdQ[1][2] += mult * 0.0;
-            GdQ[2][2] += mult * rho;
-            GdQ[3][2] += mult * 0.0;
-            GdQ[4][2] += mult * rho * v;
+      // Fourth column
+      GdQ[0][3] += mult * 0.0;
+      GdQ[1][3] += mult * 0.0;
+      GdQ[2][3] += mult * 0.0;
+      GdQ[3][3] += mult * rho;
+      GdQ[4][3] += mult * rho * w;
 
-            // Fourth column
-            GdQ[0][3] += mult * 0.0;
-            GdQ[1][3] += mult * 0.0;
-            GdQ[2][3] += mult * 0.0;
-            GdQ[3][3] += mult * rho;
-            GdQ[4][3] += mult * rho * w;
+      // Fifth column
+      GdQ[0][4] += mult * rho_T;
+      GdQ[1][4] += mult * rho_T * u;
+      GdQ[2][4] += mult * rho_T * v;
+      GdQ[3][4] += mult * rho_T * w;
+      GdQ[4][4] += mult * (rho_T * H + rho * cp);
 
-            // Fifth column
-            GdQ[0][4] += mult * rho_T;
-            GdQ[1][4] += mult * rho_T * u;
-            GdQ[2][4] += mult * rho_T * v;
-            GdQ[3][4] += mult * rho_T * w;
-            GdQ[4][4] += mult * (rho_T * H + rho * cp);
+      for (int n = 5; n < ne; n++) {
+        // Block (2) nth column
+        GdQ[0][n] += mult * rho_Y[n - 5];
+        GdQ[1][n] += mult * rho_Y[n - 5] * u;
+        GdQ[2][n] += mult * rho_Y[n - 5] * v;
+        GdQ[3][n] += mult * rho_Y[n - 5] * w;
+        double h_y = qh(n) - qh(ne);
+        GdQ[4][n] += mult * (H * rho_Y[n - 5] + rho * h_y);
+        // Block (3)
+        GdQ[n][0] += mult * Theta * Y[n - 5];
+        GdQ[n][1] += mult * 0.0;
+        GdQ[n][2] += mult * 0.0;
+        GdQ[n][3] += mult * 0.0;
+        GdQ[n][4] += mult * rho_T * Y[n - 5];
+      }
 
-            for (int n = 5; n < ne; n++) {
-              // Block (2) nth column
-              GdQ[0][n] += mult * rho_Y[n - 5];
-              GdQ[1][n] += mult * rho_Y[n - 5] * u;
-              GdQ[2][n] += mult * rho_Y[n - 5] * v;
-              GdQ[3][n] += mult * rho_Y[n - 5] * w;
-              double h_y = qh(i, j, k, n) - qh(i, j, k, ne);
-              GdQ[4][n] += mult * (H * rho_Y[n - 5] + rho * h_y);
-              // Block (3)
-              GdQ[n][0] += mult * Theta * Y[n - 5];
-              GdQ[n][1] += mult * 0.0;
-              GdQ[n][2] += mult * 0.0;
-              GdQ[n][3] += mult * 0.0;
-              GdQ[n][4] += mult * rho_T * Y[n - 5];
-            }
+      // Block (4)
+      for (int n = 5; n < ne; n++) {
+        for (int q = 5; q < ne; q++) {
+          GdQ[q][n] += mult * Y[q - 5] * rho_Y[n - 5];
+        }
+      }
+      for (int n = 5; n < ne; n++) {
+        GdQ[n][n] += mult * rho;
+      }
+    }
 
-            // Block (4)
-            for (int n = 5; n < ne; n++) {
-              for (int q = 5; q < ne; q++) {
-                GdQ[q][n] += mult * Y[q - 5] * rho_Y[n - 5];
-              }
-            }
-            for (int n = 5; n < ne; n++) {
-              GdQ[n][n] += mult * rho;
-            }
-          }
+    /////////////////////////////////////////////////////////////////////////////
+    // Perform LU decomposition with partial pivoting
+    // Routine modifies GdQ in place resulting in a
+    // strictly lower triangle matrix with 1.0 along the diagonal
+    // and an upper triangular matrix including the diagonal.
+    /////////////////////////////////////////////////////////////////////////////
 
-          /////////////////////////////////////////////////////////////////////////////
-          // Perform LU decomposition with partial pivoting
-          // Routine modifies GdQ in place resulting in a
-          // strictly lower triangle matrix with 1.0 along the diagonal
-          // and an upper triangular matrix including the diagonal.
-          /////////////////////////////////////////////////////////////////////////////
+    for (int l = 0; l < ne; l++) {
+      perm[l] = l;
+    }
 
-          for (int l = 0; l < ne; l++) {
-            perm[l] = l;
-          }
+    for (int l = 0; l < ne; l++) {
+      int pivotInd = 0;
+      double pivot = 0.0;
+      int tempInd;
+      for (int m = l; m < ne; m++)
+        if (abs(GdQ[m][l]) > abs(pivot)) {
+          pivot = GdQ[m][l];
+          pivotInd = m;
+        }
 
-          for (int l = 0; l < ne; l++) {
-            int pivotInd = 0;
-            double pivot = 0.0;
-            int tempInd;
-            for (int m = l; m < ne; m++)
-              if (abs(GdQ[m][l]) > abs(pivot)) {
-                pivot = GdQ[m][l];
-                pivotInd = m;
-              }
+      for (int p = 0; p < ne; p++) {
+        tempRow[p] = GdQ[l][p];
+        GdQ[l][p] = GdQ[pivotInd][p];
+        GdQ[pivotInd][p] = tempRow[p];
+      }
 
-            for (int p = 0; p < ne; p++) {
-              tempRow[p] = GdQ[l][p];
-              GdQ[l][p] = GdQ[pivotInd][p];
-              GdQ[pivotInd][p] = tempRow[p];
-            }
+      tempInd = perm[l];
+      perm[l] = perm[pivotInd];
+      perm[pivotInd] = tempInd;
 
-            tempInd = perm[l];
-            perm[l] = perm[pivotInd];
-            perm[pivotInd] = tempInd;
+      for (int p = l + 1; p < ne; p++) {
+        double temp;
+        temp = GdQ[p][l] /= GdQ[l][l];
+        for (int q = l + 1; q < ne; q++) {
+          GdQ[p][q] -= temp * GdQ[l][q];
+        }
+      }
+    }
 
-            for (int p = l + 1; p < ne; p++) {
-              double temp;
-              temp = GdQ[p][l] /= GdQ[l][l];
-              for (int q = l + 1; q < ne; q++) {
-                GdQ[p][q] -= temp * GdQ[l][q];
-              }
-            }
-          }
+    // Row permute dQ to match LU
+    for (int l = 0; l < ne; l++) {
+      tempRow[l] = dQ(perm[l]);
+    }
+    for (int l = 0; l < ne; l++) {
+      dQ(l) = tempRow[l];
+    }
 
-          // Row permute dQ to match LU
-          for (int l = 0; l < ne; l++) {
-            tempRow[l] = dQ(i, j, k, perm[l]);
-          }
-          for (int l = 0; l < ne; l++) {
-            dQ(i, j, k, l) = tempRow[l];
-          }
+    // Solve Ax = b where A = LU by first solving for
+    //
+    // Lz = a then Ux=z
+    //
+    // Form of the equations is actually
+    //
+    // LU(dq) = dQ
+    //
+    // So begin with Lz = dQ where tempRow = z
 
-          // Solve Ax = b where A = LU by first solving for
-          //
-          // Lz = a then Ux=z
-          //
-          // Form of the equations is actually
-          //
-          // LU(dq) = dQ
-          //
-          // So begin with Lz = dQ where tempRow = z
+    for (int l = 0; l < ne; l++) {
+      for (int q = 0; q < l; q++) {
+        tempRow[l] -= GdQ[l][q] * tempRow[q];
+      }
+    }
 
-          for (int l = 0; l < ne; l++) {
-            for (int q = 0; q < l; q++) {
-              tempRow[l] -= GdQ[l][q] * tempRow[q];
-            }
-          }
+    // Now solve Ux=z which is actually
+    //
+    // U(dq) = tempRow
+    //
+    // Recall we are working with primatives so we will modify the dQ
+    // view in place with the resultant dq values (as x)
 
-          // Now solve Ux=z which is actually
-          //
-          // U(dq) = tempRow
-          //
-          // Recall we are working with primatives so we will modify the dQ view
-          // in place with the resultant dq values (as x)
-
-          for (int l = ne - 1; l > -1; l--) {
-            dQ(i, j, k, l) = tempRow[l];
-            for (int q = ne - 1; q > l; q--) {
-              dQ(i, j, k, l) -= GdQ[l][q] * dQ(i, j, k, q);
-            }
-            dQ(i, j, k, l) /= GdQ[l][l];
-          }
-          // scaled by the cell's pseudo step, so a stage adds it as it is
-          for (int l = 0; l < ne; l++) {
-            dQ(i, j, k, l) *= dtau(i, j, k);
-          }
-        });
+    for (int l = ne - 1; l > -1; l--) {
+      dQ(l) = tempRow[l];
+      for (int q = ne - 1; q > l; q--) {
+        dQ(l) -= GdQ[l][q] * dQ(q);
+      }
+      dQ(l) /= GdQ[l][l];
+    }
+    // scaled by the cell's pseudo step, so a stage adds it as it is
+    for (int l = 0; l < ne; l++) {
+      dQ(l) *= dtau();
+    }
   }
+};
+
+PG_ABI void pgInvertDQ(const invertDQ &k, const pgTiling &t) {
+  forCells("dq = (Gamma + dqdQ)^{-1} dQ", t, k);
 }

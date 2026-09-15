@@ -14,3 +14,4 @@ compile_commands.json
 TAGS
 .venv
 *.json
+.DS_Store

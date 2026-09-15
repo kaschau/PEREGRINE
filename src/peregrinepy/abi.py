@@ -83,18 +83,33 @@ lib.declare("pgCopy", [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_size_t])
 
 
 class View(ctypes.Structure):
-    """One array as a kernel receives it."""
+    """One array as a kernel receives it: where it is, its extents, and its
+    strides in elements, which is the only place the device layout is
+    turned into an address."""
 
     _fields_ = [
         ("data", ctypes.c_void_p),
         ("rank", ctypes.c_int),
         ("extent", ctypes.c_int * 5),
+        ("stride", ctypes.c_long * 5),
     ]
 
     @classmethod
     def of(cls, array):
         # an array a face never allocated: the kernel never reads it
-        return cls(None, 0, (ctypes.c_int * 5)()) if array is None else array.record
+        if array is None:
+            return cls(None, 0, (ctypes.c_int * 5)(), (ctypes.c_long * 5)())
+        return array.record
+
+    @classmethod
+    def strides(cls, shape, order):
+        """Element strides of a contiguous array of this shape and order."""
+        strides, step = [0] * len(shape), 1
+        axes = range(len(shape)) if order == "F" else reversed(range(len(shape)))
+        for axis in axes:
+            strides[axis] = step
+            step *= shape[axis]
+        return strides
 
 
 class Dims(ctypes.Structure):
@@ -146,10 +161,12 @@ class DeviceArray:
         self.nbytes = int(np.prod(self.shape)) * self.dtype.itemsize
         self.ptr = lib.pgAllocate(self.nbytes)
         # the record a kernel receives, fixed for the life of the array
+        pad = [0] * (5 - len(self.shape))
         self.record = View(
             self.ptr,
             len(self.shape),
-            (ctypes.c_int * 5)(*self.shape, *[0] * (5 - len(self.shape))),
+            (ctypes.c_int * 5)(*self.shape, *pad),
+            (ctypes.c_long * 5)(*View.strides(self.shape, self.order), *pad),
         )
 
     def __del__(self):
@@ -183,6 +200,14 @@ class DeviceArray:
         host = np.require(array, self.dtype, self.order)
         assert host.shape == self.shape, (host.shape, self.shape)
         lib.pgToDevice(host.ctypes.data, self.ptr, self.nbytes, wait)
+
+    @classmethod
+    def ofBytes(cls, buffer):
+        """A device copy of a ctypes array or a numpy array, as raw bytes."""
+        host = np.frombuffer(buffer, dtype=np.uint8)
+        array = cls(host.shape, np.uint8)
+        array.set(host)
+        return array
 
     def copyFrom(self, other):
         """Take another device array's contents, without the host, in order

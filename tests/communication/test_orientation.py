@@ -103,7 +103,7 @@ pytestmark = pytest.mark.parametrize(
     "adv,gas",
     list(
         itertools.product(
-            ("KEEPpe", "fourthOrderKEEP"),
+            ("KEPaEC", "fourthOrderKEEP"),
             ("air", "CH4_O2"),
         )
     ),

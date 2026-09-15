@@ -70,10 +70,10 @@ class StagnationSubsonicInlet(Inlet):
         self.species(face, self.imposed)
 
 
+# the constant mass flux inlet is set aside with its post-eos hook
 _inlets = (
     SupersonicInlet,
     ConstantVelocitySubsonicInlet,
-    ConstantMassFluxSubsonicInlet,
     StagnationSubsonicInlet,
 )
 
@@ -81,7 +81,7 @@ pytestmark = pytest.mark.parametrize(
     "adv,gas",
     list(
         itertools.product(
-            ("KEEPpe", "fourthOrderKEEP"),
+            ("KEPaEC", "fourthOrderKEEP"),
             ("air", "CH4_O2"),
         )
     ),
@@ -90,7 +90,4 @@ pytestmark = pytest.mark.parametrize(
 
 @pytest.mark.parametrize("bc", _inlets, ids=lambda i: i.bcType)
 def test_inlet(my_setup, adv, gas, bc):
-    # NOTE: fourth order not working for constant mdot
-    if bc is ConstantMassFluxSubsonicInlet and adv == "fourthOrderKEEP":
-        pytest.skip("fourth order not supported for constant mass flux")
     bc(adv, gas).check()
