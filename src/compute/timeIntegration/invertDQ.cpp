@@ -1,15 +1,14 @@
 #include "array"
 #include "dualTime.hpp"
 #include "kernel.hpp"
+#include "species.hpp"
 #include "vector"
 
 PG_RANGE(cellCenters)
 struct invertDQ {
   cellCenterIn Q, dIJK, dtau, q, qh, qt;
-  record MW;
   cellCenterInOut dQ;
   dims d;
-  double Ru;
   double dt;
   bool viscous;
   KOKKOS_INLINE_FUNCTION void operator()() const {

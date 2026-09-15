@@ -17,7 +17,6 @@ twins = {
     abi.Column: (32, (("records", 0), ("at", 8), ("entry", 16))),
     abi.FaceColumn: (40, (("records", 0), ("at", 8), ("nface", 32))),
     abi.PerEntryInt: (16, (("all", 0), ("value", 8))),
-    abi.Record: (72, (("r", 0),)),
     abi.DimsColumn: (16, (("all", 0), ("at", 8))),
 }
 

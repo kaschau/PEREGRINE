@@ -29,7 +29,6 @@ from ..mpiComm.mpiUtils import getCommRankSize
 from ..plugins import pluginsOf
 from ..table import Table
 from ..files.configFile import pgConfigError
-from .thtrdat import thtrdat
 
 
 class solver(restart):
@@ -57,7 +56,6 @@ class solver(restart):
         super().__init__(self.mixture.speciesNames)
         # its arrays are made where the kernels run
         self.backend = runtimeBackend()
-        self.thtrdat = thtrdat(self.mixture, self.backend)
         self.ne = 5 + self.mixture.ns - 1
 
         # every array a block holds beyond the restart's, and every kernel the
@@ -72,11 +70,11 @@ class solver(restart):
         self.ng = max(k.stencil for k in kernels)
         tileSize = config["RHS"]["tileSize"]
         self.table = Table(self.blocks, tileSize, self.backend)
-        self.jit = Jit(self.mixture.ns, self.ng, tileSize)
+        self.jit = Jit(self.mixture.ns, self.ng, tileSize, self.mixture.tables())
         self.jit.compile(kernels)
         for k in kernels:
-            bound = isinstance(k, (CellCenterKernel, CellFaceKernel))
-            k.bind(self.table if bound else None, self.thtrdat)
+            if isinstance(k, (CellCenterKernel, CellFaceKernel)):
+                k.bind(self.table)
 
         # what calls them: the halo exchange and the step's flows
         self.haloExchange = HaloExchange(

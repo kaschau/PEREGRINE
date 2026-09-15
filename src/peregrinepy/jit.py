@@ -35,7 +35,7 @@ class Jit:
         os.environ.get("PEREGRINE_CACHE", Path.home() / ".cache" / "peregrinepy")
     )
 
-    def __init__(self, ns, ng, tileSize):
+    def __init__(self, ns, ng, tileSize, tables):
         # a kernel is compiled for one species count, halo depth and tile size
         self.defines = (
             f"NS={ns}",
@@ -44,6 +44,58 @@ class Jit:
             f"PG_TILE={tileSize}",
         )
         self.toolchain = Toolchain.read(self.package / "toolchain.json")
+        # the species data, baked into a header the species kernels are built with
+        self.tables = self._writeTables(tables)
+
+    ###########################################################################
+    # The species tables
+    ###########################################################################
+    def _writeTables(self, tables):
+        """The species data as one header of initializer lists, hexfloat so
+        every double is exact, written to the store once per distinct data;
+        species.hpp declares the accessors over them. Returns its path."""
+        lines = [
+            "// the species data of one case, written by the jit",
+            "#define PG_SPECIES_TABLES",
+        ]
+        key = hashlib.sha256()
+        for name, value in tables.items():
+            macro = "PG_" + re.sub(r"(?<=[a-z0-9])(?=[A-Z])", "_", name).upper()
+            if isinstance(value, tuple):
+                offsets, coefs = value
+                key.update(offsets.tobytes()), key.update(coefs.tobytes())
+                lines.append(f"#define {macro}_OFFSETS {self._ints(offsets)}")
+                lines.append(f"#define {macro}_COEFS {self._doubles(coefs)}")
+            else:
+                key.update(value.tobytes())
+                if value.ndim == 0:
+                    lines.append(f"#define {macro} {float(value).hex()}")
+                else:
+                    lines.append(f"#define {macro} {self._doubles(value)}")
+        path = self.cacheDir / f"species-{key.hexdigest()[:16]}.hpp"
+        if not path.exists():
+            path.parent.mkdir(parents=True, exist_ok=True)
+            # written aside and moved in whole, so a reader never sees a partial file
+            with tempfile.NamedTemporaryFile("w", dir=path.parent, delete=False) as f:
+                f.write("\n".join(lines) + "\n")
+            shutil.move(f.name, path)
+        return path
+
+    @staticmethod
+    def _ints(a):
+        return "{" + ", ".join(str(int(x)) for x in a) + "}"
+
+    @staticmethod
+    def _doubles(a):
+        return "{" + ", ".join(float(x).hex() for x in a) + "}"
+
+    def _forced(self, source, includes):
+        """The forced includes of a source, the species tables among them
+        when the source reaches species.hpp."""
+        forced = tuple(self.compute / i for i in includes)
+        if any(f.name == "species.hpp" for f in self.files(source, tuple(includes))):
+            forced = (self.tables, *forced)
+        return forced
 
     ###########################################################################
     # The compute tree, read once
@@ -91,13 +143,13 @@ class Jit:
         everything it is compiled from, the toolchain, and the case's defines
         and includes."""
         defines = self.defines + tuple(defines)
-        forced = tuple(self.compute / i for i in includes)
+        forced = self._forced(source, includes)
         key = hashlib.sha256()
-        for f in self.files(source, tuple(includes)):
+        for f in (*self.files(source, tuple(includes)), *forced):
             key.update(f.read_bytes())
         key.update(repr(vars(self.toolchain)).encode())
         key.update(" ".join(sorted(defines)).encode())
-        key.update(" ".join(str(i) for i in forced).encode())
+        key.update(" ".join(i.name for i in forced).encode())
         stem = Path(source).stem
         return self.cacheDir / f"{stem}-{key.hexdigest()[:16]}{self.toolchain.suffix}"
 
@@ -110,7 +162,7 @@ class Jit:
 
         path = self.compute / source
         defines = self.defines + tuple(defines)
-        includes = tuple(self.compute / i for i in includes)
+        includes = self._forced(source, includes)
         out.parent.mkdir(parents=True, exist_ok=True)
         # ranks on one node race to the same file; the first to the lock builds it
         with open(out.with_suffix(".lock"), "w") as lock:

@@ -134,17 +134,6 @@ using cellFaceIn = cellFaceColumn<const double>;
 using cellFaceOut = cellFaceColumn<double>;
 using cellFaceInOut = cellFaceOut;
 
-// a case-wide record (the species data), carried by value so the device
-// has it, indexed as it is
-struct record {
-  pgView r;
-  template <class... X>
-  KOKKOS_INLINE_FUNCTION const double &operator()(X... index) const {
-    return window<const double, sizeof...(X)>{r.data, &r}(index...);
-  }
-  KOKKOS_INLINE_FUNCTION int extent(const int d) const { return r.extent[d]; }
-};
-
 // one value per entry of the table (an integer column), pinned with the
 // columns so the body reads it as a value
 template <class T> struct perEntry {
@@ -341,7 +330,7 @@ KOKKOS_INLINE_FUNCTION out5 as5(const pgOut &v) {
 
 // the member twins python builds a kernel's record from, laid out the same
 static_assert(sizeof(cellCenterIn) == 32 && sizeof(cellFaceIn) == 32 &&
-              sizeof(haloIn) == 40 && sizeof(record) == 72 &&
-              sizeof(perEntry<int>) == 16 && sizeof(dims) == 16);
+              sizeof(haloIn) == 40 && sizeof(perEntry<int>) == 16 &&
+              sizeof(dims) == 16);
 
 #endif

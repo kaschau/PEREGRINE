@@ -15,7 +15,7 @@ import re
 
 import numpy as np
 
-from .abi import Column, DimsColumn, FaceColumn, PerEntryInt, Record
+from .abi import Column, DimsColumn, FaceColumn, PerEntryInt
 from .bcs import getBc
 from .jit import Jit
 from .misc import subclassWhere
@@ -25,8 +25,8 @@ from .table import BaseRange
 class Kernel:
     """A kernel over a table given at the call, or the bound one. Each
     argument is filled by name: from the table for the columns, dims,
-    tilings and per-entry integers, from the species data for the case
-    records and constants, and from keywords for the rest."""
+    tilings and per-entry integers, and from keywords for the rest; the
+    species data is baked in by the jit."""
 
     scalars = {"int": ctypes.c_int, "double": ctypes.c_double, "bool": ctypes.c_bool}
     prototype = re.compile(r"PG_ABI\s+(\w+)\s+(pg\w+)\s*\(([^)]*)\)")
@@ -93,7 +93,7 @@ class Kernel:
         # the compiled function, once the jit has handed it over
         self.function = None
         # what a call runs with unless it says otherwise
-        self.table, self.thtrdat, self.fixed = None, None, {}
+        self.table, self.fixed = None, {}
         # how each parameter is found at a call
         tilings = iter(self.ranges)
         self.resolvers = [
@@ -172,8 +172,6 @@ class Kernel:
                         FaceColumn if head.startswith(cls.blockFaceHeads) else Column
                     )
                     members.append(("column", mname.removesuffix(side), ctype, access))
-                elif head == "record":
-                    members.append(("record", mname, Record, head))
                 elif head == "dims":
                     members.append(("dims", mname, DimsColumn, head))
                 elif head == "perEntry<int>":
@@ -243,10 +241,9 @@ class Kernel:
     # Filling a call
     ###########################################################################
     def _resolver(self, kind, name, declared=None, ctype=None):
-        """A function of (table, th, nface, given, keep) giving one argument;
-        what is given by keyword wins over what the table or species data
-        hold. A column is the table's, where the kernels run; a single
-        record, the case's, on the host."""
+        """A function of (table, nface, given, keep) giving one argument;
+        what is given by keyword wins over what the table holds. A column is
+        the table's, where the kernels run."""
 
         def given(value, keep, table):
             # a column is named: the kernel gets the table's
@@ -265,7 +262,7 @@ class Kernel:
         def tilingOf(table, nface):
             return ctypes.addressof(table.tiling(declared.at(nface)))
 
-        def found(table, th, nface, keep, values):
+        def found(table, nface, keep, values):
             if kind == "struct":
                 # one record of the struct, each member found as an argument is
                 record, members = self.structs[name]
@@ -274,14 +271,12 @@ class Kernel:
                     if mkind == "own":
                         continue
                     resolve = self._resolver(mkind, mname, declared, mtype)
-                    setattr(filled, field, resolve(table, th, nface, values, keep))
+                    setattr(filled, field, resolve(table, nface, values, keep))
                 keep.append(filled)
                 return ctypes.addressof(filled)
             if kind == "column":
                 # the table's column; the shape pins the rest
                 return ctype(records=table.column(self.columns.get(name, name)))
-            if kind == "record":
-                return Record(r=getattr(th, name).record)
             if kind == "dims":
                 column = table.column("dims")
                 return ctype(all=column) if ctype is DimsColumn else column
@@ -294,23 +289,21 @@ class Kernel:
                 return ctype(all=column) if ctype is PerEntryInt else column
             if kind == "int" and name == "nface":
                 return nface
-            if kind in self.scalars and th is not None and hasattr(th, name):
-                return getattr(th, name)
             raise TypeError(f"a call needs {name}")
 
-        def resolve(table, th, nface, values, keep):
+        def resolve(table, nface, values, keep):
             return (
                 given(values.pop(name), keep, table)
                 if name in values
-                else found(table, th, nface, keep, values)
+                else found(table, nface, keep, values)
             )
 
         return resolve
 
-    def bind(self, table=None, thtrdat=None, **fixed):
-        """What a call runs with unless it names its own: the table and the
-        species data, and the scalars settled up front."""
-        self.table, self.thtrdat, self.fixed = table, thtrdat, fixed
+    def bind(self, table=None, **fixed):
+        """What a call runs with unless it names its own: the table, and the
+        scalars settled up front."""
+        self.table, self.fixed = table, fixed
         return self
 
     def __call__(self, table=None, nface=None, **given):
@@ -327,7 +320,7 @@ class Kernel:
             nface = bound
         keep = []
         try:
-            args = [r(table, self.thtrdat, nface, given, keep) for r in self.resolvers]
+            args = [r(table, nface, given, keep) for r in self.resolvers]
         except TypeError as e:
             raise TypeError(f"{self.__name__}: {e}") from None
         if given:

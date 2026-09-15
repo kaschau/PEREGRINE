@@ -1,4 +1,5 @@
 #include "kernel.hpp"
+#include "species.hpp"
 
 // References
 //
@@ -20,8 +21,6 @@ PG_RANGE(cellCenters, halo = ng)
 struct chungDenseGasUnityLewis {
   cellCenterIn Q, q, qh;
   cellCenterOut qt;
-  record MW, Tcrit, Vcrit, acentric, chungA, chungB, lewis, redDipole;
-  double Ru;
   KOKKOS_INLINE_FUNCTION void operator()() const {
     const double &T = q(4);
     double Y[ns];

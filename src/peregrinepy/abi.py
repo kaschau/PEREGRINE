@@ -182,13 +182,6 @@ class PerEntryInt(ctypes.Structure):
     _fields_ = [("all", ctypes.c_void_p), ("value", ctypes.c_int)]
 
 
-class Record(ctypes.Structure):
-    """A case-wide record by value (record): the device cannot follow a host
-    pointer."""
-
-    _fields_ = [("r", pgView)]
-
-
 class DimsColumn(ctypes.Structure):
     """The dims column (dims): every entry's shape, then the entry's."""
 

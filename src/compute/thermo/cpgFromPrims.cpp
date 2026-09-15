@@ -1,11 +1,10 @@
 #include "kernel.hpp"
+#include "species.hpp"
 
 PG_RANGE(cellCenters, halo = ng)
 struct cpgFromPrims {
   cellCenterOut Q, qh;
   cellCenterInOut q;
-  record MW, cp0;
-  double Ru;
   KOKKOS_INLINE_FUNCTION void operator()() const {
     // Updates all conserved quantities from primatives
     // Along the way, we need to compute mixture properties

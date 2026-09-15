@@ -30,7 +30,7 @@ class Report(BasePlugin):
         # its own reduction, compiled and bound as the solver's kernels are
         self.CFLmax = CellCenterKernel("utils/CFLmax.cpp")
         solver.jit.compile([self.CFLmax])
-        self.CFLmax.bind(solver.table, solver.thtrdat)
+        self.CFLmax.bind(solver.table)
         self.started = perf_counter()
         if getCommRankSize()[1] == 0:
             print(self.banner)

@@ -1,11 +1,10 @@
 #include "kernel.hpp"
+#include "species.hpp"
 
 PG_RANGE(cellCenters, halo = ng)
 struct kineticTheoryUnityLewis {
   cellCenterIn Q, q, qh;
   cellCenterOut qt;
-  record MW, kappaPoly, lewis, muPoly;
-  double Ru;
   KOKKOS_INLINE_FUNCTION void operator()() const {
     // poly'l degree
 
@@ -43,9 +42,9 @@ struct kineticTheoryUnityLewis {
       // the scratch persists between cells; Horner starts from zero
       mu_sp[n] = 0.0;
       kappa_sp[n] = 0.0;
-      for (int m = muPoly.extent(1) - 1; m >= 0; m--)
+      for (int m = muPolyDegree(n) - 1; m >= 0; m--)
         mu_sp[n] = mu_sp[n] * u + muPoly(n, m);
-      for (int m = kappaPoly.extent(1) - 1; m >= 0; m--)
+      for (int m = kappaPolyDegree(n) - 1; m >= 0; m--)
         kappa_sp[n] = kappa_sp[n] * u + kappaPoly(n, m);
 
       // Set to the correct dimensions

@@ -1,11 +1,10 @@
 #include "kernel.hpp"
+#include "species.hpp"
 
 PG_RANGE(cellCenters, halo = ng)
 struct kineticTheory {
   cellCenterIn q;
   cellCenterOut qt;
-  record MW, dij, kappaPoly, muPoly;
-  double Ru;
   KOKKOS_INLINE_FUNCTION void operator()() const {
     // poly'l degree
 
@@ -58,13 +57,13 @@ struct kineticTheory {
       // the scratch persists between cells; Horner starts from zero
       mu_sp[n] = 0.0;
       kappa_sp[n] = 0.0;
-      for (int m = muPoly.extent(1) - 1; m >= 0; m--)
+      for (int m = muPolyDegree(n) - 1; m >= 0; m--)
         mu_sp[n] = mu_sp[n] * u + muPoly(n, m);
-      for (int m = kappaPoly.extent(1) - 1; m >= 0; m--)
+      for (int m = kappaPolyDegree(n) - 1; m >= 0; m--)
         kappa_sp[n] = kappa_sp[n] * u + kappaPoly(n, m);
       for (int n2 = n; n2 <= ns - 1; n2++) {
         Dij[n][n2] = 0.0;
-        for (int m = dij.extent(2) - 1; m >= 0; m--)
+        for (int m = dijDegree(n, n2) - 1; m >= 0; m--)
           Dij[n][n2] = Dij[n][n2] * u + dij(n, n2, m);
       }
 

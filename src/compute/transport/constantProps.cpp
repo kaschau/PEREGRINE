@@ -1,11 +1,10 @@
 #include "kernel.hpp"
+#include "species.hpp"
 
 PG_RANGE(cellCenters, halo = ng)
 struct constantProps {
   cellCenterIn Q, q, qh;
   cellCenterOut qt;
-  record MW, kappa0, lewis, mu0;
-  double Ru;
   KOKKOS_INLINE_FUNCTION void operator()() const {
     double Y[ns];
     double X[ns];

@@ -2,9 +2,11 @@
 
 from pathlib import Path
 
+import numpy as np
+
 from .cantera import CanteraParser
 from ..misc import subclassWhere
-from . import anyOf
+from . import Ru, anyOf
 from .diffusionModel import BaseSpeciesDiffusionModel
 from .eosModel import BaseEosModel
 from .species import Species
@@ -42,6 +44,57 @@ class Mixture:
         for model in (self.trans, self.diffusion):
             if model is not None:
                 model.populateSpeciesData(self.species)
+
+    # what the kernels read of a species: one value each, or one polynomial
+    # in ln T each, ascending coefficients; a quantity no model provided is
+    # zeros, and no kernel of that case reads it
+    scalars = (
+        "MW",
+        "hRef",
+        "cp0",
+        "mu0",
+        "kappa0",
+        "lewis",
+        "Tcrit",
+        "pcrit",
+        "Vcrit",
+        "acentric",
+        "redDipole",
+    )
+    polynomials = (
+        "cpPoly",
+        "hPoly",
+        "sPoly",
+        "muPoly",
+        "kappaPoly",
+        "chungA",
+        "chungB",
+    )
+
+    def tables(self):
+        """The species data as the jit bakes it: name -> array. A scalar is
+        (ns,). A polynomial table is ragged, every row its own length, as
+        (offsets, coefs): offsets[r] .. offsets[r + 1] are row r's
+        coefficients in coefs. The rows are the species, and for dij the
+        unordered pairs (i <= j) in numpy's triu_indices order, which
+        species.hpp's pairIndex reproduces."""
+        sp = list(self.species.values())
+        tables = {"Ru": np.array(Ru)}
+        for name in self.scalars:
+            tables[name] = np.array([s.get(name, 0.0) for s in sp], dtype=np.float64)
+        for name in self.polynomials:
+            tables[name] = self._ragged([s.get(name, [0.0]) for s in sp])
+        i, j = np.triu_indices(self.ns)
+        pairs = [sp[a]["dij"][b] if "dij" in sp[a] else [0.0] for a, b in zip(i, j)]
+        tables["dij"] = self._ragged(pairs)
+        return tables
+
+    @staticmethod
+    def _ragged(rows):
+        offsets = np.zeros(len(rows) + 1, dtype=np.int32)
+        offsets[1:] = np.cumsum([len(r) for r in rows])
+        coefs = np.concatenate([np.asarray(r, dtype=np.float64) for r in rows])
+        return offsets, coefs
 
     @property
     def transportKernel(self):

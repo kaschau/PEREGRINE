@@ -17,7 +17,7 @@ class NanCheck(BasePlugin):
         # its own check, compiled and bound as the solver's kernels are
         self.allFinite = CellCenterKernel("utils/allFinite.cpp")
         solver.jit.compile([self.allFinite])
-        self.allFinite.bind(solver.table, solver.thtrdat)
+        self.allFinite.bind(solver.table)
 
     def __call__(self, solver):
         comm, rank, size = getCommRankSize()

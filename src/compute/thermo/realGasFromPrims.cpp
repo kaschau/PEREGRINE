@@ -1,12 +1,11 @@
 #include "cubic.hpp"
 #include "kernel.hpp"
+#include "species.hpp"
 
 PG_RANGE(cellCenters, halo = ng)
 struct realGasFromPrims {
   cellCenterOut Q, qh;
   cellCenterInOut q;
-  record MW, cpPoly, hPoly, hRef, Tcrit, pcrit, acentric;
-  double Ru;
   KOKKOS_INLINE_FUNCTION void operator()() const {
     // Updates all conserved quantities from primatives
     // Along the way, we need to compute mixture properties
@@ -177,9 +176,9 @@ struct realGasFromPrims {
       for (int n = 0; n <= ns - 1; n++) {
         // ideal cp/R and h/(RT), Horner in u
         double cpR = 0.0, hRT = 0.0;
-        for (int m = cpPoly.extent(1) - 1; m >= 0; m--)
+        for (int m = cpPolyDegree(n) - 1; m >= 0; m--)
           cpR = cpR * u + cpPoly(n, m);
-        for (int m = hPoly.extent(1) - 1; m >= 0; m--)
+        for (int m = hPolyDegree(n) - 1; m >= 0; m--)
           hRT = hRT * u + hPoly(n, m);
         hRT += hRef(n) / T;
         const double Rn = Ru / MW(n);
