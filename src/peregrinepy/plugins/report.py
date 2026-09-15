@@ -1,17 +1,54 @@
+from time import perf_counter
+
+import numpy as np
+from mpi4py import MPI
+
+from ..kernel import CellCenterKernel
 from ..mpiComm.mpiUtils import getCommRankSize
 from .base import BasePlugin
 
 
 class Report(BasePlugin):
-    """The step just taken: its number, time, size and CFL numbers. The CFL
-    is reduced over the ranks here, so a run pays for it only when it asks."""
+    """Everything a run prints: the banner and the case when it starts, each
+    step it is due on (number, time, size, CFL numbers, and whatever the
+    stepper has to say), and the timing when it is over. Without this plugin
+    a run prints nothing. The CFL is reduced over the ranks here, so a run
+    pays for it only when it asks."""
 
     name = "report"
 
+    banner = (
+        " >>> ******************************** <<<\n"
+        "              PEREGRINE CFD\n"
+        " >>> ******************************** <<<\n"
+        "  Copyright (c) 2021-2024 Kyle A. Schau\n"
+        "           All rights reserved.\n"
+    )
+
+    def __init__(self, solver, cfgsect):
+        super().__init__(solver, cfgsect)
+        # its own reduction, compiled and bound as the solver's kernels are
+        self.CFLmax = CellCenterKernel("utils/CFLmax.cpp")
+        solver.jit.compile([self.CFLmax])
+        self.CFLmax.bind(solver.table, solver.thtrdat)
+        self.started = perf_counter()
+        if getCommRankSize()[1] == 0:
+            print(self.banner)
+            print(solver)
+
+    def before(self, solver, dt):
+        """A stepper gathers what it will report only on a step that is
+        reported on."""
+        solver.reportDue = self.dueAfter(solver, dt)
+
     def __call__(self, solver):
-        acoustic, convective, both = solver.maxCFL()
-        if getCommRankSize()[1] != 0:
+        comm, rank, size = getCommRankSize()
+        cfl = np.zeros(3)
+        self.CFLmax(cfl=cfl)
+        comm.Allreduce(MPI.IN_PLACE, cfl, op=MPI.MAX)
+        if rank != 0:
             return
+        acoustic, convective, both = cfl
         dt = solver.dt
         print(
             f" >>> --------- nrt: {solver.nrt:<6} ---------- <<<\n",
@@ -21,4 +58,21 @@ class Report(BasePlugin):
             f"         Acoustic  : {acoustic * dt:.3f}\n"
             f"         Convective: {convective * dt:.3f}\n"
             " >>> -------------------------------- <<<\n",
+        )
+        said = solver.report()
+        if said:
+            print(said)
+
+    def finalize(self, solver):
+        elapsed = perf_counter() - self.started
+        cells = solver.numCells
+        if getCommRankSize()[1] != 0:
+            return
+        hrs, rem = divmod(elapsed, 3600.0)
+        mins, secs = divmod(rem, 60.0)
+        steps = max(solver.nrt, 1)
+        print(
+            "PEREGRINE simulation completed.\n"
+            f"Simulation time: {int(hrs)}h : {int(mins)}m : {int(secs)}s\n"
+            f"Seconds/Iteration/Cell: {elapsed / steps / cells:.3e}\n"
         )

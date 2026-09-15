@@ -351,7 +351,7 @@ def simulate(testnum, index="i"):
 
     dimsPerBlock = rotate([nx, 2, 2], index)
     lengths = rotate([1, 0.1, 0.1], index)
-    mb = pg.multiBlock.solver(
+    mb = pg.integrators.getSolver(
         config,
         mesh=pg.mesher.CubeMesher(
             mbDims=[1, 1, 1], dimsPerBlock=dimsPerBlock, lengths=lengths
@@ -390,7 +390,7 @@ def simulate(testnum, index="i"):
 
     ccAxis = {"i": 0, "j": 1, "k": 2}
     uIndex = {"i": 1, "j": 2, "k": 3}
-    xc = blk.hostCopy("cells")[..., ccAxis[index]]
+    xc = blk.cells.get()[..., ccAxis[index]]
     # Initialize Left/Right properties
     q = blk.q.get()
     q[:, :, :, 0] = np.where(xc <= test.x0, test.pL, test.pR)
@@ -455,7 +455,7 @@ def simulate(testnum, index="i"):
 
     s_ = rotate(np.s_[ng:-ng, ng, ng], index)
     q, Q, qh = blk.q.get(), blk.Q.get(), blk.qh.get()
-    x = blk.hostCopy("cells")[..., ccAxis[index]][s_]
+    x = blk.cells.get()[..., ccAxis[index]][s_]
     rho = Q[s_][:, 0]
     p = q[s_][:, 0]
     phi = blk.phi.get()[s_][:, uIndex[index] - 1]

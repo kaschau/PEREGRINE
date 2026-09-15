@@ -1,9 +1,9 @@
 #include "kernel.hpp"
 
-PG_RANGE(interior, ne)
+PG_RANGE(cellCenters, components = ne)
 struct dq2FD {
-  in dENCdxyz, q;
-  out grads;
+  cellCenterIn dENCdxyz, q;
+  cellCenterOut grads;
   dims d;
   KOKKOS_INLINE_FUNCTION void operator()(const int l) const {
     const int ni = d->ni, nj = d->nj, nk = d->nk;

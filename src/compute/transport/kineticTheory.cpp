@@ -1,9 +1,9 @@
 #include "kernel.hpp"
 
-PG_RANGE(cells)
+PG_RANGE(cellCenters, halo = ng)
 struct kineticTheory {
-  in q;
-  out qt;
+  cellCenterIn q;
+  cellCenterOut qt;
   record MW, dij, kappaPoly, muPoly;
   double Ru;
   KOKKOS_INLINE_FUNCTION void operator()() const {

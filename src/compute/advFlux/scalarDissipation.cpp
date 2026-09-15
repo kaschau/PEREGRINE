@@ -2,14 +2,14 @@
 
 PG_STENCIL(2);
 
-PG_RANGE(faces)
+PG_RANGE(cellFaces)
 struct scalarDissipation {
-  inL QL, phiL, qL, qhL;
-  inR QR, phiR, qR, qhR;
-  inLL QLL;
-  inRR QRR;
-  out F;
-  in A;
+  cellCenterL QL, phiL, qL, qhL;
+  cellCenterR QR, phiR, qR, qhR;
+  cellCenterLL QLL;
+  cellCenterRR QRR;
+  cellFaceOut F;
+  cellFaceIn A;
   static constexpr double kappa2 = 0.5;
   static constexpr double kappa4 = 0.005;
   KOKKOS_INLINE_FUNCTION void operator()() const {

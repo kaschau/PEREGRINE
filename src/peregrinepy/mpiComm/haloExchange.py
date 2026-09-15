@@ -6,6 +6,10 @@ and that block may be on another rank or on this one. Which faces trade, who
 they trade with, and the planes of the block they trade through are all fixed
 once the blocks know their neighbors, so they are worked out once here and an
 exchange only moves data.
+
+The halo exchange moves halos and nothing else: it is given its pack and
+unpack kernels, builds its trade tables from Trade entries, and is told to
+forget when a block or a face re-makes its arrays.
 """
 
 import numpy as np
@@ -13,12 +17,33 @@ from mpi4py.MPI import DOUBLE as MPIDOUBLE
 from mpi4py.MPI import Request
 
 from ..abi import lib
-from ..kernel import BoundKernel
 from ..table import Table
 from .mpiUtils import getCommRankSize
 
 
-class Communicator:
+class Trade:
+    """One face's trade of one variable through one buffer: what a pack or
+    an unpack takes for it. A block array's planes go out through the face's
+    send buffer, laid out for the neighbor, and come in from whichever
+    buffer the neighbor's arrived in."""
+
+    def __init__(self, blk, face, var, buffer):
+        self.blk, self.face = blk, face
+        self.view = getattr(blk, var)
+        self.buffer = buffer
+        self.nLayer, self.skip = face.tradeLayers(var)
+
+    def column(self, name):
+        if name == "nface":
+            return self.face.nface
+        if name == "transpose":
+            return int(self.face._transposed)
+        if name in ("flip0", "flip1"):
+            return int(int(name[-1]) in self.face._flipped)
+        return getattr(self, name)
+
+
+class HaloExchange:
     """The halo exchange for one multiBlock.
 
     A face whose neighbor sits on our own rank is handed what we packed for it
@@ -26,11 +51,11 @@ class Communicator:
     packed partition is the former.
     """
 
-    def __init__(self, table, thtrdat):
-        # the pack and unpack, every trading face in one call
-        self.pack = BoundKernel(table, thtrdat, "utils/extractSendBuffer.cpp")
-        self.unpack = BoundKernel(table, thtrdat, "utils/placeRecvBuffer.cpp")
-        self.kernels = [self.pack, self.unpack]
+    def __init__(self, pack, unpack, tileSize, backend):
+        # the pack and unpack, every trading face in one call; the trade
+        # tables are kept where the kernels run
+        self.pack, self.unpack = pack, unpack
+        self.tileSize, self.backend = tileSize, backend
         self.comm, self.rank, self.size = getCommRankSize()
 
         # every face that trades, with the block planes it trades through
@@ -72,33 +97,29 @@ class Communicator:
         for var in varis:
             self._exchangeOne(var)
 
+    def forget(self):
+        """A block or a face re-made its arrays: every trade table and
+        landing is read again."""
+        self.tables, self.landings = {}, {}
+
     def _tables(self, var):
-        """The pack and unpack tables for one variable: each trade's block
-        array, its buffers and which planes it trades. A neighbor on our own
-        rank is unpacked straight out of what it packed; a message lands in
-        the face's own buffer first."""
+        """The pack and unpack tables for one variable, a trade per face. A
+        neighbor on our own rank is unpacked straight out of what it packed;
+        a message lands in the face's own buffer first."""
         if var not in self.tables:
             partners = dict(self.local)
-            pack, unpack = Table(), Table()
-            for index, (blk, face) in enumerate(self.trades):
-                nLayer, skip = face.tradeLayers(var)
-                pack.register(index, "view", getattr(blk, var))
-                pack.register(index, "buffer", getattr(face, "sendBuffer_" + var))
-                pack.setInt(index, "nface", face.nface)
-                pack.setInt(index, "nLayer", nLayer)
-                pack.setInt(index, "skip", skip)
-                pack.setInt(index, "transpose", int(face._transposed))
-                pack.setInt(index, "flip0", int(0 in face._flipped))
-                pack.setInt(index, "flip1", int(1 in face._flipped))
+            pack, unpack = [], []
+            for blk, face in self.trades:
+                pack.append(Trade(blk, face, var, getattr(face, "sendBuffer_" + var)))
                 if face in partners:
-                    source = getattr(partners[face], "sendBuffer_" + var)
+                    arrival = getattr(partners[face], "sendBuffer_" + var)
                 else:
-                    source = getattr(face, "recvBuffer_" + var)
-                unpack.register(index, "view", getattr(blk, var))
-                unpack.register(index, "buffer", source)
-                unpack.setInt(index, "nface", face.nface)
-                unpack.setInt(index, "nLayer", nLayer)
-            self.tables[var] = (pack, unpack)
+                    arrival = getattr(face, "recvBuffer_" + var)
+                unpack.append(Trade(blk, face, var, arrival))
+            self.tables[var] = (
+                Table(pack, self.tileSize, self.backend),
+                Table(unpack, self.tileSize, self.backend),
+            )
         return self.tables[var]
 
     def _ndim(self, var):

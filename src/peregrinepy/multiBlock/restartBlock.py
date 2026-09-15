@@ -9,19 +9,12 @@ class restartBlock(gridBlock):
     would need to know about a block.
     """
 
-    def __init__(self, nblki, speciesNames, ng=0):
-        super().__init__(nblki, ng)
-
-        self.nrt = 0
-        self.tme = 0.0
-
-        self.speciesNames = speciesNames
-        self.ns = len(speciesNames)
+    def __init__(self, nblki, mb):
+        super().__init__(nblki, mb)
+        self.speciesNames = mb.speciesNames
+        self.ns = len(self.speciesNames)
         if self.ns < 1:
             raise ValueError("Number of species must be >=1")
-
-        # Primative variables
-        self.declare("q", kind="cell", components=5 + self.ns - 1)
 
     def verifySpeciesSum(self, normalize=False):
         """Function to verify that the sum of species in any cell is not greater than unity"""
@@ -29,7 +22,8 @@ class restartBlock(gridBlock):
         assert (
             self.ns > 1
         ), "You are trying to check species sum on a case where ns = 1."
-        summation = np.sum(self.q[:, :, :, 5::], axis=-1)
+        q = self.q.get()
+        summation = np.sum(q[:, :, :, 5::], axis=-1)
         if np.max(summation) > 1.0:
             print(
                 "Warning! Species sum of",
@@ -40,9 +34,10 @@ class restartBlock(gridBlock):
                 self.nblki,
             )
             if normalize:
-                self.q[:, :, :, 5::] = np.where(
+                q[:, :, :, 5::] = np.where(
                     summation[:, :, :, np.newaxis] > 1.0,
-                    self.q[:, :, :, 5::] / summation[:, :, :, np.newaxis],
-                    self.q[:, :, :, 5::],
+                    q[:, :, :, 5::] / summation[:, :, :, np.newaxis],
+                    q[:, :, :, 5::],
                 )
+                self.q.set(q)
             return False

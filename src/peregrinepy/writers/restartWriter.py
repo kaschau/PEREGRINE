@@ -55,7 +55,7 @@ class RestartWriter(BaseWriter):
         # block arrays written beside the state
         self.extras = tuple(extras)
         self.speciesNames = mb.speciesNames
-        self.hasConservatives = mb.hasConservatives
+        self.writesRho = "Q" in mb.arrays
         # what a result is called, from its step n and time t; set by every write
         self.basename = basename
         self.name = basename.format(n=mb.nrt, t=mb.tme)
@@ -79,7 +79,7 @@ class RestartWriter(BaseWriter):
     def dataNames(self):
         """Every variable this writer puts in the file, in q's order."""
         names = ["p", "u", "v", "w", "T"] + self.speciesNames
-        if self.hasConservatives:
+        if self.writesRho:
             names.insert(0, "rho")
         return names
 
@@ -159,12 +159,12 @@ class RestartWriter(BaseWriter):
         # one snapshot of each block's state for the whole write: q, the
         # density alone out of Q when there is one, and the extras
         self._host = {
-            id(blk): {n: blk.hostCopy(n) for n in ("q", *self.extras)}
+            id(blk): {n: getattr(blk, n).get() for n in ("q", *self.extras)}
             for blk in mb.blocks
         }
-        if self.hasConservatives:
+        if self.writesRho:
             for blk in mb.blocks:
-                self._host[id(blk)]["rho"] = blk.Q.component(0)
+                self._host[id(blk)]["rho"] = blk.Q.get(component=0)
 
         # which of my blocks are pieces of each block of the grid
         mine = {}
@@ -302,7 +302,7 @@ class RestartWriter(BaseWriter):
 
     def _decorateBlockElem(self, blockElem, nblki, ni, nj, nk):
         scalars = ["p", "T"] + self.speciesNames
-        if self.hasConservatives:
+        if self.writesRho:
             scalars.insert(0, "rho")
 
         for varName in scalars:

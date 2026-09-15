@@ -38,7 +38,7 @@ def simulate():
     NE = 64
     NN = 64
     NX = 64
-    mb = pg.multiBlock.solver(
+    mb = pg.integrators.getSolver(
         config,
         mesh=pg.mesher.CubeMesher(
             mbDims=[1, 1, 1],
@@ -61,7 +61,7 @@ def simulate():
     delY = Ly / (NN - 1)
     delZ = Lz / (NX - 1)
 
-    nodes = blk.hostCopy("nodes")
+    nodes = blk.nodes.get()
     x, y, z = (nodes[..., n] for n in range(3))
     for E in range(NE):
         for N in range(NN):
@@ -87,7 +87,7 @@ def simulate():
                     * np.sin(lamXZ * np.pi * E * delX / Lx)
                     * np.sin(lamYZ * np.pi * N * delY / Ly)
                 )
-    blk.store("nodes", nodes)
+    blk.nodes.set(nodes)
 
     mb.setBlockCommunication()
 
@@ -100,7 +100,7 @@ def simulate():
     rho0 = 1.0
     gamma = cp / (cp - R)
 
-    xc, yc, zc = (blk.hostCopy("cells")[..., n] for n in range(3))
+    xc, yc, zc = (blk.cells.get()[..., n] for n in range(3))
 
     q = blk.q.get()
     q[:, :, :, 0] = 1 / gamma + (rho0 * M0**2 / 16.0) * (

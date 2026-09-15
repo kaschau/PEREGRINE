@@ -3,11 +3,11 @@
 #include "kernel.hpp"
 #include "vector"
 
-PG_RANGE(interior)
+PG_RANGE(cellCenters)
 struct invertDQ {
-  in Q, dIJK, dtau, q, qh, qt;
+  cellCenterIn Q, dIJK, dtau, q, qh, qt;
   record MW;
-  inout dQ;
+  cellCenterInOut dQ;
   dims d;
   double Ru;
   double dt;

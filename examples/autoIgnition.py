@@ -42,7 +42,7 @@ def simulate():
         s: y for s, y in zip(gas.species_names, gas.Y) if y > 0.0
     }
     config.validateConfig()
-    mb = pg.multiBlock.solver(
+    mb = pg.integrators.getSolver(
         config,
         mesh=pg.mesher.CubeMesher(
             mbDims=[1, 1, 1], dimsPerBlock=[2, 2, 2], lengths=[0.01, 0.01, 0.01]

@@ -19,7 +19,7 @@ def simulate():
     config["mcPhysics"]["trans"] = "chungDenseGas"
     config["mcPhysics"]["Trange"] = (300.0, 2000.0)
     config.validateConfig()
-    mb = pg.multiBlock.solver(
+    mb = pg.integrators.getSolver(
         config,
         mesh=pg.mesher.CubeMesher(
             mbDims=[1, 1, 1], dimsPerBlock=[2, 2, 2], lengths=[0.01, 0.01, 0.01]

@@ -9,7 +9,7 @@ def create(bc, adv, gas):
     config["RHS"]["diffusion"] = True
     configure(config, gas)
 
-    mb = pg.multiBlock.solver(
+    mb = pg.integrators.getSolver(
         config,
         mesh=pg.mesher.CubeMesher(
             mbDims=[1, 1, 1], dimsPerBlock=[8, 6, 4], lengths=[1, 1, 1]
@@ -19,10 +19,10 @@ def create(bc, adv, gas):
     # perturb the ineterio points a bit
     for blk in mb.blocks:
         i = blk.ng + 1
-        nodes = blk.hostCopy("nodes")
+        nodes = blk.nodes.get()
         size = nodes[i:-i, i:-i, i:-i].shape
         nodes[i:-i, i:-i, i:-i] += np.random.uniform(-1, 1, size) * 0.02
-        blk.store("nodes", nodes)
+        blk.nodes.set(nodes)
 
     mb.generateHalo()
     mb.computeMetrics()
@@ -85,8 +85,8 @@ def create(bc, adv, gas):
         inputBcValues["mDotPerUnitArea"] = mDotPerAbc
         face.bc.setValues(inputBcValues)
         # the target mdot goes in the zeroth (unused) index of QBcVals, for the check
-        QBcVals = face.hostCopy("QBcVals")
+        QBcVals = face.QBcVals.get()
         QBcVals[:, :, 0] = mDotPerAbc
-        face.store("QBcVals", QBcVals)
+        face.QBcVals.set(QBcVals)
 
     return mb

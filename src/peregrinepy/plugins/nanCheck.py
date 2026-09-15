@@ -1,6 +1,7 @@
 import numpy as np
 from mpi4py import MPI
 
+from ..kernel import CellCenterKernel
 from ..mpiComm.mpiUtils import getCommRankSize
 from .base import BasePlugin
 
@@ -11,9 +12,16 @@ class NanCheck(BasePlugin):
 
     name = "nanCheck"
 
+    def __init__(self, solver, cfgsect):
+        super().__init__(solver, cfgsect)
+        # its own check, compiled and bound as the solver's kernels are
+        self.allFinite = CellCenterKernel("utils/allFinite.cpp")
+        solver.jit.compile([self.allFinite])
+        self.allFinite.bind(solver.table, solver.thtrdat)
+
     def __call__(self, solver):
         comm, rank, size = getCommRankSize()
-        bad = np.array([not solver.allFinite()], np.int32)
+        bad = np.array([not self.allFinite()], np.int32)
         comm.Allreduce(MPI.IN_PLACE, bad, op=MPI.SUM)
         if not bad[0]:
             return

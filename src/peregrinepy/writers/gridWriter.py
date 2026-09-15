@@ -73,7 +73,7 @@ class GridWriter(BaseWriter):
         with Progress(len(mb.blocks), self.quiet) as bar:
             for blk in mb.blocks:
                 coordS = gf[f"coordinates_{blk.nblki:06d}"]
-                nodes = blk.hostCopy("nodes")
+                nodes = blk.nodes.get()
                 for c, name in enumerate(("x", "y", "z")):
                     coordS[name][:] = np.ascontiguousarray(nodes[blk.interior + (c,)].T)
                 bar.step(f"Writing out block {blk.nblki}")

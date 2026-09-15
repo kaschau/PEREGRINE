@@ -67,7 +67,7 @@ def reorientBlock1(mb, S, varList):
     if S == "123":
         return
     blk0, blk1 = mb.blocks[0], mb.blocks[1]
-    data = {var: reorient(blk1.hostCopy(var), S) for var in varList}
+    data = {var: reorient(getattr(blk1, var).get(), S) for var in varList}
 
     # storage axis axes[m] now holds reference axis m
     axes, _ = signedPermutation(S)
@@ -78,7 +78,7 @@ def reorientBlock1(mb, S, varList):
     # resizing reallocates every array whose shape changed
     blk1.setExtents(*newDims)
     for var, values in data.items():
-        blk1.store(var, values)
+        getattr(blk1, var).set(values)
 
     blk0.getFace(2).orientation = S
     nn = blk0.getFace(2).neighborNface
@@ -97,7 +97,7 @@ def reorientBlock1(mb, S, varList):
     blk1.getFace(nn).orientation = inverseS
 
 
-VARLIST = ["nodes", "q", "Q", "grads", "phi"]
+VARLIST = ["nodes", "q", "Q", "grads"]
 
 pytestmark = pytest.mark.parametrize(
     "adv,gas",
@@ -118,7 +118,7 @@ def buildAndCommunicate(S, adv, gas, seed):
     config["RHS"]["diffusion"] = True
     configure(config, gas)
 
-    mb = pg.multiBlock.solver(
+    mb = pg.integrators.getSolver(
         config,
         mesh=pg.mesher.CubeMesher(
             mbDims=[2, 1, 1], dimsPerBlock=[6, 3, 2], lengths=[2, 1, 1]
@@ -127,12 +127,12 @@ def buildAndCommunicate(S, adv, gas, seed):
 
     for blk in mb.blocks:
         for var in VARLIST:
-            blk.store(var, np.random.random(blk.shapeOf(var)))
+            getattr(blk, var).set(np.random.random(blk.shapeOf(var)))
 
     reorientBlock1(mb, S, VARLIST)
 
     mb.setBlockCommunication()
-    mb.communicator.exchange(VARLIST)
+    mb.haloExchange.exchange(VARLIST)
 
     return mb
 
@@ -146,8 +146,8 @@ def _reference(adv, gas, seed):
     if key not in _refCache:
         mb = buildAndCommunicate("123", adv, gas, seed)
         _refCache[key] = (
-            {v: mb.blocks[0].hostCopy(v) for v in VARLIST},
-            {v: mb.blocks[1].hostCopy(v) for v in VARLIST},
+            {v: getattr(mb.blocks[0], v).get() for v in VARLIST},
+            {v: getattr(mb.blocks[1], v).get() for v in VARLIST},
         )
     return _refCache[key]
 
@@ -159,8 +159,14 @@ def test_orientation(my_setup, adv, gas, S):
 
     mb = buildAndCommunicate(S, adv, gas, seed)
     for var in VARLIST:
-        assert np.array_equal(mb.blocks[0].hostCopy(var), ref0[var]), (S, var, "blk0")
-        assert np.array_equal(mb.blocks[1].hostCopy(var), reorient(ref1[var], S)), (
+        assert np.array_equal(getattr(mb.blocks[0], var).get(), ref0[var]), (
+            S,
+            var,
+            "blk0",
+        )
+        assert np.array_equal(
+            getattr(mb.blocks[1], var).get(), reorient(ref1[var], S)
+        ), (
             S,
             var,
             "blk1",

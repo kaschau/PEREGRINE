@@ -3,10 +3,10 @@
 #include "kernel.hpp"
 #include "vector"
 
-PG_RANGE(interior, ne)
+PG_RANGE(cellCenters, components = ne)
 struct dQdt {
-  in Q, Qn, Qnm1;
-  inout dQ;
+  cellCenterIn Q, Qn, Qnm1;
+  cellCenterInOut dQ;
   dims d;
   double dt;
   KOKKOS_INLINE_FUNCTION void operator()(const int l) const {

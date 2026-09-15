@@ -1,15 +1,38 @@
 import numpy as np
 
+from ..backend import HostBackend
 from .topology import topology
 from .gridBlock import gridBlock
 
 
 class grid(topology):
     """A topology with coordinates: every block's nodes, and the metrics and
-    halos that follow from them."""
+    halos that follow from them. A multiBlock says what every one of its
+    blocks holds, each level adding its own arrays to the level below's."""
+
+    # the halo depth of its blocks; a solver's is as deep as its widest stencil
+    ng = 0
+
+    def __init__(self):
+        super().__init__()
+        # where its blocks' arrays are made: numpy on the host, until a solver
+        # says where its kernels run
+        self.backend = HostBackend()
+        # name -> (kind, components) of every array a block holds
+        self.arrays = {}
+        self.declareArray("nodes", kind="node", components=3)
+        # cell centers are as much as a block with no solution on it can work out
+        self.declareArray("cells", kind="cell", components=3)
+
+    def declareArray(self, name, *, kind, components=()):
+        """An array every block holds: its kind names the shape, the
+        components what sits at each point of it."""
+        if isinstance(components, int):
+            components = (components,)
+        self.arrays[name] = (kind, tuple(components))
 
     def _newBlock(self, nblki):
-        return gridBlock(nblki)
+        return gridBlock(nblki, self)
 
     def detectPeriodics(self, tol=1e-8):
         """Find the interfaces that are really periodic, and how they move.
@@ -28,7 +51,7 @@ class grid(topology):
             if face.neighbor is None or face.periodicRotation is not None:
                 continue
             other = self.getBlock(face.neighbor)
-            mine = blk.hostCopy("nodes")[face.firstPlane].reshape(-1, 3)
+            mine = blk.nodes.get()[face.firstPlane].reshape(-1, 3)
             theirs = face.alignToMe(
                 other.nodes[other.getFace(face.neighborNface).firstPlane]
             ).reshape(-1, 3)

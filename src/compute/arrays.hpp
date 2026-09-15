@@ -1,6 +1,7 @@
 // How a body reaches data: a column of the block table pinned to the cell
 // the launch shape hands it (in, out, inout, and a flux kernel's sides), a
-// column of the face table pinned to a halo cell (faceIn, faceOut), a
+// column of a block face launch pinned to a halo cell (halo, block face and
+// record columns), a
 // case-wide record, the entry's dims, a per-entry value, and the window
 // underneath them all; the case's constants, which the halo depth needs.
 // Nothing here launches anything. A kernel gets this through kernel.hpp.
@@ -68,11 +69,16 @@ KOKKOS_INLINE_FUNCTION constexpr offset operator*(const int n,
 }
 constexpr offset I{1, 0, 0}, J{0, 1, 0}, K{0, 0, 1};
 
-// A column of the table as a kernel's member: python hands over the records,
-// the launch shape pins it to the cell, and the body indexes what remains,
-// whose count says the rank. A read-only column is an in, a written one an
-// out (inout when it is both, for python's graph); a flux kernel's are
-// declared a side away from the face.
+// A column of the block table as a kernel's member: python hands over the
+// records, the launch shape pins it to the cell the thread is on, and the
+// body indexes what remains, whose count says the rank. A column is
+// declared by where the thread looks. In a cell-center launch a
+// cellCenterIn/Out/InOut column is the thread's own cell, q(l), or a fixed
+// neighbor of it, q(+I, l). In a cell-face launch the thread traverses the
+// faces of one direction and a cell-center column looks to a side of the
+// face, cellCenterL/R (LL/RR one further), qL(l), qR(l); a face is indexed
+// like the cell to its right. A cellFaceIn/Out/InOut column is the face's
+// own array, F(l), A(c), and has no neighbors.
 template <class T, offset O> struct column {
   const pgView *records;
   const pgView *at; // pinned: the entry's record
@@ -109,9 +115,24 @@ template <class T, offset O> struct column {
     return element(o, rest...);
   }
 };
-using in = column<const double, offset{0, 0, 0}>;
-using out = column<double, offset{0, 0, 0}>;
-using inout = out;
+using cellCenterIn = column<const double, offset{0, 0, 0}>;
+using cellCenterOut = column<double, offset{0, 0, 0}>;
+using cellCenterInOut = cellCenterOut; // read and written, for python's graph
+
+// a cell-face array at the face the thread is on: the same pin and address
+// as a cell-center column with no step, and no neighbors
+template <class T> struct cellFaceColumn : column<T, offset{0, 0, 0}> {
+  template <class... X>
+    requires(std::is_integral_v<X> && ...)
+  KOKKOS_INLINE_FUNCTION T &operator()(X... rest) const {
+    return this->element(offset{0, 0, 0}, rest...);
+  }
+  template <class... X>
+  KOKKOS_INLINE_FUNCTION T &operator()(const offset &, X...) const = delete;
+};
+using cellFaceIn = cellFaceColumn<const double>;
+using cellFaceOut = cellFaceColumn<double>;
+using cellFaceInOut = cellFaceOut;
 
 // a case-wide record (the species data), carried by value so the device
 // has it, indexed as it is
@@ -142,27 +163,34 @@ struct dims {
   KOKKOS_INLINE_FUNCTION const pgDims *operator->() const { return at; }
 };
 
-// A column of the face table as a hook's member, pinned to one halo cell of
-// one face. An i face is the prototype: the halo lies to the left of the
-// face and the interior to the right. A thread stands on one halo layer of
-// one plane cell: q.L(n) is its own halo cell, q.R(n), q.RR(n), q.RRR(n) the
-// first three interior cells, the words a wide flux stencil uses; q.at(layer,
-// n) reaches any layer, counted from the face, negative into the halo. A
-// face array's own plane is its R; a face's values are read here(n), a
-// per-face record as it is. A hook declares the columns it uses, faceIn,
-// faceOut or faceInOut, and nothing else. Every hook runs over every halo
-// layer.
+// The columns of a block face launch, pinned to one halo cell of one of a
+// block's six faces: a thread stands on one halo layer of one plane cell.
+// An i face is the prototype: the halo lies to the left of the face and the
+// interior to the right. A column is declared by what the thread stands
+// next to. A halo column is a cell-center array of the block walked in
+// layers from the face: q.L(n) is the thread's own halo cell, q.R(n),
+// q.RR(n), q.RRR(n) the first three interior cells, q.at(layer, n) any
+// layer counted from the face, negative into the halo. A block face column is
+// a value on the block face at this plane cell, whether the array is the
+// block's cell-face area vectors or the face's own values: S(c),
+// qBcVals(n). A record column is a per-face constant indexed as it is, the
+// rotation matrix; a buffer column is a face's exchange buffer, the same. A bc
+// declares the columns it uses, in, out or inout, and nothing else, and runs
+// over every halo layer.
 //
-// The hooks: euler sets the halo state the inviscid fluxes see, and every
-// wall is a slip wall there; preDqDxyz then makes no-slip walls correct so
-// the velocity gradients on them come out right; postDqDxyz sets the halo
-// gradients, of which only the first layer's are read, by the face.
-// where a hook's thread stands
+// A bc has a struct per bcHook, the point of the step it runs at: euler
+// sets the halo state the inviscid fluxes see, and every wall is a slip
+// wall there; preDqDxyz then makes no-slip walls correct so the velocity
+// gradients on them come out right; postDqDxyz sets the halo gradients, of
+// which only the first layer's are read, by the face.
+// where a bc's thread stands
 struct plane {
   int entry, g, i, j, nface;
 };
 
-template <class T> struct faceColumn {
+// what every column of a block face launch shares: the records, the pinned face
+// and plane cell, and which way the face looks
+template <class T> struct atBlockFace {
   const pgView *records;
   const pgView *at_; // pinned: the face's record
   plane p;           // pinned
@@ -176,21 +204,35 @@ template <class T> struct faceColumn {
   KOKKOS_INLINE_FUNCTION bool low() const { return faceLow(p.nface); }
   // the sign of the outward normal along the axis
   KOKKOS_INLINE_FUNCTION double outward() const { return low() ? -1.0 : 1.0; }
-
-  // an element at a layer from the face, in this plane cell
+  KOKKOS_INLINE_FUNCTION int extent(const int d) const {
+    return at_->extent[d];
+  }
+  // the block index along the axis of the cell `layer` from the face, the
+  // first interior cell at 0, negative into the halo
+  KOKKOS_INLINE_FUNCTION int along(const int layer) const {
+    return low() ? ng + layer : at_->extent[axis()] - ng - 1 - layer;
+  }
+  // this plane cell's indices in a block array, with `along` on the axis
   template <class... X>
-  KOKKOS_INLINE_FUNCTION T &at(const int layer, X... rest) const {
+  KOKKOS_INLINE_FUNCTION T &inBlock(const int along, X... rest) const {
     const pgView &v = *at_;
-    const int a = axis();
-    const int along = low() ? ng + layer : v.extent[a] - ng - 1 - layer;
     int b[3];
     int d = 0;
     for (int k = 0; k < 3; k++) {
-      b[k] = k == a ? along : (d++ == 0 ? p.i : p.j);
+      b[k] = k == axis() ? along : (d++ == 0 ? p.i : p.j);
       assert(b[k] >= 0 && b[k] < v.extent[k]);
     }
     assert(v.rank == 3 + sizeof...(X));
     return window<T, 3 + sizeof...(X)>{v.data, &v}(b[0], b[1], b[2], rest...);
+  }
+};
+
+// a cell-center array of the block, walked in layers from the face
+template <class T> struct haloColumn : atBlockFace<T> {
+  using atBlockFace<T>::p;
+  template <class... X>
+  KOKKOS_INLINE_FUNCTION T &at(const int layer, X... rest) const {
+    return this->inBlock(this->along(layer), rest...);
   }
   template <class... X> KOKKOS_INLINE_FUNCTION T &L(X... rest) const {
     return at(-1 - p.g, rest...);
@@ -205,28 +247,47 @@ template <class T> struct faceColumn {
     return at(2, rest...);
   }
   // the same column standing on another plane cell of this face
-  KOKKOS_INLINE_FUNCTION faceColumn on(const int a, const int b) const {
-    faceColumn c = *this;
+  KOKKOS_INLINE_FUNCTION haloColumn on(const int a, const int b) const {
+    haloColumn c = *this;
     c.p.i = a, c.p.j = b;
     return c;
   }
-  KOKKOS_INLINE_FUNCTION int extent(const int d) const {
-    return at_->extent[d];
-  }
-  // a face's own values, at this plane cell
-  template <class... X> KOKKOS_INLINE_FUNCTION T &here(X... rest) const {
-    assert(at_->rank == 2 + sizeof...(X));
-    return window<T, 2 + sizeof...(X)>{at_->data, at_}(p.i, p.j, rest...);
-  }
-  // a per-face record, indexed as it is
-  template <class... X> KOKKOS_INLINE_FUNCTION T &operator()(X... index) const {
-    assert(at_->rank == sizeof...(X));
-    return window<T, sizeof...(X)>{at_->data, at_}(index...);
+};
+using haloIn = haloColumn<const double>;
+using haloOut = haloColumn<double>;
+using haloInOut = haloOut; // read and written, for python's graph
+
+// a value on the block face at this plane cell: from the block's cell-face
+// array (rank 4, the plane of cell faces lying on the block face), or from the
+// face's own values (rank 3)
+template <class T> struct blockFaceColumn : atBlockFace<T> {
+  using atBlockFace<T>::p;
+  template <class... X> KOKKOS_INLINE_FUNCTION T &operator()(X... rest) const {
+    const pgView &v = *this->at_;
+    if (v.rank == 3 + sizeof...(X)) {
+      // the block face's plane of cell faces: a cell-face array has one more
+      // plane along the axis than the cell array, so its layer 0 is the
+      // block face on either side
+      return this->inBlock(this->along(0), rest...);
+    }
+    assert(v.rank == 2 + sizeof...(X));
+    return window<T, 2 + sizeof...(X)>{v.data, &v}(p.i, p.j, rest...);
   }
 };
-using faceIn = faceColumn<const double>;
-using faceOut = faceColumn<double>;
-using faceInOut = faceOut; // read and written, for python's graph
+using blockFaceIn = blockFaceColumn<const double>;
+
+// a per-face array indexed as it is
+template <class T> struct recordColumn : atBlockFace<T> {
+  template <class... X> KOKKOS_INLINE_FUNCTION T &operator()(X... index) const {
+    assert(this->at_->rank == sizeof...(X));
+    return window<T, sizeof...(X)>{this->at_->data, this->at_}(index...);
+  }
+};
+using recordIn = recordColumn<const double>;
+// a face's exchange buffer, laid out (layer, a, b, components) for the
+// neighbor and indexed as it is
+using bufferIn = recordColumn<const double>;
+using bufferOut = recordColumn<double>;
 
 // The windows by rank, and the records as windows: the form of the three
 // hand-unrolled flux schemes, until they are generalized.
@@ -277,5 +338,10 @@ KOKKOS_INLINE_FUNCTION in5 as5(const pgIn &v) {
 KOKKOS_INLINE_FUNCTION out5 as5(const pgOut &v) {
   return asWindow<double, 5>(v);
 }
+
+// the member twins python builds a kernel's record from, laid out the same
+static_assert(sizeof(cellCenterIn) == 32 && sizeof(cellFaceIn) == 32 &&
+              sizeof(haloIn) == 40 && sizeof(record) == 72 &&
+              sizeof(perEntry<int>) == 16 && sizeof(dims) == 16);
 
 #endif

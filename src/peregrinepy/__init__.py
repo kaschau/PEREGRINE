@@ -3,6 +3,7 @@ from . import bcs
 from . import partition
 from . import plugins
 from . import files
+from . import integrators
 from . import interpolation
 from . import mesher
 from . import misc
@@ -19,6 +20,7 @@ __all__ = [
     "partition",
     "plugins",
     "files",
+    "integrators",
     "interpolation",
     "mesher",
     "misc",

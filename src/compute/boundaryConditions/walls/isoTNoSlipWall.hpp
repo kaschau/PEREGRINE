@@ -6,11 +6,11 @@
 namespace isoTNoSlipWall {
 
 struct euler {
-  faceInOut q;
-  faceIn S, qBcVals;
+  haloInOut q;
+  blockFaceIn S, qBcVals;
   KOKKOS_INLINE_FUNCTION void operator()() const {
     double area, nx, ny, nz;
-    faceNormal(S.R(0), S.R(1), S.R(2), area, nx, ny, nz);
+    faceNormal(S(0), S(1), S(2), area, nx, ny, nz);
 
     // match pressure
     q.L(0) = q.R(0);
@@ -22,7 +22,7 @@ struct euler {
     q.L(3) = q.R(3) - 2.0 * uDotn * nz;
 
     // set temperature
-    q.L(4) = qBcVals.here(4);
+    q.L(4) = qBcVals(4);
     // match species
     for (int n = 5; n < ne; n++) {
       q.L(n) = q.R(n);
@@ -31,7 +31,7 @@ struct euler {
 };
 
 struct preDqDxyz {
-  faceInOut q;
+  haloInOut q;
   KOKKOS_INLINE_FUNCTION void operator()() const {
     // flip velo on wall
     q.L(1) = -q.R(1);
@@ -41,7 +41,7 @@ struct preDqDxyz {
 };
 
 struct postDqDxyz {
-  faceInOut grads;
+  haloInOut grads;
   KOKKOS_INLINE_FUNCTION void operator()() const {
     // negate pressure,  neumann velocity,temperature
     // gradients

@@ -18,7 +18,7 @@ def test_cubic(my_setup):
     config["mcPhysics"]["Trange"] = (300.0, 3500.0)
     config["RHS"]["diffusion"] = False
 
-    mb = pg.multiBlock.solver(
+    mb = pg.integrators.getSolver(
         config,
         mesh=pg.mesher.CubeMesher(
             mbDims=[1, 1, 1], dimsPerBlock=[2, 2, 2], lengths=[1, 1, 1]

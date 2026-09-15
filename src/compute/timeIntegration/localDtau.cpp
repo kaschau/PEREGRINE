@@ -3,10 +3,10 @@
 #include "kernel.hpp"
 #include "vector"
 
-PG_RANGE(interior)
+PG_RANGE(cellCenters)
 struct localDtau {
-  in Q, dIJK, iS, jS, kS, q, qh, qt;
-  out dtau;
+  cellCenterIn Q, dIJK, iS, jS, kS, q, qh, qt;
+  cellCenterOut dtau;
   dims d;
   bool viscous;
   KOKKOS_INLINE_FUNCTION void operator()() const {

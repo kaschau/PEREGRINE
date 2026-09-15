@@ -40,7 +40,7 @@ class RestartReader:
     def fill(self, mb):
         """Fill in the primitives of every block of mb, and the step and time
         they are at; and any array a block declares that the result stores
-        beyond the state, an integrator's."""
+        beyond the state, a stepper's."""
         with h5py.File(self.fileName, "r") as f, Progress(
             len(mb.blocks), self.quiet
         ) as bar:
@@ -49,15 +49,11 @@ class RestartReader:
 
                 # read from base slab
                 resS = f[f"results_{blk.baseNblki:06d}"]
-                dest = blk.hostCopy("q")
+                dest = blk.q.get()
                 for i, var in enumerate(variables):
                     # a case may carry species the result it restarts from did
                     # not, and those keep the zeros they were allocated with
                     if var not in resS:
-                        if blk.nblki == 0:
-                            print(
-                                f"Warning, {var} not found in restart. Leaving as is."
-                            )
                         continue
                     # the device layout takes the file straight in; a host
                     # array pays a copy through a temporary
@@ -70,13 +66,13 @@ class RestartReader:
                     else:
                         dest[blk.interior + tuple([i])] = resS[var][blk.baseCellSlab].T
 
-                blk.store("q", dest)
+                blk.q.set(dest)
 
                 for name in self.extras:
                     if name not in getattr(blk, "declared", ()):
                         continue
                     self.found.add(name)
-                    dest = blk.hostCopy(name)
+                    dest = getattr(blk, name).get()
                     comps = (slice(None),) * (dest.ndim - 3)
                     if dest.flags["F_CONTIGUOUS"]:
                         resS[name].read_direct(
@@ -86,7 +82,7 @@ class RestartReader:
                         )
                     else:
                         dest[blk.interior] = resS[name][comps + blk.baseCellSlab].T
-                    blk.store(name, dest)
+                    getattr(blk, name).set(dest)
                 bar.step(f"Reading in block {blk.nblki}")
 
         mb.nrt = self.nrt

@@ -1,11 +1,11 @@
 #include "faces.hpp"
 
-PG_RANGE(faces)
+PG_RANGE(cellFaces)
 struct rusanov {
-  inR QR, qR, qhR;
-  inL QL, qL, qhL;
-  out F;
-  in A;
+  cellCenterR QR, qR, qhR;
+  cellCenterL QL, qL, qhL;
+  cellFaceOut F;
+  cellFaceIn A;
   KOKKOS_INLINE_FUNCTION void operator()() const {
     double S, nx, ny, nz;
     faceNormal(A(0), A(1), A(2), S, nx, ny, nz);

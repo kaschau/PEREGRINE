@@ -37,7 +37,7 @@ class GridReader:
                 else []
             )
             # which partition we picked, and what the rest of the reads follow
-            self._partitionName, self._cuts, self._rankOfNblki = None, None, None
+            self.partitionName, self._cuts, self._rankOfNblki = None, None, None
             self.mine = (
                 range(self.totalBlocks) if ranks is None else self._partition(*ranks)
             )
@@ -57,10 +57,10 @@ class GridReader:
                 # takes the coordinates, a dataset each in the file and one
                 # array in the block
                 if "nodes" in getattr(blk, "declared", ()):
-                    nodes = blk.hostCopy("nodes")
+                    nodes = blk.nodes.get()
                     for c, name in enumerate(("x", "y", "z")):
                         nodes[blk.interior + (c,)] = coordS[name][blk.baseNodeSlab].T
-                    blk.store("nodes", nodes)
+                    blk.nodes.set(nodes)
                 bar.step(f"Reading in block {nblki}")
             self._readConnectivity(mb)
 
@@ -72,7 +72,7 @@ class GridReader:
 
         A partition for the same ranks but a different node layout assigns the
         same ranks, just placed for a machine we are not on, so it is used
-        with a note rather than refused.
+        rather than refused; the run header names the one used.
         """
         layouts = [rpn for n, rpn in self.partitions if n == size]
         if not layouts:
@@ -83,11 +83,6 @@ class GridReader:
                 f" -ranksPerNode {ranksPerNode}"
             )
         if ranksPerNode not in layouts:
-            print(
-                f"No {size}x{ranksPerNode} partition, using "
-                f"{size}x{layouts[0]}, which was placed for a different node "
-                f"layout."
-            )
             ranksPerNode = layouts[0]
 
         name = f"{size}x{ranksPerNode}"
@@ -103,7 +98,7 @@ class GridReader:
             assert len(rank) == len(cuts), (
                 f"the {name} partition has {len(rank)} ranks for " f"{len(cuts)} pieces"
             )
-        self._partitionName, self._cuts, self._rankOfNblki = name, cuts, rank
+        self.partitionName, self._cuts, self._rankOfNblki = name, cuts, rank
         return [int(n) for n in np.flatnonzero(rank == getCommRankSize()[1])]
 
     def _blockBaseInfo(self, blk):
@@ -148,7 +143,7 @@ class GridReader:
         partition whose blocks are pieces connects them its own way, so it
         carries its own."""
         if self._cuts is not None:
-            group = self.f[f"partitions/{self._partitionName}/connectivity"]
+            group = self.f[f"partitions/{self.partitionName}/connectivity"]
         else:
             group = self.f["connectivity"]
         neighbor = np.array(group["neighbor"])

@@ -122,7 +122,7 @@ def simulate():
             dimsPerBlock=[100, 40, 2],
             lengths=[0.1, 0.02, 0.001],
         )
-    mb = pg.multiBlock.solver(config, mesh)
+    mb = pg.integrators.getSolver(config, mesh)
     blk = mb.blocks[0]
     mb.totalBlocks = 2
     if rank == 0:

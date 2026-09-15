@@ -1,7 +1,6 @@
 #!/usr/bin/env -S python -m mpi4py
 import argparse
 import sys
-from time import perf_counter
 
 import numpy as np
 
@@ -11,49 +10,15 @@ np.seterr(all="raise")
 
 
 def simulate(args):
+    """A case from a config and a grid, or from a result, run to the end.
+    Nothing prints unless the config asks for the report plugin."""
     comm, rank, size = pg.mpiComm.mpiUtils.getCommRankSize()
-    if rank == 0:
-        string = " >>> ******************************** <<<\n"
-        string += "              PEREGRINE CFD\n"
-        string += " >>> ******************************** <<<\n"
-        string += "  Copyright (c) 2021-2024 Kyle A. Schau\n"
-        string += "           All rights reserved.\n"
-        print(string)
-
     # a result carries the case and the grid it came from; either given here wins
     state = pg.readers.RestartReader(args.restart) if args.restart else None
     config = pg.readers.readConfigFile(args.config) if args.config else state.config
     ranks = (size, pg.mpiComm.mpiUtils.getRanksPerNode())
     mesh = pg.readers.GridReader(args.mesh or state.grid, ranks)
-    mb = pg.multiBlock.solver(config, mesh, state)
-
-    # Get some stats about the simulation
-    nCells = mb.numCells
-    efficiency, slowestProc = mb.loadEfficiency
-    if rank == 0:
-        string = " Simulation Summary:\n"
-        string += f"  Total cells: {nCells}"
-        print(string)
-        if efficiency == 100.0:
-            print("  Perfect load balancing achieved. 10 points to Gryffindor")
-        else:
-            print(
-                f"  Load Balance Eff: {efficiency: .2f}% (rank {slowestProc})",
-            )
-        print(mb)
-        ts = perf_counter()
-
-    mb.run()
-
-    if rank == 0:
-        elapsed = perf_counter() - ts
-        hrs, rem = divmod(elapsed, 3600.0)
-        mins, secs = divmod(rem, 60.0)
-        print(
-            "PEREGRINE simulation completed.\n"
-            f"Simulation time: {hrs}h : {mins}m : {int(secs)}s\n"
-            f"Seconds/Iteration/Cell: {elapsed/config['simulation']['niter']/nCells}\n"
-        )
+    pg.integrators.getSolver(config, mesh, state).run()
 
 
 if __name__ == "__main__":

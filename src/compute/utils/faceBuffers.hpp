@@ -5,7 +5,8 @@
 
 #include "kernel.hpp"
 
-// A face's halo trade. Layer 0 of a buffer is the plane nearest the face on
+// One block face's trade in a halo exchange. Layer 0 of a buffer is the
+// plane nearest the face on
 // both sides, so what one block sends from its interior lands in its
 // neighbor's halo layer for layer whatever side either face is on. The send
 // buffer is packed the way the neighbor reads it -- the plane is turned on
@@ -15,15 +16,15 @@
 
 // what python hands a send: the block array, the buffer, and how the
 // neighbor's frame differs (a node array's planes start past the face)
-struct sendTrade {
-  faceIn view;
-  faceOut buffer;
+struct haloSend {
+  haloIn view;
+  bufferOut buffer;
   perEntry<int> skip, transpose, flip0, flip1;
   int ndim;
 };
 template <int R> struct packing {
-  faceIn view;
-  faceOut buffer;
+  haloIn view;
+  bufferOut buffer;
   perEntry<int> skip, transpose, flip0, flip1;
   KOKKOS_INLINE_FUNCTION void operator()() const {
     const int g = view.p.g, a = view.p.i, b = view.p.j;
@@ -44,14 +45,14 @@ template <int R> struct packing {
   }
 };
 
-struct recvTrade {
-  faceOut view;
-  faceIn buffer;
+struct haloRecv {
+  haloOut view;
+  bufferIn buffer;
   int ndim;
 };
 template <int R> struct unpacking {
-  faceOut view;
-  faceIn buffer;
+  haloOut view;
+  bufferIn buffer;
   KOKKOS_INLINE_FUNCTION void operator()() const {
     const int g = view.p.g, a = view.p.i, b = view.p.j;
     const int nl = buffer.extent(3), nm = R == 5 ? buffer.extent(4) : 1;

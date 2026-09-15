@@ -6,11 +6,11 @@
 namespace isoTMovingWall {
 
 struct euler {
-  faceInOut q;
-  faceIn S, qBcVals;
+  haloInOut q;
+  blockFaceIn S, qBcVals;
   KOKKOS_INLINE_FUNCTION void operator()() const {
     double area, nx, ny, nz;
-    faceNormal(S.R(0), S.R(1), S.R(2), area, nx, ny, nz);
+    faceNormal(S(0), S(1), S(2), area, nx, ny, nz);
 
     // match pressure
     q.L(0) = q.R(0);
@@ -22,7 +22,7 @@ struct euler {
     q.L(3) = q.R(3) - 2.0 * uDotn * nz;
 
     // set temperature
-    q.L(4) = qBcVals.here(4);
+    q.L(4) = qBcVals(4);
     // match species
     for (int n = 5; n < ne; n++) {
       q.L(n) = q.R(n);
@@ -31,18 +31,18 @@ struct euler {
 };
 
 struct preDqDxyz {
-  faceInOut q;
-  faceIn qBcVals;
+  haloInOut q;
+  blockFaceIn qBcVals;
   KOKKOS_INLINE_FUNCTION void operator()() const {
     // apply velo on wall
-    q.L(1) = 2.0 * qBcVals.here(1) - q.R(1);
-    q.L(2) = 2.0 * qBcVals.here(2) - q.R(2);
-    q.L(3) = 2.0 * qBcVals.here(3) - q.R(3);
+    q.L(1) = 2.0 * qBcVals(1) - q.R(1);
+    q.L(2) = 2.0 * qBcVals(2) - q.R(2);
+    q.L(3) = 2.0 * qBcVals(3) - q.R(3);
   }
 };
 
 struct postDqDxyz {
-  faceInOut grads;
+  haloInOut grads;
   KOKKOS_INLINE_FUNCTION void operator()() const {
     // negate pressure gradient, neumann velocity,
     // temperature gradients

@@ -38,7 +38,7 @@ def test_kineticTheory(my_setup, ctfile):
     config["mcPhysics"]["diffusion"] = "binary"
     config["RHS"]["diffusion"] = True
 
-    mb = pg.multiBlock.solver(
+    mb = pg.integrators.getSolver(
         config,
         mesh=pg.mesher.CubeMesher(
             mbDims=[1, 1, 1], dimsPerBlock=[2, 2, 2], lengths=[1, 1, 1]

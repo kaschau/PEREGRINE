@@ -1,11 +1,11 @@
 #include "faces.hpp"
 
-PG_RANGE(faces)
+PG_RANGE(cellFaces)
 struct hllc {
-  inL QL, qL, qhL;
-  inR QR, qR, qhR;
-  out F;
-  in A;
+  cellCenterL QL, qL, qhL;
+  cellCenterR QR, qR, qhR;
+  cellFaceOut F;
+  cellFaceIn A;
   KOKKOS_INLINE_FUNCTION void operator()() const {
     double S, nx, ny, nz;
     faceNormal(A(0), A(1), A(2), S, nx, ny, nz);

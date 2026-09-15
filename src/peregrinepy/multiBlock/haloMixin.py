@@ -69,13 +69,13 @@ class HaloMixin:
     def fillHaloWithNearest(self, name):
         """Every halo plane of an array a copy of the nearest interior one:
         the starting point for a state read in over the interior alone."""
-        a = self.hostCopy(name)
+        a = getattr(self, name).get()
         ng = self.ng
         for axis in range(3):
             planes = np.moveaxis(a, axis, 0)
             planes[:ng] = planes[ng]
             planes[-ng:] = planes[-ng - 1]
-        self.store(name, a)
+        getattr(self, name).set(a)
 
     def generateHalo(self):
         ng = self.ng

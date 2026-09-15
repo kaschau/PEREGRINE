@@ -1,10 +1,10 @@
 #include "kernel.hpp"
 #include <numeric>
 
-PG_RANGE(interior)
+PG_RANGE(cellCenters)
 struct vanAlbadaPressure {
-  out phi;
-  in q;
+  cellCenterOut phi;
+  cellCenterIn q;
   dims d;
   KOKKOS_INLINE_FUNCTION void operator()() const {
     const int ni = d->ni, nj = d->nj, nk = d->nk;

@@ -6,16 +6,16 @@
 namespace constantPressureSubsonicExit {
 
 struct euler {
-  faceInOut q;
-  faceIn S, qBcVals;
+  haloInOut q;
+  blockFaceIn S, qBcVals;
   KOKKOS_INLINE_FUNCTION void operator()() const {
     const double dplus = S.outward();
 
     double area, nx, ny, nz;
-    faceNormal(S.R(0), S.R(1), S.R(2), area, nx, ny, nz);
+    faceNormal(S(0), S(1), S(2), area, nx, ny, nz);
 
     // set pressure
-    q.L(0) = qBcVals.here(0);
+    q.L(0) = qBcVals(0);
 
     // extrapolate velocity, each halo layer mirrored about the first
     // interior cell, unless reverse flow detected
@@ -39,7 +39,7 @@ struct euler {
 };
 
 struct postDqDxyz {
-  faceInOut grads;
+  haloInOut grads;
   KOKKOS_INLINE_FUNCTION void operator()() const {
     for (int l = 0; l < ne; l++) {
       // neumann all gradients

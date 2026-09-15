@@ -98,7 +98,10 @@ class MergeMixin(OrientMixin):
             dropShared[axis] = slice(1, None)
             joined = {
                 name: np.concatenate(
-                    [lower.hostCopy(name), upper.hostCopy(name)[tuple(dropShared)]],
+                    [
+                        getattr(lower, name).get(),
+                        getattr(upper, name).get()[tuple(dropShared)],
+                    ],
                     axis=axis,
                 )
                 for name in ("nodes",)
@@ -107,7 +110,7 @@ class MergeMixin(OrientMixin):
             dims[axis] += (B.ni, B.nj, B.nk)[axis] - 1
             A.setExtents(*dims)
             for name, values in joined.items():
-                A.store(name, values)
+                getattr(A, name).set(values)
 
             # B is now in our frame, so its far face is ours on that side
             A.faces[fa - 1] = B.getFace(fa)
@@ -129,7 +132,7 @@ class MergeMixin(OrientMixin):
             for face in blk.faces:
                 if face.neighbor is not None:
                     face.neighbor = renumber[face.neighbor]
-        mb.blocks = keep
+        mb.blocks[:] = keep
         mb.totalBlocks = len(keep)
 
     def matchInterfaces(self, mb):

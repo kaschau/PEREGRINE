@@ -7,10 +7,10 @@
 // costs nothing. The interior only: every halo a stage reads is rebuilt by
 // the consistify that follows it.
 
-PG_RANGE(interior, ne)
+PG_RANGE(cellCenters, components = ne)
 struct axpbypcz {
-  inout A;
-  in B, C;
+  cellCenterInOut A;
+  cellCenterIn B, C;
   double a, b;
   double c;
   KOKKOS_INLINE_FUNCTION void operator()(const int l) const {

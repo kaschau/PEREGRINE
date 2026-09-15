@@ -16,10 +16,10 @@
 //     O'Connell
 //     5th Edition, 2001
 
-PG_RANGE(cells)
+PG_RANGE(cellCenters, halo = ng)
 struct chungDenseGasUnityLewis {
-  in Q, q, qh;
-  out qt;
+  cellCenterIn Q, q, qh;
+  cellCenterOut qt;
   record MW, Tcrit, Vcrit, acentric, chungA, chungB, lewis, redDipole;
   double Ru;
   KOKKOS_INLINE_FUNCTION void operator()() const {

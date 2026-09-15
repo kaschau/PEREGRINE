@@ -10,10 +10,10 @@
 // FLUIDSInt.J.Numer.Meth.Fluids2000;32: 369 – 406 E. Lenormand,  P. Sagautb,
 // and  L. Ta Phuoc
 
-PG_RANGE(interiorPlusOne)
+PG_RANGE(cellCenters, halo = 1)
 struct smagorinsky {
-  in Jinv, Q, grads, qh;
-  inout qt;
+  cellCenterIn Jinv, Q, grads, qh;
+  cellCenterInOut qt;
   dims d;
   KOKKOS_INLINE_FUNCTION void operator()() const {
     const int ni = d->ni, nj = d->nj, nk = d->nk;

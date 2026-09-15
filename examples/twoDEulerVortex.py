@@ -30,7 +30,7 @@ def simulate():
     config.validateConfig()
 
     NE = NN = 41
-    mb = pg.multiBlock.solver(
+    mb = pg.integrators.getSolver(
         config,
         mesh=pg.mesher.CubeMesher(
             mbDims=[1, 1, 1],
@@ -52,7 +52,7 @@ def simulate():
     xMin = yMin = -6.0
     lamX = lamY = 4.0
     kappa = 0.25
-    nodes = blk.hostCopy("nodes")
+    nodes = blk.nodes.get()
     x, y = (nodes[..., n] for n in range(2))
     for E in range(NE):
         for N in range(NN):
@@ -64,7 +64,7 @@ def simulate():
                 N
                 + Ay * np.sin(2 * np.pi * kappa) * np.sin(lamY * np.pi * E * delX / Lx)
             )
-    blk.store("nodes", nodes)
+    blk.nodes.set(nodes)
     # the nodes moved, so the halos and metrics follow them
     mb.unifyGrid()
     mb.computeMetrics()
@@ -88,7 +88,7 @@ def simulate():
     uInf = MInf * aInf
     C0 = 0.02 * uInf * Rc
 
-    xc, yc = (blk.hostCopy("cells")[..., n] for n in range(2))
+    xc, yc = (blk.cells.get()[..., n] for n in range(2))
 
     r = np.sqrt(((xc - x0) ** 2 + (yc - y0) ** 2) / Rc**2)
 

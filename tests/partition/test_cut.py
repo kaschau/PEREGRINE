@@ -57,17 +57,15 @@ def test_cutTilesTheBlock(axis, nCuts):
     myAxis = "ijk".index(axis)
     # the cube is axis aligned, so the pieces sort along the coordinate the
     # cut axis runs on
-    pieces = sorted(
-        work.blocks, key=lambda blk: blk.hostCopy("nodes")[..., myAxis].min()
-    )
+    pieces = sorted(work.blocks, key=lambda blk: blk.nodes.get()[..., myAxis].min())
     dropShared = [slice(None)] * 3
     dropShared[myAxis] = slice(1, None)
     joined = np.concatenate(
-        [pieces[0].hostCopy("nodes")]
-        + [p.hostCopy("nodes")[tuple(dropShared)] for p in pieces[1:]],
+        [pieces[0].nodes.get()]
+        + [p.nodes.get()[tuple(dropShared)] for p in pieces[1:]],
         axis=myAxis,
     )
-    assert np.array_equal(joined, base.blocks[0].hostCopy("nodes"))
+    assert np.array_equal(joined, base.blocks[0].nodes.get())
 
 
 @pytest.mark.parametrize("axis", ("i", "j", "k"))
@@ -78,9 +76,7 @@ def test_mergeUndoesCut(axis):
 
     assert partitioner.mergeAll(work) == 3
     assert len(work.blocks) == 1
-    assert np.array_equal(
-        work.blocks[0].hostCopy("nodes"), base.blocks[0].hostCopy("nodes")
-    )
+    assert np.array_equal(work.blocks[0].nodes.get(), base.blocks[0].nodes.get())
 
 
 def test_evenlySpacedCuts():
@@ -151,10 +147,8 @@ def test_everyPieceIsFoundInTheBlockItNames(mbDims, axis):
     for blk, (baseNblki, i0, i1, j0, j1, k0, k1) in zip(work.blocks, table):
         assert (blk.ni, blk.nj, blk.nk) == (i1 - i0 + 1, j1 - j0 + 1, k1 - k0 + 1)
         assert np.array_equal(
-            blk.hostCopy("nodes"),
-            base.getBlock(baseNblki).hostCopy("nodes")[
-                i0 : i1 + 1, j0 : j1 + 1, k0 : k1 + 1
-            ],
+            blk.nodes.get(),
+            base.getBlock(baseNblki).nodes.get()[i0 : i1 + 1, j0 : j1 + 1, k0 : k1 + 1],
         )
     # the pieces of a base block tile it, so the cells add back up
     assert sum(b.nCells for b in work.blocks) == sum(b.nCells for b in base.blocks)
@@ -172,6 +166,6 @@ def test_provenanceSurvivesRepeatedCuts():
     ):
         assert baseNblki == 0
         assert np.array_equal(
-            blk.hostCopy("nodes"),
-            base.blocks[0].hostCopy("nodes")[i0 : i1 + 1, j0 : j1 + 1, k0 : k1 + 1],
+            blk.nodes.get(),
+            base.blocks[0].nodes.get()[i0 : i1 + 1, j0 : j1 + 1, k0 : k1 + 1],
         )

@@ -1,30 +1,25 @@
 import numpy as np
 
-from ..abi import HostStorageMixin
 from .gridFace import gridFace
 from .metricsMixin import MetricsMixin
 from .topologyBlock import topologyBlock
 
 
-class gridBlock(topologyBlock, MetricsMixin, HostStorageMixin):
-    """
-    gridBlock object holds all the information that a grid
-    would need to know about a block.
-    """
+class gridBlock(topologyBlock, MetricsMixin):
+    """A block with coordinates and the arrays that follow. Each array the
+    multiBlock declared is stored as blk.<name>, made on the multiBlock's
+    backend at setExtents; a block declares nothing of its own."""
 
-    def __init__(self, nblki, ng=0):
-        self.ng = ng
-
+    def __init__(self, nblki, mb):
+        self.ng = mb.ng
+        # what the multiBlock says a block holds, and the backend its arrays
+        # are made on
+        self.declared = mb.arrays
+        self.backend = mb.backend
         super().__init__(nblki)
-
-        # every array is an attribute named for it, shaped once the extents are
-        # known; what a block declares is all it may hold
-        self.declared = {}
-
-        self.declare("nodes", kind="node", components=3)
-        # cell centers are as much as a block with no solution on it can work
-        # out; the rest of the metrics are a solverBlock's
-        self.declare("cells", kind="cell", components=3)
+        # every array is an attribute named for it, made once the extents are known
+        for name in self.declared:
+            setattr(self, name, None)
 
     def splitAlong(self, axis, cutIndex):
         """A grid block holds the coordinates its cut splits in two. The two
@@ -32,15 +27,11 @@ class gridBlock(topologyBlock, MetricsMixin, HostStorageMixin):
         low, high = [slice(None)] * 3, [slice(None)] * 3
         low[axis] = slice(0, cutIndex + 1)
         high[axis] = slice(cutIndex, None)
-        return {
-            "nodes": (
-                np.copy(self.nodes[tuple(low)]),
-                np.copy(self.nodes[tuple(high)]),
-            )
-        }
+        nodes = self.nodes.get()
+        return {"nodes": (nodes[tuple(low)], nodes[tuple(high)])}
 
     def _newFace(self, nface):
-        return gridFace(nface)
+        return gridFace(nface, self.backend)
 
     ###########################################################################
     # The arrays a block has, and how big they are
@@ -57,26 +48,35 @@ class gridBlock(topologyBlock, MetricsMixin, HostStorageMixin):
             "kface": (ni + 2 * ng - 1, nj + 2 * ng - 1, nk + 2 * ng),
         }
 
+    def shapeOf(self, name):
+        kind, components = self.declared[name]
+        return self.shapes[kind] + components
+
     def setExtents(self, ni, nj, nk):
         """A grid block holds arrays shaped by its extents, so learning them
-        is what gives it those arrays."""
+        is what gives it those arrays, zeroed. One that already has its
+        shape keeps what is in it, which is what lets a block be re-sized
+        around arrays that have already been rearranged."""
         super().setExtents(ni, nj, nk)
-        self.allocate()
-
-    def allocate(self):
-        """Give every declared array the memory its shape asks for. One that
-        already has that shape keeps what is in it, which is what lets a block
-        be re-sized around arrays that have already been rearranged."""
-        for name in self.declared:
-            shape = self.shapeOf(name)
+        for name, (kind, components) in self.declared.items():
+            shape = self.shapes[kind] + components
             current = getattr(self, name)
             if current is not None and current.shape == shape:
                 continue
-            setattr(self, name, self._new(shape))
-            self._placed(name)
+            array = self.backend.allocate(
+                shape, name=name, kind=kind, components=components
+            )
+            setattr(self, name, array)
 
-    def _placed(self, name):
-        """What a kind of block does with an array it just made; nothing here."""
+    def replace(self, name, values):
+        """A new array of these values' shape holding them, in place of the
+        old one; what a block re-sized around rearranged contents does."""
+        kind, components = self.declared[name]
+        array = self.backend.allocate(
+            values.shape, name=name, kind=kind, components=components
+        )
+        array.set(values)
+        setattr(self, name, array)
 
     @property
     def interior(self):

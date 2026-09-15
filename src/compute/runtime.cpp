@@ -19,6 +19,11 @@ PG_ABI int pgLayoutLeft() {
   return std::is_same<layout, Kokkos::LayoutLeft>::value;
 }
 
+// 1 if the kernels' memory is host memory, so python can hand a kernel its
+// own numpy buffers. Not SpaceAccessibility: a managed-memory build is
+// accessible from the host, but numpy's allocations are not managed.
+PG_ABI int pgOnHost() { return std::is_same_v<viewSpace, Kokkos::HostSpace>; }
+
 // zeroed, as a Kokkos::View would be: the kernels accumulate into fresh arrays
 PG_ABI void *pgAllocate(size_t bytes) {
   void *device = Kokkos::kokkos_malloc<viewSpace>("pg", bytes);
@@ -57,15 +62,6 @@ PG_ABI void pgToDevice(const void *host, void *device, size_t bytes, int wait) {
                     hostBytes(static_cast<const char *>(host), bytes));
   if (wait)
     Kokkos::fence();
-}
-
-PG_ABI void pgCopy(void *dst, const void *src, size_t bytes) {
-  using dstBytes =
-      Kokkos::View<char *, viewSpace, Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
-  using srcBytes = Kokkos::View<const char *, viewSpace,
-                                Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
-  Kokkos::deep_copy(execSpace(), dstBytes(static_cast<char *>(dst), bytes),
-                    srcBytes(static_cast<const char *>(src), bytes));
 }
 
 PG_ABI void pgFence() { Kokkos::fence(); }

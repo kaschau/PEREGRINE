@@ -6,11 +6,12 @@
 namespace stagnationSubsonicInlet {
 
 struct euler {
-  faceInOut q;
-  faceIn qh, S, qBcVals;
+  haloInOut q;
+  haloIn qh;
+  blockFaceIn S, qBcVals;
   KOKKOS_INLINE_FUNCTION void operator()() const {
     double area, nx, ny, nz;
-    faceNormal(S.R(0), S.R(1), S.R(2), area, nx, ny, nz);
+    faceNormal(S(0), S(1), S(2), area, nx, ny, nz);
 
     // neumann total enthalpy, gamma to halo
     const double &gamma = qh.R(0);
@@ -38,8 +39,8 @@ struct euler {
     double Mb = Vb / cb;
 
     // compute static pressure
-    q.L(0) = qBcVals.here(0) * pow(1.0 + (gamma - 1.0) / 2.0 * pow(Mb, 2.0),
-                                   -gamma / (gamma - 1.0));
+    q.L(0) = qBcVals(0) * pow(1.0 + (gamma - 1.0) / 2.0 * pow(Mb, 2.0),
+                              -gamma / (gamma - 1.0));
 
     // extrapolate face normal velocity
     q.L(1) = Vb * nx;
@@ -47,17 +48,17 @@ struct euler {
     q.L(3) = Vb * nz;
 
     // compute static temperature
-    q.L(4) = qBcVals.here(4) / (1.0 + (gamma - 1.0) / 2.0 * pow(Mb, 2.0));
+    q.L(4) = qBcVals(4) / (1.0 + (gamma - 1.0) / 2.0 * pow(Mb, 2.0));
 
     // apply species in halo
     for (int n = 5; n < ne; n++) {
-      q.L(n) = qBcVals.here(n);
+      q.L(n) = qBcVals(n);
     }
   }
 };
 
 struct postDqDxyz {
-  faceInOut grads;
+  haloInOut grads;
   KOKKOS_INLINE_FUNCTION void operator()() const {
     for (int l = 0; l < ne; l++) {
       // neumann all gradients

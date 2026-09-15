@@ -77,8 +77,8 @@ class BaseBC:
 
     def _bcVals(self, face, name):
         if name.startswith("Y") and name[1:].isdigit():
-            return face.hostCopy("qBcVals")[:, :, 5 + int(name[1:])]
-        return face.hostCopy("qBcVals")[:, :, self._bcIndex[name]]
+            return face.qBcVals.get()[:, :, 5 + int(name[1:])]
+        return face.qBcVals.get()[:, :, self._bcIndex[name]]
 
     def species(self, face, rule):
         """apply a rule to every species the case actually carries"""

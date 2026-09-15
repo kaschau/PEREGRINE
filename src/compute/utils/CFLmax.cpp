@@ -25,9 +25,9 @@ struct maxCfl {
   KOKKOS_INLINE_FUNCTION bool references_scalar() const { return true; }
 };
 
-PG_RANGE(interior)
+PG_RANGE(cellCenters)
 struct CFLmax {
-  in dIJK, iS, jS, kS, q, qh;
+  cellCenterIn dIJK, iS, jS, kS, q, qh;
   dims d;
   KOKKOS_INLINE_FUNCTION void operator()(cfl3 &m) const {
     // a direction one cell thick is not marched in

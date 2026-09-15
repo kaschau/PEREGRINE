@@ -42,7 +42,7 @@ class TestPeriodics:
         p3 /= np.linalg.norm(axis)
         p3[0] = (-axis[1] * p3[1] - axis[2] * p3[2]) / axis[0]
 
-        mb = pg.multiBlock.solver(
+        mb = pg.integrators.getSolver(
             config,
             mesh=pg.mesher.AnnulusMesher(sweep=sweep, p2=axis, p3=p3, periodic=True),
         )
@@ -123,7 +123,7 @@ class TestPeriodics:
 
         # check the gradients
         mb.dqdxyz()
-        mb.communicator.exchange("grads")
+        mb.haloExchange.exchange("grads")
         mb.applyBcs("postDqDxyz")
 
         grads = blk.grads.get()

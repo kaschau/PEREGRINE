@@ -26,13 +26,13 @@ struct residualReducer {
   KOKKOS_INLINE_FUNCTION bool references_scalar() const { return true; }
 };
 
-PG_RANGE(interior)
+PG_RANGE(cellCenters)
 struct residual {
-  in q, Q0;
+  cellCenterIn q, Q0;
 };
 // one component's residual; flat, so the shape can pin its columns
 struct residualOf {
-  in q, Q0;
+  cellCenterIn q, Q0;
   int m;
   KOKKOS_INLINE_FUNCTION void operator()(maxAndSum &v) const {
     const double res = abs(q(m) - Q0(m));

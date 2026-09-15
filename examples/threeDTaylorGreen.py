@@ -32,7 +32,7 @@ def simulate():
     NE = 65
     NN = 65
     NX = 65
-    mb = pg.multiBlock.solver(
+    mb = pg.integrators.getSolver(
         config,
         mesh=pg.mesher.CubeMesher(
             mbDims=[1, 1, 1],
@@ -51,7 +51,7 @@ def simulate():
     M0 = 0.4
     rho0 = 1.0
     gamma = cp / (cp - R)
-    xc, yc, zc = (blk.hostCopy("cells")[..., n] for n in range(3))
+    xc, yc, zc = (blk.cells.get()[..., n] for n in range(3))
     q = blk.q.get()
     q[:, :, :, 0] = 1 / gamma + (rho0 * M0**2 / 16.0) * (
         np.cos(2 * xc) + np.cos(2 * yc)

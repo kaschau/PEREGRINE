@@ -21,7 +21,7 @@ def simulate():
     config["RHS"]["diffusion"] = True
     config["RHS"]["primaryAdvFlux"] = "rusanov"
     config.validateConfig()
-    mb = pg.multiBlock.solver(
+    mb = pg.integrators.getSolver(
         config,
         mesh=pg.mesher.CubeMesher(
             mbDims=[1, 1, 1], dimsPerBlock=[41, 2, 2], lengths=[1, 0.01, 0.01]
@@ -37,7 +37,7 @@ def simulate():
     q[:, :, :, 0] = 101325.0
     # Make equal mass
     MWA, MWB = mb.thtrdat.MW.get()[:2]
-    xc = blk.hostCopy("cells")[..., 0]
+    xc = blk.cells.get()[..., 0]
     q[:, :, :, 4] = np.where(xc < 0.5, 300.0 * MWA / MWB, 300.0)
     q[:, :, :, 5] = np.where(xc < 0.5, 1.0, 0.0)
 
@@ -58,7 +58,7 @@ def simulate():
     fig, ax1 = plt.subplots()
     ax1.set_title("1D Diffusion Results")
     ax1.set_xlabel(r"x")
-    x = blk.hostCopy("cells")[..., 0][ng:-ng, ng, ng]
+    x = blk.cells.get()[..., 0][ng:-ng, ng, ng]
     A = q[ng:-ng, ng, ng, 5]
     B = 1.0 - q[ng:-ng, ng, ng, 5]
     ax1.plot(x, A, marker="o", color="r", label="A", linewidth=1.0)

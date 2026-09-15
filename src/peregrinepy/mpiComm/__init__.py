@@ -1,4 +1,4 @@
 from . import mpiUtils
-from .communicator import Communicator
+from .haloExchange import HaloExchange
 
-__all__ = ["mpiUtils", "Communicator"]
+__all__ = ["mpiUtils", "HaloExchange"]

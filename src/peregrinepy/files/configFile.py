@@ -34,6 +34,10 @@ class configFile(frozenDict):
         self["timeIntegration"] = frozenDict(
             {
                 "integrator": "rk3",
+                # dual time's pseudo time scheme, any Runge-Kutta integrator,
+                # and how many pseudo steps each physical step gets
+                "pseudoIntegrator": "rk3",
+                "subIterations": 20,
                 # how each step is sized: fixed at dt, or cfl up to maxDt
                 "controller": "fixed",
                 "dt": 1e-3,
@@ -50,6 +54,8 @@ class configFile(frozenDict):
                 "switchAdvFlux": None,
                 "diffusion": False,
                 "subgrid": None,
+                # items of one block per launch tile
+                "tileSize": 128,
             }
         )
 
@@ -116,3 +122,15 @@ class configFile(frozenDict):
         step graph's to say."""
         self["timeIntegration"]["dt"] = float(self["timeIntegration"]["dt"])
         self["mcPhysics"]["nChemSubSteps"] = max(1, self["mcPhysics"]["nChemSubSteps"])
+        tile = self["RHS"]["tileSize"]
+        if not isinstance(tile, int) or tile < 1:
+            raise pgConfigError(
+                "RHS", "tileSize", f"{tile!r} is not a positive integer."
+            )
+        sub = self["timeIntegration"]["subIterations"]
+        if not isinstance(sub, int) or sub < 1:
+            raise pgConfigError(
+                "timeIntegration",
+                "subIterations",
+                f"{sub!r} is not a positive integer.",
+            )

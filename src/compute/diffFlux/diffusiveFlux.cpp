@@ -2,12 +2,12 @@
 
 // This should basically never be used. It always worse than alpha damping.
 
-PG_RANGE(faces)
+PG_RANGE(cellFaces)
 struct diffusiveFlux {
-  inL QL, gradsL, qL, qhL, qtL;
-  inR QR, gradsR, qR, qhR, qtR;
-  inout F;
-  in A;
+  cellCenterL QL, gradsL, qL, qhL, qtL;
+  cellCenterR QR, gradsR, qR, qhR, qtR;
+  cellFaceInOut F;
+  cellFaceIn A;
   static constexpr double bulkVisc = 0.0;
   KOKKOS_INLINE_FUNCTION void operator()() const {
     double mu = 0.5 * (qtR(0) + qtL(0));

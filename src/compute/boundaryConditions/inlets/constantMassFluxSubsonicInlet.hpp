@@ -1,5 +1,5 @@
 // Set aside: not a valid condition until the equation of state composes
-// into the hook; its post-eos fix-up needs a halo density and does the
+// into the bc; its post-eos fix-up needs a halo density and does the
 // interior cell and the halo in sequence.
 #ifndef __constantMassFluxSubsonicInlet_H__
 #define __constantMassFluxSubsonicInlet_H__
@@ -9,8 +9,8 @@
 namespace constantMassFluxSubsonicInlet {
 
 struct euler {
-  faceInOut q;
-  faceIn qBcVals;
+  haloInOut q;
+  blockFaceIn qBcVals;
   KOKKOS_INLINE_FUNCTION void operator()() const {
     // extrapolate pressure, each halo layer mirrored about the first interior
     // cell
@@ -22,27 +22,27 @@ struct euler {
     q.L(3) = 0.0;
 
     // apply temperature to halo
-    q.L(4) = qBcVals.here(4);
+    q.L(4) = qBcVals(4);
 
     // apply species to halo
     for (int n = 5; n < ne; n++) {
-      q.L(n) = qBcVals.here(n);
+      q.L(n) = qBcVals(n);
     }
   }
 };
 
 struct postEos {
-  faceInOut q, Q;
-  faceIn QBcVals;
+  haloInOut q, Q;
+  blockFaceIn QBcVals;
   KOKKOS_INLINE_FUNCTION void operator()() const {
     // the eos has run on the halo from python: density is valid. The
     // velocities either side of the face are set so that
     // 1/2(rho1+rho2)*1/2(u1+u2) evaluates to the desired mass flux: the
     // first interior layer from the halo layer facing it, then the halo from
     // the interior just set; one thread does both, in that order
-    const double &rhou = QBcVals.here(1);
-    const double &rhov = QBcVals.here(2);
-    const double &rhow = QBcVals.here(3);
+    const double &rhou = QBcVals(1);
+    const double &rhov = QBcVals(2);
+    const double &rhow = QBcVals(3);
 
     q.R(1) = 4.0 * rhou / (Q.R(0) + Q.L(0)) - q.L(1);
     q.R(2) = 4.0 * rhov / (Q.R(0) + Q.L(0)) - q.L(2);
@@ -61,7 +61,7 @@ struct postEos {
 };
 
 struct postDqDxyz {
-  faceInOut grads;
+  haloInOut grads;
   KOKKOS_INLINE_FUNCTION void operator()() const {
     for (int l = 0; l < ne; l++) {
       // neumann all gradients

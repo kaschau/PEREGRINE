@@ -1,9 +1,9 @@
 #include "kernel.hpp"
 
-PG_RANGE(cells)
+PG_RANGE(cellCenters, halo = ng)
 struct cpgFromCons {
-  inout Q;
-  out q, qh;
+  cellCenterInOut Q;
+  cellCenterOut q, qh;
   record MW, cp0;
   double Ru;
   KOKKOS_INLINE_FUNCTION void operator()() const {

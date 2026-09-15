@@ -1,9 +1,13 @@
 """Compiling the kernels a case needs, one library each, when it needs them.
 
 The runtime is built once by CMake and records how it was compiled in
-toolchain.json; every kernel is compiled the same way, into a cache keyed by
+toolchain.json; every kernel is compiled the same way, into a store keyed by
 its source, the headers it includes, the toolchain and its defines. A case
-loads only the libraries it will call."""
+loads only the libraries it will call, and each kernel is handed its own
+function out of its own library.
+
+The jit compiles and hands back callables; it knows nothing of tags, tables,
+arrays, or the order kernels run in."""
 
 import contextlib
 import fcntl
@@ -14,6 +18,7 @@ import shutil
 import subprocess
 import tempfile
 from concurrent.futures import ThreadPoolExecutor
+from functools import cache
 from pathlib import Path
 
 from .abi import lib
@@ -21,7 +26,7 @@ from .toolchain import Toolchain
 
 
 class Jit:
-    """Compiling kernels for one case, into the cache they are kept in."""
+    """Compiling kernels for one case, into the store they are kept in."""
 
     package = Path(__file__).parent
     compute = package.parent / "compute"
@@ -30,16 +35,23 @@ class Jit:
         os.environ.get("PEREGRINE_CACHE", Path.home() / ".cache" / "peregrinepy")
     )
 
-    def __init__(self, ns):
-        # a kernel is compiled for one species count and halo depth; the depth
-        # is known once every kernel of the case is
-        self.ns, self.ng = ns, None
+    def __init__(self, ns, ng, tileSize):
+        # a kernel is compiled for one species count, halo depth and tile size
+        self.defines = (
+            f"NS={ns}",
+            f"NE={5 + ns - 1}",
+            f"NG={ng}",
+            f"PG_TILE={tileSize}",
+        )
         self.toolchain = Toolchain.read(self.package / "toolchain.json")
 
-    @property
-    def defines(self):
-        assert self.ng is not None, "the halo depth is not known yet"
-        return (f"NS={self.ns}", f"NE={5 + self.ns - 1}", f"NG={self.ng}")
+    ###########################################################################
+    # The compute tree, read once
+    ###########################################################################
+    @classmethod
+    def header(cls, relpath):
+        """The text of one file of the compute tree."""
+        return (cls.compute / relpath).read_text()
 
     @classmethod
     def _headers(cls, path, seen):
@@ -54,28 +66,43 @@ class Jit:
                     break
         return seen
 
-    def library(self, source, defines=(), includes=()):
-        """Where the cache keeps the library for one kernel source: keyed on
-        the source and every header it or a forced include reaches, the
-        toolchain, and the case's defines and includes."""
-        path = self.compute / source
-        defines = self.defines + tuple(defines)
-        includes = tuple(self.compute / i for i in includes)
+    @classmethod
+    @cache
+    def files(cls, source, includes=()):
+        """What a kernel is compiled from: its source, the forced includes,
+        and every header they reach, in that order."""
+        path = cls.compute / source
+        forced = tuple(cls.compute / i for i in includes)
         headers = set()
-        for f in (path, *includes):
-            self._headers(f, headers)
+        for f in (path, *forced):
+            cls._headers(f, headers)
+        return (path, *forced, *sorted(headers - {path, *forced}))
+
+    @classmethod
+    def texts(cls, source, includes=()):
+        """Those files' texts, for a kernel to read its struct out of."""
+        return [f.read_text() for f in cls.files(source, includes)]
+
+    ###########################################################################
+    # The store
+    ###########################################################################
+    def library(self, source, defines=(), includes=()):
+        """Where the store keeps the library for one kernel source: keyed on
+        everything it is compiled from, the toolchain, and the case's defines
+        and includes."""
+        defines = self.defines + tuple(defines)
+        forced = tuple(self.compute / i for i in includes)
         key = hashlib.sha256()
-        for f in (path, *includes, *sorted(headers - {path, *includes})):
+        for f in self.files(source, tuple(includes)):
             key.update(f.read_bytes())
         key.update(repr(vars(self.toolchain)).encode())
         key.update(" ".join(sorted(defines)).encode())
-        key.update(" ".join(str(i) for i in includes).encode())
-        return (
-            self.cacheDir / f"{path.stem}-{key.hexdigest()[:16]}{self.toolchain.suffix}"
-        )
+        key.update(" ".join(str(i) for i in forced).encode())
+        stem = Path(source).stem
+        return self.cacheDir / f"{stem}-{key.hexdigest()[:16]}{self.toolchain.suffix}"
 
     def build(self, source, defines=(), includes=()):
-        """The library for one kernel source, compiled if the cache has no
+        """The library for one kernel source, compiled if the store has no
         current one. Returns its path."""
         out = self.library(source, defines, includes)
         if out.exists():
@@ -115,14 +142,12 @@ class Jit:
         return out
 
     def compile(self, kernels):
-        """Every one of :kernels: not yet compiled: built at once, since they
-        are independent, then loaded."""
-        pending = [k for k in kernels if not k.compiled]
-        # two kernels bound from one source build one library
-        requests = {(k.source, k.defines, k.includes) for k in pending}
+        """Every kernel's function: the distinct requests among :kernels: are
+        built at once, since they are independent, then each kernel is handed
+        its function out of its own library."""
+        requests = {(k.source, k.defines, k.includes) for k in kernels}
         with ThreadPoolExecutor() as pool:
-            list(pool.map(lambda r: self.build(*r), requests))
-        for k in pending:
-            k.library = self.build(k.source, k.defines, k.includes)
-            lib.load(k.library)
-            k.compiled = True
+            paths = dict(zip(requests, pool.map(lambda r: self.build(*r), requests)))
+        for k in kernels:
+            path = paths[(k.source, k.defines, k.includes)]
+            k.function = lib.function(path, k.name, k.argtypes, k.restype)

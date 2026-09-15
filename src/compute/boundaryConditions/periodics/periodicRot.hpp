@@ -6,8 +6,8 @@
 namespace periodicRot {
 
 struct euler {
-  faceInOut q, Q;
-  faceIn rot;
+  haloInOut q, Q;
+  recordIn rot;
   KOKKOS_INLINE_FUNCTION void operator()() const {
     // turn the velocity vector of this halo cell onto this face
     const double u = q.L(1);
@@ -30,8 +30,8 @@ struct euler {
 };
 
 struct postDqDxyz {
-  faceInOut grads;
-  faceIn rot;
+  haloInOut grads;
+  recordIn rot;
   KOKKOS_INLINE_FUNCTION void operator()() const {
     for (int l = 0; l < ne; l++) {
       // turn the gradient vectors onto this face

@@ -29,14 +29,14 @@ PG_STENCIL(2);
 constexpr int iMod = PG_DIRECTION == 0, jMod = PG_DIRECTION == 1,
               kMod = PG_DIRECTION == 2;
 
-PG_RANGE(faces)
+PG_RANGE(cellFaces)
 PG_ABI void pgMuscl2rusanov(pgIn *Q_, pgOut *F_, pgIn *A_, pgIn *q_, pgIn *qh_,
                             const pgDims *d, const pgTiling &t) {
 #if PG_DIRECTION == 0
   Kokkos::parallel_for(
-      "MUSCL 2 rusanov i face conv fluxes", t.policy(),
+      "MUSCL 2 rusanov i face conv fluxes", policyOf(t),
       KOKKOS_LAMBDA(const team &team) {
-        const auto r = t.of(team);
+        const auto r = tileOf(t, team);
         const int e = r.e;
         auto Q = as4(Q_[e]);
         auto F = as4(F_[e]);
@@ -216,9 +216,9 @@ PG_ABI void pgMuscl2rusanov(pgIn *Q_, pgOut *F_, pgIn *A_, pgIn *q_, pgIn *qh_,
 #endif
 #if PG_DIRECTION == 1
   Kokkos::parallel_for(
-      "MUSCL 2 rusanov j face conv fluxes", t.policy(),
+      "MUSCL 2 rusanov j face conv fluxes", policyOf(t),
       KOKKOS_LAMBDA(const team &team) {
-        const auto r = t.of(team);
+        const auto r = tileOf(t, team);
         const int e = r.e;
         auto Q = as4(Q_[e]);
         auto F = as4(F_[e]);
@@ -398,9 +398,9 @@ PG_ABI void pgMuscl2rusanov(pgIn *Q_, pgOut *F_, pgIn *A_, pgIn *q_, pgIn *qh_,
 #endif
 #if PG_DIRECTION == 2
   Kokkos::parallel_for(
-      "MUSCL 2 rusanov k face conv fluxes", t.policy(),
+      "MUSCL 2 rusanov k face conv fluxes", policyOf(t),
       KOKKOS_LAMBDA(const team &team) {
-        const auto r = t.of(team);
+        const auto r = tileOf(t, team);
         const int e = r.e;
         auto Q = as4(Q_[e]);
         auto F = as4(F_[e]);

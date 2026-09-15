@@ -1,68 +1,32 @@
-"""One compiled C function, described by its own prototype, and the form a
-solver calls it in."""
+"""One compiled kernel, described by its own C++: the prototype names the
+function, the struct it takes lists what it runs on, and the source declares
+its stencil and its ranges. Python builds a ctypes twin of the struct from
+the members, fills one record per call, and hands its address over with the
+tilings. What a member is declared as says what the kernel does with it: an
+`in` is read, an `out` written, and the step's graph orders kernels by that.
+The jit hands a kernel its function; bind() settles what a call runs with.
+
+A kernel is one launch and nothing else: it does not compile itself, owns no
+table (it is bound to one), carries no tag (the solver's dict names it), and
+knows nothing of the order it runs in, which is a flow's."""
 
 import ctypes
 import re
 
 import numpy as np
 
-from .abi import View, lib
+from .abi import Column, DimsColumn, FaceColumn, PerEntryInt, Record
+from .bcs import getBc
 from .jit import Jit
-
-
-class Column(ctypes.Structure):
-    """A column member as the C++ declares it: the records python hands
-    over, then the entry's record and the cell the launch shape pins."""
-
-    _fields_ = [
-        ("records", ctypes.c_void_p),
-        ("at", ctypes.c_void_p),
-        ("entry", ctypes.c_int),
-        ("i", ctypes.c_int),
-        ("j", ctypes.c_int),
-        ("k", ctypes.c_int),
-    ]
-
-
-class FaceColumn(ctypes.Structure):
-    """A face column: the records, then the face's record and the halo cell
-    the launch shape pins."""
-
-    _fields_ = [
-        ("records", ctypes.c_void_p),
-        ("at", ctypes.c_void_p),
-        ("entry", ctypes.c_int),
-        ("g", ctypes.c_int),
-        ("i", ctypes.c_int),
-        ("j", ctypes.c_int),
-        ("nface", ctypes.c_int),
-    ]
-
-
-class PerEntryInt(ctypes.Structure):
-    """An integer column read as a value: the column, then the entry's value
-    the launch shape pins."""
-
-    _fields_ = [("all", ctypes.c_void_p), ("value", ctypes.c_int)]
-
-
-class Record(ctypes.Structure):
-    """A case-wide record, by value: the device cannot follow a host pointer."""
-
-    _fields_ = [("r", View)]
-
-
-class Dims(ctypes.Structure):
-    _fields_ = [("all", ctypes.c_void_p), ("at", ctypes.c_void_p)]
+from .misc import subclassWhere
+from .table import BaseRange
 
 
 class Kernel:
-    """Each argument is filled by name: from a table for the views, dims,
-    ranges and per-entry integers, from the species data for the case arrays
-    and constants, and from keywords for the rest. What the prototype marks
-    pgIn is read, pgOut written; that is what a step's graph orders by. A
-    kernel is a struct: the arguments are its members, the prototype takes
-    it by reference, and python fills one record of it per call."""
+    """A kernel over a table given at the call, or the bound one. Each
+    argument is filled by name: from the table for the columns, dims,
+    tilings and per-entry integers, from the species data for the case
+    records and constants, and from keywords for the rest."""
 
     scalars = {"int": ctypes.c_int, "double": ctypes.c_double, "bool": ctypes.c_bool}
     prototype = re.compile(r"PG_ABI\s+(\w+)\s+(pg\w+)\s*\(([^)]*)\)")
@@ -71,77 +35,111 @@ class Kernel:
     # a struct's members come first, then its operator
     structHead = r"struct\s+{name}\s*(?::\s*(?:public\s+)?(\w+))?\s*\{{(.*?)(?=KOKKOS_INLINE_FUNCTION|operator\(|\}};)"
     known = ("pgView", "pgIn", "pgOut", "pgDims", "pgTiling", "int", "double", "bool")
-    # a column member's head: what the kernel does with it, and for a flux
-    # kernel which side of the face it is, which its name ends in
+    # a column member's head: where the thread looks and what the kernel does
+    # with it; a cell-center column seen from a face ends in its side
     columnHeads = {
-        "in": ("r", ""),
-        "out": ("w", ""),
-        "inout": ("rw", ""),
-        "inL": ("r", "L"),
-        "inR": ("r", "R"),
-        "inLL": ("r", "LL"),
-        "inRR": ("r", "RR"),
-        "faceIn": ("r", ""),
-        "faceOut": ("w", ""),
-        "faceInOut": ("rw", ""),
+        "cellCenterIn": ("r", ""),
+        "cellCenterOut": ("w", ""),
+        "cellCenterInOut": ("rw", ""),
+        "cellCenterL": ("r", "L"),
+        "cellCenterR": ("r", "R"),
+        "cellCenterLL": ("r", "LL"),
+        "cellCenterRR": ("r", "RR"),
+        "cellFaceIn": ("r", ""),
+        "cellFaceOut": ("w", ""),
+        "cellFaceInOut": ("rw", ""),
+        "haloIn": ("r", ""),
+        "haloOut": ("w", ""),
+        "haloInOut": ("rw", ""),
+        "blockFaceIn": ("r", ""),
+        "recordIn": ("r", ""),
+        "bufferIn": ("r", ""),
+        "bufferOut": ("w", ""),
     }
+    # the heads of a block face launch's columns, one twin for all
+    blockFaceHeads = ("halo", "blockFace", "record", "buffer")
 
-    def __init__(
-        self,
-        name,
-        restype,
-        params,
-        reads,
-        writes,
-        stencil,
-        ranges,
-        columns=None,
-        structs=None,
-    ):
-        self.name = name
-        # [(kind, name)] in call order
-        self.params = params
-        # a struct argument: its ctypes type and [(kind, member, field)]
-        self.structs = structs or {}
-        # what the prototype calls a column -> what the table calls it: a
+    def __init__(self, source, defines=(), includes=(), columns=None):
+        self.source = source
+        self.defines, self.includes = tuple(defines), tuple(includes)
+        self.__name__ = source.rsplit("/", 1)[-1].removesuffix(".cpp")
+        # what the source calls a column -> what the table calls it: a
         # direction's kernel names F and A, the table iF and iS
         self.columns = dict(columns or {})
+        texts = [self.expand(t, self.defines) for t in Jit.texts(source, self.includes)]
+        # the C function, its parameters [(kind, name)] in call order, and a
+        # struct argument's ctypes type and [(kind, member, field, ctype)]
+        self.name, self.restype, self.params, self.structs, reads, writes = self._parse(
+            texts
+        )
         self.reads = [self.columns.get(r, r) for r in reads]
         self.writes = [self.columns.get(w, w) for w in writes]
         # how many halo layers it reaches into
-        self.stencil = stencil
-        # the ranges it declares, one per tiling it takes, in order
-        self.ranges = ranges
-        argtypes = [
-            ctypes.c_int if kind == "count" else self.scalars.get(kind, ctypes.c_void_p)
-            for kind, _ in params
+        stencil = self.stencilDeclaration.search(texts[0])
+        self.stencil = int(stencil.group(1)) if stencil else 1
+        # the ranges it and its forced includes declare, one per tiling it takes
+        self.ranges = []
+        for text in texts[: 1 + len(self.includes)]:
+            for decl in self.rangeDeclaration.findall(text):
+                self.ranges.append(self.rangeOf(decl))
+        tilings = sum(kind == "tiling" for kind, _ in self.params)
+        if tilings != len(self.ranges):
+            raise ValueError(
+                f"{self.name} takes {tilings} tilings and declares {len(self.ranges)} ranges"
+            )
+        self.argtypes = [
+            self.scalars.get(kind, ctypes.c_void_p) for kind, _ in self.params
         ]
-        lib.declare(name, argtypes, {"int": ctypes.c_int, "void": None}[restype])
+        # the compiled function, once the jit has handed it over
+        self.function = None
+        # what a call runs with unless it says otherwise
+        self.table, self.thtrdat, self.fixed = None, None, {}
         # how each parameter is found at a call
-        tilings = iter(ranges)
+        tilings = iter(self.ranges)
         self.resolvers = [
             self._resolver(kind, pname, next(tilings) if kind == "tiling" else None)
-            for kind, pname in params
+            for kind, pname in self.params
         ]
+
+    def __repr__(self):
+        return f"<{type(self).__name__} {self.__name__}>"
+
+    ###########################################################################
+    # Reading the C++
+    ###########################################################################
+    def rangeOf(self, declaration):
+        """A PG_RANGE declaration as a range: its kind, then key = value
+        parameters (ng and ne stand for the block's); the cell faces are the
+        kernel's own direction."""
+        kind, *params = [x.strip() for x in declaration.split(",")]
+        kwargs = {}
+        for param in params:
+            key, sep, value = (x.strip() for x in param.partition("="))
+            if not sep:
+                raise ValueError(f"PG_RANGE({declaration}): {param} is not key = value")
+            kwargs[key] = value if value in ("ng", "ne") else int(value)
+        if kind == "cellFaces":
+            kwargs["axis"] = "ijk".index(self.columns["F"][0])
+        return subclassWhere(BaseRange, kind=kind)(**kwargs)
 
     @staticmethod
     def expand(text, defines):
-        """The jit's defines applied to a prototype: a hook names its
-        condition through PG_PASTE(PG_CONDITION, PG_HOOK)."""
+        """The jit's defines applied to a text: a bc names its struct through
+        PG_BCTYPE and PG_BCHOOK."""
         for define in defines:
             key, _, value = define.partition("=")
             text = re.sub(rf"\b{key}\b", value, text)
-        return re.sub(r"PG_PASTE\((\w+),\s*(\w+)\)", r"\1_\2", text)
+        return text
 
     @classmethod
     def members(cls, structName, texts):
-        """[(kind, name, ctype)] of a struct's data members, a base's first,
-        found among the texts a source reaches."""
+        """[(kind, name, ctype, head)] of a struct's data members, a base's
+        first, found among the texts a source reaches."""
         for text in texts:
             m = re.search(cls.structHead.format(name=structName), text, re.S)
             if m:
                 break
-            # the name may be an alias: a hook's is what the jit's defines say
+            # the name may be an alias: a bc's is what the jit's defines say
             alias = re.search(rf"using\s+{structName}\s*=\s*([\w:]+)\s*;", text)
             if alias:
                 return cls.members(alias.group(1).rsplit("::", 1)[-1], texts)
@@ -151,7 +149,7 @@ class Kernel:
         members = cls.members(base, texts) if base else []
         for statement in re.sub(r"//.*", "", body).split(";"):
             statement = " ".join(statement.split())
-            if not statement or statement.startswith(("static", "//")):
+            if not statement or statement.startswith("static"):
                 continue
             head, _, rest = (
                 statement.replace("const ", "").replace("mutable ", "").partition(" ")
@@ -170,42 +168,36 @@ class Kernel:
                         raise ValueError(
                             f"struct {structName}: {mname} is {head}, so it ends in {side}"
                         )
-                    ctype = FaceColumn if head.startswith("face") else Column
+                    ctype = (
+                        FaceColumn if head.startswith(cls.blockFaceHeads) else Column
+                    )
                     members.append(("column", mname.removesuffix(side), ctype, access))
                 elif head == "record":
                     members.append(("record", mname, Record, head))
                 elif head == "dims":
-                    members.append(("dims", mname, Dims, head))
-                elif head in ("pgIn", "pgOut", "pgView") and pointer:
-                    members.append(("view", mname.rstrip("_"), ctypes.c_void_p, head))
-                elif head in ("pgIn", "pgOut", "pgView"):
-                    members.append(("record", mname.rstrip("_"), View, head))
+                    members.append(("dims", mname, DimsColumn, head))
                 elif head == "perEntry<int>":
                     members.append(("ints", mname, PerEntryInt, head))
                 elif head in ("int", "double") and pointer:
+                    # an array given at the call
                     members.append((head + "s", mname, ctypes.c_void_p, head))
-                elif head == "pgDims" and pointer:
-                    members.append(("dims", mname, ctypes.c_void_p, head))
                 elif head in cls.scalars and not pointer:
                     members.append((head, mname, cls.scalars[head], head))
                 else:
                     raise ValueError(f"struct {structName}: what is {statement}?")
         return members
 
-    @classmethod
-    def parse(cls, source, includes=(), columns=None, defines=(), headers=()):
-        """The one kernel a source declares, from its prototype; the stencil
-        it declares, one layer unless it says more; and the ranges it and
-        its forced includes declare, one per tiling it takes. An argument
-        that is a struct by reference brings its members as arguments."""
-        found = cls.prototype.findall(source)
+    def _parse(self, texts):
+        """The one kernel a source declares, from its prototype: its C name
+        and result, its parameters, and for a struct by reference its members
+        and what they read and write. The parameter-list form of the three
+        hand-unrolled schemes parses too; they are never called."""
+        found = self.prototype.findall(texts[0])
         if len(found) != 1:
             raise ValueError(
                 f"a kernel source declares one PG_ABI function, this one {len(found)}"
             )
         restype, name, params = found[0]
-        params = cls.expand(params, defines)
-        texts = [cls.expand(t, defines) for t in (source, *includes, *headers)]
         parsed, reads, writes, structs = [], [], [], {}
         for p in params.split(","):
             words = p.split()
@@ -213,10 +205,8 @@ class Kernel:
             pname = words[-1].lstrip("*&")
             ptype = " ".join(words[:-1]) + ("*" if words[-1][0] in "*&" else "")
             ptype = ptype.replace(" *", "*").replace(" &", "*").replace("const ", "")
-            if pname == "count":
-                parsed.append(("count", pname))
-            elif ptype.endswith("*") and ptype[:-1] not in cls.known:
-                members = cls.members(ptype[:-1], texts)
+            if ptype.endswith("*") and ptype[:-1] not in self.known:
+                members = self.members(ptype[:-1], texts)
                 fields = [
                     (f"m{i}", ctype) for i, (_, _, ctype, _) in enumerate(members)
                 ]
@@ -226,8 +216,6 @@ class Kernel:
                     [(k, n, f, c) for (k, n, c, _), (f, _) in zip(members, fields)],
                 )
                 for kind, mname, _, head in members:
-                    if kind == "view":
-                        (writes if head == "pgOut" else reads).append(mname)
                     if kind == "column":
                         if "r" in head:
                             reads.append(mname)
@@ -248,41 +236,24 @@ class Kernel:
                 parsed.append(("doubles", pname))
             else:
                 parsed.append((ptype, pname))
-        stencil = cls.stencilDeclaration.search(source)
-        ranges = []
-        for text in texts[: 1 + len(includes)]:
-            for decl in cls.rangeDeclaration.findall(text):
-                parts = [x.strip() for x in decl.split(",")]
-                ranges.append((parts[0], *parts[1:]))
-        tilings = sum(kind == "tiling" for kind, _ in parsed)
-        if tilings != len(ranges):
-            raise ValueError(
-                f"{name} takes {tilings} tilings and declares {len(ranges)} ranges"
-            )
-        return cls(
-            name,
-            restype,
-            parsed,
-            reads,
-            writes,
-            int(stencil.group(1)) if stencil else 1,
-            ranges,
-            columns,
-            structs,
-        )
+        restype = {"int": ctypes.c_int, "void": None}[restype]
+        return name, restype, parsed, structs, reads, writes
 
+    ###########################################################################
+    # Filling a call
+    ###########################################################################
     def _resolver(self, kind, name, declared=None, ctype=None):
-        """A function of (table, th, nface, given) giving one argument; what
-        is given by keyword wins over what the table or species data hold.
-        A column is handed over where the kernels run; a single record, the
-        case's, on the host."""
+        """A function of (table, th, nface, given, keep) giving one argument;
+        what is given by keyword wins over what the table or species data
+        hold. A column is the table's, where the kernels run; a single
+        record, the case's, on the host."""
 
         def given(value, keep, table):
-            # a column is named: the kernel gets its device copy
+            # a column is named: the kernel gets the table's
             if kind == "view":
-                return table.device(value)
+                return table.column(value)
             if kind == "column":
-                return ctype(records=table.device(value))
+                return ctype(records=table.column(value))
             if kind in ("ints", "doubles"):
                 value = np.ascontiguousarray(
                     value, dtype=np.int32 if kind == "ints" else np.float64
@@ -292,21 +263,9 @@ class Kernel:
             return value
 
         def tilingOf(table, nface):
-            # facePlanes says how many layers before its components; faces
-            # means the kernel's own direction
-            rangeKind, *rest = declared
-            if rangeKind == "faces":
-                rangeKind = self.columns["F"][0] + "Faces"
-            arg = None
-            if rangeKind == "facePlanes":
-                arg = table.ng if rest[0] == "ng" else int(rest[0])
-                rest = rest[1:]
-            components = rest[0] if rest else "1"
-            return ctypes.addressof(table.tiling(rangeKind, arg, components, nface))
+            return ctypes.addressof(table.tiling(declared.at(nface)))
 
         def found(table, th, nface, keep, values):
-            if kind == "count":
-                return len(table)
             if kind == "struct":
                 # one record of the struct, each member found as an argument is
                 record, members = self.structs[name]
@@ -320,24 +279,19 @@ class Kernel:
                 return ctypes.addressof(filled)
             if kind == "column":
                 # the table's column; the shape pins the rest
-                return ctype(records=table.device(self.columns.get(name, name)))
+                return ctype(records=table.column(self.columns.get(name, name)))
             if kind == "record":
-                return Record(r=View.of(getattr(th, name)))
+                return Record(r=getattr(th, name).record)
             if kind == "dims":
-                return Dims(all=table.device("dims"))
+                column = table.column("dims")
+                return ctype(all=column) if ctype is DimsColumn else column
             if kind == "view":
-                if th is not None and hasattr(th, name):
-                    record = View.of(getattr(th, name))
-                    keep.append(record)
-                    return ctypes.addressof(record)
-                return table.device(self.columns.get(name, name))
-            if kind == "dims":
-                return table.device("dims")
+                return table.column(self.columns.get(name, name))
             if kind == "tiling":
                 return tilingOf(table, nface)
             if kind == "ints":
-                column = table.device(name)
-                return ctype(all=column) if ctype is not None else column
+                column = table.column(name)
+                return ctype(all=column) if ctype is PerEntryInt else column
             if kind == "int" and name == "nface":
                 return nface
             if kind in self.scalars and th is not None and hasattr(th, name):
@@ -353,112 +307,86 @@ class Kernel:
 
         return resolve
 
-    def __call__(self, table=None, th=None, nface=None, library=None, **given):
+    def bind(self, table=None, thtrdat=None, **fixed):
+        """What a call runs with unless it names its own: the table and the
+        species data, and the scalars settled up front."""
+        self.table, self.thtrdat, self.fixed = table, thtrdat, fixed
+        return self
+
+    def __call__(self, table=None, nface=None, **given):
         """Run over a table's entries; :given: supplies the scalars, and any
-        array by its parameter name. :library: is the one to call, when the
-        name is not enough to say."""
+        array by its parameter name. :nface: narrows a cell-center range: 0
+        the interior, 1..6 one block face's halo, -1 or none as declared."""
+        if self.function is None:
+            raise RuntimeError(f"{self.__name__} is not compiled")
+        if table is None:
+            table = self.table
+        given = {**self.fixed, **given}
+        bound = given.pop("nface", None)
+        if nface is None:
+            nface = bound
         keep = []
         try:
-            args = [r(table, th, nface, given, keep) for r in self.resolvers]
+            args = [r(table, self.thtrdat, nface, given, keep) for r in self.resolvers]
         except TypeError as e:
-            raise TypeError(f"{self.name}: {e}") from None
+            raise TypeError(f"{self.__name__}: {e}") from None
         if given:
-            raise TypeError(f"{self.name} takes no {', '.join(given)}")
-        function = (
-            getattr(lib, self.name)
-            if library is None
-            else lib.function(library, self.name)
+            raise TypeError(f"{self.__name__} takes no {', '.join(given)}")
+        return self.function(*args)
+
+
+class CellCenterKernel(Kernel):
+    """A kernel over the cell centers of the solver's blocks, bound to the
+    block table."""
+
+
+class CellFaceKernel(Kernel):
+    """A flux kernel over the cell faces of one direction of the solver's
+    blocks: the source names one direction's flux F, area vector A and
+    faces, and the direction maps them to the table's; a scheme's three
+    directions are a KernelGroup."""
+
+    def __init__(self, source, direction):
+        axis = "ijk"[direction]
+        super().__init__(
+            source,
+            defines=(f"PG_DIRECTION={direction}",),
+            columns={"F": f"{axis}F", "A": f"{axis}S", "Faces": f"{axis}Faces"},
         )
-        return function(*args)
+        self.direction = direction
 
 
-class BoundKernel:
-    """A kernel as a case calls it: over the case's block table, or a table
-    of its own, with the case's species data, and with its fixed scalars
-    settled up front so the call names only what varies -- or overrides one.
-    What it reads, writes and reaches is known from its source the moment it
-    is made; the case compiles it with the rest."""
+class BlockFaceKernel(Kernel):
+    """One bcType's body at one bcHook, over the halo cells of the block
+    faces in a table given at the call: bc.cpp compiled with the bcType's
+    header forced in."""
 
-    def __init__(
-        self,
-        table,
-        thtrdat,
-        source,
-        tableOf=None,
-        defines=(),
-        includes=(),
-        columns=None,
-        role=None,
-        **fixed,
-    ):
-        self.table, self.thtrdat = table, thtrdat
-        self.source, self.fixed = source, fixed
-        self.defines, self.includes = tuple(defines), tuple(includes)
-        # None is the case's block table; otherwise what to call for the table
-        self.tableOf = tableOf
-        path = Jit.compute / source
-        # every header the source or a forced include reaches: a struct may
-        # be declared in one
-        headers = set()
-        for f in (path, *(Jit.compute / i for i in self.includes)):
-            Jit._headers(f, headers)
-        self.kernel = Kernel.parse(
-            path.read_text(),
-            [(Jit.compute / i).read_text() for i in self.includes],
-            columns,
-            self.defines,
-            [h.read_text() for h in headers],
+    def __init__(self, bcType, bcHook):
+        super().__init__(
+            "boundaryConditions/bc.cpp",
+            defines=(f"PG_BCTYPE={bcType}", f"PG_BCHOOK={bcHook}"),
+            includes=(getBc(bcType).header(),),
         )
-        # the library the jit compiled it into, once it has
-        self.library = None
-        self.compiled = False
-        # the name the config knows it by, and the one the case calls it by
-        self.__name__ = source.rsplit("/", 1)[-1].removesuffix(".cpp")
-        self.role = role or self.__name__
+        self.bcType, self.bcHook = bcType, bcHook
 
-    @property
-    def reads(self):
-        return self.kernel.reads
 
-    @property
-    def writes(self):
-        return self.kernel.writes
-
-    @property
-    def stencil(self):
-        return self.kernel.stencil
-
-    def __call__(self, table=None, **given):
-        if not self.compiled:
-            raise RuntimeError(f"{self.role} is not compiled")
-        if table is None:
-            table = self.table if self.tableOf is None else self.tableOf()
-        return self.kernel(
-            table, self.thtrdat, library=self.library, **{**self.fixed, **given}
-        )
+class HaloExchangeKernel(Kernel):
+    """A pack or an unpack over the block faces of a halo exchange table
+    given at the call: every trade of one variable, whose arrays are all of
+    one ndim."""
 
 
 class KernelGroup:
-    """A flux scheme's directions under the scheme's name, run one after the
-    other."""
+    """A flux scheme's directions, run one after the other: it reads and
+    writes what any of them does and reaches as far as the widest."""
 
     def __init__(self, kernels):
         self.kernels = kernels
         self.__name__ = kernels[0].__name__
+        self.reads = list(dict.fromkeys(r for k in kernels for r in k.reads))
+        self.writes = list(dict.fromkeys(w for k in kernels for w in k.writes))
+        self.stencil = max(k.stencil for k in kernels)
 
     def __call__(self, *args, **kwargs):
         for kernel in self.kernels:
             kernel(*args, **kwargs)
-
-
-def byRole(kernels):
-    """Every kernel under its role: a role whose kernels differ only by their
-    defines (a scheme's directions) is the group of them, any other role is
-    the last kernel bound to it."""
-    roles = {}
-    for k in kernels:
-        roles.setdefault(k.role, []).append(k)
-    return {
-        role: KernelGroup(ks) if len({k.defines for k in ks}) > 1 else ks[-1]
-        for role, ks in roles.items()
-    }

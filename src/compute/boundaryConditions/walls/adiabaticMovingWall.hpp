@@ -6,11 +6,11 @@
 namespace adiabaticMovingWall {
 
 struct euler {
-  faceInOut q;
-  faceIn S;
+  haloInOut q;
+  blockFaceIn S;
   KOKKOS_INLINE_FUNCTION void operator()() const {
     double area, nx, ny, nz;
-    faceNormal(S.R(0), S.R(1), S.R(2), area, nx, ny, nz);
+    faceNormal(S(0), S(1), S(2), area, nx, ny, nz);
 
     // match pressure
     q.L(0) = q.R(0);
@@ -31,18 +31,18 @@ struct euler {
 };
 
 struct preDqDxyz {
-  faceInOut q;
-  faceIn qBcVals;
+  haloInOut q;
+  blockFaceIn qBcVals;
   KOKKOS_INLINE_FUNCTION void operator()() const {
     // apply velo to face
-    q.L(1) = 2.0 * qBcVals.here(1) - q.R(1);
-    q.L(2) = 2.0 * qBcVals.here(2) - q.R(2);
-    q.L(3) = 2.0 * qBcVals.here(3) - q.R(3);
+    q.L(1) = 2.0 * qBcVals(1) - q.R(1);
+    q.L(2) = 2.0 * qBcVals(2) - q.R(2);
+    q.L(3) = 2.0 * qBcVals(3) - q.R(3);
   }
 };
 
 struct postDqDxyz {
-  faceInOut grads;
+  haloInOut grads;
   KOKKOS_INLINE_FUNCTION void operator()() const {
     // negate pressure,  neumann velocity gradients
     grads.L(0, 0) = -grads.R(0, 0);

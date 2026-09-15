@@ -1,12 +1,12 @@
 // PEREGRINE's C ABI: what Python and the kernels agree on. Every struct
-// here has a twin in python (abi.View, abi.pgCells, table.Tiling, and the
-// kernel record python builds from a kernel's members), laid out the same.
-// The runtime and the kernels include this; a kernel gets it through
-// kernel.hpp.
+// here has a twin in peregrinepy/abi.py laid out the same, and both sides
+// assert the sizes. The runtime and the kernels include this; a kernel gets
+// it through kernel.hpp.
 #ifndef __abi_H__
 #define __abi_H__
 
 #include <Kokkos_Core.hpp>
+#include <cstddef>
 
 // where kernels run, and the memory and layout Kokkos picks for it
 using execSpace = Kokkos::DefaultExecutionSpace;
@@ -32,49 +32,37 @@ struct pgView {
 struct pgCells {
   int start[3], extent[4], n;
 };
+
+// a block's shape: cells per direction
+struct pgDims {
+  int ni, nj, nk;
+};
+
+// One launch over every entry of a table. Each entry has some items -- its
+// cells, or the elements of its planes -- and a team does a tile of one
+// entry's, so a rank of thousands of small entries and one of a few huge
+// ones both fill the device. Python tiles the range a kernel declares and
+// hands the tiling over with the columns: the entry of each tile, the first
+// tile and the items of each entry, and each entry's cells.
+struct pgTiling {
+  const int *entry, *first, *items;
+  const pgCells *cells;
+  int count, tiles;
+};
 }
+
+static_assert(sizeof(pgView) == 72 && offsetof(pgView, rank) == 8 &&
+              offsetof(pgView, extent) == 12 && offsetof(pgView, stride) == 32);
+static_assert(sizeof(pgCells) == 32 && offsetof(pgCells, extent) == 12 &&
+              offsetof(pgCells, n) == 28);
+static_assert(sizeof(pgDims) == 12);
+static_assert(sizeof(pgTiling) == 40 && offsetof(pgTiling, cells) == 24 &&
+              offsetof(pgTiling, count) == 32);
 
 // a kernel names each record it takes by what it does with it: the same
 // bytes, but an in unpacks to a view that cannot be written, and the step's
 // graph orders kernels by what they read and write
 struct pgIn : pgView {};
 struct pgOut : pgView {};
-
-extern "C" {
-// a block's shape: cells per direction
-struct pgDims {
-  int ni, nj, nk;
-};
-}
-
-// One launch over every entry of a table. Each entry has some items -- its
-// cells, or the elements of its planes -- and a team does `tileSize` of one
-// entry's, so a rank of thousands of small entries and one of a few huge
-// ones both fill the device. Python tiles the range a kernel declares and
-// hands the tiling over with the columns.
-constexpr int tileSize = 128; // as Tiling.tileSize in python
-using teams = Kokkos::TeamPolicy<execSpace>;
-using team = teams::member_type;
-
-// the tiling python made: the entry of each tile, the first tile and the
-// items of each entry, and each entry's cells; laid out as python's Tiling
-struct pgTiling {
-  const int *entry, *first, *items;
-  const pgCells *cells;
-  int count, tiles;
-
-  struct tile {
-    int e, begin, end;
-  };
-  // the entry and item range of this team's tile
-  KOKKOS_INLINE_FUNCTION tile of(const team &t) const {
-    const int rank = t.league_rank();
-    const int lo = entry[rank];
-    const int begin = (rank - first[lo]) * tileSize;
-    const int n = items[lo];
-    return {lo, begin, begin + tileSize < n ? begin + tileSize : n};
-  }
-  teams policy() const { return teams(tiles, Kokkos::AUTO); }
-};
 
 #endif

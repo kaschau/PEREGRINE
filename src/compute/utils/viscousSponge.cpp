@@ -1,9 +1,9 @@
 #include "kernel.hpp"
 
-PG_RANGE(interiorPlusOne)
+PG_RANGE(cellCenters, halo = 1)
 struct viscousSponge {
-  in cells;
-  inout qt;
+  cellCenterIn cells;
+  cellCenterInOut qt;
   dims d;
   const double *origin, *ending;
   double mult;

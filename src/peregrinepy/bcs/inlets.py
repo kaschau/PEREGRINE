@@ -30,7 +30,7 @@ class StagnationSubsonicInlet(InletBC):
 
 # Set aside: its post-eos fix-up needs a halo density and writes the first
 # interior cell in sequence with the halo; it returns when the equation of
-# state composes into the hook itself.
+# state composes into the bc kernel itself.
 # class ConstantMassFluxSubsonicInlet(InletBC):
 #     """sets a target momentum from the face normal rather than a velocity"""
 #

@@ -1,9 +1,9 @@
 #include "kernel.hpp"
 
-PG_RANGE(interior, ne)
+PG_RANGE(cellCenters, components = ne)
 struct applyHybridFlux {
-  in Jinv, iF, jF, kF, phi;
-  inout dQ;
+  cellCenterIn Jinv, iF, jF, kF, phi;
+  cellCenterInOut dQ;
   dims d;
   double primary;
   KOKKOS_INLINE_FUNCTION void operator()(const int l) const {

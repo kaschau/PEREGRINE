@@ -1,10 +1,10 @@
 #include "cubic.hpp"
 #include "kernel.hpp"
 
-PG_RANGE(cells)
+PG_RANGE(cellCenters, halo = ng)
 struct realGasFromPrims {
-  out Q, qh;
-  inout q;
+  cellCenterOut Q, qh;
+  cellCenterInOut q;
   record MW, cpPoly, hPoly, hRef, Tcrit, pcrit, acentric;
   double Ru;
   KOKKOS_INLINE_FUNCTION void operator()() const {

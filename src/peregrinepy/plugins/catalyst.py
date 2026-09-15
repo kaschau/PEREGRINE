@@ -41,7 +41,7 @@ class Catalyst(BasePlugin):
             q, Q = blk.q.get(), blk.Q.get()
             grid = self.vtk.vtkStructuredGrid()
             grid.SetDimensions(blk.ni, blk.nj, blk.nk)
-            interior = blk.hostCopy("nodes")[ng:-ng, ng:-ng, ng:-ng]
+            interior = blk.nodes.get()[ng:-ng, ng:-ng, ng:-ng]
             coords = np.column_stack(
                 [interior[..., n].ravel(order="F") for n in range(3)]
             )

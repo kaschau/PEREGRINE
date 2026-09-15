@@ -1,23 +1,22 @@
 import numpy as np
 
 from .. import bcs
-from ..abi import DeviceStorageMixin
 from .gridFace import gridFace
 from .topologyFace import topologyFace
 
 
-class solverFace(gridFace, DeviceStorageMixin):
+class solverFace(gridFace):
     # what a face trades with its neighbor, and the shape each trade takes
     commVars = {
         "nodes": "node",
         "q": "state",
         "Q": "state",
         "grads": "gradient",
-        "phi": "switch",
     }
 
     def __init__(self, nface, ng, blk):
-        super().__init__(nface)
+        # its arrays are made where the block's are
+        super().__init__(nface, blk.backend)
 
         self.ng = ng
         # the block this face bounds
@@ -99,16 +98,29 @@ class solverFace(gridFace, DeviceStorageMixin):
             # a gradient is only ever wanted one cell past the block
             "gradient": (1,) + cell + (ne, 3),
             "gradientSend": (1,) + theirCell + (ne, 3),
-            "switch": (1,) + cell + (3,),
-            "switchSend": (1,) + theirCell + (3,),
             # what a bc holds across the face itself
             "bcValues": cell + (ne,),
         }
 
-    def allocate(self, *names, **values):
-        super().allocate(*names, **values)
-        # a new array is a new record for the hooks that run over this face
+    def allocate(self, *names):
+        super().allocate(*names)
+        # a new array is a new record for the bcs that run over this face
         self.blk.mb.facesChanged = True
+
+    def column(self, name):
+        """What a face table takes from this face: which side of its block
+        it is, its own arrays, the block's area vectors on its axis as S and
+        its rotation as rot, then the block's arrays."""
+        if name == "nface":
+            return self.nface
+        if name == "S":
+            return getattr(self.blk, f"{self.direction}S")
+        if name == "rot":
+            return self.periodicRotMatrix
+        own = getattr(self, name) if name in self.declared else None
+        if own is not None:
+            return own
+        return self.blk.column(name)
 
     def setExtents(self, ni, nj, nk, ne):
         """The block this face bounds is this big, so this face's arrays can
@@ -162,5 +174,5 @@ class solverFace(gridFace, DeviceStorageMixin):
     def bcType(self, value):
         topologyFace.bcType.fset(self, value)
         self.bc = bcs.getBc(value)(self)
-        # the hooks that run over this face follow its condition
+        # the face tables follow its bcType
         self.blk.mb.facesChanged = True

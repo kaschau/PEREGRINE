@@ -14,7 +14,7 @@ class MetricsMixin:
             )
 
         # a cell center is the mean of the eight corners around it
-        v = self.hostCopy("nodes")
+        v = self.nodes.get()
         center = 0.125 * (
             v[0:-1, 0:-1, 0:-1]
             + v[0:-1, 0:-1, 1::]
@@ -25,4 +25,4 @@ class MetricsMixin:
             + v[1::, 1::, 0:-1]
             + v[1::, 1::, 1::]
         )
-        self.store("cells", center)
+        self.cells.set(center)

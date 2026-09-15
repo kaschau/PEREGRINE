@@ -6,18 +6,18 @@
 namespace supersonicInlet {
 
 struct euler {
-  faceOut q;
-  faceIn qBcVals;
+  haloOut q;
+  blockFaceIn qBcVals;
   KOKKOS_INLINE_FUNCTION void operator()() const {
     for (int l = 0; l < ne; l++) {
       // apply all variables on face
-      q.L(l) = qBcVals.here(l);
+      q.L(l) = qBcVals(l);
     }
   }
 };
 
 struct postDqDxyz {
-  faceInOut grads;
+  haloInOut grads;
   KOKKOS_INLINE_FUNCTION void operator()() const {
     for (int l = 0; l < ne; l++) {
       // neumann all gradients

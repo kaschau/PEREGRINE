@@ -75,7 +75,7 @@ def simulate(index, velo):
     elif "z" in velo:
         periodic = [False, False, True]
 
-    mb = pg.multiBlock.solver(
+    mb = pg.integrators.getSolver(
         config,
         mesh=pg.mesher.CubeMesher(
             mbDims=[1, 1, 1],
@@ -154,7 +154,7 @@ def simulate(index, velo):
     else:
         raise ValueError()
 
-    xc = blk.hostCopy("cells")[..., ccAxis[index]][s_]
+    xc = blk.cells.get()[..., ccAxis[index]][s_]
     sU_ = s_ + (uIndex,)
 
     outputTimes = [0.0005, 0.005, 0.05]

@@ -37,7 +37,7 @@ def simulate(index="i"):
     lengths = rotate([1, 0.1, 0.1], index)
     periodic = rotate([True, False, False], index)
 
-    mb = pg.multiBlock.solver(
+    mb = pg.integrators.getSolver(
         config,
         mesh=pg.mesher.CubeMesher(
             mbDims=[1, 1, 1],
@@ -60,7 +60,7 @@ def simulate(index="i"):
     q = blk.q.get()
     q[:, :, :, 0] = 1.0
     q[:, :, :, uIndex[index]] = 1.0
-    xc = blk.hostCopy("cells")[..., ccAxis[index]]
+    xc = blk.cells.get()[..., ccAxis[index]]
     initial_rho = 2.0 + np.sin(2 * np.pi * xc)
     initial_T = 1.0 / (R * initial_rho)
     q[:, :, :, 4] = initial_T
@@ -84,7 +84,7 @@ def simulate(index="i"):
     ax1.set_title("1D Advection Results")
     ax1.set_xlabel(r"x")
     s_ = rotate(np.s_[ng:-ng, ng, ng], index)
-    x = blk.hostCopy("cells")[..., ccAxis[index]][s_]
+    x = blk.cells.get()[..., ccAxis[index]][s_]
     rho = Q[s_][:, 0]
     p = q[s_][:, 0]
     u = q[s_][:, uIndex[index]]

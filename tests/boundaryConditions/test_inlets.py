@@ -47,11 +47,11 @@ class ConstantMassFluxSubsonicInlet(Inlet):
         self.mb.primaryAdvFlux()
 
         d = face.direction
-        F = face.boundary(blk.hostCopy(f"{d}F"))[ng:-ng, ng:-ng, 0]
+        F = face.boundary(getattr(blk, f"{d}F").get())[ng:-ng, ng:-ng, 0]
         S = face.boundary(blk.faceNormals(d)[0])[ng:-ng, ng:-ng]
 
         mult = 1.0 if face.amILow else -1.0
-        target = face.hostCopy("QBcVals")[0, 0, 0] * np.sum(S)
+        target = face.QBcVals.get()[0, 0, 0] * np.sum(S)
         computed = mult * np.sum(F)
         assert abs(target - computed) / target * 100.0 < 1e-3
 
@@ -70,7 +70,7 @@ class StagnationSubsonicInlet(Inlet):
         self.species(face, self.imposed)
 
 
-# the constant mass flux inlet is set aside with its post-eos hook
+# the constant mass flux inlet is set aside with its post-eos fix-up
 _inlets = (
     SupersonicInlet,
     ConstantVelocitySubsonicInlet,

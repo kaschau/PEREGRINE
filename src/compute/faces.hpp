@@ -15,11 +15,12 @@ constexpr int iMod = PG_DIRECTION == 0, jMod = PG_DIRECTION == 1,
 // the face normal as a step between cells
 constexpr offset N{iMod, jMod, kMod};
 
-// a flux kernel's columns, declared a side away from the face: L is the
-// cell behind it, R the cell it indexes, LL and RR one further
-using inL = column<const double, -N>;
-using inR = in;
-using inLL = column<const double, -2 * N>;
-using inRR = column<const double, N>;
+// a cell-center column seen from the face the thread traverses: L is the
+// cell to its left, R the cell to its right, which the face is indexed
+// like; LL and RR one further
+using cellCenterL = column<const double, -N>;
+using cellCenterR = cellCenterIn;
+using cellCenterLL = column<const double, -2 * N>;
+using cellCenterRR = column<const double, N>;
 
 #endif

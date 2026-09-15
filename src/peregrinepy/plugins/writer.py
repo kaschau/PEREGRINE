@@ -9,7 +9,7 @@ from .base import BasePlugin
 class Writer(BasePlugin):
     """Results into a directory, made if need be, named from the step n or
     the time t (`basename`, q.{n:08d} unless said), carrying whatever the
-    integrator keeps beyond the state. The xdmf points at the
+    stepper keeps beyond the state. The xdmf points at the
     grid file the case came from; a case meshed in a script gets one written
     into the directory first."""
 
@@ -36,7 +36,7 @@ class Writer(BasePlugin):
             gridDir,
             precision,
             basename=basename,
-            extras=solver.integrator.stateArrays,
+            extras=solver.restartArrays,
             config=solver.config,
         )
 

@@ -2,9 +2,9 @@
 
 // 0 if any conserved quantity in the interior of any block is not finite;
 // python combines the ranks.
-PG_RANGE(interior, ne)
+PG_RANGE(cellCenters, components = ne)
 struct allFinite {
-  in Q;
+  cellCenterIn Q;
   KOKKOS_INLINE_FUNCTION void operator()(const int l, int &finite) const {
     finite = fmin(isfinite(Q(l)), finite);
   }

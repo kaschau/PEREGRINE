@@ -6,11 +6,11 @@
 namespace adiabaticNoSlipWall {
 
 struct euler {
-  faceInOut q;
-  faceIn S;
+  haloInOut q;
+  blockFaceIn S;
   KOKKOS_INLINE_FUNCTION void operator()() const {
     double area, nx, ny, nz;
-    faceNormal(S.R(0), S.R(1), S.R(2), area, nx, ny, nz);
+    faceNormal(S(0), S(1), S(2), area, nx, ny, nz);
 
     // match pressure
     q.L(0) = q.R(0);
@@ -31,7 +31,7 @@ struct euler {
 };
 
 struct preDqDxyz {
-  faceInOut q;
+  haloInOut q;
   KOKKOS_INLINE_FUNCTION void operator()() const {
     // flip velo on wall
     q.L(1) = -q.R(1);
@@ -41,7 +41,7 @@ struct preDqDxyz {
 };
 
 struct postDqDxyz {
-  faceInOut grads;
+  haloInOut grads;
   KOKKOS_INLINE_FUNCTION void operator()() const {
     // negate pressure,  neumann velocity gradients
     grads.L(0, 0) = -grads.R(0, 0);

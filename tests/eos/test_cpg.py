@@ -24,7 +24,7 @@ def test_cpg(my_setup):
     config["mcPhysics"]["eos"] = "cpg"
     config["RHS"]["diffusion"] = False
 
-    mb = pg.multiBlock.solver(
+    mb = pg.integrators.getSolver(
         config,
         mesh=pg.mesher.CubeMesher(
             mbDims=[1, 1, 1], dimsPerBlock=[2, 2, 2], lengths=[1, 1, 1]

@@ -6,11 +6,11 @@
 namespace adiabaticSlipWall {
 
 struct euler {
-  faceInOut q;
-  faceIn S;
+  haloInOut q;
+  blockFaceIn S;
   KOKKOS_INLINE_FUNCTION void operator()() const {
     double area, nx, ny, nz;
-    faceNormal(S.R(0), S.R(1), S.R(2), area, nx, ny, nz);
+    faceNormal(S(0), S(1), S(2), area, nx, ny, nz);
 
     // match pressure
     q.L(0) = q.R(0);
@@ -31,7 +31,7 @@ struct euler {
 };
 
 struct postDqDxyz {
-  faceInOut grads;
+  haloInOut grads;
   KOKKOS_INLINE_FUNCTION void operator()() const {
     for (int l = 0; l < ne; l++) {
       // negate all gradients

@@ -8,12 +8,12 @@
 // Journal of Computational Physics
 // 408 (2020)
 
-PG_RANGE(faces)
+PG_RANGE(cellFaces)
 struct alphaDampingFlux {
-  inL QL, cellsL, gradsL, qL, qhL, qtL;
-  inR QR, cellsR, gradsR, qR, qhR, qtR;
-  inout F;
-  in A, Faces;
+  cellCenterL QL, cellsL, gradsL, qL, qhL, qtL;
+  cellCenterR QR, cellsR, gradsR, qR, qhR, qtR;
+  cellFaceInOut F;
+  cellFaceIn A, Faces;
   static constexpr double bulkVisc = 0.0;
   static constexpr double alpha = 1.0;
   KOKKOS_INLINE_FUNCTION void operator()() const {
