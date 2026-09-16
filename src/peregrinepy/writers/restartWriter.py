@@ -208,13 +208,13 @@ class RestartWriter(BaseWriter):
 
         ng = blk.ng
         array, j = self._sourceFor(blk, name)
-        whole = self.fileOrder(array)
+        whole = self.fileOrder(array, dset.dtype)
         count = (blk.nk - 1, blk.nj - 1, blk.ni - 1)
         # a variable is one component of q, or a field of its own
         picked = blk.interior + (j,) if j is not None else blk.interior
         if whole is None:
-            # a CPU build's arrays are not in file order, so gather them first
-            whole = np.ascontiguousarray(array[picked].T)
+            # not in file order or the file's type, so gather it first
+            whole = np.ascontiguousarray(array[picked].T, dtype=dset.dtype)
             sourceSel = ((0, 0, 0), count)
         elif j is None:
             sourceSel = ((ng, ng, ng), count)
@@ -232,10 +232,10 @@ class RestartWriter(BaseWriter):
         ng = blk.ng
         array = self._host[id(blk)][name]
         comps = array.shape[3:][::-1]
-        whole = self.fileOrder(array)
+        whole = self.fileOrder(array, dset.dtype)
         count = comps + (blk.nk - 1, blk.nj - 1, blk.ni - 1)
         if whole is None:
-            whole = np.ascontiguousarray(array[blk.interior].T)
+            whole = np.ascontiguousarray(array[blk.interior].T, dtype=dset.dtype)
             sourceSel = ((0,) * len(count), count)
         else:
             sourceSel = ((0,) * len(comps) + (ng, ng, ng), count)

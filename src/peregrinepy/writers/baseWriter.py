@@ -112,14 +112,30 @@ class BaseWriter:
         fspace.select_hyperslab(*destSel)
         dset.id.write(mspace, fspace, source, dxpl=self._dxpl)
 
+    def _writeTable(self, group, name, table):
+        """A small table every rank holds, as one collective write: rank 0
+        supplies it and the rest show up empty, since a file system that
+        needs MPI_File_sync refuses every independent write."""
+        dset = group.create_dataset(name, shape=table.shape, dtype=table.dtype)
+        if self.rank == 0:
+            whole = np.ascontiguousarray(table)
+            slab = ((0,) * table.ndim, table.shape)
+            self._writeSlab(dset, whole, slab, slab)
+        else:
+            self._writeSlab(dset)
+
     @staticmethod
-    def fileOrder(array):
-        """A block array as the file stores it, (k, j, i). On a GPU build the
-        views are LayoutLeft, so this transpose is a view of the host mirror
-        and nothing is copied; on a CPU build it is not contiguous and HDF5
-        cannot take it, so the caller falls back to a contiguous copy."""
+    def fileOrder(array, dtype):
+        """A block array as the file stores it, (k, j, i) in the file's type.
+        On a GPU build the views are LayoutLeft, so this transpose is a view
+        of the host mirror and nothing is copied; on a CPU build it is not
+        contiguous and HDF5 cannot take it, so the caller falls back to a
+        contiguous copy. A file narrower than the array takes the copy too:
+        HDF5 converts a slab larger than its buffer independently, which a
+        file system that needs MPI_File_sync refuses."""
         transposed = array.T
-        return transposed if transposed.flags["C_CONTIGUOUS"] else None
+        fits = transposed.flags["C_CONTIGUOUS"] and transposed.dtype == dtype
+        return transposed if fits else None
 
     ###########################################################################
     # The xdmf side

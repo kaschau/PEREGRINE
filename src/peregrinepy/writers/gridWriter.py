@@ -70,18 +70,30 @@ class GridWriter(BaseWriter):
             for name in ("x", "y", "z"):
                 coordS.create_dataset(name, shape=(nk, nj, ni), dtype=self.fdtype)
 
-        with Progress(len(mb.blocks), self.quiet) as bar:
-            for blk in mb.blocks:
-                coordS = gf[f"coordinates_{blk.nblki:06d}"]
-                nodes = blk.nodes.get()
+        # the writes are collective, so every rank walks every dataset
+        mine = {blk.nblki: blk for blk in mb.blocks}
+        with Progress(len(self.extents), self.quiet) as bar:
+            for nblki, (ni, nj, nk) in enumerate(self.extents):
+                coordS = gf[f"coordinates_{nblki:06d}"]
+                blk = mine.get(nblki)
+                nodes = blk.nodes.get() if blk is not None else None
                 for c, name in enumerate(("x", "y", "z")):
-                    coordS[name][:] = np.ascontiguousarray(nodes[blk.interior + (c,)].T)
-                bar.step(f"Writing out block {blk.nblki}")
+                    if blk is None:
+                        self._writeSlab(coordS[name])
+                        continue
+                    whole = np.ascontiguousarray(
+                        nodes[blk.interior + (c,)].T, dtype=self.fdtype
+                    )
+                    slab = ((0, 0, 0), (nk, nj, ni))
+                    self._writeSlab(coordS[name], whole, slab, slab)
+                bar.step(f"Writing out block {nblki}")
 
         self._writeConnectivity(gf, mb)
         # the base grid is a partition like any other: one rank owning all of it
-        gf.create_dataset(
-            "partitions/1x1/rank", data=np.zeros(self.totalBlocks, dtype=np.int32)
+        self._writeTable(
+            gf.create_group("partitions/1x1"),
+            "rank",
+            np.zeros(self.totalBlocks, dtype=np.int32),
         )
         gf.close()
 
@@ -109,10 +121,10 @@ class GridWriter(BaseWriter):
         if f"partitions/{name}" in gf:
             del gf[f"partitions/{name}"]
         group = gf.create_group(f"partitions/{name}")
-        group.create_dataset("rank", data=rank)
+        self._writeTable(group, "rank", rank)
 
         if any(blk.baseSlice is not None for blk in mb.blocks):
-            group.create_dataset("cuts", data=BasePartitioner.cutTable(mb))
+            self._writeTable(group, "cuts", BasePartitioner.cutTable(mb))
             self._writeConnectivity(group, mb)
         gf.close()
 
@@ -144,10 +156,9 @@ class GridWriter(BaseWriter):
         if "connectivity" in group:
             del group["connectivity"]
         connS = group.create_group("connectivity")
-        connS.create_dataset("neighbor", data=neighbor)
-        connS.create_dataset("periodicRotation", data=periodicRotation)
-        connS.create_dataset("periodicTranslation", data=periodicTranslation)
+        self._writeTable(connS, "neighbor", neighbor)
+        self._writeTable(connS, "periodicRotation", periodicRotation)
+        self._writeTable(connS, "periodicTranslation", periodicTranslation)
         for name, table in (("orientation", orientation), ("bcName", bcName)):
             # parallel hdf5 has no variable length strings, so size to the longest
-            table = table.astype("S")
-            connS.create_dataset(name, data=table, dtype=table.dtype)
+            self._writeTable(connS, name, table.astype("S"))
