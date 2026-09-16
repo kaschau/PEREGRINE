@@ -149,16 +149,18 @@ class pgTiling(ctypes.Structure):
 # the first field of each, the launch shape pins the rest
 ###############################################################################
 class Column(ctypes.Structure):
-    """A block column (column<T, O>): the records, then the entry's record
-    and the cell."""
+    """A block column (column<T, O>): the records, then what the launch
+    pins, the entry's data and strides and the cell."""
 
     _fields_ = [
         ("records", ctypes.c_void_p),
-        ("at", ctypes.c_void_p),
+        ("data", ctypes.c_void_p),
+        ("stride", ctypes.c_int * 5),
         ("entry", ctypes.c_int),
         ("i", ctypes.c_int),
         ("j", ctypes.c_int),
         ("k", ctypes.c_int),
+        ("pad", ctypes.c_int),
     ]
 
 

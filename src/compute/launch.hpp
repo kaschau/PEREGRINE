@@ -230,11 +230,12 @@ template <class F>
 void forCells(const char *name, const pgTiling &t, const F &f) {
   auto body = KOKKOS_LAMBDA(const team &team) {
     const auto r = tileOf(t, team);
+    const auto p = pinned(f, entry{r.e});
     Kokkos::parallel_for(Kokkos::TeamThreadRange(team, r.begin, r.end),
                          [&](const int item) {
                            cell c{r.e};
                            cellAt(t.cells[r.e], item, c.i, c.j, c.k);
-                           pinned(f, c)();
+                           pinned(p, within{c})();
                          });
   };
   Kokkos::parallel_for(name, policyOf(t, body), body);

@@ -14,7 +14,7 @@ twins = {
     abi.pgDims: (12, (("ni", 0), ("nj", 4), ("nk", 8))),
     abi.pgTiling: (48, (("cells", 24), ("count", 32), ("tiles", 36), ("tile", 40))),
     # the member twins, as arrays.hpp asserts them
-    abi.Column: (32, (("records", 0), ("at", 8), ("entry", 16))),
+    abi.Column: (56, (("records", 0), ("data", 8), ("stride", 16), ("entry", 36))),
     abi.FaceColumn: (40, (("records", 0), ("at", 8), ("nface", 32))),
     abi.PerEntryInt: (16, (("all", 0), ("value", 8))),
     abi.DimsColumn: (16, (("all", 0), ("at", 8))),

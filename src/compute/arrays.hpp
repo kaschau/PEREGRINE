@@ -23,8 +23,9 @@ KOKKOS_INLINE_FUNCTION int faceAxis(const int nface) { return (nface - 1) / 2; }
 KOKKOS_INLINE_FUNCTION bool faceLow(const int nface) { return nface % 2 == 1; }
 
 // A window is an array as its record describes it: the data pointer and
-// the record, whose strides are read from memory as they are needed, so a
-// thread holds two pointers per array. Everything below is plain data.
+// the record, whose strides are read as they are needed. A column (below)
+// does not: it pins its entry's record once per team and its cell per
+// item, and its body reads only data. Everything below is plain data.
 // the index the layout runs fastest, whose stride is one
 KOKKOS_INLINE_FUNCTION constexpr int fastest(const int R) {
   return std::is_same_v<layout, Kokkos::LayoutLeft> ? 0 : R - 1;
@@ -79,43 +80,90 @@ constexpr offset I{1, 0, 0}, J{0, 1, 0}, K{0, 0, 1};
 // face, cellCenterL/R (LL/RR one further), qL(l), qR(l); a face is indexed
 // like the cell to its right. A cellFaceIn/Out/InOut column is the face's
 // own array, F(l), A(c), and has no neighbors.
+// a read of a const element, as a value, through the global address space
+// on AMD: a load through a generic pointer is a flat load, which may return
+// out of order, so the compiler drains every load in flight before using
+// any (measured: 36 drains per trip of the viscous flux's species loop); a
+// global load it counts, and overlaps
+template <class T> KOKKOS_INLINE_FUNCTION decltype(auto) loadAt(T *p) {
+  if constexpr (std::is_const_v<T>) {
+#if defined(__HIP_DEVICE_COMPILE__)
+    typedef __attribute__((address_space(1))) T *global;
+    return std::remove_const_t<T>(*(global)p);
+#else
+    return std::remove_const_t<T>(*p);
+#endif
+  } else {
+    return *p;
+  }
+}
+
+// what a team pins once: its entry; what an item pins: its cell within it
+struct entry {
+  int e;
+};
+struct within {
+  cell c;
+};
 template <class T, offset O> struct column {
   const pgView *records;
-  const pgView *at; // pinned: the entry's record
-  cell c;           // pinned: where the body is
+  // pinned by the team: its entry's data and strides, read from the record
+  // once; pinned by the item: its cell. Read per element instead, the
+  // record's pointer and strides were a chase in front of every load that
+  // the compiler could not hoist past a kernel's stores
+  T *data;
+  int stride[5];
+  cell c;
 
-  KOKKOS_INLINE_FUNCTION void pin(const cell &where) {
-    at = records + where.entry;
-    c = where;
+  KOKKOS_INLINE_FUNCTION void pin(const entry &at) {
+#if defined(__HIP_DEVICE_COMPILE__)
+    // records are never written during a kernel and the entry is the team's:
+    // read as constant memory, they are scalar loads the wavefront shares
+    typedef __attribute__((address_space(4))) const pgView *constant;
+    const constant r = (constant)records + at.e;
+#else
+    const pgView *r = records + at.e;
+#endif
+    data = r->data;
+    for (int d = 0; d < 5; d++)
+      stride[d] = static_cast<int>(r->stride[d]);
   }
-  // the element at a step from the cell: the address is made here, so the
-  // compiler keeps what the body shares and nothing more
+  KOKKOS_INLINE_FUNCTION void pin(const within &at) { c = at.c; }
+  KOKKOS_INLINE_FUNCTION void pin(const cell &where) {
+    pin(entry{where.entry});
+    pin(within{where});
+  }
+  // the element at a step from the cell
   template <class... X>
-  KOKKOS_INLINE_FUNCTION T &element(const offset &o, X... rest) const {
-    constexpr int R = 3 + sizeof...(X);
-    assert(at->rank == R);
-    const long index[] = {static_cast<long>(c.i + O.di + o.di),
-                          static_cast<long>(c.j + O.dj + o.dj),
-                          static_cast<long>(c.k + O.dk + o.dk),
-                          static_cast<long>(rest)...};
-    long offset = index[fastest(R)];
-    for (int d = 0; d < R; d++)
-      if (d != fastest(R))
-        offset += index[d] * at->stride[d];
-    return at->data[offset];
+  KOKKOS_INLINE_FUNCTION decltype(auto) element(const offset &o,
+                                                X... rest) const {
+    const int r[] = {static_cast<int>(rest)..., 0, 0};
+    const long i = c.i + O.di + o.di, j = c.j + O.dj + o.dj,
+               k = c.k + O.dk + o.dk;
+    long off;
+    if constexpr (std::is_same_v<layout, Kokkos::LayoutLeft>)
+      off = i + j * stride[1] + k * stride[2];
+    else
+      off = i * stride[0] + j * stride[1] + k * stride[2];
+    if constexpr (sizeof...(X) >= 1)
+      off += r[0] * stride[3];
+    if constexpr (sizeof...(X) >= 2)
+      off += r[1] * stride[4];
+    return loadAt(data + off);
   }
   template <class... X>
     requires(std::is_integral_v<X> && ...)
-  KOKKOS_INLINE_FUNCTION T &operator()(X... rest) const {
+  KOKKOS_INLINE_FUNCTION decltype(auto) operator()(X... rest) const {
     return element(offset{0, 0, 0}, rest...);
   }
   // element i of the entry's allocation, flat: what an elements launch reads
-  KOKKOS_INLINE_FUNCTION T &operator[](const int i) const {
-    return at->data[i];
+  KOKKOS_INLINE_FUNCTION decltype(auto) operator[](const int i) const {
+    return loadAt(data + i);
   }
   // a fixed neighbor of the cell
   template <class... X>
-  KOKKOS_INLINE_FUNCTION T &operator()(const offset &o, X... rest) const {
+  KOKKOS_INLINE_FUNCTION decltype(auto) operator()(const offset &o,
+                                                   X... rest) const {
     return element(o, rest...);
   }
 };
@@ -128,11 +176,12 @@ using cellCenterInOut = cellCenterOut; // read and written, for python's graph
 template <class T> struct cellFaceColumn : column<T, offset{0, 0, 0}> {
   template <class... X>
     requires(std::is_integral_v<X> && ...)
-  KOKKOS_INLINE_FUNCTION T &operator()(X... rest) const {
+  KOKKOS_INLINE_FUNCTION decltype(auto) operator()(X... rest) const {
     return this->element(offset{0, 0, 0}, rest...);
   }
   template <class... X>
-  KOKKOS_INLINE_FUNCTION T &operator()(const offset &, X...) const = delete;
+  KOKKOS_INLINE_FUNCTION decltype(auto) operator()(const offset &,
+                                                   X...) const = delete;
 };
 using cellFaceIn = cellFaceColumn<const double>;
 using cellFaceOut = cellFaceColumn<double>;
@@ -143,7 +192,10 @@ using cellFaceInOut = cellFaceOut;
 template <class T> struct perEntry {
   const T *all;
   T value;
-  template <class P> KOKKOS_INLINE_FUNCTION void pin(const P &p) {
+  KOKKOS_INLINE_FUNCTION void pin(const entry &at) { value = all[at.e]; }
+  template <class P>
+    requires requires(const P &p) { p.entry; }
+  KOKKOS_INLINE_FUNCTION void pin(const P &p) {
     value = all[p.entry];
   }
   KOKKOS_INLINE_FUNCTION T operator()() const { return value; }
@@ -152,6 +204,7 @@ template <class T> struct perEntry {
 // the entry's dims, pinned with the columns
 struct dims {
   const pgDims *all, *at;
+  KOKKOS_INLINE_FUNCTION void pin(const entry &e) { at = all + e.e; }
   KOKKOS_INLINE_FUNCTION void pin(const cell &c) { at = all + c.entry; }
   KOKKOS_INLINE_FUNCTION const pgDims *operator->() const { return at; }
 };
@@ -333,7 +386,7 @@ KOKKOS_INLINE_FUNCTION out5 as5(const pgOut &v) {
 }
 
 // the member twins python builds a kernel's record from, laid out the same
-static_assert(sizeof(cellCenterIn) == 32 && sizeof(cellFaceIn) == 32 &&
+static_assert(sizeof(cellCenterIn) == 56 && sizeof(cellFaceIn) == 56 &&
               sizeof(haloIn) == 40 && sizeof(perEntry<int>) == 16 &&
               sizeof(dims) == 16);
 
