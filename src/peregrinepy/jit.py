@@ -35,15 +35,12 @@ class Jit:
         os.environ.get("PEREGRINE_CACHE", Path.home() / ".cache" / "peregrinepy")
     )
 
-    def __init__(
-        self, ns, ng, tileSize, tables, eos, diffusion=None, mixingRule="wilke"
-    ):
-        # a kernel is compiled for one species count, halo depth and tile size
+    def __init__(self, ns, ng, tables, eos, diffusion=None, mixingRule="wilke"):
+        # a kernel is compiled for one species count and halo depth
         self.defines = (
             f"NS={ns}",
             f"NE={5 + ns - 1}",
             f"NG={ng}",
-            f"PG_TILE={tileSize}",
         )
         self.toolchain = Toolchain.read(self.package / "toolchain.json")
         # the species data, baked into a header the species kernels are built

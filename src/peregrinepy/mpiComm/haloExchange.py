@@ -51,11 +51,11 @@ class HaloExchange:
     packed partition is the former.
     """
 
-    def __init__(self, pack, unpack, tileSize, backend):
+    def __init__(self, pack, unpack, tiles, backend):
         # the pack and unpack, every trading face in one call; the trade
         # tables are kept where the kernels run
         self.pack, self.unpack = pack, unpack
-        self.tileSize, self.backend = tileSize, backend
+        self.tiles, self.backend = tiles, backend
         self.comm, self.rank, self.size = getCommRankSize()
 
         # every face that trades, with the block planes it trades through
@@ -117,8 +117,8 @@ class HaloExchange:
                     arrival = getattr(face, "recvBuffer_" + var)
                 unpack.append(Trade(blk, face, var, arrival))
             self.tables[var] = (
-                Table(pack, self.tileSize, self.backend),
-                Table(unpack, self.tileSize, self.backend),
+                Table(pack, self.tiles, self.backend),
+                Table(unpack, self.tiles, self.backend),
             )
         return self.tables[var]
 

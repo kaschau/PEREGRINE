@@ -27,7 +27,8 @@ void faceNormal(const double &sx, const double &sy, const double &sz, double &S,
 // entry: PG_RANGE(cellCenters[, halo = 1 | ng][, components = 3 | ne]) the
 // interior and as much halo as it says, PG_RANGE(cellFaces) the faces of the
 // kernel's direction, PG_RANGE(blockFacePlanes, layers = ng) a block face's
-// planes, PG_RANGE(bufferPlanes) a trade's buffer
+// planes, PG_RANGE(bufferPlanes) a trade's buffer, PG_RANGE(elements,
+// components = ne) every element of an ne-wide array's allocation, flat
 #define PG_RANGE(...)
 
 #endif

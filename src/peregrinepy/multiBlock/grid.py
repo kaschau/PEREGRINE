@@ -53,7 +53,7 @@ class grid(topology):
             other = self.getBlock(face.neighbor)
             mine = blk.nodes.get()[face.firstPlane].reshape(-1, 3)
             theirs = face.alignToMe(
-                other.nodes[other.getFace(face.neighborNface).firstPlane]
+                other.nodes.get()[other.getFace(face.neighborNface).firstPlane]
             ).reshape(-1, 3)
 
             moved = self._transformOnto(theirs, mine, tol)

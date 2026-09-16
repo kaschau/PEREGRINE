@@ -1,22 +1,19 @@
 #include "kernel.hpp"
 
-// The linear combinations of solution registers every time integration stage
-// is built from: A = a*A + b*B [+ c*C]. A leading coefficient of zero means
-// the stage starts from somewhere else, so A is written without being read;
-// the test is on a value that is the same for every element, so the branch
-// costs nothing. The interior only: every halo a stage reads is rebuilt by
-// the consistify that follows it.
-
-PG_RANGE(cellCenters, components = ne)
+// A = a*A + b*B over every element of the allocations, as copy. No case for
+// a zero coefficient: an array is zeroed when it is made and holds a state
+// after, so 0 * A is 0, and a branch on the coefficient cost a fifth of the
+// time. The arrays are ne wide.
+PG_RANGE(elements, components = ne)
 struct axpby {
   cellCenterInOut A;
   double a, b;
   cellCenterIn B;
-  KOKKOS_INLINE_FUNCTION void operator()(const int l) const {
-    A(l) = a == 0.0 ? b * B(l) : a * A(l) + b * B(l);
+  KOKKOS_INLINE_FUNCTION void operator()(const int i) const {
+    A[i] = a * A[i] + b * B[i];
   }
 };
 
 PG_ABI void pgAxpby(const axpby &k, const pgTiling &t) {
-  forCellsAndComponents("axpby", t, k);
+  forElements("axpby", t, k);
 }

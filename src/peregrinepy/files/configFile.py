@@ -55,7 +55,12 @@ class configFile(frozenDict):
                 "diffusion": False,
                 "subgrid": None,
                 # items of one block per launch tile
+                # items of one block a team does: cells for a launch over
+                # cells or faces, elements for one whose item is one element
+                # (a copy, a launch over cells and components); measured
+                # optima on an MI100 at 57 components were ~128-256 and ~1024
                 "tileSize": 128,
+                "tileElements": 1024,
             }
         )
 
@@ -127,11 +132,10 @@ class configFile(frozenDict):
         step graph's to say."""
         self["timeIntegration"]["dt"] = float(self["timeIntegration"]["dt"])
         self["mcPhysics"]["nChemSubSteps"] = max(1, self["mcPhysics"]["nChemSubSteps"])
-        tile = self["RHS"]["tileSize"]
-        if not isinstance(tile, int) or tile < 1:
-            raise pgConfigError(
-                "RHS", "tileSize", f"{tile!r} is not a positive integer."
-            )
+        for key in ("tileSize", "tileElements"):
+            tile = self["RHS"][key]
+            if not isinstance(tile, int) or tile < 1:
+                raise pgConfigError("RHS", key, f"{tile!r} is not a positive integer.")
         sub = self["timeIntegration"]["subIterations"]
         if not isinstance(sub, int) or sub < 1:
             raise pgConfigError(

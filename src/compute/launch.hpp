@@ -7,12 +7,9 @@
 
 #include "arrays.hpp"
 
-// A launch is tiles of items: a team does `tileSize` items of one entry. The
-// size is a knob of the case, baked in by the jit as python tiled with it.
-#ifndef PG_TILE
-#error "a kernel is compiled for one tile size: PG_TILE comes from the jit"
-#endif
-constexpr int tileSize = PG_TILE;
+// A launch is tiles of items: a team does one tile of one entry's items.
+// How many items a tile is comes with the tiling, the case's knob for that
+// kind of item: cells, or single elements.
 using teams = Kokkos::TeamPolicy<execSpace>;
 using team = teams::member_type;
 
@@ -23,9 +20,9 @@ struct tile {
 KOKKOS_INLINE_FUNCTION tile tileOf(const pgTiling &t, const team &m) {
   const int rank = m.league_rank();
   const int e = t.entry[rank];
-  const int begin = (rank - t.first[e]) * tileSize;
+  const int begin = (rank - t.first[e]) * t.tile;
   const int n = t.items[e];
-  return {e, begin, begin + tileSize < n ? begin + tileSize : n};
+  return {e, begin, begin + t.tile < n ? begin + t.tile : n};
 }
 inline teams policyOf(const pgTiling &t) {
   return teams(t.tiles, Kokkos::AUTO);
@@ -203,6 +200,21 @@ void forCells(const char *name, const pgTiling &t, const F &f) {
                                cellAt(t.cells[r.e], item, c.i, c.j, c.k);
                                pinned(f, c)();
                              });
+      });
+}
+
+// a body on every element of every entry's allocation, halos and all,
+// f(i) with the columns pinned to the entry and read flat, A[i]: what a
+// copy or a linear combination of whole arrays is, and nothing else. The
+// range is PG_RANGE(elements, components = ...), the arrays' width.
+template <class F>
+void forElements(const char *name, const pgTiling &t, const F &f) {
+  Kokkos::parallel_for(
+      name, policyOf(t), KOKKOS_LAMBDA(const team &team) {
+        const auto r = tileOf(t, team);
+        const auto p = pinned(f, cell{r.e, 0, 0, 0});
+        Kokkos::parallel_for(Kokkos::TeamThreadRange(team, r.begin, r.end),
+                             [&](const int item) { p(item); });
       });
 }
 

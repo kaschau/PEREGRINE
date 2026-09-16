@@ -129,8 +129,8 @@ class pgDims(ctypes.Structure):
 
 class pgTiling(ctypes.Structure):
     """One launch over every entry of a table (pgTiling in abi.hpp): the
-    entry of each tile, the first tile and the items of each entry, and each
-    entry's cells, all where the kernels run."""
+    entry of each tile, the first tile and the items of each entry, each
+    entry's cells, all where the kernels run, and the items a tile is."""
 
     _fields_ = [
         ("entry", ctypes.c_void_p),
@@ -139,6 +139,7 @@ class pgTiling(ctypes.Structure):
         ("cells", ctypes.c_void_p),
         ("count", ctypes.c_int),
         ("tiles", ctypes.c_int),
+        ("tile", ctypes.c_int),
     ]
 
 

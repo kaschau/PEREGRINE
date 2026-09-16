@@ -68,12 +68,12 @@ class solver(restart):
         # the halo is as deep as the widest stencil among them; the table and
         # the jit follow, and each kernel is bound to what it runs over
         self.ng = max(k.stencil for k in kernels)
-        tileSize, mc = config["RHS"]["tileSize"], config["mcPhysics"]
-        self.table = Table(self.blocks, tileSize, self.backend)
+        rhs, mc = config["RHS"], config["mcPhysics"]
+        self.tiles = {"cells": rhs["tileSize"], "elements": rhs["tileElements"]}
+        self.table = Table(self.blocks, self.tiles, self.backend)
         self.jit = Jit(
             self.mixture.ns,
             self.ng,
-            tileSize,
             self.mixture.tables(),
             mc["eos"],
             mc["diffusion"],
@@ -86,7 +86,7 @@ class solver(restart):
 
         # what calls them: the halo exchange and the step's flows
         self.haloExchange = HaloExchange(
-            self.kernels["pack"], self.kernels["unpack"], tileSize, self.backend
+            self.kernels["pack"], self.kernels["unpack"], self.tiles, self.backend
         )
         self.graphs = {
             "consistify": Graph.consistify(self),
@@ -201,13 +201,14 @@ class solver(restart):
             self.declareArray("qt", kind="cell", components=2 + ns)
 
     def declareKernels(self):
-        """The kernels every case calls, each under its tag: the linear
-        combinations of block arrays, the equation of state, the fluxes and
+        """The kernels every case calls, each under its tag: the copy and
+        linear combinations of block arrays, the equation of state, the fluxes and
         the apply, the transport, the exchange, and every bcType's body at
         every bcHook the case has. A stepper and a controller add their own
         through super()."""
         rhs, mc = self.config["RHS"], self.config["mcPhysics"]
         k = self.kernels
+        k["copy"] = CellCenterKernel("utils/copy.cpp")
         k["axpby"] = CellCenterKernel("utils/axpby.cpp")
         k["axpbypcz"] = CellCenterKernel("utils/axpbypcz.cpp")
         # the equation of state is compiled into these by the jit
@@ -261,9 +262,8 @@ class solver(restart):
     # Named block arrays, on every block at once
     ###########################################################################
     def copyArray(self, dst, src):
-        """One block array's interior into another's: axpby with a leading
-        zero, which writes without reading."""
-        self.axpby(A=dst, a=0.0, b=1.0, B=src)
+        """One block array's interior into another's."""
+        self.copy(A=dst, B=src)
 
     def swapArrays(self, a, b):
         """The two named block arrays trade places on every block, so nothing
@@ -318,9 +318,7 @@ class solver(restart):
         for f in faces:
             if bcHook in f.bc.bcHooks():
                 groups.setdefault(f.bc.bcType, []).append(f)
-        return {
-            t: Table(fs, self.table.tileSize, self.backend) for t, fs in groups.items()
-        }
+        return {t: Table(fs, self.tiles, self.backend) for t, fs in groups.items()}
 
     def applyBcs(self, bcHook, faces=None):
         """One bcHook on the given faces, or on every face that has it, the

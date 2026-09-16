@@ -43,11 +43,12 @@ struct pgDims {
 // entry's, so a rank of thousands of small entries and one of a few huge
 // ones both fill the device. Python tiles the range a kernel declares and
 // hands the tiling over with the columns: the entry of each tile, the first
-// tile and the items of each entry, and each entry's cells.
+// tile and the items of each entry, each entry's cells, and the items a
+// tile is, the case's knob for this kind of item.
 struct pgTiling {
   const int *entry, *first, *items;
   const pgCells *cells;
-  int count, tiles;
+  int count, tiles, tile;
 };
 }
 
@@ -56,8 +57,9 @@ static_assert(sizeof(pgView) == 72 && offsetof(pgView, rank) == 8 &&
 static_assert(sizeof(pgCells) == 32 && offsetof(pgCells, extent) == 12 &&
               offsetof(pgCells, n) == 28);
 static_assert(sizeof(pgDims) == 12);
-static_assert(sizeof(pgTiling) == 40 && offsetof(pgTiling, cells) == 24 &&
-              offsetof(pgTiling, count) == 32);
+static_assert(sizeof(pgTiling) == 48 && offsetof(pgTiling, cells) == 24 &&
+              offsetof(pgTiling, count) == 32 &&
+              offsetof(pgTiling, tile) == 40);
 
 // a kernel names each record it takes by what it does with it: the same
 // bytes, but an in unpacks to a view that cannot be written, and the step's

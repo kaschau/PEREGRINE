@@ -197,23 +197,21 @@ class MergeMixin(OrientMixin):
         at = np.array([w[1] for w in where])
         held = np.array([w[0] for w in where])
 
-        # each copy as the block that holds it and the node of it that it is
-        sites = [
-            (
-                blocks[b].nodes,
-                np.unravel_index(f, blocks[b].nodes.shape[:3]),
-            )
-            for b, f in zip(held, at)
-        ]
+        # each copy as the block that holds it and the node of it that it is,
+        # on a host copy of each block's nodes that is put back at the end
+        hosts = {b: blocks[b].nodes.get() for b in set(held)}
+        sites = [(b, np.unravel_index(f, hosts[b].shape[:3])) for b, f in zip(held, at)]
 
-        values = np.array([nodes[index] for nodes, index in sites])
+        values = np.array([hosts[b][index] for b, index in sites])
         count = np.bincount(group)
         mean = np.stack(
             [np.bincount(group, weights=values[:, n]) / count for n in range(3)],
             axis=-1,
         )[group]
-        for m, (nodes, index) in enumerate(sites):
-            nodes[index] = mean[m]
+        for m, (b, index) in enumerate(sites):
+            hosts[b][index] = mean[m]
+        for b, nodes in hosts.items():
+            blocks[b].nodes.set(nodes)
         return float(np.abs(values - mean).max())
 
     def mergeAll(self, mb):

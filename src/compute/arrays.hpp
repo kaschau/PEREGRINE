@@ -109,6 +109,10 @@ template <class T, offset O> struct column {
   KOKKOS_INLINE_FUNCTION T &operator()(X... rest) const {
     return element(offset{0, 0, 0}, rest...);
   }
+  // element i of the entry's allocation, flat: what an elements launch reads
+  KOKKOS_INLINE_FUNCTION T &operator[](const int i) const {
+    return at->data[i];
+  }
   // a fixed neighbor of the cell
   template <class... X>
   KOKKOS_INLINE_FUNCTION T &operator()(const offset &o, X... rest) const {

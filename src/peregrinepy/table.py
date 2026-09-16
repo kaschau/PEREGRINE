@@ -48,6 +48,12 @@ class BaseRange:
         ng = blk.ng
         return tuple(n + 2 * ng - 1 for n in (blk.ni, blk.nj, blk.nk))
 
+    @property
+    def tileKind(self):
+        """What a tile of this range counts, and so which knob sizes it:
+        `cells`, or `elements` where a thread's item is one element."""
+        return "elements" if self.components != 1 else "cells"
+
     def nComponents(self, blk):
         if isinstance(self.components, str):
             ne, _, less = self.components.partition("-")
@@ -80,6 +86,22 @@ class CellCenters(BaseRange):
         if nface == 0:
             return CellCenters(self.components, 0)
         return BlockFaceHalo(self.components, nface)
+
+
+@dataclass(frozen=True)
+class Elements(BaseRange):
+    """Every element of a block array's allocation, halos and components
+    and all, as one flat run: what a copy or a linear combination of whole
+    arrays walks. The components are the arrays' width."""
+
+    kind: ClassVar[str] = "elements"
+
+    def cells(self, entry):
+        return (0,) * 3, self.extents(blockOf(entry))
+
+    @property
+    def tileKind(self):
+        return "elements"
 
 
 @dataclass(frozen=True)
@@ -152,12 +174,13 @@ class Table:
     cells are of; it holds nothing but the columns and tilings it uploads,
     makes no kernels, and says nothing about the order launches run in."""
 
-    def __init__(self, entries, tileSize, backend):
+    def __init__(self, entries, tiles, backend):
         # the list itself, not a copy: a block table is over the blocks as they come
         self.entries = entries
-        # items of one entry per tile, the case's knob; and where the kernels
-        # run, which is where the columns and tilings are kept
-        self.tileSize = tileSize
+        # items of one entry per tile, the case's knobs by what an item is
+        # ({"cells": n, "elements": n}); and where the kernels run, which is
+        # where the columns and tilings are kept
+        self.tiles = tiles
         self.backend = backend
         self._columns = {}
         self._tilings = {}
@@ -211,8 +234,9 @@ class Table:
     ###########################################################################
     def tiling(self, rng):
         """The tiling of a range over every entry, kept once made: a tile is
-        `tileSize` items of one entry."""
+        the range's kind of item, as many of one entry's as the knob says."""
         if rng not in self._tilings:
+            tile = self.tiles[rng.tileKind]
             count = self.count
             cells = np.zeros(count, dtype=np.dtype(pgCells))
             for index, entry in enumerate(self.entries):
@@ -222,13 +246,13 @@ class Table:
                 cells["extent"][index] = (*extent, nc)
                 cells["n"][index] = int(np.prod(extent)) * nc
             items = cells["n"].copy()
-            perEntry = -(-items // self.tileSize)
+            perEntry = -(-items // tile)
             first = np.zeros(count + 1, dtype=np.int32)
             first[1:] = np.cumsum(perEntry)
             # which entry each tile belongs to, so a team finds its own in one read
             entry = np.repeat(np.arange(count, dtype=np.int32), perEntry)
             arrays = [self._upload(a) for a in (entry, first, items, cells)]
-            tiling = pgTiling(*(a.ptr for a in arrays), count, int(first[-1]))
+            tiling = pgTiling(*(a.ptr for a in arrays), count, int(first[-1]), tile)
             # the arrays live as long as the tiling that points into them
             tiling.arrays = arrays
             self._tilings[rng] = tiling
