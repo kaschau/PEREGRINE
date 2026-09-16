@@ -1,4 +1,4 @@
-from . import abi
+from . import backend
 from . import bcs
 from . import partition
 from . import plugins
@@ -15,7 +15,7 @@ from . import writers
 from ._version import __version__
 
 __all__ = [
-    "abi",
+    "backend",
     "bcs",
     "partition",
     "plugins",

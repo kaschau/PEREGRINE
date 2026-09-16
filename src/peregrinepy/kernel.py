@@ -15,11 +15,11 @@ import re
 
 import numpy as np
 
-from .abi import Column, DimsColumn, FaceColumn, PerEntryInt
+from .backend.abi import Column, DimsColumn, FaceColumn, PerEntryInt
 from .bcs import getBc
-from .jit import Jit
+from .backend.jit import Jit
 from .misc import subclassWhere
-from .table import BaseRange
+from .backend.table import BaseRange
 
 
 class Kernel:

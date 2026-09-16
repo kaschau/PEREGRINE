@@ -3,7 +3,7 @@ from functools import cache
 
 import numpy as np
 
-from ..jit import Jit
+from ..backend.jit import Jit
 
 
 class BaseBC:

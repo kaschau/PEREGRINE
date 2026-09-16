@@ -1,5 +1,5 @@
 // PEREGRINE's C ABI: what Python and the kernels agree on. Every struct
-// here has a twin in peregrinepy/abi.py laid out the same, and both sides
+// here has a twin in peregrinepy/backend/abi.py laid out the same, and both sides
 // assert the sizes. The runtime and the kernels include this; a kernel gets
 // it through kernel.hpp.
 #ifndef __abi_H__

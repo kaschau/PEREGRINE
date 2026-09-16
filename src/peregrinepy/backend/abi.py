@@ -24,6 +24,7 @@ class Library:
         "pgFinalize": ([], None),
         "pgLayoutLeft": ([], ctypes.c_int),
         "pgOnHost": ([], ctypes.c_int),
+        "pgBackend": ([], ctypes.c_char_p),
         "pgAllocate": ([ctypes.c_size_t], ctypes.c_void_p),
         "pgFree": ([ctypes.c_void_p], None),
         "pgToHost": (
@@ -57,7 +58,7 @@ class Library:
     def initialize(self):
         """Load the runtime and start Kokkos. Nothing before this touches a
         device, so a pre or post processing run never needs one."""
-        path = next(Path(__file__).parent.glob("libpgruntime.*"))
+        path = next(Path(__file__).parent.parent.glob("libpgruntime.*"))
         self.load(path, shared=True)
         for name, (argtypes, restype) in self.runtime.items():
             setattr(self, name, self.function(path, name, argtypes, restype))

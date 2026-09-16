@@ -28,20 +28,28 @@ from .toolchain import Toolchain
 class Jit:
     """Compiling kernels for one case, into the store they are kept in."""
 
-    package = Path(__file__).parent
+    # the package root, where the runtime library and toolchain.json are installed
+    package = Path(__file__).parent.parent
     compute = package.parent / "compute"
     includeLine = re.compile(r'^\s*#\s*include\s+"([^"]+)"', re.M)
     cacheDir = Path(
         os.environ.get("PEREGRINE_CACHE", Path.home() / ".cache" / "peregrinepy")
     )
 
-    def __init__(self, ns, ng, tables, eos, diffusion=None, mixingRule="wilke"):
-        # a kernel is compiled for one species count and halo depth
+    def __init__(
+        self, ns, ng, tables, eos, diffusion=None, mixingRule="wilke", launch=None
+    ):
+        # a kernel is compiled for one species count and halo depth, and on
+        # a device for one launch bound, (threads, waves) from the backend's
+        # config section; none is the host's unbounded launch
         self.defines = (
             f"NS={ns}",
             f"NE={5 + ns - 1}",
             f"NG={ng}",
         )
+        if launch is not None:
+            threads, waves = launch
+            self.defines += (f"PG_LAUNCH_THREADS={threads}", f"PG_LAUNCH_WAVES={waves}")
         self.toolchain = Toolchain.read(self.package / "toolchain.json")
         # the species data, baked into a header the species kernels are built
         # with; the case's equation of state, forced in ahead of any source

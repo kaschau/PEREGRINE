@@ -1,4 +1,4 @@
-from peregrinepy import abi
+from peregrinepy.backend import abi
 import pytest
 
 

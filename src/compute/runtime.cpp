@@ -19,6 +19,10 @@ PG_ABI int pgLayoutLeft() {
   return std::is_same<layout, Kokkos::LayoutLeft>::value;
 }
 
+// the execution space the runtime was built for, as Kokkos names it:
+// Serial, OpenMP, Cuda, HIP
+PG_ABI const char *pgBackend() { return execSpace::name(); }
+
 // 1 if the kernels' memory is host memory, so python can hand a kernel its
 // own numpy buffers. Not SpaceAccessibility: a managed-memory build is
 // accessible from the host, but numpy's allocations are not managed.

@@ -1,6 +1,6 @@
 import numpy as np
 
-from ..abi import pgDims
+from ..backend.abi import pgDims
 from .haloMixin import HaloMixin
 from .restartBlock import restartBlock
 from .solverMetricsMixin import SolverMetricsMixin

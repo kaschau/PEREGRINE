@@ -174,13 +174,11 @@ class Table:
     cells are of; it holds nothing but the columns and tilings it uploads,
     makes no kernels, and says nothing about the order launches run in."""
 
-    def __init__(self, entries, tiles, backend):
+    def __init__(self, entries, backend):
         # the list itself, not a copy: a block table is over the blocks as they come
         self.entries = entries
-        # items of one entry per tile, the case's knobs by what an item is
-        # ({"cells": n, "elements": n}); and where the kernels run, which is
-        # where the columns and tilings are kept
-        self.tiles = tiles
+        # where the kernels run, which is where the columns and tilings are
+        # kept, and whose tiles say how many items of one entry a team does
         self.backend = backend
         self._columns = {}
         self._tilings = {}
@@ -236,7 +234,7 @@ class Table:
         """The tiling of a range over every entry, kept once made: a tile is
         the range's kind of item, as many of one entry's as the knob says."""
         if rng not in self._tilings:
-            tile = self.tiles[rng.tileKind]
+            tile = self.backend.tiles[rng.tileKind]
             count = self.count
             cells = np.zeros(count, dtype=np.dtype(pgCells))
             for index, entry in enumerate(self.entries):

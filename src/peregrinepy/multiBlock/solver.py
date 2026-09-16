@@ -12,10 +12,9 @@ from mpi4py import MPI
 
 from .restart import restart
 from .solverBlock import solverBlock
-from ..backend import runtimeBackend
+from ..backend import Backend
 from ..bcs import bcTypesWith
 from ..graph import Graph
-from ..jit import Jit
 from ..kernel import (
     BlockFaceKernel,
     CellCenterKernel,
@@ -27,7 +26,6 @@ from ..mixture import Mixture
 from ..mpiComm import HaloExchange
 from ..mpiComm.mpiUtils import getCommRankSize
 from ..plugins import pluginsOf
-from ..table import Table
 from ..files.configFile import pgConfigError
 
 
@@ -55,7 +53,7 @@ class solver(restart):
         self.mixture = Mixture(config["mcPhysics"])
         super().__init__(self.mixture.speciesNames)
         # its arrays are made where the kernels run
-        self.backend = runtimeBackend()
+        self.backend = Backend.fromRuntime(config)
         self.ne = 5 + self.mixture.ns - 1
 
         # every array a block holds beyond the restart's, and every kernel the
@@ -68,10 +66,9 @@ class solver(restart):
         # the halo is as deep as the widest stencil among them; the table and
         # the jit follow, and each kernel is bound to what it runs over
         self.ng = max(k.stencil for k in kernels)
-        rhs, mc = config["RHS"], config["mcPhysics"]
-        self.tiles = {"cells": rhs["tileSize"], "elements": rhs["tileElements"]}
-        self.table = Table(self.blocks, self.tiles, self.backend)
-        self.jit = Jit(
+        mc = config["mcPhysics"]
+        self.table = self.backend.table(self.blocks)
+        self.jit = self.backend.jit(
             self.mixture.ns,
             self.ng,
             self.mixture.tables(),
@@ -86,7 +83,7 @@ class solver(restart):
 
         # what calls them: the halo exchange and the step's flows
         self.haloExchange = HaloExchange(
-            self.kernels["pack"], self.kernels["unpack"], self.tiles, self.backend
+            self.kernels["pack"], self.kernels["unpack"], self.backend
         )
         self.graphs = {
             "consistify": Graph.consistify(self),
@@ -318,7 +315,7 @@ class solver(restart):
         for f in faces:
             if bcHook in f.bc.bcHooks():
                 groups.setdefault(f.bc.bcType, []).append(f)
-        return {t: Table(fs, self.tiles, self.backend) for t, fs in groups.items()}
+        return {t: self.backend.table(fs) for t, fs in groups.items()}
 
     def applyBcs(self, bcHook, faces=None):
         """One bcHook on the given faces, or on every face that has it, the

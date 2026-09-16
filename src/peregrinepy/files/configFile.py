@@ -54,13 +54,38 @@ class configFile(frozenDict):
                 "switchAdvFlux": None,
                 "diffusion": False,
                 "subgrid": None,
-                # items of one block per launch tile
-                # items of one block a team does: cells for a launch over
-                # cells or faces, elements for one whose item is one element
-                # (a copy, a launch over cells and components); measured
-                # optima on an MI100 at 57 components were ~128-256 and ~1024
+            }
+        )
+
+        # How the kernels are launched, a section per backend the runtime
+        # may have been built for; a run reads the one it was. tileSize and
+        # tileElements are the items of one block a team does: cells for a
+        # launch over cells or faces, elements for one whose item is one
+        # element (a copy, a launch over cells and components). On a device
+        # a cell team is its tile, and the kernels are compiled with a launch
+        # bound of launchThreads with a floor of launchWaves resident waves,
+        # which is the register budget: a floor of 2 measured best on an
+        # MI100 (the floor of 4 an unbounded launch implies spilled the
+        # viscous flux and transport); on CUDA 1 keeps nvcc's budget until a
+        # card measures otherwise. The host is one thread per team.
+        for name in ("serial", "openmp"):
+            self[f"backend-{name}"] = frozenDict(
+                {"tileSize": 128, "tileElements": 1024}
+            )
+        self["backend-cuda"] = frozenDict(
+            {
                 "tileSize": 128,
                 "tileElements": 1024,
+                "launchThreads": 256,
+                "launchWaves": 1,
+            }
+        )
+        self["backend-hip"] = frozenDict(
+            {
+                "tileSize": 128,
+                "tileElements": 1024,
+                "launchThreads": 256,
+                "launchWaves": 2,
             }
         )
 
@@ -132,10 +157,19 @@ class configFile(frozenDict):
         step graph's to say."""
         self["timeIntegration"]["dt"] = float(self["timeIntegration"]["dt"])
         self["mcPhysics"]["nChemSubSteps"] = max(1, self["mcPhysics"]["nChemSubSteps"])
-        for key in ("tileSize", "tileElements"):
-            tile = self["RHS"][key]
-            if not isinstance(tile, int) or tile < 1:
-                raise pgConfigError("RHS", key, f"{tile!r} is not a positive integer.")
+        for section in (k for k in self if k.startswith("backend-")):
+            launch = self[section]
+            for key in launch:
+                if not isinstance(launch[key], int) or launch[key] < 1:
+                    raise pgConfigError(
+                        section, key, f"{launch[key]!r} is not a positive integer."
+                    )
+            # a device's cell team is its tile, within the launch bound
+            if (
+                "launchThreads" in launch
+                and launch["tileSize"] > launch["launchThreads"]
+            ):
+                raise pgConfigError(section, "tileSize", "is at most launchThreads.")
         sub = self["timeIntegration"]["subIterations"]
         if not isinstance(sub, int) or sub < 1:
             raise pgConfigError(

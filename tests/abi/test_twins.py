@@ -5,7 +5,7 @@ import ctypes
 
 import pytest
 
-from peregrinepy import abi
+from peregrinepy.backend import abi
 
 twins = {
     # struct, size in bytes, (field, offset) pairs

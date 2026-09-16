@@ -16,8 +16,7 @@ import numpy as np
 from mpi4py.MPI import DOUBLE as MPIDOUBLE
 from mpi4py.MPI import Request
 
-from ..abi import lib
-from ..table import Table
+from ..backend.abi import lib
 from .mpiUtils import getCommRankSize
 
 
@@ -51,11 +50,11 @@ class HaloExchange:
     packed partition is the former.
     """
 
-    def __init__(self, pack, unpack, tiles, backend):
+    def __init__(self, pack, unpack, backend):
         # the pack and unpack, every trading face in one call; the trade
         # tables are kept where the kernels run
         self.pack, self.unpack = pack, unpack
-        self.tiles, self.backend = tiles, backend
+        self.backend = backend
         self.comm, self.rank, self.size = getCommRankSize()
 
         # every face that trades, with the block planes it trades through
@@ -117,8 +116,8 @@ class HaloExchange:
                     arrival = getattr(face, "recvBuffer_" + var)
                 unpack.append(Trade(blk, face, var, arrival))
             self.tables[var] = (
-                Table(pack, self.tiles, self.backend),
-                Table(unpack, self.tiles, self.backend),
+                self.backend.table(pack),
+                self.backend.table(unpack),
             )
         return self.tables[var]
 
