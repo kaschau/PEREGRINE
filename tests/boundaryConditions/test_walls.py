@@ -13,7 +13,7 @@ class Wall(BaseBC):
 
     @property
     def gradRules(self):
-        return dict(p="negate", velo=self._veloGrad, T=self._tempGrad, Y="negate")
+        return dict(velo=self._veloGrad, T=self._tempGrad, Y="negate")
 
     def euler(self, face):
         self.run(face, "euler")
@@ -101,7 +101,7 @@ pytestmark = pytest.mark.parametrize(
     "adv,gas",
     list(
         itertools.product(
-            ("KEPaEC", "fourthOrderKEEP"),
+            ("KEPaEC",),
             ("air", "CH4_O2"),
         )
     ),

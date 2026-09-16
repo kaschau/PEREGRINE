@@ -39,7 +39,7 @@ class Trace(BasePlugin):
 
     def __call__(self, solver):
         # one snapshot per block the traces live in
-        qs = {n: solver.getBlock(n).q.get() for n in {t[0] for t in self.traces}}
+        qs = {n: solver.getBlock(n).primitives() for n in {t[0] for t in self.traces}}
         for nblki, fileName, i, j, k in self.traces:
             row = np.concatenate(([solver.tme], qs[nblki][i, j, k, :]))
             with open(fileName, "a") as f:

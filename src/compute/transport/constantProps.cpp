@@ -1,67 +1,41 @@
+#include "conserved.hpp"
+#include "diffusion.hpp"
 #include "kernel.hpp"
-#include "species.hpp"
+#include "mixing.hpp"
 
+// Constant species properties: each species' viscosity and conductivity as
+// the mixture gives them, mixed by Wilke's rule and the series-parallel
+// mean; the species diffusion coefficients from the case's diffusion model.
 PG_RANGE(cellCenters, halo = ng)
 struct constantProps {
   cellCenterIn Q, q, qh;
   cellCenterOut qt;
   KOKKOS_INLINE_FUNCTION void operator()() const {
-    double Y[ns];
+    // the mole fractions off the conserved state
     double X[ns];
+    const double rhoinv = 1.0 / Q(0);
+    const double MWmix = moleFractions(massFractions(Q, rhoinv), X);
+    const double T = q(1);
 
-    // Compute nth species Y
-    Y[ns - 1] = 1.0;
-    for (int n = 0; n < ns - 1; n++) {
-      Y[n] = q(5 + n);
-      Y[ns - 1] -= Y[n];
-    }
-
-    // Update mixture properties
-    // Mole fractions
     {
-      double mass = 0.0;
+      double sqrtMu[ns];
       for (int n = 0; n <= ns - 1; n++) {
-        mass += Y[n] / MW(n);
+        sqrtMu[n] = sqrt(mu0(n));
       }
-      for (int n = 0; n <= ns - 1; n++) {
-        X[n] = Y[n] / MW(n) / mass;
-      }
+      qt(0) = wilkeViscosity(X, sqrtMu);
     }
-
-    // viscosity mixture
-    double mu = 0.0;
+    double kappaSp[ns];
     for (int n = 0; n <= ns - 1; n++) {
-      double phitemp = 0.0;
-      for (int n2 = 0; n2 <= ns - 1; n2++) {
-        double phi =
-            pow((1.0 + sqrt(mu0(n) / mu0(n2) * sqrt(MW(n2) / MW(n)))), 2.0) /
-            (sqrt(8.0) * sqrt(1 + MW(n) / MW(n2)));
-        phitemp += phi * X[n2];
-      }
-      mu += mu0(n) * X[n] / phitemp;
+      kappaSp[n] = kappa0(n);
     }
-
-    // thermal conductivity mixture
-    double kappa;
-    {
-      double sum1 = 0.0;
-      double sum2 = 0.0;
-      for (int n = 0; n <= ns - 1; n++) {
-        sum1 += X[n] * kappa0(n);
-        sum2 += X[n] / kappa0(n);
-      }
-      kappa = 0.5 * (sum1 + 1.0 / sum2);
-    }
-
-    // Set values of new properties
-    // viscocity
-    qt(0) = mu;
-    // thermal conductivity
+    const double kappa = mixtureConductivity(X, kappaSp);
     qt(1) = kappa;
-    // Diffusion coefficients mass
-    // NOTE: Unity Lewis number approximation!
+
+    double D[ns];
+    diffusion::coefficients({q(0), T, log(T), rhoinv, qh(1), kappa, MWmix, X},
+                            D);
     for (int n = 0; n <= ns - 1; n++) {
-      qt(2 + n) = kappa / (Q(0) * qh(1) * lewis(n));
+      qt(2 + n) = D[n];
     }
   }
 };

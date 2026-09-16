@@ -5,7 +5,7 @@
 
 PG_RANGE(cellCenters)
 struct localDtau {
-  cellCenterIn Q, dIJK, iS, jS, kS, q, qh, qt;
+  cellCenterIn Q, dIJK, iS, jS, kS, qh, qt;
   cellCenterOut dtau;
   dims d;
   bool viscous;
@@ -43,9 +43,11 @@ struct localDtau {
     double knx0, kny0, knz0, knx1, kny1, knz1;
     faceNormal(kS(0), kS(1), kS(2), S0, knx0, kny0, knz0);
     faceNormal(kS(+K, 0), kS(+K, 1), kS(+K, 2), S1, knx1, kny1, knz1);
-    const double &u = q(1);
-    const double &v = q(2);
-    const double &w = q(3);
+    // the velocity off the conserved state
+    const double rhoinv = 1.0 / Q(0);
+    const double u = Q(1) * rhoinv;
+    const double v = Q(2) * rhoinv;
+    const double w = Q(3) * rhoinv;
 
     double uI = sqrt(pow(0.5 * (inx0 + inx1) * u, 2.0) +
                      pow(0.5 * (iny0 + iny1) * v, 2.0) +
@@ -63,7 +65,7 @@ struct localDtau {
     double pseudoVNN = 0.1;
 
     // the preconditioned system's wave speeds set the pseudo step
-    const double nu = viscous ? qt(0) / Q(0) : 0.0;
+    const double nu = viscous ? qt(0) * rhoinv : 0.0;
     const double Ur = referenceVelocity(sqrt(u * u + v * v + w * w), c, nu,
                                         iMult * dI, jMult * dJ, kMult * dK);
     // the preconditioned system propagates u' +- c', not u + c

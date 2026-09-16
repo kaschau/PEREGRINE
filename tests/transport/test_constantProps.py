@@ -31,15 +31,15 @@ def test_constantProps(my_setup):
 
     p = np.random.uniform(low=10000, high=1000000)
     T = np.random.uniform(low=200, high=3500)
-    q = blk.q.get()
+    q = blk.primitives()
     q[:, :, :, 0] = p
     q[:, :, :, 4] = T
-    blk.q.set(q)
+    mb.setPrimitives([q])
 
     # Update transport
     assert mb.trans.__name__ == "constantProps"
-    mb.trans(nface=0)
-    q, qt = blk.q.get(), blk.qt.get()
+    mb.trans()
+    q, qt = blk.primitives(), blk.qt.get()
     ng = blk.ng
 
     # test the properties

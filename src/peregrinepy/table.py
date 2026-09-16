@@ -32,6 +32,7 @@ class BaseRange:
     `ne` mean the block's."""
 
     kind: ClassVar[str] = None
+    # a count, or `ne` less a count: "ne", "ne - 1"
     components: int | str = 1
 
     def cells(self, entry):
@@ -48,7 +49,11 @@ class BaseRange:
         return tuple(n + 2 * ng - 1 for n in (blk.ni, blk.nj, blk.nk))
 
     def nComponents(self, blk):
-        return blk.ne if self.components == "ne" else int(self.components)
+        if isinstance(self.components, str):
+            ne, _, less = self.components.partition("-")
+            assert ne.strip() == "ne"
+            return blk.ne - (int(less) if less else 0)
+        return self.components
 
 
 @dataclass(frozen=True)

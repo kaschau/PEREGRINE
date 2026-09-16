@@ -22,17 +22,17 @@ struct smagorinsky {
     const double Prt = 0.4;
     const double Sct = 1.0;
 
-    const double &dudx = grads(1, 0);
-    const double &dudy = grads(1, 1);
-    const double &dudz = grads(1, 2);
+    const double &dudx = grads(0, 0);
+    const double &dudy = grads(0, 1);
+    const double &dudz = grads(0, 2);
 
-    const double &dvdx = grads(2, 0);
-    const double &dvdy = grads(2, 1);
-    const double &dvdz = grads(2, 2);
+    const double &dvdx = grads(1, 0);
+    const double &dvdy = grads(1, 1);
+    const double &dvdz = grads(1, 2);
 
-    const double &dwdx = grads(3, 0);
-    const double &dwdy = grads(3, 1);
-    const double &dwdz = grads(3, 2);
+    const double &dwdx = grads(2, 0);
+    const double &dwdy = grads(2, 1);
+    const double &dwdz = grads(2, 2);
 
     double S[3][3];
     S[0][0] = dudx;

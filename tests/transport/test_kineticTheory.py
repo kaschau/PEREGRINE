@@ -48,16 +48,16 @@ def test_kineticTheory(my_setup, ctfile):
     blk = mb.blocks[0]
 
     gas.TPY = T, p, Y
-    q = blk.q.get()
+    q = blk.primitives()
     q[:, :, :, 0] = p
     q[:, :, :, 4] = T
     q[:, :, :, 5::] = Y[0:-1]
-    blk.q.set(q)
+    mb.setPrimitives([q])
 
     # Update transport
     assert mb.trans.__name__ == "kineticTheory"
-    mb.trans(nface=0)
-    q, qt = blk.q.get(), blk.qt.get()
+    mb.trans()
+    q, qt = blk.primitives(), blk.qt.get()
     ng = blk.ng
 
     # test the properties

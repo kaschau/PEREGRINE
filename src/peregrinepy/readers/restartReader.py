@@ -49,7 +49,7 @@ class RestartReader:
 
                 # read from base slab
                 resS = f[f"results_{blk.baseNblki:06d}"]
-                dest = blk.q.get()
+                dest = blk.prims.get()
                 for i, var in enumerate(variables):
                     # a case may carry species the result it restarts from did
                     # not, and those keep the zeros they were allocated with
@@ -66,7 +66,7 @@ class RestartReader:
                     else:
                         dest[blk.interior + tuple([i])] = resS[var][blk.baseCellSlab].T
 
-                blk.q.set(dest)
+                blk.prims.set(dest)
 
                 for name in self.extras:
                     if name not in getattr(blk, "declared", ()):

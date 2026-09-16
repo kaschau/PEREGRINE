@@ -1,4 +1,5 @@
 #include "faces.hpp"
+#include "thermo/eos.hpp"
 
 // This should basically never be used. It always worse than alpha damping.
 
@@ -17,17 +18,17 @@ struct diffusiveFlux {
     // no mass diffuses, so the continuity flux is left alone
 
     // Derivatives on face
-    double dudx = 0.5 * (gradsR(1, 0) + gradsL(1, 0));
-    double dvdx = 0.5 * (gradsR(2, 0) + gradsL(2, 0));
-    double dwdx = 0.5 * (gradsR(3, 0) + gradsL(3, 0));
+    double dudx = 0.5 * (gradsR(0, 0) + gradsL(0, 0));
+    double dvdx = 0.5 * (gradsR(1, 0) + gradsL(1, 0));
+    double dwdx = 0.5 * (gradsR(2, 0) + gradsL(2, 0));
 
-    double dudy = 0.5 * (gradsR(1, 1) + gradsL(1, 1));
-    double dvdy = 0.5 * (gradsR(2, 1) + gradsL(2, 1));
-    double dwdy = 0.5 * (gradsR(3, 1) + gradsL(3, 1));
+    double dudy = 0.5 * (gradsR(0, 1) + gradsL(0, 1));
+    double dvdy = 0.5 * (gradsR(1, 1) + gradsL(1, 1));
+    double dwdy = 0.5 * (gradsR(2, 1) + gradsL(2, 1));
 
-    double dudz = 0.5 * (gradsR(1, 2) + gradsL(1, 2));
-    double dvdz = 0.5 * (gradsR(2, 2) + gradsL(2, 2));
-    double dwdz = 0.5 * (gradsR(3, 2) + gradsL(3, 2));
+    double dudz = 0.5 * (gradsR(0, 2) + gradsL(0, 2));
+    double dvdz = 0.5 * (gradsR(1, 2) + gradsL(1, 2));
+    double dwdz = 0.5 * (gradsR(2, 2) + gradsL(2, 2));
 
     double div = dudx + dvdy + dwdz;
 
@@ -54,23 +55,28 @@ struct diffusiveFlux {
 
     // energy
     //   heat conduction
-    double dTdx = 0.5 * (gradsR(4, 0) + gradsL(4, 0));
-    double dTdy = 0.5 * (gradsR(4, 1) + gradsL(4, 1));
-    double dTdz = 0.5 * (gradsR(4, 2) + gradsL(4, 2));
+    double dTdx = 0.5 * (gradsR(3, 0) + gradsL(3, 0));
+    double dTdy = 0.5 * (gradsR(3, 1) + gradsL(3, 1));
+    double dTdz = 0.5 * (gradsR(3, 2) + gradsL(3, 2));
 
     double heatFlux = -kappa * (dTdx * A(0) + dTdy * A(1) + dTdz * A(2));
 
     // flow work
     // Compute face normal volume flux vector
-    double uf = 0.5 * (qR(1) + qL(1));
-    double vf = 0.5 * (qR(2) + qL(2));
-    double wf = 0.5 * (qR(3) + qL(3));
+    // the face velocity, each side's off its conserved state
+    const double rhoinvL = 1.0 / QL(0), rhoinvR = 1.0 / QR(0);
+    double uf = 0.5 * (QR(1) * rhoinvR + QL(1) * rhoinvL);
+    double vf = 0.5 * (QR(2) * rhoinvR + QL(2) * rhoinvL);
+    double wf = 0.5 * (QR(3) * rhoinvR + QL(3) * rhoinvL);
 
     F(4) += -(uf * txx + vf * txy + wf * txz) * A(0) -
             (uf * tyx + vf * tyy + wf * tyz) * A(1) -
             (uf * tzx + vf * tzy + wf * tzz) * A(2) + heatFlux;
 
     // Species
+    // the species enthalpies from each side's eos
+    const auto hL = eos::enthalpies(qL(1), qhL);
+    const auto hR = eos::enthalpies(qR(1), qhR);
     double Dk, Vc = 0.0;
     double gradYns = 0.0;
     double rho = 0.5 * (QR(0) + QL(0));
@@ -78,9 +84,9 @@ struct diffusiveFlux {
     // Dk*gradYk
     for (int n = 0; n < ne - 5; n++) {
       Dk = 0.5 * (qtR(2 + n) + qtL(2 + n));
-      double dYdx = 0.5 * (gradsR(5 + n, 0) + gradsL(5 + n, 0));
-      double dYdy = 0.5 * (gradsR(5 + n, 1) + gradsL(5 + n, 1));
-      double dYdz = 0.5 * (gradsR(5 + n, 2) + gradsL(5 + n, 2));
+      double dYdx = 0.5 * (gradsR(4 + n, 0) + gradsL(4 + n, 0));
+      double dYdy = 0.5 * (gradsR(4 + n, 1) + gradsL(4 + n, 1));
+      double dYdz = 0.5 * (gradsR(4 + n, 2) + gradsL(4 + n, 2));
 
       double gradYk = (dYdx * A(0) + dYdy * A(1) + dYdz * A(2));
       gradYns -= gradYk;
@@ -88,7 +94,7 @@ struct diffusiveFlux {
       // the species flux before its correction, and its enthalpy with
       // it
       double Jk = -rho * Dk * gradYk;
-      double hk = 0.5 * (qhR(5 + n) + qhL(5 + n));
+      double hk = 0.5 * (hR(n) + hL(n));
       F(5 + n) += Jk;
       F(4) += Jk * hk;
     }
@@ -100,17 +106,17 @@ struct diffusiveFlux {
     double Yk, hk;
     double Yns = 1.0;
     for (int n = 0; n < ne - 5; n++) {
-      Yk = 0.5 * (qR(5 + n) + qL(5 + n));
+      Yk = 0.5 * (QR(5 + n) * rhoinvR + QL(5 + n) * rhoinvL);
       Yns -= Yk;
       // the correction, and its enthalpy with it
       double corr = Yk * rho * Vc;
-      hk = 0.5 * (qhR(5 + n) + qhL(5 + n));
+      hk = 0.5 * (hR(n) + hL(n));
       F(5 + n) += corr;
       F(4) += corr * hk;
     }
     // Apply the n=ns species to thermal diffusion
     Yns = fmax(Yns, 0.0);
-    hk = 0.5 * (qhR(ne) + qhL(ne));
+    hk = 0.5 * (hR(ns - 1) + hL(ns - 1));
     F(4) += (-rho * Dk * gradYns + Yns * rho * Vc) * hk;
   }
 };

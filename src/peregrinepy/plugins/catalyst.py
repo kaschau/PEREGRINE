@@ -38,7 +38,7 @@ class Catalyst(BasePlugin):
         # Create the grid and data arrays
         for blk in mb.blocks:
             ng = blk.ng
-            q, Q = blk.q.get(), blk.Q.get()
+            q, Q = blk.primitives(), blk.Q.get()
             grid = self.vtk.vtkStructuredGrid()
             grid.SetDimensions(blk.ni, blk.nj, blk.nk)
             interior = blk.nodes.get()[ng:-ng, ng:-ng, ng:-ng]
@@ -112,7 +112,7 @@ class Catalyst(BasePlugin):
 
         mbds = self.dataDescription.GetInputDescriptionByName("input").GetGrid()
         for blk in mb.blocks:
-            q, Q = blk.q.get(), blk.Q.get()
+            q, Q = blk.primitives(), blk.Q.get()
             ng = blk.ng
             grid = mbds.GetBlock(blk.nblki)
 

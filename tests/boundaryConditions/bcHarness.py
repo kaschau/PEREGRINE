@@ -10,13 +10,14 @@ class BaseBC:
     # what each variable's gradient does in the first halo
     gradRules = {"all": "neumann"}
 
-    # which arrays a stage writes, and so what to snapshot off the device after it
+    # what a stage writes, and so what to snapshot off the device after it:
+    # the primitive vector, derived from the state, or the gradients
     _pull = {
         "euler": ["q"],
         "preDqDxyz": ["q"],
         "postDqDxyz": ["grads"],
     }
-    # the slices of q that share a rule
+    # the slices of the primitive vector that share a rule
     _slice = {
         "p": np.s_[0],
         "u": np.s_[1],
@@ -26,6 +27,14 @@ class BaseBC:
         "T": np.s_[4],
         "Y": np.s_[5:],
         "TY": np.s_[4:],
+        "all": np.s_[:],
+    }
+    # the slices of grads, which holds no pressure
+    _gradSlice = {
+        "velo": np.s_[0:3],
+        "T": np.s_[3],
+        "Y": np.s_[4:],
+        "TY": np.s_[3:],
         "all": np.s_[:],
     }
     # "negate" makes the gradient average to zero on the face, "neumann"
@@ -60,7 +69,9 @@ class BaseBC:
     def run(self, face, stage):
         self.mb.applyBcs(stage, faces=[face])
         for name in self._pull[stage]:
-            self.host[name] = getattr(self.blk, name).get()
+            self.host[name] = (
+                self.blk.primitives() if name == "q" else getattr(self.blk, name).get()
+            )
 
     def q(self, name):
         """the q slice a variable name refers to; a species is "Y3" and so on"""
@@ -147,7 +158,7 @@ class BaseBC:
         d = self.host["grads"]
         h, first = face.halo(d)[0], face.interior(d)[0]
         for name, rule in rules.items():
-            sl = self._slice[name]
+            sl = self._gradSlice[name]
             self._close(h[..., sl, :], self._sign[rule] * first[..., sl, :])
 
     @staticmethod

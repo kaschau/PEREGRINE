@@ -1,41 +1,39 @@
 #ifndef __adiabaticSlipWall_H__
 #define __adiabaticSlipWall_H__
 
+#include "boundaryConditions/haloState.hpp"
 #include "kernel.hpp"
 
 namespace adiabaticSlipWall {
 
 struct euler {
-  haloInOut q;
+  haloInOut Q, q, qh;
   blockFaceIn S;
   KOKKOS_INLINE_FUNCTION void operator()() const {
     double area, nx, ny, nz;
     faceNormal(S(0), S(1), S(2), area, nx, ny, nz);
 
-    // match pressure
-    q.L(0) = q.R(0);
-
-    // mirror velo on wall
-    double uDotn = q.R(1) * nx + q.R(2) * ny + q.R(3) * nz;
-    q.L(1) = q.R(1) - 2.0 * uDotn * nx;
-    q.L(2) = q.R(2) - 2.0 * uDotn * ny;
-    q.L(3) = q.R(3) - 2.0 * uDotn * nz;
-
-    // match temperature
-    q.L(4) = q.R(4);
-    // match species
-    for (int n = 5; n < ne; n++) {
-      q.L(n) = q.R(n);
-    }
+    // mirror the velocity about the wall; pressure and species match
+    const auto in = interiorOf(Q);
+    const double uDotn = in.u * nx + in.v * ny + in.w * nz;
+    haloState(Q, q, qh, q.R(0), q.R(1), in.u - 2.0 * uDotn * nx,
+              in.v - 2.0 * uDotn * ny, in.w - 2.0 * uDotn * nz,
+              massFractions(cellOf(Q, 0), in.rhoinv));
   }
 };
 
 struct postDqDxyz {
   haloInOut grads;
   KOKKOS_INLINE_FUNCTION void operator()() const {
-    for (int l = 0; l < ne; l++) {
-      // negate all gradients
-      for (int d = 0; d < 3; d++) {
+    for (int d = 0; d < 3; d++) {
+      // velocity gradients negated, so the wall gradient is zero
+      for (int l = 0; l < 3; l++) {
+        grads.L(l, d) = -grads.R(l, d);
+      }
+      // temperature gradient negated, so the wall gradient is zero
+      grads.L(3, d) = -grads.R(3, d);
+      // species gradients negated, so the wall gradient is zero
+      for (int l = 4; l < ne - 1; l++) {
         grads.L(l, d) = -grads.R(l, d);
       }
     }

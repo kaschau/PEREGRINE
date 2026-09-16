@@ -27,8 +27,9 @@ class restart(grid):
         # the step count and the time the state is at
         self.nrt = 0
         self.tme = 0.0
-        # the primitives
-        self.declareArray("q", kind="cell", components=5 + self.ns - 1)
+        # the primitive vector p, u, v, w, T, Y(0 .. ns - 2), what a result
+        # file holds of the state
+        self.declareArray("prims", kind="cell", components=5 + self.ns - 1)
 
     def checkSpeciesSum(self, normalize=False):
         """Loop through each block to check that the sum of all

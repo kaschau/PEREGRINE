@@ -31,30 +31,6 @@ def create(bc, adv, gas):
     for face in blk.faces:
         face.bcType = bc
 
-    q = blk.q.get()
-    qshape = q.shape[:3]
-    p = np.random.uniform(low=101325.0 * 0.1, high=101325 * 10, size=qshape)
-    u = np.random.uniform(low=-200, high=200, size=qshape)
-    v = np.random.uniform(low=-200, high=200, size=qshape)
-    w = np.random.uniform(low=-200, high=200, size=qshape)
-    T = np.random.uniform(low=200, high=3000, size=qshape)
-    if blk.ns > 1:
-        Y = np.random.uniform(low=0.0, high=1.0, size=qshape + (blk.ns - 1,))
-        Y = Y / np.sum(Y, axis=-1)[:, :, :, np.newaxis]
-
-    q[:, :, :, 0] = p
-    q[:, :, :, 1] = u
-    q[:, :, :, 2] = v
-    q[:, :, :, 3] = w
-    q[:, :, :, 4] = T
-    if blk.ns > 1:
-        q[:, :, :, 5::] = Y
-    blk.q.set(q)
-
-    mb.stateFromPrims(nface=-1)
-
-    mb.dqdxyz()
-
     if blk.ns > 1:
         Ybc = np.random.uniform(low=0.0, high=1.0, size=blk.ns)
         Ybc = Ybc / np.sum(Ybc)
@@ -88,5 +64,27 @@ def create(bc, adv, gas):
         QBcVals = face.QBcVals.get()
         QBcVals[:, :, 0] = mDotPerAbc
         face.QBcVals.set(QBcVals)
+
+    q = blk.primitives()
+    qshape = q.shape[:3]
+    p = np.random.uniform(low=101325.0 * 0.1, high=101325 * 10, size=qshape)
+    u = np.random.uniform(low=-200, high=200, size=qshape)
+    v = np.random.uniform(low=-200, high=200, size=qshape)
+    w = np.random.uniform(low=-200, high=200, size=qshape)
+    T = np.random.uniform(low=200, high=3000, size=qshape)
+    if blk.ns > 1:
+        Y = np.random.uniform(low=0.0, high=1.0, size=qshape + (blk.ns - 1,))
+        Y = Y / np.sum(Y, axis=-1)[:, :, :, np.newaxis]
+
+    q[:, :, :, 0] = p
+    q[:, :, :, 1] = u
+    q[:, :, :, 2] = v
+    q[:, :, :, 3] = w
+    q[:, :, :, 4] = T
+    if blk.ns > 1:
+        q[:, :, :, 5::] = Y
+    mb.setPrimitives([q])
+
+    mb.dqdxyz()
 
     return mb

@@ -1,75 +1,53 @@
 #ifndef __isoTMovingWall_H__
 #define __isoTMovingWall_H__
 
+#include "boundaryConditions/haloState.hpp"
 #include "kernel.hpp"
 
 namespace isoTMovingWall {
 
 struct euler {
-  haloInOut q;
+  haloInOut Q, q, qh;
   blockFaceIn S, qBcVals;
   KOKKOS_INLINE_FUNCTION void operator()() const {
     double area, nx, ny, nz;
     faceNormal(S(0), S(1), S(2), area, nx, ny, nz);
 
-    // match pressure
-    q.L(0) = q.R(0);
-
-    // mirror velo on wall
-    double uDotn = q.R(1) * nx + q.R(2) * ny + q.R(3) * nz;
-    q.L(1) = q.R(1) - 2.0 * uDotn * nx;
-    q.L(2) = q.R(2) - 2.0 * uDotn * ny;
-    q.L(3) = q.R(3) - 2.0 * uDotn * nz;
-
-    // set temperature
-    q.L(4) = qBcVals(4);
-    // match species
-    for (int n = 5; n < ne; n++) {
-      q.L(n) = q.R(n);
-    }
+    // mirror the velocity about the wall; pressure and species match
+    const auto in = interiorOf(Q);
+    const double uDotn = in.u * nx + in.v * ny + in.w * nz;
+    haloState(Q, q, qh, q.R(0), qBcVals(4), in.u - 2.0 * uDotn * nx,
+              in.v - 2.0 * uDotn * ny, in.w - 2.0 * uDotn * nz,
+              massFractions(cellOf(Q, 0), in.rhoinv));
   }
 };
 
 struct preDqDxyz {
-  haloInOut q;
+  haloInOut Q;
   blockFaceIn qBcVals;
   KOKKOS_INLINE_FUNCTION void operator()() const {
-    // apply velo on wall
-    q.L(1) = 2.0 * qBcVals(1) - q.R(1);
-    q.L(2) = 2.0 * qBcVals(2) - q.R(2);
-    q.L(3) = 2.0 * qBcVals(3) - q.R(3);
+    // the wall's velocity on the wall, as the halo momentum
+    const auto in = interiorOf(Q);
+    Q.L(1) = Q.L(0) * (2.0 * qBcVals(1) - in.u);
+    Q.L(2) = Q.L(0) * (2.0 * qBcVals(2) - in.v);
+    Q.L(3) = Q.L(0) * (2.0 * qBcVals(3) - in.w);
   }
 };
 
 struct postDqDxyz {
   haloInOut grads;
   KOKKOS_INLINE_FUNCTION void operator()() const {
-    // negate pressure gradient, neumann velocity,
-    // temperature gradients
-    grads.L(0, 0) = -grads.R(0, 0);
-    grads.L(1, 0) = grads.R(1, 0);
-    grads.L(2, 0) = grads.R(2, 0);
-    grads.L(3, 0) = grads.R(3, 0);
-    grads.L(4, 0) = grads.R(4, 0);
-
-    grads.L(0, 1) = -grads.R(0, 1);
-    grads.L(1, 1) = grads.R(1, 1);
-    grads.L(2, 1) = grads.R(2, 1);
-    grads.L(3, 1) = grads.R(3, 1);
-    grads.L(4, 1) = grads.R(4, 1);
-
-    grads.L(0, 2) = -grads.R(0, 2);
-    grads.L(1, 2) = grads.R(1, 2);
-    grads.L(2, 2) = grads.R(2, 2);
-    grads.L(3, 2) = grads.R(3, 2);
-    grads.L(4, 2) = grads.R(4, 2);
-
-    // negate species gradient (so gradient evaluates
-    // to zero on wall)
-    for (int n = 5; n < ne; n++) {
-      grads.L(n, 0) = -grads.R(n, 0);
-      grads.L(n, 1) = -grads.R(n, 1);
-      grads.L(n, 2) = -grads.R(n, 2);
+    for (int d = 0; d < 3; d++) {
+      // velocity gradients neumann
+      for (int l = 0; l < 3; l++) {
+        grads.L(l, d) = grads.R(l, d);
+      }
+      // temperature gradient neumann
+      grads.L(3, d) = grads.R(3, d);
+      // species gradients negated, so the wall gradient is zero
+      for (int l = 4; l < ne - 1; l++) {
+        grads.L(l, d) = -grads.R(l, d);
+      }
     }
   }
 };

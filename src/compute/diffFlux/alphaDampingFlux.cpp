@@ -1,4 +1,5 @@
 #include "faces.hpp"
+#include "thermo/eos.hpp"
 
 // References
 //
@@ -8,6 +9,9 @@
 // Journal of Computational Physics
 // 408 (2020)
 
+// grads holds the velocity in slots 0 .. 2, T in 3 and Y(n) in 4 + n; the
+// velocity and Y at each side come off its conserved state, the species
+// enthalpies from the eos at its temperature.
 PG_RANGE(cellFaces)
 struct alphaDampingFlux {
   cellCenterL QL, cellsL, gradsL, qL, qhL, qtL;
@@ -24,9 +28,14 @@ struct alphaDampingFlux {
     double kappa = 0.5 * (qtR(1) + qtL(1));
     double lambda = bulkVisc - 2.0 / 3.0 * mu;
 
-    // no mass diffuses, so the continuity flux is left alone
+    // each side's velocity, off its conserved state
+    const double rhoinvL = 1.0 / QL(0), rhoinvR = 1.0 / QR(0);
+    const double uL = QL(1) * rhoinvL, vL = QL(2) * rhoinvL,
+                 wL = QL(3) * rhoinvL;
+    const double uR = QR(1) * rhoinvR, vR = QR(2) * rhoinvR,
+                 wR = QR(3) * rhoinvR;
 
-    // Geometric terms
+    // Compute face normal gradient with alpha damping
     double e[3] = {cellsR(0) - cellsL(0), cellsR(1) - cellsL(1),
                    cellsR(2) - cellsL(2)};
     double njk[3] = {nx, ny, nz};
@@ -41,36 +50,28 @@ struct alphaDampingFlux {
     double xci[3] = {Faces(0) - cellsR(0), Faces(1) - cellsR(1),
                      Faces(2) - cellsR(2)};
 
-    // Face derivatives = consistent + damping
-    double wDOTxc = (gradsL(1, 0) * xcim1[0] + gradsL(1, 1) * xcim1[1] +
-                     gradsL(1, 2) * xcim1[2]);
-    double wL = qL(1) + wDOTxc;
-    wDOTxc =
-        (gradsR(1, 0) * xci[0] + gradsR(1, 1) * xci[1] + gradsR(1, 2) * xci[2]);
-    double wR = qR(1) + wDOTxc;
-    double dudx = 0.5 * (gradsR(1, 0) + gradsL(1, 0)) + damp[0] * (wR - wL);
-    double dudy = 0.5 * (gradsR(1, 1) + gradsL(1, 1)) + damp[1] * (wR - wL);
-    double dudz = 0.5 * (gradsR(1, 2) + gradsL(1, 2)) + damp[2] * (wR - wL);
+    // the face gradient of slot l of grads: the sides' average, damped
+    // toward the difference of the values each side extrapolates to the face
+    const auto faceGrad = [&](const int l, const double phiL, const double phiR,
+                              double *g) {
+      double wDOTxc = (gradsL(l, 0) * xcim1[0] + gradsL(l, 1) * xcim1[1] +
+                       gradsL(l, 2) * xcim1[2]);
+      const double wl = phiL + wDOTxc;
+      wDOTxc = (gradsR(l, 0) * xci[0] + gradsR(l, 1) * xci[1] +
+                gradsR(l, 2) * xci[2]);
+      const double wr = phiR + wDOTxc;
+      for (int d = 0; d < 3; d++) {
+        g[d] = 0.5 * (gradsR(l, d) + gradsL(l, d)) + damp[d] * (wr - wl);
+      }
+    };
 
-    wDOTxc = (gradsL(2, 0) * xcim1[0] + gradsL(2, 1) * xcim1[1] +
-              gradsL(2, 2) * xcim1[2]);
-    wL = qL(2) + wDOTxc;
-    wDOTxc =
-        (gradsR(2, 0) * xci[0] + gradsR(2, 1) * xci[1] + gradsR(2, 2) * xci[2]);
-    wR = qR(2) + wDOTxc;
-    double dvdx = 0.5 * (gradsR(2, 0) + gradsL(2, 0)) + damp[0] * (wR - wL);
-    double dvdy = 0.5 * (gradsR(2, 1) + gradsL(2, 1)) + damp[1] * (wR - wL);
-    double dvdz = 0.5 * (gradsR(2, 2) + gradsL(2, 2)) + damp[2] * (wR - wL);
-
-    wDOTxc = (gradsL(3, 0) * xcim1[0] + gradsL(3, 1) * xcim1[1] +
-              gradsL(3, 2) * xcim1[2]);
-    wL = qL(3) + wDOTxc;
-    wDOTxc =
-        (gradsR(3, 0) * xci[0] + gradsR(3, 1) * xci[1] + gradsR(3, 2) * xci[2]);
-    wR = qR(3) + wDOTxc;
-    double dwdx = 0.5 * (gradsR(3, 0) + gradsL(3, 0)) + damp[0] * (wR - wL);
-    double dwdy = 0.5 * (gradsR(3, 1) + gradsL(3, 1)) + damp[1] * (wR - wL);
-    double dwdz = 0.5 * (gradsR(3, 2) + gradsL(3, 2)) + damp[2] * (wR - wL);
+    double du[3], dv[3], dw[3];
+    faceGrad(0, uL, uR, du);
+    faceGrad(1, vL, vR, dv);
+    faceGrad(2, wL, wR, dw);
+    const double dudx = du[0], dudy = du[1], dudz = du[2];
+    const double dvdx = dv[0], dvdy = dv[1], dvdz = dv[2];
+    const double dwdx = dw[0], dwdy = dw[1], dwdz = dw[2];
 
     double div = dudx + dvdy + dwdz;
 
@@ -96,82 +97,51 @@ struct alphaDampingFlux {
     F(3) += tzx * A(0) + tzy * A(1) + tzz * A(2);
 
     // energy
-    //   heat conduction
-    wDOTxc = (gradsL(4, 0) * xcim1[0] + gradsL(4, 1) * xcim1[1] +
-              gradsL(4, 2) * xcim1[2]);
-    wL = qL(4) + wDOTxc;
-    wDOTxc =
-        (gradsR(4, 0) * xci[0] + gradsR(4, 1) * xci[1] + gradsR(4, 2) * xci[2]);
-    wR = qR(4) + wDOTxc;
-    double dTdx = 0.5 * (gradsR(4, 0) + gradsL(4, 0)) + damp[0] * (wR - wL);
-    double dTdy = 0.5 * (gradsR(4, 1) + gradsL(4, 1)) + damp[1] * (wR - wL);
-    double dTdz = 0.5 * (gradsR(4, 2) + gradsL(4, 2)) + damp[2] * (wR - wL);
+    double dT[3];
+    faceGrad(3, qL(1), qR(1), dT);
+    double heatFlux = -kappa * (dT[0] * A(0) + dT[1] * A(1) + dT[2] * A(2));
 
-    double heatFlux = -kappa * (dTdx * A(0) + dTdy * A(1) + dTdz * A(2));
-
-    // flow work
-    // Compute face normal volume flux vector
-    double uf = 0.5 * (qR(1) + qL(1));
-    double vf = 0.5 * (qR(2) + qL(2));
-    double wf = 0.5 * (qR(3) + qL(3));
+    double uf = 0.5 * (uR + uL);
+    double vf = 0.5 * (vR + vL);
+    double wf = 0.5 * (wR + wL);
 
     F(4) += -(uf * txx + vf * txy + wf * txz) * A(0) -
             (uf * tyx + vf * tyy + wf * tyz) * A(1) -
             (uf * tzx + vf * tzy + wf * tzz) * A(2) + heatFlux;
 
-    // Species
+    // species, with the correction that keeps the diffusion fluxes summing
+    // to zero; the enthalpies from each side's eos
+    const auto hL = eos::enthalpies(qL(1), qhL);
+    const auto hR = eos::enthalpies(qR(1), qhR);
     double Dk, Vc = 0.0;
     double gradYns = 0.0;
     double rho = 0.5 * (QR(0) + QL(0));
-    // Compute the species flux and correction term \sum(k=1,ns)
-    // Dk*gradYk
     for (int n = 0; n < ne - 5; n++) {
       Dk = 0.5 * (qtR(2 + n) + qtL(2 + n));
-      wDOTxc = (gradsL(5 + n, 0) * xcim1[0] + gradsL(5 + n, 1) * xcim1[1] +
-                gradsL(5 + n, 2) * xcim1[2]);
-      wL = qL(5 + n) + wDOTxc;
-      wDOTxc = (gradsR(5 + n, 0) * xci[0] + gradsR(5 + n, 1) * xci[1] +
-                gradsR(5 + n, 2) * xci[2]);
-      wR = qR(5 + n) + wDOTxc;
-      double dYdx =
-          0.5 * (gradsR(5 + n, 0) + gradsL(5 + n, 0)) + damp[0] * (wR - wL);
-      double dYdy =
-          0.5 * (gradsR(5 + n, 1) + gradsL(5 + n, 1)) + damp[1] * (wR - wL);
-      double dYdz =
-          0.5 * (gradsR(5 + n, 2) + gradsL(5 + n, 2)) + damp[2] * (wR - wL);
-
-      double gradYk = (dYdx * A(0) + dYdy * A(1) + dYdz * A(2));
+      double dY[3];
+      faceGrad(4 + n, QL(5 + n) * rhoinvL, QR(5 + n) * rhoinvR, dY);
+      double gradYk = (dY[0] * A(0) + dY[1] * A(1) + dY[2] * A(2));
       gradYns -= gradYk;
       Vc += Dk * gradYk;
-      // the species flux before its correction, and its enthalpy with
-      // it
       double Jk = -rho * Dk * gradYk;
-      double hk = 0.5 * (qhR(5 + n) + qhL(5 + n));
+      double hk = 0.5 * (hR(n) + hL(n));
       F(5 + n) += Jk;
       F(4) += Jk * hk;
     }
-    // Apply n=ns species to correction
     Dk = 0.5 * (qtR(2 + ne - 5) + qtL(2 + ne - 5));
     Vc += Dk * gradYns;
 
-    // Apply correction and species thermal flux
     double hk;
     double Yns = 1.0;
     for (int n = 0; n < ne - 5; n++) {
-      double Yk = 0.5 * (qR(5 + n) + qL(5 + n));
+      double Yk = 0.5 * (QR(5 + n) * rhoinvR + QL(5 + n) * rhoinvL);
       Yns -= Yk;
-      // the correction, and its enthalpy with it
       double corr = Yk * rho * Vc;
-      hk = 0.5 * (qhR(5 + n) + qhL(5 + n));
+      hk = 0.5 * (hR(n) + hL(n));
       F(5 + n) += corr;
       F(4) += corr * hk;
     }
-    // Apply the n=ns species to thermal diffusion
-    // If we are single species, this should be zero,
-    // so Yns will = 1.0, but gradYns will == 0.0 and
-    // Vc will == 0.0 (bc gradYns==0.0) from above
-    // so this is zero for ns=1
-    hk = 0.5 * (qhR(ne) + qhL(ne));
+    hk = 0.5 * (hR(ns - 1) + hL(ns - 1));
     F(4) += (-rho * Dk * gradYns + Yns * rho * Vc) * hk;
   }
 };

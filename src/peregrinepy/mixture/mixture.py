@@ -82,6 +82,15 @@ class Mixture:
         tables = {"Ru": np.array(Ru)}
         for name in self.scalars:
             tables[name] = np.array([s.get(name, 0.0) for s in sp], dtype=np.float64)
+        # a kernel multiplies by the reciprocal, never divides by MW; Wilke's
+        # rule wants MW^(-1/4) per species and, per ordered pair, its constant
+        # 1 / sqrt(8 (1 + MW_n / MW_m)), row-major
+        MW = tables["MW"]
+        tables["MWinv"] = 1.0 / MW
+        tables["MWqInv"] = MW**-0.25
+        tables["wilke"] = (
+            1.0 / np.sqrt(8.0 * (1.0 + MW[:, None] / MW[None, :]))
+        ).ravel()
         for name in self.polynomials:
             tables[name] = self._ragged([s.get(name, [0.0]) for s in sp])
         i, j = np.triu_indices(self.ns)
@@ -95,23 +104,6 @@ class Mixture:
         offsets[1:] = np.cumsum([len(r) for r in rows])
         coefs = np.concatenate([np.asarray(r, dtype=np.float64) for r in rows])
         return offsets, coefs
-
-    @property
-    def transportKernel(self):
-        """The one kernel the transport and species diffusion choices pick
-        between them."""
-        pair = (self.trans.name, self.diffusion.name)
-        kernel = {
-            ("kineticTheory", "binary"): "kineticTheory",
-            ("kineticTheory", "lewis"): "kineticTheoryUnityLewis",
-            ("chungDenseGas", "lewis"): "chungDenseGasUnityLewis",
-            ("constantProps", "lewis"): "constantProps",
-        }.get(pair)
-        if kernel is None:
-            raise ValueError(
-                f"no transport kernel for {pair[0]} with {pair[1]} diffusion"
-            )
-        return kernel
 
     @property
     def models(self):

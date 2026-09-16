@@ -16,13 +16,18 @@ class restartBlock(gridBlock):
         if self.ns < 1:
             raise ValueError("Number of species must be >=1")
 
+    def primitives(self):
+        """The primitive vector of every cell, p, u, v, w, T, Y(0 .. ns - 2),
+        as a host array."""
+        return self.prims.get()
+
     def verifySpeciesSum(self, normalize=False):
         """Function to verify that the sum of species in any cell is not greater than unity"""
 
         assert (
             self.ns > 1
         ), "You are trying to check species sum on a case where ns = 1."
-        q = self.q.get()
+        q = self.prims.get()
         summation = np.sum(q[:, :, :, 5::], axis=-1)
         if np.max(summation) > 1.0:
             print(
@@ -39,5 +44,5 @@ class restartBlock(gridBlock):
                     q[:, :, :, 5::] / summation[:, :, :, np.newaxis],
                     q[:, :, :, 5::],
                 )
-                self.q.set(q)
+                self.prims.set(q)
             return False

@@ -4,8 +4,8 @@ PG_STENCIL(2);
 
 PG_RANGE(cellFaces)
 struct scalarDissipation {
-  cellCenterL QL, phiL, qL, qhL;
-  cellCenterR QR, phiR, qR, qhR;
+  cellCenterL QL, phiL, qhL;
+  cellCenterR QR, phiR, qhR;
   cellCenterLL QLL;
   cellCenterRR QRR;
   cellFaceOut F;
@@ -23,9 +23,11 @@ struct scalarDissipation {
     const double eps4 = fmax(0.0, kappa4 - eps2);
 
     // Compute face normal volume flux vector
-    const double uf = 0.5 * (qR(1) + qL(1));
-    const double vf = 0.5 * (qR(2) + qL(2));
-    const double wf = 0.5 * (qR(3) + qL(3));
+    // the face velocity, each side's off its conserved state
+    const double rhoinvL = 1.0 / QL(0), rhoinvR = 1.0 / QR(0);
+    const double uf = 0.5 * (QR(1) * rhoinvR + QL(1) * rhoinvL);
+    const double vf = 0.5 * (QR(2) * rhoinvR + QL(2) * rhoinvL);
+    const double wf = 0.5 * (QR(3) * rhoinvR + QL(3) * rhoinvL);
 
     const double U = nx * uf + ny * vf + nz * wf;
 

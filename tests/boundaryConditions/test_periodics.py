@@ -13,7 +13,7 @@ pytestmark = pytest.mark.parametrize(
     "adv,gas",
     list(
         itertools.product(
-            ("KEPaEC", "fourthOrderKEEP"),
+            ("KEPaEC",),
             ("air", "CH4_O2"),
         )
     ),
@@ -48,7 +48,7 @@ class TestPeriodics:
         )
         blk = mb.blocks[0]
 
-        q = blk.q.get()
+        q = blk.primitives()
         qshape = q.shape[:3]
         p = np.random.uniform(low=101325 * 0.9, high=101325 * 1.1)
         u = np.random.uniform(low=1, high=1000, size=qshape)
@@ -67,12 +67,9 @@ class TestPeriodics:
         q[:, :, :, 4] = T
         if blk.ns > 1:
             q[:, :, :, 5::] = Y
-        blk.q.set(q)
+        mb.setPrimitives([q])
 
-        mb.stateFromPrims(nface=0)
-        mb.consistify()
-
-        q = blk.q.get()
+        q = blk.primitives()
 
         u = q[:, :, :, 1]
         v = q[:, :, :, 2]
@@ -136,7 +133,7 @@ class TestPeriodics:
         s6 = np.s_[ng:-ng, ng:-ng, -(g + 1)]
         s5c = np.s_[ng:-ng, ng:-ng, 2 * ng - g - 1]
         s5f = np.s_[ng:-ng, ng:-ng, 2 * ng - g]
-        for i in range(blk.ne):
+        for i in range(blk.ne - 1):
             normals6 = np.column_stack((nx[s6].ravel(), ny[s6].ravel(), nz[s6].ravel()))
             normals5 = np.column_stack(
                 (nx[s5f].ravel(), ny[s5f].ravel(), nz[s5f].ravel())

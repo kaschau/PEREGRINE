@@ -28,6 +28,11 @@ class BaseEosModel(BaseModel):
     def sPoly(self, species):
         return [self.caloric.sPoly(sp) for sp in species.values()]
 
+    def qhComponents(self, ns):
+        """How wide a cell's qh is: gamma, cp, rho h, c, rho e; the twin of
+        eos::qhComponents in the eos header."""
+        return 5
+
 
 class CpgModel(BaseEosModel):
     """Calorically perfect."""
@@ -58,6 +63,11 @@ class RealGasModel(BaseEosModel):
         self.fromSpecies += self.critical
         self.derivable[self.critical] = ("well", "diam")
         self.provides["criticalPoint"] = self.critical
+
+    def qhComponents(self, ns):
+        """The five, then each species' enthalpy with its departure, which no
+        polynomial in T gives back."""
+        return 5 + ns
 
     def criticalPoint(self, species):
         """The measured critical point, or one from the Lennard-Jones parameters

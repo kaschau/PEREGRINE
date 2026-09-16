@@ -68,9 +68,16 @@ class solver(restart):
         # the halo is as deep as the widest stencil among them; the table and
         # the jit follow, and each kernel is bound to what it runs over
         self.ng = max(k.stencil for k in kernels)
-        tileSize = config["RHS"]["tileSize"]
+        tileSize, mc = config["RHS"]["tileSize"], config["mcPhysics"]
         self.table = Table(self.blocks, tileSize, self.backend)
-        self.jit = Jit(self.mixture.ns, self.ng, tileSize, self.mixture.tables())
+        self.jit = Jit(
+            self.mixture.ns,
+            self.ng,
+            tileSize,
+            self.mixture.tables(),
+            mc["eos"],
+            mc["diffusion"],
+        )
         self.jit.compile(kernels)
         for k in kernels:
             if isinstance(k, (CellCenterKernel, CellFaceKernel)):
@@ -102,14 +109,15 @@ class solver(restart):
         self.computeMetrics()
         self._applyBcValues()
 
-        # the state, and what follows from it
+        # the state, from the primitive vector a fresh case or a result
+        # gives, and what follows from it
         if state is None:
             self._setUniformState()
         else:
             state.fill(self)
             # a result holds the interior; the halos start as the nearest cell
             for blk in self.blocks:
-                blk.fillHaloWithNearest("q")
+                blk.fillHaloWithNearest("prims")
         self.consistifyFromPrims()
         # what the stepper keeps beyond the state
         if state is None:
@@ -139,6 +147,13 @@ class solver(restart):
             raise pgConfigError("chemistry", True, "not until the composition round")
         if rhs["primaryAdvFlux"] is None:
             raise pgConfigError("primaryAdvFlux", None, "a case has a primary flux")
+        if rhs["primaryAdvFlux"] in ("fourthOrderKEEP", "muscl2hllc", "muscl2rusanov"):
+            raise pgConfigError(
+                "primaryAdvFlux",
+                rhs["primaryAdvFlux"],
+                "the hand-unrolled schemes return as a muscl, limiter and riemann"
+                " solver composition",
+            )
         if mc["eos"] not in ("cpg", "tpg", "realGas"):
             raise pgConfigError("eos", mc["eos"])
         if ti["integrator"] == "dualTime":
@@ -158,10 +173,12 @@ class solver(restart):
                 )
 
     def declareArrays(self):
-        """Every array a solver's block holds beyond its grid and state: the
-        metrics, the conserved state and its derivative, the face fluxes,
-        the thermodynamic state, and with diffusion the gradients and the
-        transport properties. A stepper adds what it keeps through super()."""
+        """Every array a solver's block holds beyond its grid and the
+        primitive vector it starts from: the metrics, the conserved state
+        and its derivative, the face fluxes, the thermodynamic state -- p and
+        T in q, what the eos keeps in qh -- and with diffusion the gradients
+        and the transport properties. A stepper adds what it keeps through
+        super()."""
         ne, ns = self.ne, self.mixture.ns
         self.declareArray("Jinv", kind="cell")
         self.declareArray("dIJK", kind="cell", components=3)
@@ -173,9 +190,13 @@ class solver(restart):
             self.declareArray(f"{axis}F", kind=f"{axis}face", components=ne)
         self.declareArray("Q", kind="cell", components=ne)
         self.declareArray("dQ", kind="cell", components=ne)
-        self.declareArray("qh", kind="cell", components=5 + ns)
+        self.declareArray("q", kind="cell", components=2)
+        self.declareArray(
+            "qh", kind="cell", components=self.mixture.eos.qhComponents(ns)
+        )
         if self.config["RHS"]["diffusion"]:
-            self.declareArray("grads", kind="cell", components=(ne, 3))
+            # the velocity, T and Y(0 .. ns - 2): nothing diffuses on pressure
+            self.declareArray("grads", kind="cell", components=(ne - 1, 3))
             self.declareArray("qt", kind="cell", components=2 + ns)
 
     def declareKernels(self):
@@ -188,8 +209,9 @@ class solver(restart):
         k = self.kernels
         k["axpby"] = CellCenterKernel("utils/axpby.cpp")
         k["axpbypcz"] = CellCenterKernel("utils/axpbypcz.cpp")
-        k["stateFromCons"] = CellCenterKernel(f"thermo/{mc['eos']}FromCons.cpp")
-        k["stateFromPrims"] = CellCenterKernel(f"thermo/{mc['eos']}FromPrims.cpp")
+        # the equation of state is compiled into these by the jit
+        k["stateFromCons"] = CellCenterKernel("thermo/stateFromCons.cpp")
+        k["stateFromPrims"] = CellCenterKernel("thermo/stateFromPrims.cpp")
         k["primaryAdvFlux"] = KernelGroup(
             [
                 CellFaceKernel(f"advFlux/{rhs['primaryAdvFlux']}.cpp", d)
@@ -198,9 +220,8 @@ class solver(restart):
         )
         bcHooks = ["euler"]
         if rhs["diffusion"]:
-            k["trans"] = CellCenterKernel(
-                f"transport/{self.mixture.transportKernel}.cpp"
-            )
+            # the species diffusion model is compiled into it by the jit
+            k["trans"] = CellCenterKernel(f"transport/{mc['trans']}.cpp")
             k["dqdxyz"] = CellCenterKernel("utils/dq2FD.cpp")
             k["diffFlux"] = KernelGroup(
                 [CellFaceKernel("diffFlux/alphaDampingFlux.cpp", d) for d in range(3)]
@@ -302,16 +323,13 @@ class solver(restart):
 
     def applyBcs(self, bcHook, faces=None):
         """One bcHook on the given faces, or on every face that has it, the
-        way the step does: after euler the faces' state follows. A bcHook
-        the case's flow does not have runs nothing."""
+        way the step does. A bcHook the case's flow does not have runs
+        nothing."""
         graph = self.graphs["consistify" if bcHook == "euler" else "rhs"]
         node = graph.bcs(bcHook)
         if node is None:
             return
-        tables = self.blockFaceTables(bcHook, faces)
-        node.run(tables)
-        if bcHook == "euler":
-            graph.faceState.run(tables)
+        node.run(self.blockFaceTables(bcHook, faces))
 
     def _setUniformState(self):
         """Every cell of q at the config's initial conditions."""
@@ -332,9 +350,9 @@ class solver(restart):
         values = [ic[k] for k in ("p", "u", "v", "w", "T")]
         values += [Y.get(name, 0.0) for name in self.speciesNames[:-1]]
         for blk in self.blocks:
-            q = blk.q.get()
-            q[...] = values
-            blk.q.set(q)
+            prims = blk.prims.get()
+            prims[...] = values
+            blk.prims.set(prims)
 
     ###########################################################################
     # Stepping: the three verbs a stepper and the tests use, each one flow
@@ -346,7 +364,21 @@ class solver(restart):
         self.graphs["consistify"].run()
 
     def consistifyFromPrims(self):
+        """The state from every block's primitive vector, then everything
+        derived from it. The vector is held only for this: a case starts
+        from it, a test sets it through setPrimitives, and it is released
+        once the state is made."""
         self.graphs["consistifyFromPrims"].run()
+        for blk in self.blocks:
+            blk.prims = None
+        self.table.forget("prims")
+
+    def setPrimitives(self, primitives):
+        """The state from :primitives:, a host array per block of p, u, v, w,
+        T, Y(0 .. ns - 2) over every cell, halos included."""
+        for blk, values in zip(self.blocks, primitives):
+            blk.replace("prims", values)
+        self.consistifyFromPrims()
 
     ###########################################################################
     # The grid, once every block is on its rank

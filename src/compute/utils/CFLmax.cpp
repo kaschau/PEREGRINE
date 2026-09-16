@@ -27,7 +27,7 @@ struct maxCfl {
 
 PG_RANGE(cellCenters)
 struct CFLmax {
-  cellCenterIn dIJK, iS, jS, kS, q, qh;
+  cellCenterIn dIJK, iS, jS, kS, Q, qh;
   dims d;
   KOKKOS_INLINE_FUNCTION void operator()(cfl3 &m) const {
     // a direction one cell thick is not marched in
@@ -49,9 +49,11 @@ struct CFLmax {
     double knx0, kny0, knz0, knx1, kny1, knz1;
     faceNormal(kS(0), kS(1), kS(2), S0, knx0, kny0, knz0);
     faceNormal(kS(+K, 0), kS(+K, 1), kS(+K, 2), S1, knx1, kny1, knz1);
-    const double &u = q(1);
-    const double &v = q(2);
-    const double &w = q(3);
+    // the velocity off the conserved state
+    const double rhoinv = 1.0 / Q(0);
+    const double u = Q(1) * rhoinv;
+    const double v = Q(2) * rhoinv;
+    const double w = Q(3) * rhoinv;
 
     const double uI = sqrt(pow(0.5 * (inx0 + inx1) * u, 2.0) +
                            pow(0.5 * (iny0 + iny1) * v, 2.0) +

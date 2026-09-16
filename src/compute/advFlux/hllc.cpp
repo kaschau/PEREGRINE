@@ -10,13 +10,15 @@ struct hllc {
     double S, nx, ny, nz;
     faceNormal(A(0), A(1), A(2), S, nx, ny, nz);
 
-    const double &ufR = qR(1);
-    const double &vfR = qR(2);
-    const double &wfR = qR(3);
+    // each side's velocity, off its conserved state
+    const double rhoinvL = 1.0 / QL(0), rhoinvR = 1.0 / QR(0);
+    const double ufR = QR(1) * rhoinvR;
+    const double vfR = QR(2) * rhoinvR;
+    const double wfR = QR(3) * rhoinvR;
 
-    const double &ufL = qL(1);
-    const double &vfL = qL(2);
-    const double &wfL = qL(3);
+    const double ufL = QL(1) * rhoinvL;
+    const double vfL = QL(2) * rhoinvL;
+    const double wfL = QL(3) * rhoinvL;
 
     double UR = nx * ufR + ny * vfR + nz * wfR;
     double UL = nx * ufL + ny * vfL + nz * wfL;
@@ -75,14 +77,14 @@ struct hllc {
       F(3) = FWL + SL * (UstarL * Sstar * nz - rhowL) * S;
       F(4) = FEL +
              SL *
-                 (UstarL * (EL / rhoL +
+                 (UstarL * (EL * rhoinvL +
                             (Sstar - UL) * (Sstar + pL / (rhoL * (SL - UL)))) -
                   EL) *
                  S;
       for (int n = 0; n < ne - 5; n++) {
         double FYiL, YiL, rhoYiL;
         FYiL = QL(5 + n) * UL * S;
-        YiL = qL(5 + n);
+        YiL = QL(5 + n) * rhoinvL;
         rhoYiL = QL(5 + n);
         F(5 + n) = FYiL + SL * (UstarL * YiL - rhoYiL) * S;
       }
@@ -101,14 +103,14 @@ struct hllc {
       F(3) = FWR + SR * (UstarR * Sstar * nz - rhowR) * S;
       F(4) = FER +
              SR *
-                 (UstarR * (ER / rhoR +
+                 (UstarR * (ER * rhoinvR +
                             (Sstar - UR) * (Sstar + pR / (rhoR * (SR - UR)))) -
                   ER) *
                  S;
       for (int n = 0; n < ne - 5; n++) {
         double FYiR, YiR, rhoYiR;
         FYiR = QR(5 + n) * UR * S;
-        YiR = qR(5 + n);
+        YiR = QR(5 + n) * rhoinvR;
         rhoYiR = QR(5 + n);
         F(5 + n) = FYiR + SR * (UstarR * YiR - rhoYiR) * S;
       }

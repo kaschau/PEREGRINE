@@ -156,10 +156,12 @@ class RestartWriter(BaseWriter):
                 shape = self.extraShapes[name][::-1] + cells
                 resS.create_dataset(name, shape=shape, dtype=self.fdtype)
 
-        # one snapshot of each block's state for the whole write: q, the
-        # density alone out of Q when there is one, and the extras
+        # one snapshot of each block's state for the whole write: the
+        # primitive vector, the density alone out of Q when there is one, and
+        # the extras
         self._host = {
-            id(blk): {n: getattr(blk, n).get() for n in ("q", *self.extras)}
+            id(blk): {"prims": blk.primitives()}
+            | {n: getattr(blk, n).get() for n in self.extras}
             for blk in mb.blocks
         }
         if self.writesRho:
@@ -241,10 +243,10 @@ class RestartWriter(BaseWriter):
         self._writeSlab(dset, whole, sourceSel, (destStart, count))
 
     def _sourceFor(self, blk, name):
-        """Where a named variable comes from: a component of q, or a field
-        of its own with no component."""
+        """Where a named variable comes from: a component of the primitive
+        vector, or a field of its own with no component."""
         held = self._host[id(blk)]
-        q = held["q"]
+        q = held["prims"]
         if name == "rho":
             return held["rho"], None
         if name == blk.speciesNames[-1]:

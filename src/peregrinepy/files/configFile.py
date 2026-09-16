@@ -69,10 +69,13 @@ class configFile(frozenDict):
                 "diffusion": "lewis",
                 "chemistry": False,
                 "nChemSubSteps": 1,
-                # what every temperature-dependent property is refit over and to
+                # what every temperature-dependent property is refit over and
+                # to: the lowest degree within the tolerance, or the best at the
+                # cap, which is seven terms, the count the source data has, and
+                # what a polynomial in ln T stays well conditioned at
                 "Trange": None,
                 "reFitTol": 1e-3,
-                "reFitMaxDegree": 8,
+                "reFitMaxDegree": 6,
             }
         )
 

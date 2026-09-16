@@ -35,7 +35,7 @@ class Jit:
         os.environ.get("PEREGRINE_CACHE", Path.home() / ".cache" / "peregrinepy")
     )
 
-    def __init__(self, ns, ng, tileSize, tables):
+    def __init__(self, ns, ng, tileSize, tables, eos, diffusion=None):
         # a kernel is compiled for one species count, halo depth and tile size
         self.defines = (
             f"NS={ns}",
@@ -44,8 +44,13 @@ class Jit:
             f"PG_TILE={tileSize}",
         )
         self.toolchain = Toolchain.read(self.package / "toolchain.json")
-        # the species data, baked into a header the species kernels are built with
+        # the species data, baked into a header the species kernels are built
+        # with; the case's equation of state, forced in ahead of any source
+        # that reaches thermo/eos.hpp; and its species diffusion model, ahead
+        # of any that reaches transport/diffusion.hpp
         self.tables = self._writeTables(tables)
+        self.eos = eos
+        self.diffusion = diffusion
 
     ###########################################################################
     # The species tables
@@ -89,13 +94,38 @@ class Jit:
     def _doubles(a):
         return "{" + ", ".join(float(x).hex() for x in a) + "}"
 
-    def _forced(self, source, includes):
-        """The forced includes of a source, the species tables among them
-        when the source reaches species.hpp."""
-        forced = tuple(self.compute / i for i in includes)
-        if any(f.name == "species.hpp" for f in self.files(source, tuple(includes))):
+    def _case(self, source, includes):
+        """What the case adds to a source's build: its defines and forced
+        includes. A source that reaches species.hpp is built with the
+        tables; one that reaches thermo/eos.hpp with the case's eos header
+        and PG_EOS naming it; one that reaches transport/diffusion.hpp with
+        the case's diffusion model's header and PG_DIFFUSION naming it."""
+        names = {f.name for f in self.files(source, tuple(includes))}
+        defines, forced = (), tuple(self.compute / i for i in includes)
+        if "diffusion.hpp" in names:
+            if self.diffusion is None:
+                raise ValueError(f"{source} needs a species diffusion model")
+            defines += (f"PG_DIFFUSION={self.diffusion}",)
+            forced = (
+                self.compute / "transport" / "diffusion" / f"{self.diffusion}.hpp",
+                *forced,
+            )
+        if "eos.hpp" in names:
+            defines += (f"PG_EOS={self.eos}",)
+            forced = (self.compute / "thermo" / f"{self.eos}.hpp", *forced)
+        if "species.hpp" in names:
             forced = (self.tables, *forced)
-        return forced
+        return defines, forced
+
+    def _reached(self, source, includes, forced):
+        """Every file a build reads: the source's walk and the forced
+        includes' walks."""
+        files = set(self.files(source, tuple(includes)))
+        for f in forced:
+            if f.is_relative_to(self.compute):
+                files.add(f)
+                self._headers(f, files)
+        return sorted(files)
 
     ###########################################################################
     # The compute tree, read once
@@ -142,10 +172,10 @@ class Jit:
         """Where the store keeps the library for one kernel source: keyed on
         everything it is compiled from, the toolchain, and the case's defines
         and includes."""
-        defines = self.defines + tuple(defines)
-        forced = self._forced(source, includes)
+        caseDefines, forced = self._case(source, includes)
+        defines = self.defines + caseDefines + tuple(defines)
         key = hashlib.sha256()
-        for f in (*self.files(source, tuple(includes)), *forced):
+        for f in (*self._reached(source, includes, forced), self.tables):
             key.update(f.read_bytes())
         key.update(repr(vars(self.toolchain)).encode())
         key.update(" ".join(sorted(defines)).encode())
@@ -161,8 +191,8 @@ class Jit:
             return out
 
         path = self.compute / source
-        defines = self.defines + tuple(defines)
-        includes = self._forced(source, includes)
+        caseDefines, includes = self._case(source, includes)
+        defines = self.defines + caseDefines + tuple(defines)
         out.parent.mkdir(parents=True, exist_ok=True)
         # ranks on one node race to the same file; the first to the lock builds it
         with open(out.with_suffix(".lock"), "w") as lock:

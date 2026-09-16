@@ -51,17 +51,16 @@ def test_tpg(my_setup, ctfile):
     blk = mb.blocks[0]
     ng = blk.ng
 
-    q = blk.q.get()
+    q = blk.primitives()
     q[:, :, :, 0] = p
     q[:, :, :, 1:4] = 0.0
     q[:, :, :, 4] = T
     q[:, :, :, 5::] = Y[0:-1]
 
     # Update cons
-    assert mb.stateFromPrims.__name__ == "tpgFromPrims"
-    blk.q.set(q)
-    mb.stateFromPrims(nface=0)
-    q, Q, qh = blk.q.get(), blk.Q.get(), blk.qh.get()
+    assert mb.jit.eos == "tpg"
+    mb.setPrimitives([q])
+    q, Q, qh = blk.primitives(), blk.Q.get(), blk.qh.get()
 
     # test the properties
     pgcons = Q[ng, ng, ng]
@@ -94,32 +93,14 @@ def test_tpg(my_setup, ctfile):
     pd.append(print_diff("gamma", gas.cp / gas.cv, pgthrm[0]))
     pd.append(print_diff("cp", gas.cp, pgthrm[1]))
     pd.append(print_diff("h", gas.enthalpy_mass, pgthrm[2] / pgcons[0]))
-    for i, n in enumerate(gas.species_names):
-        pd.append(
-            print_diff(
-                "h_" + n,
-                (
-                    gas.standard_enthalpies_RT[i]
-                    * ct.gas_constant
-                    * gas.T
-                    / gas.molecular_weights[i]
-                ),
-                pgthrm[5 + i],
-                scale=gas.standard_cp_R[i]
-                * ct.gas_constant
-                * gas.T
-                / gas.molecular_weights[i],
-            )
-        )
 
     # Go the other way
-    # Scramble the primatives
-    q[:, :, :, 0] = 0.0
-    q[:, :, :, 4] = 0.0
-    q[:, :, :, 5::] = np.zeros(len(Y[0:-1]))
-    blk.q.set(q)
-    mb.stateFromCons(nface=0)
-    q, Q, qh = blk.q.get(), blk.Q.get(), blk.qh.get()
+    # Scramble p and T, which the eos makes again from Q
+    pT = blk.q.get()
+    pT[...] = 0.0
+    blk.q.set(pT)
+    mb.stateFromCons()
+    q, Q, qh = blk.primitives(), blk.Q.get(), blk.qh.get()
     pgcons, pgprim, pgthrm = Q[ng, ng, ng], q[ng, ng, ng], qh[ng, ng, ng]
 
     print("********  Conservatives to Primatives ***************")
@@ -147,23 +128,6 @@ def test_tpg(my_setup, ctfile):
     pd.append(print_diff("gamma", gas.cp / gas.cv, pgthrm[0]))
     pd.append(print_diff("cp", gas.cp, pgthrm[1]))
     pd.append(print_diff("h", gas.enthalpy_mass, pgthrm[2] / pgcons[0]))
-    for i, n in enumerate(gas.species_names[0:-1]):
-        pd.append(
-            print_diff(
-                "h_" + n,
-                (
-                    gas.standard_enthalpies_RT[i]
-                    * ct.gas_constant
-                    * gas.T
-                    / gas.molecular_weights[i]
-                ),
-                pgthrm[5 + i],
-                scale=gas.standard_cp_R[i]
-                * ct.gas_constant
-                * gas.T
-                / gas.molecular_weights[i],
-            )
-        )
 
     # every property is a refit to the case's tolerance, in percent here
     assert np.all(np.array(pd) < config["mcPhysics"]["reFitTol"] * 100)

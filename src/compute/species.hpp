@@ -25,9 +25,16 @@ constexpr double Ru = PG_RU;
     return t[n];                                                               \
   }
 
-// one polynomial per row: its degree, and coefficient m of row r
+// one value per ordered pair of species, row-major
+#define PG_SPECIES_PAIR(name, DATA)                                            \
+  KOKKOS_INLINE_FUNCTION double name(const int n, const int m) {               \
+    static constexpr double t[ns * ns] = DATA;                                 \
+    return t[n * ns + m];                                                      \
+  }
+
+// one polynomial per row: its number of terms, and coefficient m of row r
 #define PG_SPECIES_POLYNOMIAL(name, OFFSETS, COEFS)                            \
-  KOKKOS_INLINE_FUNCTION int name##Degree(const int r) {                       \
+  KOKKOS_INLINE_FUNCTION int name##Terms(const int r) {                        \
     static constexpr int o[] = OFFSETS;                                        \
     return o[r + 1] - o[r];                                                    \
   }                                                                            \
@@ -38,11 +45,16 @@ constexpr double Ru = PG_RU;
   }
 
 PG_SPECIES_SCALAR(MW, PG_MW)
+PG_SPECIES_SCALAR(MWinv, PG_MWINV)
+PG_SPECIES_SCALAR(MWqInv, PG_MWQ_INV)
+// Wilke's pair constant 1 / sqrt(8 (1 + MW_n / MW_m))
+PG_SPECIES_PAIR(wilke, PG_WILKE)
 PG_SPECIES_SCALAR(hRef, PG_H_REF)
 PG_SPECIES_SCALAR(cp0, PG_CP0)
 PG_SPECIES_SCALAR(mu0, PG_MU0)
 PG_SPECIES_SCALAR(kappa0, PG_KAPPA0)
-PG_SPECIES_SCALAR(lewis, PG_LEWIS)
+// the Lewis number, the name the diffusion model namespace does not take
+PG_SPECIES_SCALAR(lewisNumber, PG_LEWIS)
 PG_SPECIES_SCALAR(Tcrit, PG_TCRIT)
 PG_SPECIES_SCALAR(pcrit, PG_PCRIT)
 PG_SPECIES_SCALAR(Vcrit, PG_VCRIT)
@@ -65,8 +77,8 @@ KOKKOS_INLINE_FUNCTION int pairIndex(const int n, const int n2) {
   const int i = n < n2 ? n : n2, j = n < n2 ? n2 : n;
   return i * ns - i * (i - 1) / 2 + (j - i);
 }
-KOKKOS_INLINE_FUNCTION int dijDegree(const int n, const int n2) {
-  return dijPairDegree(pairIndex(n, n2));
+KOKKOS_INLINE_FUNCTION int dijTerms(const int n, const int n2) {
+  return dijPairTerms(pairIndex(n, n2));
 }
 KOKKOS_INLINE_FUNCTION double dij(const int n, const int n2, const int m) {
   return dijPair(pairIndex(n, n2), m);

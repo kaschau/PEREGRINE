@@ -2,7 +2,8 @@
 dict, with the boundary conditions at their fixed points. The right-hand
 side is a primary flux, then the diffusive flux, then the apply; making a
 state consistent is the exchange, the equation of state, the boundary
-conditions' euler bcHook, the faces' state, and the transport. Each node says
+conditions' euler bcHook -- each leaves its halo's state whole, through the
+eos -- and the transport. Each node says
 what it reads and writes, and the graph links each to the last writer of
 what it reads and to every reader since the last write of what it writes,
 so the order is a valid schedule and the links are the input for running
@@ -100,21 +101,6 @@ class BcNode(BlockFaceLaunchNode):
             self.kernels[bcType](table)
 
 
-class BlockFaceStateNode(BlockFaceLaunchNode):
-    """One cell-center kernel on every block face table of a bcHook: the
-    state in the halo cells, once the bcs have set them."""
-
-    def __init__(self, solver, bcHook, kernel):
-        super().__init__(
-            f"stateFromPrims@{bcHook}", solver, bcHook, kernel.reads, kernel.writes
-        )
-        self.kernel = kernel
-
-    def run(self, tables=None):
-        for table in self.tables(tables).values():
-            self.kernel(table=table)
-
-
 class HaloExchangeNode(BaseNode):
     """A halo exchange of the named arrays: every block's are read, every
     block's halos written."""
@@ -203,15 +189,15 @@ class Graph:
     ###########################################################################
     @classmethod
     def consistify(cls, solver, fromPrims=False):
-        """From one state to everything derived from it, halos and boundary
-        conditions included."""
+        """From the conserved state to everything derived from it, halos and
+        boundary conditions included; :fromPrims: makes the conserved state
+        first, from the primitive vector a case starts from."""
         g = cls(solver, "consistifyFromPrims" if fromPrims else "consistify")
-        g.add(HaloExchangeNode(solver.haloExchange, "q" if fromPrims else "Q"))
-        g.slot("stateFromPrims" if fromPrims else "stateFromCons")
+        if fromPrims:
+            g.slot("stateFromPrims")
+        g.add(HaloExchangeNode(solver.haloExchange, "Q"))
+        g.slot("stateFromCons")
         g.add(BcNode(solver, "euler"))
-        g.faceState = g.add(
-            BlockFaceStateNode(solver, "euler", solver.kernels["stateFromPrims"])
-        )
         if solver.config["RHS"]["diffusion"]:
             g.slot("trans")
         g._link()

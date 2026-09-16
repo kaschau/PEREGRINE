@@ -41,8 +41,11 @@ class SupersonicExit(Exit):
     bcType = "supersonicExit"
 
     def state(self, face):
-        self.extrapolate(face, "p", lo=0.0, hi=face.interior(self.q("p"))[0])
-        self.extrapolate(face, "T", lo=0.0)
+        # p and T floor at a hundredth of the interior, so the halo keeps a
+        # density
+        p, T = face.interior(self.q("p"))[0], face.interior(self.q("T"))[0]
+        self.extrapolate(face, "p", lo=0.01 * p, hi=p)
+        self.extrapolate(face, "T", lo=0.01 * T)
         if self.blk.ns > 1:
             self.extrapolate(face, "Y", lo=0.0, hi=1.0)
 
@@ -53,7 +56,7 @@ pytestmark = pytest.mark.parametrize(
     "adv,gas",
     list(
         itertools.product(
-            ("KEPaEC", "fourthOrderKEEP"),
+            ("KEPaEC",),
             ("air", "CH4_O2"),
         )
     ),

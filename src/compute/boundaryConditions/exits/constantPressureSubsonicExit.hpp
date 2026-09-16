@@ -1,12 +1,13 @@
 #ifndef __constantPressureSubsonicExit_H__
 #define __constantPressureSubsonicExit_H__
 
+#include "boundaryConditions/haloState.hpp"
 #include "kernel.hpp"
 
 namespace constantPressureSubsonicExit {
 
 struct euler {
-  haloInOut q;
+  haloInOut Q, q, qh;
   blockFaceIn S, qBcVals;
   KOKKOS_INLINE_FUNCTION void operator()() const {
     const double dplus = S.outward();
@@ -14,35 +15,32 @@ struct euler {
     double area, nx, ny, nz;
     faceNormal(S(0), S(1), S(2), area, nx, ny, nz);
 
-    // set pressure
-    q.L(0) = qBcVals(0);
-
-    // extrapolate velocity, each halo layer mirrored about the first
-    // interior cell, unless reverse flow detected
-    double uDotn = (q.R(1) * nx + q.R(2) * ny + q.R(3) * nz) * dplus;
+    // the velocity extrapolated to the halo, each layer mirrored about the
+    // first interior cell, unless reverse flow is detected, then flipped on
+    // the face like a slip wall; the face's pressure; everything else neumann
+    const auto in = interiorOf(Q);
+    const double uDotn = (in.u * nx + in.v * ny + in.w * nz) * dplus;
+    double u, v, w;
     if (uDotn > 0.0) {
-      for (int l = 1; l <= 3; l++) {
-        q.L(l) = 2.0 * q.R(l) - q.at(q.p.g + 1, l);
-      }
+      const double rhoinv2 = 1.0 / Q.at(Q.p.g + 1, 0);
+      u = 2.0 * in.u - Q.at(Q.p.g + 1, 1) * rhoinv2;
+      v = 2.0 * in.v - Q.at(Q.p.g + 1, 2) * rhoinv2;
+      w = 2.0 * in.w - Q.at(Q.p.g + 1, 3) * rhoinv2;
     } else {
-      // flip velocity on face (like slip wall)
-      q.L(1) = q.R(1) - 2.0 * uDotn * nx * dplus;
-      q.L(2) = q.R(2) - 2.0 * uDotn * ny * dplus;
-      q.L(3) = q.R(3) - 2.0 * uDotn * nz * dplus;
+      u = in.u - 2.0 * uDotn * nx * dplus;
+      v = in.v - 2.0 * uDotn * ny * dplus;
+      w = in.w - 2.0 * uDotn * nz * dplus;
     }
-
-    // neumann everything else
-    for (int l = 4; l < ne; l++) {
-      q.L(l) = q.R(l);
-    }
+    haloState(Q, q, qh, qBcVals(0), q.R(1), u, v, w,
+              massFractions(cellOf(Q, 0), in.rhoinv));
   }
 };
 
 struct postDqDxyz {
   haloInOut grads;
   KOKKOS_INLINE_FUNCTION void operator()() const {
-    for (int l = 0; l < ne; l++) {
-      // neumann all gradients
+    // neumann all gradients
+    for (int l = 0; l < ne - 1; l++) {
       for (int d = 0; d < 3; d++) {
         grads.L(l, d) = grads.R(l, d);
       }

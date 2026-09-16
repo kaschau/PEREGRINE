@@ -1,6 +1,6 @@
 #include "kernel.hpp"
 
-// The residual between q and Q0 (which holds primitives under dual time),
+// The residual between Q and Q0, the state a dual time stage began from,
 // into rMax[ne], rSum[ne]; python combines the ranks.
 
 // the largest residual and the sum of squares, reduced together
@@ -28,14 +28,14 @@ struct residualReducer {
 
 PG_RANGE(cellCenters)
 struct residual {
-  cellCenterIn q, Q0;
+  cellCenterIn Q, Q0;
 };
 // one component's residual; flat, so the shape can pin its columns
 struct residualOf {
-  cellCenterIn q, Q0;
+  cellCenterIn Q, Q0;
   int m;
   KOKKOS_INLINE_FUNCTION void operator()(maxAndSum &v) const {
-    const double res = abs(q(m) - Q0(m));
+    const double res = abs(Q(m) - Q0(m));
     v.mx = fmax(res, v.mx);
     v.sm += res * res;
   }
@@ -45,7 +45,7 @@ PG_ABI void pgResidual(const residual &k, const pgTiling &t, double *rMax,
                        double *rSum) {
   for (int m = 0; m < ne; m++) {
     maxAndSum total{0.0, 0.0};
-    reduceCells("residual", t, residualOf{k.q, k.Q0, m},
+    reduceCells("residual", t, residualOf{k.Q, k.Q0, m},
                 residualReducer(total));
     rMax[m] = total.mx, rSum[m] = total.sm;
   }

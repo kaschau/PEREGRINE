@@ -1,7 +1,7 @@
 #include "array"
 #include "dualTime.hpp"
 #include "kernel.hpp"
-#include "species.hpp"
+#include "thermo/eos.hpp"
 #include "vector"
 
 PG_RANGE(cellCenters)
@@ -51,40 +51,24 @@ struct invertDQ {
     /////
     ////////////////////////////////////////////////
     const double &p = q(0);
-    const double &u = q(1);
-    const double &v = q(2);
-    const double &w = q(3);
-    const double &T = q(4);
+    const double &T = q(1);
     const double &rho = Q(0);
+    const double rhoinv = 1.0 / rho;
+    const double u = Q(1) * rhoinv;
+    const double v = Q(2) * rhoinv;
+    const double w = Q(3) * rhoinv;
     double Y[ns];
     double rho_Y[ns];
     double cp = qh(1);
-    double H = qh(2) / rho + 0.5 * (pow(u, 2.0) + pow(v, 2.0) + pow(w, 2.0));
+    double H = qh(2) * rhoinv + 0.5 * (u * u + v * v + w * w);
     double c = qh(3);
-    // Compute nth species Y
-    Y[ns - 1] = 1.0;
-    double denom = 0.0;
-    for (int n = 0; n < ns - 1; n++) {
-      Y[n] = q(5 + n);
-      Y[ns - 1] -= Y[n];
-      denom += Y[n] / MW(n);
-    }
-    denom += Y[ns - 1] / MW(ns - 1);
+    massFractions(Q, rhoinv, Y);
 
-    // Compute MWmix
-    double MWmix = 0.0;
-    for (int n = 0; n <= ns - 1; n++) {
-      double X = Y[n] / MW(n) / denom;
-      MWmix += MW(n) * X;
-    }
-
-    // Compute required derivatives
-    double rho_p = rho / p;
-    double rho_T = -rho / T;
-
-    for (int n = 0; n < ns - 1; n++) {
-      rho_Y[n] = -rho * (MWmix * (1.0 / MW(n) - 1.0 / MW(ns - 1)));
-    }
+    // the density's derivatives, and the species enthalpies, from the eos
+    double rho_p, rho_T;
+    eos::densityDerivatives(
+        p, T, rho, [&](const int n) { return Y[n]; }, rho_p, rho_T, rho_Y);
+    const auto hi = eos::enthalpies(T, qh);
 
     /////////////////////////////////////////////////
     // The preconditioning and transformation matrix
@@ -183,7 +167,7 @@ struct invertDQ {
         GdQ[1][n] += mult * rho_Y[n - 5] * u;
         GdQ[2][n] += mult * rho_Y[n - 5] * v;
         GdQ[3][n] += mult * rho_Y[n - 5] * w;
-        double h_y = qh(n) - qh(ne);
+        double h_y = hi(n - 5) - hi(ns - 1);
         GdQ[4][n] += mult * (H * rho_Y[n - 5] + rho * h_y);
         // Block (3)
         GdQ[n][0] += mult * Theta * Y[n - 5];
@@ -286,9 +270,38 @@ struct invertDQ {
     for (int l = 0; l < ne; l++) {
       dQ(l) *= dtau();
     }
+
+    // the increment back in conserved variables, dQ = (dQ/dq) dq, the
+    // transformation's columns applied one at a time
+    for (int l = 0; l < ne; l++) {
+      tempRow[l] = 0.0;
+    }
+    {
+      const double dp = dQ(0), du = dQ(1), dv = dQ(2), dw = dQ(3), dT = dQ(4);
+      double drho = rho_p * dp + rho_T * dT;
+      double dE = (rho_p * H + T * rho_T / rho) * dp +
+                  rho * (u * du + v * dv + w * dw) +
+                  (rho_T * H + rho * cp) * dT;
+      for (int n = 5; n < ne; n++) {
+        const double dY = dQ(n);
+        drho += rho_Y[n - 5] * dY;
+        dE += (H * rho_Y[n - 5] + rho * (hi(n - 5) - hi(ns - 1))) * dY;
+      }
+      tempRow[0] = drho;
+      tempRow[1] = drho * u + rho * du;
+      tempRow[2] = drho * v + rho * dv;
+      tempRow[3] = drho * w + rho * dw;
+      tempRow[4] = dE;
+      for (int n = 5; n < ne; n++) {
+        tempRow[n] = drho * Y[n - 5] + rho * dQ(n);
+      }
+    }
+    for (int l = 0; l < ne; l++) {
+      dQ(l) = tempRow[l];
+    }
   }
 };
 
 PG_ABI void pgInvertDQ(const invertDQ &k, const pgTiling &t) {
-  forCells("dq = (Gamma + dqdQ)^{-1} dQ", t, k);
+  forCells("dQ = dQdq (Gamma + dqdQ)^{-1} dQ", t, k);
 }

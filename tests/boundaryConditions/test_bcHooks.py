@@ -43,8 +43,11 @@ def test_flowListsItsSlots(my_setup):
         "haloExchange Q",
         "stateFromCons",
         "bcs euler",
-        "stateFromPrims@euler",
         "trans",
+    ]
+    assert [n.name for n in mb.graphs["consistifyFromPrims"].nodes][:2] == [
+        "stateFromPrims",
+        "haloExchange Q",
     ]
     del mb.kernels["applyFlux"]
     with pytest.raises(KeyError):

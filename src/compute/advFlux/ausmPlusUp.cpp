@@ -11,13 +11,15 @@ struct ausmPlusUp {
     double S, nx, ny, nz;
     faceNormal(A(0), A(1), A(2), S, nx, ny, nz);
 
-    const double &ufR = qR(1);
-    const double &vfR = qR(2);
-    const double &wfR = qR(3);
+    // each side's velocity, off its conserved state
+    const double rhoinvL = 1.0 / QL(0), rhoinvR = 1.0 / QR(0);
+    const double ufR = QR(1) * rhoinvR;
+    const double vfR = QR(2) * rhoinvR;
+    const double wfR = QR(3) * rhoinvR;
 
-    double ufL = qL(1);
-    double vfL = qL(2);
-    double wfL = qL(3);
+    const double ufL = QL(1) * rhoinvL;
+    const double vfL = QL(2) * rhoinvL;
+    const double wfL = QL(3) * rhoinvL;
 
     double UR = nx * ufR + ny * vfR + nz * wfR;
     double UL = nx * ufL + ny * vfL + nz * wfL;
@@ -71,26 +73,28 @@ struct ausmPlusUp {
     double p12 = p5Plus * pL + p5Minus * pR -
                  Ku * p5Plus * p5Minus * (rhoR + rhoL) * (fa * a12) * (UR - UL);
 
-    // Upwind the flux
-    const int indx = (mDot12 > 0.0) ? -1 : 0;
+    // Upwind the flux: the upwind side carries the rest
+    const bool fromL = mDot12 > 0.0;
+    const int indx = fromL ? -1 : 0;
+    const double rhoinvU = fromL ? rhoinvL : rhoinvR;
     // Continuity rho*Ui
     F(0) = mDot12 * S;
 
     // x momentum rho*u*Ui+ p*Ax
-    F(1) = mDot12 * qR(indx * N, 1) * S + p12 * A(0);
+    F(1) = mDot12 * (fromL ? ufL : ufR) * S + p12 * A(0);
 
     // y momentum rho*v*Ui+ p*Ay
-    F(2) = mDot12 * qR(indx * N, 2) * S + p12 * A(1);
+    F(2) = mDot12 * (fromL ? vfL : vfR) * S + p12 * A(1);
 
     // w momentum rho*w*Ui+ p*Az
-    F(3) = mDot12 * qR(indx * N, 3) * S + p12 * A(2);
+    F(3) = mDot12 * (fromL ? wfL : wfR) * S + p12 * A(2);
 
     // Total energy (rhoE+ p)*Ui)
-    F(4) = mDot12 * (QR(indx * N, 4) + qR(indx * N, 0)) / QR(indx * N, 0) * S;
+    F(4) = mDot12 * (QR(indx * N, 4) + qR(indx * N, 0)) * rhoinvU * S;
 
     // Species
     for (int n = 0; n < ne - 5; n++) {
-      F(5 + n) = mDot12 * qR(indx * N, 5 + n) * S;
+      F(5 + n) = mDot12 * QR(indx * N, 5 + n) * rhoinvU * S;
     }
   }
 };

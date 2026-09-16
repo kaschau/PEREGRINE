@@ -28,21 +28,18 @@ class StagnationSubsonicInlet(InletBC):
     values = {"pt": 0, "Tt": 4}
 
 
-# Set aside: its post-eos fix-up needs a halo density and writes the first
-# interior cell in sequence with the halo; it returns when the equation of
-# state composes into the bc kernel itself.
-# class ConstantMassFluxSubsonicInlet(InletBC):
-#     """sets a target momentum from the face normal rather than a velocity"""
-#
-#     bcType = "constantMassFluxSubsonicInlet"
-#     values = {"T": 4}
-#
-#     def _constants(self, valueDict, qBcVals, QBcVals):
-#         super()._constants(valueDict, qBcVals, QBcVals)
-#         face, blk = self.face, self.face.blk
-#         # the normal has to point into the block
-#         sign = 1.0 if face.amILow else -1.0
-#         mDot = valueDict["mDotPerUnitArea"]
-#         _, n = blk.faceNormals(face.direction)
-#         for m in range(3):
-#             QBcVals[:, :, m + 1] = sign * face.boundary(n[m]) * mDot
+class ConstantMassFluxSubsonicInlet(InletBC):
+    """sets a target momentum from the face normal rather than a velocity"""
+
+    bcType = "constantMassFluxSubsonicInlet"
+    values = {"T": 4}
+
+    def _constants(self, valueDict, qBcVals, QBcVals):
+        super()._constants(valueDict, qBcVals, QBcVals)
+        face, blk = self.face, self.face.blk
+        # the normal has to point into the block
+        sign = 1.0 if face.amILow else -1.0
+        mDot = valueDict["mDotPerUnitArea"]
+        _, n = blk.faceNormals(face.direction)
+        for m in range(3):
+            QBcVals[:, :, m + 1] = sign * face.boundary(n[m]) * mDot

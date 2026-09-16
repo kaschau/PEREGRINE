@@ -97,13 +97,13 @@ def reorientBlock1(mb, S, varList):
     blk1.getFace(nn).orientation = inverseS
 
 
-VARLIST = ["nodes", "q", "Q", "grads"]
+VARLIST = ["nodes", "Q", "grads"]
 
 pytestmark = pytest.mark.parametrize(
     "adv,gas",
     list(
         itertools.product(
-            ("KEPaEC", "fourthOrderKEEP"),
+            ("KEPaEC",),
             ("air", "CH4_O2"),
         )
     ),

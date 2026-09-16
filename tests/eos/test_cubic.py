@@ -32,19 +32,18 @@ def test_cubic(my_setup):
     Y = np.random.uniform(low=0.0, high=1.0, size=mb.ns)
     Y = Y / np.sum(Y)
 
-    q = blk.q.get()
+    q = blk.primitives()
     q[:, :, :, 0] = p
     q[:, :, :, 1:4] = 0.0
     q[:, :, :, 4] = T
     q[:, :, :, 5::] = Y[0:-1]
 
     # Update cons
-    assert mb.stateFromPrims.__name__ == "realGasFromPrims"
-    blk.q.set(q)
-    mb.stateFromPrims(nface=0)
+    assert mb.jit.eos == "realGas"
+    mb.setPrimitives([q])
     # Go the other way
-    mb.stateFromCons(nface=0)
-    q = blk.q.get()
+    mb.stateFromCons()
+    q = blk.primitives()
 
     # test the properties
     pgprim = q[ng, ng, ng]

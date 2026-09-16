@@ -109,15 +109,15 @@ class Kernel:
     ###########################################################################
     def rangeOf(self, declaration):
         """A PG_RANGE declaration as a range: its kind, then key = value
-        parameters (ng and ne stand for the block's); the cell faces are the
-        kernel's own direction."""
+        parameters (ng and ne stand for the block's, and ne may be less a
+        count, `ne - 1`); the cell faces are the kernel's own direction."""
         kind, *params = [x.strip() for x in declaration.split(",")]
         kwargs = {}
         for param in params:
             key, sep, value = (x.strip() for x in param.partition("="))
             if not sep:
                 raise ValueError(f"PG_RANGE({declaration}): {param} is not key = value")
-            kwargs[key] = value if value in ("ng", "ne") else int(value)
+            kwargs[key] = value if value.startswith(("ng", "ne")) else int(value)
         if kind == "cellFaces":
             kwargs["axis"] = "ijk".index(self.columns["F"][0])
         return subclassWhere(BaseRange, kind=kind)(**kwargs)

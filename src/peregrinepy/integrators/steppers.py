@@ -157,13 +157,12 @@ class rk4(rungeKutta):
 
 class dualTime(BaseStepper):
     """Each physical step converged in pseudo time: a Runge-Kutta stepper's
-    stages on the primitives, each stepping by the preconditioned increment
-    invertDQ leaves in dQ, with the physical time derivative as a source.
-    Which stepper, and how many pseudo steps, the config says."""
+    stages on the conserved state, each stepping by the preconditioned
+    increment invertDQ leaves in dQ, with the physical time derivative as a
+    source. Which stepper, and how many pseudo steps, the config says."""
 
     stepperName = "dualTime"
     restartArrays = ("Qnm1",)
-    state = "q"
     # the residual after each pseudo step, gathered when a report is due
     residuals = ()
 
@@ -211,7 +210,7 @@ class dualTime(BaseStepper):
         self.dQdt(dt=dt)
         self.invertDQ(dt=dt, viscous=self.viscous)
         self.pseudo.combine(self, *weights, dt=1.0, first=n == 0)
-        self.consistifyFromPrims()
+        self.consistify()
 
     def advance(self, dt):
         """Qn and Qnm1 are the two states before now; the pseudo time loop
@@ -237,9 +236,9 @@ class dualTime(BaseStepper):
     def report(self):
         """The root-sum-square residual after each pseudo time step of the
         step just taken, by equation."""
-        header = " SubIter      p          u          v          w          T"
+        header = " SubIter     rho        rhou       rhov       rhow       rhoE"
         if self.ne > 5:
-            header += "        Y(1) ... Y(NS-1)"
+            header += "      rhoY(1) ... rhoY(NS-1)"
         rows = (
             f"{n + 1:8d}" + "".join(f" {r: 1.3E}" for r in resid)
             for n, resid in enumerate(self.residuals)

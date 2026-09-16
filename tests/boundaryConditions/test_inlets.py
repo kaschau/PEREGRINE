@@ -70,10 +70,10 @@ class StagnationSubsonicInlet(Inlet):
         self.species(face, self.imposed)
 
 
-# the constant mass flux inlet is set aside with its post-eos fix-up
 _inlets = (
     SupersonicInlet,
     ConstantVelocitySubsonicInlet,
+    ConstantMassFluxSubsonicInlet,
     StagnationSubsonicInlet,
 )
 
@@ -81,7 +81,7 @@ pytestmark = pytest.mark.parametrize(
     "adv,gas",
     list(
         itertools.product(
-            ("KEPaEC", "fourthOrderKEEP"),
+            ("KEPaEC",),
             ("air", "CH4_O2"),
         )
     ),

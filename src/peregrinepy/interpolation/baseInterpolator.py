@@ -80,11 +80,11 @@ class BaseInterpolator:
         toPts = blkTo.cells.get().reshape(-1, 3)
         onto = self.prepare(fromPts, toPts)
 
-        shape = blkTo.q.shape[:3]
-        qTo = blkTo.q.get()
-        for i in range(blksFrom[0].q.shape[-1]):
+        shape = blkTo.prims.shape[:3]
+        qTo = blkTo.prims.get()
+        for i in range(blksFrom[0].prims.shape[-1]):
             qvFrom = np.concatenate(
-                [blk.q.get(component=i).ravel() for blk in blksFrom]
+                [blk.prims.get(component=i).ravel() for blk in blksFrom]
             )
             qvTo = onto(qvFrom)
 
@@ -93,7 +93,7 @@ class BaseInterpolator:
                 qvTo = np.clip(qvTo, np.min(qvFrom), np.max(qvFrom))
 
             qTo[:, :, :, i] = qvTo.reshape(shape)
-        blkTo.q.set(qTo)
+        blkTo.prims.set(qTo)
 
     def boundingBlocks(self, mbTo, mbFrom):
         """

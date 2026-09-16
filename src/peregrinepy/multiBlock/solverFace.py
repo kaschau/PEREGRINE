@@ -9,7 +9,6 @@ class solverFace(gridFace):
     # what a face trades with its neighbor, and the shape each trade takes
     commVars = {
         "nodes": "node",
-        "q": "state",
         "Q": "state",
         "grads": "gradient",
     }
@@ -95,9 +94,10 @@ class solverFace(gridFace):
             "nodeSend": (ng,) + theirNode + (3,),
             "state": (ng,) + cell + (ne,),
             "stateSend": (ng,) + theirCell + (ne,),
-            # a gradient is only ever wanted one cell past the block
-            "gradient": (1,) + cell + (ne, 3),
-            "gradientSend": (1,) + theirCell + (ne, 3),
+            # a gradient is only ever wanted one cell past the block; there is
+            # none of the pressure
+            "gradient": (1,) + cell + (ne - 1, 3),
+            "gradientSend": (1,) + theirCell + (ne - 1, 3),
             # what a bc holds across the face itself
             "bcValues": cell + (ne,),
         }

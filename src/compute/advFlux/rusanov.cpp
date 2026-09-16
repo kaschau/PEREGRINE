@@ -13,13 +13,15 @@ struct rusanov {
     double UR;
     double UL;
 
-    const double &ufR = qR(1);
-    const double &vfR = qR(2);
-    const double &wfR = qR(3);
+    // each side's velocity, off its conserved state
+    const double rhoinvL = 1.0 / QL(0), rhoinvR = 1.0 / QR(0);
+    const double ufR = QR(1) * rhoinvR;
+    const double vfR = QR(2) * rhoinvR;
+    const double wfR = QR(3) * rhoinvR;
 
-    const double &ufL = qL(1);
-    const double &vfL = qL(2);
-    const double &wfL = qL(3);
+    const double ufL = QL(1) * rhoinvL;
+    const double vfL = QL(2) * rhoinvL;
+    const double wfL = QL(3) * rhoinvL;
 
     UR = nx * ufR + ny * vfR + nz * wfR;
     UL = nx * ufL + ny * vfL + nz * wfL;

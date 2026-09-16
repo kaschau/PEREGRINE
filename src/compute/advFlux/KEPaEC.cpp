@@ -7,10 +7,17 @@ struct KEPaEC {
   cellFaceOut F;
   cellFaceIn A;
   KOKKOS_INLINE_FUNCTION void operator()() const {
+    // each side's velocity, off its conserved state
+    const double rhoinvL = 1.0 / QL(0), rhoinvR = 1.0 / QR(0);
+    const double uL = QL(1) * rhoinvL, vL = QL(2) * rhoinvL,
+                 wL = QL(3) * rhoinvL;
+    const double uR = QR(1) * rhoinvR, vR = QR(2) * rhoinvR,
+                 wR = QR(3) * rhoinvR;
+
     // Compute face normal volume flux vector
-    double uf = 0.5 * (qR(1) + qL(1));
-    double vf = 0.5 * (qR(2) + qL(2));
-    double wf = 0.5 * (qR(3) + qL(3));
+    double uf = 0.5 * (uR + uL);
+    double vf = 0.5 * (vR + vL);
+    double wf = 0.5 * (wR + wL);
 
     double U = A(0) * uf + A(1) * vf + A(2) * wf;
 
@@ -33,21 +40,21 @@ struct KEPaEC {
     F(3) = C * wf + pf * A(2);
 
     // Total energy (rhoE+ p)*Ui)
-    double Kj = C * 0.5 * (qR(1) * qL(1) + qR(2) * qL(2) + qR(3) * qL(3));
+    double Kj = C * 0.5 * (uR * uL + vR * vL + wR * wL);
 
-    double Pj = 0.5 * (qL(0) * (qR(1) * A(0) + qR(2) * A(1) + qR(3) * A(2)) +
-                       qR(0) * (qL(1) * A(0) + qL(2) * A(1) + qL(3) * A(2)));
+    double Pj = 0.5 * (qL(0) * (uR * A(0) + vR * A(1) + wR * A(2)) +
+                       qR(0) * (uL * A(0) + vL * A(1) + wL * A(2)));
 
     // solve for internal energy flux
-    double eR = qhR(4) / QR(0);
-    double eL = qhL(4) / QL(0);
+    double eR = qhR(4) * rhoinvR;
+    double eL = qhL(4) * rhoinvL;
     double Ij = 2.0 * (eL * eR) / (eL + eR) * C;
 
     F(4) = Ij + Kj + Pj;
 
     // Species
     for (int n = 0; n < ne - 5; n++) {
-      F(5 + n) = 0.5 * (qR(5 + n) + qL(5 + n)) * C;
+      F(5 + n) = 0.5 * (QR(5 + n) * rhoinvR + QL(5 + n) * rhoinvL) * C;
     }
   }
 };
