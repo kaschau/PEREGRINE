@@ -2,6 +2,7 @@
 #include "diffusion.hpp"
 #include "kernel.hpp"
 #include "mixing.hpp"
+#include "mixingRule.hpp"
 
 // Kinetic theory transport: each species' viscosity and conductivity from
 // its fit in ln T, mixed by Wilke's rule and the series-parallel mean; the
@@ -29,16 +30,16 @@ struct kineticTheory {
       double sqrtMu[ns];
       for (int n = 0; n <= ns - 1; n++) {
         double mu = 0.0;
-        for (int m = muPolyTerms(n) - 1; m >= 0; m--)
+        for (int m = muPolyTerms - 1; m >= 0; m--)
           mu = mu * u + muPoly(n, m);
         sqrtMu[n] = mu * sqrtsqrtT;
       }
-      qt(0) = wilkeViscosity(X, sqrtMu);
+      qt(0) = mixingRule::viscosity(X, sqrtMu);
     }
     double kappaSp[ns];
     for (int n = 0; n <= ns - 1; n++) {
       double kappa = 0.0;
-      for (int m = kappaPolyTerms(n) - 1; m >= 0; m--)
+      for (int m = kappaPolyTerms - 1; m >= 0; m--)
         kappa = kappa * u + kappaPoly(n, m);
       kappaSp[n] = kappa * sqrtT;
     }

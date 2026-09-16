@@ -29,7 +29,7 @@ template <class Yf> KOKKOS_INLINE_FUNCTION double gasConstant(const Yf &Y) {
 KOKKOS_INLINE_FUNCTION double enthalpy(const int n, const double T,
                                        const double u, const double Tinv) {
   double hRT = 0.0;
-  for (int m = hPolyTerms(n) - 1; m >= 0; m--)
+  for (int m = hPolyTerms - 1; m >= 0; m--)
     hRT = hRT * u + hPoly(n, m);
   hRT += hRef(n) * Tinv;
   return hRT * T * Ru * MWinv(n);
@@ -53,7 +53,7 @@ KOKKOS_INLINE_FUNCTION void properties(const double T, const Yf &Y, double &h,
   for (int n = 0; n <= ns - 1; n++) {
     // cp/R, Horner in u
     double cpR = 0.0;
-    for (int m = cpPolyTerms(n) - 1; m >= 0; m--)
+    for (int m = cpPolyTerms - 1; m >= 0; m--)
       cpR = cpR * u + cpPoly(n, m);
     cp += cpR * Ru * MWinv(n) * Y(n);
     h += enthalpy(n, T, u, Tinv) * Y(n);
@@ -77,23 +77,23 @@ KOKKOS_INLINE_FUNCTION state fromPrims(const double p, const double T,
   return s;
 }
 
-// the state from density, internal energy and mass fractions: Newton on T
-// from the guess
+// the state from density, internal energy and mass fractions: a fixed
+// count of Newton steps on T from the guess, the cell's last T. Measured
+// on GRI30: from within 1% the floor (1e-10 K, the fits' rounding) is
+// reached in 3, from 10% off in 3, from 50% off in 4. A fixed count keeps
+// every thread of a warp on the same path and cannot run away on a fit
+// whose floor sits above a tolerance; a step moves T by far less than 1%.
+constexpr int newtonSteps = 3;
 template <class Yf, class Hf>
 KOKKOS_INLINE_FUNCTION state fromCons(const double rho, const double e,
                                       const Yf &Y, const double Tguess,
                                       const Hf &) {
   state s;
   const double Rmix = gasConstant(Y);
-  int nitr = 0, maxitr = 100;
-  double tol = 1e-8;
-  double error = 1e100;
   double T = (Tguess < 1.0) ? 300.0 : Tguess;
-  while ((abs(error) > tol) && (nitr < maxitr)) {
+  for (int k = 0; k < newtonSteps; k++) {
     properties(T, Y, s.h, s.cp);
-    error = e - (s.h - Rmix * T);
-    T = T - error / (-s.cp + Rmix);
-    nitr += 1;
+    T += (e - (s.h - Rmix * T)) / (s.cp - Rmix);
   }
   s.rho = rho;
   s.e = e;

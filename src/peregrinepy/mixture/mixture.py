@@ -73,10 +73,11 @@ class Mixture:
 
     def tables(self):
         """The species data as the jit bakes it: name -> array. A scalar is
-        (ns,). A polynomial table is ragged, every row its own length, as
-        (offsets, coefs): offsets[r] .. offsets[r + 1] are row r's
-        coefficients in coefs. The rows are the species, and for dij the
-        unordered pairs (i <= j) in numpy's triu_indices order, which
+        (ns,). A polynomial table is (rows, terms), every row padded with
+        leading zeros to the table's longest, so a kernel walks it
+        contiguously with one trip count; the leading zeros cost Horner
+        nothing and change no bit. The rows are the species, and for dij
+        the unordered pairs (i <= j) in numpy's triu_indices order, which
         species.hpp's pairIndex reproduces."""
         sp = list(self.species.values())
         tables = {"Ru": np.array(Ru)}
@@ -84,26 +85,30 @@ class Mixture:
             tables[name] = np.array([s.get(name, 0.0) for s in sp], dtype=np.float64)
         # a kernel multiplies by the reciprocal, never divides by MW; Wilke's
         # rule wants MW^(-1/4) per species and, per ordered pair, its constant
-        # 1 / sqrt(8 (1 + MW_n / MW_m)), row-major
+        # 1 / sqrt(8 (1 + MW_n / MW_m)), row-major; Herning's wants sqrt(MW)
         MW = tables["MW"]
         tables["MWinv"] = 1.0 / MW
         tables["MWqInv"] = MW**-0.25
-        tables["wilke"] = (
+        tables["sqrtMW"] = np.sqrt(MW)
+        tables["wilkePair"] = (
             1.0 / np.sqrt(8.0 * (1.0 + MW[:, None] / MW[None, :]))
         ).ravel()
         for name in self.polynomials:
-            tables[name] = self._ragged([s.get(name, [0.0]) for s in sp])
+            tables[name] = self._padded([s.get(name, [0.0]) for s in sp])
         i, j = np.triu_indices(self.ns)
         pairs = [sp[a]["dij"][b] if "dij" in sp[a] else [0.0] for a, b in zip(i, j)]
-        tables["dij"] = self._ragged(pairs)
+        tables["dij"] = self._padded(pairs)
         return tables
 
     @staticmethod
-    def _ragged(rows):
-        offsets = np.zeros(len(rows) + 1, dtype=np.int32)
-        offsets[1:] = np.cumsum([len(r) for r in rows])
-        coefs = np.concatenate([np.asarray(r, dtype=np.float64) for r in rows])
-        return offsets, coefs
+    def _padded(rows):
+        """Rows of coefficients, ascending in the power, as one (rows, terms)
+        array: the high powers a row lacks are zero."""
+        terms = max(len(r) for r in rows)
+        table = np.zeros((len(rows), terms), dtype=np.float64)
+        for k, r in enumerate(rows):
+            table[k, : len(r)] = r
+        return table
 
     @property
     def models(self):

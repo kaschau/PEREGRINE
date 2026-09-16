@@ -67,6 +67,8 @@ class configFile(frozenDict):
                 # none, like RHS diffusion: a viscous case picks one
                 "trans": None,
                 "diffusion": "lewis",
+                # how the species' viscosities mix: wilke or herning
+                "mixingRule": "wilke",
                 "chemistry": False,
                 "nChemSubSteps": 1,
                 # what every temperature-dependent property is refit over and

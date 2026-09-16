@@ -2,6 +2,7 @@
 #include "diffusion.hpp"
 #include "kernel.hpp"
 #include "mixing.hpp"
+#include "mixingRule.hpp"
 
 // Constant species properties: each species' viscosity and conductivity as
 // the mixture gives them, mixed by Wilke's rule and the series-parallel
@@ -22,7 +23,7 @@ struct constantProps {
       for (int n = 0; n <= ns - 1; n++) {
         sqrtMu[n] = sqrt(mu0(n));
       }
-      qt(0) = wilkeViscosity(X, sqrtMu);
+      qt(0) = mixingRule::viscosity(X, sqrtMu);
     }
     double kappaSp[ns];
     for (int n = 0; n <= ns - 1; n++) {

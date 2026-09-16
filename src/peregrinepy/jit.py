@@ -35,7 +35,9 @@ class Jit:
         os.environ.get("PEREGRINE_CACHE", Path.home() / ".cache" / "peregrinepy")
     )
 
-    def __init__(self, ns, ng, tileSize, tables, eos, diffusion=None):
+    def __init__(
+        self, ns, ng, tileSize, tables, eos, diffusion=None, mixingRule="wilke"
+    ):
         # a kernel is compiled for one species count, halo depth and tile size
         self.defines = (
             f"NS={ns}",
@@ -51,6 +53,7 @@ class Jit:
         self.tables = self._writeTables(tables)
         self.eos = eos
         self.diffusion = diffusion
+        self.mixingRule = mixingRule
 
     ###########################################################################
     # The species tables
@@ -58,7 +61,8 @@ class Jit:
     def _writeTables(self, tables):
         """The species data as one header of initializer lists, hexfloat so
         every double is exact, written to the store once per distinct data;
-        species.hpp declares the accessors over them. Returns its path."""
+        species.hpp declares the accessors over them. A (rows, terms) table
+        is written flat with its term count. Returns its path."""
         lines = [
             "// the species data of one case, written by the jit",
             "#define PG_SPECIES_TABLES",
@@ -66,17 +70,14 @@ class Jit:
         key = hashlib.sha256()
         for name, value in tables.items():
             macro = "PG_" + re.sub(r"(?<=[a-z0-9])(?=[A-Z])", "_", name).upper()
-            if isinstance(value, tuple):
-                offsets, coefs = value
-                key.update(offsets.tobytes()), key.update(coefs.tobytes())
-                lines.append(f"#define {macro}_OFFSETS {self._ints(offsets)}")
-                lines.append(f"#define {macro}_COEFS {self._doubles(coefs)}")
+            key.update(value.tobytes())
+            if value.ndim == 2:
+                lines.append(f"#define {macro}_TERMS {value.shape[1]}")
+                lines.append(f"#define {macro} {self._doubles(value.ravel())}")
+            elif value.ndim == 0:
+                lines.append(f"#define {macro} {float(value).hex()}")
             else:
-                key.update(value.tobytes())
-                if value.ndim == 0:
-                    lines.append(f"#define {macro} {float(value).hex()}")
-                else:
-                    lines.append(f"#define {macro} {self._doubles(value)}")
+                lines.append(f"#define {macro} {self._doubles(value)}")
         path = self.cacheDir / f"species-{key.hexdigest()[:16]}.hpp"
         if not path.exists():
             path.parent.mkdir(parents=True, exist_ok=True)
@@ -87,10 +88,6 @@ class Jit:
         return path
 
     @staticmethod
-    def _ints(a):
-        return "{" + ", ".join(str(int(x)) for x in a) + "}"
-
-    @staticmethod
     def _doubles(a):
         return "{" + ", ".join(float(x).hex() for x in a) + "}"
 
@@ -98,8 +95,9 @@ class Jit:
         """What the case adds to a source's build: its defines and forced
         includes. A source that reaches species.hpp is built with the
         tables; one that reaches thermo/eos.hpp with the case's eos header
-        and PG_EOS naming it; one that reaches transport/diffusion.hpp with
-        the case's diffusion model's header and PG_DIFFUSION naming it."""
+        and PG_EOS naming it; one that reaches transport/diffusion.hpp or
+        transport/mixingRule.hpp with the case's model's header and
+        PG_DIFFUSION or PG_MIXING_RULE naming it."""
         names = {f.name for f in self.files(source, tuple(includes))}
         defines, forced = (), tuple(self.compute / i for i in includes)
         if "diffusion.hpp" in names:
@@ -108,6 +106,12 @@ class Jit:
             defines += (f"PG_DIFFUSION={self.diffusion}",)
             forced = (
                 self.compute / "transport" / "diffusion" / f"{self.diffusion}.hpp",
+                *forced,
+            )
+        if "mixingRule.hpp" in names:
+            defines += (f"PG_MIXING_RULE={self.mixingRule}",)
+            forced = (
+                self.compute / "transport" / "mixingRule" / f"{self.mixingRule}.hpp",
                 *forced,
             )
         if "eos.hpp" in names:

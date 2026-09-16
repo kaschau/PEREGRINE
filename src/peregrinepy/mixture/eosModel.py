@@ -13,11 +13,16 @@ class BaseEosModel(BaseModel):
         super().__init__(configSect)
         self.caloric = caloricModel(configSect)
         self.fromSpecies += self.caloric.needs
-        # ordered: each reads what the one before stored
-        self.provides.update(cpPoly="cpPoly", hPoly="hPoly", hRef="hRef", sPoly="sPoly")
+        # ordered: each reads what the one before stored; the fit's own error
+        # is kept, since it is what a check of the eos against its source
+        # data can ask for
+        self.provides.update(
+            cpPoly=("cpPoly", "cpFitError"), hPoly="hPoly", hRef="hRef", sPoly="sPoly"
+        )
 
     def cpPoly(self, species):
-        return [self.caloric.cpPoly(sp) for sp in species.values()]
+        fits = [self.caloric.cpPoly(sp) for sp in species.values()]
+        return [f[0] for f in fits], [f[1] for f in fits]
 
     def hPoly(self, species):
         return [self.caloric.hPoly(sp) for sp in species.values()]

@@ -7,14 +7,15 @@
 
 namespace binary {
 
-// the mixture-averaged diffusion coefficient of each species from the
-// binary fits, Horner in u = ln T at unit pressure and scaled by T^(3/2):
-// each pair's D_nm once, its reciprocal into both species' sums; D[n] is
-// 1 / (p sum_m X_m / D_nm + p X_n / (MWmix - MW_n X_n) sum_m X_m MW_m /
-// D_nm), the sums over m != n. A pure fluid has no diffusion coefficient:
-// every D is zero.
+// each species' D from the binary fits, Horner in u = ln T at unit pressure
+// and scaled by T^(3/2): D[n] = 1 / (p sum_m X_m / D_nm + p X_n / (MWmix -
+// MW_n X_n) sum_m X_m MW_m / D_nm), the sums over m != n. Each pair's fit
+// is evaluated twice, once from each side, so a species' two sums are
+// scalars: a per-species array of sums is indexed by the inner loop, which
+// puts it in memory, and that cost three times the arithmetic it saved. A
+// pure fluid has no diffusion coefficient: every D is zero.
 KOKKOS_INLINE_FUNCTION void coefficients(const mixtureState &s, double *D) {
-  const double p = s.p, T = s.T, u = s.u, MWmix = s.MWmix;
+  const double p = s.p, u = s.u, MWmix = s.MWmix;
   const double *X = s.X;
   for (int n = 0; n <= ns - 1; n++) {
     if (X[n] == 1.0) {
@@ -24,26 +25,21 @@ KOKKOS_INLINE_FUNCTION void coefficients(const mixtureState &s, double *D) {
       return;
     }
   }
-  double sum1[ns], sum2[ns];
+  const double T_3o2 = s.T * sqrt(s.T);
   for (int n = 0; n <= ns - 1; n++) {
-    sum1[n] = 0.0;
-    sum2[n] = 0.0;
-  }
-  const double T_3o2 = T * sqrt(T);
-  for (int n = 0; n <= ns - 1; n++) {
-    for (int m = n + 1; m <= ns - 1; m++) {
+    double sum1 = 0.0, sum2 = 0.0;
+    for (int m = 0; m <= ns - 1; m++) {
+      if (m == n) {
+        continue;
+      }
       double Dnm = 0.0;
-      for (int k = dijTerms(n, m) - 1; k >= 0; k--)
+      for (int k = dijTerms - 1; k >= 0; k--)
         Dnm = Dnm * u + dij(n, m, k);
       const double Dinv = 1.0 / (Dnm * T_3o2);
-      sum1[n] += X[m] * Dinv;
-      sum2[n] += X[m] * MW(m) * Dinv;
-      sum1[m] += X[n] * Dinv;
-      sum2[m] += X[n] * MW(n) * Dinv;
+      sum1 += X[m] * Dinv;
+      sum2 += X[m] * MW(m) * Dinv;
     }
-  }
-  for (int n = 0; n <= ns - 1; n++) {
-    D[n] = 1.0 / (p * sum1[n] + p * X[n] / (MWmix - MW(n) * X[n]) * sum2[n]);
+    D[n] = 1.0 / (p * sum1 + p * X[n] / (MWmix - MW(n) * X[n]) * sum2);
   }
 }
 

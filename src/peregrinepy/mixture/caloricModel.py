@@ -30,7 +30,8 @@ class ConstantCpModel(BaseCaloricModel):
         self.needs += ("cp0",)
 
     def cpPoly(self, sp):
-        return [sp["cp0"] * sp["MW"] / Ru]
+        # a constant is its own fit, exactly
+        return [sp["cp0"] * sp["MW"] / Ru], 0.0
 
     def hPoly(self, sp):
         return sp["cpPoly"]
@@ -53,9 +54,11 @@ class TempDepCpModel(BaseCaloricModel, PolyFitMixin):
         self.needs += (anyOf(f.name for f in subclasses(BaseThermoData)),)
 
     def cpPoly(self, sp):
+        """The fit and the relative error it achieved: within the tolerance,
+        or the best the degree cap can do."""
         T, cpR = self._sample(sp)
         tol, deg = self.configSect["reFitTol"], self.configSect["reFitMaxDegree"]
-        return self.fitLowestDegree(np.log(T), cpR, tol, deg)[0]
+        return self.fitLowestDegree(np.log(T), cpR, tol, deg)
 
     def hPoly(self, sp):
         return self.integratePolyExp(sp["cpPoly"])

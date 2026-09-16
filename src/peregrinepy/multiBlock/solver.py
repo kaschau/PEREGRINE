@@ -77,6 +77,7 @@ class solver(restart):
             self.mixture.tables(),
             mc["eos"],
             mc["diffusion"],
+            mc["mixingRule"],
         )
         self.jit.compile(kernels)
         for k in kernels:

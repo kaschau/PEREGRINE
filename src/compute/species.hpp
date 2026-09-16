@@ -32,23 +32,22 @@ constexpr double Ru = PG_RU;
     return t[n * ns + m];                                                      \
   }
 
-// one polynomial per row: its number of terms, and coefficient m of row r
-#define PG_SPECIES_POLYNOMIAL(name, OFFSETS, COEFS)                            \
-  KOKKOS_INLINE_FUNCTION int name##Terms(const int r) {                        \
-    static constexpr int o[] = OFFSETS;                                        \
-    return o[r + 1] - o[r];                                                    \
-  }                                                                            \
+// one polynomial per row, every row the table's number of terms (the high
+// powers a row lacks are zero, which costs Horner nothing): coefficient m
+// of row r, rows contiguous, so a walk is one trip count and one load a term
+#define PG_SPECIES_POLYNOMIAL(name, TERMS, DATA)                               \
+  constexpr int name##Terms = TERMS;                                           \
   KOKKOS_INLINE_FUNCTION double name(const int r, const int m) {               \
-    static constexpr int o[] = OFFSETS;                                        \
-    static constexpr double c[] = COEFS;                                       \
-    return c[o[r] + m];                                                        \
+    static constexpr double c[] = DATA;                                        \
+    return c[r * TERMS + m];                                                   \
   }
 
 PG_SPECIES_SCALAR(MW, PG_MW)
 PG_SPECIES_SCALAR(MWinv, PG_MWINV)
 PG_SPECIES_SCALAR(MWqInv, PG_MWQ_INV)
+PG_SPECIES_SCALAR(sqrtMW, PG_SQRT_MW)
 // Wilke's pair constant 1 / sqrt(8 (1 + MW_n / MW_m))
-PG_SPECIES_PAIR(wilke, PG_WILKE)
+PG_SPECIES_PAIR(wilkePair, PG_WILKE_PAIR)
 PG_SPECIES_SCALAR(hRef, PG_H_REF)
 PG_SPECIES_SCALAR(cp0, PG_CP0)
 PG_SPECIES_SCALAR(mu0, PG_MU0)
@@ -61,25 +60,23 @@ PG_SPECIES_SCALAR(Vcrit, PG_VCRIT)
 PG_SPECIES_SCALAR(acentric, PG_ACENTRIC)
 PG_SPECIES_SCALAR(redDipole, PG_RED_DIPOLE)
 
-PG_SPECIES_POLYNOMIAL(cpPoly, PG_CP_POLY_OFFSETS, PG_CP_POLY_COEFS)
-PG_SPECIES_POLYNOMIAL(hPoly, PG_H_POLY_OFFSETS, PG_H_POLY_COEFS)
-PG_SPECIES_POLYNOMIAL(sPoly, PG_S_POLY_OFFSETS, PG_S_POLY_COEFS)
-PG_SPECIES_POLYNOMIAL(muPoly, PG_MU_POLY_OFFSETS, PG_MU_POLY_COEFS)
-PG_SPECIES_POLYNOMIAL(kappaPoly, PG_KAPPA_POLY_OFFSETS, PG_KAPPA_POLY_COEFS)
-PG_SPECIES_POLYNOMIAL(chungA, PG_CHUNG_A_OFFSETS, PG_CHUNG_A_COEFS)
-PG_SPECIES_POLYNOMIAL(chungB, PG_CHUNG_B_OFFSETS, PG_CHUNG_B_COEFS)
+PG_SPECIES_POLYNOMIAL(cpPoly, PG_CP_POLY_TERMS, PG_CP_POLY)
+PG_SPECIES_POLYNOMIAL(hPoly, PG_H_POLY_TERMS, PG_H_POLY)
+PG_SPECIES_POLYNOMIAL(sPoly, PG_S_POLY_TERMS, PG_S_POLY)
+PG_SPECIES_POLYNOMIAL(muPoly, PG_MU_POLY_TERMS, PG_MU_POLY)
+PG_SPECIES_POLYNOMIAL(kappaPoly, PG_KAPPA_POLY_TERMS, PG_KAPPA_POLY)
+PG_SPECIES_POLYNOMIAL(chungA, PG_CHUNG_A_TERMS, PG_CHUNG_A)
+PG_SPECIES_POLYNOMIAL(chungB, PG_CHUNG_B_TERMS, PG_CHUNG_B)
 
 // the binary diffusion fits are one per unordered pair, the rows the pairs
 // i <= j in numpy's triu_indices order: row i's pairs start after the
 // i rows before it, which held ns, ns - 1, ... pairs
-PG_SPECIES_POLYNOMIAL(dijPair, PG_DIJ_OFFSETS, PG_DIJ_COEFS)
+PG_SPECIES_POLYNOMIAL(dijPair, PG_DIJ_TERMS, PG_DIJ)
 KOKKOS_INLINE_FUNCTION int pairIndex(const int n, const int n2) {
   const int i = n < n2 ? n : n2, j = n < n2 ? n2 : n;
   return i * ns - i * (i - 1) / 2 + (j - i);
 }
-KOKKOS_INLINE_FUNCTION int dijTerms(const int n, const int n2) {
-  return dijPairTerms(pairIndex(n, n2));
-}
+constexpr int dijTerms = dijPairTerms;
 KOKKOS_INLINE_FUNCTION double dij(const int n, const int n2, const int m) {
   return dijPair(pairIndex(n, n2), m);
 }

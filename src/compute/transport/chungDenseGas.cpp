@@ -2,6 +2,7 @@
 #include "diffusion.hpp"
 #include "kernel.hpp"
 #include "mixing.hpp"
+#include "mixingRule.hpp"
 
 // References
 //
@@ -25,7 +26,6 @@ struct chungDenseGas {
   cellCenterOut qt;
   KOKKOS_INLINE_FUNCTION void operator()() const {
     const double &T = q(1);
-    double Y[ns];
     double X[ns];
     double mu_sp[ns];
     double kappa_sp[ns];
@@ -33,9 +33,11 @@ struct chungDenseGas {
     // the mole fractions off the conserved state, the last mass fraction
     // kept non-negative
     const double rhoinv = 1.0 / Q(0);
-    massFractions(Q, rhoinv, Y);
-    Y[ns - 1] = fmax(0.0, Y[ns - 1]);
-    const double MWmix = moleFractions([&](const int n) { return Y[n]; }, X);
+    const auto Yof = massFractions(Q, rhoinv);
+    const auto Y = [&](const int n) {
+      return n == ns - 1 ? fmax(0.0, Yof(n)) : Yof(n);
+    };
+    const double MWmix = moleFractions(Y, X);
 
     for (int n = 0; n <= ns - 1; n++) {
       const double Acoeff = 1.16145;
@@ -120,14 +122,12 @@ struct chungDenseGas {
 
       // Compute final thermal conductivity, convert to SI units
       kappa_sp[n] = (lambdak + lambdap) * 418.68;
+      // Wilke's rule wants sqrt(mu)
+      mu_sp[n] = sqrt(mu_sp[n]);
     }
 
-    // the mixture: Wilke's rule on sqrt(mu), the series-parallel mean
-    double sqrtMu[ns];
-    for (int n = 0; n <= ns - 1; n++) {
-      sqrtMu[n] = sqrt(mu_sp[n]);
-    }
-    qt(0) = wilkeViscosity(X, sqrtMu);
+    // the mixture: Wilke's rule, the series-parallel mean
+    qt(0) = mixingRule::viscosity(X, mu_sp);
     const double kappa = mixtureConductivity(X, kappa_sp);
     qt(1) = kappa;
     // the species diffusion coefficients from the case's diffusion model

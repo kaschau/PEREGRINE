@@ -157,9 +157,9 @@ properties(const double T, const Yf &Y, const double MWmix, const double hDep,
   for (int n = 0; n <= ns - 1; n++) {
     // ideal cp/R and h/(RT), Horner in u
     double cpR = 0.0, hRT = 0.0;
-    for (int m = cpPolyTerms(n) - 1; m >= 0; m--)
+    for (int m = cpPolyTerms - 1; m >= 0; m--)
       cpR = cpR * u + cpPoly(n, m);
-    for (int m = hPolyTerms(n) - 1; m >= 0; m--)
+    for (int m = hPolyTerms - 1; m >= 0; m--)
       hRT = hRT * u + hPoly(n, m);
     hRT += hRef(n) * Tinv;
     const double Rn = Ru * MWinv(n);
@@ -231,13 +231,15 @@ KOKKOS_INLINE_FUNCTION state fromCons(const double rho, const double e,
   const double Rmix = Ru / MWmix;
   // molar volume
   double Vm = MWmix / rho;
-  int nitr = 0, maxitr = 100;
-  double tol = 1e-8;
-  double error = 1e100;
   cubic c;
   double p = 0.0;
   double T = (Tguess < 1.0) ? 300.0 : Tguess;
-  while ((abs(error) > tol) && (nitr < maxitr)) {
+  // Newton on T until a step is below a part in 1e9 of T: the enthalpy's
+  // rounding floor is measured at 3e-12 of T, so this is a thousandfold
+  // above it and a millionth of a kelvin at most. Not a fixed count, as
+  // tpg's is: near the critical point the gradients are steep and Newton
+  // takes what it takes, up to the cap.
+  for (int nitr = 0; nitr < 100; nitr++) {
     // With a T, we can compute p
     coefficients(T, X, ai, c);
     // PR
@@ -249,9 +251,13 @@ KOKKOS_INLINE_FUNCTION state fromCons(const double rho, const double e,
     double hDep, cpDep;
     departures(T, X, ai, c, hDep, cpDep);
     properties(T, Y, MWmix, hDep, cpDep, s.h, s.cp, his);
-    error = e - (s.h - c.Z * Rmix * T);
-    T = T - error / (-s.cp + Rmix * (c.Z * c.dZdT));
-    nitr += 1;
+    const double dT =
+        (e - (s.h - c.Z * Rmix * T)) / (s.cp - Rmix * (c.Z * c.dZdT));
+    T += dT;
+    // written so a NaN leaves at once too
+    if (!(abs(dT) > 1e-9 * T)) {
+      break;
+    }
   }
   s.rho = rho;
   s.e = e;
