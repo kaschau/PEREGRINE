@@ -3,6 +3,8 @@ cross the bus through the runtime. A device section carries the launch
 bound its kernels are compiled with; the measured defaults differ by
 card, which is why each is its own class and section."""
 
+import ctypes
+
 import numpy as np
 
 from .abi import lib
@@ -34,6 +36,28 @@ class DeviceBackend(BaseBackend):
             array.ptr + component * host.nbytes, host.ctypes.data, host.nbytes, True
         )
         return host
+
+    def pull(self, array, host, wait):
+        assert host.flags["C_CONTIGUOUS" if self.order == "C" else "F_CONTIGUOUS"]
+        lib.pgToHost(array.ptr, host.ctypes.data, array.nbytes, wait)
+
+    def pullAside(self, array, host):
+        lib.pgCopyToHostAside(array.ptr, host.ctypes.data, array.nbytes)
+
+    def pushAside(self, array, host):
+        lib.pgCopyToDeviceAside(host.ctypes.data, array.ptr, array.nbytes)
+
+    def pinned(self, shape, dtype=np.float64):
+        # pinned for the run: the runtime frees it at finalize with the rest
+        dtype = np.dtype(dtype)
+        n = int(np.prod(shape))
+        ptr = lib.pgAllocatePinned(max(n * dtype.itemsize, 1))
+        flat = np.ctypeslib.as_array(
+            ctypes.cast(ptr, ctypes.POINTER(ctypes.c_byte)), (n * dtype.itemsize,)
+        )
+        array = flat.view(dtype).reshape(shape, order=self.order)
+        array[...] = 0
+        return array
 
     def fromHost(self, array, values, wait):
         host = np.require(values, array.dtype, self.order)

@@ -337,7 +337,7 @@ class CellFaceKernel(Kernel):
     """A flux kernel over the cell faces of one direction of the solver's
     blocks: the source names one direction's flux F, area vector A and
     faces, and the direction maps them to the table's; a scheme's three
-    directions are a KernelGroup."""
+    directions are a kernel group."""
 
     def __init__(self, source, direction):
         axis = "ijk"[direction]
@@ -369,9 +369,11 @@ class HaloExchangeKernel(Kernel):
     one ndim."""
 
 
-class KernelGroup:
-    """A flux scheme's directions, run one after the other: it reads and
-    writes what any of them does and reaches as far as the widest."""
+class BaseKernelGroup:
+    """Several kernels under one tag: it reads and writes what any of them
+    does and reaches as far as the widest. A call runs them in order; what
+    order they owe each other is stated by :stages:, kernels independent
+    within a stage, each stage after the last."""
 
     def __init__(self, kernels):
         self.kernels = kernels
@@ -383,3 +385,20 @@ class KernelGroup:
     def __call__(self, *args, **kwargs):
         for kernel in self.kernels:
             kernel(*args, **kwargs)
+
+
+class OrderedKernelGroup(BaseKernelGroup):
+    """Kernels each after the last."""
+
+    @property
+    def stages(self):
+        return [[kernel] for kernel in self.kernels]
+
+
+class UnorderedKernelGroup(BaseKernelGroup):
+    """Kernels that read and write nothing of each other's, so no order is
+    owed between them."""
+
+    @property
+    def stages(self):
+        return [self.kernels]

@@ -129,10 +129,6 @@ template <class T, offset O> struct column {
       stride[d] = static_cast<int>(r->stride[d]);
   }
   KOKKOS_INLINE_FUNCTION void pin(const within &at) { c = at.c; }
-  KOKKOS_INLINE_FUNCTION void pin(const cell &where) {
-    pin(entry{where.entry});
-    pin(within{where});
-  }
   // the element at a step from the cell
   template <class... X>
   KOKKOS_INLINE_FUNCTION decltype(auto) element(const offset &o,
@@ -193,11 +189,6 @@ template <class T> struct perEntry {
   const T *all;
   T value;
   KOKKOS_INLINE_FUNCTION void pin(const entry &at) { value = all[at.e]; }
-  template <class P>
-    requires requires(const P &p) { p.entry; }
-  KOKKOS_INLINE_FUNCTION void pin(const P &p) {
-    value = all[p.entry];
-  }
   KOKKOS_INLINE_FUNCTION T operator()() const { return value; }
 };
 
@@ -205,7 +196,6 @@ template <class T> struct perEntry {
 struct dims {
   const pgDims *all, *at;
   KOKKOS_INLINE_FUNCTION void pin(const entry &e) { at = all + e.e; }
-  KOKKOS_INLINE_FUNCTION void pin(const cell &c) { at = all + c.entry; }
   KOKKOS_INLINE_FUNCTION const pgDims *operator->() const { return at; }
 };
 
@@ -234,17 +224,19 @@ struct plane {
   int entry, g, i, j, nface;
 };
 
-// what every column of a block face launch shares: the records, the pinned face
-// and plane cell, and which way the face looks
+// what every column of a block face launch shares: the records, the face's
+// record pinned by the team, the plane cell pinned by the item, and which
+// way the face looks. The record stays a pointer here: a plane's threads
+// read a few elements each, and holding the record's extents and strides
+// in the column measured 4% slower than reading them (the column copied
+// per item outweighs the chase it saves)
 template <class T> struct atBlockFace {
   const pgView *records;
-  const pgView *at_; // pinned: the face's record
-  plane p;           // pinned
+  const pgView *at_;
+  plane p;
 
-  KOKKOS_INLINE_FUNCTION void pin(const plane &where) {
-    at_ = records + where.entry;
-    p = where;
-  }
+  KOKKOS_INLINE_FUNCTION void pin(const entry &at) { at_ = records + at.e; }
+  KOKKOS_INLINE_FUNCTION void pin(const plane &where) { p = where; }
   // the axis this face is normal to, and whether it is the low end of it
   KOKKOS_INLINE_FUNCTION int axis() const { return faceAxis(p.nface); }
   KOKKOS_INLINE_FUNCTION bool low() const { return faceLow(p.nface); }

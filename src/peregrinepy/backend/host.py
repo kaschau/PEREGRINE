@@ -22,6 +22,18 @@ class HostBackend(BaseBackend):
             return array.data.copy(order=self.order)
         return np.array(array.data[..., component], order=self.order)
 
+    def pull(self, array, host, wait):
+        host[...] = array.data
+
+    def pullAside(self, array, host):
+        host[...] = array.data
+
+    def pushAside(self, array, host):
+        array.data[...] = host
+
+    def pinned(self, shape, dtype=np.float64):
+        return np.zeros(shape, dtype, order=self.order)
+
     def fromHost(self, array, values, wait):
         array.data[...] = values
 

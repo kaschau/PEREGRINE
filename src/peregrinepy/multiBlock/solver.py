@@ -16,11 +16,12 @@ from ..backend import Backend
 from ..bcs import bcTypesWith
 from ..graph import Graph
 from ..kernel import (
+    BaseKernelGroup,
     BlockFaceKernel,
     CellCenterKernel,
     CellFaceKernel,
     HaloExchangeKernel,
-    KernelGroup,
+    UnorderedKernelGroup,
 )
 from ..mixture import Mixture
 from ..mpiComm import HaloExchange
@@ -211,7 +212,8 @@ class solver(restart):
         # the equation of state is compiled into these by the jit
         k["stateFromCons"] = CellCenterKernel("thermo/stateFromCons.cpp")
         k["stateFromPrims"] = CellCenterKernel("thermo/stateFromPrims.cpp")
-        k["primaryAdvFlux"] = KernelGroup(
+        # a scheme's directions write their own flux: no order between them
+        k["primaryAdvFlux"] = UnorderedKernelGroup(
             [
                 CellFaceKernel(f"advFlux/{rhs['primaryAdvFlux']}.cpp", d)
                 for d in range(3)
@@ -222,7 +224,7 @@ class solver(restart):
             # the species diffusion model is compiled into it by the jit
             k["trans"] = CellCenterKernel(f"transport/{mc['trans']}.cpp")
             k["dqdxyz"] = CellCenterKernel("utils/dq2FD.cpp")
-            k["diffFlux"] = KernelGroup(
+            k["diffFlux"] = UnorderedKernelGroup(
                 [CellFaceKernel("diffFlux/alphaDampingFlux.cpp", d) for d in range(3)]
             )
             bcHooks += ["preDqDxyz", "postDqDxyz"]
@@ -240,7 +242,7 @@ class solver(restart):
         return [
             k
             for v in self.kernels.values()
-            for k in (v.kernels if isinstance(v, KernelGroup) else (v,))
+            for k in (v.kernels if isinstance(v, BaseKernelGroup) else (v,))
         ]
 
     def __getattr__(self, name):
@@ -318,6 +320,26 @@ class solver(restart):
                 bcHook, [f for _, f in self.faces()]
             )
         return self._blockFaceTables[bcHook]
+
+    def remoteFaceTables(self):
+        """The faces whose halos arrive by message, as a table of them all
+        for a cell kernel and one per axis for a flux kernel: what a flow
+        redoes once the halos have landed. Kept until a face changes."""
+        if self.facesChanged:
+            self._blockFaceTables = {}
+            self.facesChanged = False
+        if "remote" not in self._blockFaceTables:
+            remote = list(self.haloExchange.remote)
+            self._blockFaceTables["remote"] = (
+                self.backend.table(remote),
+                [
+                    self.backend.table(
+                        [f for f in remote if (f.nface - 1) // 2 == axis]
+                    )
+                    for axis in range(3)
+                ],
+            )
+        return self._blockFaceTables["remote"]
 
     def _tablesOf(self, bcHook, faces):
         groups = {}

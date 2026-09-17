@@ -27,6 +27,7 @@ class Library:
         "pgBackend": ([], ctypes.c_char_p),
         "pgAllocate": ([ctypes.c_size_t], ctypes.c_void_p),
         "pgFree": ([ctypes.c_void_p], None),
+        "pgAllocatePinned": ([ctypes.c_size_t], ctypes.c_void_p),
         "pgToHost": (
             [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_size_t, ctypes.c_int],
             None,
@@ -36,10 +37,22 @@ class Library:
             None,
         ),
         "pgFence": ([], None),
+        "pgCopyToHostAside": (
+            [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_size_t],
+            None,
+        ),
+        "pgCopyToDeviceAside": (
+            [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_size_t],
+            None,
+        ),
+        "pgCopyWait": ([], None),
         "pgGraphBegin": ([], ctypes.c_int),
         "pgGraphEnd": ([], None),
         "pgGraphSubmit": ([ctypes.c_int], None),
         "pgGraphDrop": ([ctypes.c_int], None),
+        "pgGraphFork": ([], None),
+        "pgGraphSibling": ([], None),
+        "pgGraphJoin": ([], None),
     }
 
     def __init__(self):
@@ -169,8 +182,8 @@ class Column(ctypes.Structure):
 
 
 class FaceColumn(ctypes.Structure):
-    """A face column (faceColumn<T>): the records, then the face's record
-    and the halo cell."""
+    """A block face column (atBlockFace<T>): the records, then the face's
+    record and the plane the launch pins."""
 
     _fields_ = [
         ("records", ctypes.c_void_p),

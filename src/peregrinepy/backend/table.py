@@ -126,17 +126,37 @@ class BlockFaceHalo(BaseRange):
 @dataclass(frozen=True)
 class CellFaces(BaseRange):
     """The faces of one direction between the interior cells: one more than
-    the cells along it."""
+    the cells along it. Over a block face table, the one plane of faces
+    lying on each face, which must be of the direction; a call can also
+    narrow it so: 0 the interior faces, 1..6 a block face's plane."""
 
     kind: ClassVar[str] = "cellFaces"
     axis: int = 0
+    # None as declared, 0 the interior faces, 1..6 a block face's plane
+    side: int | None = None
 
     def cells(self, entry):
         blk = blockOf(entry)
         ng = blk.ng
+        start = [ng] * 3
         extent = [n - 2 * ng for n in self.extents(blk)]
         extent[self.axis] += 1
-        return (ng,) * 3, tuple(extent)
+        # a face entry's own side, or the side a call named
+        side = entry.column("nface") if self.side is None else self.side
+        if side == 0:
+            start[self.axis] += 1
+            extent[self.axis] -= 2
+        elif side is not None:
+            assert (side - 1) // 2 == self.axis, (side, self.axis)
+            if side % 2 == 0:
+                start[self.axis] += extent[self.axis] - 1
+            extent[self.axis] = 1
+        return tuple(start), tuple(extent)
+
+    def at(self, nface):
+        if nface is None or nface == -1:
+            return self
+        return CellFaces(self.components, self.axis, nface)
 
 
 @dataclass(frozen=True)

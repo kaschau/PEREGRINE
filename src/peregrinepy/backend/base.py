@@ -72,5 +72,20 @@ class BaseBackend:
     def toHost(self, array, component, wait):
         raise NotImplementedError
 
+    def pull(self, array, host, wait):
+        """Copy an array into host memory kept for it."""
+        raise NotImplementedError
+
+    def pullAside(self, array, host):
+        raise NotImplementedError
+
+    def pushAside(self, array, host):
+        raise NotImplementedError
+
+    def pinned(self, shape, dtype=np.float64):
+        """Host memory the device reaches at bus speed, as a numpy array in
+        this backend's order, kept for the run."""
+        raise NotImplementedError
+
     def fromHost(self, array, values, wait):
         raise NotImplementedError

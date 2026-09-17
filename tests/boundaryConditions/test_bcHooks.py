@@ -30,24 +30,33 @@ def test_bcHookOutsideTheFlowRunsNothing(my_setup):
 
 def test_flowListsItsSlots(my_setup):
     mb = _solver(diffusion=True)
+    # everything runs while the halos are in flight; what a message brings
+    # is done again after it lands
     assert [n.name for n in mb.graphs["rhs"].nodes] == [
-        "primaryAdvFlux",
         "bcs preDqDxyz",
         "dqdxyz",
-        "haloExchange grads",
+        "haloExchange grads start",
+        "primaryAdvFlux",
+        "haloExchange grads send",
         "bcs postDqDxyz",
         "diffFlux",
+        "haloExchange grads finish",
+        "primaryAdvFlux diffFlux remote",
         "applyFlux",
     ]
     assert [n.name for n in mb.graphs["consistify"].nodes] == [
-        "haloExchange Q",
+        "haloExchange Q start",
         "stateFromCons",
+        "haloExchange Q send",
         "bcs euler",
         "trans",
+        "haloExchange Q finish",
+        "stateFromCons remote",
+        "trans remote",
     ]
     assert [n.name for n in mb.graphs["consistifyFromPrims"].nodes][:2] == [
         "stateFromPrims",
-        "haloExchange Q",
+        "haloExchange Q start",
     ]
     del mb.kernels["applyFlux"]
     with pytest.raises(KeyError):

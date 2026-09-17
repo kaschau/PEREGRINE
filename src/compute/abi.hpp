@@ -27,6 +27,10 @@ using graphNode =
                                        Kokkos::Experimental::TypeErasedTag,
                                        Kokkos::Experimental::TypeErasedTag>;
 PG_ABI graphNode *pgGraphTail();
+// independent launches under capture: siblings off one node, joined after
+PG_ABI void pgGraphFork();
+PG_ABI void pgGraphSibling();
+PG_ABI void pgGraphJoin();
 
 extern "C" {
 // one array as Python holds it: where, how big, and its strides in

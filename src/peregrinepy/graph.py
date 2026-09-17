@@ -16,7 +16,7 @@ arrays: every slot is filled from the solver's dict, and a tag the dict
 lacks is a bug in the flow, not a null."""
 
 from .backend.abi import lib
-from .kernel import BlockFaceKernel, KernelGroup
+from .kernel import BaseKernelGroup, BlockFaceKernel
 
 
 class BaseNode:
@@ -39,7 +39,8 @@ class BaseNode:
 
 class CellCenterLaunchNode(BaseNode):
     """One kernel of the dict over the cell centers of the solver's blocks,
-    with the scalars its slot settles."""
+    with the scalars its slot settles; narrowed to the interior when the
+    flow says so."""
 
     def __init__(self, name, kernel, **fixed):
         super().__init__(name, kernel.reads, kernel.writes)
@@ -50,15 +51,58 @@ class CellCenterLaunchNode(BaseNode):
 
 
 class CellFaceLaunchNode(BaseNode):
-    """A flux scheme over the cell faces of the solver's blocks: its three
-    directions' kernels, run one after the other."""
+    """A flux scheme over the cell faces of the solver's blocks, its kernels
+    placed by the group's stages: a stage's kernels are siblings in a
+    captured graph, hung off one node and joined after all, so the device
+    may run them in any order or together; a direct launch has one queue
+    and runs them in order either way."""
 
-    def __init__(self, name, group):
+    def __init__(self, name, group, **fixed):
         super().__init__(name, group.reads, group.writes)
-        self.group = group
+        self.group, self.fixed = group, fixed
 
     def run(self):
-        self.group()
+        for stage in self.group.stages:
+            lib.pgGraphFork()
+            for kernel in stage:
+                lib.pgGraphSibling()
+                kernel(**self.fixed)
+            lib.pgGraphJoin()
+
+
+class RemoteHalosNode(BaseNode):
+    """A cell kernel again, over the halo cells behind the faces whose halos
+    arrived by message: the kernel ran over everything while they were in
+    flight, and only these were stale. A rank with none launches nothing."""
+
+    def __init__(self, name, kernel, solver, **fixed):
+        super().__init__(name, kernel.reads, kernel.writes)
+        self.kernel, self.solver, self.fixed = kernel, solver, fixed
+
+    def run(self):
+        table, _ = self.solver.remoteFaceTables()
+        if table.count:
+            self.kernel(table=table, **self.fixed)
+
+
+class RemoteFacesNode(BaseNode):
+    """The flux schemes again, over the planes of faces lying on the block
+    faces whose halos arrived by message: the advective flux sets them and
+    the viscous flux adds to them, as they were for every face while the
+    halos were in flight."""
+
+    def __init__(self, name, groups, solver):
+        reads = dict.fromkeys(r for g in groups for r in g.reads)
+        writes = dict.fromkeys(w for g in groups for w in g.writes)
+        super().__init__(name, reads, writes)
+        self.groups, self.solver = groups, solver
+
+    def run(self):
+        _, byAxis = self.solver.remoteFaceTables()
+        for group in self.groups:
+            for kernel in group.kernels:
+                if byAxis[kernel.direction].count:
+                    kernel(table=byAxis[kernel.direction])
 
 
 class BlockFaceLaunchNode(BaseNode):
@@ -103,15 +147,37 @@ class BcNode(BlockFaceLaunchNode):
 
 
 class HaloExchangeNode(BaseNode):
-    """A halo exchange of the named arrays: every block's are read, every
-    block's halos written."""
+    """A halo exchange of one array, in three parts a flow lays apart: the
+    start packs and copies the messages out beside the kernels, the send
+    posts them once the copy has landed, the finish receives and unpacks;
+    what the flow puts between them runs while the messages fly. The start
+    reads the array; the finish writes its halos. The three are made
+    together."""
 
-    def __init__(self, haloExchange, *arrays):
-        super().__init__(f"haloExchange {' '.join(arrays)}", arrays, arrays)
-        self.haloExchange, self.arrays = haloExchange, list(arrays)
+    def __init__(self, haloExchange, array):
+        super().__init__(f"haloExchange {array} start", (array,), ())
+        self.haloExchange, self.array = haloExchange, array
+        self.pending = None
+        self.send = HaloExchangePartNode(self, "send")
+        self.finish = HaloExchangePartNode(self, "finish")
 
     def run(self):
-        self.haloExchange.exchange(self.arrays)
+        self.pending = self.haloExchange.start(self.array)
+
+
+class HaloExchangePartNode(BaseNode):
+    def __init__(self, start, part):
+        writes = (start.array,) if part == "finish" else ()
+        super().__init__(f"haloExchange {start.array} {part}", (), writes)
+        self.start, self.part = start, part
+
+    def run(self):
+        exchange, array = self.start.haloExchange, self.start.array
+        if self.part == "send":
+            self.start.pending = exchange.send(array, self.start.pending)
+        else:
+            exchange.finish(array, self.start.pending)
+            self.start.pending = None
 
 
 class Graph:
@@ -142,10 +208,29 @@ class Graph:
         if tag not in self.solver.kernels:
             raise KeyError(f"the {self.name} flow needs {tag}, which is not defined")
         kernel = self.solver.kernels[tag]
-        if isinstance(kernel, KernelGroup):
-            self.add(CellFaceLaunchNode(tag, kernel))
+        if isinstance(kernel, BaseKernelGroup):
+            self.add(CellFaceLaunchNode(tag, kernel, **fixed))
         else:
             self.add(CellCenterLaunchNode(tag, kernel, **fixed))
+
+    def redo(self, *tags, **fixed):
+        """The kernels under :tags: again, over what a message brought: a
+        cell kernel over the remote faces' halo cells, flux schemes over
+        the remote faces' planes, in the order given."""
+        kernels = [self._kernel(t) for t in tags]
+        if all(isinstance(k, BaseKernelGroup) for k in kernels):
+            return self.add(
+                RemoteFacesNode(f"{' '.join(tags)} remote", kernels, self.solver)
+            )
+        (kernel,) = kernels
+        return self.add(
+            RemoteHalosNode(f"{tags[0]} remote", kernel, self.solver, **fixed)
+        )
+
+    def _kernel(self, tag):
+        if tag not in self.solver.kernels:
+            raise KeyError(f"the {self.name} flow needs {tag}, which is not defined")
+        return self.solver.kernels[tag]
 
     def bcs(self, bcHook):
         """This flow's bc node for a bcHook; None if it has
@@ -213,7 +298,16 @@ class Graph:
         self.segments = []
         graph = None
         for node in self.nodes:
-            if isinstance(node, HaloExchangeNode) and node.haloExchange.remote:
+            remote = (
+                node.haloExchange.remote
+                if isinstance(node, HaloExchangeNode)
+                else (
+                    node.start.haloExchange.remote
+                    if isinstance(node, HaloExchangePartNode)
+                    else False
+                )
+            )
+            if remote:
                 if graph is not None:
                     lib.pgGraphEnd()
                     graph = None
@@ -248,11 +342,19 @@ class Graph:
         if fromPrims:
             g.oneShot = True
             g.slot("stateFromPrims")
-        g.add(HaloExchangeNode(solver.haloExchange, "Q"))
+        # everything runs while the halos are in flight; only the halos a
+        # message brings are stale then, and they are done again after
+        viscous = solver.config["RHS"]["diffusion"]
+        exchange = g.add(HaloExchangeNode(solver.haloExchange, "Q"))
         g.slot("stateFromCons")
+        g.add(exchange.send)
         g.add(BcNode(solver, "euler"))
-        if solver.config["RHS"]["diffusion"]:
+        if viscous:
             g.slot("trans")
+        g.add(exchange.finish)
+        g.redo("stateFromCons")
+        if viscous:
+            g.redo("trans")
         g._link()
         return g
 
@@ -262,13 +364,21 @@ class Graph:
         differences. Every flux accumulates on the faces, a direction at a
         time, and one apply makes dQ of them."""
         g = cls(solver, "rhs")
-        g.slot("primaryAdvFlux")
         if solver.config["RHS"]["diffusion"]:
+            # the gradients go out first and every flux runs while they
+            # are in flight; the faces on a remote block face, whose halo
+            # gradients were stale, are done again once they have landed
             g.add(BcNode(solver, "preDqDxyz"))
             g.slot("dqdxyz")
-            g.add(HaloExchangeNode(solver.haloExchange, "grads"))
+            exchange = g.add(HaloExchangeNode(solver.haloExchange, "grads"))
+            g.slot("primaryAdvFlux")
+            g.add(exchange.send)
             g.add(BcNode(solver, "postDqDxyz"))
             g.slot("diffFlux")
+            g.add(exchange.finish)
+            g.redo("primaryAdvFlux", "diffFlux")
+        else:
+            g.slot("primaryAdvFlux")
         g.slot("applyFlux")
         g._link()
         return g
