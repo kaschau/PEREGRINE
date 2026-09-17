@@ -1,6 +1,6 @@
 // The case's equation of state, as a piece any kernel or boundary condition
 // can call: eos::fromPrims and eos::fromCons work out the mixture state at
-// one point from (p, T, Y) or (rho, e, Y) over the species tables, and hand
+// one point from (p, T, Y) or (rho, e, Y) over the species data, and hand
 // back a `state`; eos::enthalpies gives each species' enthalpy at a cell;
 // eos::densityDerivatives what the dual time preconditioning linearizes
 // with; eos::qhComponents says how wide a cell's qh is. The jit picks the

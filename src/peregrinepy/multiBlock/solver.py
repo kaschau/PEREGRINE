@@ -1,6 +1,7 @@
 """The system of a case: its blocks and their arrays, the species data, the
-tables, every kernel by tag, the flows, the boundary conditions and the
-exchange, made in the order solver.__init__ lays out.
+two tables, every kernel by tag, the halo exchanges, the boundary
+conditions, and the step's graphs, made in the order solver.__init__ lays
+out.
 
 What is not the solver's: taking a step and sizing it (the stepper's and the
 controller's, composed onto it by integrators.getSolver), stage storage (a
@@ -10,45 +11,44 @@ that only a plugin or a controller calls (they declare their own)."""
 import numpy as np
 from mpi4py import MPI
 
+from .arrays import CellCenterArray, CellFaceArray
 from .restart import restart
 from .solverBlock import solverBlock
 from ..backend import Backend
-from ..bcs import bcTypesWith
-from ..graph import Graph
+from ..bcs import bcTypesWith, getBc
+from ..graph import CollectiveLaunchNode, Graph
 from ..kernel import (
-    BaseKernelGroup,
-    BlockFaceKernel,
     CellCenterKernel,
     CellFaceKernel,
     HaloExchangeKernel,
     UnorderedKernelGroup,
 )
 from ..mixture import Mixture
-from ..mpiComm import HaloExchange
+from ..mpiComm import BaseHaloExchange
 from ..mpiComm.mpiUtils import getCommRankSize
 from ..plugins import pluginsOf
 from ..files.configFile import pgConfigError
 
 
 class solver(restart):
-    """A runnable case: the blocks, the mixture and its species data, the
-    step's graphs, the boundary conditions, and every kernel the config asks
-    for, compiled and bound. integrators.getSolver composes a controller
-    and a stepper onto this, which is how a case is made: the stepper takes
-    a step and says what it keeps, the controller sizes each step and runs
-    the case."""
+    """A runnable case: the blocks, the mixture and its species data, every
+    kernel the config asks for, the tables and tilings the launches run
+    over, the halo exchanges, the boundary conditions, and the step's
+    graphs. integrators.getSolver composes a controller and a stepper onto
+    this, which is how a case is made: the stepper takes a step and says
+    what it keeps, the controller sizes each step and runs the case."""
 
     def _newBlock(self, nblki):
         return solverBlock(nblki, self)
 
     def __init__(self, config, mesh, state=None):
-        """A case, ready to step. The step's graphs and every kernel they call
-        are compiled for the config; the blocks come from :mesh: -- a mesher
-        or a grid reader, anything that fills a multiBlock -- and are
-        connected, haloed and metricked, with the boundary values the config
-        names on their faces; the state comes from :state: -- a restart
-        reader -- or is uniform at the config's initial conditions, and is
-        made consistent."""
+        """Makes a case, ready to step. Every kernel is compiled for the
+        config; the blocks come from :mesh: -- a mesher or a grid reader,
+        anything that fills a multiBlock -- and are connected, haloed and
+        metricked, with the boundary values the config names on their
+        faces; the state comes from :state: -- a restart reader -- or is
+        uniform at the config's initial conditions, and is made
+        consistent."""
         self.config = config
         self._refuse(config)
         self.mixture = Mixture(config["mcPhysics"])
@@ -58,55 +58,49 @@ class solver(restart):
         self.ne = 5 + self.mixture.ns - 1
 
         # every array a block holds beyond the restart's, and every kernel the
-        # case calls by tag: the base's, the stepper's and the controller's;
-        # nothing about order, which the graphs hold
+        # case calls by tag: the base's, the stepper's and the controller's
         self.declareArrays()
         self.kernels = {}
         self.declareKernels()
         kernels = self._everyKernel()
-        # the halo is as deep as the widest stencil among them; the table and
-        # the jit follow, and each kernel is bound to what it runs over
+        # the halo is as deep as the widest stencil among them; the jit follows
         self.ng = max(k.stencil for k in kernels)
-        mc = config["mcPhysics"]
-        self.table = self.backend.table(self.blocks)
-        self.jit = self.backend.jit(
-            self.mixture.ns,
-            self.ng,
-            self.mixture.tables(),
-            mc["eos"],
-            mc["diffusion"],
-            mc["mixingRule"],
-        )
+        self.jit = self.backend.jit(self.ng, self.mixture, config["mcPhysics"])
         self.jit.compile(kernels)
-        for k in kernels:
-            if isinstance(k, (CellCenterKernel, CellFaceKernel)):
-                k.bind(self.table)
 
-        # what calls them: the halo exchange and the step's flows
-        self.haloExchange = HaloExchange(
-            self.kernels["pack"], self.kernels["unpack"], self.backend
-        )
-        self.graphs = {
-            "consistify": Graph.consistify(self),
-            "consistifyFromPrims": Graph.consistify(self, fromPrims=True),
-            "rhs": Graph.rhs(self),
-        }
-        for graph in self.graphs.values():
-            graph.check(self.arrays)
-
-        # the blocks, and what follows from them; the bcs find their faces
-        # before the first step, and again whenever a face changes
-        self.facesChanged = True
-        self._blockFaceTables = {}
+        # the two tables every launch runs over, over the blocks and their
+        # block faces as the mesh fills them in; then the blocks, wired to
+        # their neighbors, and the halo exchanges, fixed from here
+        self.blockFaces = []
+        self.blockTable = self.backend.table(self.blocks)
+        self.blockFaceTable = self.backend.table(self.blockFaces)
         mesh.fill(self)
+        self.blockFaces.extend(face for _, face in self.faces())
         # the grid file this case came from, if it came from one, and the
         # partition of it this run took
         self.meshFile = getattr(mesh, "fileName", None)
         self.partition = getattr(mesh, "partitionName", None)
         self.setBlockCommunication()
+        self.tradingFaces, self.localFaces, self.remoteFaces = self._sortFaces()
+        self.hereFaces = [f for f in self.blockFaces if f not in self.remoteFaces]
+        exchangeKind = BaseHaloExchange.fromConfig(config)
+        self.exchanges = {
+            name: exchangeKind(
+                name,
+                self.blockFaceTable,
+                self.tradingFaces,
+                self.localFaces,
+                self.remoteFaces,
+                depth,
+            )
+            for name, depth in self.exchanged()
+        }
         self.unifyGrid()
         self.computeMetrics()
         self._applyBcValues()
+        # the step's graphs, from what is now fixed
+        self.graphs = {}
+        self.declareGraphs()
 
         # the state, from the primitive vector a fresh case or a result
         # gives, and what follows from it
@@ -129,7 +123,7 @@ class solver(restart):
         self.plugins = pluginsOf(self, config)
 
     ###########################################################################
-    # The kernels
+    # What the case declares: arrays, kernels, exchanges, graphs
     ###########################################################################
     @staticmethod
     def _refuse(config):
@@ -172,38 +166,38 @@ class solver(restart):
                 )
 
     def declareArrays(self):
-        """Every array a solver's block holds beyond its grid and the
-        primitive vector it starts from: the metrics, the conserved state
-        and its derivative, the face fluxes, the thermodynamic state -- p and
-        T in q, what the eos keeps in qh -- and with diffusion the gradients
-        and the transport properties. A stepper adds what it keeps through
-        super()."""
+        """Declares every array a solver's block holds beyond its grid and
+        the primitive vector it starts from: the metrics, the conserved
+        state and its derivative, the cell-face fluxes, the thermodynamic
+        state -- p and T in q, what the eos keeps in qh -- and with
+        diffusion the gradients and the transport properties. A stepper
+        adds what it keeps through super()."""
         ne, ns = self.ne, self.mixture.ns
-        self.declareArray("Jinv", kind="cell")
-        self.declareArray("dIJK", kind="cell", components=3)
+        self.declareArray("Jinv", CellCenterArray)
+        self.declareArray("dIJK", CellCenterArray, components=3)
         # cell center transformation metrics
-        self.declareArray("dENCdxyz", kind="cell", components=(3, 3))
-        for axis in "ijk":
-            self.declareArray(f"{axis}Faces", kind=f"{axis}face", components=3)
-            self.declareArray(f"{axis}S", kind=f"{axis}face", components=3)
-            self.declareArray(f"{axis}F", kind=f"{axis}face", components=ne)
-        self.declareArray("Q", kind="cell", components=ne)
-        self.declareArray("dQ", kind="cell", components=ne)
-        self.declareArray("q", kind="cell", components=2)
+        self.declareArray("dENCdxyz", CellCenterArray, components=(3, 3))
+        for axis, d in enumerate("ijk"):
+            self.declareArray(f"{d}Faces", CellFaceArray, components=3, axis=axis)
+            self.declareArray(f"{d}S", CellFaceArray, components=3, axis=axis)
+            self.declareArray(f"{d}F", CellFaceArray, components=ne, axis=axis)
+        self.declareArray("Q", CellCenterArray, components=ne)
+        self.declareArray("dQ", CellCenterArray, components=ne)
+        self.declareArray("q", CellCenterArray, components=2)
         self.declareArray(
-            "qh", kind="cell", components=self.mixture.eos.qhComponents(ns)
+            "qh", CellCenterArray, components=self.mixture.eos.qhComponents(ns)
         )
         if self.config["RHS"]["diffusion"]:
             # the velocity, T and Y(0 .. ns - 2): nothing diffuses on pressure
-            self.declareArray("grads", kind="cell", components=(ne - 1, 3))
-            self.declareArray("qt", kind="cell", components=2 + ns)
+            self.declareArray("grads", CellCenterArray, components=(ne - 1, 3))
+            self.declareArray("qt", CellCenterArray, components=2 + ns)
 
     def declareKernels(self):
-        """The kernels every case calls, each under its tag: the copy and
-        linear combinations of block arrays, the equation of state, the fluxes and
-        the apply, the transport, the exchange, and every bcType's body at
-        every bcHook the case has. A stepper and a controller add their own
-        through super()."""
+        """Declares the kernels every case calls, each under its tag: the
+        copy and linear combinations of block arrays, the equation of state,
+        the fluxes and the apply, the transport, the pack and unpack of the
+        exchanges, and every bcType's body at every bcHook the case has. A
+        stepper and a controller add their own through super()."""
         rhs, mc = self.config["RHS"], self.config["mcPhysics"]
         k = self.kernels
         k["copy"] = CellCenterKernel("utils/copy.cpp")
@@ -231,56 +225,245 @@ class solver(restart):
         k["applyFlux"] = CellCenterKernel("utils/applyFlux.cpp")
         k["pack"] = HaloExchangeKernel("utils/extractSendBuffer.cpp")
         k["unpack"] = HaloExchangeKernel("utils/placeRecvBuffer.cpp")
-        # every bcType's body at each bcHook, kept on its own, so the
-        # kernels are fixed and only the faces are found at a run
+        # every bcType's body at each bcHook, its own kernel: bc.cpp compiled
+        # with the bcType's header forced in
         for bcHook in bcHooks:
             for bcType in bcTypesWith(bcHook):
-                k[f"{bcType}@{bcHook}"] = BlockFaceKernel(bcType, bcHook)
+                k[f"{bcType}@{bcHook}"] = CellCenterKernel(
+                    "boundaryConditions/bc.cpp",
+                    defines=(f"PG_BCTYPE={bcType}", f"PG_BCHOOK={bcHook}"),
+                    includes=(getBc(bcType).header(),),
+                )
+
+    def exchanged(self):
+        """Names the arrays whose halos are exchanged, with the planes each
+        trades: the nodes and the state ng deep, the gradients one."""
+        pairs = [("nodes", self.ng), ("Q", self.ng)]
+        if self.config["RHS"]["diffusion"]:
+            pairs.append(("grads", 1))
+        return pairs
+
+    def declareGraphs(self):
+        """Declares the step's graphs, each stage a list of device graphs
+        cut where a message is waited on: making the state consistent is
+        the Q exchange around the equation of state, the boundary
+        conditions' euler bcHook and the transport, the halos a message
+        brought done again after it lands; the right-hand side is the
+        gradient exchange around the advective and diffusive fluxes, then
+        the apply. A stepper adds its own through super()."""
+        viscous = self.config["RHS"]["diffusion"]
+        Q = self.exchanges["Q"]
+        stage = [
+            Graph("consistify: pack Q", before=[Q.expect], after=[Q.copyOut]),
+            Graph("consistify: state", after=[Q.send, Q.receive]),
+            Graph("consistify: remote halos", after=[Q.sent]),
+        ]
+        stage[0].add(self.packNode("Q"))
+        stage[0].add(self.unpackNode("Q", "local"))
+        stage[1].add(self.launchNode("stateFromCons", "all"))
+        stage[1].add(self.bcNode("euler", self.hereFaces, "here"))
+        if viscous:
+            stage[1].add(self.launchNode("trans", "all"))
+        stage[2].add(self.unpackNode("Q", "remote"))
+        stage[2].add(self.bcNode("euler", self.remoteFaces, "remote"))
+        stage[2].add(self.redoNode("stateFromCons"))
+        if viscous:
+            stage[2].add(self.redoNode("trans"))
+        self.graphs["consistify"] = stage
+
+        if not viscous:
+            rhs = Graph("rhs")
+            rhs.add(self.launchNode("primaryAdvFlux", "interior"))
+            rhs.add(self.launchNode("applyFlux", "interior"))
+            self.graphs["rhs"] = [rhs]
+            return
+        grads = self.exchanges["grads"]
+        stage = [
+            Graph("rhs: gradients", before=[grads.expect], after=[grads.copyOut]),
+            Graph("rhs: fluxes", after=[grads.send, grads.receive]),
+            Graph("rhs: remote faces", after=[grads.sent]),
+        ]
+        stage[0].add(self.bcNode("preDqDxyz", self.blockFaces))
+        stage[0].add(self.launchNode("dqdxyz", "interior"))
+        stage[0].add(self.packNode("grads"))
+        stage[0].add(self.unpackNode("grads", "local"))
+        stage[1].add(self.launchNode("primaryAdvFlux", "interior"))
+        stage[1].add(self.bcNode("postDqDxyz", self.hereFaces, "here"))
+        stage[1].add(self.launchNode("diffFlux", "interior"))
+        stage[2].add(self.unpackNode("grads", "remote"))
+        stage[2].add(self.bcNode("postDqDxyz", self.remoteFaces, "remote"))
+        stage[2].add(self.redoNode("primaryAdvFlux", "diffFlux"))
+        stage[2].add(self.launchNode("applyFlux", "interior"))
+        self.graphs["rhs"] = stage
 
     def _everyKernel(self):
-        """Every kernel under the tags, a group's members each."""
-        return [
-            k
-            for v in self.kernels.values()
-            for k in (v.kernels if isinstance(v, BaseKernelGroup) else (v,))
-        ]
+        """Lists every kernel under the tags, a group's members each."""
+        return [k for v in self.kernels.values() for stage in v.stages for k in stage]
 
-    def __getattr__(self, name):
-        # a kernel is reached by its tag
-        kernels = self.__dict__.get("kernels", {})
-        if name in kernels:
-            return kernels[name]
-        # a property that raised an AttributeError of its own lands here too;
-        # run it again so that error is the one seen
-        attr = getattr(type(self), name, None)
-        if isinstance(attr, property):
-            return attr.fget(self)
-        raise AttributeError(name)
+    ###########################################################################
+    # Launches: a kernel over a table and a tiling
+    ###########################################################################
+    def tiling(self, kernel, over):
+        """Gives the tiling of the block table a kernel's kind of item takes
+        over the named canonical range -- full, all, interior -- made once
+        and kept."""
+        components = self._componentsOf(kernel)
+        axis = getattr(kernel, "direction", None)
+        key = (kernel.items, axis, components, over)
+        if key not in self.blockTable.tilings:
+            ranges = [
+                (n, start, extent, components)
+                for n, blk in enumerate(self.blocks)
+                for start, extent in getattr(kernel.rangeOf(blk), over)()
+            ]
+            self.blockTable.tile(key, ranges, kernel.tileKind)
+        return self.blockTable.tilings[key]
+
+    def _componentsOf(self, kernel):
+        """Resolves the components an item of this kernel is of: a count,
+        or ne less a count."""
+        components = kernel.components
+        if isinstance(components, str):
+            _, _, less = components.partition("-")
+            return self.ne - (int(less) if less else 0)
+        return components
+
+    def launch(self, tag, over, **given):
+        """Runs the kernel under :tag: now over the named range of the block
+        table; :given: supplies its scalars and any array by name."""
+        kernel = self.kernels[tag]
+        return kernel(self.blockTable, self.tiling(kernel, over), **given)
+
+    def launchNode(self, tag, over, **fixed):
+        """Makes a node launching the kernels under :tag:, each over the
+        named range of the block table."""
+        stages = [
+            [(k, self.blockTable, self.tiling(k, over)) for k in stage]
+            for stage in self.kernels[tag].stages
+        ]
+        return CollectiveLaunchNode(tag, stages, **fixed)
+
+    def faceTiling(self, key, faces, boxesOf, items="cells"):
+        """Gives the tiling of the block-face table under :key:, made once
+        from :boxesOf:(face) over these faces and kept."""
+        if key not in self.blockFaceTable.tilings:
+            index = {id(f): n for n, f in enumerate(self.blockFaces)}
+            ranges = [
+                (index[id(f)], start, extent, 1)
+                for f in faces
+                for start, extent in boxesOf(f)
+            ]
+            self.blockFaceTable.tile(key, ranges, items)
+        return self.blockFaceTable.tilings[key]
+
+    def bcNode(self, bcHook, faces, where=""):
+        """Makes the node of the boundary conditions at one bcHook over
+        these block faces: every bcType with a kernel there over the halo
+        cells behind the faces carrying it, as one stage since their faces
+        are disjoint. A hook that follows an unpack is done in two: the
+        faces whose halos are here, then the ones a message brings (a
+        periodic across ranks), once it has landed."""
+        stage = []
+        for tag, kernel in self.kernels.items():
+            if not tag.endswith(f"@{bcHook}"):
+                continue
+            bcType = tag.removesuffix(f"@{bcHook}")
+            mine = [f for f in faces if f.bcType == bcType]
+            tiling = self.faceTiling(("halo", bcType, where), mine, kernel.behind)
+            stage.append((kernel, self.blockFaceTable, tiling))
+        return CollectiveLaunchNode(f"bcs {bcHook} {where}".strip(), [stage])
+
+    def redoNode(self, *tags):
+        """Makes the node launching the kernels under :tags: again over what
+        a message brought: a cell kernel over the halo cells behind the
+        remote block faces, a flux scheme over the plane of cell faces on
+        them, in the order given."""
+        remote = self.remoteFaces
+        stages = []
+        for tag in tags:
+            for stage in self.kernels[tag].stages:
+                stages.append(
+                    [
+                        (k, self.blockFaceTable, self._remoteTiling(k, remote))
+                        for k in stage
+                    ]
+                )
+        return CollectiveLaunchNode(f"{' '.join(tags)} remote", stages)
+
+    def _remoteTiling(self, kernel, remote):
+        """Gives the tiling of what this kernel does again over the remote
+        block faces that concern it."""
+        key = ("remote", kernel.items, getattr(kernel, "direction", None))
+        faces = [f for f in remote if kernel.concerns(f)]
+        return self.faceTiling(key, faces, kernel.behind)
+
+    def packNode(self, name):
+        """Makes the node packing one array's halos for its neighbors, over
+        every trading block face."""
+        exchange = self.exchanges[name]
+        stage = [(self.kernels["pack"], self.blockFaceTable, exchange.tilings["pack"])]
+        return CollectiveLaunchNode(f"pack {name}", [stage], **exchange.packArgs)
+
+    def unpackNode(self, name, which):
+        """Makes the node unpacking one array's halos behind the block faces
+        met on this rank (local) or on another (remote)."""
+        exchange = self.exchanges[name]
+        stage = [(self.kernels["unpack"], self.blockFaceTable, exchange.tilings[which])]
+        return CollectiveLaunchNode(
+            f"unpack {name} {which}", [stage], **exchange.unpackArgs
+        )
+
+    def exchange(self, name):
+        """Fills every block's halos of one array now, the graph's steps in
+        a row: what the grid's nodes need at setup."""
+        ex = self.exchanges[name]
+        ex.expect()
+        self.packNode(name).run()
+        self.unpackNode(name, "local").run()
+        ex.copyOut()
+        ex.send()
+        ex.receive()
+        self.unpackNode(name, "remote").run()
+        ex.sent()
+
+    def _sortFaces(self):
+        """Sorts the block faces once: the ones that trade, the pairs met on
+        this rank, and the ones met on another."""
+        rank = getCommRankSize()[1]
+        trading, local, remote = [], [], []
+        for face in self.blockFaces:
+            if face.neighbor is None:
+                continue
+            trading.append(face)
+            if face.commRank == rank:
+                theirs = self.getBlock(face.neighbor).getFace(face.neighborNface)
+                local.append((face, theirs))
+            else:
+                remote.append(face)
+        return trading, local, remote
 
     ###########################################################################
     # Named block arrays, on every block at once
     ###########################################################################
     def copyArray(self, dst, src):
-        """One block array's interior into another's."""
-        self.copy(A=dst, B=src)
+        """Copies one block array into another, every element."""
+        self.launch("copy", "full", A=dst, B=src)
 
     def swapArrays(self, a, b):
-        """The two named block arrays trade places on every block, so nothing
-        is copied to shift a state back one step; the table reads both
+        """Trades two named block arrays' places on every block, so nothing
+        is copied to shift a state back one step; the tables read both
         again."""
         for blk in self.blocks:
             x, y = getattr(blk, a), getattr(blk, b)
             setattr(blk, a, y), setattr(blk, b, x)
-        self.table.forget(a)
-        self.table.forget(b)
-        self.dropGraphs()
+        self.forget(a)
+        self.forget(b)
 
-    def dropGraphs(self):
-        """The flows' captured device graphs, if any, replay what they were
-        recorded with: after an array or a face changes they are dropped
-        and recorded again on the next run."""
-        for graph in self.graphs.values():
-            graph.drop()
+    def forget(self, name):
+        """Drops what the tables hold of one block array: it is another
+        array now, and no graph launches over these."""
+        self.blockTable.forget(name)
+        self.blockFaceTable.forget(name)
 
     ###########################################################################
     # The boundary conditions, on the faces
@@ -305,58 +488,13 @@ class solver(restart):
             face.bcType = entry["bcType"]
             if face.bc.values:
                 face.bc.setValues(entry)
-        self.dropGraphs()
-
-    def blockFaceTables(self, bcHook, faces=None):
-        """The block faces with a bcType at :bcHook:, grouped by bcType into
-        a table each: every face's, kept until a face changes, or :faces:'."""
-        if faces is not None:
-            return self._tablesOf(bcHook, faces)
-        if self.facesChanged:
-            self._blockFaceTables = {}
-            self.facesChanged = False
-        if bcHook not in self._blockFaceTables:
-            self._blockFaceTables[bcHook] = self._tablesOf(
-                bcHook, [f for _, f in self.faces()]
-            )
-        return self._blockFaceTables[bcHook]
-
-    def remoteFaceTables(self):
-        """The faces whose halos arrive by message, as a table of them all
-        for a cell kernel and one per axis for a flux kernel: what a flow
-        redoes once the halos have landed. Kept until a face changes."""
-        if self.facesChanged:
-            self._blockFaceTables = {}
-            self.facesChanged = False
-        if "remote" not in self._blockFaceTables:
-            remote = list(self.haloExchange.remote)
-            self._blockFaceTables["remote"] = (
-                self.backend.table(remote),
-                [
-                    self.backend.table(
-                        [f for f in remote if (f.nface - 1) // 2 == axis]
-                    )
-                    for axis in range(3)
-                ],
-            )
-        return self._blockFaceTables["remote"]
-
-    def _tablesOf(self, bcHook, faces):
-        groups = {}
-        for f in faces:
-            if bcHook in f.bc.bcHooks():
-                groups.setdefault(f.bc.bcType, []).append(f)
-        return {t: self.backend.table(fs) for t, fs in groups.items()}
 
     def applyBcs(self, bcHook, faces=None):
-        """One bcHook on the given faces, or on every face that has it, the
-        way the step does. A bcHook the case's flow does not have runs
+        """Runs one bcHook now on the given block faces, or on every one,
+        the way the step does; a bcHook no graph of the case has runs
         nothing."""
-        graph = self.graphs["consistify" if bcHook == "euler" else "rhs"]
-        node = graph.bcs(bcHook)
-        if node is None:
-            return
-        node.run(self.blockFaceTables(bcHook, faces))
+        faces = self.blockFaces if faces is None else faces
+        self.bcNode(bcHook, faces, tuple(id(f) for f in faces)).run()
 
     def _setUniformState(self):
         """Every cell of q at the config's initial conditions."""
@@ -382,28 +520,30 @@ class solver(restart):
             blk.prims.set(prims)
 
     ###########################################################################
-    # Stepping: the three verbs a stepper and the tests use, each one flow
+    # Stepping: the three verbs a stepper and the tests use
     ###########################################################################
     def rhs(self):
-        self.graphs["rhs"].run()
+        for graph in self.graphs["rhs"]:
+            graph.run()
 
     def consistify(self):
-        self.graphs["consistify"].run()
+        for graph in self.graphs["consistify"]:
+            graph.run()
 
     def consistifyFromPrims(self):
-        """The state from every block's primitive vector, then everything
-        derived from it. The vector is held only for this: a case starts
-        from it, a test sets it through setPrimitives, and it is released
-        once the state is made."""
-        self.graphs["consistifyFromPrims"].run()
+        """Makes the state from every block's primitive vector, then
+        everything derived from it. The vector is held only for this: a
+        case starts from it, a test sets it through setPrimitives, and it
+        is released once the state is made."""
+        self.launch("stateFromPrims", "all")
+        self.consistify()
         for blk in self.blocks:
             blk.prims = None
-        self.table.forget("prims")
-        self.dropGraphs()
+        self.forget("prims")
 
     def setPrimitives(self, primitives):
-        """The state from :primitives:, a host array per block of p, u, v, w,
-        T, Y(0 .. ns - 2) over every cell, halos included."""
+        """Sets the state from :primitives:, a host array per block of p, u,
+        v, w, T, Y(0 .. ns - 2) over every cell, halos included."""
         for blk, values in zip(self.blocks, primitives):
             blk.replace("prims", values)
         self.consistifyFromPrims()
@@ -416,12 +556,10 @@ class solver(restart):
             blk.generateHalo()
 
     def unifyGrid(self):
+        """Fills every block's node halo from its neighbors, and moves a
+        periodic halo to where its transform puts it."""
         self.generateHalo()
-
-        # Lets just be clean and create the edges and corners
-        for _ in range(3):
-            self.haloExchange.exchange("nodes")
-
+        self.exchange("nodes")
         for blk in self.blocks:
             periodic = [f for f in blk.faces if f.periodicRotation is not None]
             if not periodic:
@@ -438,7 +576,6 @@ class solver(restart):
     def setBlockCommunication(self):
         for blk in self.blocks:
             blk.setBlockCommunication()
-        self.haloExchange.connect(self.faces())
 
     @property
     def myCells(self):
@@ -477,6 +614,9 @@ class solver(restart):
         string += f"  Equation of State: {self.config['mcPhysics']['eos']}\n"
         if not self.config["RHS"]["diffusion"]:
             string += "  Diffusion terms not solved for\n"
-        for graph in self.graphs.values():
-            string += "\n".join("  " + line for line in repr(graph).split("\n")) + "\n"
+        for stage in self.graphs.values():
+            for graph in stage:
+                string += (
+                    "\n".join("  " + line for line in repr(graph).split("\n")) + "\n"
+                )
         return string

@@ -26,16 +26,16 @@ using teams = Kokkos::TeamPolicy<execSpace>;
 using elementTeams = Kokkos::TeamPolicy<execSpace>;
 using team = teams::member_type;
 
-// a team's tile: its entry and its item range
+// a team's tile: its range, the entry the range is of, and its item range
 struct tile {
-  int e, begin, end;
+  int r, e, begin, end;
 };
 KOKKOS_INLINE_FUNCTION tile tileOf(const pgTiling &t, const team &m) {
   const int rank = m.league_rank();
-  const int e = t.entry[rank];
-  const int begin = (rank - t.first[e]) * t.tile;
-  const int n = t.items[e];
-  return {e, begin, begin + t.tile < n ? begin + t.tile : n};
+  const int r = t.range[rank];
+  const int begin = (rank - t.first[r]) * t.tile;
+  const int n = t.items[r];
+  return {r, t.ranges[r].entry, begin, begin + t.tile < n ? begin + t.tile : n};
 }
 // a cell team is its tile, one thread per item, as far as the space allows:
 // the whole tile on a device, one thread on the host
@@ -99,7 +99,7 @@ KOKKOS_INLINE_FUNCTION void unravelPlanes(int item, const int *extent,
   }
 }
 
-// an item of one entry's cells turned back into indices. On the left
+// an item of a range's cells turned back into indices. On the left
 // layout a face kernel walks its own direction right after the fastest
 // index, so the plane a face reads on its far side is the one the tile
 // before walked and still in cache: measured on an MI100, the k viscous
@@ -109,7 +109,7 @@ constexpr int walkNext = 2;
 #else
 constexpr int walkNext = 1;
 #endif
-KOKKOS_INLINE_FUNCTION void cellAt(const pgCells &c, const int item, int &i,
+KOKKOS_INLINE_FUNCTION void cellAt(const pgRange &c, const int item, int &i,
                                    int &j, int &k) {
   int a[3];
   if constexpr (std::is_same_v<layout, Kokkos::LayoutLeft>)
@@ -118,7 +118,7 @@ KOKKOS_INLINE_FUNCTION void cellAt(const pgCells &c, const int item, int &i,
     unravel<3>(item, c.extent, a);
   i = c.start[0] + a[0], j = c.start[1] + a[1], k = c.start[2] + a[2];
 }
-KOKKOS_INLINE_FUNCTION void cellAt(const pgCells &c, const int item, int &i,
+KOKKOS_INLINE_FUNCTION void cellAt(const pgRange &c, const int item, int &i,
                                    int &j, int &k, int &l) {
   int a[4];
   unravel<4>(item, c.extent, a);
@@ -141,7 +141,7 @@ template <class K, class... A> constexpr int arityFrom() {
 template <class K> constexpr int arity = arityFrom<K>();
 
 // what pins, and what does not; a member pins to the position its kind
-// takes (a block column to a cell, a face column to a plane)
+// takes (a block column to a cell, a block face column to a halo cell)
 template <class M, class P> KOKKOS_INLINE_FUNCTION void pin(M &, const P &) {}
 template <class M, class P>
   requires requires(M &m, const P &p) { m.pin(p); }
@@ -249,7 +249,7 @@ void forCells(const char *name, const pgTiling &t, const F &f) {
     Kokkos::parallel_for(Kokkos::TeamThreadRange(team, r.begin, r.end),
                          [&](const int item) {
                            cell c{r.e};
-                           cellAt(t.cells[r.e], item, c.i, c.j, c.k);
+                           cellAt(t.ranges[r.r], item, c.i, c.j, c.k);
                            pinned(p, within{c})();
                          });
   };
@@ -281,7 +281,7 @@ void forCellsAndComponents(const char *name, const pgTiling &t, const F &f) {
                          [&](const int item) {
                            cell c{r.e};
                            int l;
-                           cellAt(t.cells[r.e], item, c.i, c.j, c.k, l);
+                           cellAt(t.ranges[r.r], item, c.i, c.j, c.k, l);
                            pinned(p, within{c})(l);
                          });
   };
@@ -304,7 +304,7 @@ void reduceCells(const char *name, const pgTiling &t, const F &f,
         Kokkos::TeamThreadRange(team, r.begin, r.end),
         [&](const int item, value &v) {
           cell c{r.e};
-          cellAt(t.cells[r.e], item, c.i, c.j, c.k);
+          cellAt(t.ranges[r.r], item, c.i, c.j, c.k);
           pinned(p, within{c})(v);
         },
         R(mine));
@@ -331,7 +331,7 @@ void reduceCellsAndComponents(const char *name, const pgTiling &t, const F &f,
             [&](const int item, value &v) {
               cell c{r.e};
               int l;
-              cellAt(t.cells[r.e], item, c.i, c.j, c.k, l);
+              cellAt(t.ranges[r.r], item, c.i, c.j, c.k, l);
               pinned(p, within{c})(l, v);
             },
             R(mine));
@@ -341,19 +341,37 @@ void reduceCellsAndComponents(const char *name, const pgTiling &t, const F &f,
       reducer);
 }
 
-// one condition's body on every halo cell of every face in the table
+// a cell of a halo range behind a block face, as the block face columns
+// stand on it: the layer counted outward from the face, and the position
+// on the block face proper
+KOKKOS_INLINE_FUNCTION haloCell haloCellOf(const pgRange &c, const cell &at,
+                                           const int nface) {
+  const int index[3] = {at.i, at.j, at.k};
+  const int axis = blockFaceAxis(nface);
+  const int along = index[axis] - c.start[axis];
+  haloCell p{at.entry, blockFaceLow(nface) ? c.extent[axis] - 1 - along : along,
+             0, 0, nface};
+  int d = 0;
+  for (int k = 0; k < 3; k++)
+    if (k != axis)
+      (d++ == 0 ? p.i : p.j) = index[k] - ng;
+  return p;
+}
+
+// a body on every halo cell behind every block face in the table, its
+// columns standing on the halo cell: a boundary condition
 template <class F>
-void forBlockFacePlanes(const char *name, const pgTiling &t, const F &f,
-                        const int *nface) {
+void forHaloCells(const char *name, const pgTiling &t, const F &f,
+                  const int *nface) {
   auto body = KOKKOS_LAMBDA(const team &team) {
     const auto r = tileOf(t, team);
     const auto p = pinned(f, entry{r.e});
-    Kokkos::parallel_for(Kokkos::TeamThreadRange(team, r.begin, r.end),
-                         [&](const int item) {
-                           plane at{r.e, 0, 0, 0, nface[r.e]};
-                           cellAt(t.cells[r.e], item, at.g, at.i, at.j);
-                           pinned(p, at)();
-                         });
+    Kokkos::parallel_for(
+        Kokkos::TeamThreadRange(team, r.begin, r.end), [&](const int item) {
+          cell c{r.e};
+          cellAt(t.ranges[r.r], item, c.i, c.j, c.k);
+          pinned(p, haloCellOf(t.ranges[r.r], c, nface[r.e]))();
+        });
   };
   launch(name, policyOf(t, body), body);
 }
@@ -361,7 +379,7 @@ void forBlockFacePlanes(const char *name, const pgTiling &t, const F &f,
 // a halo exchange's body on every plane cell of every layer of every block
 // face in the table, walked in the block's memory order
 template <class F>
-void forHaloExchange(const char *name, const pgTiling &t, const F &f,
+void forBufferPlanes(const char *name, const pgTiling &t, const F &f,
                      const int *nface) {
   auto body = KOKKOS_LAMBDA(const team &team) {
     const auto r = tileOf(t, team);
@@ -369,8 +387,9 @@ void forHaloExchange(const char *name, const pgTiling &t, const F &f,
     Kokkos::parallel_for(
         Kokkos::TeamThreadRange(team, r.begin, r.end), [&](const int item) {
           int at[3];
-          unravelPlanes(item, t.cells[r.e].extent, faceAxis(nface[r.e]), at);
-          pinned(p, plane{r.e, at[0], at[1], at[2], nface[r.e]})();
+          unravelPlanes(item, t.ranges[r.r].extent, blockFaceAxis(nface[r.e]),
+                        at);
+          pinned(p, haloCell{r.e, at[0], at[1], at[2], nface[r.e]})();
         });
   };
   launch(name, elementPolicyOf(t), body);

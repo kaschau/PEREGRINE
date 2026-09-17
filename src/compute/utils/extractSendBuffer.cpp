@@ -7,13 +7,13 @@ PG_ABI void pgExtractSendBuffer(const haloSend &k, const pgTiling &t,
   if (!t.tiles)
     return;
   if (k.ndim == 4)
-    forHaloExchange(
+    forBufferPlanes(
         "extract send buffers", t,
-        packing<4>{k.view, k.buffer, k.skip, k.transpose, k.flip0, k.flip1},
+        packing<4>{k.view, k.buffer, k.transpose, k.flip0, k.flip1, k.skip},
         nface);
   else
-    forHaloExchange(
+    forBufferPlanes(
         "extract send buffers", t,
-        packing<5>{k.view, k.buffer, k.skip, k.transpose, k.flip0, k.flip1},
+        packing<5>{k.view, k.buffer, k.transpose, k.flip0, k.flip1, k.skip},
         nface);
 }

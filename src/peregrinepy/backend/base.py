@@ -9,9 +9,9 @@ which is the register budget the compiler works to."""
 import numpy as np
 
 from .abi import lib
-from .array import Array
+from .array import BaseArray
 from .jit import Jit
-from .table import Table
+from .table import ArrayTable
 
 
 class BaseBackend:
@@ -52,15 +52,16 @@ class BaseBackend:
 
     def table(self, entries):
         """A table of entries kept here, tiled by this backend's tiles."""
-        return Table(entries, self)
+        return ArrayTable(entries, self)
 
-    def jit(self, ns, ng, tables, eos, diffusion=None, mixingRule="wilke"):
-        """The compiler for this backend's kernels, with its launch bound."""
-        return Jit(ns, ng, tables, eos, diffusion, mixingRule, launch=self.launchBound)
+    def jit(self, ng, mixture, mcPhysics):
+        """Makes the compiler for this backend's kernels, with its launch
+        bound."""
+        return Jit(ng, mixture, mcPhysics, launch=self.launchBound)
 
-    def allocate(self, shape, dtype=np.float64, **info):
-        """A zeroed array on this backend."""
-        return Array(shape, self, dtype, **info)
+    def allocate(self, shape, dtype=np.float64, name=None):
+        """Makes a zeroed array on this backend."""
+        return BaseArray(shape, self, dtype, name=name)
 
     def memory(self, array):
         """Zeroed memory for :array:, as an address."""

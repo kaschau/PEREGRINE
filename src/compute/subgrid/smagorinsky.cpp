@@ -10,7 +10,7 @@
 // FLUIDSInt.J.Numer.Meth.Fluids2000;32: 369 – 406 E. Lenormand,  P. Sagautb,
 // and  L. Ta Phuoc
 
-PG_RANGE(cellCenters, halo = 1)
+PG_RANGE(cellCenters)
 struct smagorinsky {
   cellCenterIn Jinv, Q, grads, qh;
   cellCenterInOut qt;

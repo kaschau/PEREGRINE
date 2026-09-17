@@ -7,7 +7,7 @@
 // Kinetic theory transport: each species' viscosity and conductivity from
 // its fit in ln T, mixed by Wilke's rule and the series-parallel mean; the
 // species diffusion coefficients from the case's diffusion model.
-PG_RANGE(cellCenters, halo = ng)
+PG_RANGE(cellCenters)
 struct kineticTheory {
   cellCenterIn Q, q, qh;
   cellCenterOut qt;

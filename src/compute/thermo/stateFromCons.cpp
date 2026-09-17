@@ -4,7 +4,7 @@
 // The state of every cell from its conserved variables: the mass fractions
 // clipped and renormalized in Q, then the case's eos for p, T and qh; T's
 // last value is the iterative eos's guess.
-PG_RANGE(cellCenters, halo = ng)
+PG_RANGE(cellCenters)
 struct stateFromCons {
   cellCenterInOut Q, q;
   cellCenterOut qh;

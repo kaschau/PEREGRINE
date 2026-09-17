@@ -36,15 +36,17 @@ class Jit:
         os.environ.get("PEREGRINE_CACHE", Path.home() / ".cache" / "peregrinepy")
     )
 
-    def __init__(
-        self, ns, ng, tables, eos, diffusion=None, mixingRule="wilke", launch=None
-    ):
+    def __init__(self, ng, mixture, mcPhysics, launch=None):
+        """Makes the compiler for one case: its halo depth, its mixture --
+        the species count and species data -- and its mcPhysics section, which
+        names the equation of state, the species diffusion model and the
+        mixing rule; on a device the backend's launch bound too."""
         # a kernel is compiled for one species count and halo depth, and on
         # a device for one launch bound, (threads, waves) from the backend's
         # config section; none is the host's unbounded launch
         self.defines = (
-            f"NS={ns}",
-            f"NE={5 + ns - 1}",
+            f"NS={mixture.ns}",
+            f"NE={5 + mixture.ns - 1}",
             f"NG={ng}",
         )
         if launch is not None:
@@ -55,25 +57,25 @@ class Jit:
         # with; the case's equation of state, forced in ahead of any source
         # that reaches thermo/eos.hpp; and its species diffusion model, ahead
         # of any that reaches transport/diffusion.hpp
-        self.tables = self._writeTables(tables)
-        self.eos = eos
-        self.diffusion = diffusion
-        self.mixingRule = mixingRule
+        self.speciesData = self._writeSpeciesData(mixture.speciesData())
+        self.eos = mcPhysics["eos"]
+        self.diffusion = mcPhysics["diffusion"]
+        self.mixingRule = mcPhysics["mixingRule"]
 
     ###########################################################################
-    # The species tables
+    # The species data
     ###########################################################################
-    def _writeTables(self, tables):
-        """The species data as one header of initializer lists, hexfloat so
-        every double is exact, written to the store once per distinct data;
-        species.hpp declares the accessors over them. A (rows, terms) table
-        is written flat with its term count. Returns its path."""
+    def _writeSpeciesData(self, speciesData):
+        """Writes the species data as one header of initializer lists,
+        hexfloat so every double is exact, to the store once per distinct
+        data; species.hpp declares the accessors over them. A (rows, terms)
+        array is written flat with its term count. Returns its path."""
         lines = [
             "// the species data of one case, written by the jit",
-            "#define PG_SPECIES_TABLES",
+            "#define PG_SPECIES_DATA",
         ]
         key = hashlib.sha256()
-        for name, value in tables.items():
+        for name, value in speciesData.items():
             macro = "PG_" + re.sub(r"(?<=[a-z0-9])(?=[A-Z])", "_", name).upper()
             key.update(value.tobytes())
             if value.ndim == 2:
@@ -99,7 +101,7 @@ class Jit:
     def _case(self, source, includes):
         """What the case adds to a source's build: its defines and forced
         includes. A source that reaches species.hpp is built with the
-        tables; one that reaches thermo/eos.hpp with the case's eos header
+        species data; one that reaches thermo/eos.hpp with the case's eos header
         and PG_EOS naming it; one that reaches transport/diffusion.hpp or
         transport/mixingRule.hpp with the case's model's header and
         PG_DIFFUSION or PG_MIXING_RULE naming it."""
@@ -123,7 +125,7 @@ class Jit:
             defines += (f"PG_EOS={self.eos}",)
             forced = (self.compute / "thermo" / f"{self.eos}.hpp", *forced)
         if "species.hpp" in names:
-            forced = (self.tables, *forced)
+            forced = (self.speciesData, *forced)
         return defines, forced
 
     def _reached(self, source, includes, forced):
@@ -184,7 +186,7 @@ class Jit:
         caseDefines, forced = self._case(source, includes)
         defines = self.defines + caseDefines + tuple(defines)
         key = hashlib.sha256()
-        for f in (*self._reached(source, includes, forced), self.tables):
+        for f in (*self._reached(source, includes, forced), self.speciesData):
             key.update(f.read_bytes())
         key.update(repr(vars(self.toolchain)).encode())
         key.update(" ".join(sorted(defines)).encode())

@@ -22,13 +22,12 @@ void faceNormal(const double &sx, const double &sy, const double &sz, double &S,
 // a kernel with a wider stencil says so; the jit sizes the halo to the widest
 #define PG_STENCIL(n)                                                          \
   static_assert(NG >= (n), "this kernel needs " #n " halo layers")
-// a kernel declares what it runs over, one range per tiling it takes, as a
-// kind and its parameters; Python builds the range and tiles it over every
-// entry: PG_RANGE(cellCenters[, halo = 1 | ng][, components = 3 | ne]) the
-// interior and as much halo as it says, PG_RANGE(cellFaces) the faces of the
-// kernel's direction, PG_RANGE(blockFacePlanes, layers = ng) a block face's
-// planes, PG_RANGE(bufferPlanes) a trade's buffer, PG_RANGE(elements,
-// components = ne) every element of an ne-wide array's allocation, flat
+// a kernel declares the kind of item it runs over, one per tiling it
+// takes; which cells is the launch's to say. PG_RANGE(cellCenters[,
+// components = ne]) a cell of the block, or a cell and one of its
+// components; PG_RANGE(cellFaces) a cell face of the kernel's direction;
+// PG_RANGE(bufferPlanes) a plane cell of a trade's buffer; PG_RANGE(elements,
+// components = ne) an element of an ne-wide array's allocation, flat
 #define PG_RANGE(...)
 
 #endif

@@ -115,7 +115,7 @@ class SolverMetricsMixin(MetricsMixin):
         # Cell lengths, opposite face center to opposite face center
         # ----------------------------------------------------------------------------
 
-        dIJK = np.zeros(self.shapeOf("dIJK"))
+        dIJK = np.zeros(self.dIJK.shape)
         for a, axis in enumerate("ijk"):
             far, near = [slice(None)] * 3, [slice(None)] * 3
             far[a], near[a] = np.s_[1:], np.s_[:-1]

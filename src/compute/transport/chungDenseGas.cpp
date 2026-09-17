@@ -20,7 +20,7 @@
 //     O'Connell
 //     5th Edition, 2001
 
-PG_RANGE(cellCenters, halo = ng)
+PG_RANGE(cellCenters)
 struct chungDenseGas {
   cellCenterIn Q, q, qh;
   cellCenterOut qt;

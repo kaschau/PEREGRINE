@@ -132,7 +132,7 @@ def buildAndCommunicate(S, adv, gas, seed):
     reorientBlock1(mb, S, VARLIST)
 
     mb.setBlockCommunication()
-    mb.haloExchange.exchange(VARLIST)
+    mb.haloExchange.exchange(*VARLIST)
 
     return mb
 

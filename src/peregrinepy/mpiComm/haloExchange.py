@@ -1,236 +1,234 @@
 """
-Trading halos between blocks.
+Trading one array's halos between blocks.
 
-A block's halo is filled from whichever block lies across each of its faces,
-and that block may be on another rank or on this one. Which faces trade, who
-they trade with, and the planes of the block they trade through are all fixed
-once the blocks know their neighbors, so they are worked out once here and an
-exchange only moves data.
+A block's halo is filled from whichever block lies across each of its block
+faces, and that block may be on this rank or on another. Which block faces
+trade, with whom, and how each neighbor's plane lies against ours is
+settled once the blocks are wired; the exchange for one array is made from
+that and the array's kind, and from then on only moves data. Every trading
+face packs its planes into a send buffer laid out for its neighbor. A face
+whose neighbor is on this rank holds the neighbor's send buffer as its own
+receive buffer, so its halo is unpacked straight out of what the neighbor
+packed, on the device. A face whose neighbor is on another rank has its
+buffers carved out of that rank's pools, and its halo costs a message.
 
-The halo exchange moves halos and nothing else: it is given its pack and
-unpack kernels, builds its trade tables from Trade entries, and is told to
-forget when a block or a face re-makes its arrays.
+The pack and the two unpacks are kernels the graph launches like any
+other, over the block-face table and the tilings made here. The exchange
+itself is the host steps between them, one method each, in the order a
+graph lays them out around its launches: expect the messages, copy them
+out beside the kernels once the pack is queued, send once the copy has
+landed, receive, unpack, and wait on our own sends. How a message travels
+-- through pinned host mirrors, or straight from the device pools when the
+MPI is GPU-aware -- is the config's choice of exchange class.
 """
 
 import numpy as np
-from mpi4py.MPI import DOUBLE as MPIDOUBLE
+from mpi4py import MPI
 from mpi4py.MPI import Request
 
 from ..backend.abi import lib
-from ..backend.array import Array
+from ..backend.array import PooledArray
+from ..misc import subclassWhere
 from .mpiUtils import getCommRankSize
 
 
-class Trade:
-    """One face's trade of one variable through one buffer: what a pack or
-    an unpack takes for it. A block array's planes go out through the face's
-    send buffer, laid out for the neighbor, and come in from whichever
-    buffer the neighbor's arrived in."""
+class BaseHaloExchange:
+    """One array's halo exchange: its buffers on every trading block face,
+    its pools per other rank, its tilings over the block-face table, and
+    the host steps of moving its messages."""
 
-    def __init__(self, blk, face, var, buffer):
-        self.blk, self.face = blk, face
-        self.view = getattr(blk, var)
-        self.buffer = buffer
-        self.nLayer, self.skip = face.tradeLayers(var)
+    # what the config calls this way of moving messages
+    kind = None
 
-    def column(self, name):
-        if name == "nface":
-            return self.face.nface
-        if name == "transpose":
-            return int(self.face._transposed)
-        if name in ("flip0", "flip1"):
-            return int(int(name[-1]) in self.face._flipped)
-        return getattr(self, name)
+    @classmethod
+    def fromConfig(cls, config):
+        """Picks the exchange class the config names."""
+        return subclassWhere(cls, kind=config["haloExchange"]["kind"])
 
-
-class HaloExchange:
-    """The halo exchange for one multiBlock.
-
-    A face whose neighbor sits on our own rank is handed what we packed for it
-    directly; only a face that leaves the rank costs a message. Most of a well
-    packed partition is the former.
-    """
-
-    def __init__(self, pack, unpack, backend):
-        # the pack and unpack, every trading face in one call; the trade
-        # tables are kept where the kernels run
-        self.pack, self.unpack = pack, unpack
-        self.backend = backend
+    def __init__(self, name, faces, trading, local, remote, depth):
+        """Makes the exchange of the array :name: over the block faces of a
+        table (:faces:, its entries): :trading: the faces that trade,
+        :local: pairs of a face and the face it meets on this rank,
+        :remote: the faces whose neighbor is on another rank; :depth: the
+        planes traded, ng for a state, one for a gradient."""
+        self.name, self.depth = name, depth
         self.comm, self.rank, self.size = getCommRankSize()
+        self.faces = faces
+        self.send, self.recv = f"sendBuffer_{name}", f"recvBuffer_{name}"
+        # the array's kind on any block says its components and how far
+        # past a block face its trade starts
+        blk = trading[0].blk if trading else faces.entries[0].blk
+        array = getattr(blk, name)
+        self.components = array.components
+        self.skip = array.range.exchangeStartPlane
+        self.ndim = len(array.shape)
+        self.backend = blk.backend
+        # a face with its neighbor here packs into a buffer of its own and
+        # unpacks out of the neighbor's; the slots are the face's, declared
+        for face, theirs in local:
+            setattr(face, self.send, self._buffer(face, self.send, theirs=True))
+        for face, theirs in local:
+            setattr(face, self.recv, getattr(theirs, self.send))
+        # a face with its neighbor elsewhere has its buffers in that rank's pools
+        self.ranks = sorted({f.commRank for f in remote})
+        self.sendPools = {r: self._pool(remote, r, self.send) for r in self.ranks}
+        self.recvPools = {r: self._pool(remote, r, self.recv) for r in self.ranks}
+        self.recvs, self.sends = {}, {}
+        # what the graph launches: the pack over every trading face, the
+        # unpack over the faces met here, and over the faces met elsewhere
+        index = {id(f): n for n, f in enumerate(faces.entries)}
+        self.tilings = {
+            "pack": self._tiling("pack", index, trading, self.send),
+            "local": self._tiling("local", index, [f for f, _ in local], self.recv),
+            "remote": self._tiling("remote", index, remote, self.recv),
+        }
+        self.packArgs = dict(
+            view=name, buffer=self.send, skip=self.skip, ndim=self.ndim
+        )
+        self.unpackArgs = dict(view=name, buffer=self.recv, ndim=self.ndim)
 
-        # every face that trades, with the block planes it trades through
-        self.trades = []
-        # a neighbor on our own rank, as (our face, the face it meets)
-        self.local = []
-        # a neighbor we have to send to
-        self.remote = []
-        # per variable: the pack and unpack tables over every trade, and the
-        # pools the remote faces' buffers sit in, all kept once made
-        self.tables = {}
-        self.pools = {}
+    def _shape(self, face, theirs):
+        """Gives a buffer's shape over a block face proper: the planes
+        traded, the plane in our frame or, for what our neighbor reads, in
+        the neighbor's."""
+        depth, a, b = getattr(face.blk, self.name).range.haloExtents(
+            face.nface, self.depth
+        )
+        plane = (b, a) if theirs and face._transposed else (a, b)
+        return (depth,) + plane + self.components
 
-    def connect(self, faces):
-        """Which of the (block, face) pairs trade and with whom, once the
-        blocks know their neighbors."""
-        faces = list(faces)
-        blocks = {blk.nblki: blk for blk, _ in faces}
-        self.trades, self.local, self.remote = [], [], []
-        self.tables, self.pools = {}, {}
-        for blk, face in faces:
-            if face.neighbor is None:
-                continue
-            self.trades.append((blk, face))
-            if face.commRank != self.rank:
-                self.remote.append(face)
-                continue
-            neighbor = blocks.get(face.neighbor)
-            assert neighbor is not None, (
-                f"block {blk.nblki} face {face.nface} names rank {self.rank}"
-                f" for neighbor {face.neighbor}, which is not on it"
-            )
-            self.local.append((face, neighbor.getFace(face.neighborNface)))
+    def _buffer(self, face, name, theirs):
+        return self.backend.allocate(self._shape(face, theirs), name=name)
 
-    def exchange(self, varis):
-        """Fill every block's halo from its neighbors."""
-        if not isinstance(varis, list):
-            varis = [varis]
-        for var in varis:
-            self.finish(var, self.send(var, self.start(var)))
+    def _pool(self, remote, rank, name):
+        """Makes one device pool for the faces trading with :rank: and
+        carves each face's buffer of this name out of it, in an order both
+        ranks know: by the sending face's block and side."""
+        theirs = name == self.send
+        key = (
+            (lambda f: (f.blk.nblki, f.nface))
+            if theirs
+            else (lambda f: (f.neighbor, f.neighborNface))
+        )
+        faces = sorted((f for f in remote if f.commRank == rank), key=key)
+        shapes = [self._shape(f, theirs) for f in faces]
+        offsets = np.cumsum([0] + [int(np.prod(s)) for s in shapes])
+        pool = self.backend.allocate((max(int(offsets[-1]), 1),), name=f"{name}Pool")
+        for face, shape, offset in zip(faces, shapes, offsets):
+            setattr(face, name, PooledArray(pool, offset, shape, name=name))
+        return pool
 
-    def start(self, var):
-        """Send one variable's halos on their way: the pack, the halos a
-        neighbor on this rank hands over unpacked at once, and every message
-        copied to the host beside the kernels. What follows in a flow can
-        run meanwhile: only the halos behind a remote face are stale until
-        finish, and send goes between."""
-        pack, unpackLocal, unpackRemote = self._tables(var)
-        (sendPool, sendHost, sendTo), (recvPool, recvHost, recvFrom) = self._pools(var)
-        # what arrives lands in the mirror before anything is sent: one
-        # message per partner, under one tag, in the order the variables go
-        recvs = [
-            self.comm.Irecv([recvHost[part], MPIDOUBLE], source=partner, tag=0)
-            for partner, part in recvFrom.items()
+    def _tiling(self, key, index, faces, buffer):
+        """Makes the tiling of these faces' buffer planes over the table."""
+        ranges = [
+            (index[id(f)], (0, 0, 0), getattr(f, buffer).shape[:3], 1) for f in faces
         ]
-        # the pack turns the plane onto the neighbor's frame as it goes, so
-        # nothing here has to leave the device but the messages, in one copy
-        # that the kernels do not wait for
-        if self.trades:
-            self.pack(pack, ndim=self._ndim(var))
-        if self.local:
-            self.unpack(unpackLocal, ndim=self._ndim(var))
-        if self.remote:
-            sendPool.pullAside(sendHost)
-        return recvs
+        return self.faces.tile((self.name, key), ranges, "cells")
 
-    def send(self, var, recvs):
-        """The messages out, once their copy has landed: each partner's is a
-        slice of the mirror. Placed after a launch, the wait is for the copy
-        alone while the kernels run on."""
-        (sendPool, sendHost, sendTo), _ = self._pools(var)
-        sends = []
-        if self.remote:
-            lib.pgCopyWait()
-            sends = [
-                self.comm.Isend([sendHost[part], MPIDOUBLE], dest=partner, tag=0)
-                for partner, part in sendTo.items()
-            ]
-        return recvs, sends
+    @property
+    def remote(self):
+        """Says whether any message travels: a step then goes through the
+        host and ends a captured graph."""
+        return bool(self.ranks)
 
-    def finish(self, var, pending):
-        """The halos in: what arrived to the device in one copy beside the
-        kernels, the unpack of the remote faces once it has landed, and our
-        own sends waited on. Every partner's message goes under one tag;
-        messages from one source in one tag arrive in order, and this
-        variable's has been received here before the next variable's is
-        sent, so waiting on our own sends is all the next exchange needs."""
-        recvs, sends = pending
-        pack, unpackLocal, unpackRemote = self._tables(var)
-        _, (recvPool, recvHost, _) = self._pools(var)
-        Request.Waitall(recvs)
-        if self.remote:
-            recvPool.pushAside(recvHost)
-            lib.pgCopyWait()
-            self.unpack(unpackRemote, ndim=self._ndim(var))
-        Request.Waitall(sends)
+    def expect(self):
+        """Posts the receives of every other rank's message."""
+        raise NotImplementedError
 
-    def forget(self):
-        """A block or a face re-made its arrays: every trade table and pool
-        is made again."""
-        self.tables, self.pools = {}, {}
+    def copyOut(self):
+        """Readies the packed send buffers to be sent, behind the kernels
+        queued so far."""
+        raise NotImplementedError
 
-    def _tables(self, var):
-        """The pack and unpack tables for one variable, a trade per face. A
-        neighbor on our own rank is unpacked straight out of what it packed;
-        a message lands in the face's own buffer first."""
-        if var not in self.tables:
-            self._pools(var)
-            partners = dict(self.local)
-            pack, unpackLocal, unpackRemote = [], [], []
-            for blk, face in self.trades:
-                pack.append(Trade(blk, face, var, getattr(face, "sendBuffer_" + var)))
-                if face in partners:
-                    arrival = getattr(partners[face], "sendBuffer_" + var)
-                    unpackLocal.append(Trade(blk, face, var, arrival))
-                else:
-                    arrival = getattr(face, "recvBuffer_" + var)
-                    unpackRemote.append(Trade(blk, face, var, arrival))
-            self.tables[var] = (
-                self.backend.table(pack),
-                self.backend.table(unpackLocal),
-                self.backend.table(unpackRemote),
+    def send(self):
+        """Posts our message to every other rank once its buffers are
+        ready."""
+        raise NotImplementedError
+
+    def receive(self):
+        """Waits for every message and puts it where the unpack reads
+        it."""
+        raise NotImplementedError
+
+    def sent(self):
+        """Waits for our messages to be taken, so the buffers may be packed
+        again."""
+        Request.Waitall(list(self.sends.values()))
+
+
+class HostStagedHaloExchange(BaseHaloExchange):
+    """Messages staged through pinned host mirrors of the pools: one copy
+    out beside the kernels, one message per rank each way, one copy in."""
+
+    kind = "hostStaged"
+
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.sendMirrors = {
+            r: self.backend.pinned(self.sendPools[r].shape) for r in self.ranks
+        }
+        self.recvMirrors = {
+            r: self.backend.pinned(self.recvPools[r].shape) for r in self.ranks
+        }
+
+    def expect(self):
+        """Posts the receives of every other rank's message, into its
+        mirror."""
+        for r in self.ranks:
+            self.recvs[r] = self.comm.Irecv([self.recvMirrors[r], MPI.DOUBLE], source=r)
+
+    def copyOut(self):
+        """Copies every rank's packed send pool to its host mirror, beside
+        the kernels, after what they have queued."""
+        for r in self.ranks:
+            self.sendPools[r].pullAside(self.sendMirrors[r])
+
+    def send(self):
+        """Posts our message to every other rank once the copy to its
+        mirror has landed."""
+        lib.pgCopyWait()
+        for r in self.ranks:
+            self.sends[r] = self.comm.Isend([self.sendMirrors[r], MPI.DOUBLE], dest=r)
+
+    def receive(self):
+        """Waits for every message and copies it from its mirror to the
+        device beside the kernels; the unpack may be launched once this
+        returns."""
+        Request.Waitall(list(self.recvs.values()))
+        for r in self.ranks:
+            self.recvPools[r].pushAside(self.recvMirrors[r])
+        lib.pgCopyWait()
+
+
+class DeviceHaloExchange(BaseHaloExchange):
+    """Messages straight from and into the device pools, for an MPI that is
+    GPU-aware: no mirrors, no copies; a send waits for the pack instead."""
+
+    kind = "device"
+
+    def _memory(self, pool):
+        return MPI.memory.fromaddress(pool.ptr, pool.nbytes)
+
+    def expect(self):
+        """Posts the receives of every other rank's message, into its
+        pool."""
+        for r in self.ranks:
+            self.recvs[r] = self.comm.Irecv(
+                [self._memory(self.recvPools[r]), MPI.DOUBLE], source=r
             )
-        return self.tables[var]
 
-    def _ndim(self, var):
-        """How many dimensions a variable's arrays have, which its trades are
-        all of; not an MPI rank."""
-        return len(getattr(self.trades[0][0], var).shape)
+    def copyOut(self):
+        """Waits for the pack to finish: a message may not be posted before
+        its buffers are written."""
+        lib.pgFence()
 
-    def _pools(self, var):
-        """The remote faces' send and receive buffers for one variable, each
-        a slice of one device pool, with a pinned host mirror of each pool,
-        and the faces ordered so that everything for one partner rank is one
-        slice of it: an exchange is one copy each way and one message per
-        partner. Both sides order a partner's faces by the sending face's
-        block and side, which each knows. Measured on two MI100s over the
-        burner: a copy per face into host memory allocated per call, and a
-        message per face, were the whole cost of the exchange."""
-        if var not in self.pools:
-            send, recv = "sendBuffer_" + var, "recvBuffer_" + var
-            sendOrder = sorted(
-                self.remote, key=lambda f: (f.commRank, f.blk.nblki, f.nface)
+    def send(self):
+        """Posts our message to every other rank from its pool."""
+        for r in self.ranks:
+            self.sends[r] = self.comm.Isend(
+                [self._memory(self.sendPools[r]), MPI.DOUBLE], dest=r
             )
-            recvOrder = sorted(
-                self.remote, key=lambda f: (f.commRank, f.neighbor, f.neighborNface)
-            )
-            pools = {}
-            for name, order in ((send, sendOrder), (recv, recvOrder)):
-                slices, offset, partners = {}, 0, {}
-                for face in order:
-                    n = int(np.prod(face.shapeOf(name)))
-                    slices[face] = slice(offset, offset + n)
-                    partners.setdefault(face.commRank, [offset, offset])[1] = offset + n
-                    offset += n
-                pool = self.backend.allocate((max(offset, 1),), name=f"{name}Pool")
-                mirror = self.backend.pinned((max(offset, 1),))
-                for face in order:
-                    kind, components = face.declared[name]
-                    setattr(
-                        face,
-                        name,
-                        Array.within(
-                            pool,
-                            slices[face].start,
-                            face.shapeOf(name),
-                            name=name,
-                            kind=kind,
-                            components=components,
-                        ),
-                    )
-                pools[name] = (
-                    pool,
-                    mirror,
-                    {r: slice(a, b) for r, (a, b) in partners.items()},
-                )
-            self.pools[var] = (pools[send], pools[recv])
-        return self.pools[var]
+
+    def receive(self):
+        """Waits for every message, which lands in its pool."""
+        Request.Waitall(list(self.recvs.values()))

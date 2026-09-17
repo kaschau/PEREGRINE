@@ -23,7 +23,7 @@ def _solver(diffusion):
 
 def test_bcHookOutsideTheFlowRunsNothing(my_setup):
     mb = _solver(diffusion=False)
-    assert mb.graphs["rhs"].bcs("preDqDxyz") is None
+    assert mb.graphs["rhs"].node("bcs preDqDxyz") is None
     assert not [tag for tag in mb.kernels if tag.endswith("@preDqDxyz")]
     mb.applyBcs("preDqDxyz")
 
@@ -35,28 +35,28 @@ def test_flowListsItsSlots(my_setup):
     assert [n.name for n in mb.graphs["rhs"].nodes] == [
         "bcs preDqDxyz",
         "dqdxyz",
-        "haloExchange grads start",
+        "haloExchange grads stage",
         "primaryAdvFlux",
         "haloExchange grads send",
         "bcs postDqDxyz",
         "diffFlux",
-        "haloExchange grads finish",
+        "haloExchange grads receive",
         "primaryAdvFlux diffFlux remote",
         "applyFlux",
     ]
     assert [n.name for n in mb.graphs["consistify"].nodes] == [
-        "haloExchange Q start",
+        "haloExchange Q stage",
         "stateFromCons",
         "haloExchange Q send",
         "bcs euler",
         "trans",
-        "haloExchange Q finish",
+        "haloExchange Q receive",
         "stateFromCons remote",
         "trans remote",
     ]
     assert [n.name for n in mb.graphs["consistifyFromPrims"].nodes][:2] == [
         "stateFromPrims",
-        "haloExchange Q start",
+        "haloExchange Q stage",
     ]
     del mb.kernels["applyFlux"]
     with pytest.raises(KeyError):

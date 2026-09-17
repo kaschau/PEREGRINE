@@ -4,7 +4,7 @@
 // The state of every cell from a primitive vector p, u, v, w, T, Y(0 .. ns
 // - 2), which a case starts from: the mass fractions clipped and
 // renormalized, then the case's eos for the rest.
-PG_RANGE(cellCenters, halo = ng)
+PG_RANGE(cellCenters)
 struct stateFromPrims {
   cellCenterIn prims;
   cellCenterOut Q, q, qh;

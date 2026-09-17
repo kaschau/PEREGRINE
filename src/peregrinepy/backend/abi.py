@@ -96,10 +96,10 @@ lib = Library()
 ###############################################################################
 # The structs of abi.hpp
 ###############################################################################
-class pgView(ctypes.Structure):
-    """One array as a kernel receives it (pgView in abi.hpp): where it is,
-    its extents, and its strides in elements, which is the only place the
-    device layout is turned into an address."""
+class pgArrayInfo(ctypes.Structure):
+    """All a kernel needs to know about one array (pgArrayInfo in abi.hpp):
+    where it is, its extents, and its strides in elements, which is the
+    only place the device layout is turned into an address."""
 
     _fields_ = [
         ("data", ctypes.c_void_p),
@@ -109,8 +109,8 @@ class pgView(ctypes.Structure):
     ]
 
 
-# the record of an array an entry does not have: a kernel never reads it
-null = pgView(None, 0, (ctypes.c_int * 5)(), (ctypes.c_long * 5)())
+# the arrayInfo of an array an entry does not have: a kernel never reads it
+noArray = pgArrayInfo(None, 0, (ctypes.c_int * 5)(), (ctypes.c_long * 5)())
 
 
 def strides(shape, order):
@@ -123,14 +123,15 @@ def strides(shape, order):
     return out
 
 
-class pgCells(ctypes.Structure):
-    """The cells of one entry a launch does (pgCells in abi.hpp): a start
-    and an extent per axis, the components, and the item count."""
+class pgRange(ctypes.Structure):
+    """One range a launch does (pgRange in abi.hpp): a start and an extent per
+    axis, the components, the item count, and the entry the range is of."""
 
     _fields_ = [
         ("start", ctypes.c_int * 3),
         ("extent", ctypes.c_int * 4),
         ("n", ctypes.c_int),
+        ("entry", ctypes.c_int),
     ]
 
 
@@ -146,15 +147,15 @@ class pgDims(ctypes.Structure):
 
 
 class pgTiling(ctypes.Structure):
-    """One launch over every entry of a table (pgTiling in abi.hpp): the
-    entry of each tile, the first tile and the items of each entry, each
-    entry's cells, all where the kernels run, and the items a tile is."""
+    """One launch over a table (pgTiling in abi.hpp): the range of each tile,
+    the first tile and the items of each range, the ranges, all where the
+    kernels run, and the items a tile is."""
 
     _fields_ = [
-        ("entry", ctypes.c_void_p),
+        ("range", ctypes.c_void_p),
         ("first", ctypes.c_void_p),
         ("items", ctypes.c_void_p),
-        ("cells", ctypes.c_void_p),
+        ("ranges", ctypes.c_void_p),
         ("count", ctypes.c_int),
         ("tiles", ctypes.c_int),
         ("tile", ctypes.c_int),
@@ -166,11 +167,11 @@ class pgTiling(ctypes.Structure):
 # the first field of each, the launch shape pins the rest
 ###############################################################################
 class Column(ctypes.Structure):
-    """A block column (column<T, O>): the records, then what the launch
+    """A block column (column<T, O>): the arrayInfos, then what the launch
     pins, the entry's data and strides and the cell."""
 
     _fields_ = [
-        ("records", ctypes.c_void_p),
+        ("arrayInfos", ctypes.c_void_p),
         ("data", ctypes.c_void_p),
         ("stride", ctypes.c_int * 5),
         ("entry", ctypes.c_int),
@@ -181,12 +182,12 @@ class Column(ctypes.Structure):
     ]
 
 
-class FaceColumn(ctypes.Structure):
-    """A block face column (atBlockFace<T>): the records, then the face's
-    record and the plane the launch pins."""
+class BlockFaceColumn(ctypes.Structure):
+    """A block face column (atBlockFace<T>): the arrayInfos, then the face's
+    arrayInfo and the halo cell the launch pins."""
 
     _fields_ = [
-        ("records", ctypes.c_void_p),
+        ("arrayInfos", ctypes.c_void_p),
         ("at", ctypes.c_void_p),
         ("entry", ctypes.c_int),
         ("g", ctypes.c_int),
@@ -203,7 +204,7 @@ class PerEntryInt(ctypes.Structure):
     _fields_ = [("all", ctypes.c_void_p), ("value", ctypes.c_int)]
 
 
-class DimsColumn(ctypes.Structure):
+class Dims(ctypes.Structure):
     """The dims column (dims): every entry's shape, then the entry's."""
 
     _fields_ = [("all", ctypes.c_void_p), ("at", ctypes.c_void_p)]

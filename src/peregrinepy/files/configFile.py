@@ -89,6 +89,11 @@ class configFile(frozenDict):
             }
         )
 
+        # How a halo exchange's messages travel: staged through pinned host
+        # memory, or straight from the device buffers when the MPI is
+        # GPU-aware, which the installation knows and the runtime cannot
+        self["haloExchange"] = frozenDict({"kind": "hostStaged"})
+
         self["mcPhysics"] = frozenDict(
             {
                 # a Cantera mechanism file, or a list of species from the library

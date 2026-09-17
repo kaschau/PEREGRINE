@@ -1,3 +1,5 @@
+from functools import partial
+
 import numpy as np
 from mpi4py import MPI
 
@@ -14,10 +16,13 @@ class NanCheck(BasePlugin):
 
     def __init__(self, solver, cfgsect):
         super().__init__(solver, cfgsect)
-        # its own check, compiled and bound as the solver's kernels are
-        self.allFinite = CellCenterKernel("utils/allFinite.cpp")
-        solver.jit.compile([self.allFinite])
-        self.allFinite.bind(solver.table)
+        # its own check, compiled as the solver's kernels are and settled
+        # on the interior of the block table
+        kernel = CellCenterKernel("utils/allFinite.cpp")
+        solver.jit.compile([kernel])
+        self.allFinite = partial(
+            kernel, solver.blockTable, solver.tiling(kernel, "interior")
+        )
 
     def __call__(self, solver):
         comm, rank, size = getCommRankSize()

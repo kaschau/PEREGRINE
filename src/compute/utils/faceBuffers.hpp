@@ -14,18 +14,20 @@
 // it is. A thread stands on one plane cell of one layer and does every
 // component of it; a variable's faces are all of one ndim.
 
-// what python hands a send: the block array, the buffer, and how the
-// neighbor's frame differs (a node array's planes start past the face)
+// what python hands a send: the block array, the buffer, how the neighbor's
+// frame differs, and how far past the face the planes start (one for a
+// node array, whose face plane both sides hold)
 struct haloSend {
   haloIn view;
   bufferOut buffer;
-  perEntry<int> skip, transpose, flip0, flip1;
-  int ndim;
+  perEntry<int> transpose, flip0, flip1;
+  int skip, ndim;
 };
 template <int R> struct packing {
   haloIn view;
   bufferOut buffer;
-  perEntry<int> skip, transpose, flip0, flip1;
+  perEntry<int> transpose, flip0, flip1;
+  int skip;
   KOKKOS_INLINE_FUNCTION void operator()() const {
     const int g = view.p.g, a = view.p.i, b = view.p.j;
     const int na = buffer.extent(1), nb = buffer.extent(2);
@@ -34,7 +36,7 @@ template <int R> struct packing {
     const int aa = flip0() ? na - 1 - a : a;
     const int bb = flip1() ? nb - 1 - b : b;
     const auto src = transpose() ? view.on(bb, aa) : view.on(aa, bb);
-    const int layer = g + skip();
+    const int layer = g + skip;
     for (int m = 0; m < nm; m++)
       for (int l = 0; l < nl; l++) {
         if constexpr (R == 4)

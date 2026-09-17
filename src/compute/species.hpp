@@ -1,7 +1,7 @@
 // The species data of the case, baked by the jit: a value per species, or a
 // polynomial in ln T per species (ascending coefficients, every fit its own
 // degree, nothing padded), reached through one accessor each. The jit
-// forces the tables in ahead of any source that includes this; a table is
+// forces the data in ahead of any source that includes this; each array is
 // a static constexpr array inside a plain inline function, the one form
 // both device compilers place well (a namespace-scope constexpr array is a
 // host object to nvcc, and a non-static local one is rebuilt on the stack
@@ -11,9 +11,9 @@
 
 #include "arrays.hpp"
 
-#ifndef PG_SPECIES_TABLES
+#ifndef PG_SPECIES_DATA
 #error                                                                         \
-    "a species kernel is compiled with the case's tables, forced in by the jit"
+    "a species kernel is compiled with the case's species data, forced in by the jit"
 #endif
 
 constexpr double Ru = PG_RU;
@@ -32,7 +32,7 @@ constexpr double Ru = PG_RU;
     return t[n * ns + m];                                                      \
   }
 
-// one polynomial per row, every row the table's number of terms (the high
+// one polynomial per row, every row the array's number of terms (the high
 // powers a row lacks are zero, which costs Horner nothing): coefficient m
 // of row r, rows contiguous, so a walk is one trip count and one load a term
 #define PG_SPECIES_POLYNOMIAL(name, TERMS, DATA)                               \

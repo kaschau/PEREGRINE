@@ -7,9 +7,9 @@ PG_ABI void pgPlaceRecvBuffer(const haloRecv &k, const pgTiling &t,
   if (!t.tiles)
     return;
   if (k.ndim == 4)
-    forHaloExchange("place recv buffers", t, unpacking<4>{k.view, k.buffer},
+    forBufferPlanes("place recv buffers", t, unpacking<4>{k.view, k.buffer},
                     nface);
   else
-    forHaloExchange("place recv buffers", t, unpacking<5>{k.view, k.buffer},
+    forBufferPlanes("place recv buffers", t, unpacking<5>{k.view, k.buffer},
                     nface);
 }

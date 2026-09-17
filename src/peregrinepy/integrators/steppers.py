@@ -11,6 +11,7 @@ from mpi4py import MPI
 
 from ..kernel import CellCenterKernel
 from ..misc import subclassWhere
+from ..multiBlock.arrays import CellCenterArray
 from ..mpiComm.mpiUtils import getCommRankSize
 
 
@@ -36,7 +37,7 @@ class BaseStepper:
     def declareArrays(self):
         super().declareArrays()
         for name in self.storage:
-            self.declareArray(name, kind="cell", components=self.ne)
+            self.declareArray(name, CellCenterArray, components=self.ne)
 
     def initialize(self):
         """What a fresh case does before its first step; nothing, for most."""
@@ -77,9 +78,9 @@ class rungeKutta(BaseStepper):
         if first and "Q0" in self.storage:
             self.copyArray("Q0", Q)
         if wQ0 == 0.0:
-            self.axpby(A=Q, a=wQ, b=wdQ * dt, B=dQ)
+            self.launch("axpby", "full", A=Q, a=wQ, b=wdQ * dt, B=dQ)
         else:
-            self.axpbypcz(A=Q, a=wQ, b=wQ0, B="Q0", c=wdQ * dt, C=dQ)
+            self.launch("axpbypcz", "full", A=Q, a=wQ, b=wQ0, B="Q0", c=wdQ * dt, C=dQ)
 
 
 class rk1(rungeKutta):
@@ -148,11 +149,11 @@ class rk4(rungeKutta):
         Q, Q0, S, dQ = self.state, "Q0", "Q1", "dQ"
         if first:
             self.copyArray(Q0, Q)
-        self.axpby(A=S, a=0.0 if first else 1.0, b=wSum * dt, B=dQ)
+        self.launch("axpby", "full", A=S, a=0.0 if first else 1.0, b=wSum * dt, B=dQ)
         if wdQ is None:
-            self.axpbypcz(A=Q, a=0.0, b=1.0, B=Q0, c=1.0, C=S)
+            self.launch("axpbypcz", "full", A=Q, a=0.0, b=1.0, B=Q0, c=1.0, C=S)
         else:
-            self.axpbypcz(A=Q, a=0.0, b=1.0, B=Q0, c=wdQ * dt, C=dQ)
+            self.launch("axpbypcz", "full", A=Q, a=0.0, b=1.0, B=Q0, c=wdQ * dt, C=dQ)
 
 
 class dualTime(BaseStepper):
@@ -191,10 +192,10 @@ class dualTime(BaseStepper):
 
     def declareArrays(self):
         super().declareArrays()
-        self.declareArray("dtau", kind="cell")
+        self.declareArray("dtau", CellCenterArray)
         # the preconditioning reads the transport properties, diffusion or not
         if not self.viscous:
-            self.declareArray("qt", kind="cell", components=2 + self.mixture.ns)
+            self.declareArray("qt", CellCenterArray, components=2 + self.mixture.ns)
 
     def declareKernels(self):
         super().declareKernels()
@@ -207,8 +208,8 @@ class dualTime(BaseStepper):
         preconditioned update."""
         frac, *weights = self.stages[n]
         self.rhs()
-        self.dQdt(dt=dt)
-        self.invertDQ(dt=dt, viscous=self.viscous)
+        self.launch("dQdt", "interior", dt=dt)
+        self.launch("invertDQ", "interior", dt=dt, viscous=self.viscous)
         self.pseudo.combine(self, *weights, dt=1.0, first=n == 0)
         self.consistify()
 
@@ -218,13 +219,13 @@ class dualTime(BaseStepper):
         comm, rank, size = getCommRankSize()
         self.residuals = []
         for n in range(self.subIterations):
-            self.localDtau(viscous=self.viscous)
+            self.launch("localDtau", "interior", viscous=self.viscous)
             for stage in range(len(self.stages)):
                 self._stage(stage, dt)
             # the residual is only worth its reduction when it will be reported
             if self.reportDue:
                 resid = np.zeros((2, self.ne))
-                self.residual(rMax=resid[0], rSum=resid[1])
+                self.launch("residual", "interior", rMax=resid[0], rSum=resid[1])
                 comm.Allreduce(MPI.IN_PLACE, resid[1, :], op=MPI.SUM)
                 self.residuals.append(np.sqrt(resid[1, :]))
 

@@ -1,6 +1,7 @@
 import numpy as np
 
 from ..backend import HostBackend
+from .arrays import CellCenterArray, NodeArray
 from .topology import topology
 from .gridBlock import gridBlock
 
@@ -18,18 +19,20 @@ class grid(topology):
         # where its blocks' arrays are made: numpy on the host, until a solver
         # says where its kernels run
         self.backend = HostBackend()
-        # name -> (kind, components) of every array a block holds
+        # name -> (kind, components, what else the kind takes) of every
+        # array a block holds
         self.arrays = {}
-        self.declareArray("nodes", kind="node", components=3)
+        self.declareArray("nodes", NodeArray, components=3)
         # cell centers are as much as a block with no solution on it can work out
-        self.declareArray("cells", kind="cell", components=3)
+        self.declareArray("cells", CellCenterArray, components=3)
 
-    def declareArray(self, name, *, kind, components=()):
-        """An array every block holds: its kind names the shape, the
-        components what sits at each point of it."""
+    def declareArray(self, name, kind, components=(), **rangeArgs):
+        """Declares an array every block holds: its kind (a block array
+        class) gives the shape and the ranges, the components what sits at
+        each point of it; a cell-face kind takes its axis."""
         if isinstance(components, int):
             components = (components,)
-        self.arrays[name] = (kind, tuple(components))
+        self.arrays[name] = (kind, tuple(components), rangeArgs)
 
     def _newBlock(self, nblki):
         return gridBlock(nblki, self)

@@ -44,7 +44,7 @@ class ConstantMassFluxSubsonicInlet(Inlet):
 
     def _massFlux(self, face):
         blk, ng = self.blk, self.blk.ng
-        self.mb.primaryAdvFlux()
+        self.mb.graphs["rhs"].node("primaryAdvFlux").run()
 
         d = face.direction
         F = face.boundary(getattr(blk, f"{d}F").get())[ng:-ng, ng:-ng, 0]

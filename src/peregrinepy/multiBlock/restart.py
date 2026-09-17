@@ -1,4 +1,5 @@
 from ..readers import GridReader, RestartReader
+from .arrays import CellCenterArray
 from .grid import grid
 from .restartBlock import restartBlock
 
@@ -29,7 +30,7 @@ class restart(grid):
         self.tme = 0.0
         # the primitive vector p, u, v, w, T, Y(0 .. ns - 2), what a result
         # file holds of the state
-        self.declareArray("prims", kind="cell", components=5 + self.ns - 1)
+        self.declareArray("prims", CellCenterArray, components=5 + self.ns - 1)
 
     def checkSpeciesSum(self, normalize=False):
         """Loop through each block to check that the sum of all

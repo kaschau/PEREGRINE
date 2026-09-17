@@ -87,7 +87,9 @@ class RestartWriter(BaseWriter):
         """The shape past the cells of each extra array, from whichever rank
         holds a block."""
         mine = (
-            {n: mb.blocks[0].shapeOf(n)[3:] for n in self.extras} if mb.blocks else {}
+            {n: getattr(mb.blocks[0], n).components for n in self.extras}
+            if mb.blocks
+            else {}
         )
         shapes = {}
         for theirs in self.comm.allgather(mine):

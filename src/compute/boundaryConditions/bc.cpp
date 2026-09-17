@@ -12,8 +12,7 @@
 
 using bc = PG_BCTYPE::PG_BCHOOK;
 
-PG_RANGE(blockFacePlanes, layers = ng)
+PG_RANGE(cellCenters)
 PG_ABI void pgBc(const bc &k, const pgTiling &t, const int *nface) {
-  forBlockFacePlanes(PG_STRING(PG_BCTYPE) " " PG_STRING(PG_BCHOOK), t, k,
-                     nface);
+  forHaloCells(PG_STRING(PG_BCTYPE) " " PG_STRING(PG_BCHOOK), t, k, nface);
 }

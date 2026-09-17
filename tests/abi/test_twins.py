@@ -9,15 +9,15 @@ from peregrinepy.backend import abi
 
 twins = {
     # struct, size in bytes, (field, offset) pairs
-    abi.pgView: (72, (("data", 0), ("rank", 8), ("extent", 12), ("stride", 32))),
-    abi.pgCells: (32, (("start", 0), ("extent", 12), ("n", 28))),
+    abi.pgArrayInfo: (72, (("data", 0), ("rank", 8), ("extent", 12), ("stride", 32))),
+    abi.pgRange: (32, (("start", 0), ("extent", 12), ("n", 28))),
     abi.pgDims: (12, (("ni", 0), ("nj", 4), ("nk", 8))),
     abi.pgTiling: (48, (("cells", 24), ("count", 32), ("tiles", 36), ("tile", 40))),
     # the member twins, as arrays.hpp asserts them
-    abi.Column: (56, (("records", 0), ("data", 8), ("stride", 16), ("entry", 36))),
-    abi.FaceColumn: (40, (("records", 0), ("at", 8), ("nface", 32))),
+    abi.Column: (56, (("arrayInfos", 0), ("data", 8), ("stride", 16), ("entry", 36))),
+    abi.BlockFaceColumn: (40, (("arrayInfos", 0), ("at", 8), ("nface", 32))),
     abi.PerEntryInt: (16, (("all", 0), ("value", 8))),
-    abi.DimsColumn: (16, (("all", 0), ("at", 8))),
+    abi.Dims: (16, (("all", 0), ("at", 8))),
 }
 
 

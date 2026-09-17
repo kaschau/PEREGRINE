@@ -71,8 +71,8 @@ class Mixture:
         "chungB",
     )
 
-    def tables(self):
-        """The species data as the jit bakes it: name -> array. A scalar is
+    def speciesData(self):
+        """Gives the species data as the jit bakes it: name -> array. A scalar is
         (ns,). A polynomial table is (rows, terms), every row padded with
         leading zeros to the table's longest, so a kernel walks it
         contiguously with one trip count; the leading zeros cost Horner

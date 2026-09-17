@@ -1,6 +1,6 @@
 #include "kernel.hpp"
 
-PG_RANGE(cellCenters, halo = 1)
+PG_RANGE(cellCenters)
 struct viscousSponge {
   cellCenterIn cells;
   cellCenterInOut qt;

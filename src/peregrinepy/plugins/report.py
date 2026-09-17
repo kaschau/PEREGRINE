@@ -1,3 +1,4 @@
+from functools import partial
 from time import perf_counter
 
 import numpy as np
@@ -27,10 +28,13 @@ class Report(BasePlugin):
 
     def __init__(self, solver, cfgsect):
         super().__init__(solver, cfgsect)
-        # its own reduction, compiled and bound as the solver's kernels are
-        self.CFLmax = CellCenterKernel("utils/CFLmax.cpp")
-        solver.jit.compile([self.CFLmax])
-        self.CFLmax.bind(solver.table)
+        # its own reduction, compiled as the solver's kernels are and
+        # settled on the interior of the block table
+        kernel = CellCenterKernel("utils/CFLmax.cpp")
+        solver.jit.compile([kernel])
+        self.CFLmax = partial(
+            kernel, solver.blockTable, solver.tiling(kernel, "interior")
+        )
         self.started = perf_counter()
         if getCommRankSize()[1] == 0:
             print(self.banner)

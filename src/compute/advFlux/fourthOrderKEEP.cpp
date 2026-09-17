@@ -13,8 +13,9 @@ constexpr int iMod = PG_DIRECTION == 0, jMod = PG_DIRECTION == 1,
               kMod = PG_DIRECTION == 2;
 
 PG_RANGE(cellFaces)
-PG_ABI void pgFourthOrderKEEP(pgIn *Q_, pgOut *F_, pgIn *A_, pgIn *q_,
-                              pgIn *qh_, const pgDims *d, const pgTiling &t) {
+PG_ABI void pgFourthOrderKEEP(pgArrayIn *Q_, pgArrayOut *F_, pgArrayIn *A_,
+                              pgArrayIn *q_, pgArrayIn *qh_, const pgDims *d,
+                              const pgTiling &t) {
 #if PG_DIRECTION == 0
   Kokkos::parallel_for(
       "4th Order KEEP i face conv fluxes", policyOf(t),

@@ -34,47 +34,28 @@ class gridBlock(topologyBlock, MetricsMixin):
         return gridFace(nface, self.backend)
 
     ###########################################################################
-    # The arrays a block has, and how big they are
+    # The arrays a block has
     ###########################################################################
     @property
-    def shapes(self):
-        """What each kind of array is shaped, for this block's extents."""
-        ng, ni, nj, nk = self.ng, self.ni, self.nj, self.nk
-        return {
-            "node": (ni + 2 * ng, nj + 2 * ng, nk + 2 * ng),
-            "cell": (ni + 2 * ng - 1, nj + 2 * ng - 1, nk + 2 * ng - 1),
-            "iface": (ni + 2 * ng, nj + 2 * ng - 1, nk + 2 * ng - 1),
-            "jface": (ni + 2 * ng - 1, nj + 2 * ng, nk + 2 * ng - 1),
-            "kface": (ni + 2 * ng - 1, nj + 2 * ng - 1, nk + 2 * ng),
-        }
-
-    def shapeOf(self, name):
-        kind, components = self.declared[name]
-        return self.shapes[kind] + components
+    def extents(self):
+        """Gives this block's extents, its nodes per axis: (ni, nj, nk)."""
+        return (self.ni, self.nj, self.nk)
 
     def setExtents(self, ni, nj, nk):
-        """A grid block holds arrays shaped by its extents, so learning them
-        is what gives it those arrays, zeroed. One that already has its
-        shape keeps what is in it, which is what lets a block be re-sized
-        around arrays that have already been rearranged."""
+        """Sizes this block, which is what gives it its arrays, zeroed: each
+        declared one made for this block by its kind."""
         super().setExtents(ni, nj, nk)
-        for name, (kind, components) in self.declared.items():
-            shape = self.shapes[kind] + components
-            current = getattr(self, name)
-            if current is not None and current.shape == shape:
-                continue
-            array = self.backend.allocate(
-                shape, name=name, kind=kind, components=components
-            )
-            setattr(self, name, array)
+        for name in self.declared:
+            setattr(self, name, self._make(name))
+
+    def _make(self, name):
+        kind, components, rangeArgs = self.declared[name]
+        return kind(self, name, components, **rangeArgs)
 
     def replace(self, name, values):
-        """A new array of these values' shape holding them, in place of the
-        old one; what a block re-sized around rearranged contents does."""
-        kind, components = self.declared[name]
-        array = self.backend.allocate(
-            values.shape, name=name, kind=kind, components=components
-        )
+        """Puts a new array holding these values in place of the old one of
+        this name: a new arrayInfo for the tables that read it."""
+        array = self._make(name)
         array.set(values)
         setattr(self, name, array)
 

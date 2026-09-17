@@ -30,8 +30,9 @@ constexpr int iMod = PG_DIRECTION == 0, jMod = PG_DIRECTION == 1,
               kMod = PG_DIRECTION == 2;
 
 PG_RANGE(cellFaces)
-PG_ABI void pgMuscl2rusanov(pgIn *Q_, pgOut *F_, pgIn *A_, pgIn *q_, pgIn *qh_,
-                            const pgDims *d, const pgTiling &t) {
+PG_ABI void pgMuscl2rusanov(pgArrayIn *Q_, pgArrayOut *F_, pgArrayIn *A_,
+                            pgArrayIn *q_, pgArrayIn *qh_, const pgDims *d,
+                            const pgTiling &t) {
 #if PG_DIRECTION == 0
   Kokkos::parallel_for(
       "MUSCL 2 rusanov i face conv fluxes", policyOf(t),
