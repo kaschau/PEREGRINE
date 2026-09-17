@@ -36,6 +36,10 @@ class Library:
             None,
         ),
         "pgFence": ([], None),
+        "pgGraphBegin": ([], ctypes.c_int),
+        "pgGraphEnd": ([], None),
+        "pgGraphSubmit": ([ctypes.c_int], None),
+        "pgGraphDrop": ([ctypes.c_int], None),
     }
 
     def __init__(self):

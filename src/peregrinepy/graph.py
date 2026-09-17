@@ -15,6 +15,7 @@ A flow is the one place order lives. It makes no kernels and holds no
 arrays: every slot is filled from the solver's dict, and a tag the dict
 lacks is a bug in the flow, not a null."""
 
+from .backend.abi import lib
 from .kernel import BlockFaceKernel, KernelGroup
 
 
@@ -121,6 +122,14 @@ class Graph:
     def __init__(self, solver, name):
         self.solver, self.name = solver, name
         self.nodes = []
+        # the flow as Kokkos graphs, once captured: runs of nodes recorded
+        # as one graph each, split where an exchange has to go through the
+        # host, in the order they run; a flow run once, on arrays that are
+        # then released, is not worth recording. On a device a graph is one
+        # submission of what was many launches; the host runs its nodes in
+        # order, so the same path is what the suite exercises
+        self.segments = None
+        self.oneShot = False
 
     def add(self, node):
         self.nodes.append(node)
@@ -178,8 +187,51 @@ class Graph:
                         )
 
     def run(self):
+        """The flow, as the graphs it was recorded into the first time; a
+        one-shot flow node by node."""
+        if self.oneShot:
+            for node in self.nodes:
+                node.run()
+            return
+        # a face that changed changes the bc tables every flow was recorded with
+        if self.solver.facesChanged:
+            self.solver.dropGraphs()
+        if self.segments is None:
+            self._capture()
+        for kind, item in self.segments:
+            if kind == "graph":
+                lib.pgGraphSubmit(item)
+            else:
+                item.run()
+
+    def _capture(self):
+        """Record the flow: every launch becomes a node of the graph under
+        capture, and an exchange with a message to pass through the host
+        ends one graph and begins the next. The nodes' arguments are fixed
+        after binding, which is what a graph replays; a flow whose arrays
+        or faces change is dropped and captured again."""
+        self.segments = []
+        graph = None
         for node in self.nodes:
+            if isinstance(node, HaloExchangeNode) and node.haloExchange.remote:
+                if graph is not None:
+                    lib.pgGraphEnd()
+                    graph = None
+                self.segments.append(("node", node))
+                continue
+            if graph is None:
+                graph = lib.pgGraphBegin()
+                self.segments.append(("graph", graph))
             node.run()
+        if graph is not None:
+            lib.pgGraphEnd()
+
+    def drop(self):
+        """Forget the captured graphs: the next run records them again."""
+        for kind, item in self.segments or ():
+            if kind == "graph":
+                lib.pgGraphDrop(item)
+        self.segments = None
 
     def __repr__(self):
         return f"{self.name}:\n" + "\n".join(f"  {n!r}" for n in self.nodes)
@@ -194,6 +246,7 @@ class Graph:
         first, from the primitive vector a case starts from."""
         g = cls(solver, "consistifyFromPrims" if fromPrims else "consistify")
         if fromPrims:
+            g.oneShot = True
             g.slot("stateFromPrims")
         g.add(HaloExchangeNode(solver.haloExchange, "Q"))
         g.slot("stateFromCons")

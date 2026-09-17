@@ -271,6 +271,14 @@ class solver(restart):
             setattr(blk, a, y), setattr(blk, b, x)
         self.table.forget(a)
         self.table.forget(b)
+        self.dropGraphs()
+
+    def dropGraphs(self):
+        """The flows' captured device graphs, if any, replay what they were
+        recorded with: after an array or a face changes they are dropped
+        and recorded again on the next run."""
+        for graph in self.graphs.values():
+            graph.drop()
 
     ###########################################################################
     # The boundary conditions, on the faces
@@ -295,6 +303,7 @@ class solver(restart):
             face.bcType = entry["bcType"]
             if face.bc.values:
                 face.bc.setValues(entry)
+        self.dropGraphs()
 
     def blockFaceTables(self, bcHook, faces=None):
         """The block faces with a bcType at :bcHook:, grouped by bcType into
@@ -368,6 +377,7 @@ class solver(restart):
         for blk in self.blocks:
             blk.prims = None
         self.table.forget("prims")
+        self.dropGraphs()
 
     def setPrimitives(self, primitives):
         """The state from :primitives:, a host array per block of p, u, v, w,

@@ -1,11 +1,12 @@
 // PEREGRINE's C ABI: what Python and the kernels agree on. Every struct
-// here has a twin in peregrinepy/backend/abi.py laid out the same, and both sides
-// assert the sizes. The runtime and the kernels include this; a kernel gets
-// it through kernel.hpp.
+// here has a twin in peregrinepy/backend/abi.py laid out the same, and both
+// sides assert the sizes. The runtime and the kernels include this; a kernel
+// gets it through kernel.hpp.
 #ifndef __abi_H__
 #define __abi_H__
 
 #include <Kokkos_Core.hpp>
+#include <Kokkos_Graph.hpp>
 #include <cstddef>
 
 // where kernels run, and the memory and layout Kokkos picks for it
@@ -16,6 +17,16 @@ using hostSpace = Kokkos::HostSpace;
 
 // the module is built with hidden visibility; the ABI is what is not hidden
 #define PG_ABI extern "C" __attribute__((visibility("default")))
+
+// A device graph under capture: the runtime holds the graph and the node
+// its next launch follows; a launch shape, finding one open, adds its
+// kernel as the next node instead of launching it. The node is held type
+// erased, so any kernel library can extend it.
+using graphNode =
+    Kokkos::Experimental::GraphNodeRef<execSpace,
+                                       Kokkos::Experimental::TypeErasedTag,
+                                       Kokkos::Experimental::TypeErasedTag>;
+PG_ABI graphNode *pgGraphTail();
 
 extern "C" {
 // one array as Python holds it: where, how big, and its strides in

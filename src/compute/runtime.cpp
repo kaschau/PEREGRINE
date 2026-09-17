@@ -1,5 +1,22 @@
 #include "abi.hpp"
 #include <Kokkos_Core.hpp>
+#include <memory>
+#include <vector>
+
+// The device graphs a run captures: a flow's launches, recorded once as a
+// chain of nodes in the order they were made and submitted as one from
+// then on. One capture is open at a time; the launch shapes read its tail.
+namespace {
+struct capturedGraph {
+  Kokkos::Experimental::Graph<execSpace> graph;
+  graphNode tail;
+  capturedGraph() : tail(graph.root_node()) {}
+};
+// leaked on purpose: a Kokkos object destroyed after finalize aborts, and
+// pgFinalize clears this first
+auto &graphs = *new std::vector<std::unique_ptr<capturedGraph>>;
+capturedGraph *capturing = nullptr;
+} // namespace
 
 // The runtime half of the ABI: memory where the kernels run, and the copies
 // in and out of it.
@@ -9,6 +26,8 @@ PG_ABI void pgInitialize() {
 }
 
 PG_ABI void pgFinalize() {
+  graphs.clear();
+  capturing = nullptr;
   if (Kokkos::is_initialized())
     Kokkos::finalize();
 }
@@ -35,6 +54,30 @@ PG_ABI void *pgAllocate(size_t bytes) {
       Kokkos::View<char *, viewSpace, Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
   Kokkos::deep_copy(deviceBytes(static_cast<char *>(device), bytes), 0);
   return device;
+}
+
+// opens a capture: every launch until pgGraphEnd becomes a node; the id
+// submits it later
+PG_ABI int pgGraphBegin() {
+  graphs.push_back(std::make_unique<capturedGraph>());
+  capturing = graphs.back().get();
+  return static_cast<int>(graphs.size()) - 1;
+}
+
+PG_ABI void pgGraphEnd() {
+  capturing->graph.instantiate();
+  capturing = nullptr;
+}
+
+// the graph runs in order on the execution space, after what was queued
+// before it, like the launches it stands for
+PG_ABI void pgGraphSubmit(int id) { graphs[id]->graph.submit(execSpace{}); }
+
+// a graph whose arrays or faces changed is dropped; a new capture replaces it
+PG_ABI void pgGraphDrop(int id) { graphs[id].reset(); }
+
+PG_ABI graphNode *pgGraphTail() {
+  return capturing ? &capturing->tail : nullptr;
 }
 
 // an array outliving finalize is the process exiting; there is nothing to free

@@ -225,6 +225,21 @@ KOKKOS_INLINE_FUNCTION K pinned(const K &k, const P &at) {
 // The struct has to be a named type: the NVIDIA compiler will not put a
 // kernel lambda in a template instantiated with another lambda's type.
 
+// a launch, or the next node of the graph under capture
+template <class P, class B>
+void launch(const char *name, const P &policy, const B &body) {
+  if (graphNode *tail = pgGraphTail())
+    *tail = tail->then_parallel_for(std::string(name), policy, body);
+  else
+    Kokkos::parallel_for(name, policy, body);
+}
+// a reduction is read on the host as it returns: it has no place in a graph
+inline void notCapturing(const char *name) {
+  if (pgGraphTail())
+    Kokkos::abort(
+        (std::string(name) + ": a reduction under graph capture").c_str());
+}
+
 // a body on every cell of every entry, its columns pinned to the cell
 template <class F>
 void forCells(const char *name, const pgTiling &t, const F &f) {
@@ -238,7 +253,7 @@ void forCells(const char *name, const pgTiling &t, const F &f) {
                            pinned(p, within{c})();
                          });
   };
-  Kokkos::parallel_for(name, policyOf(t, body), body);
+  launch(name, policyOf(t, body), body);
 }
 
 // a body on every element of every entry's allocation, halos and all,
@@ -247,29 +262,29 @@ void forCells(const char *name, const pgTiling &t, const F &f) {
 // range is PG_RANGE(elements, components = ...), the arrays' width.
 template <class F>
 void forElements(const char *name, const pgTiling &t, const F &f) {
-  Kokkos::parallel_for(
-      name, elementPolicyOf(t), KOKKOS_LAMBDA(const team &team) {
-        const auto r = tileOf(t, team);
-        const auto p = pinned(f, cell{r.e, 0, 0, 0});
-        Kokkos::parallel_for(Kokkos::TeamThreadRange(team, r.begin, r.end),
-                             [&](const int item) { p(item); });
-      });
+  auto body = KOKKOS_LAMBDA(const team &team) {
+    const auto r = tileOf(t, team);
+    const auto p = pinned(f, cell{r.e, 0, 0, 0});
+    Kokkos::parallel_for(Kokkos::TeamThreadRange(team, r.begin, r.end),
+                         [&](const int item) { p(item); });
+  };
+  launch(name, elementPolicyOf(t), body);
 }
 
 // a body on every cell and component: f(l)
 template <class F>
 void forCellsAndComponents(const char *name, const pgTiling &t, const F &f) {
-  Kokkos::parallel_for(
-      name, elementPolicyOf(t), KOKKOS_LAMBDA(const team &team) {
-        const auto r = tileOf(t, team);
-        Kokkos::parallel_for(Kokkos::TeamThreadRange(team, r.begin, r.end),
-                             [&](const int item) {
-                               cell c{r.e};
-                               int l;
-                               cellAt(t.cells[r.e], item, c.i, c.j, c.k, l);
-                               pinned(f, c)(l);
-                             });
-      });
+  auto body = KOKKOS_LAMBDA(const team &team) {
+    const auto r = tileOf(t, team);
+    Kokkos::parallel_for(Kokkos::TeamThreadRange(team, r.begin, r.end),
+                         [&](const int item) {
+                           cell c{r.e};
+                           int l;
+                           cellAt(t.cells[r.e], item, c.i, c.j, c.k, l);
+                           pinned(f, c)(l);
+                         });
+  };
+  launch(name, elementPolicyOf(t), body);
 }
 
 // a reduction over every cell: f(value &), joined within each team and then
@@ -277,6 +292,7 @@ void forCellsAndComponents(const char *name, const pgTiling &t, const F &f) {
 template <class F, class R>
 void reduceCells(const char *name, const pgTiling &t, const F &f,
                  const R &reducer) {
+  notCapturing(name);
   using value = typename R::value_type;
   auto body = KOKKOS_LAMBDA(const team &team, value &upd) {
     const auto r = tileOf(t, team);
@@ -299,6 +315,7 @@ void reduceCells(const char *name, const pgTiling &t, const F &f,
 template <class F, class R>
 void reduceCellsAndComponents(const char *name, const pgTiling &t, const F &f,
                               const R &reducer) {
+  notCapturing(name);
   using value = typename R::value_type;
   Kokkos::parallel_reduce(
       name, elementPolicyOf(t),
@@ -334,7 +351,7 @@ void forBlockFacePlanes(const char *name, const pgTiling &t, const F &f,
                            pinned(f, p)();
                          });
   };
-  Kokkos::parallel_for(name, policyOf(t, body), body);
+  launch(name, policyOf(t, body), body);
 }
 
 // a halo exchange's body on every plane cell of every layer of every block
@@ -342,17 +359,16 @@ void forBlockFacePlanes(const char *name, const pgTiling &t, const F &f,
 template <class F>
 void forHaloExchange(const char *name, const pgTiling &t, const F &f,
                      const int *nface) {
-  Kokkos::parallel_for(
-      name, elementPolicyOf(t), KOKKOS_LAMBDA(const team &team) {
-        const auto r = tileOf(t, team);
-        Kokkos::parallel_for(
-            Kokkos::TeamThreadRange(team, r.begin, r.end), [&](const int item) {
-              int at[3];
-              unravelPlanes(item, t.cells[r.e].extent, faceAxis(nface[r.e]),
-                            at);
-              pinned(f, plane{r.e, at[0], at[1], at[2], nface[r.e]})();
-            });
-      });
+  auto body = KOKKOS_LAMBDA(const team &team) {
+    const auto r = tileOf(t, team);
+    Kokkos::parallel_for(
+        Kokkos::TeamThreadRange(team, r.begin, r.end), [&](const int item) {
+          int at[3];
+          unravelPlanes(item, t.cells[r.e].extent, faceAxis(nface[r.e]), at);
+          pinned(f, plane{r.e, at[0], at[1], at[2], nface[r.e]})();
+        });
+  };
+  launch(name, elementPolicyOf(t), body);
 }
 
 #endif
