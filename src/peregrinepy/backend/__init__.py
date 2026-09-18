@@ -5,6 +5,7 @@ the package stands on the backend it returns."""
 
 import os
 from functools import cache
+from pathlib import Path
 
 from . import abi
 from .array import BaseArray, PooledArray
@@ -12,6 +13,8 @@ from .base import BaseBackend as Backend
 from .device import CudaBackend, DeviceBackend, HipBackend
 from .host import HostBackend, OpenMPBackend, SerialBackend
 from .jit import Jit
+from .sources import Sources
+from .store import Store
 from .table import ArrayTable
 from .toolchain import (
     BaseToolchain,
@@ -20,6 +23,21 @@ from .toolchain import (
     OpenMPToolchain,
     SerialToolchain,
 )
+
+
+@cache
+def getSources():
+    """Gives the compute tree, src/compute, read once a process."""
+    return Sources(Path(__file__).parent.parent.parent / "compute")
+
+
+@cache
+def getStore():
+    """Gives the store, $PEREGRINE_CACHE or ~/.cache/peregrinepy, once a
+    process."""
+    return Store(
+        os.environ.get("PEREGRINE_CACHE", Path.home() / ".cache" / "peregrinepy")
+    )
 
 
 @cache
@@ -50,6 +68,8 @@ __all__ = [
     "OpenMPBackend",
     "SerialBackend",
     "Jit",
+    "Sources",
+    "Store",
     "ArrayTable",
     "BaseToolchain",
     "CudaToolchain",
@@ -57,4 +77,6 @@ __all__ = [
     "OpenMPToolchain",
     "SerialToolchain",
     "getToolchain",
+    "getSources",
+    "getStore",
 ]

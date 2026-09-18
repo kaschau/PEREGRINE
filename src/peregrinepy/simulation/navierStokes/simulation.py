@@ -50,11 +50,12 @@ class NavierStokesSimulation(EulerSimulation):
         )
         return k
 
-    def graphs(self):
+    def graphs(self, dt):
         """Gives consistify with the transport after the state, and the
         right-hand side as the gradient exchange: the gradient boundary
         conditions and the gradients ahead of it, the fluxes while it
-        flies, then the remote faces done again and the apply."""
+        flies, then the remote faces done again, the apply and the
+        chemistry."""
         k = self.kernels
         consistify = ExchangeGraphs(
             "consistify",
@@ -82,6 +83,7 @@ class NavierStokesSimulation(EulerSimulation):
                 BCNode(k["bcs postDqDxyz"], "remote"),
                 RedoNode(k["advFlux"], k["diffFlux"]),
                 LaunchNode(k["applyFlux"], "interior"),
+                *self.chemistryNodes(dt),
             ],
         )
         return {"consistify": [consistify], "rhs": [rhs]}

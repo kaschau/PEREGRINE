@@ -63,10 +63,11 @@ class BaseSimulation:
         depth: the mixture's species data and the simulation section."""
         raise NotImplementedError
 
-    def graphs(self):
+    def graphs(self, dt):
         """Gives this physics' graphs by stage, of graph.py's nodes over
         its kernels, each stage a list of graphs cut where a message is
-        waited on."""
+        waited on; :dt: is the case's step where the kernels run, for a
+        node that integrates over it."""
         raise NotImplementedError
 
     def initialState(self):

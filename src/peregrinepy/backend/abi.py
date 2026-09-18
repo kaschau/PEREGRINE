@@ -78,9 +78,9 @@ class Library:
         touches a device, so a pre or post processing run never needs one."""
         from mpi4py import MPI
 
-        from .jit import Jit
+        from . import getSources, getStore, getToolchain
 
-        path = Jit.runtime()
+        path = getStore().runtime(getSources(), getToolchain())
         self.load(path, shared=True)
         for name, (argtypes, restype) in self.runtime.items():
             setattr(self, name, self.function(path, name, argtypes, restype))

@@ -79,7 +79,6 @@ Good Luck!
 ## Utilities
 There are a bunch of utilities to make running with PEREGRINE easier, see the [utilities](https://github.com/kaschau/PEREGRINE/tree/main/utilities) folder. They are pretty obvious from the name. Here is a brief list and summary.
 
- * [ct2pgChem](https://github.com/kaschau/PEREGRINE/blob/main/utilities/ct2pgChem.py): For performance, PEREGRINE hand writes the chemical source term kernel for a given chemistry mechanism. This utility takes a cantera yaml file and outputs a C++ source code ready to be used in PEREGRINE. You just need to add the C++ code to the appropriate folder in `src`, and the `compute` library will have access to your new chemical source terms.
 
  * [ct2pgTHTR](https://github.com/kaschau/PEREGRINE/blob/main/utilities/ct2pgTHTR.py): Thermodynamic and transport properties are given to PEREGRINE via a stripped down, custom yaml file that is read in at run time. This utility creates that file from a cantera yaml file. The order of the species is set by this file (and thus the order in the canter file). So make sure this is the order you want, and this agrees with the order in your chemistry kernel.
 
@@ -132,7 +131,8 @@ PEREGRINE run in executable mode requires an input configuration file (in yaml f
       precision: double # every array and kernel value: double, or single
       trans: null # transport model; a viscous case picks one
       diffusion: lewis # species diffusion model
-      chemistry: false
+      chemistry: null # finite-rate chemistry: null, explicit (the production rates as the source), or substepped
+      chemistryMaxSubSteps: 10 # substepped: the most substeps a step takes to the fastest species' bound
       Trange: null # [Tlow, Thigh] every temperature-dependent property is refit over
       reFitTol: 1.0e-3 # max relative error of each refit polynomial
       reFitMaxDegree: 8 # and the degree it may go to

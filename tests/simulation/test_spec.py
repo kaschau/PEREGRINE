@@ -85,7 +85,7 @@ def test_kernelsAreByTagWithTheBoundariesByHook():
 def test_graphsAreSaidInNamesWithoutASolver():
     sim = simulation("navierStokes")
     sim.declKernels()
-    graphs = sim.graphs()
+    graphs = sim.graphs(dt=None)
     assert set(graphs) == {"consistify", "rhs"}
     (consistify,), (rhs,) = graphs["consistify"], graphs["rhs"]
     assert isinstance(consistify, ExchangeGraphs) and consistify.array == "Q"
@@ -95,7 +95,7 @@ def test_graphsAreSaidInNamesWithoutASolver():
     assert kinds == [BCNode, RedoNode, LaunchNode]
     euler = simulation("euler")
     euler.declKernels()
-    (rhs,) = euler.graphs()["rhs"]
+    (rhs,) = euler.graphs(dt=None)["rhs"]
     assert isinstance(rhs, Graph) and [type(n) for n in rhs.nodes] == [
         LaunchNode,
         LaunchNode,

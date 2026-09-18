@@ -36,7 +36,7 @@ def database(name):
 
 from .diffusionModel import BaseSpeciesDiffusionModel  # noqa: E402
 from .eosModel import BaseEosModel  # noqa: E402
-from .mixture import Mixture  # noqa: E402
+from .mixture import Mixture, ReactingMixture  # noqa: E402
 from .species import Species  # noqa: E402
 from .transportModel import BaseTransportModel  # noqa: E402
 
@@ -54,3 +54,10 @@ __all__ = [
     "kB",
     "Tref",
 ]
+
+
+def getMixture(configSect, root=None):
+    """Makes the case's mixture from its simulation section: reacting when
+    the section names a chemistry."""
+    kind = ReactingMixture if configSect["chemistry"] else Mixture
+    return kind(configSect, root)

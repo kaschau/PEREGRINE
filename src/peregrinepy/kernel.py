@@ -16,7 +16,7 @@ from functools import cache
 import numpy as np
 
 from .backend.abi import Column, Dims, BlockFaceColumn, PerEntryInt
-from .backend.jit import Jit
+from .backend import getSources
 from .ranges import CellCenterRange, CellFaceRange
 
 
@@ -49,7 +49,9 @@ class BaseKernel:
         """Reads the column aliases off the headers: head -> the twin python
         fills for a member of that head."""
         aliases = dict(
-            cls.alias.findall(Jit.header("arrays.hpp") + Jit.header("faces.hpp"))
+            cls.alias.findall(
+                getSources().header("arrays.hpp") + getSources().header("faces.hpp")
+            )
         )
         heads = {}
         for name in aliases:
@@ -69,7 +71,10 @@ class BaseKernel:
         # what the source calls a column -> what the table calls it: a
         # direction's kernel names F and A, the table iF and iS
         self.columns = dict(columns or {})
-        texts = [self.expand(t, self.defines) for t in Jit.texts(source, self.includes)]
+        texts = [
+            self.expand(t, self.defines)
+            for t in getSources().texts(source, self.includes)
+        ]
         # the C function, its parameters [(kind, name)] in call order, and a
         # struct argument's ctypes type and [(kind, member, field, ctype)]
         self.name, self.restype, self.params, self.structs = self._parse(texts)
@@ -464,7 +469,10 @@ class FluxKernel(CellFaceKernel):
         """Says whether a scheme is a composition of advFlux/flux.cpp, or a
         flux source of its own."""
         return (
-            Jit.compute / "advFlux" / "formula" / f"{scheme.split('-')[-1]}.hpp"
+            getSources().compute
+            / "advFlux"
+            / "formula"
+            / f"{scheme.split('-')[-1]}.hpp"
         ).is_file()
 
     def __init__(self, scheme, direction, secondary=None, switch=None, switchValues=()):
@@ -475,7 +483,7 @@ class FluxKernel(CellFaceKernel):
             # a formula alone takes the cells as they are: the two about the
             # face, or the four when it declares it reaches that far
             reaches = self.stencilDeclaration.search(
-                Jit.header(f"advFlux/formula/{formula}.hpp")
+                getSources().header(f"advFlux/formula/{formula}.hpp")
             )
             reconstruct = "fourCells" if reaches else "piecewiseConstant"
         else:

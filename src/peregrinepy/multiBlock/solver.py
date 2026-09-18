@@ -240,7 +240,10 @@ class solver(restart):
         """Makes every graph the simulation and the integrator say, by
         stage, bound to this rank's means, with what the plugins add at the
         end of a stage after it."""
-        specs = {**self.simulation.graphs(), **self.integrator.graphs()}
+        specs = {
+            **self.simulation.graphs(self.integrator.dtOnDevice),
+            **self.integrator.graphs(),
+        }
         for plugin in self.plugins.values():
             for stage, nodes in plugin.after().items():
                 if stage not in specs:

@@ -7,7 +7,7 @@ from functools import cache
 
 import numpy as np
 
-from ..backend.jit import Jit
+from ..backend import getSources
 from ..misc import subclasses, subclassWhere
 
 
@@ -66,7 +66,7 @@ class BaseBC:
     def bcHooks(cls):
         """The bcHooks this bc has a kernel for -- euler, preDqDxyz,
         postDqDxyz -- as its header declares them."""
-        text = Jit.header(cls.header())
+        text = getSources().header(cls.header())
         return tuple(re.findall(r"^struct (\w+) \{", text, re.M))
 
     def setValues(self, valueDict):

@@ -33,8 +33,11 @@ class configFile(frozenDict):
                 "precision": "double",
                 # how the species' viscosities mix: wilke or herning
                 "mixingRule": "wilke",
-                "chemistry": False,
-                "nChemSubSteps": 1,
+                # finite-rate chemistry: none, the production rates as the
+                # source, or substepped to the fastest species' bound, up to
+                # so many substeps
+                "chemistry": None,
+                "chemistryMaxSubSteps": 200,
                 # what every temperature-dependent property is refit over and
                 # to: the lowest degree within the tolerance, or the best at the
                 # cap, which is seven terms, the count the source data has, and
@@ -158,7 +161,6 @@ class configFile(frozenDict):
         step graph's to say."""
         self["timeIntegration"]["dt"] = float(self["timeIntegration"]["dt"])
         sim = self["simulation"]
-        sim["nChemSubSteps"] = max(1, sim["nChemSubSteps"])
         for section in (k for k in self if k.startswith("backend-")):
             launch = self[section]
             for key in launch:

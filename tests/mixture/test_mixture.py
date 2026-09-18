@@ -75,3 +75,17 @@ def test_mechanismWinsOverLibrary():
     # the library's; the mechanism's is the one on the species
     assert gri["H2O"]["well"] != lib["H2O"]["well"]
     assert m.species["H2O"]["well"] == gri["H2O"]["well"]
+
+
+def test_aReactingMixtureNeedsReactions():
+    from peregrinepy.mixture import ReactingMixture, getMixture
+
+    sect = configSect("GRI30.yaml", eos="tpg")
+    sect["chemistry"] = "explicit"
+    m = getMixture(sect)
+    assert isinstance(m, ReactingMixture) and "reactions" in m.tables()
+    assert "reactions" not in getMixture(configSect("GRI30.yaml", eos="tpg")).tables()
+    sect = configSect(air, eos="tpg")
+    sect["chemistry"] = "explicit"
+    with pytest.raises(ValueError):
+        getMixture(sect)

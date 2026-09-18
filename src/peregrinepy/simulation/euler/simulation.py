@@ -12,7 +12,7 @@ from ...kernel import (
     FluxKernel,
     UnorderedKernelGroup,
 )
-from ...mixture import Mixture
+from ...mixture import getMixture
 from ...multiBlock.arrays import CellCenterArray, CellFaceArray
 from .boundaries import BaseEulerBC
 from ..base import BaseSimulation
@@ -43,7 +43,7 @@ class EulerSimulation(BaseSimulation):
 
     def __init__(self, config):
         super().__init__(config)
-        self.mixture = Mixture(config["simulation"])
+        self.mixture = getMixture(config["simulation"])
         self.ne = 5 + self.mixture.ns - 1
 
     def validate(self, config):
@@ -54,8 +54,8 @@ class EulerSimulation(BaseSimulation):
                 rhs["secondaryAdvFlux"],
                 "a secondary flux and a switch go together",
             )
-        if sim["chemistry"]:
-            raise pgConfigError("chemistry", True, "not until the composition round")
+        if sim["chemistry"] not in (None, "explicit", "substepped"):
+            raise pgConfigError("chemistry", sim["chemistry"])
         if rhs["primaryAdvFlux"] is None:
             raise pgConfigError("primaryAdvFlux", None, "a case has a primary flux")
         if sim["eos"] not in ("cpg", "tpg", "realGas"):
@@ -122,6 +122,9 @@ class EulerSimulation(BaseSimulation):
         arrays["qh"] = dict(
             kind=CellCenterArray, components=self.mixture.eos.qhComponents(ns)
         )
+        # the net production rates, kept when they are the source as they are
+        if self.config["simulation"]["chemistry"] == "explicit":
+            arrays["omega"] = dict(kind=CellCenterArray, components=ns)
         return arrays
 
     def declKernels(self):
@@ -152,6 +155,18 @@ class EulerSimulation(BaseSimulation):
             name=scheme,
         )
         k["applyFlux"] = CellCenterKernel("utils/applyFlux.cpp")
+        # finite-rate chemistry: the production rates and their apply, or the
+        # substepped source in one, the reactions baked in by the jit
+        chemistry = self.config["simulation"]["chemistry"]
+        if chemistry == "explicit":
+            k["omega"] = CellCenterKernel("chemistry/productionRates.cpp")
+            k["applyOmega"] = CellCenterKernel("chemistry/applyOmega.cpp")
+        if chemistry == "substepped":
+            most = int(self.config["simulation"]["chemistryMaxSubSteps"])
+            k["finiteRateSubstep"] = CellCenterKernel(
+                "chemistry/finiteRateSubstep.cpp",
+                defines=[f"PG_CHEMISTRY_MAX_SUBSTEPS={most}"],
+            )
         # boundary conditions by hook
         for bcHook in self.bcHooks:
             k[f"bcs {bcHook}"] = UnorderedKernelGroup(
@@ -166,11 +181,24 @@ class EulerSimulation(BaseSimulation):
     def bakes(self):
         return self.mixture, self.config["simulation"]
 
-    def graphs(self):
+    def chemistryNodes(self, dt):
+        """Gives the nodes of the chemistry source at the end of the
+        right-hand side, over the interior: a source is the cell's own."""
+        k = self.kernels
+        if "omega" in k:
+            return [
+                LaunchNode(k["omega"], "interior"),
+                LaunchNode(k["applyOmega"], "interior"),
+            ]
+        if "finiteRateSubstep" in k:
+            return [LaunchNode(k["finiteRateSubstep"], "interior", dt=dt)]
+        return []
+
+    def graphs(self, dt):
         """Gives consistify -- the Q exchange around the equation of state
         and the euler boundary conditions, the halos a message brought done
-        again after it lands -- and the right-hand side, the advective flux
-        and its apply."""
+        again after it lands -- and the right-hand side, the advective flux,
+        its apply and the chemistry."""
         k = self.kernels
         consistify = ExchangeGraphs(
             "consistify",
@@ -186,6 +214,7 @@ class EulerSimulation(BaseSimulation):
             [
                 LaunchNode(k["advFlux"], "interior"),
                 LaunchNode(k["applyFlux"], "interior"),
+                *self.chemistryNodes(dt),
             ],
         )
         return {"consistify": [consistify], "rhs": [rhs]}

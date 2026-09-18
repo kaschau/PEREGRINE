@@ -18,7 +18,7 @@ import peregrinepy as pg
 
 def simulate():
     relpath = str(Path(__file__).parent)
-    ct.add_directory(relpath + "/../src/peregrinepy/mixture/database/source")
+    ct.add_directory(relpath + "/../src/peregrinepy/mixture/database/mechanisms")
     gas = ct.Solution("CH4_O2_FFCMY.yaml")
     # set the gas state
     gas.TP = 300.0, 101325.0
@@ -32,11 +32,11 @@ def simulate():
     config["RHS"]["switchAdvFlux"] = "jamesonPressure"
     config["RHS"]["switchValues"] = {"gain": 5.0}
     config["timeIntegration"]["integrator"] = "rk3"
-    config["simulation"]["chemistry"] = True
-    config["simulation"]["mixture"] = "chem_CH4_O2_FFCMY"
-    config["simulation"]["nChemSubSteps"] = 10
+    config["simulation"]["chemistry"] = "substepped"
+    config["simulation"]["chemistryMaxSubSteps"] = 10
     config["simulation"]["eos"] = "tpg"
-    config["simulation"]["mixture"] = "thtr_CH4_O2_FFCMY.yaml"
+    config["simulation"]["mixture"] = "CH4_O2_FFCMY.yaml"
+    config["simulation"]["Trange"] = (300.0, 3500.0)
     config["bcValues"]["walls"] = {"bcType": "adiabaticSlipWall"}
     config.validateConfig()
 

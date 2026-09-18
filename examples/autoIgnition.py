@@ -14,7 +14,7 @@ from pathlib import Path
 
 def simulate():
     relpath = str(Path(__file__).parent)
-    ct.add_directory(relpath + "/../src/peregrinepy/mixture/database/source")
+    ct.add_directory(relpath + "/../src/peregrinepy/mixture/database/mechanisms")
 
     # Cantera stuff
     T, p = 1100.0, 101325
@@ -30,11 +30,11 @@ def simulate():
     config = pg.files.configFile()
     config["simulation"]["physics"] = "euler"
     config["timeIntegration"]["integrator"] = "rk4"
-    config["simulation"]["chemistry"] = True
-    config["simulation"]["mixture"] = "chem_CH4_O2_FFCMY"
-    config["simulation"]["nChemSubSteps"] = 10
+    config["simulation"]["chemistry"] = "substepped"
+    config["simulation"]["chemistryMaxSubSteps"] = 10
     config["simulation"]["eos"] = "tpg"
-    config["simulation"]["mixture"] = "thtr_CH4_O2_FFCMY.yaml"
+    config["simulation"]["mixture"] = "CH4_O2_FFCMY.yaml"
+    config["simulation"]["Trange"] = (300.0, 3500.0)
     # the reactor's state, uniform over the block
     config["initialConditions"]["p"] = gas.P
     config["initialConditions"]["T"] = gas.T
