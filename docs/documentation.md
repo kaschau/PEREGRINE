@@ -129,6 +129,7 @@ PEREGRINE run in executable mode requires an input configuration file (in yaml f
     mcPhysics: # the gas, and the eos, transport and diffusion models
       mixture: ["O2", "N2"] # a Cantera mechanism file, or a list of species from the library
       eos: cpg
+      precision: double # every array and kernel value: double, or single
       trans: null # transport model; a viscous case picks one
       diffusion: lewis # species diffusion model
       chemistry: false

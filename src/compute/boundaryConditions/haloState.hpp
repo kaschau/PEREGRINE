@@ -24,10 +24,10 @@ template <class H> KOKKOS_INLINE_FUNCTION auto haloOf(const H &column) {
 
 // the first interior cell of a halo column, read off its conserved state
 struct interiorCell {
-  double rhoinv, u, v, w;
+  fpdtype rhoinv, u, v, w;
 };
 template <class H> KOKKOS_INLINE_FUNCTION interiorCell interiorOf(const H &Q) {
-  const double rhoinv = 1.0 / Q.R(0);
+  const fpdtype rhoinv = 1.0 / Q.R(0);
   return {rhoinv, Q.R(1) * rhoinv, Q.R(2) * rhoinv, Q.R(3) * rhoinv};
 }
 
@@ -38,7 +38,7 @@ template <class V> KOKKOS_INLINE_FUNCTION auto primitiveY(const V &vals) {
     if (n < ns - 1) {
       return vals(5 + n);
     }
-    double last = 1.0;
+    fpdtype last = 1.0;
     for (int m = 0; m < ns - 1; m++) {
       last -= vals(5 + m);
     }
@@ -51,9 +51,9 @@ template <class V> KOKKOS_INLINE_FUNCTION auto primitiveY(const V &vals) {
 // properties and, for an eos that keeps them, species enthalpies
 template <class HQ, class Hq, class Hqh, class Yf>
 KOKKOS_INLINE_FUNCTION void haloState(const HQ &Q, const Hq &q, const Hqh &qh,
-                                      const double p, const double T,
-                                      const double u, const double v,
-                                      const double w, const Yf &Y) {
+                                      const fpdtype p, const fpdtype T,
+                                      const fpdtype u, const fpdtype v,
+                                      const fpdtype w, const Yf &Y) {
   const auto s = eos::fromPrims(p, T, Y, keepHi(haloOf(qh)));
   writeState(s, u, v, w, Y, haloOf(Q), haloOf(q), haloOf(qh));
 }

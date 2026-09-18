@@ -12,7 +12,7 @@ struct euler {
   KOKKOS_INLINE_FUNCTION void operator()() const {
     // the pressure extrapolated to the halo, each layer mirrored about the
     // first interior cell; the face's velocity, temperature and species
-    const double p = 2.0 * q.R(0) - q.at(q.p.g + 1, 0);
+    const fpdtype p = 2.0 * q.R(0) - q.at(q.p.g + 1, 0);
     haloState(Q, q, qh, p, qBcVals(4), qBcVals(1), qBcVals(2), qBcVals(3),
               primitiveY(qBcVals));
   }

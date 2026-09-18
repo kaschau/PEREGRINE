@@ -16,19 +16,19 @@
     "a species kernel is compiled with the case's species data, forced in by the jit"
 #endif
 
-constexpr double Ru = PG_RU;
+constexpr fpdtype Ru = PG_RU;
 
 // one value per species
 #define PG_SPECIES_SCALAR(name, DATA)                                          \
-  KOKKOS_INLINE_FUNCTION double name(const int n) {                            \
-    static constexpr double t[ns] = DATA;                                      \
+  KOKKOS_INLINE_FUNCTION fpdtype name(const int n) {                           \
+    static constexpr fpdtype t[ns] = DATA;                                     \
     return t[n];                                                               \
   }
 
 // one value per ordered pair of species, row-major
 #define PG_SPECIES_PAIR(name, DATA)                                            \
-  KOKKOS_INLINE_FUNCTION double name(const int n, const int m) {               \
-    static constexpr double t[ns * ns] = DATA;                                 \
+  KOKKOS_INLINE_FUNCTION fpdtype name(const int n, const int m) {              \
+    static constexpr fpdtype t[ns * ns] = DATA;                                \
     return t[n * ns + m];                                                      \
   }
 
@@ -37,8 +37,8 @@ constexpr double Ru = PG_RU;
 // of row r, rows contiguous, so a walk is one trip count and one load a term
 #define PG_SPECIES_POLYNOMIAL(name, TERMS, DATA)                               \
   constexpr int name##Terms = TERMS;                                           \
-  KOKKOS_INLINE_FUNCTION double name(const int r, const int m) {               \
-    static constexpr double c[] = DATA;                                        \
+  KOKKOS_INLINE_FUNCTION fpdtype name(const int r, const int m) {              \
+    static constexpr fpdtype c[] = DATA;                                       \
     return c[r * TERMS + m];                                                   \
   }
 
@@ -77,7 +77,7 @@ KOKKOS_INLINE_FUNCTION int pairIndex(const int n, const int n2) {
   return i * ns - i * (i - 1) / 2 + (j - i);
 }
 constexpr int dijTerms = dijPairTerms;
-KOKKOS_INLINE_FUNCTION double dij(const int n, const int n2, const int m) {
+KOKKOS_INLINE_FUNCTION fpdtype dij(const int n, const int n2, const int m) {
   return dijPair(pairIndex(n, n2), m);
 }
 

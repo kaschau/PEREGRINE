@@ -167,8 +167,8 @@ template <class T, offset O> struct column {
     return element(o, rest...);
   }
 };
-using cellCenterIn = column<const double, offset{0, 0, 0}>;
-using cellCenterOut = column<double, offset{0, 0, 0}>;
+using cellCenterIn = column<const fpdtype, offset{0, 0, 0}>;
+using cellCenterOut = column<fpdtype, offset{0, 0, 0}>;
 using cellCenterInOut = cellCenterOut; // read and written, for python's graph
 
 // a cell-face array at the face the thread is on: the same pin and address
@@ -183,8 +183,8 @@ template <class T> struct cellFaceColumn : column<T, offset{0, 0, 0}> {
   KOKKOS_INLINE_FUNCTION decltype(auto) operator()(const offset &,
                                                    X...) const = delete;
 };
-using cellFaceIn = cellFaceColumn<const double>;
-using cellFaceOut = cellFaceColumn<double>;
+using cellFaceIn = cellFaceColumn<const fpdtype>;
+using cellFaceOut = cellFaceColumn<fpdtype>;
 using cellFaceInOut = cellFaceOut;
 
 // one value per entry of the table (an integer column), pinned with the
@@ -202,7 +202,7 @@ template <class T> struct caseValue {
   const T *data;
   KOKKOS_INLINE_FUNCTION T operator()() const { return *data; }
 };
-using caseIn = caseValue<const double>;
+using caseIn = caseValue<const fpdtype>;
 
 // the entry's dims, pinned with the columns
 struct dims {
@@ -257,7 +257,7 @@ template <class T> struct atBlockFace {
   KOKKOS_INLINE_FUNCTION int axis() const { return blockFaceAxis(p.nface); }
   KOKKOS_INLINE_FUNCTION bool low() const { return blockFaceLow(p.nface); }
   // the sign of the outward normal along the axis
-  KOKKOS_INLINE_FUNCTION double outward() const { return low() ? -1.0 : 1.0; }
+  KOKKOS_INLINE_FUNCTION fpdtype outward() const { return low() ? -1.0 : 1.0; }
   KOKKOS_INLINE_FUNCTION int extent(const int d) const {
     return arrayInfo->extent[d];
   }
@@ -309,8 +309,8 @@ template <class T> struct haloColumn : atBlockFace<T> {
     return c;
   }
 };
-using haloIn = haloColumn<const double>;
-using haloOut = haloColumn<double>;
+using haloIn = haloColumn<const fpdtype>;
+using haloOut = haloColumn<fpdtype>;
 using haloInOut = haloOut; // read and written, for python's graph
 
 // a value on the block face at this halo cell's position: from the block's
@@ -330,7 +330,7 @@ template <class T> struct blockFaceColumn : atBlockFace<T> {
     return getArrayElement<T, 2 + sizeof...(X)>{v.data, &v}(p.i, p.j, rest...);
   }
 };
-using blockFaceIn = blockFaceColumn<const double>;
+using blockFaceIn = blockFaceColumn<const fpdtype>;
 
 // an array of the entry read in its own indices, no frame between: a
 // block face's rotation, a trade's buffer
@@ -341,24 +341,24 @@ template <class T> struct plainColumn : atBlockFace<T> {
                                             this->arrayInfo}(index...);
   }
 };
-using plainIn = plainColumn<const double>;
+using plainIn = plainColumn<const fpdtype>;
 // a face's exchange buffer, laid out (layer, a, b, components) for the
 // neighbor and indexed as it is
-using bufferIn = plainColumn<const double>;
-using bufferOut = plainColumn<double>;
+using bufferIn = plainColumn<const fpdtype>;
+using bufferOut = plainColumn<fpdtype>;
 
 // getArrayElement by rank, and an array as one: the form of the three
 // hand-unrolled flux schemes, until they are generalized.
-using in1 = getArrayElement<const double, 1>;
-using in2 = getArrayElement<const double, 2>;
-using in3 = getArrayElement<const double, 3>;
-using in4 = getArrayElement<const double, 4>;
-using in5 = getArrayElement<const double, 5>;
-using out1 = getArrayElement<double, 1>;
-using out2 = getArrayElement<double, 2>;
-using out3 = getArrayElement<double, 3>;
-using out4 = getArrayElement<double, 4>;
-using out5 = getArrayElement<double, 5>;
+using in1 = getArrayElement<const fpdtype, 1>;
+using in2 = getArrayElement<const fpdtype, 2>;
+using in3 = getArrayElement<const fpdtype, 3>;
+using in4 = getArrayElement<const fpdtype, 4>;
+using in5 = getArrayElement<const fpdtype, 5>;
+using out1 = getArrayElement<fpdtype, 1>;
+using out2 = getArrayElement<fpdtype, 2>;
+using out3 = getArrayElement<fpdtype, 3>;
+using out4 = getArrayElement<fpdtype, 4>;
+using out5 = getArrayElement<fpdtype, 5>;
 
 // the array as getArrayElement of the rank the kernel expects, read-only or
 // writable by what the kernel said; callable where the kernels run
@@ -368,34 +368,34 @@ getArrayElementOf(const pgArrayInfo &v) {
   return {v.data, &v};
 }
 KOKKOS_INLINE_FUNCTION in1 as1(const pgArrayIn &v) {
-  return getArrayElementOf<const double, 1>(v);
+  return getArrayElementOf<const fpdtype, 1>(v);
 }
 KOKKOS_INLINE_FUNCTION out1 as1(const pgArrayOut &v) {
-  return getArrayElementOf<double, 1>(v);
+  return getArrayElementOf<fpdtype, 1>(v);
 }
 KOKKOS_INLINE_FUNCTION in2 as2(const pgArrayIn &v) {
-  return getArrayElementOf<const double, 2>(v);
+  return getArrayElementOf<const fpdtype, 2>(v);
 }
 KOKKOS_INLINE_FUNCTION out2 as2(const pgArrayOut &v) {
-  return getArrayElementOf<double, 2>(v);
+  return getArrayElementOf<fpdtype, 2>(v);
 }
 KOKKOS_INLINE_FUNCTION in3 as3(const pgArrayIn &v) {
-  return getArrayElementOf<const double, 3>(v);
+  return getArrayElementOf<const fpdtype, 3>(v);
 }
 KOKKOS_INLINE_FUNCTION out3 as3(const pgArrayOut &v) {
-  return getArrayElementOf<double, 3>(v);
+  return getArrayElementOf<fpdtype, 3>(v);
 }
 KOKKOS_INLINE_FUNCTION in4 as4(const pgArrayIn &v) {
-  return getArrayElementOf<const double, 4>(v);
+  return getArrayElementOf<const fpdtype, 4>(v);
 }
 KOKKOS_INLINE_FUNCTION out4 as4(const pgArrayOut &v) {
-  return getArrayElementOf<double, 4>(v);
+  return getArrayElementOf<fpdtype, 4>(v);
 }
 KOKKOS_INLINE_FUNCTION in5 as5(const pgArrayIn &v) {
-  return getArrayElementOf<const double, 5>(v);
+  return getArrayElementOf<const fpdtype, 5>(v);
 }
 KOKKOS_INLINE_FUNCTION out5 as5(const pgArrayOut &v) {
-  return getArrayElementOf<double, 5>(v);
+  return getArrayElementOf<fpdtype, 5>(v);
 }
 
 // the member twins python builds a kernel's argument from, laid out the same

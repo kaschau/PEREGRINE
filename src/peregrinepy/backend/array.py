@@ -16,10 +16,10 @@ class BaseArray:
     """One array on a backend: its shape, order and strides, the info a
     kernel receives, and the memory its backend gave it."""
 
-    def __init__(self, shape, backend, dtype=np.float64, *, name=None):
+    def __init__(self, shape, backend, dtype=None, *, name=None):
         self.shape = tuple(int(n) for n in shape)
         self.backend = backend
-        self.dtype = np.dtype(dtype)
+        self.dtype = np.dtype(backend.fpdtype if dtype is None else dtype)
         self.order = backend.order
         self.name = name
         self.nbytes = int(np.prod(self.shape)) * self.dtype.itemsize

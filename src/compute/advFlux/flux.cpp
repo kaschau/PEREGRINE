@@ -21,7 +21,7 @@ struct flux : PG_BASE {
   using base = PG_BASE;
   KOKKOS_INLINE_FUNCTION void operator()() const {
 #ifdef PG_SECONDARY
-    const double w = this->weight();
+    const fpdtype w = this->weight();
     PG_PRIMARY::flux(*this, this->A, weighted{this->F, 1.0 - w});
     PG_SECONDARY::flux(*this, this->A, added{this->F, w});
 #else

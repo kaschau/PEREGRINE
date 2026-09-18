@@ -24,6 +24,7 @@ MPI is GPU-aware -- is the config's choice of exchange class.
 
 import numpy as np
 from mpi4py import MPI
+from mpi4py.util.dtlib import from_numpy_dtype
 from mpi4py.MPI import Request
 
 from ..backend.abi import lib
@@ -212,13 +213,15 @@ class DeviceHaloExchange(BaseHaloExchange):
     def _memory(self, pool):
         return MPI.memory.fromaddress(pool.ptr, pool.nbytes)
 
+    def _message(self, pool):
+        """The pool's memory as a typed MPI buffer, in the case's precision."""
+        return [self._memory(pool), from_numpy_dtype(pool.dtype)]
+
     def expect(self):
         """Posts the receives of every other rank's message, into its
         pool."""
         for r in self.ranks:
-            self.recvs[r] = self.comm.Irecv(
-                [self._memory(self.recvPools[r]), MPI.DOUBLE], source=r
-            )
+            self.recvs[r] = self.comm.Irecv(self._message(self.recvPools[r]), source=r)
 
     def copyOut(self):
         """Waits for the pack to finish: a message may not be posted before
@@ -228,9 +231,7 @@ class DeviceHaloExchange(BaseHaloExchange):
     def send(self):
         """Posts our message to every other rank from its pool."""
         for r in self.ranks:
-            self.sends[r] = self.comm.Isend(
-                [self._memory(self.sendPools[r]), MPI.DOUBLE], dest=r
-            )
+            self.sends[r] = self.comm.Isend(self._message(self.sendPools[r]), dest=r)
 
     def receive(self):
         """Waits for every message, which lands in its pool."""

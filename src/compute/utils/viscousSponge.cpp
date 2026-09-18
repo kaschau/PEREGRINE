@@ -7,9 +7,9 @@ PG_RANGE(cellCenters)
 struct viscousSponge {
   cellCenterIn cells;
   cellCenterInOut qt;
-  double nx, ny, nz, start, length, mult;
+  fpdtype nx, ny, nz, start, length, mult;
   KOKKOS_INLINE_FUNCTION void operator()() const {
-    const double along =
+    const fpdtype along =
         (cells(0) * nx + cells(1) * ny + cells(2) * nz - start) / length;
     qt(0) *= 1.0 + fmin(fmax(0.0, along * (mult - 1.0)), mult - 1.0);
   }

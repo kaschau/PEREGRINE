@@ -24,22 +24,22 @@ struct invertDQ {
     // 1995
     // doi: 10.2514/3.12946
     //-------------------------------------------------------------------------------------------|
-    double iMult = 1.0;
-    double jMult = 1.0;
-    double kMult = 1.0;
+    fpdtype iMult = 1.0;
+    fpdtype jMult = 1.0;
+    fpdtype kMult = 1.0;
     if (ni == 2) {
-      iMult = Kokkos::Experimental::infinity<double>::value;
+      iMult = Kokkos::Experimental::infinity<fpdtype>::value;
     }
     if (nj == 2) {
-      jMult = Kokkos::Experimental::infinity<double>::value;
+      jMult = Kokkos::Experimental::infinity<fpdtype>::value;
     }
     if (nk == 2) {
-      kMult = Kokkos::Experimental::infinity<double>::value;
+      kMult = Kokkos::Experimental::infinity<fpdtype>::value;
     }
 
-    double GdQ[ne][ne];
+    fpdtype GdQ[ne][ne];
     int perm[ne];
-    double tempRow[ne];
+    fpdtype tempRow[ne];
 
     ////////////////////////////////////////////////
     ///// COMPUTE GdQ MATRIX
@@ -50,22 +50,22 @@ struct invertDQ {
     /////  \Gamma + 3d[e]tau / (2d[e]t) dQdq
     /////
     ////////////////////////////////////////////////
-    const double &p = q(0);
-    const double &T = q(1);
-    const double &rho = Q(0);
-    const double rhoinv = 1.0 / rho;
-    const double u = Q(1) * rhoinv;
-    const double v = Q(2) * rhoinv;
-    const double w = Q(3) * rhoinv;
-    double Y[ns];
-    double rho_Y[ns];
-    double cp = qh(1);
-    double H = qh(2) * rhoinv + 0.5 * (u * u + v * v + w * w);
-    double c = qh(3);
+    const fpdtype &p = q(0);
+    const fpdtype &T = q(1);
+    const fpdtype &rho = Q(0);
+    const fpdtype rhoinv = 1.0 / rho;
+    const fpdtype u = Q(1) * rhoinv;
+    const fpdtype v = Q(2) * rhoinv;
+    const fpdtype w = Q(3) * rhoinv;
+    fpdtype Y[ns];
+    fpdtype rho_Y[ns];
+    fpdtype cp = qh(1);
+    fpdtype H = qh(2) * rhoinv + 0.5 * (u * u + v * v + w * w);
+    fpdtype c = qh(3);
     massFractions(Q, rhoinv, Y);
 
     // the density's derivatives, and the species enthalpies, from the eos
-    double rho_p, rho_T;
+    fpdtype rho_p, rho_T;
     eos::densityDerivatives(
         p, T, rho, [&](const int n) { return Y[n]; }, rho_p, rho_T, rho_Y);
     const auto hi = eos::enthalpies(T, qh);
@@ -82,20 +82,20 @@ struct invertDQ {
         GdQ[l][m] = 0.0;
       }
     }
-    double Thetas[2];
-    double mults[2];
+    fpdtype Thetas[2];
+    fpdtype mults[2];
 
     // Prematrix multipliers (constants)
     mults[0] = 1.0;
     mults[1] = 3.0 / 2.0 * dtau() / dt();
 
     // Reference velocity for preconditioning theta
-    const double U = sqrt(u * u + v * v + w * w);
-    const double nu = viscous ? qt(0) / Q(0) : 0.0;
-    const double &dI = dIJK(0);
-    const double &dJ = dIJK(1);
-    const double &dK = dIJK(2);
-    const double Ur =
+    const fpdtype U = sqrt(u * u + v * v + w * w);
+    const fpdtype nu = viscous ? qt(0) / Q(0) : 0.0;
+    const fpdtype &dI = dIJK(0);
+    const fpdtype &dJ = dIJK(1);
+    const fpdtype &dK = dIJK(2);
+    const fpdtype Ur =
         referenceVelocity(U, c, nu, iMult * dI, jMult * dJ, kMult * dK);
 
     // Thetas (just rho_p for dQdq)
@@ -122,8 +122,8 @@ struct invertDQ {
     ///////////////////////////////////////////////////////////////////
 
     for (int p = 0; p < 2; p++) {
-      double Theta = Thetas[p];
-      double mult = mults[p];
+      fpdtype Theta = Thetas[p];
+      fpdtype mult = mults[p];
 
       // Block (1)
       // First column
@@ -167,7 +167,7 @@ struct invertDQ {
         GdQ[1][n] += mult * rho_Y[n - 5] * u;
         GdQ[2][n] += mult * rho_Y[n - 5] * v;
         GdQ[3][n] += mult * rho_Y[n - 5] * w;
-        double h_y = hi(n - 5) - hi(ns - 1);
+        fpdtype h_y = hi(n - 5) - hi(ns - 1);
         GdQ[4][n] += mult * (H * rho_Y[n - 5] + rho * h_y);
         // Block (3)
         GdQ[n][0] += mult * Theta * Y[n - 5];
@@ -201,7 +201,7 @@ struct invertDQ {
 
     for (int l = 0; l < ne; l++) {
       int pivotInd = 0;
-      double pivot = 0.0;
+      fpdtype pivot = 0.0;
       int tempInd;
       for (int m = l; m < ne; m++)
         if (abs(GdQ[m][l]) > abs(pivot)) {
@@ -220,7 +220,7 @@ struct invertDQ {
       perm[pivotInd] = tempInd;
 
       for (int p = l + 1; p < ne; p++) {
-        double temp;
+        fpdtype temp;
         temp = GdQ[p][l] /= GdQ[l][l];
         for (int q = l + 1; q < ne; q++) {
           GdQ[p][q] -= temp * GdQ[l][q];
@@ -277,13 +277,13 @@ struct invertDQ {
       tempRow[l] = 0.0;
     }
     {
-      const double dp = dQ(0), du = dQ(1), dv = dQ(2), dw = dQ(3), dT = dQ(4);
-      double drho = rho_p * dp + rho_T * dT;
-      double dE = (rho_p * H + T * rho_T / rho) * dp +
-                  rho * (u * du + v * dv + w * dw) +
-                  (rho_T * H + rho * cp) * dT;
+      const fpdtype dp = dQ(0), du = dQ(1), dv = dQ(2), dw = dQ(3), dT = dQ(4);
+      fpdtype drho = rho_p * dp + rho_T * dT;
+      fpdtype dE = (rho_p * H + T * rho_T / rho) * dp +
+                   rho * (u * du + v * dv + w * dw) +
+                   (rho_T * H + rho * cp) * dT;
       for (int n = 5; n < ne; n++) {
-        const double dY = dQ(n);
+        const fpdtype dY = dQ(n);
         drho += rho_Y[n - 5] * dY;
         dE += (H * rho_Y[n - 5] + rho * (hi(n - 5) - hi(ns - 1))) * dY;
       }

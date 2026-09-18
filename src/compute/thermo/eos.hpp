@@ -24,7 +24,7 @@ namespace eos = PG_EOS;
 // where fromPrims and fromCons put a species enthalpy: into the cell's
 // qh(5 + n) for an eos that keeps them, nowhere for one that does not
 template <class Qh> KOKKOS_INLINE_FUNCTION auto keepHi(const Qh &qh) {
-  return [qh](const int n, const double h) {
+  return [qh](const int n, const fpdtype h) {
     if constexpr (eos::qhComponents > 5) {
       qh(5 + n) = h;
     }
@@ -35,9 +35,10 @@ template <class Qh> KOKKOS_INLINE_FUNCTION auto keepHi(const Qh &qh) {
 // Q's density, momentum, total energy and species mass; q's p and T; qh's
 // gamma, cp, rho h, c, rho e
 template <class Yf, class QC, class QP, class QH>
-KOKKOS_INLINE_FUNCTION void
-writeState(const eos::state &s, const double u, const double v, const double w,
-           const Yf &Y, const QC &Q, const QP &q, const QH &qh) {
+KOKKOS_INLINE_FUNCTION void writeState(const eos::state &s, const fpdtype u,
+                                       const fpdtype v, const fpdtype w,
+                                       const Yf &Y, const QC &Q, const QP &q,
+                                       const QH &qh) {
   Q(0) = s.rho;
   Q(1) = s.rho * u;
   Q(2) = s.rho * v;

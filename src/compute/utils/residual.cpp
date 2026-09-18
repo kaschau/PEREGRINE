@@ -5,7 +5,7 @@
 
 // the largest residual and the sum of squares, reduced together
 struct maxAndSum {
-  double mx, sm;
+  fpdtype mx, sm;
 };
 struct residualReducer {
   using reducer = residualReducer;
@@ -35,14 +35,14 @@ struct residualOf {
   cellCenterIn Q, Q0;
   int m;
   KOKKOS_INLINE_FUNCTION void operator()(maxAndSum &v) const {
-    const double res = abs(Q(m) - Q0(m));
+    const fpdtype res = abs(Q(m) - Q0(m));
     v.mx = fmax(res, v.mx);
     v.sm += res * res;
   }
 };
 
-PG_ABI void pgResidual(const residual &k, const pgTiling &t, double *rMax,
-                       double *rSum) {
+PG_ABI void pgResidual(const residual &k, const pgTiling &t, fpdtype *rMax,
+                       fpdtype *rSum) {
   for (int m = 0; m < ne; m++) {
     maxAndSum total{0.0, 0.0};
     reduceCells("residual", t, residualOf{k.Q, k.Q0, m},

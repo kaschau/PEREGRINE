@@ -10,10 +10,11 @@
 
 namespace herning {
 
-KOKKOS_INLINE_FUNCTION double viscosity(const double *X, const double *sqrtMu) {
-  double num = 0.0, den = 0.0;
+KOKKOS_INLINE_FUNCTION fpdtype viscosity(const fpdtype *X,
+                                         const fpdtype *sqrtMu) {
+  fpdtype num = 0.0, den = 0.0;
   for (int n = 0; n <= ns - 1; n++) {
-    const double w = X[n] * sqrtMW(n);
+    const fpdtype w = X[n] * sqrtMW(n);
     num += w * sqrtMu[n] * sqrtMu[n];
     den += w;
   }

@@ -2,11 +2,11 @@
 #ifndef __limiterVanLeer_H__
 #define __limiterVanLeer_H__
 
-#include <Kokkos_Core.hpp>
+#include "abi.hpp"
 
 struct vanLeer {
-  static constexpr double limit = 2.0;
-  static KOKKOS_INLINE_FUNCTION double phi(double r) {
+  static constexpr fpdtype limit = 2.0;
+  static KOKKOS_INLINE_FUNCTION fpdtype phi(fpdtype r) {
     return (r + fabs(r)) / (1.0 + fabs(r));
   }
 };

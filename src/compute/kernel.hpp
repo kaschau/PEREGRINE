@@ -7,13 +7,38 @@
 #include "launch.hpp"
 #include <math.h>
 
+// In single, a two-argument math call on a fpdtype and a double literal,
+// fmax(x, 1.0), is in fpdtype: otherwise the library's promoted template is
+// chosen, which on nvcc is a host function, and a device body that calls
+// one is silently dropped. A call already on two reals is the builtin; in
+// double there is no such pair.
+#ifdef PG_SINGLE
+#define PG_FPDTYPE_PAIR(name)                                                  \
+  KOKKOS_INLINE_FUNCTION fpdtype name(fpdtype a, double b) {                   \
+    return ::name(a, fpdtype(b));                                              \
+  }                                                                            \
+  KOKKOS_INLINE_FUNCTION fpdtype name(double a, fpdtype b) {                   \
+    return ::name(fpdtype(a), b);                                              \
+  }                                                                            \
+  KOKKOS_INLINE_FUNCTION fpdtype name(fpdtype a, int b) {                      \
+    return ::name(a, fpdtype(b));                                              \
+  }                                                                            \
+  KOKKOS_INLINE_FUNCTION fpdtype name(int a, fpdtype b) {                      \
+    return ::name(fpdtype(a), b);                                              \
+  }
+PG_FPDTYPE_PAIR(fmin)
+PG_FPDTYPE_PAIR(fmax)
+PG_FPDTYPE_PAIR(pow)
+#undef PG_FPDTYPE_PAIR
+#endif
+
 // a face's area and unit normal, from its area vector
 KOKKOS_INLINE_FUNCTION
-void faceNormal(const double &sx, const double &sy, const double &sz, double &S,
-                double &nx, double &ny, double &nz) {
+void faceNormal(const fpdtype &sx, const fpdtype &sy, const fpdtype &sz,
+                fpdtype &S, fpdtype &nx, fpdtype &ny, fpdtype &nz) {
   // a degenerate face is floored, we divide by this
   S = sqrt(sx * sx + sy * sy + sz * sz);
-  double Sinv = 1.0 / S;
+  fpdtype Sinv = 1.0 / S;
   nx = sx * Sinv;
   ny = sy * Sinv;
   nz = sz * Sinv;

@@ -6,8 +6,8 @@
 
 namespace lewis {
 
-KOKKOS_INLINE_FUNCTION void coefficients(const mixtureState &s, double *D) {
-  const double kappaOverRhoCp = s.kappa * s.rhoinv / s.cp;
+KOKKOS_INLINE_FUNCTION void coefficients(const mixtureState &s, fpdtype *D) {
+  const fpdtype kappaOverRhoCp = s.kappa * s.rhoinv / s.cp;
   for (int n = 0; n <= ns - 1; n++) {
     D[n] = kappaOverRhoCp / lewisNumber(n);
   }

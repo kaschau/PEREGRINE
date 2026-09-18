@@ -53,7 +53,7 @@ class Report(BasePlugin):
 
     def __call__(self, solver):
         comm, rank, size = getCommRankSize()
-        cfl = np.zeros(3)
+        cfl = np.zeros(3, solver.backend.fpdtype)
         self.CFLmax(cfl=cfl)
         comm.Allreduce(MPI.IN_PLACE, cfl, op=MPI.MAX)
         if rank != 0:

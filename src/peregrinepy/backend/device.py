@@ -47,7 +47,8 @@ class DeviceBackend(BaseBackend):
     def pushAside(self, array, host):
         lib.pgCopyToDeviceAside(host.ctypes.data, array.ptr, array.nbytes)
 
-    def pinned(self, shape, dtype=np.float64):
+    def pinned(self, shape, dtype=None):
+        dtype = self.fpdtype if dtype is None else dtype
         # pinned for the run: the runtime frees it at finalize with the rest
         dtype = np.dtype(dtype)
         n = int(np.prod(shape))

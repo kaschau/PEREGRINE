@@ -13,26 +13,26 @@ struct constantProps {
   cellCenterOut qt;
   KOKKOS_INLINE_FUNCTION void operator()() const {
     // the mole fractions off the conserved state
-    double X[ns];
-    const double rhoinv = 1.0 / Q(0);
-    const double MWmix = moleFractions(massFractions(Q, rhoinv), X);
-    const double T = q(1);
+    fpdtype X[ns];
+    const fpdtype rhoinv = 1.0 / Q(0);
+    const fpdtype MWmix = moleFractions(massFractions(Q, rhoinv), X);
+    const fpdtype T = q(1);
 
     {
-      double sqrtMu[ns];
+      fpdtype sqrtMu[ns];
       for (int n = 0; n <= ns - 1; n++) {
         sqrtMu[n] = sqrt(mu0(n));
       }
       qt(0) = mixingRule::viscosity(X, sqrtMu);
     }
-    double kappaSp[ns];
+    fpdtype kappaSp[ns];
     for (int n = 0; n <= ns - 1; n++) {
       kappaSp[n] = kappa0(n);
     }
-    const double kappa = mixtureConductivity(X, kappaSp);
+    const fpdtype kappa = mixtureConductivity(X, kappaSp);
     qt(1) = kappa;
 
-    double D[ns];
+    fpdtype D[ns];
     diffusion::coefficients({q(0), T, log(T), rhoinv, qh(1), kappa, MWmix, X},
                             D);
     for (int n = 0; n <= ns - 1; n++) {

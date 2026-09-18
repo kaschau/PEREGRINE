@@ -4,8 +4,10 @@
 #ifndef __faceState_H__
 #define __faceState_H__
 
+#include "abi.hpp"
+
 struct faceState {
-  double rho, u, v, w, rhou, rhov, rhow, p, E, c;
+  fpdtype rho, u, v, w, rhou, rhov, rhow, p, E, c;
 };
 
 #endif

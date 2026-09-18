@@ -31,7 +31,8 @@ class HostBackend(BaseBackend):
     def pushAside(self, array, host):
         array.data[...] = host
 
-    def pinned(self, shape, dtype=np.float64):
+    def pinned(self, shape, dtype=None):
+        dtype = self.fpdtype if dtype is None else dtype
         return np.zeros(shape, dtype, order=self.order)
 
     def fromHost(self, array, values, wait):

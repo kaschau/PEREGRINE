@@ -15,26 +15,26 @@ struct KEPaEC {
   twoPoint(const Ca &Qa, const Ca &qa, const Ca &qha, const Cb &Qb,
            const Cb &qb, const Cb &qhb, const cellFaceIn &A, const Out &F) {
     // each side's velocity, off its conserved state
-    const double rhoinvL = 1.0 / Qa(0), rhoinvR = 1.0 / Qb(0);
-    const double uL = Qa(1) * rhoinvL, vL = Qa(2) * rhoinvL,
-                 wL = Qa(3) * rhoinvL;
-    const double uR = Qb(1) * rhoinvR, vR = Qb(2) * rhoinvR,
-                 wR = Qb(3) * rhoinvR;
+    const fpdtype rhoinvL = 1.0 / Qa(0), rhoinvR = 1.0 / Qb(0);
+    const fpdtype uL = Qa(1) * rhoinvL, vL = Qa(2) * rhoinvL,
+                  wL = Qa(3) * rhoinvL;
+    const fpdtype uR = Qb(1) * rhoinvR, vR = Qb(2) * rhoinvR,
+                  wR = Qb(3) * rhoinvR;
 
     // Compute face normal volume flux vector
-    double uf = 0.5 * (uR + uL);
-    double vf = 0.5 * (vR + vL);
-    double wf = 0.5 * (wR + wL);
+    fpdtype uf = 0.5 * (uR + uL);
+    fpdtype vf = 0.5 * (vR + vL);
+    fpdtype wf = 0.5 * (wR + wL);
 
-    double U = A(0) * uf + A(1) * vf + A(2) * wf;
+    fpdtype U = A(0) * uf + A(1) * vf + A(2) * wf;
 
-    double pf = 0.5 * (qb(0) + qa(0));
+    fpdtype pf = 0.5 * (qb(0) + qa(0));
 
     // Compute fluxes
-    double rho = 0.5 * (Qb(0) + Qa(0));
+    fpdtype rho = 0.5 * (Qb(0) + Qa(0));
 
     // Continuity rho*Ui
-    double C = rho * U;
+    fpdtype C = rho * U;
     F(0) = C;
 
     // x momentum rho*u*Ui+ p*Ax
@@ -47,15 +47,15 @@ struct KEPaEC {
     F(3) = C * wf + pf * A(2);
 
     // Total energy (rhoE+ p)*Ui)
-    double Kj = C * 0.5 * (uR * uL + vR * vL + wR * wL);
+    fpdtype Kj = C * 0.5 * (uR * uL + vR * vL + wR * wL);
 
-    double Pj = 0.5 * (qa(0) * (uR * A(0) + vR * A(1) + wR * A(2)) +
-                       qb(0) * (uL * A(0) + vL * A(1) + wL * A(2)));
+    fpdtype Pj = 0.5 * (qa(0) * (uR * A(0) + vR * A(1) + wR * A(2)) +
+                        qb(0) * (uL * A(0) + vL * A(1) + wL * A(2)));
 
     // solve for internal energy flux
-    double eR = qhb(4) * rhoinvR;
-    double eL = qha(4) * rhoinvL;
-    double Ij = 2.0 * (eL * eR) / (eL + eR) * C;
+    fpdtype eR = qhb(4) * rhoinvR;
+    fpdtype eL = qha(4) * rhoinvL;
+    fpdtype Ij = 2.0 * (eL * eR) / (eL + eR) * C;
 
     F(4) = Ij + Kj + Pj;
 

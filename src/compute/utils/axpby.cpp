@@ -9,7 +9,7 @@
 PG_RANGE(elements, components = ne)
 struct axpby {
   cellCenterInOut A;
-  double a, b;
+  fpdtype a, b;
   cellCenterIn B;
   caseIn dt;
   KOKKOS_INLINE_FUNCTION void operator()(const int i) const {

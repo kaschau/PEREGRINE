@@ -22,8 +22,10 @@ class BaseBackend:
     # what the runtime calls it, lower case; its config section is backend-<name>
     name = None
 
-    def __init__(self, order="C", launch=None):
+    def __init__(self, order="C", launch=None, precision="double"):
         self.order = order
+        # what every array it makes holds, the case's precision
+        self.fpdtype = np.dtype({"double": np.float64, "single": np.float32}[precision])
         # how this backend launches, from its config section: the items of
         # one entry a team does, by what an item is, and on a device the
         # launch bound the kernels are compiled with, (threads, waves). A
@@ -50,7 +52,9 @@ class BaseBackend:
 
         order = "F" if lib.pgLayoutLeft() else "C"
         name = lib.pgBackend().decode().lower()
-        return subclassWhere(cls, name=name)(order, config[f"backend-{name}"])
+        return subclassWhere(cls, name=name)(
+            order, config[f"backend-{name}"], config["simulation"]["precision"]
+        )
 
     def arrayTable(self, entries):
         """Gives the array table of these entries -- the list itself, not a
@@ -65,9 +69,12 @@ class BaseBackend:
         bound."""
         return Jit(ng, mixture, simulation, launch=self.launchBound)
 
-    def allocate(self, shape, dtype=np.float64, name=None):
-        """Makes a zeroed array on this backend."""
-        return BaseArray(shape, self, dtype, name=name)
+    def allocate(self, shape, dtype=None, name=None):
+        """Makes a zeroed array on this backend, of its precision unless
+        another dtype is asked for."""
+        return BaseArray(
+            shape, self, self.fpdtype if dtype is None else dtype, name=name
+        )
 
     def memory(self, array):
         """Zeroed memory for :array:, as an address."""
@@ -89,9 +96,9 @@ class BaseBackend:
     def pushAside(self, array, host):
         raise NotImplementedError
 
-    def pinned(self, shape, dtype=np.float64):
+    def pinned(self, shape, dtype=None):
         """Host memory the device reaches at bus speed, as a numpy array in
-        this backend's order, kept for the run."""
+        this backend's order, of its precision, kept for the run."""
         raise NotImplementedError
 
     def fromHost(self, array, values, wait):

@@ -57,7 +57,7 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
                             const int &rface /*=0*/, const int &indxI /*=0*/,
                             const int &indxJ /*=0*/, const int &indxK /*=0*/,
                             const int &nChemSubSteps /*=1*/,
-                            const double &dt /*=1.0*/) {
+                            const fpdtype &dt /*=1.0*/) {
 
   // --------------------------------------------------------------|
   // cc range
@@ -67,12 +67,12 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
   Kokkos::parallel_for(
       "Compute chemical source terms", range,
       KOKKOS_LAMBDA(const int i, const int j, const int k) {
-        double T = b.q(i, j, k, 4);
-        double &rho = b.Q(i, j, k, 0);
-        double Y[32];
-        double dYdt[32];
-        double dTdt = 0.0;
-        double tSub = dt / nChemSubSteps;
+        fpdtype T = b.q(i, j, k, 4);
+        fpdtype &rho = b.Q(i, j, k, 0);
+        fpdtype Y[32];
+        fpdtype dYdt[32];
+        fpdtype dTdt = 0.0;
+        fpdtype tSub = dt / nChemSubSteps;
 
         // Set the initial values of Y array
         for (int n = 0; n < 31; n++) {
@@ -83,7 +83,7 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
 
           // Compute nth species Y
           Y[31] = 1.0;
-          double testSum = 0.0;
+          fpdtype testSum = 0.0;
           for (int n = 0; n < 31; n++) {
             Y[n] = fmax(fmin(Y[n], 1.0), 0.0);
             Y[31] -= Y[n];
@@ -97,7 +97,7 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
           }
 
           // Concentrations
-          double cs[32];
+          fpdtype cs[32];
           for (int n = 0; n <= 31; n++) {
             cs[n] = rho * Y[n] / th.MW(n);
           }
@@ -106,39 +106,39 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
           // Gibbs energy. --------------------------------------------- >
           // ----------------------------------------------------------- >
 
-          double hi[32];
-          double gbs[32];
-          double cp = 0.0;
+          fpdtype hi[32];
+          fpdtype gbs[32];
+          fpdtype cp = 0.0;
           // start scope of precomputed T**
           {
-            double logT = log(T);
-            double Tinv = 1.0 / T;
-            double To2 = T / 2.0;
-            double T2 = pow(T, 2);
-            double T3 = pow(T, 3);
-            double T4 = pow(T, 4);
-            double T2o2 = T2 / 2.0;
-            double T3o3 = T3 / 3.0;
-            double T4o4 = T4 / 4.0;
-            double T2o3 = T2 / 3.0;
-            double T3o4 = T3 / 4.0;
-            double T4o5 = T4 / 5.0;
+            fpdtype logT = log(T);
+            fpdtype Tinv = 1.0 / T;
+            fpdtype To2 = T / 2.0;
+            fpdtype T2 = pow(T, 2);
+            fpdtype T3 = pow(T, 3);
+            fpdtype T4 = pow(T, 4);
+            fpdtype T2o2 = T2 / 2.0;
+            fpdtype T3o3 = T3 / 3.0;
+            fpdtype T4o4 = T4 / 4.0;
+            fpdtype T2o3 = T2 / 3.0;
+            fpdtype T3o4 = T3 / 4.0;
+            fpdtype T4o5 = T4 / 5.0;
 
             for (int n = 0; n <= 31; n++) {
               int m = (T <= th.NASA7(n, 0)) ? 8 : 1;
-              double cps = (th.NASA7(n, m + 0) + th.NASA7(n, m + 1) * T +
-                            th.NASA7(n, m + 2) * T2 + th.NASA7(n, m + 3) * T3 +
-                            th.NASA7(n, m + 4) * T4) *
-                           th.Ru / th.MW(n);
+              fpdtype cps = (th.NASA7(n, m + 0) + th.NASA7(n, m + 1) * T +
+                             th.NASA7(n, m + 2) * T2 + th.NASA7(n, m + 3) * T3 +
+                             th.NASA7(n, m + 4) * T4) *
+                            th.Ru / th.MW(n);
 
               hi[n] = th.NASA7(n, m + 0) + th.NASA7(n, m + 1) * To2 +
                       th.NASA7(n, m + 2) * T2o3 + th.NASA7(n, m + 3) * T3o4 +
                       th.NASA7(n, m + 4) * T4o5 + th.NASA7(n, m + 5) * Tinv;
 
-              double scs = th.NASA7(n, m + 0) * logT + th.NASA7(n, m + 1) * T +
-                           th.NASA7(n, m + 2) * T2o2 +
-                           th.NASA7(n, m + 3) * T3o3 +
-                           th.NASA7(n, m + 4) * T4o4 + th.NASA7(n, m + 6);
+              fpdtype scs = th.NASA7(n, m + 0) * logT + th.NASA7(n, m + 1) * T +
+                            th.NASA7(n, m + 2) * T2o2 +
+                            th.NASA7(n, m + 3) * T3o3 +
+                            th.NASA7(n, m + 4) * T4o4 + th.NASA7(n, m + 6);
 
               cp += cps * Y[n];
               gbs[n] = hi[n] - scs;
@@ -151,21 +151,21 @@ void chem_C2H4_Air_Skeletal(block_ &b, const thtrdat_ &th,
           // Forward, backward, net rates of progress. ----------------- >
           // ----------------------------------------------------------- >
 
-          double q[206];
+          fpdtype q[206];
 
           // start scope of these temp vars
           {
-            double cTBC, k_f, dG, K_c;
+            fpdtype cTBC, k_f, dG, K_c;
 
-            double Fcent;
-            double pmod;
-            double Pr, k0;
-            double A, f1, F_pdr;
-            double C, N;
-            double q_f, q_b;
-            double logT = log(T);
-            double Tinv = 1.0 / T;
-            double prefRuT = 101325.0 / (th.Ru * T);
+            fpdtype Fcent;
+            fpdtype pmod;
+            fpdtype Pr, k0;
+            fpdtype A, f1, F_pdr;
+            fpdtype C, N;
+            fpdtype q_f, q_b;
+            fpdtype logT = log(T);
+            fpdtype Tinv = 1.0 / T;
+            fpdtype prefRuT = 101325.0 / (th.Ru * T);
             // Reaction #0
             k_f = exp(log(83000000000.00002) - (7252.903136317711 * Tinv));
             dG = -gbs[1] + gbs[2] - gbs[3] + gbs[4];

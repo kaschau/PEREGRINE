@@ -14,11 +14,11 @@ struct euler {
     // first interior cell; the face's temperature and species; and, with
     // the halo density the eos gives those, the halo velocity that makes the
     // face's average of density times velocity the target momentum
-    const double p = 2.0 * q.R(0) - q.at(q.p.g + 1, 0);
+    const fpdtype p = 2.0 * q.R(0) - q.at(q.p.g + 1, 0);
     const auto Y = primitiveY(qBcVals);
     const auto s = eos::fromPrims(p, qBcVals(4), Y, keepHi(haloOf(qh)));
     const auto in = interiorOf(Q);
-    const double scale = 4.0 / (Q.R(0) + s.rho);
+    const fpdtype scale = 4.0 / (Q.R(0) + s.rho);
     writeState(s, QBcVals(1) * scale - in.u, QBcVals(2) * scale - in.v,
                QBcVals(3) * scale - in.w, Y, haloOf(Q), haloOf(q), haloOf(qh));
   }

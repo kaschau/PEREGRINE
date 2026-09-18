@@ -18,6 +18,13 @@ using hostSpace = Kokkos::HostSpace;
 // the module is built with hidden visibility; the ABI is what is not hidden
 #define PG_ABI extern "C" __attribute__((visibility("default")))
 
+// the precision of every array and kernel value: the case's, baked in by
+// the jit; the runtime holds the arrays as bytes and never reads one
+#ifndef PG_FPDTYPE
+#define PG_FPDTYPE double
+#endif
+using fpdtype = PG_FPDTYPE;
+
 // A device graph under capture: the runtime holds the graph and the node
 // its next launch follows; a launch shape, finding one open, adds its
 // kernel as the next node instead of launching it. The node is held type
@@ -39,7 +46,7 @@ extern "C" {
 // how big, and its strides in elements, which Python works out from the
 // device layout
 struct pgArrayInfo {
-  double *data;
+  fpdtype *data;
   int rank;
   int extent[5];
   long stride[5];

@@ -29,6 +29,8 @@ class configFile(frozenDict):
                 # none, like the physics: a viscous case picks one
                 "trans": None,
                 "diffusion": "lewis",
+                # what every array and kernel value is: double, or single
+                "precision": "double",
                 # how the species' viscosities mix: wilke or herning
                 "mixingRule": "wilke",
                 "chemistry": False,

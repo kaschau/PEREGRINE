@@ -10,19 +10,19 @@ struct euler {
   haloInOut Q, q, qh;
   blockFaceIn S, qBcVals;
   KOKKOS_INLINE_FUNCTION void operator()() const {
-    const double dplus = S.outward();
+    const fpdtype dplus = S.outward();
 
-    double area, nx, ny, nz;
+    fpdtype area, nx, ny, nz;
     faceNormal(S(0), S(1), S(2), area, nx, ny, nz);
 
     // the velocity extrapolated to the halo, each layer mirrored about the
     // first interior cell, unless reverse flow is detected, then flipped on
     // the face like a slip wall; the face's pressure; everything else neumann
     const auto in = interiorOf(Q);
-    const double uDotn = (in.u * nx + in.v * ny + in.w * nz) * dplus;
-    double u, v, w;
+    const fpdtype uDotn = (in.u * nx + in.v * ny + in.w * nz) * dplus;
+    fpdtype u, v, w;
     if (uDotn > 0.0) {
-      const double rhoinv2 = 1.0 / Q.at(Q.p.g + 1, 0);
+      const fpdtype rhoinv2 = 1.0 / Q.at(Q.p.g + 1, 0);
       u = 2.0 * in.u - Q.at(Q.p.g + 1, 1) * rhoinv2;
       v = 2.0 * in.v - Q.at(Q.p.g + 1, 2) * rhoinv2;
       w = 2.0 * in.w - Q.at(Q.p.g + 1, 3) * rhoinv2;

@@ -2,11 +2,11 @@
 #ifndef __limiterMinmod_H__
 #define __limiterMinmod_H__
 
-#include <Kokkos_Core.hpp>
+#include "abi.hpp"
 
 struct minmod {
-  static constexpr double limit = 1.0;
-  static KOKKOS_INLINE_FUNCTION double phi(double r) {
+  static constexpr fpdtype limit = 1.0;
+  static KOKKOS_INLINE_FUNCTION fpdtype phi(fpdtype r) {
     return fmax(0.0, fmin(1.0, r));
   }
 };

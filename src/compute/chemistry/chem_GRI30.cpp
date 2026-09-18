@@ -74,7 +74,7 @@
 void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
                 const int &indxI /*=0*/, const int &indxJ /*=0*/,
                 const int &indxK /*=0*/, const int &nChemSubSteps /*=1*/,
-                const double &dt /*=1.0*/) {
+                const fpdtype &dt /*=1.0*/) {
 
   // --------------------------------------------------------------|
   // cc range
@@ -84,12 +84,12 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
   Kokkos::parallel_for(
       "Compute chemical source terms", range,
       KOKKOS_LAMBDA(const int i, const int j, const int k) {
-        double T = b.q(i, j, k, 4);
-        double &rho = b.Q(i, j, k, 0);
-        double Y[53];
-        double dYdt[53];
-        double dTdt = 0.0;
-        double tSub = dt / nChemSubSteps;
+        fpdtype T = b.q(i, j, k, 4);
+        fpdtype &rho = b.Q(i, j, k, 0);
+        fpdtype Y[53];
+        fpdtype dYdt[53];
+        fpdtype dTdt = 0.0;
+        fpdtype tSub = dt / nChemSubSteps;
 
         // Set the initial values of Y array
         for (int n = 0; n < 52; n++) {
@@ -100,7 +100,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
 
           // Compute nth species Y
           Y[52] = 1.0;
-          double testSum = 0.0;
+          fpdtype testSum = 0.0;
           for (int n = 0; n < 52; n++) {
             Y[n] = fmax(fmin(Y[n], 1.0), 0.0);
             Y[52] -= Y[n];
@@ -114,7 +114,7 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
           }
 
           // Concentrations
-          double cs[53];
+          fpdtype cs[53];
           for (int n = 0; n <= 52; n++) {
             cs[n] = rho * Y[n] / th.MW(n);
           }
@@ -123,39 +123,39 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
           // Gibbs energy. --------------------------------------------- >
           // ----------------------------------------------------------- >
 
-          double hi[53];
-          double gbs[53];
-          double cp = 0.0;
+          fpdtype hi[53];
+          fpdtype gbs[53];
+          fpdtype cp = 0.0;
           // start scope of precomputed T**
           {
-            double logT = log(T);
-            double Tinv = 1.0 / T;
-            double To2 = T / 2.0;
-            double T2 = pow(T, 2);
-            double T3 = pow(T, 3);
-            double T4 = pow(T, 4);
-            double T2o2 = T2 / 2.0;
-            double T3o3 = T3 / 3.0;
-            double T4o4 = T4 / 4.0;
-            double T2o3 = T2 / 3.0;
-            double T3o4 = T3 / 4.0;
-            double T4o5 = T4 / 5.0;
+            fpdtype logT = log(T);
+            fpdtype Tinv = 1.0 / T;
+            fpdtype To2 = T / 2.0;
+            fpdtype T2 = pow(T, 2);
+            fpdtype T3 = pow(T, 3);
+            fpdtype T4 = pow(T, 4);
+            fpdtype T2o2 = T2 / 2.0;
+            fpdtype T3o3 = T3 / 3.0;
+            fpdtype T4o4 = T4 / 4.0;
+            fpdtype T2o3 = T2 / 3.0;
+            fpdtype T3o4 = T3 / 4.0;
+            fpdtype T4o5 = T4 / 5.0;
 
             for (int n = 0; n <= 52; n++) {
               int m = (T <= th.NASA7(n, 0)) ? 8 : 1;
-              double cps = (th.NASA7(n, m + 0) + th.NASA7(n, m + 1) * T +
-                            th.NASA7(n, m + 2) * T2 + th.NASA7(n, m + 3) * T3 +
-                            th.NASA7(n, m + 4) * T4) *
-                           th.Ru / th.MW(n);
+              fpdtype cps = (th.NASA7(n, m + 0) + th.NASA7(n, m + 1) * T +
+                             th.NASA7(n, m + 2) * T2 + th.NASA7(n, m + 3) * T3 +
+                             th.NASA7(n, m + 4) * T4) *
+                            th.Ru / th.MW(n);
 
               hi[n] = th.NASA7(n, m + 0) + th.NASA7(n, m + 1) * To2 +
                       th.NASA7(n, m + 2) * T2o3 + th.NASA7(n, m + 3) * T3o4 +
                       th.NASA7(n, m + 4) * T4o5 + th.NASA7(n, m + 5) * Tinv;
 
-              double scs = th.NASA7(n, m + 0) * logT + th.NASA7(n, m + 1) * T +
-                           th.NASA7(n, m + 2) * T2o2 +
-                           th.NASA7(n, m + 3) * T3o3 +
-                           th.NASA7(n, m + 4) * T4o4 + th.NASA7(n, m + 6);
+              fpdtype scs = th.NASA7(n, m + 0) * logT + th.NASA7(n, m + 1) * T +
+                            th.NASA7(n, m + 2) * T2o2 +
+                            th.NASA7(n, m + 3) * T3o3 +
+                            th.NASA7(n, m + 4) * T4o4 + th.NASA7(n, m + 6);
 
               cp += cps * Y[n];
               gbs[n] = hi[n] - scs;
@@ -168,21 +168,21 @@ void chem_GRI30(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
           // Forward, backward, net rates of progress. ----------------- >
           // ----------------------------------------------------------- >
 
-          double q[325];
+          fpdtype q[325];
 
           // start scope of these temp vars
           {
-            double cTBC, k_f, dG, K_c;
+            fpdtype cTBC, k_f, dG, K_c;
 
-            double Fcent;
-            double pmod;
-            double Pr, k0;
-            double A, f1, F_pdr;
-            double C, N;
-            double q_f, q_b;
-            double logT = log(T);
-            double Tinv = 1.0 / T;
-            double prefRuT = 101325.0 / (th.Ru * T);
+            fpdtype Fcent;
+            fpdtype pmod;
+            fpdtype Pr, k0;
+            fpdtype A, f1, F_pdr;
+            fpdtype C, N;
+            fpdtype q_f, q_b;
+            fpdtype logT = log(T);
+            fpdtype Tinv = 1.0 / T;
+            fpdtype prefRuT = 101325.0 / (th.Ru * T);
             // Reaction #0
             k_f = 120000000000.00002 * Tinv;
             dG = -2.0 * gbs[2] + gbs[3];

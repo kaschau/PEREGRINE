@@ -18,9 +18,9 @@ constexpr offset N{iMod, jMod, kMod};
 // a cell-center column seen from the face the thread traverses: L is the
 // cell to its left, R the cell to its right, which the face is indexed
 // like; LL and RR one further
-using cellCenterL = column<const double, -N>;
+using cellCenterL = column<const fpdtype, -N>;
 using cellCenterR = cellCenterIn;
-using cellCenterLL = column<const double, -2 * N>;
-using cellCenterRR = column<const double, N>;
+using cellCenterLL = column<const fpdtype, -2 * N>;
+using cellCenterRR = column<const fpdtype, N>;
 
 #endif

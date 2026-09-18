@@ -10,29 +10,29 @@ struct euler {
   haloInOut Q, q, qh;
   blockFaceIn S, qBcVals;
   KOKKOS_INLINE_FUNCTION void operator()() const {
-    double area, nx, ny, nz;
+    fpdtype area, nx, ny, nz;
     faceNormal(S(0), S(1), S(2), area, nx, ny, nz);
 
     // the face's stagnation pressure and temperature, and the interior's
     // Riemann invariant, give the face's velocity and Mach number
-    const double &gamma = qh.R(0);
-    const double &c = qh.R(3);
+    const fpdtype &gamma = qh.R(0);
+    const fpdtype &c = qh.R(3);
     const auto in = interiorOf(Q);
-    const double Un = in.u * nx + in.v * ny + in.w * nz;
-    const double V2 = in.u * in.u + in.v * in.v + in.w * in.w;
-    const double Ht = c * c / (gamma - 1.0) + 0.5 * V2;
-    const double Jm = -Un + 2.0 * c / (gamma - 1.0);
-    const double aq = 1 + 2.0 / (gamma - 1.0);
-    const double bq = -2.0 * Jm;
-    const double cq = (gamma - 1.0) * (0.5 * Jm * Jm - Ht);
-    const double t1 = -bq / (2.0 * aq);
-    const double t2 = sqrt(bq * bq - 4.0 * aq * cq) / (2.0 * aq);
-    const double cb = fmax(t1 + t2, t1 - t2);
-    const double Vb = 2.0 * cb / (gamma - 1.0) - Jm;
-    const double Mb = Vb / cb;
-    const double isentropic = 1.0 + (gamma - 1.0) / 2.0 * Mb * Mb;
-    const double p = qBcVals(0) * pow(isentropic, -gamma / (gamma - 1.0));
-    const double T = qBcVals(4) / isentropic;
+    const fpdtype Un = in.u * nx + in.v * ny + in.w * nz;
+    const fpdtype V2 = in.u * in.u + in.v * in.v + in.w * in.w;
+    const fpdtype Ht = c * c / (gamma - 1.0) + 0.5 * V2;
+    const fpdtype Jm = -Un + 2.0 * c / (gamma - 1.0);
+    const fpdtype aq = 1 + 2.0 / (gamma - 1.0);
+    const fpdtype bq = -2.0 * Jm;
+    const fpdtype cq = (gamma - 1.0) * (0.5 * Jm * Jm - Ht);
+    const fpdtype t1 = -bq / (2.0 * aq);
+    const fpdtype t2 = sqrt(bq * bq - 4.0 * aq * cq) / (2.0 * aq);
+    const fpdtype cb = fmax(t1 + t2, t1 - t2);
+    const fpdtype Vb = 2.0 * cb / (gamma - 1.0) - Jm;
+    const fpdtype Mb = Vb / cb;
+    const fpdtype isentropic = 1.0 + (gamma - 1.0) / 2.0 * Mb * Mb;
+    const fpdtype p = qBcVals(0) * pow(isentropic, -gamma / (gamma - 1.0));
+    const fpdtype T = qBcVals(4) / isentropic;
     haloState(Q, q, qh, p, T, Vb * nx, Vb * ny, Vb * nz, primitiveY(qBcVals));
   }
 };

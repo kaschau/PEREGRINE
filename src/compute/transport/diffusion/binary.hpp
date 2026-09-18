@@ -14,9 +14,9 @@ namespace binary {
 // scalars: a per-species array of sums is indexed by the inner loop, which
 // puts it in memory, and that cost three times the arithmetic it saved. A
 // pure fluid has no diffusion coefficient: every D is zero.
-KOKKOS_INLINE_FUNCTION void coefficients(const mixtureState &s, double *D) {
-  const double p = s.p, u = s.u, MWmix = s.MWmix;
-  const double *X = s.X;
+KOKKOS_INLINE_FUNCTION void coefficients(const mixtureState &s, fpdtype *D) {
+  const fpdtype p = s.p, u = s.u, MWmix = s.MWmix;
+  const fpdtype *X = s.X;
   for (int n = 0; n <= ns - 1; n++) {
     if (X[n] == 1.0) {
       for (int m = 0; m <= ns - 1; m++) {
@@ -25,17 +25,17 @@ KOKKOS_INLINE_FUNCTION void coefficients(const mixtureState &s, double *D) {
       return;
     }
   }
-  const double T_3o2 = s.T * sqrt(s.T);
+  const fpdtype T_3o2 = s.T * sqrt(s.T);
   for (int n = 0; n <= ns - 1; n++) {
-    double sum1 = 0.0, sum2 = 0.0;
+    fpdtype sum1 = 0.0, sum2 = 0.0;
     for (int m = 0; m <= ns - 1; m++) {
       if (m == n) {
         continue;
       }
-      double Dnm = 0.0;
+      fpdtype Dnm = 0.0;
       for (int k = dijTerms - 1; k >= 0; k--)
         Dnm = Dnm * u + dij(n, m, k);
-      const double Dinv = 1.0 / (Dnm * T_3o2);
+      const fpdtype Dinv = 1.0 / (Dnm * T_3o2);
       sum1 += X[m] * Dinv;
       sum2 += X[m] * MW(m) * Dinv;
     }

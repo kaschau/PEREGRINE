@@ -209,6 +209,11 @@ class CudaToolchain(BaseToolchain):
 
     device = "CUDA"
 
+    def deviceFlags(self):
+        # a host function called from device code is an error, not a body
+        # nvcc silently drops
+        return ["--Werror", "cross-execution-space-call"]
+
     def deviceLink(self):
         nvcc = shutil.which("nvcc")
         if nvcc is None:

@@ -123,7 +123,7 @@ class dualTime(BaseIntegrator):
                 solver.consistify()
             # the residual is only worth its reduction when it will be reported
             if self.reportDue:
-                resid = np.zeros((2, solver.ne))
+                resid = np.zeros((2, solver.ne), solver.backend.fpdtype)
                 solver.launch("residual", "interior", rMax=resid[0], rSum=resid[1])
                 comm.Allreduce(MPI.IN_PLACE, resid[1, :], op=MPI.SUM)
                 self.residuals.append(np.sqrt(resid[1, :]))

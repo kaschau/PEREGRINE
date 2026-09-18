@@ -26,7 +26,9 @@ class BaseKernel:
     integers, the tiling as given, and keywords for the rest; the species
     data is baked in by the jit."""
 
-    scalars = {"int": ctypes.c_int, "double": ctypes.c_double, "bool": ctypes.c_bool}
+    # a floating point value's ctype is the case's, settled at compile
+    scalars = {"int": ctypes.c_int, "fpdtype": None, "bool": ctypes.c_bool}
+    fpdtypes = {ctypes.c_double: np.float64, ctypes.c_float: np.float32}
     prototype = re.compile(r"PG_ABI\s+(\w+)\s+(pg\w+)\s*\(([^)]*)\)")
     stencilDeclaration = re.compile(r"PG_STENCIL\((\d+)\)")
     rangeDeclaration = re.compile(r"PG_RANGE\(([^)]*)\)")
@@ -89,11 +91,11 @@ class BaseKernel:
         self.items, self.components = (
             self.itemsOf(declared[0]) if declared else (None, 1)
         )
-        self.argtypes = [
-            self.scalars.get(kind, ctypes.c_void_p) for kind, _ in self.params
-        ]
-        # the compiled function, once the jit has handed it over
+        # the compiled function, once the jit has handed it over, with the
+        # argument types and struct layout settled for the case's precision
         self.function = None
+        self.argtypes = None
+        self.fpctype = None
         # how each parameter is found at a call
         self.resolvers = [self._resolver(kind, pname) for kind, pname in self.params]
 
@@ -115,6 +117,24 @@ class BaseKernel:
         if isinstance(self.components, str):
             _, _, less = self.components.partition("-")
             self.components = ne - (int(less) if less else 0)
+
+    def resolveFpdtype(self, fpctype):
+        """Settles every floating point value of the call for the case's
+        precision, :fpctype: its ctype: the scalar arguments' types, and
+        each struct argument's layout."""
+        self.fpctype = fpctype
+        scalars = {**self.scalars, "fpdtype": fpctype}
+        self.argtypes = [scalars.get(kind, ctypes.c_void_p) for kind, _ in self.params]
+        for pname, (name, members) in self.structs.items():
+            fields = [
+                (f"m{i}", scalars.get(head, ctype))
+                for i, (_, _, ctype, head) in enumerate(members)
+            ]
+            argument = type(name, (ctypes.Structure,), {"_fields_": fields})
+            self.structs[pname] = (
+                argument,
+                [(k, n, f, c) for (k, n, c, _), (f, _) in zip(members, fields)],
+            )
 
     @property
     def tileKind(self):
@@ -244,19 +264,12 @@ class BaseKernel:
                 parsed.append(("tiling", pname))
             elif ptype == "int*":
                 parsed.append(("ints", pname))
-            elif ptype == "double*":
-                parsed.append(("doubles", pname))
+            elif ptype == "fpdtype*":
+                parsed.append(("fpdtypes", pname))
             elif ptype.endswith("*"):
-                # any other pointer is the kernel's own struct, by reference
-                members = self.members(ptype[:-1], texts)
-                fields = [
-                    (f"m{i}", ctype) for i, (_, _, ctype, _) in enumerate(members)
-                ]
-                argument = type(ptype[:-1], (ctypes.Structure,), {"_fields_": fields})
-                structs[pname] = (
-                    argument,
-                    [(k, n, f, c) for (k, n, c, _), (f, _) in zip(members, fields)],
-                )
+                # any other pointer is the kernel's own struct, by reference:
+                # its members, laid out once the precision is settled
+                structs[pname] = (ptype[:-1], self.members(ptype[:-1], texts))
                 parsed.append(("struct", pname))
             else:
                 parsed.append((ptype, pname))
@@ -291,8 +304,8 @@ class BaseKernel:
             ),
             "view": lambda value, table, keep: table.arrayInfos(value),
             "ints": lambda value, table, keep: self._hostArray(value, np.int32, keep),
-            "doubles": lambda value, table, keep: self._hostArray(
-                value, np.float64, keep
+            "fpdtypes": lambda value, table, keep: self._ownArray(
+                value, self.fpdtypes[self.fpctype], keep
             ),
         }
         find = fromTable.get(kind, lambda *_: self._missing(name))
@@ -329,6 +342,18 @@ class BaseKernel:
         return value.ctypes.data
 
     @staticmethod
+    def _ownArray(value, dtype, keep):
+        # the kernel writes into it, so it has to be the caller's own
+        # array, in the case's precision
+        value = np.asarray(value)
+        if value.dtype != dtype or not value.flags.c_contiguous:
+            raise TypeError(
+                f"an array a kernel fills is the caller's, {np.dtype(dtype).name} and contiguous"
+            )
+        keep.append(value)
+        return value.ctypes.data
+
+    @staticmethod
     def _missing(name):
         raise TypeError(f"a call needs {name}")
 
@@ -338,6 +363,8 @@ class BaseKernel:
         tiling of nothing launches nothing."""
         if self.function is None:
             raise RuntimeError(f"{self.__name__} is not compiled")
+        if self.fpctype is None:
+            raise RuntimeError(f"{self.__name__} has no precision settled")
         if tiling.tileKind != self.tileKind:
             raise TypeError(
                 f"{self.__name__} runs over {self.tileKind}, this tiling is of {tiling.tileKind}"

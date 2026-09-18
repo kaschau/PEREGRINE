@@ -10,9 +10,9 @@
 
 // the mixture conductivity: the mean of the mole-weighted series and
 // parallel sums of the species'
-KOKKOS_INLINE_FUNCTION double mixtureConductivity(const double *X,
-                                                  const double *kappaSp) {
-  double series = 0.0, parallel = 0.0;
+KOKKOS_INLINE_FUNCTION fpdtype mixtureConductivity(const fpdtype *X,
+                                                   const fpdtype *kappaSp) {
+  fpdtype series = 0.0, parallel = 0.0;
   for (int n = 0; n <= ns - 1; n++) {
     series += X[n] * kappaSp[n];
     parallel += X[n] / kappaSp[n];
@@ -23,8 +23,8 @@ KOKKOS_INLINE_FUNCTION double mixtureConductivity(const double *X,
 // what a transport kernel has in hand when the species diffusion piece
 // runs: the state, the mole fractions, and the mixture it just made
 struct mixtureState {
-  double p, T, u, rhoinv, cp, kappa, MWmix;
-  const double *X;
+  fpdtype p, T, u, rhoinv, cp, kappa, MWmix;
+  const fpdtype *X;
 };
 
 #endif

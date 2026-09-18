@@ -25,98 +25,99 @@ struct chungDenseGas {
   cellCenterIn Q, q, qh;
   cellCenterOut qt;
   KOKKOS_INLINE_FUNCTION void operator()() const {
-    const double &T = q(1);
-    double X[ns];
-    double mu_sp[ns];
-    double kappa_sp[ns];
+    const fpdtype &T = q(1);
+    fpdtype X[ns];
+    fpdtype mu_sp[ns];
+    fpdtype kappa_sp[ns];
 
     // the mole fractions off the conserved state, the last mass fraction
     // kept non-negative
-    const double rhoinv = 1.0 / Q(0);
+    const fpdtype rhoinv = 1.0 / Q(0);
     const auto Yof = massFractions(Q, rhoinv);
     const auto Y = [&](const int n) {
       return n == ns - 1 ? fmax(0.0, Yof(n)) : Yof(n);
     };
-    const double MWmix = moleFractions(Y, X);
+    const fpdtype MWmix = moleFractions(Y, X);
 
     for (int n = 0; n <= ns - 1; n++) {
-      const double Acoeff = 1.16145;
-      const double Bcoeff = 0.14874;
-      const double Ccoeff = 0.52487;
-      const double Dcoeff = 0.77320;
-      const double Ecoeff = 2.16178;
-      const double Fcoeff = 2.43787;
+      const fpdtype Acoeff = 1.16145;
+      const fpdtype Bcoeff = 0.14874;
+      const fpdtype Ccoeff = 0.52487;
+      const fpdtype Dcoeff = 0.77320;
+      const fpdtype Ecoeff = 2.16178;
+      const fpdtype Fcoeff = 2.43787;
 
       // In the Chung paper, Vcrit is in cm^3/mol, but we store Vcrit
       // in m^3/kg
-      double Vc = Vcrit(n) * MW(n) * 1.0e3;
+      fpdtype Vc = Vcrit(n) * MW(n) * 1.0e3;
 
       // Dense gas viscosity
-      double Tr = T / Tcrit(n);
-      double Tstar = 1.2593 * Tr;
-      double Omegav = Acoeff * pow(Tstar, -Bcoeff) +
-                      Ccoeff * exp(-Dcoeff * Tstar) +
-                      Ecoeff * exp(-Fcoeff * Tstar);
+      fpdtype Tr = T / Tcrit(n);
+      fpdtype Tstar = 1.2593 * Tr;
+      fpdtype Omegav = Acoeff * pow(Tstar, -Bcoeff) +
+                       Ccoeff * exp(-Dcoeff * Tstar) +
+                       Ecoeff * exp(-Fcoeff * Tstar);
 
-      double Fc = 1.0 - 0.2756 * acentric(n) +
-                  0.059035 * pow(redDipole(n), 4.0); // + kij??
+      fpdtype Fc = 1.0 - 0.2756 * acentric(n) +
+                   0.059035 * pow(redDipole(n), 4.0); // + kij??
 
       // Viscosity for dense fluids
-      const double &A1 = chungA(n, 0);
-      const double &A2 = chungA(n, 1);
-      const double &A3 = chungA(n, 2);
-      const double &A4 = chungA(n, 3);
-      const double &A5 = chungA(n, 4);
-      const double &A6 = chungA(n, 5);
-      const double &A7 = chungA(n, 6);
-      const double &A8 = chungA(n, 7);
-      const double &A9 = chungA(n, 8);
-      const double &A10 = chungA(n, 9);
+      const fpdtype &A1 = chungA(n, 0);
+      const fpdtype &A2 = chungA(n, 1);
+      const fpdtype &A3 = chungA(n, 2);
+      const fpdtype &A4 = chungA(n, 3);
+      const fpdtype &A5 = chungA(n, 4);
+      const fpdtype &A6 = chungA(n, 5);
+      const fpdtype &A7 = chungA(n, 6);
+      const fpdtype &A8 = chungA(n, 7);
+      const fpdtype &A9 = chungA(n, 8);
+      const fpdtype &A10 = chungA(n, 9);
 
-      double rhocm = Q(0) * MWinv(n) * 1e-3;
-      double Yy = rhocm * Vc / 6.0;
-      double G1 = (1.0 - 0.5 * Yy) / pow(1.0 - Yy, 3.0);
-      double G2 =
+      fpdtype rhocm = Q(0) * MWinv(n) * 1e-3;
+      fpdtype Yy = rhocm * Vc / 6.0;
+      fpdtype G1 = (1.0 - 0.5 * Yy) / pow(1.0 - Yy, 3.0);
+      fpdtype G2 =
           (A1 * (1.0 - exp(-A4 * Yy)) / Yy + A2 * G1 * exp(A5 * Yy) + A3 * G1) /
           (A1 * A4 + A2 + A3);
 
-      double etaStarStar = A7 * pow(Yy, 2.0) * G2 *
-                           exp(A8 + A9 / Tstar + A10 * pow(Tstar, -2.0));
-      double etaStar = sqrt(Tstar) / Omegav * (Fc / G2 + A6 * Yy) + etaStarStar;
+      fpdtype etaStarStar = A7 * pow(Yy, 2.0) * G2 *
+                            exp(A8 + A9 / Tstar + A10 * pow(Tstar, -2.0));
+      fpdtype etaStar =
+          sqrt(Tstar) / Omegav * (Fc / G2 + A6 * Yy) + etaStarStar;
 
       // Compute final viscosity, convert to SI units
       mu_sp[n] =
           etaStar * 36.344 * sqrt(MW(n) * Tcrit(n)) / pow(Vc, 2.0 / 3.0) * 1e-7;
 
       // Dilute gas thermal conductivity
-      double alpha = qh(1) * 0.001 * MW(n) / qh(0) / (Ru / 1000.0) - 1.5;
-      double beta =
+      fpdtype alpha = qh(1) * 0.001 * MW(n) / qh(0) / (Ru / 1000.0) - 1.5;
+      fpdtype beta =
           0.7862 - 0.7109 * acentric(n) + 1.3168 * pow(acentric(n), 2.0);
-      double eta0 =
+      fpdtype eta0 =
           4.0785e-5 * sqrt(MW(n) * T) / (pow(Vc, 2.0 / 3.0) * Omegav) * Fc;
-      double Z = 2.0 + 10.5 * pow(Tr, 2.0);
-      double Psi =
+      fpdtype Z = 2.0 + 10.5 * pow(Tr, 2.0);
+      fpdtype Psi =
           1.0 +
           alpha * ((0.215 + 0.28288 * alpha - 1.061 * beta + 0.26665 * Z) /
                    (0.6366 + beta * Z + 1.061 * alpha * beta));
-      double lambda0 = 7.452 * eta0 * MWinv(n) * Psi;
+      fpdtype lambda0 = 7.452 * eta0 * MWinv(n) * Psi;
 
       // Dilute thermal conductivity, in cal/(cm.s.K) so need to
       // convert
-      const double &B1 = chungB(n, 0);
-      const double &B2 = chungB(n, 1);
-      const double &B3 = chungB(n, 2);
-      const double &B4 = chungB(n, 3);
-      const double &B5 = chungB(n, 4);
-      const double &B6 = chungB(n, 5);
-      const double &B7 = chungB(n, 6);
+      const fpdtype &B1 = chungB(n, 0);
+      const fpdtype &B2 = chungB(n, 1);
+      const fpdtype &B3 = chungB(n, 2);
+      const fpdtype &B4 = chungB(n, 3);
+      const fpdtype &B5 = chungB(n, 4);
+      const fpdtype &B6 = chungB(n, 5);
+      const fpdtype &B7 = chungB(n, 6);
 
-      double H2 =
+      fpdtype H2 =
           (B1 * (1.0 - exp(-B4 * Yy)) / Yy + B2 * G1 * exp(B5 * Yy) + B3 * G1) /
           (B1 * B4 + B2 + B3);
 
-      double lambdak = lambda0 * (1.0 / H2 + B6 * Yy);
-      double lambdap =
+      fpdtype lambdak = lambda0 * (1.0 / H2 + B6 * Yy);
+      fpdtype lambdap =
           (3.039e-4 * sqrt(Tcrit(n) * MWinv(n)) / pow(Vc, 2.0 / 3.0)) * B7 *
           pow(Yy, 2.0) * H2 * sqrt(Tr);
 
@@ -128,10 +129,10 @@ struct chungDenseGas {
 
     // the mixture: Wilke's rule, the series-parallel mean
     qt(0) = mixingRule::viscosity(X, mu_sp);
-    const double kappa = mixtureConductivity(X, kappa_sp);
+    const fpdtype kappa = mixtureConductivity(X, kappa_sp);
     qt(1) = kappa;
     // the species diffusion coefficients from the case's diffusion model
-    double D[ns];
+    fpdtype D[ns];
     diffusion::coefficients({q(0), T, log(T), rhoinv, qh(1), kappa, MWmix, X},
                             D);
     for (int n = 0; n <= ns - 1; n++) {

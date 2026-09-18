@@ -9,7 +9,7 @@ struct dQdt {
   cellCenterInOut dQ;
   caseIn dt;
   KOKKOS_INLINE_FUNCTION void operator()(const int l) const {
-    // the real time derivative, a source in pseudo time
+    // the fpdtype time derivative, a source in pseudo time
     dQ(l) -= (3.0 * Q(l) - 4.0 * Qn(l) + Qnm1(l)) / (2 * dt());
   }
 };

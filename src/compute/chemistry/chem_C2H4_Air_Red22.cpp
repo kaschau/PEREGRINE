@@ -47,7 +47,7 @@ void chem_C2H4_Air_Red22(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
                          const int &indxI /*=0*/, const int &indxJ /*=0*/,
                          const int &indxK /*=0*/,
                          const int &nChemSubSteps /*=1*/,
-                         const double &dt /*=1.0*/) {
+                         const fpdtype &dt /*=1.0*/) {
 
   // --------------------------------------------------------------|
   // cc range
@@ -57,14 +57,14 @@ void chem_C2H4_Air_Red22(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
   Kokkos::parallel_for(
       "Compute chemical source terms", range,
       KOKKOS_LAMBDA(const int i, const int j, const int k) {
-        double p = b.q(i, j, k, 0) * 10.0; // convert to dynes/cm^2
-        double T = b.q(i, j, k, 4);
-        double &rho = b.Q(i, j, k, 0);
-        double Y[22];
-        double dYdt[22];
+        fpdtype p = b.q(i, j, k, 0) * 10.0; // convert to dynes/cm^2
+        fpdtype T = b.q(i, j, k, 4);
+        fpdtype &rho = b.Q(i, j, k, 0);
+        fpdtype Y[22];
+        fpdtype dYdt[22];
 
-        double tSub = dt / nChemSubSteps;
-        double dTdt = 0.0;
+        fpdtype tSub = dt / nChemSubSteps;
+        fpdtype dTdt = 0.0;
 
         // Set the initial values of Y array
         for (int n = 0; n < 21; n++) {
@@ -75,7 +75,7 @@ void chem_C2H4_Air_Red22(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
 
           // Compute nth species Y
           Y[21] = 1.0;
-          double testSum = 0.0;
+          fpdtype testSum = 0.0;
           for (int n = 0; n < 21; n++) {
             Y[n] = fmax(fmin(Y[n], 1.0), 0.0);
             Y[21] -= Y[n];
@@ -91,7 +91,7 @@ void chem_C2H4_Air_Red22(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
           }
 
           // Concentrations
-          double cs[22];
+          fpdtype cs[22];
           cs[0] = Y[0] / 2.01593995e0;
           cs[1] = Y[1] / 1.00796998e0;
           cs[2] = Y[2] / 1.59994001e1;
@@ -115,7 +115,7 @@ void chem_C2H4_Air_Red22(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
           cs[20] = Y[20] / 4.20812709e1;
           cs[21] = Y[21] / 2.80133991e1;
 
-          double SUM = 0.0;
+          fpdtype SUM = 0.0;
           for (int n = 0; n < 22; n++) {
             SUM += cs[n];
           }
@@ -123,32 +123,32 @@ void chem_C2H4_Air_Red22(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
           for (int n = 0; n < 22; n++) {
             cs[n] *= SUM;
           }
-          double CTOT = 0.0;
+          fpdtype CTOT = 0.0;
           for (int n = 0; n < 22; n++) {
             CTOT += cs[n];
           }
-          double cp = 0.0;
-          double hi[22];
-          double logT = log(T);
-          double Tinv = 1.0 / T;
-          double EG[31];
+          fpdtype cp = 0.0;
+          fpdtype hi[22];
+          fpdtype logT = log(T);
+          fpdtype Tinv = 1.0 / T;
+          fpdtype EG[31];
           // start scope of precomputed T**
           {
-            double TN1 = logT - 1.0;
-            double To2 = T / 2.0;
-            double T2 = T * T;
-            double T3 = T2 * T;
-            double T4 = T3 * T;
-            double T2o3 = T2 / 3.0;
-            double T3o4 = T3 / 4.0;
-            double T4o5 = T4 / 5.0;
+            fpdtype TN1 = logT - 1.0;
+            fpdtype To2 = T / 2.0;
+            fpdtype T2 = T * T;
+            fpdtype T3 = T2 * T;
+            fpdtype T4 = T3 * T;
+            fpdtype T2o3 = T2 / 3.0;
+            fpdtype T3o4 = T3 / 4.0;
+            fpdtype T4o5 = T4 / 5.0;
 
             for (int n = 0; n <= 21; n++) {
               int m = (T <= th.NASA7(n, 0)) ? 8 : 1;
-              double cps = (th.NASA7(n, m + 0) + th.NASA7(n, m + 1) * T +
-                            th.NASA7(n, m + 2) * T2 + th.NASA7(n, m + 3) * T3 +
-                            th.NASA7(n, m + 4) * T4) *
-                           th.Ru / th.MW(n);
+              fpdtype cps = (th.NASA7(n, m + 0) + th.NASA7(n, m + 1) * T +
+                             th.NASA7(n, m + 2) * T2 + th.NASA7(n, m + 3) * T3 +
+                             th.NASA7(n, m + 4) * T4) *
+                            th.Ru / th.MW(n);
               hi[n] = th.NASA7(n, m + 0) + th.NASA7(n, m + 1) * To2 +
                       th.NASA7(n, m + 2) * T2o3 + th.NASA7(n, m + 3) * T3o4 +
                       th.NASA7(n, m + 4) * T4o5 + th.NASA7(n, m + 5) * Tinv;
@@ -157,7 +157,7 @@ void chem_C2H4_Air_Red22(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             // ends scope of precomputed T**
 
             if (T > 1000.0) {
-              double SMH;
+              fpdtype SMH;
               SMH = -3.20502331e0 + 9.50158922e2 * Tinv + 3.3372792e0 * TN1 -
                     2.47012366e-5 * T + 8.32427963e-8 * T2 -
                     1.49638662e-11 * T3 + 1.00127688e-15 * T4;
@@ -283,7 +283,7 @@ void chem_C2H4_Air_Red22(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
                     6.32402933e-11 * T3 - 1.94313595e-15 * T4;
               EG[30] = exp(SMH);
             } else {
-              double SMH;
+              fpdtype SMH;
               SMH = 6.83010238e-1 + 9.17935173e2 * Tinv + 2.34433112e0 * TN1 +
                     3.99026037e-3 * T - 3.2463585e-6 * T2 + 1.67976745e-9 * T3 -
                     3.68805881e-13 * T4;
@@ -411,12 +411,12 @@ void chem_C2H4_Air_Red22(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             }
           }
 
-          double RF[206], RB[206];
+          fpdtype RF[206], RB[206];
 
           { // scope start
-            double EQK;
+            fpdtype EQK;
             // HACK: IS THIS RIGHT FOR PATM?
-            double prefRuT = 1013250.0 / (8.31451e7 * T);
+            fpdtype prefRuT = 1013250.0 / (8.31451e7 * T);
 
             RF[0] = exp(3.20498617e1 - 7.25286183e3 * Tinv);
             EQK = EG[2] * EG[4] / EG[1] / EG[3];
@@ -1039,8 +1039,8 @@ void chem_C2H4_Air_Red22(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
           } // end scope
 
           { // start scope
-            double CTB, PR, PCOR, PRLOG, RKLOW;
-            double FCENT, XN, CPRLOG, FLOG, FCLOG, FC;
+            fpdtype CTB, PR, PCOR, PRLOG, RKLOW;
+            fpdtype FCENT, XN, CPRLOG, FLOG, FCLOG, FC;
             RF[0] = RF[0] * cs[1] * cs[3];
             RB[0] = RB[0] * cs[2] * cs[4];
             RF[1] = RF[1] * cs[0] * cs[2];
@@ -1787,7 +1787,7 @@ void chem_C2H4_Air_Red22(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
           } // end scope
 
           { // start scope
-            double DEN;
+            fpdtype DEN;
             RF[56] = 0.0;
             RF[57] = 0.0;
             RF[142] = 0.0;
@@ -1797,117 +1797,119 @@ void chem_C2H4_Air_Red22(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             //    CH
             DEN = RF[33] + RF[34] + RF[35] + RF[36] + RF[37] + RF[38] + RF[39] +
                   RF[76] + RF[86] + RF[104] + RF[110] + RB[53] + RB[59];
-            double A1_0 = (RB[33] + RB[36] + RB[38] + RB[56] + RB[76] +
-                           RB[104] + RB[110]) /
-                          DEN;
-            double A1_2 = (RB[35] + RF[53]) / DEN;
-            double A1_3 = (RF[59]) / DEN;
-            double A1_4 = (RB[34] + RB[37] + RB[39]) / DEN;
-            double A1_7 = (RB[86]) / DEN;
+            fpdtype A1_0 = (RB[33] + RB[36] + RB[38] + RB[56] + RB[76] +
+                            RB[104] + RB[110]) /
+                           DEN;
+            fpdtype A1_2 = (RB[35] + RF[53]) / DEN;
+            fpdtype A1_3 = (RF[59]) / DEN;
+            fpdtype A1_4 = (RB[34] + RB[37] + RB[39]) / DEN;
+            fpdtype A1_7 = (RB[86]) / DEN;
             //   CH2
             DEN = RF[47] + RF[48] + RF[49] + RF[50] + RF[51] + RF[52] + RF[53] +
                   RF[54] + RF[55] + RF[90] + RF[105] + RF[111] + RF[164] +
                   RB[35] + RB[58] + RB[66] + RB[67] + RB[68] + RB[79] +
                   RB[116] + RB[122] + RB[124] + RB[129] + RB[159];
-            double A2_0 = (RB[47] + RB[48] + RB[51] + RB[52] + RB[54] + RB[55] +
-                           RB[56] + RB[57] + RB[57] + RF[79] + RB[90] +
-                           RB[105] + RF[116] + RF[129] + RF[159] + RB[164]) /
-                          DEN;
-            double A2_1 = (RF[35] + RB[53]) / DEN;
-            double A2_3 = (RF[58] + RF[66] + RF[67] + RF[68]) / DEN;
-            double A2_4 = (RB[49] + RB[50]) / DEN;
-            double A2_6 = (RF[122] + RF[124]) / DEN;
-            double A2_7 = (RB[111]) / DEN;
+            fpdtype A2_0 =
+                (RB[47] + RB[48] + RB[51] + RB[52] + RB[54] + RB[55] + RB[56] +
+                 RB[57] + RB[57] + RF[79] + RB[90] + RB[105] + RF[116] +
+                 RF[129] + RF[159] + RB[164]) /
+                DEN;
+            fpdtype A2_1 = (RF[35] + RB[53]) / DEN;
+            fpdtype A2_3 = (RF[58] + RF[66] + RF[67] + RF[68]) / DEN;
+            fpdtype A2_4 = (RB[49] + RB[50]) / DEN;
+            fpdtype A2_6 = (RF[122] + RF[124]) / DEN;
+            fpdtype A2_7 = (RB[111]) / DEN;
             //   CH2*
             DEN = RF[58] + RF[59] + RF[60] + RF[61] + RF[62] + RF[63] + RF[64] +
                   RF[65] + RF[66] + RF[67] + RF[68] + RF[69] + RF[91] +
                   RF[106] + RF[165] + RF[166] + RF[182] + RB[80] + RB[97] +
                   RB[107];
-            double A3_0 = (RB[60] + RB[62] + RB[63] + RB[64] + RB[65] + RB[69] +
-                           RF[80] + RB[91] + RB[106] + RF[107] + RB[166]) /
-                          DEN;
+            fpdtype A3_0 =
+                (RB[60] + RB[62] + RB[63] + RB[64] + RB[65] + RB[69] + RF[80] +
+                 RB[91] + RB[106] + RF[107] + RB[166]) /
+                DEN;
 
-            double A3_1 = (RB[59]) / DEN;
-            double A3_2 = (RB[58] + RB[66] + RB[67] + RB[68]) / DEN;
-            double A3_4 = (RB[61]) / DEN;
-            double A3_5 = (RF[97]) / DEN;
-            double A3_6 = (RB[165]) / DEN;
-            double A3_8 = (RB[182]) / DEN;
+            fpdtype A3_1 = (RB[59]) / DEN;
+            fpdtype A3_2 = (RB[58] + RB[66] + RB[67] + RB[68]) / DEN;
+            fpdtype A3_4 = (RB[61]) / DEN;
+            fpdtype A3_5 = (RF[97]) / DEN;
+            fpdtype A3_6 = (RB[165]) / DEN;
+            fpdtype A3_8 = (RB[182]) / DEN;
             //   HCO
             DEN = RF[40] + RF[41] + RF[42] + RF[43] + RF[44] + RF[45] + RF[46] +
                   RF[87] + RF[88] + RF[119] + RF[163] + RF[188] + RB[34] +
                   RB[37] + RB[39] + RB[49] + RB[50] + RB[61] + RB[71] + RB[72] +
                   RB[73] + RB[74] + RB[75] + RB[89] + RB[139] + RB[148] +
                   RB[158];
-            double A4_0 =
+            fpdtype A4_0 =
                 (RB[40] + RB[41] + RB[42] + RB[43] + RB[44] + RB[45] + RB[46] +
                  RF[71] + RF[72] + RF[73] + RF[74] + RF[75] + RB[87] + RB[88] +
                  RF[89] + RB[142] + RF[158] + RB[178] + RB[188] + RF[193]) /
                 DEN;
-            double A4_1 = (RF[34] + RF[37] + RF[39]) / DEN;
-            double A4_2 = (RF[49] + RF[50]) / DEN;
-            double A4_3 = (RF[61]) / DEN;
-            double A4_7 = (RB[119] + RF[139]) / DEN;
-            double A4_8 = (RB[163]) / DEN;
-            double A4_9 = (RF[148]) / DEN;
+            fpdtype A4_1 = (RF[34] + RF[37] + RF[39]) / DEN;
+            fpdtype A4_2 = (RF[49] + RF[50]) / DEN;
+            fpdtype A4_3 = (RF[61]) / DEN;
+            fpdtype A4_7 = (RB[119] + RF[139]) / DEN;
+            fpdtype A4_8 = (RB[163]) / DEN;
+            fpdtype A4_9 = (RF[148]) / DEN;
             //   CH3O
             DEN = RF[95] + RF[96] + RF[97] + RF[98] + RF[99] + RF[100] +
                   RB[70] + RB[81] + RB[84];
-            double A5_0 = (RF[70] + RF[81] + RF[84] + RB[95] + RB[96] + RB[98] +
-                           RB[99] + RB[100]) /
-                          DEN;
-            double A5_3 = (RB[97]) / DEN;
+            fpdtype A5_0 = (RF[70] + RF[81] + RF[84] + RB[95] + RB[96] +
+                            RB[98] + RB[99] + RB[100]) /
+                           DEN;
+            fpdtype A5_3 = (RB[97]) / DEN;
             //   H2CC
             DEN = RF[121] + RF[122] + RF[123] + RF[124] + RB[113] + RB[133] +
                   RB[154] + RB[165] + RB[185];
-            double A6_0 =
+            fpdtype A6_0 =
                 (RF[113] + RB[121] + RB[123] + RF[154] + RF[185]) / DEN;
-            double A6_2 = (RB[122] + RB[124]) / DEN;
-            double A6_3 = (RF[165]) / DEN;
-            double A6_7 = (RF[133]) / DEN;
+            fpdtype A6_2 = (RB[122] + RB[124]) / DEN;
+            fpdtype A6_3 = (RF[165]) / DEN;
+            fpdtype A6_7 = (RF[133]) / DEN;
             //   C2H3
             DEN = RF[114] + RF[131] + RF[132] + RF[133] + RF[134] + RF[135] +
                   RF[136] + RF[137] + RF[138] + RF[139] + RF[140] + RF[141] +
                   RF[143] + RF[144] + RF[145] + RB[86] + RB[111] + RB[119] +
                   RB[156] + RB[157] + RB[160] + RB[161] + RB[167] + RB[187];
-            double A7_0 = (RB[114] + RB[131] + RB[132] + RB[134] + RB[135] +
-                           RB[136] + RB[137] + RB[141] + RB[142] + RB[143] +
-                           RB[144] + RB[145] + RF[156] + RF[157] + RF[160] +
-                           RF[161] + RF[167] + RF[187] + RB[205]) /
-                          DEN;
-            double A7_1 = (RF[86]) / DEN;
-            double A7_2 = (RF[111]) / DEN;
-            double A7_4 = (RF[119] + RB[139]) / DEN;
-            double A7_6 = (RB[133]) / DEN;
-            double A7_9 = (RB[138] + RB[140]) / DEN;
+            fpdtype A7_0 = (RB[114] + RB[131] + RB[132] + RB[134] + RB[135] +
+                            RB[136] + RB[137] + RB[141] + RB[142] + RB[143] +
+                            RB[144] + RB[145] + RF[156] + RF[157] + RF[160] +
+                            RF[161] + RF[167] + RF[187] + RB[205]) /
+                           DEN;
+            fpdtype A7_1 = (RF[86]) / DEN;
+            fpdtype A7_2 = (RF[111]) / DEN;
+            fpdtype A7_4 = (RF[119] + RB[139]) / DEN;
+            fpdtype A7_6 = (RB[133]) / DEN;
+            fpdtype A7_9 = (RB[138] + RB[140]) / DEN;
             //   C2H5
             DEN = RF[169] + RF[170] + RF[171] + RF[172] + RF[173] + RF[174] +
                   RF[175] + RF[176] + RF[177] + RB[93] + RB[155] + RB[163] +
                   RB[179] + RB[180] + RB[181] + RB[182] + RB[183] + RB[198] +
                   RB[200] + RB[203];
-            double A8_0 =
+            fpdtype A8_0 =
                 (RF[93] + RF[155] + RB[169] + RB[170] + RB[171] + RB[172] +
                  RB[173] + RB[174] + RB[175] + RB[176] + RB[177] + RB[178] +
                  RF[179] + RF[180] + RF[181] + RF[183] + RF[193] + RB[205]) /
                 DEN;
-            double A8_3 = (RF[182]) / DEN;
-            double A8_4 = (RF[163]) / DEN;
-            double A8_10 = (RF[198] + RF[200] + RF[203]) / DEN;
+            fpdtype A8_3 = (RF[182]) / DEN;
+            fpdtype A8_4 = (RF[163]) / DEN;
+            fpdtype A8_10 = (RF[198] + RF[200] + RF[203]) / DEN;
             //   CH2CHO
             DEN = RF[146] + RF[147] + RF[148] + RF[149] + RF[150] + RF[151] +
                   RF[152] + RF[153] + RB[125] + RB[138] + RB[140];
-            double A9_0 = (RF[125] + RB[146] + RB[147] + RB[149] + RB[150] +
-                           RB[151] + RB[152] + RB[153]) /
-                          DEN;
-            double A9_4 = (RB[148]) / DEN;
-            double A9_7 = (RF[138] + RF[140]) / DEN;
+            fpdtype A9_0 = (RF[125] + RB[146] + RB[147] + RB[149] + RB[150] +
+                            RB[151] + RB[152] + RB[153]) /
+                           DEN;
+            fpdtype A9_4 = (RB[148]) / DEN;
+            fpdtype A9_7 = (RF[138] + RF[140]) / DEN;
             //   nC3H7
             DEN = RF[198] + RF[199] + RF[200] + RF[201] + RF[202] + RF[203] +
                   RF[204] + RB[168] + RB[189];
-            double A10_0 =
+            fpdtype A10_0 =
                 (RF[168] + RF[189] + RB[199] + RB[201] + RB[202] + RB[204]) /
                 DEN;
-            double A10_8 = (RB[198] + RB[200] + RB[203]) / DEN;
+            fpdtype A10_8 = (RB[198] + RB[200] + RB[203]) / DEN;
             //
 
             A3_0 = A3_0 + A3_5 * A5_0;
@@ -1957,7 +1959,7 @@ void chem_C2H4_Air_Red22(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             A4_2 = A4_2 / DEN;
             A4_1 = A4_1 / DEN;
             A3_0 = A3_0 + A3_6 * A6_0;
-            double A3_7 = A3_6 * A6_7;
+            fpdtype A3_7 = A3_6 * A6_7;
             A3_2 = A3_2 + A3_6 * A6_2;
             DEN = 1.0 - A3_6 * A6_3;
             A3_0 = A3_0 / DEN;
@@ -1966,7 +1968,7 @@ void chem_C2H4_Air_Red22(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             A3_2 = A3_2 / DEN;
             A3_1 = A3_1 / DEN;
             A7_0 = A7_0 + A7_6 * A6_0;
-            double A7_3 = A7_6 * A6_3;
+            fpdtype A7_3 = A7_6 * A6_3;
             A7_2 = A7_2 + A7_6 * A6_2;
             DEN = 1.0 - A7_6 * A6_7;
             A7_0 = A7_0 / DEN;
@@ -2054,7 +2056,7 @@ void chem_C2H4_Air_Red22(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
             DEN = 1.0 - A3_4 * A4_3;
             A3_0 = A3_0 / DEN;
 
-            double XQ[10];
+            fpdtype XQ[10];
             XQ[2] = A3_0;
             XQ[3] = A4_0 + A4_3 * XQ[2];
             XQ[6] = A7_0 + A7_3 * XQ[2] + A7_4 * XQ[3];
@@ -2236,7 +2238,7 @@ void chem_C2H4_Air_Red22(block_ &b, const thtrdat_ &th, const int &rface /*=0*/,
           } // end scope
 
           { // start scope
-            double ROP;
+            fpdtype ROP;
             ROP = RF[0] - RB[0];
             dYdt[1] = dYdt[1] - ROP;
             dYdt[2] = dYdt[2] + ROP;

@@ -9,23 +9,23 @@
 
 template <class Out> struct weighted {
   const Out &F;
-  double w;
+  fpdtype w;
   struct slot {
     decltype(std::declval<const Out &>()(0)) f;
-    double w;
-    KOKKOS_INLINE_FUNCTION void operator=(double v) const { f = w * v; }
-    KOKKOS_INLINE_FUNCTION void operator+=(double v) const { f += w * v; }
+    fpdtype w;
+    KOKKOS_INLINE_FUNCTION void operator=(fpdtype v) const { f = w * v; }
+    KOKKOS_INLINE_FUNCTION void operator+=(fpdtype v) const { f += w * v; }
   };
   KOKKOS_INLINE_FUNCTION slot operator()(int l) const { return {F(l), w}; }
 };
 template <class Out> struct added {
   const Out &F;
-  double w;
+  fpdtype w;
   struct slot {
     decltype(std::declval<const Out &>()(0)) f;
-    double w;
-    KOKKOS_INLINE_FUNCTION void operator=(double v) const { f += w * v; }
-    KOKKOS_INLINE_FUNCTION void operator+=(double v) const { f += w * v; }
+    fpdtype w;
+    KOKKOS_INLINE_FUNCTION void operator=(fpdtype v) const { f += w * v; }
+    KOKKOS_INLINE_FUNCTION void operator+=(fpdtype v) const { f += w * v; }
   };
   KOKKOS_INLINE_FUNCTION slot operator()(int l) const { return {F(l), w}; }
 };

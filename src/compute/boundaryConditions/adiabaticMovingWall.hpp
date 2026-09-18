@@ -10,12 +10,12 @@ struct euler {
   haloInOut Q, q, qh;
   blockFaceIn S, qBcVals;
   KOKKOS_INLINE_FUNCTION void operator()() const {
-    double area, nx, ny, nz;
+    fpdtype area, nx, ny, nz;
     faceNormal(S(0), S(1), S(2), area, nx, ny, nz);
 
     // mirror the velocity about the wall; pressure and species match
     const auto in = interiorOf(Q);
-    const double uDotn = in.u * nx + in.v * ny + in.w * nz;
+    const fpdtype uDotn = in.u * nx + in.v * ny + in.w * nz;
     haloState(Q, q, qh, q.R(0), q.R(1), in.u - 2.0 * uDotn * nx,
               in.v - 2.0 * uDotn * ny, in.w - 2.0 * uDotn * nz,
               massFractions(cellOf(Q, 0), in.rhoinv));

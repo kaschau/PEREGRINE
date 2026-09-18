@@ -16,13 +16,14 @@ PG_STENCIL(2);
 
 struct jamesonPressure : PG_RECONSTRUCT {
   using base = PG_RECONSTRUCT;
-  static KOKKOS_INLINE_FUNCTION double sensor(double pm, double p, double pp) {
+  static KOKKOS_INLINE_FUNCTION fpdtype sensor(fpdtype pm, fpdtype p,
+                                               fpdtype pp) {
     return fabs(pp - 2.0 * p + pm) / fabs(pp + 2.0 * p + pm);
   }
-  KOKKOS_INLINE_FUNCTION double weight() const {
-    const double pLL = this->qL(-N, 0), pL = this->qL(0), pR = this->qR(0),
-                 pRR = this->qR(+N, 0);
-    const double s = fmax(sensor(pLL, pL, pR), sensor(pL, pR, pRR));
+  KOKKOS_INLINE_FUNCTION fpdtype weight() const {
+    const fpdtype pLL = this->qL(-N, 0), pL = this->qL(0), pR = this->qR(0),
+                  pRR = this->qR(+N, 0);
+    const fpdtype s = fmax(sensor(pLL, pL, pR), sensor(pL, pR, pRR));
     return fmin(PG_JAMESONPRESSURE_GAIN * s, 1.0);
   }
 };

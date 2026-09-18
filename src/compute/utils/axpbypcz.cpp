@@ -8,8 +8,8 @@ PG_RANGE(elements, components = ne)
 struct axpbypcz {
   cellCenterInOut A;
   cellCenterIn B, C;
-  double a, b;
-  double c;
+  fpdtype a, b;
+  fpdtype c;
   caseIn dt;
   KOKKOS_INLINE_FUNCTION void operator()(const int i) const {
     A[i] = a * A[i] + b * B[i] + c * dt() * C[i];

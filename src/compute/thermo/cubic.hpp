@@ -1,4 +1,4 @@
-// The cubic equation of state's root, shared by the real gas kernels.
+// The cubic equation of state's root, shared by the fpdtype gas kernels.
 #ifndef __cubic_H__
 #define __cubic_H__
 
@@ -42,29 +42,30 @@
 //
 // ----------------------------------------------------------------------//
 
-// With three real roots, the stable phase is the one of least Gibbs energy.
+// With three fpdtype roots, the stable phase is the one of least Gibbs energy.
 // Taking the largest is correct only on the gas-like branch. A root at or
 // below Bstar is not a physical volume, so it is not a candidate.
-KOKKOS_INLINE_FUNCTION double stableRoot(const double x1, const double x2,
-                                         const double x3, const double Astar,
-                                         const double Bstar, const double uRG,
-                                         const double wRG) {
-  const double sq = sqrt(uRG * uRG - 4.0 * wRG);
-  const double roots[3] = {x1, x2, x3};
+KOKKOS_INLINE_FUNCTION fpdtype stableRoot(const fpdtype x1, const fpdtype x2,
+                                          const fpdtype x3, const fpdtype Astar,
+                                          const fpdtype Bstar,
+                                          const fpdtype uRG,
+                                          const fpdtype wRG) {
+  const fpdtype sq = sqrt(uRG * uRG - 4.0 * wRG);
+  const fpdtype roots[3] = {x1, x2, x3};
   // if no root clears Bstar, fall back to the largest
-  double Z = fmax(x1, fmax(x2, x3));
-  double gMin = 0.0;
+  fpdtype Z = fmax(x1, fmax(x2, x3));
+  fpdtype gMin = 0.0;
   bool found = false;
   for (int n = 0; n < 3; n++) {
-    const double z = roots[n];
+    const fpdtype z = roots[n];
     if (z <= Bstar) {
       continue;
     }
     // Gibbs energy departure, g/(Ru T)
-    const double g = z - 1.0 - log(z - Bstar) +
-                     Astar / (Bstar * sq) *
-                         log((2.0 * z + Bstar * (uRG - sq)) /
-                             (2.0 * z + Bstar * (uRG + sq)));
+    const fpdtype g = z - 1.0 - log(z - Bstar) +
+                      Astar / (Bstar * sq) *
+                          log((2.0 * z + Bstar * (uRG - sq)) /
+                              (2.0 * z + Bstar * (uRG + sq)));
     if (!found || g < gMin) {
       gMin = g;
       Z = z;

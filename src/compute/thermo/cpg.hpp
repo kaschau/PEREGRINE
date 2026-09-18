@@ -9,7 +9,7 @@ namespace cpg {
 
 // the mixture state at one point, as the eos works it out
 struct state {
-  double p, T, rho, e, h, cp, gamma, c;
+  fpdtype p, T, rho, e, h, cp, gamma, c;
 };
 
 // what a cell keeps of the eos beyond p and T: gamma, cp, rho h, c, rho e;
@@ -19,7 +19,7 @@ constexpr int qhComponents = 5;
 // what any (p, T, Y) or (rho, e, Y) shares: the mixture gas constant and cp
 // from the mass fractions Y(n), n over every species
 template <class Yf>
-KOKKOS_INLINE_FUNCTION void mixture(const Yf &Y, double &Rmix, double &cp) {
+KOKKOS_INLINE_FUNCTION void mixture(const Yf &Y, fpdtype &Rmix, fpdtype &cp) {
   Rmix = 0.0;
   cp = 0.0;
   for (int n = 0; n <= ns - 1; n++) {
@@ -32,17 +32,17 @@ KOKKOS_INLINE_FUNCTION void mixture(const Yf &Y, double &Rmix, double &cp) {
 // each species' enthalpy at T, as a callable of the species; the cell's qh
 // is what a cubic eos reads its own from
 template <class Qh>
-KOKKOS_INLINE_FUNCTION auto enthalpies(const double T, const Qh &) {
+KOKKOS_INLINE_FUNCTION auto enthalpies(const fpdtype T, const Qh &) {
   return [=](const int n) { return T * cp0(n); };
 }
 
 // the state from pressure, temperature and mass fractions; hi(n, value)
 // receives each species' enthalpy an eos keeps in qh, which this one does not
 template <class Yf, class Hf>
-KOKKOS_INLINE_FUNCTION state fromPrims(const double p, const double T,
+KOKKOS_INLINE_FUNCTION state fromPrims(const fpdtype p, const fpdtype T,
                                        const Yf &Y, const Hf &) {
   state s;
-  double Rmix, cp;
+  fpdtype Rmix, cp;
   mixture(Y, Rmix, cp);
   s.p = p;
   s.T = T;
@@ -58,10 +58,10 @@ KOKKOS_INLINE_FUNCTION state fromPrims(const double p, const double T,
 // the state from density, internal energy and mass fractions; the guess is
 // what an iterative eos starts its temperature from
 template <class Yf, class Hf>
-KOKKOS_INLINE_FUNCTION state fromCons(const double rho, const double e,
-                                      const Yf &Y, const double, const Hf &) {
+KOKKOS_INLINE_FUNCTION state fromCons(const fpdtype rho, const fpdtype e,
+                                      const Yf &Y, const fpdtype, const Hf &) {
   state s;
-  double Rmix, cp;
+  fpdtype Rmix, cp;
   mixture(Y, Rmix, cp);
   s.rho = rho;
   s.e = e;
@@ -78,15 +78,16 @@ KOKKOS_INLINE_FUNCTION state fromCons(const double rho, const double e,
 // first ns - 1 mass fractions with the last taking up the change; what the
 // dual time preconditioning linearizes with
 template <class Yf>
-KOKKOS_INLINE_FUNCTION void
-densityDerivatives(const double p, const double T, const double rho,
-                   const Yf &Y, double &rho_p, double &rho_T, double *rho_Y) {
-  double denom = 0.0;
+KOKKOS_INLINE_FUNCTION void densityDerivatives(const fpdtype p, const fpdtype T,
+                                               const fpdtype rho, const Yf &Y,
+                                               fpdtype &rho_p, fpdtype &rho_T,
+                                               fpdtype *rho_Y) {
+  fpdtype denom = 0.0;
   for (int n = 0; n <= ns - 1; n++) {
     denom += Y(n) * MWinv(n);
   }
   // the mean molecular weight: Y sums to one, so sum(X MW) is 1 / sum(Y / MW)
-  const double MWmix = 1.0 / denom;
+  const fpdtype MWmix = 1.0 / denom;
   rho_p = rho / p;
   rho_T = -rho / T;
   for (int n = 0; n < ns - 1; n++) {

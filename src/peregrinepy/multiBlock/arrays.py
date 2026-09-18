@@ -15,7 +15,7 @@ class BaseBlockArray(BaseArray):
     # the kind of range object this kind of array refers to
     rangeKind = None
 
-    def __init__(self, block, name, components=(), *, dtype="float64", **rangeArgs):
+    def __init__(self, block, name, components=(), *, dtype=None, **rangeArgs):
         self.range = self.rangeKind(block.extents, block.ng, **rangeArgs)
         self.components = tuple(components)
         shape = self.range.fullExtents + self.components

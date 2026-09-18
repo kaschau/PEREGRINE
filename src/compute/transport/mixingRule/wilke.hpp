@@ -11,17 +11,18 @@
 
 namespace wilke {
 
-KOKKOS_INLINE_FUNCTION double viscosity(const double *X, const double *sqrtMu) {
-  double sInv[ns];
+KOKKOS_INLINE_FUNCTION fpdtype viscosity(const fpdtype *X,
+                                         const fpdtype *sqrtMu) {
+  fpdtype sInv[ns];
   for (int n = 0; n <= ns - 1; n++) {
     sInv[n] = 1.0 / (sqrtMu[n] * MWqInv(n));
   }
-  double mu = 0.0;
+  fpdtype mu = 0.0;
   for (int n = 0; n <= ns - 1; n++) {
-    const double sn = sqrtMu[n] * MWqInv(n);
-    double phi = 0.0;
+    const fpdtype sn = sqrtMu[n] * MWqInv(n);
+    fpdtype phi = 0.0;
     for (int m = 0; m <= ns - 1; m++) {
-      const double r = 1.0 + sn * sInv[m];
+      const fpdtype r = 1.0 + sn * sInv[m];
       phi += r * r * wilkePair(n, m) * X[m];
     }
     mu += sqrtMu[n] * sqrtMu[n] * X[n] / phi;

@@ -9,15 +9,15 @@ struct stateFromPrims {
   cellCenterIn prims;
   cellCenterOut Q, q, qh;
   KOKKOS_INLINE_FUNCTION void operator()() const {
-    const double p = prims(0);
-    const double u = prims(1);
-    const double v = prims(2);
-    const double w = prims(3);
-    const double T = prims(4);
+    const fpdtype p = prims(0);
+    const fpdtype u = prims(1);
+    const fpdtype v = prims(2);
+    const fpdtype w = prims(3);
+    const fpdtype T = prims(4);
 
-    double Y[ns];
+    fpdtype Y[ns];
     Y[ns - 1] = 1.0;
-    double testSum = 0.0;
+    fpdtype testSum = 0.0;
     for (int n = 0; n < ns - 1; n++) {
       Y[n] = fmax(fmin(prims(5 + n), 1.0), 0.0);
       Y[ns - 1] -= Y[n];
@@ -25,7 +25,7 @@ struct stateFromPrims {
     }
     if (testSum > 1.0) {
       Y[ns - 1] = 0.0;
-      const double sumInv = 1.0 / testSum;
+      const fpdtype sumInv = 1.0 / testSum;
       for (int n = 0; n < ns - 1; n++) {
         Y[n] *= sumInv;
       }

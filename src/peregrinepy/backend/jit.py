@@ -10,6 +10,7 @@ The jit compiles and hands back callables; it knows nothing of tags, tables,
 arrays, or the order kernels run in."""
 
 import contextlib
+import ctypes
 import fcntl
 import hashlib
 import os
@@ -42,7 +43,17 @@ class Jit:
         # a device for one launch bound, (threads, waves) from the backend's
         # config section; none is the host's unbounded launch
         self.ne = 5 + mixture.ns - 1
-        self.defines = (f"NS={mixture.ns}", f"NE={self.ne}", f"NG={ng}")
+        self.fpdtype = {"double": "double", "single": "float"}[simulation["precision"]]
+        self.fpctype = {"double": ctypes.c_double, "float": ctypes.c_float}[
+            self.fpdtype
+        ]
+        self.defines = (
+            f"NS={mixture.ns}",
+            f"NE={self.ne}",
+            f"NG={ng}",
+            f"PG_FPDTYPE={self.fpdtype}",
+            *(["PG_SINGLE=1"] if self.fpdtype == "float" else []),
+        )
         if launch is not None:
             threads, waves = launch
             self.defines += (f"PG_LAUNCH_THREADS={threads}", f"PG_LAUNCH_WAVES={waves}")
@@ -63,7 +74,7 @@ class Jit:
     ###########################################################################
     def _writeSpeciesData(self, speciesData):
         """Writes the species data as one header of initializer lists,
-        hexfloat so every double is exact, to the store once per distinct
+        hexfloat so every value is exact, to the store once per distinct
         text; species.hpp declares the accessors over them. A (rows, terms)
         array is written flat with its term count. Returns its path."""
         lines = [
@@ -93,7 +104,8 @@ class Jit:
 
     @staticmethod
     def _doubles(a):
-        return "{" + ", ".join(float(x).hex() for x in a) + "}"
+        # each in the case's precision: a double literal would narrow in the braces
+        return "{" + ", ".join(f"fpdtype({float(x).hex()})" for x in a) + "}"
 
     def _case(self, source, includes):
         """What the case adds to a source's build: its defines and forced
@@ -270,5 +282,6 @@ class Jit:
             paths = dict(zip(requests, pool.map(lambda r: self.build(*r), requests)))
         for k in kernels:
             path = paths[(k.source, k.defines, k.includes)]
-            k.function = lib.function(path, k.name, k.argtypes, k.restype)
             k.resolveComponents(self.ne)
+            k.resolveFpdtype(self.fpctype)
+            k.function = lib.function(path, k.name, k.argtypes, k.restype)

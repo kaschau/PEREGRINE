@@ -24,11 +24,11 @@
 // Weiss & Smith reference velocity: the flow speed, clipped between eps*c and
 // c, and no smaller than the diffusion velocity nu/dx. An inviscid call passes
 // nu = 0 and a degenerate direction an infinite length, so neither binds.
-static KOKKOS_INLINE_FUNCTION double
-referenceVelocity(const double U, const double c, const double nu,
-                  const double dI, const double dJ, const double dK) {
-  const double eps = 1.0e-5;
-  double Ur = fmax(U, eps * c);
+static KOKKOS_INLINE_FUNCTION fpdtype
+referenceVelocity(const fpdtype U, const fpdtype c, const fpdtype nu,
+                  const fpdtype dI, const fpdtype dJ, const fpdtype dK) {
+  const fpdtype eps = 1.0e-5;
+  fpdtype Ur = fmax(U, eps * c);
   Ur = fmax(Ur, nu / dI);
   Ur = fmax(Ur, nu / dJ);
   Ur = fmax(Ur, nu / dK);
