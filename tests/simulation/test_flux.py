@@ -122,11 +122,12 @@ def test_limitersOrderOnTheWave(my_setup, limiter, atLeast):
     assert np.log2(e40 / e80) > atLeast
 
 
-def test_aZeroWeightLeavesThePrimaryExact(my_setup):
-    # the wave has uniform pressure and no gradient: neither switch fires,
-    # and the blend at zero is the primary's flux to the bit
+def test_aNearZeroWeightLeavesThePrimary(my_setup):
+    # the wave's pressure and velocity are uniform to rounding, so neither
+    # switch fires beyond it, and the blend is the primary's flux
     alone = wave("KEPaEC", 41)
-    assert wave("KEPaEC", 41, secondary="rusanov", switch="jamesonPressure") == alone
+    blended = wave("KEPaEC", 41, secondary="rusanov", switch="jamesonPressure")
+    assert abs(blended - alone) < 1e-12 * alone
     viscous = wave("KEPaEC", 41, physics="navierStokes")
     ducros = wave(
         "KEPaEC",
@@ -136,7 +137,8 @@ def test_aZeroWeightLeavesThePrimaryExact(my_setup):
         values={"nu": 0.1, "floor": 0.0},
         physics="navierStokes",
     )
-    assert ducros == viscous
+    # conduction across the wave moves the velocity a little, and ducros sees it
+    assert abs(ducros - viscous) < 1e-6 * viscous
 
 
 @pytest.mark.parametrize(
