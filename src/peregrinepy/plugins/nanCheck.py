@@ -4,7 +4,7 @@ import numpy as np
 from mpi4py import MPI
 
 from ..kernel import CellCenterKernel
-from ..mpiComm.mpiUtils import getCommRankSize
+from ..misc import getCommRankSize
 from .base import BasePlugin
 
 
@@ -21,7 +21,9 @@ class NanCheck(BasePlugin):
         kernel = CellCenterKernel("utils/allFinite.cpp")
         solver.jit.compile([kernel])
         self.allFinite = partial(
-            kernel, solver.blockTable, solver.tiling(kernel, "interior")
+            kernel,
+            solver.blockArrayTable,
+            solver.blockArrayTable.tiling(kernel, "interior"),
         )
 
     def __call__(self, solver):

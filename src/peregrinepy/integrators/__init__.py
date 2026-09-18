@@ -1,29 +1,19 @@
-"""How a case steps in time, composed onto the solver at runtime the way
-PyFR composes an integrator: getSolver picks the stepper and the controller
-the config names and makes one class of the two and the solver, per case."""
+"""How a case steps in time: the integrator the config names, holding the
+solver it moves and the controller that sizes its steps."""
 
 from ..misc import subclassWhere
-from ..multiBlock.solver import solver
+from .base import BaseIntegrator
 from .controllers import CFL, BaseController, Fixed
-from .steppers import (
-    BaseStepper,
-    dualTime,
-    maccormack,
-    rk1,
-    rk2,
-    rk3,
-    rk34,
-    rk4,
-    rungeKutta,
-)
+from .dualTime import dualTime
+from .rungeKutta import maccormack, rk1, rk2, rk3, rk4, rk34, rungeKutta
 
 __all__ = [
     "BaseController",
-    "BaseStepper",
+    "BaseIntegrator",
     "CFL",
     "Fixed",
     "dualTime",
-    "getSolver",
+    "getIntegrator",
     "maccormack",
     "rk1",
     "rk2",
@@ -34,11 +24,10 @@ __all__ = [
 ]
 
 
-def getSolver(config, mesh, state=None):
-    """The solver for a config: its controller and its stepper composed onto
-    the base, one class per case, built when the case is."""
+def getIntegrator(config, solver):
+    """Makes the integrator the config names, with the controller it
+    names, for this solver."""
     ti = config["timeIntegration"]
-    stepper = subclassWhere(BaseStepper, stepperName=ti["integrator"])
     controller = subclassWhere(BaseController, controllerName=ti["controller"])
-    name = f"{stepper.__name__}_{controller.__name__}_solver"
-    return type(name, (controller, stepper, solver), {})(config, mesh, state)
+    integrator = subclassWhere(BaseIntegrator, integratorName=ti["integrator"])
+    return integrator(solver, controller(solver))

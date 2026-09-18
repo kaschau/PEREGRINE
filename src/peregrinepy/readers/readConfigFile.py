@@ -1,7 +1,7 @@
 import yaml
 
 from ..files import configFile
-from ..mpiComm.mpiUtils import getCommRankSize
+from ..misc import getCommRankSize
 
 
 def readConfigFile(filePath="./peregrine.yaml"):

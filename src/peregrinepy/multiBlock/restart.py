@@ -1,53 +1,31 @@
-from ..readers import GridReader, RestartReader
 from .arrays import CellCenterArray
 from .grid import grid
 from .restartBlock import restartBlock
 
 
 class restart(grid):
-    """A grid with a state on it: the primitives of every block at one
-    time, and the species they are of."""
+    """A grid with a state on it: the primitive vector of every block at
+    one time, as wide as its primitive variables -- p, u, v, w, T and
+    whatever a physics adds -- which are what a result file writes and a
+    reader matches."""
 
     def _newBlock(self, nblki):
         return restartBlock(nblki, self)
 
-    @classmethod
-    def fromResult(cls, fileName, quiet=True):
-        """A restart from a result file, which says its own species and the
-        grid it sits on."""
-        reader = RestartReader(fileName, quiet=quiet)
-        mb = cls(reader.species)
-        GridReader(reader.grid, quiet=quiet).fill(mb)
-        reader.fill(mb)
-        return mb
-
-    def __init__(self, spNames):
+    def __init__(self, primVars):
         super().__init__()
-        self.speciesNames = spNames
-        self.ns = len(spNames)
+        self.primVars = list(primVars)
+        self.ne = len(self.primVars)
+        # what a result of this multiBlock writes: the vector, nothing derived
+        self.exportVars = self.primVars
         # the step count and the time the state is at
         self.nrt = 0
         self.tme = 0.0
-        # the primitive vector p, u, v, w, T, Y(0 .. ns - 2), what a result
-        # file holds of the state
-        self.declareArray("prims", CellCenterArray, components=5 + self.ns - 1)
+        # the primitive vector, what a result file holds of the state
+        self.declArray("prims", CellCenterArray, components=self.ne)
 
-    def checkSpeciesSum(self, normalize=False):
-        """Loop through each block to check that the sum of all
-        species does not exceed 1.0 anywhere in the domain."""
-
-        anyBad = False
-        for blk in self.blocks:
-            goodSum = blk.verifySpeciesSum(normalize)
-            if not goodSum:
-                anyBad = True
-
-        if anyBad:
-            if not normalize:
-                print(
-                    "\nRe-run checkSpeciesSum sum with arg normalize=True to normalize species mass fraction.\n"
-                )
-            else:
-                print(
-                    "Normalizing species mass fraction such that sum is <= one everywhere."
-                )
+    def exportData(self, blk, names):
+        """Gives the named primitive variables of a block as host arrays
+        over every cell, halos included."""
+        prims = blk.prims.get()
+        return {name: prims[..., self.primVars.index(name)] for name in names}

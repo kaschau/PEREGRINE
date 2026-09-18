@@ -38,7 +38,6 @@ class Catalyst(BasePlugin):
         # Create the grid and data arrays
         for blk in mb.blocks:
             ng = blk.ng
-            q, Q = blk.primitives(), blk.Q.get()
             grid = self.vtk.vtkStructuredGrid()
             grid.SetDimensions(blk.ni, blk.nj, blk.nk)
             interior = blk.nodes.get()[ng:-ng, ng:-ng, ng:-ng]
@@ -48,48 +47,21 @@ class Catalyst(BasePlugin):
             points = self.vtk.vtkPoints()
             points.SetData(self.numpy_support.numpy_to_vtk(coords))
             grid.SetPoints(points)
-
-            # density arrays
-            self.addArray(grid, "rho", Q[ng:-ng, ng:-ng, ng:-ng, 0].ravel(order="F"))
-
-            # pressure arrays
-            self.addArray(
-                grid,
-                "p",
-                q[ng:-ng, ng:-ng, ng:-ng, 0].ravel(order="F"),
-            )
-
-            # velocity array
-            array = np.column_stack(
-                tuple(
-                    [q[ng:-ng, ng:-ng, ng:-ng, i].ravel(order="F") for i in (1, 2, 3)]
-                )
-            )
-            self.addArray(grid, "Velocity", array)
-
-            # temperature arrays
-            self.addArray(
-                grid,
-                "T",
-                q[ng:-ng, ng:-ng, ng:-ng, 4].ravel(order="F"),
-            )
-
-            for n, var in enumerate(blk.speciesNames[0:-1]):
-                self.addArray(
-                    grid,
-                    var,
-                    q[ng:-ng, ng:-ng, ng:-ng, 5 + n].ravel(order="F"),
-                )
-
-            # Add nth species
-            array = self.numpy_support.numpy_to_vtk(
-                1.0 - np.sum(q[ng:-ng, ng:-ng, ng:-ng, 5::], axis=-1).ravel(order="F")
-            )
-            self.addArray(grid, blk.speciesNames[-1], array)
-
+            for name, array in self._arrays(mb, blk).items():
+                self.addArray(grid, name, array)
             mbds.SetBlock(blk.nblki, grid)
 
         self.dataDescription.GetInputDescriptionByName("input").SetGrid(mbds)
+
+    def _arrays(self, mb, blk):
+        """Gives every export variable of a block over its interior, flat in
+        the grid's order, the velocity components as one vector."""
+        ng = blk.ng
+        flat = lambda a: a[ng:-ng, ng:-ng, ng:-ng].ravel(order="F")
+        values = mb.exportData(blk, mb.exportVars)
+        arrays = {n: flat(a) for n, a in values.items() if n not in "uvw"}
+        arrays["Velocity"] = np.column_stack([flat(values[n]) for n in "uvw"])
+        return arrays
 
     def addArray(self, grid, arrayName, npArray):
         # convert incoming numpy array to vtk
@@ -112,40 +84,9 @@ class Catalyst(BasePlugin):
 
         mbds = self.dataDescription.GetInputDescriptionByName("input").GetGrid()
         for blk in mb.blocks:
-            q, Q = blk.primitives(), blk.Q.get()
-            ng = blk.ng
             grid = mbds.GetBlock(blk.nblki)
-
-            # density array
-            self.swapArray(grid, "rho", Q[ng:-ng, ng:-ng, ng:-ng, 0].ravel(order="F"))
-
-            # pressure array
-            self.swapArray(grid, "p", q[ng:-ng, ng:-ng, ng:-ng, 0].ravel(order="F"))
-
-            # velocity array
-            array = np.column_stack(
-                tuple(
-                    [q[ng:-ng, ng:-ng, ng:-ng, i].ravel(order="F") for i in (1, 2, 3)]
-                )
-            )
-            self.addArray(grid, "Velocity", array)
-
-            # temperature array
-            self.swapArray(grid, "T", q[ng:-ng, ng:-ng, ng:-ng, 4].ravel(order="F"))
-
-            # species arrrays
-            for n, var in enumerate(blk.speciesNames[0:-1]):
-                self.swapArray(
-                    grid,
-                    var,
-                    q[ng:-ng, ng:-ng, ng:-ng, 5 + n].ravel(order="F"),
-                )
-
-            # Add nth species
-            array = 1.0 - np.sum(q[ng:-ng, ng:-ng, ng:-ng, 5::], axis=-1).ravel(
-                order="F"
-            )
-            self.swapArray(grid, blk.speciesNames[-1], array.ravel(order="F"))
+            for name, array in self._arrays(mb, blk).items():
+                self.swapArray(grid, name, array)
 
         # Execute coprocessing
         self._coProcessor.CoProcess(self.dataDescription)

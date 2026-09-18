@@ -83,7 +83,7 @@ if __name__ == "__main__":
     smooth = args.smooth
     verboseSearch = args.verboseSearch
 
-    # the newest result there; it names its own species and grid
+    # the newest result there; it names its own variables and grid
     nrts = sorted(
         int(f.split(".")[1])
         for f in os.listdir(fromDir)
@@ -91,8 +91,11 @@ if __name__ == "__main__":
     )
     if not nrts:
         raise FileNotFoundError(f"No results found in {fromDir}")
-    mbFrom = mbr.fromResult(f"{fromDir}/q.{nrts[-1]:08d}.h5", quiet=False)
-    mbTo = mbr.fromGrid(f"{toDir}/g.h5", mbFrom.speciesNames, quiet=False)
+    reader = pg.readers.RestartReader(f"{fromDir}/q.{nrts[-1]:08d}.h5", quiet=False)
+    mbFrom = mbr(reader.primVars)
+    pg.readers.GridReader(reader.grid, quiet=False).fill(mbFrom)
+    reader.fill(mbFrom)
+    mbTo = mbr.fromGrid(f"{toDir}/g.h5", mbFrom.primVars, quiet=False)
 
     pg.interpolation.getInterpolator(function, smooth, verboseSearch).interpolate(
         mbFrom, mbTo

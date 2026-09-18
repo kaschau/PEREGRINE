@@ -1,9 +1,7 @@
 import numpy as np
 
-from .. import bcs
 from ..ranges import CellCenterRange
 from .gridFace import gridFace
-from .topologyFace import topologyFace
 
 
 class solverFace(gridFace):
@@ -19,13 +17,11 @@ class solverFace(gridFace):
         self.ng = ng
         # the block this face bounds
         self.blk = blk
-        # its boundary condition, an object of the type it carries, and the
-        # values that condition holds on the face, once given
-        self.bc = bcs.getBc(self.bcType)(self)
+        # the values its boundary condition holds on the face, once given
         self.qBcVals = self.QBcVals = None
         # the buffers its trade travels in, one pair per exchanged array,
         # which the halo exchange makes once the neighbors are known
-        for name, _ in blk.mb.exchanged():
+        for name in blk.mb.exchangedArrays:
             setattr(self, f"sendBuffer_{name}", None)
             setattr(self, f"recvBuffer_{name}", None)
         # how our neighbor's face plane lies against ours: whether its two
@@ -101,12 +97,7 @@ class solverFace(gridFace):
     ###########################################################################
     # Talking to our neighbor
     ###########################################################################
-    def setCommunication(self):
+    def alignToNeighbor(self):
         """Settles how the neighbor's plane lies against ours: which of our
         two face axes it reads first, and which way round it reads each."""
         self._transposed, self._flipped = self.neighborPlaneAlignment
-
-    @topologyFace.bcType.setter
-    def bcType(self, value):
-        topologyFace.bcType.fset(self, value)
-        self.bc = bcs.getBc(value)(self)

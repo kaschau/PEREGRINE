@@ -1,7 +1,8 @@
 #include "kernel.hpp"
 
-// A = a*A + b*B + c*C, the three-array combination a Runge-Kutta stage is,
-// over every element of the allocations, as copy; no case for a zero
+// A = a*A + b*B + c*dt*C, the three-array combination a Runge-Kutta stage
+// is -- C the derivative, stepped by the step's dt read where the kernels
+// run -- over every element of the allocations, as copy; no case for a zero
 // coefficient, as in axpby. The arrays are ne wide.
 PG_RANGE(elements, components = ne)
 struct axpbypcz {
@@ -9,8 +10,9 @@ struct axpbypcz {
   cellCenterIn B, C;
   double a, b;
   double c;
+  caseIn dt;
   KOKKOS_INLINE_FUNCTION void operator()(const int i) const {
-    A[i] = a * A[i] + b * B[i] + c * C[i];
+    A[i] = a * A[i] + b * B[i] + c * dt() * C[i];
   }
 };
 

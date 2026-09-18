@@ -22,7 +22,8 @@ class BasePlugin:
         """Whether the step just taken is one this plugin acts on."""
         if self.everyTime is not None:
             period = self.everyTime
-            return int(solver.tme / period) != int((solver.tme - solver.dt) / period)
+            dt = solver.integrator.dt
+            return int(solver.tme / period) != int((solver.tme - dt) / period)
         return solver.nrt % self.everyIter == 0
 
     def dueAfter(self, solver, dt):

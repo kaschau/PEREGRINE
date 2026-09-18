@@ -13,6 +13,9 @@ import numpy as np
 
 class BaseMesher:
     mesherName = None
+    # a mesher makes its grid: it came from no file and no partition of one
+    fileName = None
+    partitionName = None
 
     def __init__(self, mbDims=[1, 1, 1], dimsPerBlock=[10, 10, 10]):
         self.mbDims = [int(n) for n in mbDims]

@@ -53,6 +53,5 @@ values needs only its `bcType`.
 A face the grid leaves unnamed says what it is by itself: one with a neighbor
 is `interior`, or periodic if it carries a transform, and one with neither is
 an `adiabaticSlipWall`. Name a boundary and define it to make it anything
-else. See
-[templates](https://github.com/kaschau/PEREGRINE/tree/main/src/peregrinepy/bcs/bcValueTemplates)
-for what each kind takes.
+else. What each kind takes is its class's `values` in
+`simulation/<physics>/boundaries.py`.

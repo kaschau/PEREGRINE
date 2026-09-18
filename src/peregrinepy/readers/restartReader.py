@@ -27,7 +27,8 @@ class RestartReader:
         with h5py.File(self.fileName, "r") as f:
             self.nrt, self.tme = int(f.attrs["nrt"]), float(f.attrs["tme"])
             names = lambda key: [s.decode() for s in f.attrs[key]]
-            self.species, self.variables = names("species"), names("variables")
+            # the least a case starts from, and everything the file holds
+            self.primVars, self.variables = names("primVars"), names("variables")
             # what the result stores per block beyond the state
             self.extras = names("extras")
             # the grid it sits on, and the case that wrote it, when it was one
@@ -40,12 +41,12 @@ class RestartReader:
     def fill(self, mb):
         """Fill in the primitives of every block of mb, and the step and time
         they are at; and any array a block declares that the result stores
-        beyond the state, a stepper's."""
+        beyond the state, an integrator's."""
         with h5py.File(self.fileName, "r") as f, Progress(
             len(mb.blocks), self.quiet
         ) as bar:
             for blk in mb.blocks:
-                variables = ["p", "u", "v", "w", "T"] + blk.speciesNames[0:-1]
+                variables = blk.primVars
 
                 # read from base slab
                 resS = f[f"results_{blk.baseNblki:06d}"]

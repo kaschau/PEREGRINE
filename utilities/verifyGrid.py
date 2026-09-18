@@ -64,7 +64,7 @@ def verify(mb):
             bcName = face.bcName
 
             if neighbor is None:
-                assert not pg.bcs.getBc(bc).hasNeighbor, (
+                assert bc != "interior" and face.periodicRotation is None, (
                     f"Block #{blk.nblki} face {nface} has no neighbor, "
                     f"but has bcType {bc}"
                 )
@@ -73,7 +73,7 @@ def verify(mb):
                     orientation is None
                 ), f"Block #{blk.nblki} face {nface} has no neighbor, but has orientation {orientation}"
 
-                if pg.bcs.getBc(bc).values:
+                if pg.simulation.BaseBC.named(bc).values:
                     assert (
                         bcName is not None
                     ), f"Block #{blk.nblki} face {nface} is {bc}, but has no bcName"

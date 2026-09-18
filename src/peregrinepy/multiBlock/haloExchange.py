@@ -12,9 +12,9 @@ receive buffer, so its halo is unpacked straight out of what the neighbor
 packed, on the device. A face whose neighbor is on another rank has its
 buffers carved out of that rank's pools, and its halo costs a message.
 
-The pack and the two unpacks are kernels the graph launches like any
-other, over the block-face table and the tilings made here. The exchange
-itself is the host steps between them, one method each, in the order a
+The pack and the two unpacks are kernels the exchange holds and the graph
+launches like any other, over the block-face table and the tilings made
+here. The exchange itself is the host steps between them, one method each, in the order a
 graph lays them out around its launches: expect the messages, copy them
 out beside the kernels once the pack is queued, send once the copy has
 landed, receive, unpack, and wait on our own sends. How a message travels
@@ -28,8 +28,7 @@ from mpi4py.MPI import Request
 
 from ..backend.abi import lib
 from ..backend.array import PooledArray
-from ..misc import subclassWhere
-from .mpiUtils import getCommRankSize
+from ..misc import getCommRankSize
 
 
 class BaseHaloExchange:
@@ -40,20 +39,21 @@ class BaseHaloExchange:
     # what the config calls this way of moving messages
     kind = None
 
-    @classmethod
-    def fromConfig(cls, config):
-        """Picks the exchange class the config names."""
-        return subclassWhere(cls, kind=config["haloExchange"]["kind"])
-
-    def __init__(self, name, faces, trading, local, remote, depth):
+    def __init__(self, name, faces, blockFacesBy, depth, pack, unpack):
         """Makes the exchange of the array :name: over the block faces of a
-        table (:faces:, its entries): :trading: the faces that trade,
-        :local: pairs of a face and the face it meets on this rank,
-        :remote: the faces whose neighbor is on another rank; :depth: the
-        planes traded, ng for a state, one for a gradient."""
+        table (:faces:, its entries), sorted in :blockFacesBy:: the ones
+        that trade, the pairs of a face and the face it meets on this rank
+        (local), the ones whose neighbor is on another rank (remote);
+        :depth: the planes traded, ng for a state, one for a gradient;
+        :pack: and :unpack: the kernels that move the halos through the
+        buffers."""
         self.name, self.depth = name, depth
+        self.pack, self.unpack = pack, unpack
         self.comm, self.rank, self.size = getCommRankSize()
         self.faces = faces
+        trading, local, remote = (
+            blockFacesBy[k] for k in ("trading", "local", "remote")
+        )
         self.send, self.recv = f"sendBuffer_{name}", f"recvBuffer_{name}"
         # the array's kind on any block says its components and how far
         # past a block face its trade starts
@@ -76,11 +76,10 @@ class BaseHaloExchange:
         self.recvs, self.sends = {}, {}
         # what the graph launches: the pack over every trading face, the
         # unpack over the faces met here, and over the faces met elsewhere
-        index = {id(f): n for n, f in enumerate(faces.entries)}
         self.tilings = {
-            "pack": self._tiling("pack", index, trading, self.send),
-            "local": self._tiling("local", index, [f for f, _ in local], self.recv),
-            "remote": self._tiling("remote", index, remote, self.recv),
+            "pack": self._tiling("pack", trading, self.send),
+            "local": self._tiling("local", [f for f, _ in local], self.recv),
+            "remote": self._tiling("remote", remote, self.recv),
         }
         self.packArgs = dict(
             view=name, buffer=self.send, skip=self.skip, ndim=self.ndim
@@ -118,12 +117,13 @@ class BaseHaloExchange:
             setattr(face, name, PooledArray(pool, offset, shape, name=name))
         return pool
 
-    def _tiling(self, key, index, faces, buffer):
+    def _tiling(self, key, faces, buffer):
         """Makes the tiling of these faces' buffer planes over the table."""
-        ranges = [
-            (index[id(f)], (0, 0, 0), getattr(f, buffer).shape[:3], 1) for f in faces
-        ]
-        return self.faces.tile((self.name, key), ranges, "cells")
+        return self.faces.tilingOver(
+            (self.name, key),
+            faces,
+            lambda f: [((0, 0, 0), getattr(f, buffer).shape[:3])],
+        )
 
     @property
     def remote(self):

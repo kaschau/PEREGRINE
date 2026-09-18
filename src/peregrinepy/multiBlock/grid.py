@@ -7,9 +7,10 @@ from .gridBlock import gridBlock
 
 
 class grid(topology):
-    """A topology with coordinates: every block's nodes, and the metrics and
-    halos that follow from them. A multiBlock says what every one of its
-    blocks holds, each level adding its own arrays to the level below's."""
+    """A topology with coordinates: every block's nodes and cell centers,
+    the metrics a physics asks for, and the node halos. A multiBlock says
+    what every one of its blocks holds, each level adding its own arrays
+    to the level below's."""
 
     # the halo depth of its blocks; a solver's is as deep as its widest stencil
     ng = 0
@@ -20,19 +21,35 @@ class grid(topology):
         # says where its kernels run
         self.backend = HostBackend()
         # name -> (kind, components, what else the kind takes) of every
-        # array a block holds
+        # array a block holds, and of the ones whose halos are exchanged,
+        # how many planes: True for the whole halo, else a count
         self.arrays = {}
-        self.declareArray("nodes", NodeArray, components=3)
+        self.exchangedArrays = {}
+        # the metrics declared, which computeMetrics makes
+        self.metrics = []
+        self.declArray("nodes", NodeArray, components=3, exchanged=True)
         # cell centers are as much as a block with no solution on it can work out
-        self.declareArray("cells", CellCenterArray, components=3)
+        self.declArray("cells", CellCenterArray, components=3)
 
-    def declareArray(self, name, kind, components=(), **rangeArgs):
+    def declArray(self, name, kind, components=(), *, exchanged=False, **rangeArgs):
         """Declares an array every block holds: its kind (a block array
         class) gives the shape and the ranges, the components what sits at
-        each point of it; a cell-face kind takes its axis."""
+        each point of it, a cell-face kind takes its axis; :exchanged: says
+        whether its halos are traded between blocks, True for the whole
+        halo or the planes to trade."""
         if isinstance(components, int):
             components = (components,)
         self.arrays[name] = (kind, tuple(components), rangeArgs)
+        if exchanged:
+            self.exchangedArrays[name] = exchanged
+
+    def declMetric(self, name):
+        """Declares one of the metrics a grid block can make, so every
+        block holds it and computeMetrics fills it; the block's maker
+        method says what kind of array it is."""
+        kind, components, rangeArgs = getattr(gridBlock, f"_{name}").arrayKind
+        self.declArray(name, kind, components, **rangeArgs)
+        self.metrics.append(name)
 
     def _newBlock(self, nblki):
         return gridBlock(nblki, self)
@@ -96,5 +113,17 @@ class grid(topology):
         return rotation, np.zeros(3)
 
     def computeMetrics(self):
+        """Makes every block's cell centers and declared metrics from its
+        nodes."""
         for blk in self.blocks:
-            blk.computeMetrics()
+            blk.computeMetrics(self.metrics)
+
+    def generateHalo(self):
+        """Extrapolates every block's node halo from its own interior."""
+        for blk in self.blocks:
+            blk.generateHalo()
+
+    def movePeriodicHalos(self):
+        """Moves every periodic block face's node halo by its transform."""
+        for blk in self.blocks:
+            blk.movePeriodicHalos()

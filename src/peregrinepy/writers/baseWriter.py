@@ -11,7 +11,7 @@ from h5py import h5fd, h5p, h5s
 from lxml import etree
 
 from .._version import __version__
-from ..mpiComm.mpiUtils import getCommRankSize
+from ..misc import getCommRankSize
 
 
 def commit():

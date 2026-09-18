@@ -5,14 +5,14 @@ import numpy as np
 from mpi4py import MPI
 
 from ..kernel import CellCenterKernel
-from ..mpiComm.mpiUtils import getCommRankSize
+from ..misc import getCommRankSize
 from .base import BasePlugin
 
 
 class Report(BasePlugin):
     """Everything a run prints: the banner and the case when it starts, each
     step it is due on (number, time, size, CFL numbers, and whatever the
-    stepper has to say), and the timing when it is over. Without this plugin
+    integrator has to say), and the timing when it is over. Without this plugin
     a run prints nothing. The CFL is reduced over the ranks here, so a run
     pays for it only when it asks."""
 
@@ -33,7 +33,9 @@ class Report(BasePlugin):
         kernel = CellCenterKernel("utils/CFLmax.cpp")
         solver.jit.compile([kernel])
         self.CFLmax = partial(
-            kernel, solver.blockTable, solver.tiling(kernel, "interior")
+            kernel,
+            solver.blockArrayTable,
+            solver.blockArrayTable.tiling(kernel, "interior"),
         )
         self.started = perf_counter()
         if getCommRankSize()[1] == 0:
@@ -41,9 +43,9 @@ class Report(BasePlugin):
             print(solver)
 
     def before(self, solver, dt):
-        """A stepper gathers what it will report only on a step that is
+        """An integrator gathers what it will report only on a step that is
         reported on."""
-        solver.reportDue = self.dueAfter(solver, dt)
+        solver.integrator.reportDue = self.dueAfter(solver, dt)
 
     def __call__(self, solver):
         comm, rank, size = getCommRankSize()
@@ -53,7 +55,7 @@ class Report(BasePlugin):
         if rank != 0:
             return
         acoustic, convective, both = cfl
-        dt = solver.dt
+        dt = solver.integrator.dt
         print(
             f" >>> --------- nrt: {solver.nrt:<6} ---------- <<<\n",
             f"    tme: {solver.tme:.6E} s\n"
@@ -63,7 +65,7 @@ class Report(BasePlugin):
             f"         Convective: {convective * dt:.3f}\n"
             " >>> -------------------------------- <<<\n",
         )
-        said = solver.report()
+        said = solver.integrator.stepReport()
         if said:
             print(said)
 

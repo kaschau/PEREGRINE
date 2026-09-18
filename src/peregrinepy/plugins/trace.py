@@ -2,7 +2,7 @@ from pathlib import Path
 
 import numpy as np
 
-from ..mpiComm.mpiUtils import getCommRankSize
+from ..misc import getCommRankSize
 from .base import BasePlugin
 
 
@@ -34,13 +34,17 @@ class Trace(BasePlugin):
                 fileName = directory / f"{tags[m]}_{x:.6f}_{y:.6f}_{z:.6f}.csv"
                 self.traces.append((blk.nblki, fileName, i, j, k))
                 if not fileName.exists():
-                    names = ["p", "u", "v", "w", "T"] + blk.speciesNames[:-1]
+                    names = blk.primVars
                     fileName.write_text("Time (s), " + ", ".join(names) + "\n")
 
     def __call__(self, solver):
         # one snapshot per block the traces live in
-        qs = {n: solver.getBlock(n).primitives() for n in {t[0] for t in self.traces}}
+        names = solver.primVars
+        qs = {
+            n: solver.exportData(solver.getBlock(n), names)
+            for n in {t[0] for t in self.traces}
+        }
         for nblki, fileName, i, j, k in self.traces:
-            row = np.concatenate(([solver.tme], qs[nblki][i, j, k, :]))
+            row = [solver.tme] + [qs[nblki][name][i, j, k] for name in names]
             with open(fileName, "a") as f:
                 np.savetxt(f, [row], fmt="%.8e", delimiter=",")

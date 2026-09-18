@@ -48,8 +48,6 @@ class BaseInterpolator:
                 bar.step(f"Interpolating block {blkTo.nblki}")
 
         mbTo.nrt, mbTo.tme = mbFrom.nrt, mbFrom.tme
-        if mbTo.ns > 1:
-            mbTo.checkSpeciesSum(True)
 
     def blocksToBlock(self, blksFrom, blkTo):
         """

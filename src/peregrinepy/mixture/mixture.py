@@ -14,7 +14,7 @@ from .transportModel import BaseTransportModel
 
 
 class Mixture:
-    """The gas a case is solving, from its mcPhysics section of the config."""
+    """The gas a case is solving, from its simulation section of the config."""
 
     def __init__(self, configSect, root=None):
         self.configSect = configSect

@@ -1,6 +1,5 @@
 """What a run does alongside the stepping, by the name the config gives it."""
 
-from ..misc import subclassWhere
 from . import (
     catalyst,
     nanCheck,
@@ -8,18 +7,15 @@ from . import (
     trace,
     writer,
 )  # noqa: F401  (registers the plugins)
+from ..misc import subclassWhere
 from .base import BasePlugin
 
-__all__ = ["BasePlugin", "getPlugin", "pluginsOf"]
+__all__ = ["BasePlugin", "getPlugins"]
 
 
-def getPlugin(name):
-    """The class for a plugin name, which is also the check that it is one."""
-    return subclassWhere(BasePlugin, name=name)
-
-
-def pluginsOf(solver, config):
-    """Every plugin the config names, made for this case."""
+def getPlugins(config, solver):
+    """Makes every plugin the config names, by name, for this solver."""
     return {
-        name: getPlugin(name)(solver, sect) for name, sect in config["plugins"].items()
+        name: subclassWhere(BasePlugin, name=name)(solver, sect)
+        for name, sect in config["plugins"].items()
     }

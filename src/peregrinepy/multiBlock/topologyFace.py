@@ -1,35 +1,21 @@
 import numpy as np
 
-from ..bcs import validBcTypes
-
 
 class topologyFace:
     def __init__(self, nface):
         assert 1 <= nface <= 6, "nface must be between (1,6)"
 
         self.nface = nface
-        # bcType and periodicRotation are reached through properties that
-        # are built on further down, so they need somewhere of their own
-        self._bcType = "adiabaticSlipWall"
-        self._periodicRotation = None
-
+        # what kind of boundary it is, and the name a grid gives it for a
+        # case to say what it is: None for an interface or an unnamed boundary
+        self.bcType = "adiabaticSlipWall"
         self.bcName = None
+        self.periodicRotation = None
         self.neighbor = None
         # which rank holds the neighbor
         self.commRank = None
         self.orientation = None
         self.periodicTranslation = None
-
-    @property
-    def bcType(self):
-        return self._bcType
-
-    @bcType.setter
-    def bcType(self, value):
-        assert (
-            value in validBcTypes()
-        ), f"{value} is not a valid bcType. Must be one of {validBcTypes()}"
-        self._bcType = value
 
     ###########################################################################
     # How a halo arriving through this face is moved onto it
@@ -41,18 +27,9 @@ class topologyFace:
         self.periodicTranslation = (
             np.zeros(3) if translation is None else np.array(translation, np.float64)
         )
-        # last, so a kind of face that builds on it sees the whole transform
         self.periodicRotation = (
             np.eye(3) if rotation is None else np.array(rotation, np.float64)
         )
-
-    @property
-    def periodicRotation(self):
-        return self._periodicRotation
-
-    @periodicRotation.setter
-    def periodicRotation(self, rotation):
-        self._periodicRotation = rotation
 
     @property
     def neighborPlaneAlignment(self):

@@ -72,7 +72,39 @@ class ArrayTable:
             self._columns[name] = self._upload(host)
         return self._columns[name].ptr
 
-    def tile(self, key, ranges, items):
+    def tiling(self, kernel, rangeName):
+        """Gives the tiling of a kernel's items over the named range of
+        every entry -- full, all, interior -- made once and kept."""
+        key = (
+            kernel.items,
+            getattr(kernel, "direction", None),
+            kernel.components,
+            rangeName,
+        )
+        if key not in self.tilings:
+            ranges = [
+                (n, start, extent, kernel.components)
+                for n, entry in enumerate(self.entries)
+                for start, extent in getattr(kernel.rangeOf(entry), rangeName)()
+            ]
+            self._tile(key, ranges, kernel.tileKind)
+        return self.tilings[key]
+
+    def tilingOver(self, key, entries, rangesOf, items="cells"):
+        """Gives the tiling under :key: over a subset of the entries, each
+        contributing the ranges :rangesOf:(entry) gives, made once and
+        kept."""
+        if key not in self.tilings:
+            index = {id(e): n for n, e in enumerate(self.entries)}
+            ranges = [
+                (index[id(e)], start, extent, 1)
+                for e in entries
+                for start, extent in rangesOf(e)
+            ]
+            self._tile(key, ranges, items)
+        return self.tilings[key]
+
+    def _tile(self, key, ranges, items):
         """Makes and keeps the tiling under :key: of :ranges:, each (entry
         index, start, extent, components): a tile is as many of one range's
         items as the backend's knob for :items: (cells or elements) says."""

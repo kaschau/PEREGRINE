@@ -9,11 +9,11 @@ and any one of them can be restarted from or animated through.
 
     q.00000042.h5
       nrt, tme                                           attributes: when this is from
-      species, variables, extras                         attributes: what each block group holds
+      primVars, variables, extras                        attributes: what each block group holds
       grid                                               attribute: the grid file, relative to this one
       config                                             attribute: the case, as its yaml
       peregrine, commit, host, ranks, command, written   attributes: where it came from
-      results_000000/{rho,p,u,v,w,T,<species>}           one group per block
+      results_000000/<variable>                          one group per block, one dataset per export variable
       results_000000/<array>                             one dataset per extra
 
 Each variable is stored (nk-1, nj-1, ni-1) over the cells of a block of the
@@ -54,8 +54,9 @@ class RestartWriter(BaseWriter):
         self.config = yaml.safe_dump(config.toDict()) if config is not None else ""
         # block arrays written beside the state
         self.extras = tuple(extras)
-        self.speciesNames = mb.speciesNames
-        self.writesRho = "Q" in mb.arrays
+        # what a case starts from, and what this multiBlock writes
+        self.primVars = list(mb.primVars)
+        self.exportVars = list(mb.exportVars)
         # what a result is called, from its step n and time t; set by every write
         self.basename = basename
         self.name = basename.format(n=mb.nrt, t=mb.tme)
@@ -74,14 +75,6 @@ class RestartWriter(BaseWriter):
 
     def getVarFileH5Location(self, varName, nblki):
         return f"{self.h5FileName}:/results_{nblki:06d}/{varName}"
-
-    @property
-    def dataNames(self):
-        """Every variable this writer puts in the file, in q's order."""
-        names = ["p", "u", "v", "w", "T"] + self.speciesNames
-        if self.writesRho:
-            names.insert(0, "rho")
-        return names
 
     def _gatherExtraShapes(self, mb):
         """The shape past the cells of each extra array, from whichever rank
@@ -136,12 +129,12 @@ class RestartWriter(BaseWriter):
     ###########################################################################
     def write(self, mb):
         self.name = self.basename.format(n=mb.nrt, t=mb.tme)
-        names = self.dataNames
+        names = self.exportVars
 
         qf = self._openCollective(self.h5FileName)
         self._stamp(qf)
         qf.attrs["nrt"], qf.attrs["tme"] = mb.nrt, mb.tme
-        qf.attrs["species"] = np.array(self.speciesNames, dtype="S")
+        qf.attrs["primVars"] = np.array(self.primVars, dtype="S")
         qf.attrs["variables"] = np.array(names, dtype="S")
         qf.attrs["extras"] = np.array(self.extras, dtype="S")
         qf.attrs["grid"] = f"{self.gridPath}/g.h5"
@@ -158,17 +151,13 @@ class RestartWriter(BaseWriter):
                 shape = self.extraShapes[name][::-1] + cells
                 resS.create_dataset(name, shape=shape, dtype=self.fdtype)
 
-        # one snapshot of each block's state for the whole write: the
-        # primitive vector, the density alone out of Q when there is one, and
-        # the extras
+        # one snapshot of each block for the whole write: every export
+        # variable, and the extras
         self._host = {
-            id(blk): {"prims": blk.primitives()}
+            id(blk): mb.exportData(blk, names)
             | {n: getattr(blk, n).get() for n in self.extras}
             for blk in mb.blocks
         }
-        if self.writesRho:
-            for blk in mb.blocks:
-                self._host[id(blk)]["rho"] = blk.Q.get(component=0)
 
         # which of my blocks are pieces of each block of the grid
         mine = {}
@@ -209,19 +198,15 @@ class RestartWriter(BaseWriter):
             return
 
         ng = blk.ng
-        array, j = self._sourceFor(blk, name)
+        array = self._host[id(blk)][name]
         whole = self.fileOrder(array, dset.dtype)
         count = (blk.nk - 1, blk.nj - 1, blk.ni - 1)
-        # a variable is one component of q, or a field of its own
-        picked = blk.interior + (j,) if j is not None else blk.interior
         if whole is None:
             # not in file order or the file's type, so gather it first
-            whole = np.ascontiguousarray(array[picked].T, dtype=dset.dtype)
+            whole = np.ascontiguousarray(array[blk.interior].T, dtype=dset.dtype)
             sourceSel = ((0, 0, 0), count)
-        elif j is None:
-            sourceSel = ((ng, ng, ng), count)
         else:
-            sourceSel = ((j, ng, ng, ng), (1,) + count)
+            sourceSel = ((ng, ng, ng), count)
         self._writeSlab(dset, whole, sourceSel, (self._destStart(blk), count))
 
     def _writeArray(self, dset, blk, name):
@@ -243,21 +228,6 @@ class RestartWriter(BaseWriter):
             sourceSel = ((0,) * len(comps) + (ng, ng, ng), count)
         destStart = (0,) * len(comps) + self._destStart(blk)
         self._writeSlab(dset, whole, sourceSel, (destStart, count))
-
-    def _sourceFor(self, blk, name):
-        """Where a named variable comes from: a component of the primitive
-        vector, or a field of its own with no component."""
-        held = self._host[id(blk)]
-        q = held["prims"]
-        if name == "rho":
-            return held["rho"], None
-        if name == blk.speciesNames[-1]:
-            if blk.ns == 1:
-                # a single species is all of it, and is not stored in q
-                return np.ones(q.shape[:3], order="F"), None
-            # the nth species is whatever the others leave
-            return np.asfortranarray(1.0 - np.sum(q[..., 5:], axis=-1)), None
-        return q, (["p", "u", "v", "w", "T"] + blk.speciesNames).index(name)
 
     def _refreshXdmf(self, mb):
         """Point the tree at this result's file, and say when it is from."""
@@ -305,12 +275,11 @@ class RestartWriter(BaseWriter):
         self.dataItemTemplate.text = "result file location here"
 
     def _decorateBlockElem(self, blockElem, nblki, ni, nj, nk):
-        scalars = ["p", "T"] + self.speciesNames
-        if self.writesRho:
-            scalars.insert(0, "rho")
-
-        for varName in scalars:
-            self._addScalarToBlockElem(blockElem, varName, nblki, ni, nj, nk)
+        """Adds every export variable as a scalar, the velocity components
+        as one vector."""
+        for varName in self.exportVars:
+            if varName not in "uvw":
+                self._addScalarToBlockElem(blockElem, varName, nblki, ni, nj, nk)
         self._addVectorToBlockElem(
             blockElem, "Velocity", ["u", "v", "w"], nblki, ni, nj, nk
         )

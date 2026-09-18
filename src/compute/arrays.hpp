@@ -196,6 +196,14 @@ template <class T> struct perEntry {
   KOKKOS_INLINE_FUNCTION T operator()() const { return value; }
 };
 
+// one value the whole case holds where the kernels run, read as a value:
+// what a controller sets each step, so a captured graph reads the step's
+template <class T> struct caseValue {
+  const T *data;
+  KOKKOS_INLINE_FUNCTION T operator()() const { return *data; }
+};
+using caseIn = caseValue<const double>;
+
 // the entry's dims, pinned with the columns
 struct dims {
   const pgDims *all, *at;
@@ -393,6 +401,6 @@ KOKKOS_INLINE_FUNCTION out5 as5(const pgArrayOut &v) {
 // the member twins python builds a kernel's argument from, laid out the same
 static_assert(sizeof(cellCenterIn) == 56 && sizeof(cellFaceIn) == 56 &&
               sizeof(haloIn) == 40 && sizeof(perEntry<int>) == 16 &&
-              sizeof(dims) == 16);
+              sizeof(dims) == 16 && sizeof(caseIn) == 8);
 
 #endif

@@ -193,7 +193,7 @@ with open(args.topoFileName, "r") as f:
                 blk.getFace(thisFace).bcName = tag
                 bcType = bcTypeOf[tag]["bcType"]
                 assert (
-                    bcType in pg.bcs.validBcTypes()
+                    bcType in pg.simulation.BaseBC.bcTypes()
                 ), f"{bcType} is not a valid PEREGRINE bcType."
                 blk.getFace(thisFace).bcType = bcType
 

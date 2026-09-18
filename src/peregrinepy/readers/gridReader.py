@@ -10,7 +10,7 @@ import h5py
 import numpy as np
 
 from ..misc import Progress
-from ..mpiComm.mpiUtils import getCommRankSize
+from ..misc import getCommRankSize
 
 
 class GridReader:

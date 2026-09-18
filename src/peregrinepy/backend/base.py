@@ -29,6 +29,8 @@ class BaseBackend:
         # launch bound the kernels are compiled with, (threads, waves). A
         # backend that only makes arrays, a grid's, has no section
         self.tiles = self.launchBound = None
+        # the array tables made here, one per list of entries, kept
+        self.arrayTables = {}
         if launch is not None:
             self.tiles = {
                 "cells": launch["tileSize"],
@@ -50,14 +52,18 @@ class BaseBackend:
         name = lib.pgBackend().decode().lower()
         return subclassWhere(cls, name=name)(order, config[f"backend-{name}"])
 
-    def table(self, entries):
-        """A table of entries kept here, tiled by this backend's tiles."""
-        return ArrayTable(entries, self)
+    def arrayTable(self, entries):
+        """Gives the array table of these entries -- the list itself, not a
+        copy -- made the first time it is asked for and kept, tiled by this
+        backend's tiles."""
+        if id(entries) not in self.arrayTables:
+            self.arrayTables[id(entries)] = ArrayTable(entries, self)
+        return self.arrayTables[id(entries)]
 
-    def jit(self, ng, mixture, mcPhysics):
+    def jit(self, ng, mixture, simulation):
         """Makes the compiler for this backend's kernels, with its launch
         bound."""
-        return Jit(ng, mixture, mcPhysics, launch=self.launchBound)
+        return Jit(ng, mixture, simulation, launch=self.launchBound)
 
     def allocate(self, shape, dtype=np.float64, name=None):
         """Makes a zeroed array on this backend."""

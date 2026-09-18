@@ -97,6 +97,13 @@ class BaseKernel:
     def __repr__(self):
         return f"<{type(self).__name__} {self.__name__}>"
 
+    def resolveComponents(self, ne):
+        """Settles how many components an item is of for a case of :ne:
+        equations: a declared count, or ne less a count."""
+        if isinstance(self.components, str):
+            _, _, less = self.components.partition("-")
+            self.components = ne - (int(less) if less else 0)
+
     @property
     def tileKind(self):
         """Says which of the backend's tile knobs sizes a tile of this
@@ -119,7 +126,7 @@ class BaseKernel:
     def itemsOf(declaration):
         """Reads a PG_RANGE declaration: the kind of item, and the
         components an item is of -- a count, or `ne` less a count, which
-        the tiling resolves for the case."""
+        the jit resolves for the case."""
         kind, *params = [x.strip() for x in declaration.split(",")]
         components = 1
         for param in params:
@@ -182,6 +189,10 @@ class BaseKernel:
                     members.append(("column", mname.removesuffix(side), twin, head))
                 elif head == "dims":
                     members.append(("dims", mname, Dims, head))
+                elif head == "caseIn":
+                    # one value the case holds where the kernels run, given
+                    # at the call as the array holding it
+                    members.append(("case", mname, ctypes.c_void_p, head))
                 elif head == "perEntry<int>":
                     members.append(("ints", mname, PerEntryInt, head))
                 elif head in ("int", "double") and pointer:
@@ -260,6 +271,7 @@ class BaseKernel:
             "tiling": lambda table, tiling, *_: ctypes.addressof(tiling),
         }
         fromKeyword = {
+            "case": lambda value, table, keep: value.ptr,
             "column": lambda value, table, keep: ctype(
                 arrayInfos=table.arrayInfos(value)
             ),
@@ -348,6 +360,21 @@ class CellCenterKernel(BaseKernel):
         return CellCenterRange(face.blk.extents, face.blk.ng).halo(face.nface)
 
 
+class BCKernel(CellCenterKernel):
+    """One boundary condition's body at one hook: bc.cpp compiled with the
+    bcType's header forced in, over the halo cells behind the block faces
+    carrying that bcType."""
+
+    def __init__(self, bc, bcHook):
+        self.bcType, self.bcHook = bc.bcType, bcHook
+        super().__init__(
+            "boundaryConditions/bc.cpp",
+            defines=(f"PG_BCTYPE={bc.bcType}", f"PG_BCHOOK={bcHook}"),
+            includes=(bc.header(),),
+        )
+        self.__name__ = f"{bc.bcType}@{bcHook}"
+
+
 class CellFaceKernel(BaseKernel):
     """A flux kernel over the cell faces of one direction: the source names
     one direction's flux F, area vector A and faces, and the direction maps
@@ -390,9 +417,9 @@ class BaseKernelGroup:
     order they owe each other is stated by :stages:: kernels independent
     within a stage, each stage after the last."""
 
-    def __init__(self, kernels):
+    def __init__(self, kernels, name=None):
         self.kernels = kernels
-        self.__name__ = kernels[0].__name__
+        self.__name__ = name or kernels[0].__name__
         self.stencil = max(k.stencil for k in kernels)
 
 

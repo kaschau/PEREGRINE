@@ -9,7 +9,7 @@ struct invertDQ {
   cellCenterIn Q, dIJK, dtau, q, qh, qt;
   cellCenterInOut dQ;
   dims d;
-  double dt;
+  caseIn dt;
   bool viscous;
   KOKKOS_INLINE_FUNCTION void operator()() const {
     const int ni = d->ni, nj = d->nj, nk = d->nk;
@@ -87,7 +87,7 @@ struct invertDQ {
 
     // Prematrix multipliers (constants)
     mults[0] = 1.0;
-    mults[1] = 3.0 / 2.0 * dtau() / dt;
+    mults[1] = 3.0 / 2.0 * dtau() / dt();
 
     // Reference velocity for preconditioning theta
     const double U = sqrt(u * u + v * v + w * w);

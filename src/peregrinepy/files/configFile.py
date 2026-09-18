@@ -16,7 +16,32 @@ class pgConfigError(Exception):
 
 class configFile(frozenDict):
     def __init__(self):
-        self["simulation"] = frozenDict({"niter": 1})
+        # The physics simulated, by the name of its simulation class, and
+        # what it is made of: the gas, its equation of state, its transport
+        # and diffusion models, and how their fits are made
+        self["simulation"] = frozenDict(
+            {
+                "physics": "navierStokes",
+                "niter": 1,
+                # a Cantera mechanism file, or a list of species from the library
+                "mixture": None,
+                "eos": "cpg",
+                # none, like the physics: a viscous case picks one
+                "trans": None,
+                "diffusion": "lewis",
+                # how the species' viscosities mix: wilke or herning
+                "mixingRule": "wilke",
+                "chemistry": False,
+                "nChemSubSteps": 1,
+                # what every temperature-dependent property is refit over and
+                # to: the lowest degree within the tolerance, or the best at the
+                # cap, which is seven terms, the count the source data has, and
+                # what a polynomial in ln T stays well conditioned at
+                "Trange": None,
+                "reFitTol": 1e-3,
+                "reFitMaxDegree": 6,
+            }
+        )
         # the uniform state a case starts from when it does not restart
         self["initialConditions"] = frozenDict(
             {
@@ -52,7 +77,6 @@ class configFile(frozenDict):
                 "primaryAdvFlux": "KEPaEC",
                 "secondaryAdvFlux": None,
                 "switchAdvFlux": None,
-                "diffusion": False,
                 "subgrid": None,
             }
         )
@@ -93,28 +117,6 @@ class configFile(frozenDict):
         # memory, or straight from the device buffers when the MPI is
         # GPU-aware, which the installation knows and the runtime cannot
         self["haloExchange"] = frozenDict({"kind": "hostStaged"})
-
-        self["mcPhysics"] = frozenDict(
-            {
-                # a Cantera mechanism file, or a list of species from the library
-                "mixture": None,
-                "eos": "cpg",
-                # none, like RHS diffusion: a viscous case picks one
-                "trans": None,
-                "diffusion": "lewis",
-                # how the species' viscosities mix: wilke or herning
-                "mixingRule": "wilke",
-                "chemistry": False,
-                "nChemSubSteps": 1,
-                # what every temperature-dependent property is refit over and
-                # to: the lowest degree within the tolerance, or the best at the
-                # cap, which is seven terms, the count the source data has, and
-                # what a polynomial in ln T stays well conditioned at
-                "Trange": None,
-                "reFitTol": 1e-3,
-                "reFitMaxDegree": 6,
-            }
-        )
 
         self["viscousSponge"] = frozenDict(
             {
@@ -161,7 +163,8 @@ class configFile(frozenDict):
         """What the file's values have to be; whether they make a step is the
         step graph's to say."""
         self["timeIntegration"]["dt"] = float(self["timeIntegration"]["dt"])
-        self["mcPhysics"]["nChemSubSteps"] = max(1, self["mcPhysics"]["nChemSubSteps"])
+        sim = self["simulation"]
+        sim["nChemSubSteps"] = max(1, sim["nChemSubSteps"])
         for section in (k for k in self if k.startswith("backend-")):
             launch = self[section]
             for key in launch:

@@ -36,19 +36,16 @@ class Jit:
         os.environ.get("PEREGRINE_CACHE", Path.home() / ".cache" / "peregrinepy")
     )
 
-    def __init__(self, ng, mixture, mcPhysics, launch=None):
+    def __init__(self, ng, mixture, simulation, launch=None):
         """Makes the compiler for one case: its halo depth, its mixture --
-        the species count and species data -- and its mcPhysics section, which
+        the species count and species data -- and its simulation section, which
         names the equation of state, the species diffusion model and the
         mixing rule; on a device the backend's launch bound too."""
         # a kernel is compiled for one species count and halo depth, and on
         # a device for one launch bound, (threads, waves) from the backend's
         # config section; none is the host's unbounded launch
-        self.defines = (
-            f"NS={mixture.ns}",
-            f"NE={5 + mixture.ns - 1}",
-            f"NG={ng}",
-        )
+        self.ne = 5 + mixture.ns - 1
+        self.defines = (f"NS={mixture.ns}", f"NE={self.ne}", f"NG={ng}")
         if launch is not None:
             threads, waves = launch
             self.defines += (f"PG_LAUNCH_THREADS={threads}", f"PG_LAUNCH_WAVES={waves}")
@@ -58,9 +55,9 @@ class Jit:
         # that reaches thermo/eos.hpp; and its species diffusion model, ahead
         # of any that reaches transport/diffusion.hpp
         self.speciesData = self._writeSpeciesData(mixture.speciesData())
-        self.eos = mcPhysics["eos"]
-        self.diffusion = mcPhysics["diffusion"]
-        self.mixingRule = mcPhysics["mixingRule"]
+        self.eos = simulation["eos"]
+        self.diffusion = simulation["diffusion"]
+        self.mixingRule = simulation["mixingRule"]
 
     ###########################################################################
     # The species data
@@ -244,3 +241,4 @@ class Jit:
         for k in kernels:
             path = paths[(k.source, k.defines, k.includes)]
             k.function = lib.function(path, k.name, k.argtypes, k.restype)
+            k.resolveComponents(self.ne)
