@@ -12,14 +12,6 @@ struct capturedGraph {
   graphNode tail;
   capturedGraph() : tail(graph.root_node()) {}
 };
-// an open fork: the node its siblings hang off, the end of each sibling
-// closed so far, and whether one is open
-struct openFork {
-  graphNode base;
-  std::vector<graphNode> ends;
-  bool open = false;
-};
-auto &forks = *new std::vector<openFork>;
 // leaked on purpose: a Kokkos object destroyed after finalize aborts, and
 // pgFinalize clears this first
 auto &graphs = *new std::vector<std::unique_ptr<capturedGraph>>;
@@ -85,14 +77,33 @@ void copyAfterKernels() {
 
 // The runtime half of the ABI: memory where the kernels run, and the copies
 // in and out of it.
-PG_ABI void pgInitialize() {
-  if (!Kokkos::is_initialized())
-    Kokkos::initialize();
+
+// how many devices this process may use; one, the host, without a device
+namespace {
+int visibleDevices() {
+  int count = 1;
+#if defined(KOKKOS_ENABLE_HIP)
+  hipGetDeviceCount(&count);
+#elif defined(KOKKOS_ENABLE_CUDA)
+  cudaGetDeviceCount(&count);
+#endif
+  return count > 0 ? count : 1;
+}
+} // namespace
+
+// starts Kokkos on the device this rank takes: the ranks sharing a node
+// take its devices in turn by their local rank, so a launcher need not
+// bind them
+PG_ABI void pgInitialize(int localRank) {
+  if (Kokkos::is_initialized())
+    return;
+  Kokkos::InitializationSettings settings;
+  settings.set_device_id(localRank % visibleDevices());
+  Kokkos::initialize(settings);
 }
 
 PG_ABI void pgFinalize() {
   graphs.clear();
-  forks.clear();
   capturing = nullptr;
   delete copyInstance;
   copyInstance = nullptr;
@@ -147,41 +158,22 @@ PG_ABI void pgGraphSubmit(int id) { graphs[id]->graph.submit(execSpace{}); }
 // a graph whose arrays or faces changed is dropped; a new capture replaces it
 PG_ABI void pgGraphDrop(int id) { graphs[id].reset(); }
 
+PG_ABI bool pgGraphCapturing() { return capturing != nullptr; }
+
+// the tail a launch shape chains its node onto
 PG_ABI graphNode *pgGraphTail() {
   return capturing ? &capturing->tail : nullptr;
 }
 
-// Independent launches under capture: a fork remembers the tail, each
-// sibling's launches hang off it, and the join is a node after all of them
-// (when_all), so the device may run the siblings in any order or together.
-// Without a capture they are launches in order like any others.
-PG_ABI void pgGraphFork() {
-  if (capturing)
-    forks.push_back({capturing->tail, {}});
-}
-
-PG_ABI void pgGraphSibling() {
-  if (!capturing)
-    return;
-  openFork &fork = forks.back();
-  if (fork.open)
-    fork.ends.push_back(capturing->tail);
-  capturing->tail = fork.base;
-  fork.open = true;
-}
-
-PG_ABI void pgGraphJoin() {
-  if (!capturing)
-    return;
-  openFork &fork = forks.back();
-  if (fork.open)
-    fork.ends.push_back(capturing->tail);
-  graphNode joined = fork.ends.empty() ? fork.base : fork.ends[0];
-  for (size_t i = 1; i < fork.ends.size(); ++i)
-    joined = Kokkos::Experimental::when_all(joined, fork.ends[i]);
-  capturing->tail = joined;
-  forks.pop_back();
-}
+// Independent launches: a fork's siblings read and write nothing of each
+// other's, so a graph could fan them out from the fork and join them with
+// when_all. It does not: Kokkos 5.2.1's HIP when_all hangs the device on
+// the next fence (measured 2026-09-18, MI100), and the graphs round found
+// no gain in graph-level overlap. So the siblings are launches in order,
+// under capture or not, and these three say only that they need not be.
+PG_ABI void pgGraphFork() {}
+PG_ABI void pgGraphSibling() {}
+PG_ABI void pgGraphJoin() {}
 
 // an array outliving finalize is the process exiting; there is nothing to free
 PG_ABI void pgFree(void *device) {

@@ -8,8 +8,9 @@ A node is one collective launch: its kernels, and in names what they run
 over -- a range, which block faces, which array is exchanged -- bound to
 the means a solver holds: its block and block face tables, its block
 faces by kind, its exchanges by array. Bound, it is stages of (kernel,
-table, tiling) that read and write nothing of each other's, so a captured
-graph may run a stage's kernels in any order or together. A physics or an
+table, tiling): a stage's kernels read and write nothing of each other's,
+which the launch says with a fork and a join, whether or not the runtime
+runs them together (today it does not: see pgGraphFork). A physics or an
 integrator says its graphs from these; a graph holds only its nodes and
 steps."""
 
@@ -18,10 +19,9 @@ from .backend.abi import lib
 
 class BaseLaunchNode:
     """One collective launch: its stages, once bound, of (kernel, table,
-    tiling), each stage after the last, and the scalars it settles. Under
-    capture a stage's kernels hang off one node and are joined after all,
-    so the device may run them in any order or together; a direct launch
-    has one queue and runs them in order."""
+    tiling), each stage after the last, and the scalars it settles. A
+    stage's kernels are forked and joined, siblings that owe each other no
+    order; the runtime may run them together or in order."""
 
     def __init__(self, name, **fixed):
         self.name, self.fixed = name, fixed

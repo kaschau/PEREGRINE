@@ -235,7 +235,7 @@ void launch(const char *name, const P &policy, const B &body) {
 }
 // a reduction is read on the host as it returns: it has no place in a graph
 inline void notCapturing(const char *name) {
-  if (pgGraphTail())
+  if (pgGraphCapturing())
     Kokkos::abort(
         (std::string(name) + ": a reduction under graph capture").c_str());
 }

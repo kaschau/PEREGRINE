@@ -70,7 +70,7 @@ set_property(TARGET pgruntime PROPERTY CXX_STANDARD 20)
 set(package_dir ${PROJECT_SOURCE_DIR}/src/peregrinepy)
 install(TARGETS pgruntime LIBRARY DESTINATION ${package_dir})
 # how runtime.cpp was compiled is how every kernel will be
-install(CODE "execute_process(COMMAND ${Python3_EXECUTABLE} ${package_dir}/toolchain.py
+install(CODE "execute_process(COMMAND ${Python3_EXECUTABLE} ${package_dir}/backend/toolchain.py
                                       ${CMAKE_BINARY_DIR}/compile_commands.json
                                       ${CMAKE_SHARED_LIBRARY_SUFFIX}
                                       ${package_dir}/toolchain.json

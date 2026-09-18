@@ -15,3 +15,5 @@ TAGS
 .venv
 *.json
 .DS_Store
+# the bit gate's references: recorded at the start of a round, not carried
+tests/gate/references.yaml

@@ -27,6 +27,8 @@ using graphNode =
                                        Kokkos::Experimental::TypeErasedTag,
                                        Kokkos::Experimental::TypeErasedTag>;
 PG_ABI graphNode *pgGraphTail();
+// whether a capture is open, which a reduction has no place in
+PG_ABI bool pgGraphCapturing();
 // independent launches under capture: siblings off one node, joined after
 PG_ABI void pgGraphFork();
 PG_ABI void pgGraphSibling();

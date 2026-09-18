@@ -5,7 +5,13 @@ import numpy as np
 
 from ...files.configFile import pgConfigError
 from ...graph import BCNode, ExchangeGraphs, Graph, LaunchNode, RedoNode
-from ...kernel import BCKernel, CellCenterKernel, CellFaceKernel, UnorderedKernelGroup
+from ...kernel import (
+    BCKernel,
+    CellCenterKernel,
+    CellFaceKernel,
+    FluxKernel,
+    UnorderedKernelGroup,
+)
 from ...mixture import Mixture
 from ...multiBlock.arrays import CellCenterArray, CellFaceArray
 from .boundaries import BaseEulerBC
@@ -53,12 +59,11 @@ class EulerSimulation(BaseSimulation):
             raise pgConfigError("chemistry", True, "not until the composition round")
         if rhs["primaryAdvFlux"] is None:
             raise pgConfigError("primaryAdvFlux", None, "a case has a primary flux")
-        if rhs["primaryAdvFlux"] in ("fourthOrderKEEP", "muscl2hllc", "muscl2rusanov"):
+        if rhs["primaryAdvFlux"] == "fourthOrderKEEP":
             raise pgConfigError(
                 "primaryAdvFlux",
-                rhs["primaryAdvFlux"],
-                "the hand-unrolled schemes return as a muscl, limiter and riemann"
-                " solver composition",
+                "fourthOrderKEEP",
+                "not until it is written as a kernel",
             )
         if sim["eos"] not in ("cpg", "tpg", "realGas"):
             raise pgConfigError("eos", sim["eos"])
@@ -132,12 +137,19 @@ class EulerSimulation(BaseSimulation):
         # the jit bakes the eos into these
         k["stateFromCons"] = CellCenterKernel("thermo/stateFromCons.cpp")
         k["stateFromPrims"] = CellCenterKernel("thermo/stateFromPrims.cpp")
-        # one flux per direction, unordered
+        # one flux per direction, unordered: composed from a Riemann solver
+        # and a reconstruction, or a central scheme of its own
+        scheme = rhs["primaryAdvFlux"]
         k["primaryAdvFlux"] = UnorderedKernelGroup(
             [
-                CellFaceKernel(f"advFlux/{rhs['primaryAdvFlux']}.cpp", d)
+                (
+                    FluxKernel(scheme, d)
+                    if FluxKernel.composed(scheme)
+                    else CellFaceKernel(f"advFlux/{scheme}.cpp", d)
+                )
                 for d in range(3)
-            ]
+            ],
+            name=scheme,
         )
         k["applyFlux"] = CellCenterKernel("utils/applyFlux.cpp")
         # boundary conditions by hook

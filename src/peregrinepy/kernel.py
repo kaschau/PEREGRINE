@@ -71,8 +71,11 @@ class BaseKernel:
         # the C function, its parameters [(kind, name)] in call order, and a
         # struct argument's ctypes type and [(kind, member, field, ctype)]
         self.name, self.restype, self.params, self.structs = self._parse(texts)
-        # how many halo layers it reaches into
-        stencil = self.stencilDeclaration.search(texts[0])
+        # how many halo layers it reaches into, said by the source or a
+        # header forced into it
+        stencil = self.stencilDeclaration.search(
+            "".join(texts[: 1 + len(self.includes)])
+        )
         self.stencil = int(stencil.group(1)) if stencil else 1
         # the kind of item it runs over, and the components one is of
         declared = self.rangeDeclaration.findall(
@@ -163,7 +166,8 @@ class BaseKernel:
         members = cls.members(base, texts) if base else []
         for statement in re.sub(r"//.*", "", body).split(";"):
             statement = " ".join(statement.split())
-            if not statement or statement.startswith("static"):
+            # a static member or a template head ahead of a method is not data
+            if not statement or statement.startswith(("static", "template")):
                 continue
             head, _, rest = (
                 statement.replace("const ", "").replace("mutable ", "").partition(" ")
@@ -380,11 +384,12 @@ class CellFaceKernel(BaseKernel):
     one direction's flux F, area vector A and faces, and the direction maps
     them to the table's; a scheme's three directions are a kernel group."""
 
-    def __init__(self, source, direction):
+    def __init__(self, source, direction, defines=(), includes=()):
         axis = "ijk"[direction]
         super().__init__(
             source,
-            defines=(f"PG_DIRECTION={direction}",),
+            defines=(f"PG_DIRECTION={direction}", *defines),
+            includes=includes,
             columns={"F": f"{axis}F", "A": f"{axis}S", "Faces": f"{axis}Faces"},
         )
         self.direction = direction
@@ -405,6 +410,44 @@ class CellFaceKernel(BaseKernel):
         return CellFaceRange(
             face.blk.extents, face.blk.ng, self.direction
         ).blockFacePlane(face.nface)
+
+
+class FluxKernel(CellFaceKernel):
+    """An advective flux composed by the jit from the scheme the config
+    names: a Riemann solver alone, piecewise constant -- rusanov, hllc,
+    ausmPlusUp -- or reconstruct-limiter-riemann -- muscl-vanLeer-rusanov.
+    A central scheme, KEPaEC, is a source of its own."""
+
+    reconstructions = ("piecewiseConstant", "muscl")
+
+    @classmethod
+    def composed(cls, scheme):
+        """Says whether a scheme is a composition of advFlux/flux.cpp, or a
+        flux source of its own."""
+        return (
+            Jit.compute / "advFlux" / "riemann" / f"{scheme.split('-')[-1]}.hpp"
+        ).is_file()
+
+    def __init__(self, scheme, direction):
+        parts = scheme.split("-")
+        riemann = parts[-1]
+        reconstruct = parts[0] if len(parts) > 1 else "piecewiseConstant"
+        limiter = parts[1] if len(parts) == 3 else None
+        if len(parts) not in (1, 3) or reconstruct not in self.reconstructions:
+            raise ValueError(
+                f"{scheme!r} is not riemann or reconstruct-limiter-riemann"
+            )
+        defines = [f"PG_RIEMANN={riemann}", f"PG_RECONSTRUCT={reconstruct}"]
+        # the solver ahead of the reconstruction that calls it, the limiter ahead of both
+        includes = [
+            f"advFlux/riemann/{riemann}.hpp",
+            f"advFlux/reconstruct/{reconstruct}.hpp",
+        ]
+        if limiter:
+            defines.append(f"PG_LIMITER={limiter}")
+            includes.insert(0, f"advFlux/limiter/{limiter}.hpp")
+        super().__init__("advFlux/flux.cpp", direction, defines, includes)
+        self.__name__ = scheme
 
 
 class HaloExchangeKernel(BaseKernel):

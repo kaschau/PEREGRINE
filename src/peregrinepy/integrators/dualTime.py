@@ -137,6 +137,8 @@ class dualTime(BaseIntegrator):
     def stepReport(self):
         """Gives the root-sum-square residual after each pseudo time step of
         the step just taken, by equation."""
+        if not self.residuals:
+            return None
         header = " SubIter     rho        rhou       rhov       rhow       rhoE"
         if self.solver.ne > 5:
             header += "      rhoY(1) ... rhoY(NS-1)"

@@ -20,7 +20,7 @@ class Library:
 
     # the runtime's functions: argument types and result
     runtime = {
-        "pgInitialize": ([], None),
+        "pgInitialize": ([ctypes.c_int], None),
         "pgFinalize": ([], None),
         "pgLayoutLeft": ([], ctypes.c_int),
         "pgOnHost": ([], ctypes.c_int),
@@ -73,13 +73,20 @@ class Library:
         return function
 
     def initialize(self):
-        """Load the runtime and start Kokkos. Nothing before this touches a
-        device, so a pre or post processing run never needs one."""
+        """Loads the runtime and starts Kokkos on this rank's device: the
+        ranks sharing a node take its devices in turn by their rank among
+        themselves, so no launcher has to bind them. Nothing before this
+        touches a device, so a pre or post processing run never needs one."""
+        from mpi4py import MPI
+
         path = next(Path(__file__).parent.parent.glob("libpgruntime.*"))
         self.load(path, shared=True)
         for name, (argtypes, restype) in self.runtime.items():
             setattr(self, name, self.function(path, name, argtypes, restype))
-        self.pgInitialize()
+        node = MPI.COMM_WORLD.Split_type(MPI.COMM_TYPE_SHARED)
+        localRank = node.rank
+        node.Free()
+        self.pgInitialize(localRank)
 
     def finalize(self):
         self.pgFinalize()
