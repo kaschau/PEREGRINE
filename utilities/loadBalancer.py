@@ -60,6 +60,20 @@ if __name__ == "__main__":
         type=str,
     )
     parser.add_argument(
+        "-haloCost",
+        dest="haloCost",
+        default=None,
+        help="".join(
+            [
+                "What a plane cell of a traded face costs a rank, in interior\n",
+                "cells: its halo is packed, unpacked and run over by the cell\n",
+                "kernels whoever holds the neighbor. Omit it for the measured\n",
+                "default.",
+            ]
+        ),
+        type=float,
+    )
+    parser.add_argument(
         "-granularity",
         dest="granularity",
         default=None,
@@ -87,7 +101,9 @@ if __name__ == "__main__":
     ranksPerNode = args.ranksPerNode
     granularity = args.granularity
 
-    partitioner = getPartitioner(args.method)
+    partitioner = getPartitioner(
+        args.method, **({} if args.haloCost is None else {"haloCost": args.haloCost})
+    )
 
     # balancing is all extents and connectivity, so no coordinate is read
     mb = pg.multiBlock.topology.fromGrid(f"{gridDir}/g.h5", quiet=False)
@@ -101,7 +117,7 @@ if __name__ == "__main__":
             f" largest {beforeMax} -> {partitioner.blockCells(mb).max()}"
         )
 
-    weights, edges = partitioner.cellWeights(mb), partitioner.edgesFromMb(mb)
+    weights, edges = partitioner.workWeights(mb), partitioner.edgesFromMb(mb)
     assign = np.empty(len(mb.blocks), dtype=np.int64)
     for r, group in enumerate(blocksForProcs):
         assign[group] = r
@@ -121,12 +137,14 @@ if __name__ == "__main__":
         f" ({nNodes} node(s)) to {gridDir}/g.h5\n\n",
         "Results of Load Balancing:\n",
         f"Total Number of blocks = {len(mb.blocks)}\n",
-        f"Total Number of cells  = {int(weights.sum())}\n\n",
+        f"Total Number of cells  = {int(partitioner.blockCells(mb).sum())}\n",
+        f"Total work = {int(weights.sum())} cells, with the halos at"
+        f" {partitioner.haloCost} a plane cell\n\n",
         f"Maximum blocks on processor = {maxBlksForProcs}\n",
-        f"Maximum load on processor = {int(procLoad.max())}\n",
+        f"Maximum work on processor = {int(procLoad.max())}\n",
         f"Eficiency = {efficiency}\n",
         f"Halo traffic of {traffic['totalEdge']} face cells:\n",
-        f"  on a rank (free)      = {traffic['intraFraction']:.1f} %\n",
+        f"  on a rank (no message) = {traffic['intraFraction']:.1f} %\n",
         f"  on a node (shared)    = {traffic['onNodeFraction']:.1f} %\n",
         f"  over the network      = {traffic['offNodeFraction']:.1f} %"
         f"  (busiest node {int(traffic['maxNodeTrunk'])} cells)\n",

@@ -1,11 +1,13 @@
 """
 Placing blocks on ranks.
 
-A block's weight is its interior cells, the work a rank does for it. An edge
-between two blocks is weighted by the cells of the face plane they share, the
-halo traffic one exchange costs. Communication comes in tiers, cheapest first:
-same rank is free, same node goes over shared memory, and across a node goes
-over the network. Balancing the weights alone leaves every neighbor on a
+A block's weight is the work a rank does for it: its interior cells, and
+the halo behind every face it trades, which is packed, unpacked and run over
+by the cell kernels whoever holds the neighbor. An edge between two blocks
+is weighted by the cells of the face plane they share, the halo traffic one
+exchange costs. Communication comes in tiers, cheapest first: same rank costs
+no message, same node goes over shared memory, and across a node goes over
+the network. Balancing the weights alone leaves every neighbor on a
 different rank, so the placement has to spend both.
 
 A partitioner cuts a grid down until its pieces fit, turns it into a weighted
@@ -22,11 +24,16 @@ from .mergeMixin import MergeMixin
 class BasePartitioner(CutMixin, MergeMixin):
     name = None
 
-    def __init__(self, tol=0.05, refinePasses=10, nStarts=6):
+    def __init__(self, tol=0.05, refinePasses=10, nStarts=6, haloCost=0.62):
         # how far past an even share a rank may be loaded
         self.tol = tol
         self.refinePasses = refinePasses
         self.nStarts = nStarts
+        # what a plane cell of a traded face costs a rank, in interior cells:
+        # fitted to the per-rank device time of eight V100s on the burner
+        # grid (0.62 for a face met on the rank, 0.98 met elsewhere, which
+        # the cut keeps few)
+        self.haloCost = haloCost
 
     def partition(self, mb, nProcs, ranksPerNode, granularity=None):
         """Place :mb:'s blocks on :nProcs: ranks, :ranksPerNode: of which share
@@ -42,7 +49,7 @@ class BasePartitioner(CutMixin, MergeMixin):
         if granularity is not None:
             self.cutToFit(mb, int(self.blockCells(mb).sum() / nProcs / granularity))
 
-        weights, edges = self.cellWeights(mb), self.edgesFromMb(mb)
+        weights, edges = self.workWeights(mb), self.edgesFromMb(mb)
         assign = self.hierarchical(weights, edges, nProcs // ranksPerNode, ranksPerNode)
 
         return [[int(n) for n in np.flatnonzero(assign == r)] for r in range(nProcs)]
@@ -58,9 +65,14 @@ class BasePartitioner(CutMixin, MergeMixin):
     def blockCells(mb):
         return np.array([b.nCells for b in mb.blocks])
 
-    def cellWeights(self, mb):
-        """The work each block is: its interior cells."""
-        return self.blockCells(mb).astype(np.int64)
+    def workWeights(self, mb):
+        """The work each block is: its interior cells, and the plane cells of
+        every face it trades at haloCost each."""
+        weights = self.blockCells(mb).astype(np.float64)
+        for blk, face in mb.faces():
+            if face.neighbor is not None:
+                weights[blk.nblki] += self.haloCost * self.facePlaneCells(blk, face)
+        return weights
 
     @staticmethod
     def facePlaneCells(blk, face):
@@ -226,7 +238,7 @@ class BasePartitioner(CutMixin, MergeMixin):
 
     def metrics(self, assign, weights, edges, k, ranksPerNode=None):
         """Balance and traffic of an assignment. intraFraction is the share of
-        exchanged face cells that stays on a rank and costs nothing."""
+        exchanged face cells that stays on a rank and costs no message."""
         load = np.bincount(assign, weights=weights, minlength=k)
         total = sum(edges.values())
         rpn = ranksPerNode or k
