@@ -15,8 +15,12 @@ class Writer(BasePlugin):
 
     name = "writer"
 
-    def __init__(self, solver, cfgsect):
-        super().__init__(solver, cfgsect)
+    def __init__(self, cfgsect):
+        super().__init__(cfgsect)
+        self.cfgsect = cfgsect
+
+    def start(self, solver):
+        cfgsect = self.cfgsect
         comm, rank, size = getCommRankSize()
         self.dir = Path(cfgsect.get("dir", "."))
         if rank == 0:

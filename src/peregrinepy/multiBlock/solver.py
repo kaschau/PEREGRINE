@@ -13,7 +13,7 @@ from .restart import restart
 from .solverBlock import solverBlock
 from ..backend import Backend
 from ..files.configFile import pgConfigError
-from ..graph import BCNode, ExchangeGraphs, LaunchNode
+from ..graph import BCNode, ExchangeGraphs, Graph, LaunchNode
 from ..kernel import CellCenterKernel, HaloExchangeKernel
 from .. import integrators
 from .. import multiBlock
@@ -51,6 +51,8 @@ class solver(restart):
         # its arrays are made where the kernels run
         self.backend = Backend.fromRuntime(config)
         self.integrator = integrators.getIntegrator(config, self)
+        # the plugins say what they need with the rest, and start once built
+        self.plugins = getPlugins(config)
         self._declArrays()
         self._declKernels()
         self._jit()
@@ -65,7 +67,8 @@ class solver(restart):
         self._setBcs()
         self._buildGraphs()
         self._setState(state)
-        self.plugins = getPlugins(config, self)
+        for plugin in self.plugins.values():
+            plugin.start(self)
 
     def _newBlock(self, nblki):
         return solverBlock(nblki, self)
@@ -79,6 +82,8 @@ class solver(restart):
         for name in self.simulation.metrics:
             self.declMetric(name)
         arrays = {**self.simulation.arrays(), **self.integrator.arrays()}
+        for plugin in self.plugins.values():
+            arrays.update(plugin.arrays())
         for name, spec in arrays.items():
             self.declArray(name, **spec)
 
@@ -93,6 +98,11 @@ class solver(restart):
             "pack": HaloExchangeKernel("utils/extractSendBuffer.cpp"),
             "unpack": HaloExchangeKernel("utils/placeRecvBuffer.cpp"),
         }
+        for plugin in self.plugins.values():
+            for tag, kernel in plugin.declKernels().items():
+                if tag in self.kernels:
+                    raise ValueError(f"{plugin.name}: the tag {tag} is taken")
+                self.kernels[tag] = kernel
 
     def _jit(self):
         """Compiles every kernel with what the simulation bakes in, and the
@@ -228,8 +238,14 @@ class solver(restart):
 
     def _buildGraphs(self):
         """Makes every graph the simulation and the integrator say, by
-        stage, bound to this rank's means."""
+        stage, bound to this rank's means, with what the plugins add at the
+        end of a stage after it."""
         specs = {**self.simulation.graphs(), **self.integrator.graphs()}
+        for plugin in self.plugins.values():
+            for stage, nodes in plugin.after().items():
+                if stage not in specs:
+                    raise ValueError(f"{plugin.name}: no stage {stage} to follow")
+                specs[stage] = [*specs[stage], Graph(f"after {stage}", nodes)]
         means = self.means
         self.graphs = {
             stage: [g for spec in stageSpecs for g in spec.bind(*means)]

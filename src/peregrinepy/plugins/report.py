@@ -26,16 +26,20 @@ class Report(BasePlugin):
         "           All rights reserved.\n"
     )
 
-    def __init__(self, solver, cfgsect):
-        super().__init__(solver, cfgsect)
-        # its own reduction, compiled as the solver's kernels are and
+    def __init__(self, cfgsect):
+        super().__init__(cfgsect)
+        # its own reduction, compiled with the solver's kernels
+        self.kernel = CellCenterKernel("utils/CFLmax.cpp")
+
+    def declKernels(self):
+        return {"report CFLmax": self.kernel}
+
+    def start(self, solver):
         # settled on the interior of the block table
-        kernel = CellCenterKernel("utils/CFLmax.cpp")
-        solver.jit.compile([kernel])
         self.CFLmax = partial(
-            kernel,
+            self.kernel,
             solver.blockArrayTable,
-            solver.blockArrayTable.tiling(kernel, "interior"),
+            solver.blockArrayTable.tiling(self.kernel, "interior"),
         )
         self.started = perf_counter()
         if getCommRankSize()[1] == 0:

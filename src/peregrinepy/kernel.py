@@ -100,6 +100,15 @@ class BaseKernel:
     def __repr__(self):
         return f"<{type(self).__name__} {self.__name__}>"
 
+    @staticmethod
+    def bakedValues(owner, values):
+        """Gives the defines that bake the config's values of one piece into
+        it: PG_<OWNER>_<NAME>."""
+        return [
+            f"PG_{owner.upper()}_{name.upper()}={float(value)!r}"
+            for name, value in dict(values).items()
+        ]
+
     def resolveComponents(self, ne):
         """Settles how many components an item is of for a case of :ne:
         equations: a declared count, or ne less a count."""
@@ -468,8 +477,7 @@ class FluxKernel(CellFaceKernel):
             defines.append(f"PG_SECONDARY={secondary}")
             includes.insert(1, f"advFlux/formula/{secondary}.hpp")
             includes.append(f"advFlux/switch/{switch}.hpp")
-            for name, value in dict(switchValues).items():
-                defines.append(f"PG_{switch.upper()}_{name.upper()}={float(value)!r}")
+            defines += self.bakedValues(switch, switchValues)
         super().__init__("advFlux/flux.cpp", direction, defines, includes)
         self.__name__ = scheme + (f" with {secondary} by {switch}" if switch else "")
 

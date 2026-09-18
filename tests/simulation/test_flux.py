@@ -17,9 +17,17 @@ gamma = air["Air"]["cp0"] / (air["Air"]["cp0"] - R)
 
 
 def line(
-    scheme, nx, secondary=None, switch=None, values=(), physics="euler", periodic=True
+    scheme,
+    nx,
+    secondary=None,
+    switch=None,
+    values=(),
+    physics="euler",
+    periodic=True,
+    configure=None,
 ):
-    """A case on a line of :nx: - 1 cells with the named fluxes."""
+    """A case on a line of :nx: - 1 cells with the named fluxes; :configure:
+    edits the config before the case is made."""
     config = pg.files.configFile()
     config["simulation"]["physics"] = physics
     config["simulation"]["mixture"] = air
@@ -32,6 +40,8 @@ def line(
     config["RHS"]["switchValues"] = dict(values)
     config["timeIntegration"]["integrator"] = "rk3"
     config["bcValues"]["walls"] = {"bcType": "adiabaticSlipWall"}
+    if configure:
+        configure(config)
     mesh = pg.mesher.CubeMesher(
         mbDims=[1, 1, 1],
         dimsPerBlock=[nx, 2, 2],

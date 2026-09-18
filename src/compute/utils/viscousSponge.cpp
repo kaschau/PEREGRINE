@@ -1,40 +1,17 @@
 #include "kernel.hpp"
 
+// A sponge: the viscosity raised toward :mult: times itself along a line,
+// from one at :start: (the origin's projection on the sponge's unit normal)
+// to mult a :length: further, and held there.
 PG_RANGE(cellCenters)
 struct viscousSponge {
   cellCenterIn cells;
   cellCenterInOut qt;
-  dims d;
-  const double *origin, *ending;
-  double mult;
+  double nx, ny, nz, start, length, mult;
   KOKKOS_INLINE_FUNCTION void operator()() const {
-    const int ni = d->ni, nj = d->nj, nk = d->nk;
-
-    const double &xc = cells(0);
-    const double &yc = cells(1);
-    const double &zc = cells(2);
-
-    double vectorX = xc - origin[0];
-    double vectorY = yc - origin[1];
-    double vectorZ = zc - origin[2];
-
-    double spongeLength =
-        sqrt(pow(ending[0] - origin[0], 2.0) + pow(ending[1] - origin[1], 2.0) +
-             pow(ending[2] - origin[2], 2.0));
-
-    double normal[3] = {
-        (ending[0] - origin[0]) / spongeLength,
-        (ending[1] - origin[1]) / spongeLength,
-        (ending[2] - origin[2]) / spongeLength,
-    };
-
-    double dist =
-        vectorX * normal[0] + vectorY * normal[1] + vectorZ * normal[2];
-
-    double multiplier = dist / spongeLength * (mult - 1.0);
-    multiplier = 1.0 + fmin(fmax(0.0, multiplier), mult);
-
-    qt(0) *= multiplier;
+    const double along =
+        (cells(0) * nx + cells(1) * ny + cells(2) * nz - start) / length;
+    qt(0) *= 1.0 + fmin(fmax(0.0, along * (mult - 1.0)), mult - 1.0);
   }
 };
 

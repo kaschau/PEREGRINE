@@ -125,7 +125,6 @@ PEREGRINE run in executable mode requires an input configuration file (in yaml f
       switchAdvFlux: null # the switch: jamesonPressure, or ducros (viscous flow)
       switchValues: {} # what the switch takes: jamesonPressure gain; ducros nu and floor
       diffusion: true #solve diffusion terms?
-      subgrid: null #use a subgrid model?
 
     mcPhysics: # the gas, and the eos, transport and diffusion models
       mixture: ["O2", "N2"] # a Cantera mechanism file, or a list of species from the library

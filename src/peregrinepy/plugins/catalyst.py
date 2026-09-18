@@ -9,8 +9,12 @@ class Catalyst(BasePlugin):
 
     name = "catalyst"
 
-    def __init__(self, mb, cfgsect):
-        super().__init__(mb, cfgsect)
+    def __init__(self, cfgsect):
+        super().__init__(cfgsect)
+        self.cfgsect = cfgsect
+
+    def start(self, mb):
+        cfgsect = self.cfgsect
         # only a case that asks for catalyst needs paraview importable
         from paraview import vtk
         from paraview.catalyst import bridge

@@ -12,18 +12,19 @@ class Trace(BasePlugin):
 
     name = "trace"
 
-    def __init__(self, solver, cfgsect):
-        super().__init__(solver, cfgsect)
+    def __init__(self, cfgsect):
+        super().__init__(cfgsect)
+        self.directory = Path(cfgsect.get("dir", "Trace"))
+        with open(cfgsect["points"], "rb") as f:
+            self.points = np.load(f)
+            self.tags = np.load(f)
+
+    def start(self, solver):
         comm, rank, size = getCommRankSize()
-        directory = Path(cfgsect.get("dir", "Trace"))
+        directory, points, tags = self.directory, self.points, self.tags
         if rank == 0:
             directory.mkdir(parents=True, exist_ok=True)
         comm.Barrier()
-
-        with open(cfgsect["points"], "rb") as f:
-            points = np.load(f)
-            tags = np.load(f)
-
         # (block number, file, i, j, k) of every point on this rank
         self.traces = []
         for blk in solver.blocks:

@@ -79,7 +79,6 @@ class configFile(frozenDict):
                 "secondaryAdvFlux": None,
                 "switchAdvFlux": None,
                 "switchValues": {},
-                "subgrid": None,
             }
         )
 
@@ -119,15 +118,6 @@ class configFile(frozenDict):
         # memory, or straight from the device buffers when the MPI is
         # GPU-aware, which the installation knows and the runtime cannot
         self["haloExchange"] = frozenDict({"kind": "hostStaged"})
-
-        self["viscousSponge"] = frozenDict(
-            {
-                "spongeON": False,
-                "origin": [0.0, 0.0, 0.0],
-                "ending": [1.0, 0.0, 0.0],
-                "multiplier": 5.0,
-            },
-        )
 
         # What each boundary reads, by the name the grid gives it. Which
         # faces carry a name is the grid's business; what they read is the

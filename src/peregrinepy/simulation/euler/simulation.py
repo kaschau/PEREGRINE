@@ -48,17 +48,11 @@ class EulerSimulation(BaseSimulation):
 
     def validate(self, config):
         rhs, sim, ti = config["RHS"], config["simulation"], config["timeIntegration"]
-        if rhs["subgrid"] is not None:
-            raise pgConfigError("subgrid", rhs["subgrid"], "not until its round")
         if (rhs["secondaryAdvFlux"] is None) != (rhs["switchAdvFlux"] is None):
             raise pgConfigError(
                 "secondaryAdvFlux",
                 rhs["secondaryAdvFlux"],
                 "a secondary flux and a switch go together",
-            )
-        if config["viscousSponge"]["spongeON"]:
-            raise pgConfigError(
-                "viscousSponge", True, "not until the composition round"
             )
         if sim["chemistry"]:
             raise pgConfigError("chemistry", True, "not until the composition round")

@@ -5,6 +5,7 @@ from . import (
     nanCheck,
     report,
     trace,
+    viscousSponge,
     writer,
 )  # noqa: F401  (registers the plugins)
 from ..misc import subclassWhere
@@ -13,9 +14,9 @@ from .base import BasePlugin
 __all__ = ["BasePlugin", "getPlugins"]
 
 
-def getPlugins(config, solver):
-    """Makes every plugin the config names, by name, for this solver."""
+def getPlugins(config):
+    """Makes every plugin the config names, by name, from its section."""
     return {
-        name: subclassWhere(BasePlugin, name=name)(solver, sect)
+        name: subclassWhere(BasePlugin, name=name)(sect)
         for name, sect in config["plugins"].items()
     }

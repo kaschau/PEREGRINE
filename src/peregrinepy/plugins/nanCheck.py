@@ -14,16 +14,20 @@ class NanCheck(BasePlugin):
 
     name = "nanCheck"
 
-    def __init__(self, solver, cfgsect):
-        super().__init__(solver, cfgsect)
-        # its own check, compiled as the solver's kernels are and settled
-        # on the interior of the block table
-        kernel = CellCenterKernel("utils/allFinite.cpp")
-        solver.jit.compile([kernel])
+    def __init__(self, cfgsect):
+        super().__init__(cfgsect)
+        # its own check, compiled with the solver's kernels
+        self.kernel = CellCenterKernel("utils/allFinite.cpp")
+
+    def declKernels(self):
+        return {"nanCheck allFinite": self.kernel}
+
+    def start(self, solver):
+        # settled on the interior of the block table
         self.allFinite = partial(
-            kernel,
+            self.kernel,
             solver.blockArrayTable,
-            solver.blockArrayTable.tiling(kernel, "interior"),
+            solver.blockArrayTable.tiling(self.kernel, "interior"),
         )
 
     def __call__(self, solver):
