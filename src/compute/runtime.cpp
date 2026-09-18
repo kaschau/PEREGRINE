@@ -16,6 +16,10 @@ struct capturedGraph {
 // pgFinalize clears this first
 auto &graphs = *new std::vector<std::unique_ptr<capturedGraph>>;
 capturedGraph *capturing = nullptr;
+#ifdef PG_GRAPH_FORK
+// nodes added under the open capture: a sibling that added none has no end
+int launched = 0;
+#endif
 // host memory the device reaches at bus speed, what an exchange stages its
 // messages through: kept for the run, freed at finalize
 auto &pinned = *new std::vector<void *>;
@@ -160,20 +164,67 @@ PG_ABI void pgGraphDrop(int id) { graphs[id].reset(); }
 
 PG_ABI bool pgGraphCapturing() { return capturing != nullptr; }
 
-// the tail a launch shape chains its node onto
+// the tail a launch shape chains its node onto; asking for it is adding one
 PG_ABI graphNode *pgGraphTail() {
-  return capturing ? &capturing->tail : nullptr;
+  if (!capturing)
+    return nullptr;
+#ifdef PG_GRAPH_FORK
+  ++launched;
+#endif
+  return &capturing->tail;
 }
 
 // Independent launches: a fork's siblings read and write nothing of each
 // other's, so a graph could fan them out from the fork and join them with
-// when_all. It does not: Kokkos 5.2.1's HIP when_all hangs the device on
-// the next fence (measured 2026-09-18, MI100), and the graphs round found
-// no gain in graph-level overlap. So the siblings are launches in order,
+// when_all. Kokkos 5.2.1's HIP when_all hangs the device on the next fence
+// (measured 2026-09-18, MI100), and the graphs round found no gain in
+// graph-level overlap, so by default the siblings are launches in order,
 // under capture or not, and these three say only that they need not be.
+// PG_GRAPH_FORK builds the fan-out, for measuring it where when_all works.
+#ifdef PG_GRAPH_FORK
+namespace {
+// an open fork: the node its siblings hang off, the end of each sibling
+// closed so far that launched anything, and the node count when the open
+// one began, or -1 with none open
+struct openFork {
+  graphNode base;
+  std::vector<graphNode> ends;
+  int began = -1;
+};
+auto &forks = *new std::vector<openFork>;
+void closeSibling(openFork &fork) {
+  if (fork.began >= 0 && launched > fork.began)
+    fork.ends.push_back(capturing->tail);
+}
+} // namespace
+PG_ABI void pgGraphFork() {
+  if (capturing)
+    forks.push_back({capturing->tail, {}});
+}
+PG_ABI void pgGraphSibling() {
+  if (!capturing)
+    return;
+  openFork &fork = forks.back();
+  closeSibling(fork);
+  capturing->tail = fork.base;
+  fork.began = launched;
+}
+PG_ABI void pgGraphJoin() {
+  if (!capturing)
+    return;
+  openFork &fork = forks.back();
+  closeSibling(fork);
+  graphNode joined = fork.ends.empty() ? fork.base : fork.ends[0];
+  for (size_t i = 1; i < fork.ends.size(); ++i)
+    joined = Kokkos::Experimental::when_all(joined, fork.ends[i]);
+  capturing->tail = joined;
+  forks.pop_back();
+}
+#else
 PG_ABI void pgGraphFork() {}
 PG_ABI void pgGraphSibling() {}
 PG_ABI void pgGraphJoin() {}
+#endif
 
 // an array outliving finalize is the process exiting; there is nothing to free
 PG_ABI void pgFree(void *device) {
