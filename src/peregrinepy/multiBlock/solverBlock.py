@@ -22,7 +22,7 @@ class solverBlock(restartBlock):
         return pgDims.of(self)
 
     def _newFace(self, nface):
-        return solverFace(nface, self.ng, self)
+        return solverFace(nface, self)
 
     def alignBlockFaces(self):
         """Settles how each neighbor's plane lies against the block face it

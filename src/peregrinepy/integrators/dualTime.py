@@ -22,9 +22,15 @@ class dualTime(BaseIntegrator):
     source. Which stepper, and how many pseudo steps, the config says."""
 
     integratorName = "dualTime"
+    # a result carries the state one step back; Qn is this one
     restartArrays = ("Qnm1",)
     # the residual after each pseudo step, gathered when a report is due
     residuals = ()
+    # Qn and Qnm1 trade names at the end of every step, so the newest
+    # state is never copied over the older; a captured graph keeps the
+    # arrays it captured, so the pseudo graphs are captured twice, once
+    # under each assignment, and this says which set the names match
+    bank = 0
 
     @cached_property
     def pseudo(self):
@@ -72,16 +78,21 @@ class dualTime(BaseIntegrator):
         localDtau = Graph(
             "localDtau", [LaunchNode(k["localDtau"], "interior", viscous=viscous)]
         )
-        pseudo = [
-            Graph(
-                f"pseudo stage {n}",
-                [
-                    LaunchNode(k["dQdt"], "interior", dt=dt),
-                    LaunchNode(k["invertDQ"], "interior", dt=dt, viscous=viscous),
-                ],
-            )
-            for n in range(len(self.stages))
-        ]
+        # the same pseudo graphs twice: one set is captured under each
+        # assignment of the names Qn and Qnm1 to their two arrays
+        pseudo = {
+            f"pseudo {bank}": [
+                Graph(
+                    f"pseudo {bank} stage {n}",
+                    [
+                        LaunchNode(k["dQdt"], "interior", dt=dt),
+                        LaunchNode(k["invertDQ"], "interior", dt=dt, viscous=viscous),
+                    ],
+                )
+                for n in range(len(self.stages))
+            ]
+            for bank in (0, 1)
+        }
         # the preconditioned increment carries the pseudo step already
         combine = [
             self.pseudo.combineGraph(self, n, *weights, dt=self.one)
@@ -90,7 +101,7 @@ class dualTime(BaseIntegrator):
         return {
             **super().graphs(),
             "localDtau": [localDtau],
-            "pseudo": pseudo,
+            **pseudo,
             "combine": combine,
         }
 
@@ -101,10 +112,11 @@ class dualTime(BaseIntegrator):
         comm, rank, size = getCommRankSize()
         self.residuals = []
         graphs = solver.graphs
+        pseudos = graphs[f"pseudo {self.bank}"]
         for n in range(self.subIterations):
             for g in graphs["localDtau"]:
                 g.run()
-            for pseudo, combine in zip(graphs["pseudo"], graphs["combine"]):
+            for pseudo, combine in zip(pseudos, graphs["combine"]):
                 solver.rhs()
                 pseudo.run()
                 combine.run()
@@ -116,10 +128,11 @@ class dualTime(BaseIntegrator):
                 comm.Allreduce(MPI.IN_PLACE, resid[1, :], op=MPI.SUM)
                 self.residuals.append(np.sqrt(resid[1, :]))
 
-        # the two earlier states shift: Qn's storage becomes Qnm1's, and only
-        # the new state is copied
+        # the oldest takes the new state, then the two earlier states trade
+        # names: Qn is this one and Qnm1 the one before, whatever the arrays
+        solver.copyArray("Qnm1", "Q")
         solver.swapArrays("Qn", "Qnm1")
-        solver.copyArray("Qn", "Q")
+        self.bank ^= 1
 
     def stepReport(self):
         """Gives the root-sum-square residual after each pseudo time step of

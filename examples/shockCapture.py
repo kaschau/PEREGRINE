@@ -336,13 +336,13 @@ class state:
 def simulate(testnum, index="i"):
     nx = 201
     config = pg.files.configFile()
-    config["mcPhysics"]["mixture"] = db
+    config["simulation"]["physics"] = "euler"
+    config["simulation"]["mixture"] = db
     config["RHS"]["shockHandling"] = "artificialDissipation"
     config["RHS"]["primaryAdvFlux"] = "KEEPpe"
     config["RHS"]["secondaryAdvFlux"] = "scalarDissipation"
     config["RHS"]["switchAdvFlux"] = "vanLeer"
     config["timeIntegration"]["integrator"] = "rk3"
-    config.validateConfig()
 
     rot = {"i": 0, "j": 1, "k": 2}
 
@@ -351,20 +351,12 @@ def simulate(testnum, index="i"):
 
     dimsPerBlock = rotate([nx, 2, 2], index)
     lengths = rotate([1, 0.1, 0.1], index)
-    mb = pg.integrators.getSolver(
-        config,
-        mesh=pg.mesher.CubeMesher(
-            mbDims=[1, 1, 1], dimsPerBlock=dimsPerBlock, lengths=lengths
-        ),
-    )
 
-    Ru = mb.thtrdat.Ru
-    MW = mb.thtrdat.MW.get()[0]
-    R = Ru / MW
-    cp = mb.thtrdat.cp0.get()[0]
+    # the gas, from its constants
+    species = db[next(iter(db))]
+    R = 8314.46261815324 / species["MW"]
+    cp = species["cp0"]
     gamma = cp / (cp - R)
-
-    print(mb)
 
     test = state(testnum, gamma, R)
     print("State {}".format(testnum))
@@ -382,85 +374,71 @@ def simulate(testnum, index="i"):
     print("uR = {}".format(test.uR))
     print("--------------------------")
 
+    # the ends of the tube: fed where the flow comes in, let out where it
+    # leaves, walls where it is still; the sides slip
+    ccAxis = {"i": 0, "j": 1, "k": 2}
+    lowFace, highFace = 2 * ccAxis[index] + 1, 2 * ccAxis[index] + 2
+    config["bcValues"]["walls"] = {"bcType": "adiabaticSlipWall"}
+    boundaryNames = dict.fromkeys(range(1, 7), "walls")
+
+    def end(name, u, p, T, nface):
+        if u == 0.0:
+            return
+        boundaryNames[nface] = name
+        # in through the low end, or in through the high end, is an inlet
+        if (u > 0) == (nface == lowFace):
+            velo = rotate([u, 0.0, 0.0], index)
+            config["bcValues"][name] = {
+                "bcType": "constantVelocitySubsonicInlet",
+                "u": velo[0],
+                "v": velo[1],
+                "w": velo[2],
+                "T": T,
+            }
+        else:
+            config["bcValues"][name] = {
+                "bcType": "constantPressureSubsonicExit",
+                "p": p,
+            }
+
+    end("left", test.uL, test.pL, test.TL, lowFace)
+    end("right", test.uR, test.pR, test.TR, highFace)
+    config.validateConfig()
+
+    mesh = pg.mesher.CubeMesher(
+        mbDims=[1, 1, 1],
+        dimsPerBlock=dimsPerBlock,
+        lengths=lengths,
+        boundaryNames=boundaryNames,
+    )
+    mb = pg.multiBlock.solver(config, mesh)
+    print(mb)
+
     blk = mb.blocks[0]
     ng = blk.ng
 
-    for face in blk.faces:
-        face.bcType = "adiabaticSlipWall"
-
-    ccAxis = {"i": 0, "j": 1, "k": 2}
     uIndex = {"i": 1, "j": 2, "k": 3}
     xc = blk.cells.get()[..., ccAxis[index]]
-    # Initialize Left/Right properties
-    q = blk.q.get()
+    # the primitive vector, p, u, v, w, T: the left and right states
+    q = np.zeros(blk.Q.shape[:3] + (mb.ne,))
     q[:, :, :, 0] = np.where(xc <= test.x0, test.pL, test.pR)
     q[:, :, :, uIndex[index]] = np.where(xc <= test.x0, test.uL, test.uR)
     q[:, :, :, 4] = np.where(xc <= test.x0, test.TL, test.TR)
-    blk.q.set(q)
+    mb.setPrimitives([q])
 
-    # Update boundary conditions
-    if index == "i":
-        lowFace = 1
-        highFace = 2
-    elif index == "j":
-        lowFace = 3
-        highFace = 4
-    elif index == "k":
-        lowFace = 5
-        highFace = 6
-
-    face = blk.getFace(lowFace)
-    if test.uL == 0.0:
-        pass
-    else:
-        inputBcValues = {}
-        if test.uL > 0:
-            face.bcType = "constantVelocitySubsonicInlet"
-            bcVelo = rotate([test.uL, 0.0, 0.0], index)
-            inputBcValues["u"] = bcVelo[0]
-            inputBcValues["v"] = bcVelo[1]
-            inputBcValues["w"] = bcVelo[2]
-            inputBcValues["T"] = test.TL
-            face.bc.setValues(inputBcValues)
-        elif test.uL < 0:
-            face.bcType = "constantPressureSubsonicExit"
-            inputBcValues["p"] = test.pL
-            face.bc.setValues(inputBcValues)
-
-    face = blk.getFace(highFace)
-    if test.uR == 0.0:
-        pass
-    else:
-        inputBcValues = {}
-        if test.uR < 0:
-            face.bcType = "constantVelocitySubsonicInlet"
-            bcVelo = rotate([test.uR, 0.0, 0.0], index)
-            inputBcValues["u"] = bcVelo[0]
-            inputBcValues["v"] = bcVelo[1]
-            inputBcValues["w"] = bcVelo[2]
-            inputBcValues["T"] = test.TR
-            face.bc.setValues(inputBcValues)
-        elif test.uR > 0:
-            face.bcType = "constantPressureSubsonicExit"
-            inputBcValues["p"] = test.pR
-            face.bc.setValues(inputBcValues)
-
-    # Update cons
-    mb.stateFromPrims(nface=0)
-    mb.consistify()
     bar = pg.misc.Progress(test.t)
     while mb.tme < test.t:
         bar.at(mb.tme)
-        mb.step(test.dt)
+        mb.integrator.step(test.dt)
 
     s_ = rotate(np.s_[ng:-ng, ng, ng], index)
-    q, Q, qh = blk.q.get(), blk.Q.get(), blk.qh.get()
+    data = mb.exportData(blk, ["rho", "p", "u", "v", "w"])
     x = blk.cells.get()[..., ccAxis[index]][s_]
-    rho = Q[s_][:, 0]
-    p = q[s_][:, 0]
+    rho = data["rho"][s_]
+    p = data["p"][s_]
     phi = blk.phi.get()[s_][:, uIndex[index] - 1]
-    u = q[s_][:, uIndex[index]]
-    e = qh[s_][:, 4]
+    u = data["uvw"[ccAxis[index]]][s_]
+    e = blk.qh.get()[s_][:, 4]
 
     res = solve(test)
     rx = res["x"]
@@ -510,11 +488,11 @@ def simulate(testnum, index="i"):
 
 if __name__ == "__main__":
     try:
-        pg.abi.lib.initialize()
+        pg.backend.abi.lib.initialize()
         testnum = 5
         index = "i"
         simulate(testnum, index)
-        pg.abi.lib.finalize()
+        pg.backend.abi.lib.finalize()
 
     except Exception as e:
         import sys

@@ -14,53 +14,49 @@ import matplotlib.pyplot as plt
 
 def simulate():
     config = pg.files.configFile()
-    config["mcPhysics"]["mixture"] = ["O2", "N2"]
-    config["mcPhysics"]["eos"] = "tpg"
-    config["mcPhysics"]["trans"] = "kineticTheory"
-    config["mcPhysics"]["Trange"] = (200.0, 1000.0)
-    config["RHS"]["diffusion"] = True
+    config["simulation"]["physics"] = "navierStokes"
+    config["simulation"]["mixture"] = ["O2", "N2"]
+    config["simulation"]["eos"] = "tpg"
+    config["simulation"]["trans"] = "kineticTheory"
+    config["simulation"]["Trange"] = (200.0, 1000.0)
     config["RHS"]["primaryAdvFlux"] = "rusanov"
+    config["bcValues"]["walls"] = {"bcType": "adiabaticSlipWall"}
     config.validateConfig()
-    mb = pg.integrators.getSolver(
-        config,
-        mesh=pg.mesher.CubeMesher(
-            mbDims=[1, 1, 1], dimsPerBlock=[41, 2, 2], lengths=[1, 0.01, 0.01]
-        ),
+    mesh = pg.mesher.CubeMesher(
+        mbDims=[1, 1, 1],
+        dimsPerBlock=[41, 2, 2],
+        lengths=[1, 0.01, 0.01],
+        boundaryNames=dict.fromkeys(range(1, 7), "walls"),
     )
+    mb = pg.multiBlock.solver(config, mesh)
 
     blk = mb.blocks[0]
-    for face in blk.faces:
-        face.bcType = "adiabaticSlipWall"
-
     ng = blk.ng
-    q = blk.q.get()
+    # the primitive vector, p, u, v, w, T, Y(O2): one species each side of
+    # the middle, the temperatures making the masses equal
+    q = np.zeros(blk.Q.shape[:3] + (mb.ne,))
     q[:, :, :, 0] = 101325.0
-    # Make equal mass
-    MWA, MWB = mb.thtrdat.MW.get()[:2]
+    MWA, MWB = mb.simulation.mixture.speciesData()["MW"][:2]
     xc = blk.cells.get()[..., 0]
     q[:, :, :, 4] = np.where(xc < 0.5, 300.0 * MWA / MWB, 300.0)
     q[:, :, :, 5] = np.where(xc < 0.5, 1.0, 0.0)
-
-    # Update cons
-    blk.q.set(q)
-    mb.stateFromPrims(nface=0)
-    mb.consistify()
+    mb.setPrimitives([q])
 
     dt = 1e-5
     nrt = 50000
     bar = pg.misc.Progress(nrt)
     while mb.nrt < nrt:
-        mb.step(dt)
+        mb.integrator.step(dt)
         if mb.nrt % 100 == 0:
             bar.at(mb.nrt)
 
-    q = blk.q.get()
+    A = mb.exportData(blk, ["O2"])["O2"]
     fig, ax1 = plt.subplots()
     ax1.set_title("1D Diffusion Results")
     ax1.set_xlabel(r"x")
     x = blk.cells.get()[..., 0][ng:-ng, ng, ng]
-    A = q[ng:-ng, ng, ng, 5]
-    B = 1.0 - q[ng:-ng, ng, ng, 5]
+    A = A[ng:-ng, ng, ng]
+    B = 1.0 - A
     ax1.plot(x, A, marker="o", color="r", label="A", linewidth=1.0)
     ax1.plot(x, B, linestyle="--", color="k", label="B", linewidth=1.5)
     ax1.set_ylim([0.49, 0.51])
@@ -71,9 +67,9 @@ def simulate():
 
 if __name__ == "__main__":
     try:
-        pg.abi.lib.initialize()
+        pg.backend.abi.lib.initialize()
         simulate()
-        pg.abi.lib.finalize()
+        pg.backend.abi.lib.finalize()
 
     except Exception as e:
         import sys

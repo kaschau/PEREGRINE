@@ -26,21 +26,20 @@ np.seterr(all="raise")
 
 def simulate():
     config = pg.files.configFile()
-    config["mcPhysics"]["mixture"] = air
+    config["simulation"]["physics"] = "euler"
+    config["simulation"]["mixture"] = air
     config.validateConfig()
 
     NE = 65
     NN = 65
     NX = 65
-    mb = pg.integrators.getSolver(
-        config,
-        mesh=pg.mesher.CubeMesher(
-            mbDims=[1, 1, 1],
-            dimsPerBlock=[NE, NN, NX],
-            lengths=[2 * np.pi for _ in range(3)],
-            periodic=[True, True, True],
-        ),
+    mesh = pg.mesher.CubeMesher(
+        mbDims=[1, 1, 1],
+        dimsPerBlock=[NE, NN, NX],
+        lengths=[2 * np.pi for _ in range(3)],
+        periodic=[True, True, True],
     )
+    mb = pg.multiBlock.solver(config, mesh)
 
     blk = mb.blocks[0]
     ng = blk.ng
@@ -52,7 +51,8 @@ def simulate():
     rho0 = 1.0
     gamma = cp / (cp - R)
     xc, yc, zc = (blk.cells.get()[..., n] for n in range(3))
-    q = blk.q.get()
+    # the primitive vector, p, u, v, w, T
+    q = np.zeros(blk.Q.shape[:3] + (mb.ne,))
     q[:, :, :, 0] = 1 / gamma + (rho0 * M0**2 / 16.0) * (
         np.cos(2 * xc) + np.cos(2 * yc)
     ) * (np.cos(2 * zc + 2.0))
@@ -60,9 +60,7 @@ def simulate():
     q[:, :, :, 2] = -M0 * np.cos(xc) * np.sin(yc) * np.cos(zc)
     q[:, :, :, 4] = q[:, :, :, 0] / (R * rho0)
 
-    blk.q.set(q)
-    mb.stateFromPrims(nface=0)
-    mb.consistify()
+    mb.setPrimitives([q])
 
     dt = 0.1 * 2 * np.pi / 64
     ke = []
@@ -74,35 +72,21 @@ def simulate():
     while mb.tme < tEnd:
         if mb.nrt % 50 == 0:
             bar.at(mb.tme)
-            q, Q = blk.q.get(), blk.Q.get()
-
-            rke = np.sum(
-                0.5
-                * Q[ng:-ng, ng:-ng, ng:-ng, 0]
-                * (
-                    q[ng:-ng, ng:-ng, ng:-ng, 1] ** 2
-                    + q[ng:-ng, ng:-ng, ng:-ng, 2] ** 2
-                    + q[ng:-ng, ng:-ng, ng:-ng, 3] ** 2
-                )
-            )
-            re = np.sum(
-                Q[ng:-ng, ng:-ng, ng:-ng, 0] * (q[ng:-ng, ng:-ng, ng:-ng, 4] * cv)
+            data = mb.exportData(blk, ["rho", "p", "u", "v", "w", "T"])
+            rho, p, u, v, w, T = (
+                data[n][blk.interior] for n in "rho p u v w T".split()
             )
 
-            rS = np.sum(
-                Q[ng:-ng, ng:-ng, ng:-ng, 0]
-                * np.log10(
-                    q[ng:-ng, ng:-ng, ng:-ng, 0]
-                    * Q[ng:-ng, ng:-ng, ng:-ng, 0] ** (-gamma)
-                )
-            )
+            rke = np.sum(0.5 * rho * (u**2 + v**2 + w**2))
+            re = np.sum(rho * (T * cv))
+            rS = np.sum(rho * np.log10(p * rho ** (-gamma)))
 
             ke.append(rke)
             e.append(re)
             s.append(rS)
             t.append(mb.tme * M0)
 
-        mb.step(dt)
+        mb.integrator.step(dt)
 
     plt.plot(t, ke / ke[0])
     plt.ylim([0, 2.4])
@@ -121,9 +105,9 @@ def simulate():
 
 if __name__ == "__main__":
     try:
-        pg.abi.lib.initialize()
+        pg.backend.abi.lib.initialize()
         simulate()
-        pg.abi.lib.finalize()
+        pg.backend.abi.lib.finalize()
 
     except Exception as e:
         import sys

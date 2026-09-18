@@ -98,75 +98,39 @@ air = {
 
 
 def simulate():
+    """A channel of two blocks, fed at one end and let out the other, with
+    Catalyst watching every step."""
     config = pg.files.configFile()
-    config["RHS"]["diffusion"] = True
-    config["mcPhysics"]["mixture"] = air
-    config["mcPhysics"]["trans"] = "constantProps"
+    config["simulation"]["physics"] = "navierStokes"
+    config["simulation"]["mixture"] = air
+    config["simulation"]["trans"] = "constantProps"
     config["plugins"]["catalyst"] = {"script": "tempcoproc.py"}
     config["initialConditions"]["u"] = 10.0
+    config["bcValues"]["inlet"] = {
+        "bcType": "constantVelocitySubsonicInlet",
+        "u": 10.0,
+        "v": 0.0,
+        "w": 0.0,
+        "T": 300.0,
+    }
+    config["bcValues"]["exit"] = {
+        "bcType": "constantPressureSubsonicExit",
+        "p": 101325.0,
+    }
+    config["bcValues"]["walls"] = {"bcType": "adiabaticNoSlipWall"}
     config.validateConfig()
 
-    comm, rank, size = pg.mpiComm.mpiUtils.getCommRankSize()
+    comm, rank, size = pg.misc.getCommRankSize()
     if rank == 0:
         with open("tempcoproc.py", "w") as f:
             f.write(fname)
-    # each rank meshes its own block, then the two are wired together by hand
-    if rank == 0:
-        mesh = pg.mesher.CubeMesher(
-            mbDims=[1, 1, 1], dimsPerBlock=[100, 40, 2], lengths=[0.1, 0.02, 0.001]
-        )
-    else:
-        mesh = pg.mesher.CubeMesher(
-            origin=[0.1, 0.0, 0.0],
-            mbDims=[1, 1, 1],
-            dimsPerBlock=[100, 40, 2],
-            lengths=[0.1, 0.02, 0.001],
-        )
-    mb = pg.integrators.getSolver(config, mesh)
-    blk = mb.blocks[0]
-    mb.totalBlocks = 2
-    if rank == 0:
-        face = blk.getFace(1)
-        face.bcType = "constantVelocitySubsonicInlet"
-        inputBcValues = {}
-        inputBcValues["p"] = 101325.0
-        inputBcValues["u"] = 10.0
-        inputBcValues["v"] = 0.0
-        inputBcValues["w"] = 0.0
-        inputBcValues["T"] = 300.0
-        face.bc.setValues(inputBcValues)
-
-        face = blk.getFace(2)
-        face.commRank = 1
-        face.neighbor = 1
-        face.bcType = "interior"
-        face.orientation = "123"
-
-    else:
-        blk.nblki = 1
-        face = blk.getFace(2)
-        face.bcType = "constantPressureSubsonicExit"
-        inputBcValues = {}
-        inputBcValues["p"] = 101325.0
-        face.bc.setValues(inputBcValues)
-
-        face = blk.getFace(1)
-        face.commRank = 0
-        face.neighbor = 0
-        face.bcType = "interior"
-        face.orientation = "123"
-
-    for f in [3, 4]:
-        face = blk.getFace(f)
-        face.bcType = "adiabaticNoSlipWall"
-
-    mb.setBlockCommunication()
-
-    mb.generateHalo()
-    mb.computeMetrics()
-
-    # the faces changed since the case was made, so its halos follow
-    mb.consistify()
+    mesh = pg.mesher.CubeMesher(
+        mbDims=[2, 1, 1],
+        dimsPerBlock=[100, 40, 2],
+        lengths=[0.2, 0.02, 0.001],
+        boundaryNames={1: "inlet", 2: "exit", 3: "walls", 4: "walls"},
+    )
+    mb = pg.multiBlock.solver(config, mesh)
 
     if rank == 0:
         print(mb)
@@ -176,7 +140,7 @@ def simulate():
     bar = pg.misc.Progress(100)
     while mb.nrt < 100:
         bar.at(mb.nrt)
-        mb.step(dt)
+        mb.integrator.step(dt)
         catalyst(mb)
 
     catalyst.finalize(mb)
@@ -186,9 +150,9 @@ def simulate():
 
 if __name__ == "__main__":
     try:
-        pg.abi.lib.initialize()
+        pg.backend.abi.lib.initialize()
         simulate()
-        pg.abi.lib.finalize()
+        pg.backend.abi.lib.finalize()
 
     except Exception as e:
         import sys

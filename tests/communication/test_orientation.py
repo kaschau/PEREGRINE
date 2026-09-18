@@ -2,8 +2,13 @@ import itertools
 
 import numpy as np
 import peregrinepy as pg
-from ..gases import configure
 import pytest
+from peregrinepy.graph import ExchangeGraphs
+from peregrinepy.partition import getPartitioner
+
+from ..gases import configure
+
+partitioner = getPartitioner()
 
 ##############################################
 # Every valid (right handed) block-to-block orientation, checked against the
@@ -61,40 +66,25 @@ def reorient(a, S):
     return np.moveaxis(out, (0, 1, 2), axes)
 
 
-def reorientBlock1(mb, S, varList):
-    """Restore the two block "blk0 face 2 <-> blk1" interface with block 1's
-    storage laid out per S, holding the same physical data."""
-    if S == "123":
-        return
-    blk0, blk1 = mb.blocks[0], mb.blocks[1]
-    data = {var: reorient(getattr(blk1, var).get(), S) for var in varList}
+class ReorientedPair(pg.mesher.CubeMesher):
+    """Two blocks along i, the second's storage laid out per S while its
+    physical data is unchanged: the partitioner relabels it, which is what
+    makes the orientation strings."""
 
-    # storage axis axes[m] now holds reference axis m
-    axes, _ = signedPermutation(S)
-    refDims = (blk1.ni, blk1.nj, blk1.nk)
-    newDims = [0, 0, 0]
-    for m in range(3):
-        newDims[axes[m]] = refDims[m]
-    # resizing reallocates every array whose shape changed
-    blk1.setExtents(*newDims)
-    for var, values in data.items():
-        getattr(blk1, var).set(values)
+    def __init__(self, S, **kwargs):
+        super().__init__(**kwargs)
+        self.S = S
 
-    blk0.getFace(2).orientation = S
-    nn = blk0.getFace(2).neighborNface
-    inverseS = blk0.getFace(2).neighborOrientation
-    # the interface may no longer be block 1's face 1
-    if nn != 1:
-        old = blk1.getFace(1)
-        old.neighbor = None
-        old.bcType = "adiabaticSlipWall"
-        old.orientation = None
-        old.commRank = None
-        new = blk1.getFace(nn)
-        new.neighbor = 0
-        new.bcType = "interior"
-        new.commRank = 0
-    blk1.getFace(nn).orientation = inverseS
+    def fill(self, mb):
+        super().fill(mb)
+        if self.S == "123":
+            return
+        axes, flips = signedPermutation(self.S)
+        # storage axis axes[m] holds reference axis m: the partitioner takes
+        # which old axis each new one holds, and which new ones run backwards
+        perm = [axes.index(m) for m in range(3)]
+        newFlips = [flips[perm[m]] for m in range(3)]
+        partitioner.reorientBlock(mb, mb.getBlock(1), perm, newFlips)
 
 
 VARLIST = ["nodes", "Q", "grads"]
@@ -111,29 +101,29 @@ pytestmark = pytest.mark.parametrize(
 
 
 def buildAndCommunicate(S, adv, gas, seed):
-    np.random.seed(seed)
-
+    """A case on the reoriented pair, random data in every exchanged array
+    -- the same physical data whatever S -- traded once."""
     config = pg.files.configFile()
     config["RHS"]["primaryAdvFlux"] = adv
-    config["RHS"]["diffusion"] = True
-    configure(config, gas)
+    configure(config, gas, "navierStokes")
 
-    mb = pg.integrators.getSolver(
-        config,
-        mesh=pg.mesher.CubeMesher(
-            mbDims=[2, 1, 1], dimsPerBlock=[6, 3, 2], lengths=[2, 1, 1]
-        ),
+    mesh = ReorientedPair(
+        S, mbDims=[2, 1, 1], dimsPerBlock=[6, 3, 2], lengths=[2, 1, 1]
     )
+    mb = pg.multiBlock.solver(config, mesh)
 
+    # the data drawn in the reference layout, so block 1 gets the same
+    # physical field however it is stored
+    np.random.seed(seed)
+    # both blocks have the reference shape in the reference layout
     for blk in mb.blocks:
-        for var in VARLIST:
-            getattr(blk, var).set(np.random.random(blk.shapeOf(var)))
+        for var in ("Q", "grads"):
+            values = np.random.random(getattr(mb.blocks[0], var).shape)
+            getattr(blk, var).set(values if blk.nblki == 0 else reorient(values, S))
 
-    reorientBlock1(mb, S, VARLIST)
-
-    mb.setBlockCommunication()
-    mb.haloExchange.exchange(*VARLIST)
-
+    for var in VARLIST:
+        for g in ExchangeGraphs("test", var).bind(*mb.means):
+            g.run()
     return mb
 
 

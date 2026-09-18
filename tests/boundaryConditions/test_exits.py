@@ -10,7 +10,7 @@ class Exit(BaseBC):
         """where the flow leaves the block, and where it re-enters"""
         n, sign = self.normals(face)
         velo = [self.q(c) for c in "uvw"]
-        uDotn = sum(face.interior(c)[0] * ni for c, ni in zip(velo, n)) * sign
+        uDotn = sum(self.interior(face, c)[0] * ni for c, ni in zip(velo, n)) * sign
         return uDotn >= 0.0, uDotn < 0.0
 
     def euler(self, face):
@@ -31,7 +31,7 @@ class ConstantPressureSubsonicExit(Exit):
     def state(self, face):
         self.imposed(face, "p")
         self.mirror(face, "T")
-        if self.blk.ns > 1:
+        if self.ns > 1:
             self.mirror(face, "Y")
 
 
@@ -43,10 +43,10 @@ class SupersonicExit(Exit):
     def state(self, face):
         # p and T floor at a hundredth of the interior, so the halo keeps a
         # density
-        p, T = face.interior(self.q("p"))[0], face.interior(self.q("T"))[0]
+        p, T = self.interior(face, self.q("p"))[0], self.interior(face, self.q("T"))[0]
         self.extrapolate(face, "p", lo=0.01 * p, hi=p)
         self.extrapolate(face, "T", lo=0.01 * T)
-        if self.blk.ns > 1:
+        if self.ns > 1:
             self.extrapolate(face, "Y", lo=0.0, hi=1.0)
 
 

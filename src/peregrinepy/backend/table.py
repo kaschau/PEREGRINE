@@ -125,6 +125,6 @@ class ArrayTable:
         tiling = pgTiling(*(a.ptr for a in arrays), count, int(first[-1]), tile)
         # the arrays live as long as the tiling that points into them
         tiling.arrays = arrays
-        tiling.items = items
+        tiling.tileKind = items
         self.tilings[key] = tiling
         return tiling

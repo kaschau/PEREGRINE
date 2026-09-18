@@ -13,14 +13,27 @@ air = {
 gases = {"air": air, "CH4_O2": "CH4_O2_FFCMY.yaml"}
 
 
-def configure(config, gas):
-    """The mcPhysics section for a named gas: constants for air, a refit
-    thermally perfect gas with kinetic theory transport for a mechanism."""
-    config["mcPhysics"]["mixture"] = gases[gas]
+def configure(config, gas, physics="navierStokes"):
+    """Fills the simulation section for a named gas -- constants for air, a
+    refit thermally perfect gas with kinetic theory transport for a
+    mechanism -- and the physics."""
+    sim = config["simulation"]
+    sim["physics"] = physics
+    sim["mixture"] = gases[gas]
     if gas == "air":
-        config["mcPhysics"]["eos"] = "cpg"
-        config["mcPhysics"]["trans"] = "constantProps"
+        sim["eos"] = "cpg"
+        sim["trans"] = "constantProps"
     else:
-        config["mcPhysics"]["eos"] = "tpg"
-        config["mcPhysics"]["trans"] = "kineticTheory"
-        config["mcPhysics"]["Trange"] = (300.0, 3500.0)
+        sim["eos"] = "tpg"
+        sim["trans"] = "kineticTheory"
+        sim["Trange"] = (300.0, 3500.0)
+
+
+def primitives(mb, blk):
+    """The primitive vector of a block as one host array over every cell,
+    (i, j, k, primVars), as the case derives it from the state: what a test
+    fills and hands to setPrimitives, and reads back to check."""
+    import numpy as np
+
+    data = mb.exportData(blk, mb.primVars)
+    return np.stack([data[name] for name in mb.primVars], axis=-1)

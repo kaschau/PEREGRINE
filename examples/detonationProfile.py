@@ -26,89 +26,75 @@ def simulate():
     gas.set_equivalence_ratio(phi, "CH4", "O2")
 
     config = pg.files.configFile()
-    config["RHS"]["diffusion"] = False
+    config["simulation"]["physics"] = "euler"
     config["RHS"]["shockHandling"] = "artificialDissipation"
     config["RHS"]["primaryAdvFlux"] = "KEEPpe"
     config["RHS"]["secondaryAdvFlux"] = "scalarDissipation"
     config["RHS"]["switchAdvFlux"] = "vanLeer"
     config["timeIntegration"]["integrator"] = "rk3"
-    config["mcPhysics"]["chemistry"] = True
-    config["mcPhysics"]["mixture"] = "chem_CH4_O2_FFCMY"
-    config["mcPhysics"]["nChemSubSteps"] = 10
-    config["mcPhysics"]["eos"] = "tpg"
-    config["mcPhysics"]["mixture"] = "thtr_CH4_O2_FFCMY.yaml"
+    config["simulation"]["chemistry"] = True
+    config["simulation"]["mixture"] = "chem_CH4_O2_FFCMY"
+    config["simulation"]["nChemSubSteps"] = 10
+    config["simulation"]["eos"] = "tpg"
+    config["simulation"]["mixture"] = "thtr_CH4_O2_FFCMY.yaml"
+    config["bcValues"]["walls"] = {"bcType": "adiabaticSlipWall"}
     config.validateConfig()
 
     nx = 300
     dx = 0.005 / 50.0  # Aproximate rde resolution
     lx = nx * dx
-    mb = pg.integrators.getSolver(
-        config,
-        mesh=pg.mesher.CubeMesher(
-            mbDims=[1, 1, 1],
-            dimsPerBlock=[nx, 2, 2],
-            lengths=[lx, 0.01, 0.01],
-            periodic=[False, False, False],
-        ),
+    mesh = pg.mesher.CubeMesher(
+        mbDims=[1, 1, 1],
+        dimsPerBlock=[nx, 2, 2],
+        lengths=[lx, 0.01, 0.01],
+        boundaryNames=dict.fromkeys(range(1, 7), "walls"),
     )
+    mb = pg.multiBlock.solver(config, mesh)
 
     blk = mb.blocks[0]
-    for face in blk.faces:
-        face.bcType = "adiabaticSlipWall"
-
     ng = blk.ng
 
-    q = blk.q.get()
-    q[ng:-ng, ng:-ng, ng:-ng, 0] = gas.P
-    q[ng:-ng, ng:-ng, ng:-ng, 4] = gas.T
-    q[ng:-ng, ng:-ng, ng:-ng, 5::] = gas.Y[0:-1]
-
-    xc = blk.cells.get()[..., 0][ng:-ng, ng:-ng, ng:-ng]
-
+    # the primitive vector, p, u, v, w, T, Y: the mixture at rest, and hot
+    # and pressed behind the shock
+    q = np.zeros(blk.Q.shape[:3] + (mb.ne,))
+    q[:, :, :, 0] = gas.P
+    q[:, :, :, 4] = gas.T
+    q[:, :, :, 5::] = gas.Y[0:-1]
+    xc = blk.cells.get()[..., 0]
     shockX = lx * 0.05
-    q[ng:-ng, ng:-ng, ng:-ng, 0] = np.where(
-        xc < shockX, 4.0e6, q[ng:-ng, ng:-ng, ng:-ng, 0]
-    )
-    q[ng:-ng, ng:-ng, ng:-ng, 4] = np.where(
-        xc < shockX, 3000.0, q[ng:-ng, ng:-ng, ng:-ng, 4]
-    )
-
-    # Update cons
-    blk.q.set(q)
-    mb.stateFromPrims(nface=0)
-    # Apply euler boundary conditions
-    mb.applyBcs("euler")
-    mb.consistify()
+    q[:, :, :, 0] = np.where(xc < shockX, 4.0e6, q[:, :, :, 0])
+    q[:, :, :, 4] = np.where(xc < shockX, 3000.0, q[:, :, :, 4])
+    mb.setPrimitives([q])
 
     dt = 1.0e-9
     config["timeIntegration"]["dt"] = dt
     testIndex = int(nx / 2)
     print(mb)
     bar = pg.misc.Progress(testIndex)
-    while blk.q.get()[testIndex, ng, ng, 4] < 350.0:
+    T = lambda: mb.exportData(blk, ["T"])["T"][:, ng, ng]
+    while T()[testIndex] < 350.0:
         if mb.nrt % 10 == 0:
-            detLoc = np.where((blk.q.get()[:, ng, ng, 4] > 350.0))[0][-1]
+            detLoc = np.where(T() > 350.0)[0][-1]
             bar.at(detLoc)
-
-        abort = mb.checkForNan()
-        if abort > 0:
+        if not np.isfinite(blk.Q.get()[blk.interior]).all():
             print("Nan")
             break
 
-        mb.step(dt)
+        mb.integrator.step(dt)
 
-    q = blk.q.get()
+    data = mb.exportData(blk, ["p", "u", "T", "O2", "H2O", "CO2", "CH4"])
+    line = lambda name: data[name][ng:-ng, ng, ng]
     fig, (ax1, ax2) = plt.subplots(2)
     ax1.set_title("1D Detonation Profile")
     ax1.set_ylabel("Pressure [MPa]")
     ax1.set_xlabel(r"x")
     x = blk.cells.get()[..., 0][ng:-ng, ng, ng]
-    p = q[ng:-ng, ng, ng, 0] / 1e6
+    p = line("p") / 1e6
     ax1.plot(x, p, color="r", label="p", linewidth=0.5)
     ax12 = ax1.twinx()
     ax12.set_ylabel("Temperatur[K] / Velocity [m/s]")
-    u = q[ng:-ng, ng, ng, 1]
-    T = q[ng:-ng, ng, ng, 4]
+    u = line("u")
+    T = line("T")
     ax12.plot(x, T, color="k", label="T", linewidth=0.5)
     ax12.plot(x, u, color="g", label="u", linewidth=0.5)
 
@@ -116,10 +102,7 @@ def simulate():
     h2, l2 = ax12.get_legend_handles_labels()
     ax1.legend(h1 + h2, l1 + l2)
 
-    O2 = q[ng:-ng, ng, ng, 5 + 2]
-    H2O = q[ng:-ng, ng, ng, 5 + 6]
-    CO2 = 1.0 - np.sum(q[ng:-ng, ng, ng, 5::], axis=1)
-    CH4 = q[ng:-ng, ng, ng, 5 + 8]
+    O2, H2O, CO2, CH4 = (line(name) for name in ("O2", "H2O", "CO2", "CH4"))
     ax2.plot(x, O2, color="b", label="O2", linewidth=0.5)
     ax2.plot(x, CH4, color="r", label="CH4", linewidth=0.5)
     ax2.plot(x, H2O, color="k", label="H2O", linewidth=0.5)
@@ -131,9 +114,9 @@ def simulate():
 
 if __name__ == "__main__":
     try:
-        pg.abi.lib.initialize()
+        pg.backend.abi.lib.initialize()
         simulate()
-        pg.abi.lib.finalize()
+        pg.backend.abi.lib.finalize()
 
     except Exception as e:
         import sys

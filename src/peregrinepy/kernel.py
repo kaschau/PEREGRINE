@@ -324,9 +324,9 @@ class BaseKernel:
         tiling of nothing launches nothing."""
         if self.function is None:
             raise RuntimeError(f"{self.__name__} is not compiled")
-        if tiling.items != self.tileKind:
+        if tiling.tileKind != self.tileKind:
             raise TypeError(
-                f"{self.__name__} runs over {self.tileKind}, this tiling is of {tiling.items}"
+                f"{self.__name__} runs over {self.tileKind}, this tiling is of {tiling.tileKind}"
             )
         if not tiling.tiles:
             return None

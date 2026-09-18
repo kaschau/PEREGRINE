@@ -54,7 +54,8 @@ class BaseHaloExchange:
         trading, local, remote = (
             blockFacesBy[k] for k in ("trading", "local", "remote")
         )
-        self.send, self.recv = f"sendBuffer_{name}", f"recvBuffer_{name}"
+        # the slots on a face its buffers of this array sit in
+        self.sendBuffer, self.recvBuffer = f"sendBuffer_{name}", f"recvBuffer_{name}"
         # the array's kind on any block says its components and how far
         # past a block face its trade starts
         blk = trading[0].blk if trading else faces.entries[0].blk
@@ -66,25 +67,27 @@ class BaseHaloExchange:
         # a face with its neighbor here packs into a buffer of its own and
         # unpacks out of the neighbor's; the slots are the face's, declared
         for face, theirs in local:
-            setattr(face, self.send, self._buffer(face, self.send, theirs=True))
+            setattr(
+                face, self.sendBuffer, self._buffer(face, self.sendBuffer, theirs=True)
+            )
         for face, theirs in local:
-            setattr(face, self.recv, getattr(theirs, self.send))
+            setattr(face, self.recvBuffer, getattr(theirs, self.sendBuffer))
         # a face with its neighbor elsewhere has its buffers in that rank's pools
         self.ranks = sorted({f.commRank for f in remote})
-        self.sendPools = {r: self._pool(remote, r, self.send) for r in self.ranks}
-        self.recvPools = {r: self._pool(remote, r, self.recv) for r in self.ranks}
+        self.sendPools = {r: self._pool(remote, r, self.sendBuffer) for r in self.ranks}
+        self.recvPools = {r: self._pool(remote, r, self.recvBuffer) for r in self.ranks}
         self.recvs, self.sends = {}, {}
         # what the graph launches: the pack over every trading face, the
         # unpack over the faces met here, and over the faces met elsewhere
         self.tilings = {
-            "pack": self._tiling("pack", trading, self.send),
-            "local": self._tiling("local", [f for f, _ in local], self.recv),
-            "remote": self._tiling("remote", remote, self.recv),
+            "pack": self._tiling("pack", trading, self.sendBuffer),
+            "local": self._tiling("local", [f for f, _ in local], self.recvBuffer),
+            "remote": self._tiling("remote", remote, self.recvBuffer),
         }
         self.packArgs = dict(
-            view=name, buffer=self.send, skip=self.skip, ndim=self.ndim
+            view=name, buffer=self.sendBuffer, skip=self.skip, ndim=self.ndim
         )
-        self.unpackArgs = dict(view=name, buffer=self.recv, ndim=self.ndim)
+        self.unpackArgs = dict(view=name, buffer=self.recvBuffer, ndim=self.ndim)
 
     def _shape(self, face, theirs):
         """Gives a buffer's shape over a block face proper: the planes
@@ -103,7 +106,7 @@ class BaseHaloExchange:
         """Makes one device pool for the faces trading with :rank: and
         carves each face's buffer of this name out of it, in an order both
         ranks know: by the sending face's block and side."""
-        theirs = name == self.send
+        theirs = name == self.sendBuffer
         key = (
             (lambda f: (f.blk.nblki, f.nface))
             if theirs

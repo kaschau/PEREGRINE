@@ -28,13 +28,13 @@ def simulate():
 
     # PEREGRINE stuff
     config = pg.files.configFile()
-    config["RHS"]["diffusion"] = False
+    config["simulation"]["physics"] = "euler"
     config["timeIntegration"]["integrator"] = "rk4"
-    config["mcPhysics"]["chemistry"] = True
-    config["mcPhysics"]["mixture"] = "chem_CH4_O2_FFCMY"
-    config["mcPhysics"]["nChemSubSteps"] = 10
-    config["mcPhysics"]["eos"] = "tpg"
-    config["mcPhysics"]["mixture"] = "thtr_CH4_O2_FFCMY.yaml"
+    config["simulation"]["chemistry"] = True
+    config["simulation"]["mixture"] = "chem_CH4_O2_FFCMY"
+    config["simulation"]["nChemSubSteps"] = 10
+    config["simulation"]["eos"] = "tpg"
+    config["simulation"]["mixture"] = "thtr_CH4_O2_FFCMY.yaml"
     # the reactor's state, uniform over the block
     config["initialConditions"]["p"] = gas.P
     config["initialConditions"]["T"] = gas.T
@@ -42,17 +42,13 @@ def simulate():
         s: y for s, y in zip(gas.species_names, gas.Y) if y > 0.0
     }
     config.validateConfig()
-    mb = pg.integrators.getSolver(
-        config,
-        mesh=pg.mesher.CubeMesher(
-            mbDims=[1, 1, 1], dimsPerBlock=[2, 2, 2], lengths=[0.01, 0.01, 0.01]
-        ),
+    mesh = pg.mesher.CubeMesher(
+        mbDims=[1, 1, 1], dimsPerBlock=[2, 2, 2], lengths=[0.01, 0.01, 0.01]
     )
+    mb = pg.multiBlock.solver(config, mesh)
 
     blk = mb.blocks[0]
     ng = blk.ng
-    for face in blk.faces:
-        face.bcType = "adiabaticNoSlipWall"
 
     dt = 1e-9
     config["timeIntegration"]["dt"] = dt
@@ -66,16 +62,16 @@ def simulate():
     print("Time   PEREGRINE  CANTERA")
     while mb.tme < 0.05:
         if mb.nrt % niterout == 0:
-            q = blk.q.get()
-            pgT.append(q[ng, ng, ng, 4])
-            pgO2.append(q[ng, ng, ng, 7])
+            data = mb.exportData(blk, ["T", "O2"])
+            pgT.append(data["T"][ng, ng, ng])
+            pgO2.append(data["O2"][ng, ng, ng])
             ctT.append(gas.T)
             ctO2.append(gas.Y[2])
             t.append(mb.tme)
 
-            print(f"{mb.tme:.2e} {q[ng,ng,ng,4]:.2f} {gas.T:.2f}")
+            print(f"{mb.tme:.2e} {pgT[-1]:.2f} {gas.T:.2f}")
 
-        mb.step(dt)
+        mb.integrator.step(dt)
         sim.advance(mb.tme)
 
     plt.plot(t, pgT, label="PEREGRINE")
@@ -92,9 +88,9 @@ def simulate():
 
 if __name__ == "__main__":
     try:
-        pg.abi.lib.initialize()
+        pg.backend.abi.lib.initialize()
         simulate()
-        pg.abi.lib.finalize()
+        pg.backend.abi.lib.finalize()
 
     except Exception as e:
         import sys

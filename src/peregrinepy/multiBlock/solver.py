@@ -55,12 +55,14 @@ class solver(restart):
         self._declKernels()
         self._jit()
         mesh.fill(self)
-        self._setBcs()
         self._alignBlockFaces()
         self._sortBlockFaces()
         self._declComm()
         self._unifyGrid()
         self.computeMetrics()
+        # after the metrics, which a boundary's values may be made from, and
+        # before the graphs, which launch by the boundaries the faces carry
+        self._setBcs()
         self._buildGraphs()
         self._setState(state)
         self.plugins = getPlugins(config, self)
@@ -300,7 +302,9 @@ class solver(restart):
     def swapArrays(self, a, b):
         """Trades two named block arrays' places on every block, so nothing
         is copied to shift a state back one step; the tables read both
-        again."""
+        again. A captured graph keeps the arrays it captured, whatever
+        their names now, so whoever swaps under one runs a set captured
+        under each assignment."""
         for blk in self.blocks:
             x, y = getattr(blk, a), getattr(blk, b)
             setattr(blk, a, y), setattr(blk, b, x)
@@ -309,7 +313,7 @@ class solver(restart):
 
     def _forget(self, name):
         """Drops what the tables hold of one block array: it is another
-        array now, and no graph launches over these."""
+        array now, or none, and no captured graph launches over it."""
         self.blockArrayTable.forget(name)
         self.blockFaceArrayTable.forget(name)
 

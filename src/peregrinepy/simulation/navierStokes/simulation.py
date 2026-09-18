@@ -3,6 +3,7 @@ transport properties, the gradients and their exchange, and the diffusive
 flux, with the boundary conditions' gradient hooks."""
 
 from .boundaries import BaseNSBC
+from ...files.configFile import pgConfigError
 from ...kernel import CellCenterKernel, CellFaceKernel, UnorderedKernelGroup
 from ...multiBlock.arrays import CellCenterArray
 from ...graph import BCNode, ExchangeGraphs, LaunchNode, RedoNode
@@ -18,6 +19,12 @@ class NavierStokesSimulation(EulerSimulation):
     viscous = True
     bcBase = BaseNSBC
     bcHooks = ("euler", "preDqDxyz", "postDqDxyz")
+
+    def validate(self, config):
+        super().validate(config)
+        sim = config["simulation"]
+        if sim["trans"] is None:
+            raise pgConfigError("trans", None, "a viscous case has a transport model")
 
     def arrays(self):
         ne, ns = self.ne, self.mixture.ns

@@ -3,6 +3,8 @@ from pathlib import Path
 import cantera as ct
 import numpy as np
 import peregrinepy as pg
+
+from ..gases import primitives
 import pytest
 
 #######################################
@@ -36,12 +38,12 @@ def test_tpg(my_setup, ctfile):
     gas.TPY = T, p, Y
 
     config = pg.files.configFile()
-    config["mcPhysics"]["mixture"] = ctfile
-    config["mcPhysics"]["eos"] = "tpg"
-    config["mcPhysics"]["Trange"] = (300.0, 3500.0)
-    config["RHS"]["diffusion"] = False
+    config["simulation"]["mixture"] = ctfile
+    config["simulation"]["eos"] = "tpg"
+    config["simulation"]["Trange"] = (300.0, 3500.0)
+    config["simulation"]["physics"] = "euler"
 
-    mb = pg.integrators.getSolver(
+    mb = pg.multiBlock.solver(
         config,
         mesh=pg.mesher.CubeMesher(
             mbDims=[1, 1, 1], dimsPerBlock=[2, 2, 2], lengths=[1, 1, 1]
@@ -51,7 +53,7 @@ def test_tpg(my_setup, ctfile):
     blk = mb.blocks[0]
     ng = blk.ng
 
-    q = blk.primitives()
+    q = primitives(mb, blk)
     q[:, :, :, 0] = p
     q[:, :, :, 1:4] = 0.0
     q[:, :, :, 4] = T
@@ -60,7 +62,7 @@ def test_tpg(my_setup, ctfile):
     # Update cons
     assert mb.jit.eos == "tpg"
     mb.setPrimitives([q])
-    q, Q, qh = blk.primitives(), blk.Q.get(), blk.qh.get()
+    q, Q, qh = primitives(mb, blk), blk.Q.get(), blk.qh.get()
 
     # test the properties
     pgcons = Q[ng, ng, ng]
@@ -99,8 +101,8 @@ def test_tpg(my_setup, ctfile):
     pT = blk.q.get()
     pT[...] = 0.0
     blk.q.set(pT)
-    mb.stateFromCons()
-    q, Q, qh = blk.primitives(), blk.Q.get(), blk.qh.get()
+    mb.consistify()
+    q, Q, qh = primitives(mb, blk), blk.Q.get(), blk.qh.get()
     pgcons, pgprim, pgthrm = Q[ng, ng, ng], q[ng, ng, ng], qh[ng, ng, ng]
 
     print("********  Conservatives to Primatives ***************")
@@ -132,5 +134,5 @@ def test_tpg(my_setup, ctfile):
     # every property rests on the refit, and the check asks exactly what the
     # fit achieved for these species (within the tolerance, or the best its
     # cap could do), in percent, plus the rounding the kernel adds
-    achieved = max(sp["cpFitError"] for sp in mb.mixture.species.values())
+    achieved = max(sp["cpFitError"] for sp in mb.simulation.mixture.species.values())
     assert np.all(np.array(pd) < achieved * 100 + 1e-6)

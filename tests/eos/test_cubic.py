@@ -1,6 +1,8 @@
 import numpy as np
 import peregrinepy as pg
 
+from ..gases import primitives
+
 
 def print_diff(name, c, p, scale=None):
     """Percent difference, against c or against a scale for a quantity that
@@ -13,12 +15,12 @@ def print_diff(name, c, p, scale=None):
 
 def test_cubic(my_setup):
     config = pg.files.configFile()
-    config["mcPhysics"]["mixture"] = ["O2", "N2", "CO2", "CH4"]
-    config["mcPhysics"]["eos"] = "realGas"
-    config["mcPhysics"]["Trange"] = (300.0, 3500.0)
-    config["RHS"]["diffusion"] = False
+    config["simulation"]["mixture"] = ["O2", "N2", "CO2", "CH4"]
+    config["simulation"]["eos"] = "realGas"
+    config["simulation"]["Trange"] = (300.0, 3500.0)
+    config["simulation"]["physics"] = "euler"
 
-    mb = pg.integrators.getSolver(
+    mb = pg.multiBlock.solver(
         config,
         mesh=pg.mesher.CubeMesher(
             mbDims=[1, 1, 1], dimsPerBlock=[2, 2, 2], lengths=[1, 1, 1]
@@ -29,10 +31,10 @@ def test_cubic(my_setup):
 
     p = np.random.uniform(low=10000, high=100000)
     T = np.random.uniform(low=300, high=1000)
-    Y = np.random.uniform(low=0.0, high=1.0, size=mb.ns)
+    Y = np.random.uniform(low=0.0, high=1.0, size=mb.simulation.mixture.ns)
     Y = Y / np.sum(Y)
 
-    q = blk.primitives()
+    q = primitives(mb, blk)
     q[:, :, :, 0] = p
     q[:, :, :, 1:4] = 0.0
     q[:, :, :, 4] = T
@@ -42,8 +44,8 @@ def test_cubic(my_setup):
     assert mb.jit.eos == "realGas"
     mb.setPrimitives([q])
     # Go the other way
-    mb.stateFromCons()
-    q = blk.primitives()
+    mb.consistify()
+    q = primitives(mb, blk)
 
     # test the properties
     pgprim = q[ng, ng, ng]
@@ -53,11 +55,11 @@ def test_cubic(my_setup):
     pd = []
     pd.append(print_diff("p", p, pgprim[0]))
     pd.append(print_diff("T", T, pgprim[4]))
-    for i, n in enumerate(mb.blocks[0].speciesNames[0:-1]):
+    for i, n in enumerate(mb.simulation.mixture.speciesNames[0:-1]):
         pd.append(print_diff(n, Y[i], pgprim[5 + i]))
 
     # every property rests on the refit, and the check asks exactly what the
     # fit achieved for these species (within the tolerance, or the best its
     # cap could do), in percent, plus the rounding the kernel adds
-    achieved = max(sp["cpFitError"] for sp in mb.mixture.species.values())
+    achieved = max(sp["cpFitError"] for sp in mb.simulation.mixture.species.values())
     assert np.all(np.array(pd) < achieved * 100 + 1e-6)

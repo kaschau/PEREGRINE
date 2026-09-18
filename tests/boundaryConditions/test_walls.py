@@ -20,7 +20,7 @@ class Wall(BaseBC):
         self.mirror(face, "p")
         self.reflect(face)
         self.temperature(face)
-        if self.blk.ns > 1:
+        if self.ns > 1:
             self.mirror(face, "Y")
 
 

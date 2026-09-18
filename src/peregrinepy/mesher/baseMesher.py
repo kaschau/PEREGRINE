@@ -17,9 +17,13 @@ class BaseMesher:
     fileName = None
     partitionName = None
 
-    def __init__(self, mbDims=[1, 1, 1], dimsPerBlock=[10, 10, 10]):
+    def __init__(self, mbDims=[1, 1, 1], dimsPerBlock=[10, 10, 10], boundaryNames={}):
         self.mbDims = [int(n) for n in mbDims]
         self.dimsPerBlock = list(dimsPerBlock)
+        # what the faces on the outside of the mesh are called, by the side
+        # (nface) they are on, for a case's bcValues to say what they are;
+        # a side left unnamed is a wall
+        self.boundaryNames = dict(boundaryNames)
 
     @property
     def nblks(self):
@@ -91,6 +95,7 @@ class BaseMesher:
                 face.orientation = "123"
             else:
                 face.bcType = "adiabaticNoSlipWall"
+                face.bcName = self.boundaryNames.get(face.nface)
                 face.neighbor = None
                 face.orientation = None
         else:
@@ -107,6 +112,7 @@ class BaseMesher:
                 face.orientation = "123"
             else:
                 face.bcType = "adiabaticNoSlipWall"
+                face.bcName = self.boundaryNames.get(face.nface)
                 face.neighbor = None
                 face.orientation = None
         else:
@@ -124,6 +130,7 @@ class BaseMesher:
                 face.orientation = "123"
             else:
                 face.bcType = "adiabaticNoSlipWall"
+                face.bcName = self.boundaryNames.get(face.nface)
                 face.neighbor = None
                 face.orientation = None
         else:
@@ -140,6 +147,7 @@ class BaseMesher:
                 face.orientation = "123"
             else:
                 face.bcType = "adiabaticNoSlipWall"
+                face.bcName = self.boundaryNames.get(face.nface)
                 face.neighbor = None
                 face.orientation = None
         else:
@@ -157,6 +165,7 @@ class BaseMesher:
                 face.orientation = "123"
             else:
                 face.bcType = "adiabaticNoSlipWall"
+                face.bcName = self.boundaryNames.get(face.nface)
                 face.neighbor = None
                 face.orientation = None
         else:
@@ -173,6 +182,7 @@ class BaseMesher:
                 face.orientation = "123"
             else:
                 face.bcType = "adiabaticNoSlipWall"
+                face.bcName = self.boundaryNames.get(face.nface)
                 face.neighbor = None
                 face.orientation = None
         else:

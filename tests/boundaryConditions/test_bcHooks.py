@@ -1,63 +1,62 @@
-"""The bcHooks are fixed points of the flows: a bcHook the case's flow does
-not have runs nothing, a flow lists its slots in order, and a slot the
-solver did not fill is a bug, not a null."""
+"""The bcHooks are fixed points of the physics: a hook the case's physics
+does not have has no kernels and no node, and each physics lays its graphs
+out in one order, what a message brings done again after it lands."""
 
 import pytest
 
 import peregrinepy as pg
-from peregrinepy.graph import Graph
 
 from ..gases import configure
 
 
-def _solver(diffusion):
+def _solver(physics):
     config = pg.files.configFile()
     config["RHS"]["primaryAdvFlux"] = "KEPaEC"
-    config["RHS"]["diffusion"] = diffusion
-    configure(config, "air")
+    configure(config, "air", physics)
     mesh = pg.mesher.CubeMesher(
         mbDims=[1, 1, 1], dimsPerBlock=[6, 6, 6], lengths=[1, 1, 1]
     )
-    return pg.integrators.getSolver(config, mesh=mesh)
+    return pg.multiBlock.solver(config, mesh=mesh)
 
 
-def test_bcHookOutsideTheFlowRunsNothing(my_setup):
-    mb = _solver(diffusion=False)
-    assert mb.graphs["rhs"].node("bcs preDqDxyz") is None
-    assert not [tag for tag in mb.kernels if tag.endswith("@preDqDxyz")]
-    mb.applyBcs("preDqDxyz")
+def _nodes(mb, stage):
+    return [[n.name for n in g.nodes] for g in mb.graphs[stage]]
 
 
-def test_flowListsItsSlots(my_setup):
-    mb = _solver(diffusion=True)
-    # everything runs while the halos are in flight; what a message brings
-    # is done again after it lands
-    assert [n.name for n in mb.graphs["rhs"].nodes] == [
-        "bcs preDqDxyz",
-        "dqdxyz",
-        "haloExchange grads stage",
-        "primaryAdvFlux",
-        "haloExchange grads send",
-        "bcs postDqDxyz",
-        "diffFlux",
-        "haloExchange grads receive",
-        "primaryAdvFlux diffFlux remote",
-        "applyFlux",
-    ]
-    assert [n.name for n in mb.graphs["consistify"].nodes] == [
-        "haloExchange Q stage",
-        "stateFromCons",
-        "haloExchange Q send",
-        "bcs euler",
-        "trans",
-        "haloExchange Q receive",
-        "stateFromCons remote",
-        "trans remote",
-    ]
-    assert [n.name for n in mb.graphs["consistifyFromPrims"].nodes][:2] == [
-        "stateFromPrims",
-        "haloExchange Q stage",
-    ]
-    del mb.kernels["applyFlux"]
+def test_bcHookOutsideThePhysicsHasNothing(my_setup):
+    mb = _solver("euler")
+    assert "bcs preDqDxyz" not in mb.kernels
+    assert all("preDqDxyz" not in name for names in _nodes(mb, "rhs") for name in names)
     with pytest.raises(KeyError):
-        Graph.rhs(mb)
+        mb.applyBcs("preDqDxyz")
+
+
+def test_eulerLaysOutItsGraphs(my_setup):
+    mb = _solver("euler")
+    assert _nodes(mb, "consistify") == [
+        ["pack Q", "unpack Q local"],
+        ["stateFromCons", "bcs euler here"],
+        ["unpack Q remote", "bcs euler remote", "redo stateFromCons"],
+    ]
+    assert _nodes(mb, "rhs") == [["KEPaEC", "applyFlux"]]
+
+
+def test_navierStokesLaysOutItsGraphs(my_setup):
+    mb = _solver("navierStokes")
+    assert _nodes(mb, "consistify") == [
+        ["pack Q", "unpack Q local"],
+        ["stateFromCons", "bcs euler here", "constantProps"],
+        ["unpack Q remote", "bcs euler remote", "redo stateFromCons constantProps"],
+    ]
+    # the gradients go out; everything runs while they fly; what a message
+    # brings is done again after it lands
+    assert _nodes(mb, "rhs") == [
+        ["bcs preDqDxyz all", "dq2FD", "pack grads", "unpack grads local"],
+        ["KEPaEC", "bcs postDqDxyz here", "alphaDampingFlux"],
+        [
+            "unpack grads remote",
+            "bcs postDqDxyz remote",
+            "redo KEPaEC alphaDampingFlux",
+            "applyFlux",
+        ],
+    ]

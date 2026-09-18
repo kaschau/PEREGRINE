@@ -26,9 +26,9 @@ T = (300.0, 3000.0)
 
 
 def configSect(mixture, **choices):
-    """An mcPhysics section as a case would write it: the config's defaults
+    """A simulation section as a case would write it: the config's defaults
     with the case's choices over them."""
-    sect = dict(pg.files.configFile()["mcPhysics"])
+    sect = dict(pg.files.configFile()["simulation"])
     sect.update({"mixture": mixture, "Trange": T, **choices})
     return sect
 

@@ -43,12 +43,12 @@ class ConstantMassFluxSubsonicInlet(Inlet):
         self._massFlux(face)
 
     def _massFlux(self, face):
-        blk, ng = self.blk, self.blk.ng
-        self.mb.graphs["rhs"].node("primaryAdvFlux").run()
+        blk = self.blk
+        self.mb.launch("primaryAdvFlux", "interior")
 
         d = face.direction
-        F = face.boundary(getattr(blk, f"{d}F").get())[ng:-ng, ng:-ng, 0]
-        S = face.boundary(blk.faceNormals(d)[0])[ng:-ng, ng:-ng]
+        F = face.blockFacePlane(getattr(blk, f"{d}F").get())[:, :, 0]
+        S = face.blockFacePlane(blk.faceNormals(d)[0])
 
         mult = 1.0 if face.amILow else -1.0
         target = face.QBcVals.get()[0, 0, 0] * np.sum(S)

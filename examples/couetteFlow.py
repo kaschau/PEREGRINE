@@ -55,10 +55,9 @@ def simulate(index, velo):
 
     config = pg.files.configFile()
     config["timeIntegration"]["dt"] = 10 * 1.0e-5 / nx
-    config["RHS"]["diffusion"] = True
-    config["mcPhysics"]["trans"] = "constantProps"
-    config["mcPhysics"]["mixture"] = air
-    config.validateConfig()
+    config["simulation"]["physics"] = "navierStokes"
+    config["simulation"]["trans"] = "constantProps"
+    config["simulation"]["mixture"] = air
 
     rot = {"i": 0, "j": 1, "k": 2}
 
@@ -67,75 +66,35 @@ def simulate(index, velo):
 
     dimsPerBlock = rotate([nx, 2, 2], index)
     lengths = rotate([h, 0.001, 0.001], index)
+    flowAxis = "xyz".index(velo[-1])
+    flowVelocity = "uvw"[flowAxis]
+    periodic = [n == flowAxis for n in range(3)]
 
-    if "x" in velo:
-        periodic = [True, False, False]
-    elif "y" in velo:
-        periodic = [False, True, False]
-    elif "z" in velo:
-        periodic = [False, False, True]
+    # the low side of the wall-normal axis is still, the high side moves,
+    # and the sides across the flow slip
+    wallAxis = rot[index]
+    still, moving = 2 * wallAxis + 1, 2 * wallAxis + 2
+    boundaryNames = {n: "slip" for n in range(1, 7)}
+    boundaryNames[still], boundaryNames[moving] = "still", "moving"
+    wallVelocity = {c: wallSpeed if c == flowVelocity else 0.0 for c in "uvw"}
+    config["bcValues"]["still"] = {"bcType": "adiabaticNoSlipWall"}
+    config["bcValues"]["moving"] = {"bcType": "adiabaticMovingWall", **wallVelocity}
+    config["bcValues"]["slip"] = {"bcType": "adiabaticSlipWall"}
+    config.validateConfig()
 
-    mb = pg.integrators.getSolver(
-        config,
-        mesh=pg.mesher.CubeMesher(
-            mbDims=[1, 1, 1],
-            dimsPerBlock=dimsPerBlock,
-            lengths=lengths,
-            periodic=periodic,
-        ),
+    mesh = pg.mesher.CubeMesher(
+        mbDims=[1, 1, 1],
+        dimsPerBlock=dimsPerBlock,
+        lengths=lengths,
+        periodic=periodic,
+        boundaryNames=boundaryNames,
     )
-
+    mb = pg.multiBlock.solver(config, mesh)
     blk = mb.blocks[0]
-
-    if index == "i":
-        blk.getFace(1).bcType = "adiabaticNoSlipWall"
-        blk.getFace(2).bcType = "adiabaticMovingWall"
-        if "y" in velo:
-            for face in [5, 6]:
-                blk.getFace(face).bcType = "adiabaticSlipWall"
-        else:
-            for face in [3, 4]:
-                blk.getFace(face).bcType = "adiabaticSlipWall"
-    elif index == "j":
-        blk.getFace(3).bcType = "adiabaticNoSlipWall"
-        blk.getFace(4).bcType = "adiabaticMovingWall"
-        if "x" in velo:
-            for face in [5, 6]:
-                blk.getFace(face).bcType = "adiabaticSlipWall"
-        else:
-            for face in [1, 2]:
-                blk.getFace(face).bcType = "adiabaticSlipWall"
-    elif index == "k":
-        blk.getFace(5).bcType = "adiabaticNoSlipWall"
-        blk.getFace(6).bcType = "adiabaticMovingWall"
-        if "x" in velo:
-            for face in [3, 4]:
-                blk.getFace(face).bcType = "adiabaticSlipWall"
-        else:
-            for face in [1, 2]:
-                blk.getFace(face).bcType = "adiabaticSlipWall"
-    else:
-        raise ValueError()
-
-    if "x" in velo:
-        valueDict = {"u": wallSpeed, "v": 0.0, "w": 0.0}
-    elif "y" in velo:
-        valueDict = {"u": 0.0, "v": wallSpeed, "w": 0.0}
-    elif "z" in velo:
-        valueDict = {"u": 0.0, "v": 0.0, "w": wallSpeed}
-    else:
-        raise ValueError()
-    for face in blk.faces:
-        if face.bcType == "adiabaticMovingWall":
-            face.bc.setValues(valueDict)
-            break
-
     ng = blk.ng
-    # the wall's values changed since the case was made, so its halos follow
-    mb.consistify()
 
-    mu = np.unique(mb.thtrdat.mu0.get())[0]
-    rho = np.unique(blk.Q.get()[:, :, :, 0])[0]
+    mu = air["Air"]["mu0"]
+    rho = blk.Q.get()[ng, ng, ng, 0]
     nu = mu / rho
 
     if index == "i":
@@ -144,18 +103,7 @@ def simulate(index, velo):
         s_ = np.s_[ng, ng:-ng, ng]
     elif index == "k":
         s_ = np.s_[ng, ng, ng:-ng]
-    ccAxis = {"i": 0, "j": 1, "k": 2}
-    if "x" in velo:
-        uIndex = 1
-    elif "y" in velo:
-        uIndex = 2
-    elif "z" in velo:
-        uIndex = 3
-    else:
-        raise ValueError()
-
-    xc = blk.cells.get()[..., ccAxis[index]][s_]
-    sU_ = s_ + (uIndex,)
+    xc = blk.cells.get()[..., wallAxis][s_]
 
     outputTimes = [0.0005, 0.005, 0.05]
     doneOutput = [False for _ in range(len(outputTimes))]
@@ -163,7 +111,7 @@ def simulate(index, velo):
     simTme = max(outputTimes) * h**2 / nu
     bar = pg.misc.Progress(simTme)
     while mb.tme < simTme:
-        mb.step(config["timeIntegration"]["dt"])
+        mb.integrator.step(config["timeIntegration"]["dt"])
 
         if mb.nrt % 200 == 0:
             bar.at(mb.tme)
@@ -173,7 +121,7 @@ def simulate(index, velo):
         for i, oT in enumerate(outputTimes):
             t = oT * h**2 / nu
             if mb.tme >= t and not doneOutput[i]:
-                outputU.append(blk.q.get()[sU_])
+                outputU.append(mb.exportData(blk, [flowVelocity])[flowVelocity][s_])
                 doneOutput[i] = True
 
     # Analytical solution
@@ -217,9 +165,9 @@ if __name__ == "__main__":
     try:
         index = "j"
         velo = "+z"
-        pg.abi.lib.initialize()
+        pg.backend.abi.lib.initialize()
         simulate(index, velo)
-        pg.abi.lib.finalize()
+        pg.backend.abi.lib.finalize()
 
     except Exception as e:
         import sys

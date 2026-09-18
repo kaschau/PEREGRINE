@@ -12,13 +12,13 @@ np.seterr(all="raise")
 def simulate(args):
     """A case from a config and a grid, or from a result, run to the end.
     Nothing prints unless the config asks for the report plugin."""
-    comm, rank, size = pg.mpiComm.mpiUtils.getCommRankSize()
+    comm, rank, size = pg.misc.getCommRankSize()
     # a result carries the case and the grid it came from; either given here wins
     state = pg.readers.RestartReader(args.restart) if args.restart else None
     config = pg.readers.readConfigFile(args.config) if args.config else state.config
-    ranks = (size, pg.mpiComm.mpiUtils.getRanksPerNode())
+    ranks = (size, pg.misc.getRanksPerNode())
     mesh = pg.readers.GridReader(args.mesh or state.grid, ranks)
-    pg.integrators.getSolver(config, mesh, state).run()
+    pg.multiBlock.solver(config, mesh, state).run()
 
 
 if __name__ == "__main__":
@@ -33,9 +33,9 @@ if __name__ == "__main__":
     if not args.restart and not (args.config and args.mesh):
         parser.error("a config and a grid file, or a result to restart from")
     try:
-        pg.abi.lib.initialize()
+        pg.backend.abi.lib.initialize()
         simulate(args)
-        pg.abi.lib.finalize()
+        pg.backend.abi.lib.finalize()
 
     except Exception as e:
         import traceback

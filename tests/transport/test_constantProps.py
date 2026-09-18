@@ -1,4 +1,6 @@
 import peregrinepy as pg
+
+from ..gases import primitives
 import numpy as np
 
 ##############################################
@@ -8,7 +10,7 @@ import numpy as np
 
 def test_constantProps(my_setup):
     config = pg.files.configFile()
-    config["mcPhysics"]["mixture"] = {
+    config["simulation"]["mixture"] = {
         "Air": {
             "MW": 28.96,
             "cp0": 1005.0,
@@ -16,11 +18,11 @@ def test_constantProps(my_setup):
             "kappa0": 0.02625394405190068,
         }
     }
-    config["mcPhysics"]["eos"] = "cpg"
-    config["mcPhysics"]["trans"] = "constantProps"
-    config["RHS"]["diffusion"] = True
+    config["simulation"]["eos"] = "cpg"
+    config["simulation"]["trans"] = "constantProps"
+    config["simulation"]["physics"] = "navierStokes"
 
-    mb = pg.integrators.getSolver(
+    mb = pg.multiBlock.solver(
         config,
         mesh=pg.mesher.CubeMesher(
             mbDims=[1, 1, 1], dimsPerBlock=[2, 2, 2], lengths=[1, 1, 1]
@@ -31,15 +33,14 @@ def test_constantProps(my_setup):
 
     p = np.random.uniform(low=10000, high=1000000)
     T = np.random.uniform(low=200, high=3500)
-    q = blk.primitives()
+    q = primitives(mb, blk)
     q[:, :, :, 0] = p
     q[:, :, :, 4] = T
     mb.setPrimitives([q])
 
     # Update transport
-    assert mb.trans.__name__ == "constantProps"
-    mb.trans()
-    q, qt = blk.primitives(), blk.qt.get()
+    assert mb.kernels["trans"].__name__ == "constantProps"
+    q, qt = primitives(mb, blk), blk.qt.get()
     ng = blk.ng
 
     # test the properties

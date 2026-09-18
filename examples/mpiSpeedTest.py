@@ -26,11 +26,9 @@ np.seterr(all="raise")
 
 def simulate():
     config = pg.files.configFile()
-    config["RHS"]["diffusion"] = True
-    config["RHS"]["shockHandling"] = "artificialDissipation"
-    config["RHS"]["switchAdvFlux"] = "jamesonPressure"
-    config["RHS"]["secondaryAdvFlux"] = "scalarDissipation"
-    config["mcPhysics"]["mixture"] = air
+    config["simulation"]["physics"] = "navierStokes"
+    config["simulation"]["mixture"] = air
+    config["simulation"]["trans"] = "constantProps"
 
     config["simulation"]["niter"] = 100
 
@@ -40,7 +38,8 @@ def simulate():
 
     ni = 30
     nbi = 10
-    mb = pg.multiBlock.restart(list(air))
+    # a single species: the primitive variables are p, u, v, w, T
+    mb = pg.multiBlock.restart(["p", "u", "v", "w", "T"])
     pg.mesher.CubeMesher(
         mbDims=[nbi, nbi, nbi],
         dimsPerBlock=[ni, ni, ni],
@@ -49,10 +48,10 @@ def simulate():
     ).fill(mb)
 
     for blk in mb.blocks:
-        q = blk.q.get()
-        q[:, :, :, 0] = 101325.0
-        q[:, :, :, 4] = 300.0
-        blk.q.set(q)
+        prims = blk.prims.get()
+        prims[:, :, :, 0] = 101325.0
+        prims[:, :, :, 4] = 300.0
+        blk.prims.set(prims)
 
     # Create the case structure
     try:

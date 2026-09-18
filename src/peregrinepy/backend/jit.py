@@ -65,16 +65,14 @@ class Jit:
     def _writeSpeciesData(self, speciesData):
         """Writes the species data as one header of initializer lists,
         hexfloat so every double is exact, to the store once per distinct
-        data; species.hpp declares the accessors over them. A (rows, terms)
+        text; species.hpp declares the accessors over them. A (rows, terms)
         array is written flat with its term count. Returns its path."""
         lines = [
             "// the species data of one case, written by the jit",
             "#define PG_SPECIES_DATA",
         ]
-        key = hashlib.sha256()
         for name, value in speciesData.items():
             macro = "PG_" + re.sub(r"(?<=[a-z0-9])(?=[A-Z])", "_", name).upper()
-            key.update(value.tobytes())
             if value.ndim == 2:
                 lines.append(f"#define {macro}_TERMS {value.shape[1]}")
                 lines.append(f"#define {macro} {self._doubles(value.ravel())}")
@@ -82,12 +80,15 @@ class Jit:
                 lines.append(f"#define {macro} {float(value).hex()}")
             else:
                 lines.append(f"#define {macro} {self._doubles(value)}")
-        path = self.cacheDir / f"species-{key.hexdigest()[:16]}.hpp"
+        text = "\n".join(lines) + "\n"
+        # named by its text, so a header written another way is another file
+        key = hashlib.sha256(text.encode()).hexdigest()[:16]
+        path = self.cacheDir / f"species-{key}.hpp"
         if not path.exists():
             path.parent.mkdir(parents=True, exist_ok=True)
             # written aside and moved in whole, so a reader never sees a partial file
             with tempfile.NamedTemporaryFile("w", dir=path.parent, delete=False) as f:
-                f.write("\n".join(lines) + "\n")
+                f.write(text)
             shutil.move(f.name, path)
         return path
 

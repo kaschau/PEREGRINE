@@ -69,18 +69,28 @@ class OrientMixin:
             reordered[f.nface - 1] = f
         blk.faces = reordered
 
+        # the arrays, relabeled; sizing the block makes new ones, which take
+        # them. Not a cell face array, which is one axis's and is made again
+        # from the cells, nor a metric, remade from the nodes by computeMetrics
         dims = (blk.ni, blk.nj, blk.nk)
-        for name in blk.declared:
+        moved = {}
+        for name, (kind, components, rangeArgs) in blk.declared.items():
             array = getattr(blk, name)
-            if array is None:
+            if (
+                array is None
+                or "axis" in rangeArgs
+                or name == "cells"
+                or name in mb.metrics
+            ):
                 continue
-            moved = np.moveaxis(array.get(), perm, (0, 1, 2))
+            values = np.moveaxis(array.get(), perm, (0, 1, 2))
             for m in range(3):
                 if flips[m]:
-                    moved = np.flip(moved, axis=m)
-            blk.replace(name, moved)
-        # the arrays are the new shape already, so sizing the block keeps them
+                    values = np.flip(values, axis=m)
+            moved[name] = values
         blk.setExtents(*(dims[perm[m]] for m in range(3)))
+        for name, values in moved.items():
+            getattr(blk, name).set(values)
 
     def longestAxisFirst(self, mb):
         """Relabel every block so its longest extent is i, the axis a launch walks

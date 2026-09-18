@@ -1,4 +1,6 @@
 import peregrinepy as pg
+
+from ..gases import primitives
 import numpy as np
 import cantera as ct
 from pathlib import Path
@@ -31,14 +33,14 @@ def test_kineticTheory(my_setup, ctfile):
     Y = Y / np.sum(Y)
 
     config = pg.files.configFile()
-    config["mcPhysics"]["mixture"] = ctfile
-    config["mcPhysics"]["eos"] = "tpg"
-    config["mcPhysics"]["Trange"] = (300.0, 3500.0)
-    config["mcPhysics"]["trans"] = "kineticTheory"
-    config["mcPhysics"]["diffusion"] = "binary"
-    config["RHS"]["diffusion"] = True
+    config["simulation"]["mixture"] = ctfile
+    config["simulation"]["eos"] = "tpg"
+    config["simulation"]["Trange"] = (300.0, 3500.0)
+    config["simulation"]["trans"] = "kineticTheory"
+    config["simulation"]["diffusion"] = "binary"
+    config["simulation"]["physics"] = "navierStokes"
 
-    mb = pg.integrators.getSolver(
+    mb = pg.multiBlock.solver(
         config,
         mesh=pg.mesher.CubeMesher(
             mbDims=[1, 1, 1], dimsPerBlock=[2, 2, 2], lengths=[1, 1, 1]
@@ -48,16 +50,15 @@ def test_kineticTheory(my_setup, ctfile):
     blk = mb.blocks[0]
 
     gas.TPY = T, p, Y
-    q = blk.primitives()
+    q = primitives(mb, blk)
     q[:, :, :, 0] = p
     q[:, :, :, 4] = T
     q[:, :, :, 5::] = Y[0:-1]
     mb.setPrimitives([q])
 
     # Update transport
-    assert mb.trans.__name__ == "kineticTheory"
-    mb.trans()
-    q, qt = blk.primitives(), blk.qt.get()
+    assert mb.kernels["trans"].__name__ == "kineticTheory"
+    q, qt = primitives(mb, blk), blk.qt.get()
     ng = blk.ng
 
     # test the properties

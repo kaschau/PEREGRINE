@@ -45,13 +45,13 @@ def test_chemistry(my_setup, thfile, ctfile, chmfile):
 
     gas.TPY = T, p, Y
 
-    config["mcPhysics"]["eos"] = "tpg"
-    config["mcPhysics"]["mixture"] = thfile
-    config["mcPhysics"]["chemistry"] = True
-    config["mcPhysics"]["mixture"] = chmfile
-    config["RHS"]["diffusion"] = False
+    config["simulation"]["eos"] = "tpg"
+    config["simulation"]["mixture"] = thfile
+    config["simulation"]["chemistry"] = True
+    config["simulation"]["mixture"] = chmfile
+    config["simulation"]["physics"] = "euler"
 
-    mb = pg.integrators.getSolver(
+    mb = pg.multiBlock.solver(
         config,
         mesh=pg.mesher.CubeMesher(
             mbDims=[1, 1, 1], dimsPerBlock=[2, 2, 2], lengths=[1, 1, 1]

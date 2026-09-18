@@ -23,9 +23,10 @@ air = {"Air": {"MW": 28.97, "cp0": 1000.0}}
 
 def simulate(index="i"):
     config = pg.files.configFile()
-    config["mcPhysics"]["mixture"] = air
+    config["simulation"]["physics"] = "euler"
+    config["simulation"]["mixture"] = air
     config["RHS"]["primaryAdvFlux"] = "KEPaEC"
-    config["RHS"]["diffusion"] = False
+    config["bcValues"]["walls"] = {"bcType": "adiabaticSlipWall"}
     config.validateConfig()
     rot = {"i": 0, "j": 1, "k": 2}
 
@@ -37,38 +38,31 @@ def simulate(index="i"):
     lengths = rotate([1, 0.1, 0.1], index)
     periodic = rotate([True, False, False], index)
 
-    mb = pg.integrators.getSolver(
-        config,
-        mesh=pg.mesher.CubeMesher(
-            mbDims=[1, 1, 1],
-            dimsPerBlock=dimsPerBlock,
-            lengths=lengths,
-            periodic=periodic,
-        ),
+    mesh = pg.mesher.CubeMesher(
+        mbDims=[1, 1, 1],
+        dimsPerBlock=dimsPerBlock,
+        lengths=lengths,
+        periodic=periodic,
+        boundaryNames=dict.fromkeys(range(1, 7), "walls"),
     )
+    mb = pg.multiBlock.solver(config, mesh)
     print(mb)
 
     blk = mb.blocks[0]
-    for face in blk.faces:
-        if face.bcType.endswith("Wall"):
-            face.bcType = "adiabaticSlipWall"
-
     ng = blk.ng
     R = 287.002507
     ccAxis = {"i": 0, "j": 1, "k": 2}
     uIndex = {"i": 1, "j": 2, "k": 3}
-    q = blk.q.get()
+    # the primitive vector, p, u, v, w, T: unit pressure and speed, and the
+    # temperature that gives the density wave
+    q = np.zeros(blk.Q.shape[:3] + (mb.ne,))
     q[:, :, :, 0] = 1.0
     q[:, :, :, uIndex[index]] = 1.0
     xc = blk.cells.get()[..., ccAxis[index]]
     initial_rho = 2.0 + np.sin(2 * np.pi * xc)
     initial_T = 1.0 / (R * initial_rho)
     q[:, :, :, 4] = initial_T
-
-    # Update cons
-    blk.q.set(q)
-    mb.stateFromPrims(nface=0)
-    mb.consistify()
+    mb.setPrimitives([q])
 
     dt = 0.1 * 0.025
     tEnd = 11.0
@@ -77,17 +71,17 @@ def simulate(index="i"):
         if mb.nrt % 50 == 0:
             bar.at(mb.tme)
 
-        mb.step(dt)
+        mb.integrator.step(dt)
 
-    q, Q = blk.q.get(), blk.Q.get()
+    data = mb.exportData(blk, ["rho", "p", "u", "v", "w"])
     fig, ax1 = plt.subplots()
     ax1.set_title("1D Advection Results")
     ax1.set_xlabel(r"x")
     s_ = rotate(np.s_[ng:-ng, ng, ng], index)
     x = blk.cells.get()[..., ccAxis[index]][s_]
-    rho = Q[s_][:, 0]
-    p = q[s_][:, 0]
-    u = q[s_][:, uIndex[index]]
+    rho = data["rho"][s_]
+    p = data["p"][s_]
+    u = data["uvw"[ccAxis[index]]][s_]
     ax1.plot(x, rho, color="g", label="rho", linewidth=0.5)
     ax1.plot(x, p, color="r", label="p", linewidth=0.5)
     ax1.plot(x, u, color="k", label="u", linewidth=0.5)
@@ -107,9 +101,9 @@ def simulate(index="i"):
 
 if __name__ == "__main__":
     try:
-        pg.abi.lib.initialize()
+        pg.backend.abi.lib.initialize()
         simulate("i")
-        pg.abi.lib.finalize()
+        pg.backend.abi.lib.finalize()
 
     except Exception as e:
         import sys

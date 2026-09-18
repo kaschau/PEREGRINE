@@ -1,13 +1,14 @@
 """Compressible flow of a mixture without diffusion: the equation of state,
 the advective flux and its apply, the euler boundary conditions."""
 
-from .boundaries import BaseEulerBC
+import numpy as np
+
 from ...files.configFile import pgConfigError
-from ...kernel import BCKernel, CellCenterKernel, CellFaceKernel
-from ...kernel import UnorderedKernelGroup
 from ...graph import BCNode, ExchangeGraphs, Graph, LaunchNode, RedoNode
+from ...kernel import BCKernel, CellCenterKernel, CellFaceKernel, UnorderedKernelGroup
 from ...mixture import Mixture
 from ...multiBlock.arrays import CellCenterArray, CellFaceArray
+from .boundaries import BaseEulerBC
 from ..base import BaseSimulation
 
 
@@ -92,14 +93,19 @@ class EulerSimulation(BaseSimulation):
         velocity and the mass fractions Q's over the density."""
         Q, q = blk.Q.get(), blk.q.get()
         rho = Q[..., 0]
-        rhoinv = 1.0 / rho
-        species = self.mixture.speciesNames
-        values = {"rho": rho, "p": q[..., 0], "T": q[..., 1]}
-        for n, name in enumerate("uvw"):
-            values[name] = Q[..., 1 + n] * rhoinv
-        for n, name in enumerate(species[:-1]):
-            values[name] = Q[..., 5 + n] * rhoinv
-        values[species[-1]] = 1.0 - sum(values[name] for name in species[:-1])
+        # the halo's edges and corners are never written, so hold no density
+        with np.errstate(divide="ignore", invalid="ignore"):
+            rhoinv = 1.0 / rho
+            species = self.mixture.speciesNames
+            values = {"rho": rho, "p": q[..., 0], "T": q[..., 1]}
+            for n, name in enumerate("uvw"):
+                values[name] = Q[..., 1 + n] * rhoinv
+            for n, name in enumerate(species[:-1]):
+                values[name] = Q[..., 5 + n] * rhoinv
+            # the last species is what the others leave: all of it, for one
+            values[species[-1]] = np.ones_like(rho) - sum(
+                values[name] for name in species[:-1]
+            )
         return {name: values[name] for name in names}
 
     def arrays(self):

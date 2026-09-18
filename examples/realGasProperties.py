@@ -13,23 +13,19 @@ import matplotlib.pyplot as plt
 
 def simulate():
     config = pg.files.configFile()
-    config["RHS"]["diffusion"] = True
-    config["mcPhysics"]["eos"] = "realGas"
-    config["mcPhysics"]["mixture"] = ["CO2"]
-    config["mcPhysics"]["trans"] = "chungDenseGas"
-    config["mcPhysics"]["Trange"] = (300.0, 2000.0)
+    config["simulation"]["physics"] = "navierStokes"
+    config["simulation"]["eos"] = "realGas"
+    config["simulation"]["mixture"] = ["CO2"]
+    config["simulation"]["trans"] = "chungDenseGas"
+    config["simulation"]["Trange"] = (300.0, 2000.0)
     config.validateConfig()
-    mb = pg.integrators.getSolver(
-        config,
-        mesh=pg.mesher.CubeMesher(
-            mbDims=[1, 1, 1], dimsPerBlock=[2, 2, 2], lengths=[0.01, 0.01, 0.01]
-        ),
+    mesh = pg.mesher.CubeMesher(
+        mbDims=[1, 1, 1], dimsPerBlock=[2, 2, 2], lengths=[0.01, 0.01, 0.01]
     )
+    mb = pg.multiBlock.solver(config, mesh)
 
     blk = mb.blocks[0]
     ng = blk.ng
-    for face in blk.faces:
-        face.bcType = "adiabaticNoSlipWall"
 
     ps = np.linspace(25, 35, 3)
     Ts = np.linspace(600, 1600, 100)
@@ -42,18 +38,14 @@ def simulate():
     mus = np.zeros((len(ps), len(Ts)))
     kappas = np.zeros((len(ps), len(Ts)))
 
+    # the primitive vector, p, u, v, w, T, at rest
+    q = np.zeros(blk.Q.shape[:3] + (mb.ne,))
     for j, p in enumerate(ps):
         for i, T in enumerate(Ts):
-            # set the gas state
-            q = blk.q.get()
+            # the state, and everything derived from it, at this p and T
             q[:, :, :, 0] = p * 1e6
             q[:, :, :, 4] = T
-
-            # Update cons
-            blk.q.set(q)
-            mb.stateFromPrims(nface=0)
-            # Update transport
-            mb.trans(nface=0)
+            mb.setPrimitives([q])
 
             Q, qh, qt = blk.Q.get(), blk.qh.get(), blk.qt.get()
             rhos[j, i] = Q[ng, ng, ng, 0]
@@ -65,7 +57,7 @@ def simulate():
             kappas[j, i] = qt[ng, ng, ng, 1]
 
     fig, axs = plt.subplots(2, 2, sharex=True)
-    fig.suptitle(f"Thermo Properties of {config['mcPhysics']['mixture'][0]}")
+    fig.suptitle(f"Thermo Properties of {config['simulation']['mixture'][0]}")
     axs[0, 0].set_ylabel("rho [kg/m^3]")
     axs[0, 1].set_ylabel("Cp [J/kg.K]")
     axs[1, 0].set_ylabel("h [J/kg]")
@@ -82,7 +74,7 @@ def simulate():
         ax.grid()
     plt.show()
 
-    fig.suptitle(f"Transport Properties of {config['mcPhysics']['mixture'][0]}")
+    fig.suptitle(f"Transport Properties of {config['simulation']['mixture'][0]}")
     fig, (ax1, ax2) = plt.subplots(2, sharex=True)
     ax2.set_xlabel("Temperature [K]")
     ax1.set_ylabel("Thermal Cond. [W/m^2.K]")
@@ -99,9 +91,9 @@ def simulate():
 
 if __name__ == "__main__":
     try:
-        pg.abi.lib.initialize()
+        pg.backend.abi.lib.initialize()
         simulate()
-        pg.abi.lib.finalize()
+        pg.backend.abi.lib.finalize()
 
     except Exception as e:
         import sys

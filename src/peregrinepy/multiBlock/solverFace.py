@@ -11,10 +11,9 @@ class solverFace(gridFace):
     against this one and the buffers the trade travels in, which the halo
     exchange makes. Everything else it reaches on its block."""
 
-    def __init__(self, nface, ng, blk):
-        # its arrays are made where the block's are
-        super().__init__(nface, blk.backend)
-        self.ng = ng
+    def __init__(self, nface, blk):
+        # its arrays are made where the block's are, as deep a halo
+        super().__init__(nface, blk.backend, blk.ng)
         # the block this face bounds
         self.blk = blk
         # the values its boundary condition holds on the face, once given

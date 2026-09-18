@@ -2,7 +2,7 @@ import itertools
 
 import numpy as np
 import peregrinepy as pg
-from ..gases import configure
+from ..gases import configure, primitives
 import pytest
 
 ##############################################
@@ -32,7 +32,7 @@ class TestPeriodics:
     def test_rotationalPeriodics(self, my_setup, adv, gas):
         config = pg.files.configFile()
         config["RHS"]["primaryAdvFlux"] = adv
-        config["RHS"]["diffusion"] = True
+        config["simulation"]["physics"] = "navierStokes"
         configure(config, gas)
 
         axis = np.random.random(3)
@@ -42,13 +42,13 @@ class TestPeriodics:
         p3 /= np.linalg.norm(axis)
         p3[0] = (-axis[1] * p3[1] - axis[2] * p3[2]) / axis[0]
 
-        mb = pg.integrators.getSolver(
+        mb = pg.multiBlock.solver(
             config,
             mesh=pg.mesher.AnnulusMesher(sweep=sweep, p2=axis, p3=p3, periodic=True),
         )
         blk = mb.blocks[0]
 
-        q = blk.primitives()
+        q = primitives(mb, blk)
         qshape = q.shape[:3]
         p = np.random.uniform(low=101325 * 0.9, high=101325 * 1.1)
         u = np.random.uniform(low=1, high=1000, size=qshape)
@@ -56,8 +56,10 @@ class TestPeriodics:
         w = np.random.uniform(low=1, high=1000, size=qshape)
         T = np.random.uniform(low=300 * 0.9, high=300 * 1.1)
 
-        if blk.ns > 1:
-            Y = np.random.uniform(low=0.0, high=1.0, size=(blk.ns - 1))
+        if mb.simulation.mixture.ns > 1:
+            Y = np.random.uniform(
+                low=0.0, high=1.0, size=(mb.simulation.mixture.ns - 1)
+            )
             Y = Y / np.sum(Y)
 
         q[:, :, :, 0] = p
@@ -65,11 +67,11 @@ class TestPeriodics:
         q[:, :, :, 2] = v
         q[:, :, :, 3] = w
         q[:, :, :, 4] = T
-        if blk.ns > 1:
+        if mb.simulation.mixture.ns > 1:
             q[:, :, :, 5::] = Y
         mb.setPrimitives([q])
 
-        q = blk.primitives()
+        q = primitives(mb, blk)
 
         u = q[:, :, :, 1]
         v = q[:, :, :, 2]
@@ -118,10 +120,9 @@ class TestPeriodics:
                 np.sum(normals6 * velo6, axis=1), np.sum(normals5 * velo5, axis=1)
             )
 
-        # check the gradients
-        mb.dqdxyz()
-        mb.haloExchange.exchange("grads")
-        mb.applyBcs("postDqDxyz")
+        # check the gradients: the right-hand side takes them, trades them,
+        # and turns them on the periodic faces
+        mb.rhs()
 
         grads = blk.grads.get()
 
