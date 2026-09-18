@@ -14,23 +14,11 @@ PEREGRINE is a second order, multiblock, structured-grid multiphysics, finite vo
 
 ## Installation
 
-You must first install [Kokkos](https://www.github.com/kokkos/kokkos) and set the environment variable `Kokkos_DIR=/path/to/kokkos/install`. The Kokkos installation controls the Host/Device + Serial/Parallel execution parameters, there are no settings for the python installation.
+Install [Kokkos](https://www.github.com/kokkos/kokkos) for the machine -- the Kokkos build decides the backend, the device architecture and the compiler; PEREGRINE has no build of its own -- and point `Kokkos_ROOT` at the install:
 
-## Easy Install
-For editable python installation:
+```export Kokkos_ROOT=/path/to/kokkos/install```
 
-``` pip install -e . ```
-
-Note, installation with pip is hard coded to Debug mode. I can't figure out how to make that an option.
-
-## Recommended Install
-For development, it is better to set the environment variable `PYTHONPATH` to point to `/path/to/PEREGRINE/src/` followed by manual installation of the C++ `compute` module:
-
-```cd /path/to/PEREGRINE; mkdir build; cd build; ccmake ../; make -j install```
-
-To generate compile_commands.json, 
-
-``` cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ../ ```
+Put `/path/to/PEREGRINE/src` on `PYTHONPATH`, or `pip install -e .` for an editable install. The runtime and every kernel a case needs are compiled at first use, with the compiler and flags the Kokkos install records, into `~/.cache/peregrinepy` (or `$PEREGRINE_CACHE`). A CUDA build needs `nvcc` on the path.
 
 ## Documentation
 

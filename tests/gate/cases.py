@@ -100,11 +100,9 @@ def digest(blockDigests):
 def platform():
     """Names what the kernels ran on, which is what a reference is for: the
     runtime's backend, and the device architecture the toolchain targets."""
+    from peregrinepy.backend import getToolchain
     from peregrinepy.backend.abi import lib
-    from peregrinepy.backend.jit import Jit
-    from peregrinepy.backend.toolchain import Toolchain
 
     name = lib.pgBackend().decode().lower()
-    flags = Toolchain.read(Jit.package / "toolchain.json").flags
-    arch = [f for f in flags if "offload-arch=" in f or f.startswith("-arch=")]
-    return name + ("-" + arch[0].split("=")[-1] if arch else "")
+    arch = getToolchain().arch
+    return name + ("-" + arch.lower() if arch else "")

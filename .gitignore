@@ -9,7 +9,6 @@ build*
 *egg*
 __pycache__
 .vscode
-compile_commands.json
 .cache
 TAGS
 .venv

@@ -1,10 +1,10 @@
 """Compiling the kernels a case needs, one library each, when it needs them.
 
-The runtime is built once by CMake and records how it was compiled in
-toolchain.json; every kernel is compiled the same way, into a store keyed by
-its source, the headers it includes, the toolchain and its defines. A case
-loads only the libraries it will call, and each kernel is handed its own
-function out of its own library.
+The runtime and every kernel are compiled the same way, with the toolchain
+of the Kokkos install, into a store keyed by the source, the headers it
+includes, the toolchain and the defines. A case loads only the libraries it
+will call, and each kernel is handed its own function out of its own
+library.
 
 The jit compiles and hands back callables; it knows nothing of tags, tables,
 arrays, or the order kernels run in."""
@@ -22,15 +22,12 @@ from functools import cache
 from pathlib import Path
 
 from .abi import lib
-from .toolchain import Toolchain
 
 
 class Jit:
     """Compiling kernels for one case, into the store they are kept in."""
 
-    # the package root, where the runtime library and toolchain.json are installed
-    package = Path(__file__).parent.parent
-    compute = package.parent / "compute"
+    compute = Path(__file__).parent.parent.parent / "compute"
     includeLine = re.compile(r'^\s*#\s*include\s+"([^"]+)"', re.M)
     cacheDir = Path(
         os.environ.get("PEREGRINE_CACHE", Path.home() / ".cache" / "peregrinepy")
@@ -49,7 +46,9 @@ class Jit:
         if launch is not None:
             threads, waves = launch
             self.defines += (f"PG_LAUNCH_THREADS={threads}", f"PG_LAUNCH_WAVES={waves}")
-        self.toolchain = Toolchain.read(self.package / "toolchain.json")
+        from . import getToolchain
+
+        self.toolchain = getToolchain()
         # the species data, baked into a header the species kernels are built
         # with; the case's equation of state, forced in ahead of any source
         # that reaches thermo/eos.hpp; and its species diffusion model, ahead
@@ -186,24 +185,56 @@ class Jit:
         key = hashlib.sha256()
         for f in (*self._reached(source, includes, forced), self.speciesData):
             key.update(f.read_bytes())
-        key.update(repr(vars(self.toolchain)).encode())
+        key.update(self.toolchain.key.encode())
         key.update(" ".join(sorted(defines)).encode())
         key.update(" ".join(i.name for i in forced).encode())
-        stem = Path(source).stem
-        return self.cacheDir / f"{stem}-{key.hexdigest()[:16]}{self.toolchain.suffix}"
+        return self._path(source, key, self.toolchain)
+
+    @classmethod
+    def _path(cls, source, key, toolchain):
+        return (
+            cls.cacheDir
+            / f"{Path(source).stem}-{key.hexdigest()[:16]}{toolchain.suffix}"
+        )
 
     def build(self, source, defines=(), includes=()):
         """The library for one kernel source, compiled if the store has no
         current one. Returns its path."""
         out = self.library(source, defines, includes)
-        if out.exists():
-            return out
-
-        path = self.compute / source
         caseDefines, includes = self._case(source, includes)
         defines = self.defines + caseDefines + tuple(defines)
+        return self._build(
+            source,
+            out,
+            self.toolchain.command(self.compute / source, out, defines, includes),
+        )
+
+    @classmethod
+    def runtime(cls):
+        """The runtime library -- Kokkos and the memory the kernels run on
+        -- built into the store like a kernel, against the whole of Kokkos.
+        Returns its path."""
+        from . import getToolchain
+
+        toolchain = getToolchain()
+        source = "runtime.cpp"
+        key = hashlib.sha256()
+        for f in cls.files(source):
+            key.update(f.read_bytes())
+        key.update(toolchain.key.encode())
+        out = cls._path(source, key, toolchain)
+        command = toolchain.command(
+            cls.compute / source, out, link=toolchain.runtimeLink
+        )
+        return cls._build(source, out, command)
+
+    @classmethod
+    def _build(cls, source, out, command):
+        """Runs a library's build unless the store has it; ranks on one
+        node race to the same file, and the first to the lock builds it."""
+        if out.exists():
+            return out
         out.parent.mkdir(parents=True, exist_ok=True)
-        # ranks on one node race to the same file; the first to the lock builds it
         with open(out.with_suffix(".lock"), "w") as lock:
             fcntl.flock(lock, fcntl.LOCK_EX)
             if not out.exists():
@@ -216,11 +247,9 @@ class Jit:
                         for k, v in os.environ.items()
                         if k != "DYLD_INSERT_LIBRARIES"
                     }
+                    command[command.index(str(out))] = str(built)
                     result = subprocess.run(
-                        self.toolchain.command(path, built, defines, includes),
-                        capture_output=True,
-                        text=True,
-                        env=env,
+                        command, capture_output=True, text=True, env=env
                     )
                     if result.returncode:
                         raise RuntimeError(

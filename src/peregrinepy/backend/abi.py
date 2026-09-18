@@ -9,7 +9,6 @@ function is one entry in Library.runtime; a new struct is one twin; nothing
 else belongs in this file."""
 
 import ctypes
-from pathlib import Path
 
 
 class Library:
@@ -79,7 +78,9 @@ class Library:
         touches a device, so a pre or post processing run never needs one."""
         from mpi4py import MPI
 
-        path = next(Path(__file__).parent.parent.glob("libpgruntime.*"))
+        from .jit import Jit
+
+        path = Jit.runtime()
         self.load(path, shared=True)
         for name, (argtypes, restype) in self.runtime.items():
             setattr(self, name, self.function(path, name, argtypes, restype))

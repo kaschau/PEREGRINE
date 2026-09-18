@@ -1,59 +1,128 @@
-"""How a kernel is compiled: the compiler and flags CMake settled on for the
-runtime, read back out of its compile_commands.json. Run by the install
-step; imports nothing from the package so it can run before the runtime is
-in place."""
+"""How the runtime and every kernel are compiled: with the compiler and
+flags the Kokkos install at $Kokkos_ROOT was built with, which its cmake
+files record, against its headers and libraries. Nothing is configured or
+installed ahead of a run. A toolchain per Kokkos device adds what that
+device's compiler does not do by itself."""
 
-import json
 import os
-import shlex
+import re
+import shutil
+import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 
-class Toolchain:
-    """A compiler, its flags, and how it links one source into one library."""
+class BaseToolchain:
+    """A compiler, its flags, and how it links one source into one
+    library: a kernel's, which leaves Kokkos to the runtime it is loaded
+    after, or the runtime's, which carries the whole of Kokkos."""
 
-    def __init__(self, compiler, flags, link, suffix):
+    # the Kokkos device this toolchain compiles for
+    device = None
+    # a cmake setting Kokkos exports, quoted or not
+    setting = r"^set\({name} \"?([^\")]*)\"?\)$"
+    # the words of an interface property, inside cmake's generator expressions
+    words = re.compile(r"\\\$<\\\$<(?:COMPILE|LINK)_LANGUAGE:CXX>:([^>]*)>")
+    # kokkosalgorithms is headers; these three are what the runtime carries
+    libraries = ("kokkoscore", "kokkoscontainers", "kokkossimd")
+
+    @staticmethod
+    def cmakeDir(root):
+        """The directory of the install's cmake files: the install, or
+        that directory itself as cmake's own Kokkos_DIR names it."""
+        root = Path(root)
+        cmake = root if (root / "KokkosConfig.cmake").is_file() else None
+        cmake = cmake or next(root.glob("lib*/cmake/Kokkos"), None)
+        if cmake is None:
+            raise FileNotFoundError(f"no Kokkos install at {root}")
+        return cmake
+
+    @classmethod
+    def devicesOf(cls, root):
+        """The devices the install at :root: was built for."""
+        common = (cls.cmakeDir(root) / "KokkosConfigCommon.cmake").read_text()
+        return cls._setting(common, "Kokkos_DEVICES").split(";")
+
+    def __init__(self, root):
+        cmake = self.cmakeDir(root)
+        self.root = cmake.parent.parent.parent
+        common = (cmake / "KokkosConfigCommon.cmake").read_text()
+        targets = (cmake / "KokkosTargets.cmake").read_text()
+        self.compiler = self._setting(common, "Kokkos_CXX_COMPILER")
+        self.arch = self._setting(common, "Kokkos_ARCH")
+        standard = self._setting(common, "Kokkos_CXX_STANDARD")
+        self.suffix = ".dylib" if sys.platform == "darwin" else ".so"
         # debug info and the asserts in a kernel are only wanted when looking
         # for a problem
         debug = bool(os.environ.get("PEREGRINE_JIT_DEBUG"))
-        dropped = ("-g", "-DNDEBUG") if debug else ("-g",)
-        self.compiler, self.flags, self.link, self.suffix = (
-            compiler,
-            [f for f in flags if f not in dropped] + (["-g"] if debug else []),
-            link,
-            suffix,
-        )
-
-    @classmethod
-    def fromCompileCommands(cls, commandsPath, suffix):
-        """runtime.cpp's compile line with its own input and output taken out."""
-        entries = json.loads(Path(commandsPath).read_text())
-        entry = next(e for e in entries if e["file"].endswith("runtime.cpp"))
-        words = (
-            shlex.split(entry["command"]) if "command" in entry else entry["arguments"]
-        )
-        compiler, flags = words[0], []
-        skip = False
-        for w in words[1:]:
-            if skip:
-                skip = False
-            elif w in ("-o", "-c"):
-                skip = w == "-o"
-            elif w != entry["file"] and not w.endswith("_EXPORTS"):
-                flags.append(w)
-        # a kernel library leaves Kokkos to the runtime it is loaded after
-        link = ["-shared"] + (
+        self.flags = [
+            *(
+                f"-D{d}"
+                for d in self._property(targets, "INTERFACE_COMPILE_DEFINITIONS")
+            ),
+            f"-I{Path(__file__).parent.parent.parent / 'compute'}",
+            "-isystem",
+            str(self.root / "include"),
+            "-O3",
+            *(["-g"] if debug else ["-DNDEBUG"]),
+            f"-std=gnu++{standard}",
+            "-fPIC",
+            "-fvisibility=hidden",
+            "-fvisibility-inlines-hidden",
+            "-Wall",
+            *self._property(targets, "INTERFACE_COMPILE_OPTIONS"),
+            *self.deviceFlags(),
+        ]
+        self.link = ["-shared"] + (
             ["-undefined", "dynamic_lookup"] if sys.platform == "darwin" else []
         )
-        return cls(compiler, flags, link, suffix)
+        archives = [str(next(self.root.glob(f"lib*/lib{l}.a"))) for l in self.libraries]
+        linked = self._property(targets, "INTERFACE_LINK_LIBRARIES")
+        self.runtimeLink = [
+            "-shared",
+            *self._property(targets, "INTERFACE_LINK_OPTIONS"),
+            *self.wholeArchive(archives),
+            *(["-ldl"] if "dl" in linked else []),
+            *self.deviceLink(),
+        ]
+
+    def wholeArchive(self, archives):
+        """The link words that take every object of the archives."""
+        if sys.platform == "darwin":
+            return [f"-Wl,-force_load,{a}" for a in archives]
+        return ["-Wl,--whole-archive", *archives, "-Wl,--no-whole-archive"]
+
+    def deviceFlags(self):
+        """What the device adds to a compile beyond what Kokkos records."""
+        return []
+
+    def deviceLink(self):
+        """What the device adds to the runtime's link beyond what its
+        compiler links by itself."""
+        return []
 
     @classmethod
-    def read(cls, path):
-        return cls(**json.loads(Path(path).read_text()))
+    def _setting(cls, text, name):
+        m = re.search(cls.setting.format(name=name), text, re.M)
+        if not m:
+            raise ValueError(f"the Kokkos install does not record {name}")
+        return m.group(1)
 
-    def write(self, path):
-        Path(path).write_text(json.dumps(vars(self), indent=1))
+    @classmethod
+    def _property(cls, text, name):
+        """The words of every target's interface property, in order, once
+        each: a plain list, or one wrapped in generator expressions."""
+        found = []
+        for value in re.findall(rf'{name} "([^"]*)"', text):
+            for group in cls.words.findall(value) or [value]:
+                found += [w for w in group.split(";") if w and w not in found]
+        return found
+
+    @property
+    def key(self):
+        """What a library built with this toolchain is keyed on."""
+        return repr((self.compiler, self.flags, self.link, self.runtimeLink))
 
     # a sanitized build for the tests, from the environment
     sanitize = (
@@ -62,7 +131,7 @@ class Toolchain:
         else []
     )
 
-    def command(self, source, out, defines=(), includes=()):
+    def command(self, source, out, defines=(), includes=(), link=None):
         """The one command that compiles and links a source into a library;
         :includes: are headers forced in ahead of it."""
         return [
@@ -72,13 +141,91 @@ class Toolchain:
             # two words: nvcc_wrapper only recognizes the flag on its own
             *(w for i in includes for w in ("-include", str(i))),
             *self.sanitize,
-            *self.link,
             str(source),
+            *(self.link if link is None else link),
             "-o",
             str(out),
         ]
 
 
-if __name__ == "__main__":
-    commands, suffix, out = sys.argv[1:4]
-    Toolchain.fromCompileCommands(commands, suffix).write(out)
+class SerialToolchain(BaseToolchain):
+    device = "SERIAL"
+
+
+class OpenMPToolchain(BaseToolchain):
+    """The host compiler's OpenMP, which Kokkos records only as a cmake
+    target: the flags are found by compiling a probe -- -fopenmp, or Apple's
+    clang's front-end form with the libomp homebrew keeps."""
+
+    device = "OPENMP"
+
+    def __init__(self, root):
+        self.openmp = None
+        super().__init__(root)
+
+    def _probe(self):
+        if self.openmp:
+            return
+        candidates = [(["-fopenmp"], ["-fopenmp"])]
+        brew = shutil.which("brew")
+        if sys.platform == "darwin" and brew:
+            prefix = subprocess.run(
+                [brew, "--prefix", "libomp"], capture_output=True, text=True
+            ).stdout.strip()
+            candidates.append(
+                (
+                    ["-Xclang", "-fopenmp", "-isystem", f"{prefix}/include"],
+                    [f"-L{prefix}/lib", "-lomp"],
+                )
+            )
+        with tempfile.TemporaryDirectory() as tmp:
+            probe = Path(tmp) / "openmp.cpp"
+            probe.write_text(
+                "#include <omp.h>\nint main() { return omp_get_max_threads() < 1; }\n"
+            )
+            for compile, link in candidates:
+                result = subprocess.run(
+                    [self.compiler, *compile, *link, str(probe), "-o", f"{tmp}/openmp"],
+                    capture_output=True,
+                )
+                if result.returncode == 0:
+                    self.openmp = (compile, link)
+                    return
+        raise EnvironmentError(f"{self.compiler} does not compile OpenMP")
+
+    def deviceFlags(self):
+        self._probe()
+        return self.openmp[0]
+
+    def deviceLink(self):
+        self._probe()
+        return self.openmp[1]
+
+
+class CudaToolchain(BaseToolchain):
+    """nvcc through Kokkos's wrapper, which links the CUDA runtime by
+    itself; the driver library Kokkos also calls is linked through the
+    stub beside nvcc, and a run finds the real one."""
+
+    device = "CUDA"
+
+    def deviceLink(self):
+        nvcc = shutil.which("nvcc")
+        if nvcc is None:
+            raise EnvironmentError("the CUDA toolchain needs nvcc on the path")
+        cuda = Path(nvcc).resolve().parent.parent
+        stubs = next(cuda.glob("lib*/stubs"), None) or next(
+            cuda.glob("targets/*/lib/stubs")
+        )
+        return [f"-L{stubs}", "-lcuda"]
+
+
+class HipToolchain(BaseToolchain):
+    """hipcc, which compiles for the device and links its runtime by
+    itself."""
+
+    device = "HIP"
+
+    def wholeArchive(self, archives):
+        # -xhip covers every input after it, so the archives are put back
+        return ["-x", "none", *super().wholeArchive(archives)]
