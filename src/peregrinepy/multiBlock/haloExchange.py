@@ -206,9 +206,26 @@ class HostStagedHaloExchange(BaseHaloExchange):
 
 class DeviceHaloExchange(BaseHaloExchange):
     """Messages straight from and into the device pools, for an MPI that is
-    GPU-aware: no mirrors, no copies; a send waits for the pack instead."""
+    GPU-aware: no mirrors, no copies; a send waits for the pack instead.
+    It says on every rank where its pools are, and refuses one the driver
+    does not place on the device: a message from anywhere else would be
+    the staged path in disguise."""
 
     kind = "device"
+
+    def __init__(self, *args):
+        super().__init__(*args)
+        for r in self.ranks:
+            for way, pool in (("send", self.sendPools[r]), ("recv", self.recvPools[r])):
+                onDevice = bool(lib.pgOnDevice(pool.ptr))
+                where = "on the device" if onDevice else "not on the device"
+                print(
+                    f"rank {self.rank}: {self.name} {way} pool to rank {r} at {pool.ptr:#x} is {where}"
+                )
+                if not onDevice:
+                    raise RuntimeError(
+                        f"{self.name}: a device exchange's pool is {where}"
+                    )
 
     def _memory(self, pool):
         return MPI.memory.fromaddress(pool.ptr, pool.nbytes)

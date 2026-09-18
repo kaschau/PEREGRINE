@@ -253,6 +253,29 @@ PG_ABI void pgCopyToDeviceAside(const void *host, void *device, size_t bytes) {
 // the host waits for the copies alone
 PG_ABI void pgCopyWait() { copySpace().fence(); }
 
+// whether an address is device memory to the device's driver; on a host
+// build nothing is
+PG_ABI int pgOnDevice(const void *p) {
+#if defined(KOKKOS_ENABLE_CUDA)
+  cudaPointerAttributes a;
+  if (cudaPointerGetAttributes(&a, p) != cudaSuccess) {
+    cudaGetLastError();
+    return 0;
+  }
+  return a.type == cudaMemoryTypeDevice;
+#elif defined(KOKKOS_ENABLE_HIP)
+  hipPointerAttribute_t a;
+  if (hipPointerGetAttributes(&a, p) != hipSuccess) {
+    (void)hipGetLastError();
+    return 0;
+  }
+  return a.type == hipMemoryTypeDevice;
+#else
+  (void)p;
+  return 0;
+#endif
+}
+
 // pinned host memory, on a host build host memory like any other
 PG_ABI void *pgAllocatePinned(size_t bytes) {
   pinned.push_back(

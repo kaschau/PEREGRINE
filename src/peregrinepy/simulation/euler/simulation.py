@@ -61,10 +61,6 @@ class EulerSimulation(BaseSimulation):
         if sim["eos"] not in ("cpg", "tpg", "realGas"):
             raise pgConfigError("eos", sim["eos"])
         if ti["integrator"] == "dualTime":
-            if sim["eos"] not in ("cpg", "tpg"):
-                raise pgConfigError(
-                    "dualTime", sim["eos"], "only cpg and tpg are supported"
-                )
             if ti["controller"] != "fixed":
                 raise pgConfigError(
                     "dualTime", ti["controller"], "only a fixed time step is supported"

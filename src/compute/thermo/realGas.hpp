@@ -100,6 +100,19 @@ KOKKOS_INLINE_FUNCTION void compressibility(const fpdtype p, const fpdtype T,
   }
 }
 
+// dZ by implicit differentiation of the cubic, given dA* and dB* by the
+// same variable
+KOKKOS_INLINE_FUNCTION fpdtype dZ(const cubic &c, const fpdtype dAstar,
+                                  const fpdtype dBstar) {
+  fpdtype dz0 =
+      -(c.Bstar * dAstar +
+        (c.Astar + (2.0 * c.Bstar + 3.0 * pow(c.Bstar, 2.0)) * wRG) * dBstar);
+  fpdtype dz1 = (dAstar + (2.0 * c.Bstar * (wRG - uRG) - uRG) * dBstar);
+  fpdtype dz2 = -(1.0 - uRG) * dBstar;
+  return -(dz2 * pow(c.Z, 2.0) + dz1 * c.Z + dz0) /
+         (3.0 * pow(c.Z, 2.0) + 2.0 * c.Z * c.z2 + c.z1);
+}
+
 // the temperature derivative of the mixing coefficient and of Z, and the
 // departures of h and cp; the ideal parts are added by the caller
 KOKKOS_INLINE_FUNCTION void departures(const fpdtype T, const fpdtype *X,
@@ -119,15 +132,7 @@ KOKKOS_INLINE_FUNCTION void departures(const fpdtype T, const fpdtype *X,
   c.dam *= -0.5 * Ru * sqrt(aiConst / T);
   fpdtype dAstardT = -2.0 * (c.Astar / T) * (1.0 - 0.5 * (T / c.am) * c.dam);
   fpdtype dBstardT = -c.Bstar / T;
-
-  fpdtype dz0 =
-      -(c.Bstar * dAstardT +
-        (c.Astar + (2.0 * c.Bstar + 3.0 * pow(c.Bstar, 2.0)) * wRG) * dBstardT);
-  fpdtype dz1 = (dAstardT + (2.0 * c.Bstar * (wRG - uRG) - uRG) * dBstardT);
-  fpdtype dz2 = -(1.0 - uRG) * dBstardT;
-
-  c.dZdT = -(dz2 * pow(c.Z, 2.0) + dz1 * c.Z + dz0) /
-           (3.0 * pow(c.Z, 2.0) + 2.0 * c.Z * c.z2 + c.z1);
+  c.dZdT = dZ(c, dAstardT, dBstardT);
 
   fpdtype Cuw = 1.0 / (c.bm * Ru * sqrt(pow(uRG, 2.0) - 4.0 * wRG));
   fpdtype ZoB = c.Z / c.Bstar;
@@ -178,17 +183,7 @@ KOKKOS_INLINE_FUNCTION void ratios(const fpdtype p, const fpdtype T,
                                    const fpdtype rho, const fpdtype cp,
                                    const cubic &c, fpdtype &gamma,
                                    fpdtype &cs) {
-  fpdtype dAstardp = c.Astar / p;
-  fpdtype dBstardp = c.Bstar / p;
-
-  fpdtype dz0 =
-      -(c.Bstar * dAstardp +
-        (c.Astar + (2.0 * c.Bstar + 3.0 * pow(c.Bstar, 2.0)) * wRG) * dBstardp);
-  fpdtype dz1 = (dAstardp + (2.0 * c.Bstar * (wRG - uRG) - uRG) * dBstardp);
-  fpdtype dz2 = -(1.0 - uRG) * dBstardp;
-
-  fpdtype dZdp = -(dz2 * pow(c.Z, 2.0) + dz1 * c.Z + dz0) /
-                 (3.0 * pow(c.Z, 2.0) + 2.0 * c.Z * c.z2 + c.z1);
+  fpdtype dZdp = dZ(c, c.Astar / p, c.Bstar / p);
 
   fpdtype drhodp = (rho / p) * (1.e0 - p * dZdp / c.Z);
   fpdtype drhodt = -(rho / T) * (1.e0 + T * c.dZdT / c.Z);
@@ -274,13 +269,50 @@ KOKKOS_INLINE_FUNCTION state fromCons(const fpdtype rho, const fpdtype e,
 }
 
 // the density's derivatives at (p, T, Y) for the dual time preconditioning:
-// not yet; the solver refuses dual time on a fpdtype gas until the cubic's
-// derivatives are written here
+// rho = p MWmix / (Z Ru T), so each is rho times the log derivative, Z's by
+// the implicit differentiation above. By p and T as ratios has them; by
+// each of the first ns - 1 mass fractions with the last taking up the
+// change, through the mixture's molecular weight and the mixing rules for
+// the cubic's coefficients.
 template <class Yf>
-KOKKOS_INLINE_FUNCTION void
-densityDerivatives(const fpdtype, const fpdtype, const fpdtype, const Yf &,
-                   fpdtype &, fpdtype &, fpdtype *) {
-  Kokkos::abort("realGas: the dual time density derivatives are not written");
+KOKKOS_INLINE_FUNCTION void densityDerivatives(const fpdtype p, const fpdtype T,
+                                               const fpdtype rho, const Yf &Y,
+                                               fpdtype &rho_p, fpdtype &rho_T,
+                                               fpdtype *rho_Y) {
+  fpdtype X[ns], ai[ns];
+  const fpdtype MWmix = moleFractions(Y, X);
+  cubic c;
+  coefficients(T, X, ai, c);
+  compressibility(p, T, c);
+  fpdtype hDep, cpDep;
+  departures(T, X, ai, c, hDep, cpDep);
+  rho_p = (rho / p) * (1.0 - p * dZ(c, c.Astar / p, c.Bstar / p) / c.Z);
+  rho_T = -(rho / T) * (1.0 + T * c.dZdT / c.Z);
+  // d am / d X_k, am being the double sum over the pairs
+  fpdtype damdX[ns];
+  for (int k = 0; k <= ns - 1; k++) {
+    damdX[k] = 0.0;
+    for (int l = 0; l <= ns - 1; l++)
+      damdX[k] += 2.0 * X[l] * sqrt(ai[k] * ai[l]);
+  }
+  const fpdtype RuT = Ru * T;
+  for (int n = 0; n < ns - 1; n++) {
+    // the mixture's molecular weight, 1 / sum(Y / MW), by Y_n less Y_last
+    const fpdtype dMWmix = -MWmix * MWmix * (MWinv(n) - MWinv(ns - 1));
+    // the mole fractions follow: X_k = Y_k MWmix / MW_k
+    fpdtype dam = 0.0, dbm = 0.0;
+    for (int k = 0; k <= ns - 1; k++) {
+      fpdtype dX = X[k] * dMWmix / MWmix;
+      if (k == n)
+        dX += MWmix * MWinv(n);
+      if (k == ns - 1)
+        dX -= MWmix * MWinv(ns - 1);
+      dam += damdX[k] * dX;
+      dbm += biConst * (Ru * Tcrit(k)) / pcrit(k) * dX;
+    }
+    const fpdtype dZdY = dZ(c, dam * p / (RuT * RuT), dbm * p / RuT);
+    rho_Y[n] = rho * (dMWmix / MWmix - dZdY / c.Z);
+  }
 }
 
 } // namespace realGas

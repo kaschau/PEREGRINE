@@ -8,7 +8,7 @@ import pytest
 import peregrinepy as pg
 from peregrinepy.files.configFile import pgConfigError
 
-from ..gases import configure
+from ..gases import configure, primitives
 
 
 def uniformBox(integrator, controller, physics):
@@ -85,3 +85,35 @@ def test_dualTimeComposesItsPseudoScheme(my_setup, pseudo):
     config["timeIntegration"]["pseudoIntegrator"] = "dualTime"
     with pytest.raises(pgConfigError):
         pg.multiBlock.solver(config, mesh)
+
+
+@pytest.mark.parametrize("eos", ["tpg", "realGas"])
+def test_dualTimeOnAnyEos(my_setup, eos):
+    # a perturbed dense cold state, far from ideal for the cubic: the pseudo
+    # iterations converge the step and the state stays finite and near
+    config, mesh = uniformBox("dualTime", "fixed", "euler")
+    config["simulation"]["mixture"] = ["O2", "N2", "CO2", "CH4"]
+    config["simulation"]["eos"] = eos
+    config["simulation"]["trans"] = None
+    config["simulation"]["Trange"] = (300.0, 3500.0)
+    config["initialConditions"].update(
+        p=60e5, T=320.0, Y={"O2": 0.3, "N2": 0.4, "CO2": 0.2}
+    )
+    config["timeIntegration"]["subIterations"] = 8
+    config["timeIntegration"]["dt"] = 1e-7
+    mb = pg.multiBlock.solver(config, mesh)
+    blk = mb.blocks[0]
+    ng = blk.ng
+    rng = np.random.default_rng(3)
+    # a slight pressure perturbation, so the pseudo iterations have work
+    q = primitives(mb, blk)
+    q[..., 0] *= 1 + 0.01 * rng.random(q.shape[:3])
+    mb.setPrimitives([q])
+    mb.integrator.initialize()
+    mb.integrator.reportDue = True
+    for _ in range(2):
+        mb.integrator.step(config["timeIntegration"]["dt"])
+    residuals = np.array(mb.integrator.residuals)
+    assert np.isfinite(blk.Q.get()[ng:-ng, ng:-ng, ng:-ng]).all()
+    # the pseudo residual fell over the sub iterations of the last step
+    assert residuals[-1, 0] < 0.5 * residuals[0, 0]

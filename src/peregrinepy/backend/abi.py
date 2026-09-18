@@ -27,6 +27,7 @@ class Library:
         "pgAllocate": ([ctypes.c_size_t], ctypes.c_void_p),
         "pgFree": ([ctypes.c_void_p], None),
         "pgAllocatePinned": ([ctypes.c_size_t], ctypes.c_void_p),
+        "pgOnDevice": ([ctypes.c_void_p], ctypes.c_int),
         "pgToHost": (
             [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_size_t, ctypes.c_int],
             None,
