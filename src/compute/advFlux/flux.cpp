@@ -1,18 +1,57 @@
 #include "faces.hpp"
 
-// One advective flux composed by the jit: the reconstruction, PG_RECONSTRUCT
-// (piecewiseConstant, muscl), is the kernel struct, forced in after the Riemann
-// solver it hands its two states to, PG_RIEMANN (rusanov, hllc, ausmPlusUp),
-// and with muscl the limiter it slopes by, PG_LIMITER.
-#ifndef PG_RECONSTRUCT
-#error "a flux is composed: -DPG_RECONSTRUCT and -DPG_RIEMANN from the jit"
+// One advective flux composed by the jit. The kernel struct is PG_BASE: the
+// reconstruction, PG_RECONSTRUCT (piecewiseConstant, muscl), which holds the
+// columns and makes the two states at the face, and with shock capturing
+// the switch on it, which weighs the face. PG_PRIMARY (a Riemann solver:
+// rusanov, hllc, ausmPlusUp; a central scheme: KEPaEC) makes the flux of
+// the states; with a switch, PG_SECONDARY is blended in by the weight,
+// (1 - w) primary + w secondary. Each is forced in ahead by the jit, and
+// with muscl the limiter it slopes by, PG_LIMITER.
+#ifndef PG_BASE
+#error                                                                         \
+    "a flux is composed: -DPG_BASE, -DPG_RECONSTRUCT and -DPG_PRIMARY from the jit"
 #endif
 #define PG_STRING_(a) #a
 #define PG_STRING(a) PG_STRING_(a)
 
-using flux = PG_RECONSTRUCT;
+// a formula writes its flux through the face's column as it is, or a share
+// of the blend: set to its weight of the value, or that added
+struct weighted {
+  const cellFaceOut &F;
+  double w;
+  struct slot {
+    double &f;
+    double w;
+    KOKKOS_INLINE_FUNCTION void operator=(double v) const { f = w * v; }
+  };
+  KOKKOS_INLINE_FUNCTION slot operator()(int l) const { return {F(l), w}; }
+};
+struct added {
+  const cellFaceOut &F;
+  double w;
+  struct slot {
+    double &f;
+    double w;
+    KOKKOS_INLINE_FUNCTION void operator=(double v) const { f += w * v; }
+  };
+  KOKKOS_INLINE_FUNCTION slot operator()(int l) const { return {F(l), w}; }
+};
 
 PG_RANGE(cellFaces)
+struct flux : PG_BASE {
+  using base = PG_BASE;
+  KOKKOS_INLINE_FUNCTION void operator()() const {
+#ifdef PG_SECONDARY
+    const double w = this->weight();
+    PG_PRIMARY::flux(*this, this->A, weighted{this->F, 1.0 - w});
+    PG_SECONDARY::flux(*this, this->A, added{this->F, w});
+#else
+    PG_PRIMARY::flux(*this, this->A, this->F);
+#endif
+  }
+};
+
 PG_ABI void pgFlux(const flux &k, const pgTiling &t) {
-  forCells(PG_STRING(PG_RECONSTRUCT) " " PG_STRING(PG_RIEMANN) " fluxes", t, k);
+  forCells(PG_STRING(PG_BASE) " " PG_STRING(PG_PRIMARY) " fluxes", t, k);
 }

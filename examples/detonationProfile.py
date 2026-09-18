@@ -27,10 +27,9 @@ def simulate():
 
     config = pg.files.configFile()
     config["simulation"]["physics"] = "euler"
-    config["RHS"]["shockHandling"] = "artificialDissipation"
-    config["RHS"]["primaryAdvFlux"] = "KEEPpe"
-    config["RHS"]["secondaryAdvFlux"] = "scalarDissipation"
-    config["RHS"]["switchAdvFlux"] = "vanLeer"
+    config["RHS"]["primaryAdvFlux"] = "KEPaEC"
+    config["RHS"]["secondaryAdvFlux"] = "rusanov"
+    config["RHS"]["switchAdvFlux"] = "jamesonPressure"
     config["timeIntegration"]["integrator"] = "rk3"
     config["simulation"]["chemistry"] = True
     config["simulation"]["mixture"] = "chem_CH4_O2_FFCMY"

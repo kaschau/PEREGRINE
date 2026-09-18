@@ -73,10 +73,12 @@ class configFile(frozenDict):
 
         self["RHS"] = frozenDict(
             {
-                "shockHandling": None,
                 "primaryAdvFlux": "KEPaEC",
+                # shock capturing: a secondary flux blended in by the
+                # switch's weight, and what the switch takes
                 "secondaryAdvFlux": None,
                 "switchAdvFlux": None,
+                "switchValues": {},
                 "subgrid": None,
             }
         )

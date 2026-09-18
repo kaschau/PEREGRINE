@@ -241,6 +241,24 @@ class gridBlock(topologyBlock):
             lengths.append(np.sqrt((span**2).sum(axis=-1)))
         return np.stack(lengths, axis=-1)
 
+    @metric(CellCenterArray)
+    def _cellLength(self, nodes):
+        """Gives every cell's length: the smallest distance from its
+        center to one of its six face centers, the finest scale it
+        resolves."""
+        center = self._cellCenters(nodes)
+        shortest = None
+        for a in range(3):
+            centers = self._faceCenters(nodes, a)
+            for side in (np.s_[:-1], np.s_[1:]):
+                index = [slice(None)] * 3
+                index[a] = side
+                distance = np.sqrt(((centers[tuple(index)] - center) ** 2).sum(axis=-1))
+                shortest = (
+                    distance if shortest is None else np.minimum(shortest, distance)
+                )
+        return shortest
+
     @metric(CellCenterArray, (3, 3))
     def _dENCdxyz(self, nodes):
         """Gives every cell's transformation metrics, d(E, N, C)/d(x, y, z),

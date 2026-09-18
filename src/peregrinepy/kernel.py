@@ -73,10 +73,10 @@ class BaseKernel:
         self.name, self.restype, self.params, self.structs = self._parse(texts)
         # how many halo layers it reaches into, said by the source or a
         # header forced into it
-        stencil = self.stencilDeclaration.search(
+        declared = self.stencilDeclaration.findall(
             "".join(texts[: 1 + len(self.includes)])
         )
-        self.stencil = int(stencil.group(1)) if stencil else 1
+        self.stencil = max((int(n) for n in declared), default=1)
         # the kind of item it runs over, and the components one is of
         declared = self.rangeDeclaration.findall(
             "".join(texts[: 1 + len(self.includes)])
@@ -166,8 +166,9 @@ class BaseKernel:
         members = cls.members(base, texts) if base else []
         for statement in re.sub(r"//.*", "", body).split(";"):
             statement = " ".join(statement.split())
-            # a static member or a template head ahead of a method is not data
-            if not statement or statement.startswith(("static", "template")):
+            # a static member, a template head ahead of a method, or the
+            # base's name is not data
+            if not statement or statement.startswith(("static", "template", "using")):
                 continue
             head, _, rest = (
                 statement.replace("const ", "").replace("mutable ", "").partition(" ")
@@ -415,8 +416,10 @@ class CellFaceKernel(BaseKernel):
 class FluxKernel(CellFaceKernel):
     """An advective flux composed by the jit from the scheme the config
     names: a Riemann solver alone, piecewise constant -- rusanov, hllc,
-    ausmPlusUp -- or reconstruct-limiter-riemann -- muscl-vanLeer-rusanov.
-    A central scheme, KEPaEC, is a source of its own."""
+    ausmPlusUp -- or reconstruct-limiter-riemann -- muscl-vanLeer-rusanov
+    -- or a central scheme, KEPaEC. For shock capturing a :secondary:
+    formula is blended in by the weight of a :switch:, jamesonPressure or
+    ducros, which the :switchValues: are baked into."""
 
     reconstructions = ("piecewiseConstant", "muscl")
 
@@ -425,29 +428,42 @@ class FluxKernel(CellFaceKernel):
         """Says whether a scheme is a composition of advFlux/flux.cpp, or a
         flux source of its own."""
         return (
-            Jit.compute / "advFlux" / "riemann" / f"{scheme.split('-')[-1]}.hpp"
+            Jit.compute / "advFlux" / "formula" / f"{scheme.split('-')[-1]}.hpp"
         ).is_file()
 
-    def __init__(self, scheme, direction):
+    def __init__(self, scheme, direction, secondary=None, switch=None, switchValues=()):
         parts = scheme.split("-")
-        riemann = parts[-1]
+        formula = parts[-1]
         reconstruct = parts[0] if len(parts) > 1 else "piecewiseConstant"
         limiter = parts[1] if len(parts) == 3 else None
         if len(parts) not in (1, 3) or reconstruct not in self.reconstructions:
             raise ValueError(
-                f"{scheme!r} is not riemann or reconstruct-limiter-riemann"
+                f"{scheme!r} is not formula or reconstruct-limiter-formula"
             )
-        defines = [f"PG_RIEMANN={riemann}", f"PG_RECONSTRUCT={reconstruct}"]
-        # the solver ahead of the reconstruction that calls it, the limiter ahead of both
+        if (secondary is None) != (switch is None):
+            raise ValueError("a secondary flux and a switch go together")
+        defines = [
+            f"PG_PRIMARY={formula}",
+            f"PG_RECONSTRUCT={reconstruct}",
+            f"PG_BASE={switch or reconstruct}",
+        ]
+        # the formulas ahead of the reconstruction, the switch on it after,
+        # the limiter ahead of all
         includes = [
-            f"advFlux/riemann/{riemann}.hpp",
+            f"advFlux/formula/{formula}.hpp",
             f"advFlux/reconstruct/{reconstruct}.hpp",
         ]
         if limiter:
             defines.append(f"PG_LIMITER={limiter}")
             includes.insert(0, f"advFlux/limiter/{limiter}.hpp")
+        if secondary:
+            defines.append(f"PG_SECONDARY={secondary}")
+            includes.insert(1, f"advFlux/formula/{secondary}.hpp")
+            includes.append(f"advFlux/switch/{switch}.hpp")
+            for name, value in dict(switchValues).items():
+                defines.append(f"PG_{switch.upper()}_{name.upper()}={float(value)!r}")
         super().__init__("advFlux/flux.cpp", direction, defines, includes)
-        self.__name__ = scheme
+        self.__name__ = scheme + (f" with {secondary} by {switch}" if switch else "")
 
 
 class HaloExchangeKernel(BaseKernel):

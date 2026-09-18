@@ -105,8 +105,8 @@ def test_graphsAreSaidInNamesWithoutASolver():
 @pytest.mark.parametrize(
     "key,value",
     [
-        ("shockHandling", "artificialDissipation"),
-        ("secondaryAdvFlux", "scalarDissipation"),
+        ("secondaryAdvFlux", "rusanov"),
+        ("switchAdvFlux", "jamesonPressure"),
         ("primaryAdvFlux", None),
     ],
 )

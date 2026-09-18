@@ -30,7 +30,7 @@ def test_launchNodeBindsEveryBlockOverTheRange(my_setup):
     ((kernel, table, tiling),) = node.stages[0]
     assert table is mb.blockArrayTable and tiling.count == len(mb.blocks)
     # a group's kernels are one stage: siblings
-    group = LaunchNode(mb.kernels["primaryAdvFlux"], "interior").bind(*mb.means)
+    group = LaunchNode(mb.kernels["advFlux"], "interior").bind(*mb.means)
     assert len(group.stages) == 1 and len(group.stages[0]) == 3
 
 
@@ -47,7 +47,7 @@ def test_bcNodeTilesOnlyTheFacesCarryingEachType(my_setup):
 
 def test_redoNodeCoversRemoteFacesOnly(my_setup):
     mb = solver()
-    node = RedoNode(mb.kernels["stateFromCons"], mb.kernels["primaryAdvFlux"]).bind(
+    node = RedoNode(mb.kernels["stateFromCons"], mb.kernels["advFlux"]).bind(
         *mb.means
     )
     # one rank: nothing is remote, so every tiling is empty

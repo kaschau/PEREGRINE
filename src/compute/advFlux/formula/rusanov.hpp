@@ -1,15 +1,15 @@
 // Rusanov: the average of the two sides' fluxes, less the largest wave
 // speed times the jump.
-#ifndef __riemannRusanov_H__
-#define __riemannRusanov_H__
+#ifndef __formulaRusanov_H__
+#define __formulaRusanov_H__
 
 #include "advFlux/faceState.hpp"
 #include "faces.hpp"
 
 struct rusanov {
-  template <class Recon>
+  template <class Recon, class Out>
   static KOKKOS_INLINE_FUNCTION void flux(const Recon &r, const cellFaceIn &A,
-                                          const cellFaceOut &F) {
+                                          const Out &F) {
     double S, nx, ny, nz;
     faceNormal(A(0), A(1), A(2), S, nx, ny, nz);
     const auto s = r.states();

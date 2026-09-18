@@ -128,7 +128,9 @@ KOKKOS_INLINE_FUNCTION void cellAt(const pgRange &c, const int item, int &i,
 // A kernel is an aggregate of its members. The launch shape pins every
 // column and dims member to the cell before calling the body, walking the
 // members by count with a structured binding; there is no other way to
-// reach a struct's members generically before C++26.
+// reach a struct's members generically before C++26. A kernel on a base
+// names it, `using base`: its members are the base's, so the base says
+// the count; one that adds members of its own besides pins itself, pin(at).
 struct anything {
   template <class T> operator T() const;
 };
@@ -138,7 +140,13 @@ template <class K, class... A> constexpr int arityFrom() {
   else
     return sizeof...(A);
 }
-template <class K> constexpr int arity = arityFrom<K>();
+template <class K> constexpr int arityOf() {
+  if constexpr (requires { typename K::base; })
+    return arityOf<typename K::base>();
+  else
+    return arityFrom<K>();
+}
+template <class K> constexpr int arity = arityOf<K>();
 
 // what pins, and what does not; a member pins to the position its kind
 // takes (a block column to a cell, a block face column to a halo cell)
@@ -215,7 +223,10 @@ KOKKOS_INLINE_FUNCTION void pinAll(K &kernel, const P &at) {
 template <class K, class P>
 KOKKOS_INLINE_FUNCTION K pinned(const K &k, const P &at) {
   K p = k;
-  pinAll(p, at);
+  if constexpr (requires { p.pin(at); })
+    p.pin(at);
+  else
+    pinAll(p, at);
   return p;
 }
 

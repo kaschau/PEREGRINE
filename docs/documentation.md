@@ -120,10 +120,10 @@ PEREGRINE run in executable mode requires an input configuration file (in yaml f
       timeIntegration: rk1
 
     RHS: # RHS control
-      shockHandling: null #method of shock handling
-      primaryAdvFlux: secondOrderKEEP  # how to compute low dissipative adctive flux
-      secondaryAdvFlux: null # how to compute low order stable advective flux
-      switchAdvFlux: null # how to switch between the two
+      primaryAdvFlux: KEPaEC  # the advective flux: a Riemann solver, reconstruct-limiter-riemann, or a central scheme
+      secondaryAdvFlux: null # shock capturing: a formula blended in by the switch's weight
+      switchAdvFlux: null # the switch: jamesonPressure, or ducros (viscous flow)
+      switchValues: {} # what the switch takes: ducros nu and floor
       diffusion: true #solve diffusion terms?
       subgrid: null #use a subgrid model?
 

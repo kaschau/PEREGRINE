@@ -44,7 +44,7 @@ class ConstantMassFluxSubsonicInlet(Inlet):
 
     def _massFlux(self, face):
         blk = self.blk
-        self.mb.launch("primaryAdvFlux", "interior")
+        self.mb.launch("advFlux", "interior")
 
         d = face.direction
         F = face.blockFacePlane(getattr(blk, f"{d}F").get())[:, :, 0]

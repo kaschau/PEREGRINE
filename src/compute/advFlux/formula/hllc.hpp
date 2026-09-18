@@ -1,18 +1,17 @@
 // HLLC: the flux of whichever of the left, left star, right star or right
 // states the face sits in, by the three wave speeds.
-#ifndef __riemannHllc_H__
-#define __riemannHllc_H__
+#ifndef __formulaHllc_H__
+#define __formulaHllc_H__
 
 #include "advFlux/faceState.hpp"
 #include "faces.hpp"
 
 struct hllc {
   // one side's own flux, and its star state's correction to it
-  template <class Recon>
+  template <class Recon, class Out>
   static KOKKOS_INLINE_FUNCTION void
   own(const Recon &r, const typename Recon::sides &s, const faceState &X,
-      double U, double S, const cellFaceIn &A, const cellFaceOut &F,
-      bool left) {
+      double U, double S, const cellFaceIn &A, const Out &F, bool left) {
     F(0) = U * X.rho * S;
     F(1) = U * X.rhou * S + X.p * A(0);
     F(2) = U * X.rhov * S + X.p * A(1);
@@ -24,11 +23,11 @@ struct hllc {
       F(5 + n) = U * (left ? rhoYL : rhoYR) * S;
     }
   }
-  template <class Recon>
+  template <class Recon, class Out>
   static KOKKOS_INLINE_FUNCTION void
   star(const Recon &r, const typename Recon::sides &s, const faceState &X,
        double U, double SX, double Sstar, double S, double nx, double ny,
-       double nz, const cellFaceIn &A, const cellFaceOut &F, bool left) {
+       double nz, const cellFaceIn &A, const Out &F, bool left) {
     const double rhoinv = 1.0 / X.rho;
     const double Frho = U * X.rho * S;
     const double FU = U * X.rhou * S + X.p * A(0);
@@ -56,9 +55,9 @@ struct hllc {
     }
   }
 
-  template <class Recon>
+  template <class Recon, class Out>
   static KOKKOS_INLINE_FUNCTION void flux(const Recon &r, const cellFaceIn &A,
-                                          const cellFaceOut &F) {
+                                          const Out &F) {
     double S, nx, ny, nz;
     faceNormal(A(0), A(1), A(2), S, nx, ny, nz);
     const auto s = r.states();

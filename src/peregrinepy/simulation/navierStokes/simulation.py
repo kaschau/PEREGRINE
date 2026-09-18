@@ -19,6 +19,8 @@ class NavierStokesSimulation(EulerSimulation):
     viscous = True
     bcBase = BaseNSBC
     bcHooks = ("euler", "preDqDxyz", "postDqDxyz")
+    # the cell length, which the ducros switch reads
+    metrics = EulerSimulation.metrics + ("cellLength",)
 
     def validate(self, config):
         super().validate(config)
@@ -72,13 +74,13 @@ class NavierStokesSimulation(EulerSimulation):
             "grads",
             ahead=[BCNode(k["bcs preDqDxyz"]), LaunchNode(k["dqdxyz"], "interior")],
             during=[
-                LaunchNode(k["primaryAdvFlux"], "interior"),
+                LaunchNode(k["advFlux"], "interior"),
                 BCNode(k["bcs postDqDxyz"], "here"),
                 LaunchNode(k["diffFlux"], "interior"),
             ],
             after=[
                 BCNode(k["bcs postDqDxyz"], "remote"),
-                RedoNode(k["primaryAdvFlux"], k["diffFlux"]),
+                RedoNode(k["advFlux"], k["diffFlux"]),
                 LaunchNode(k["applyFlux"], "interior"),
             ],
         )

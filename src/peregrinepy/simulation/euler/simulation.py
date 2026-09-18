@@ -48,9 +48,14 @@ class EulerSimulation(BaseSimulation):
 
     def validate(self, config):
         rhs, sim, ti = config["RHS"], config["simulation"], config["timeIntegration"]
-        for key in ("shockHandling", "secondaryAdvFlux", "switchAdvFlux", "subgrid"):
-            if rhs[key] is not None:
-                raise pgConfigError(key, rhs[key], "not until the composition round")
+        if rhs["subgrid"] is not None:
+            raise pgConfigError("subgrid", rhs["subgrid"], "not until its round")
+        if (rhs["secondaryAdvFlux"] is None) != (rhs["switchAdvFlux"] is None):
+            raise pgConfigError(
+                "secondaryAdvFlux",
+                rhs["secondaryAdvFlux"],
+                "a secondary flux and a switch go together",
+            )
         if config["viscousSponge"]["spongeON"]:
             raise pgConfigError(
                 "viscousSponge", True, "not until the composition round"
@@ -137,13 +142,20 @@ class EulerSimulation(BaseSimulation):
         # the jit bakes the eos into these
         k["stateFromCons"] = CellCenterKernel("thermo/stateFromCons.cpp")
         k["stateFromPrims"] = CellCenterKernel("thermo/stateFromPrims.cpp")
-        # one flux per direction, unordered: composed from a Riemann solver
-        # and a reconstruction, or a central scheme of its own
+        # one flux per direction, unordered: composed from a formula and a
+        # reconstruction, with the secondary blended in by the switch, or a
+        # scheme of its own
         scheme = rhs["primaryAdvFlux"]
-        k["primaryAdvFlux"] = UnorderedKernelGroup(
+        k["advFlux"] = UnorderedKernelGroup(
             [
                 (
-                    FluxKernel(scheme, d)
+                    FluxKernel(
+                        scheme,
+                        d,
+                        rhs["secondaryAdvFlux"],
+                        rhs["switchAdvFlux"],
+                        rhs["switchValues"],
+                    )
                     if FluxKernel.composed(scheme)
                     else CellFaceKernel(f"advFlux/{scheme}.cpp", d)
                 )
@@ -184,7 +196,7 @@ class EulerSimulation(BaseSimulation):
         rhs = Graph(
             "rhs",
             [
-                LaunchNode(k["primaryAdvFlux"], "interior"),
+                LaunchNode(k["advFlux"], "interior"),
                 LaunchNode(k["applyFlux"], "interior"),
             ],
         )

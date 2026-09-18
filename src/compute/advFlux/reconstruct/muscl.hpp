@@ -2,8 +2,8 @@
 // half a cell along a limited slope. The density, velocity and internal
 // energy are reconstructed; the pressure and sound speed take the energy's
 // limiter, the species the density's, and the total energy is rebuilt from
-// what was reconstructed. The limiter is PG_LIMITER and the Riemann solver
-// PG_RIEMANN, forced in ahead by the jit.
+// what was reconstructed. The limiter is PG_LIMITER, forced in ahead by
+// the jit.
 #ifndef __reconstructMuscl_H__
 #define __reconstructMuscl_H__
 
@@ -79,9 +79,6 @@ struct muscl {
                                       double &R) const {
     L = s.rho.left(QL(5 + n), QR(5 + n));
     R = s.rho.right(QR(5 + n), QRR(5 + n));
-  }
-  KOKKOS_INLINE_FUNCTION void operator()() const {
-    PG_RIEMANN::flux(*this, A, F);
   }
 };
 

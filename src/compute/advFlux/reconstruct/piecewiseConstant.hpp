@@ -1,8 +1,8 @@
 // Piecewise constant: the face takes each side's cell as it is, first
 // order.
-// A reconstruction is the flux kernel: its columns, the two states it
-// makes of them, a species' partial density either side, and the body
-// that hands them to the Riemann solver, PG_RIEMANN, forced in ahead.
+// A reconstruction is the flux kernel's base: its columns, the two states
+// it makes of them, and a species' partial density either side, which the
+// flux formula takes.
 #ifndef __reconstructPiecewiseConstant_H__
 #define __reconstructPiecewiseConstant_H__
 
@@ -32,9 +32,6 @@ struct piecewiseConstant {
                                       double &R) const {
     L = QL(5 + n);
     R = QR(5 + n);
-  }
-  KOKKOS_INLINE_FUNCTION void operator()() const {
-    PG_RIEMANN::flux(*this, A, F);
   }
 };
 

@@ -338,10 +338,9 @@ def simulate(testnum, index="i"):
     config = pg.files.configFile()
     config["simulation"]["physics"] = "euler"
     config["simulation"]["mixture"] = db
-    config["RHS"]["shockHandling"] = "artificialDissipation"
-    config["RHS"]["primaryAdvFlux"] = "KEEPpe"
-    config["RHS"]["secondaryAdvFlux"] = "scalarDissipation"
-    config["RHS"]["switchAdvFlux"] = "vanLeer"
+    config["RHS"]["primaryAdvFlux"] = "KEPaEC"
+    config["RHS"]["secondaryAdvFlux"] = "rusanov"
+    config["RHS"]["switchAdvFlux"] = "jamesonPressure"
     config["timeIntegration"]["integrator"] = "rk3"
 
     rot = {"i": 0, "j": 1, "k": 2}
@@ -436,7 +435,6 @@ def simulate(testnum, index="i"):
     x = blk.cells.get()[..., ccAxis[index]][s_]
     rho = data["rho"][s_]
     p = data["p"][s_]
-    phi = blk.phi.get()[s_][:, uIndex[index] - 1]
     u = data["uvw"[ccAxis[index]]][s_]
     e = blk.qh.get()[s_][:, 4]
 
@@ -459,7 +457,6 @@ def simulate(testnum, index="i"):
     lw = 0.5
     # rho
     ax1.set_xlabel(r"x")
-    ax1.plot(x, phi, "--", color="gold", label="phi", linewidth=lw)
     ax1.plot(x, rho, color="k", label="rho", linewidth=lw)
     ax1.scatter(rx, rrho, color="k", label="Analyticsl", marker="o", s=ms)
     ax1.legend()
