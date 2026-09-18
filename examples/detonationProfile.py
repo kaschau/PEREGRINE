@@ -30,6 +30,7 @@ def simulate():
     config["RHS"]["primaryAdvFlux"] = "KEPaEC"
     config["RHS"]["secondaryAdvFlux"] = "rusanov"
     config["RHS"]["switchAdvFlux"] = "jamesonPressure"
+    config["RHS"]["switchValues"] = {"gain": 5.0}
     config["timeIntegration"]["integrator"] = "rk3"
     config["simulation"]["chemistry"] = True
     config["simulation"]["mixture"] = "chem_CH4_O2_FFCMY"

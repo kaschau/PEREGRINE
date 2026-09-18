@@ -123,7 +123,7 @@ PEREGRINE run in executable mode requires an input configuration file (in yaml f
       primaryAdvFlux: KEPaEC  # the advective flux: a Riemann solver, reconstruct-limiter-riemann, or a central scheme
       secondaryAdvFlux: null # shock capturing: a formula blended in by the switch's weight
       switchAdvFlux: null # the switch: jamesonPressure, or ducros (viscous flow)
-      switchValues: {} # what the switch takes: ducros nu and floor
+      switchValues: {} # what the switch takes: jamesonPressure gain; ducros nu and floor
       diffusion: true #solve diffusion terms?
       subgrid: null #use a subgrid model?
 

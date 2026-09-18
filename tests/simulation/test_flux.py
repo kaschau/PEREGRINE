@@ -9,8 +9,11 @@ import pytest
 import peregrinepy as pg
 from peregrinepy.kernel import FluxKernel
 
+from ..riemannProblem import RiemannProblem
+
 air = {"Air": {"MW": 28.97, "cp0": 1000.0, "mu0": 1.86e-5, "kappa0": 0.0263}}
 R = 8314.46261815324 / air["Air"]["MW"]
+gamma = air["Air"]["cp0"] / (air["Air"]["cp0"] - R)
 
 
 def line(
@@ -60,18 +63,22 @@ def wave(scheme, nx, **fluxes):
 
 
 def sod(scheme, **fluxes):
-    """The density along Sod's tube at t = 0.2, R = 1 units, on 200 cells."""
+    """The mean density error along Sod's tube at t = 0.2 on 200 cells,
+    against the exact solution."""
+    test = RiemannProblem.toro(0, gamma=gamma, R=R)
     mb = line(scheme, 201, periodic=False, **fluxes)
     blk = mb.blocks[0]
     ng = blk.ng
     xc = blk.cells.get()[..., 0]
     q = np.zeros(blk.Q.shape[:3] + (mb.ne,))
-    q[..., 0] = np.where(xc <= 0.5, 1.0, 0.1)
-    q[..., 4] = np.where(xc <= 0.5, 1.0, 0.8) / R
+    q[..., 0] = np.where(xc <= test.x0, test.pL, test.pR)
+    q[..., 4] = np.where(xc <= test.x0, test.TL, test.TR)
     mb.setPrimitives([q])
-    for _ in range(2000):
-        mb.integrator.step(1e-4)
-    return blk.Q.get()[ng:-ng, ng, ng, 0]
+    for _ in range(int(round(test.t / test.dt))):
+        mb.integrator.step(test.dt)
+    x = xc[ng:-ng, ng, ng]
+    rho = mb.exportData(blk, ["rho"])["rho"][ng:-ng, ng, ng]
+    return np.abs(rho - test.solve(x)["rho"]).mean()
 
 
 def test_theSchemeStringComposes():
@@ -89,7 +96,7 @@ def test_theSchemeStringComposes():
 
 
 def test_theSwitchIsTheBaseAndWidensTheStencil():
-    k = FluxKernel("KEPaEC", 0, "rusanov", "jamesonPressure")
+    k = FluxKernel("KEPaEC", 0, "rusanov", "jamesonPressure", {"gain": 5})
     assert k.stencil == 2 and "PG_BASE=jamesonPressure" in k.defines
     assert "PG_SECONDARY=rusanov" in k.defines
     assert k.includes[-1] == "advFlux/switch/jamesonPressure.hpp"
@@ -126,7 +133,13 @@ def test_aNearZeroWeightLeavesThePrimary(my_setup):
     # the wave's pressure and velocity are uniform to rounding, so neither
     # switch fires beyond it, and the blend is the primary's flux
     alone = wave("KEPaEC", 41)
-    blended = wave("KEPaEC", 41, secondary="rusanov", switch="jamesonPressure")
+    blended = wave(
+        "KEPaEC",
+        41,
+        secondary="rusanov",
+        switch="jamesonPressure",
+        values={"gain": 5.0},
+    )
     assert abs(blended - alone) < 1e-12 * alone
     viscous = wave("KEPaEC", 41, physics="navierStokes")
     ducros = wave(
@@ -142,27 +155,20 @@ def test_aNearZeroWeightLeavesThePrimary(my_setup):
 
 
 @pytest.mark.parametrize(
-    "switch,values,physics",
+    "switch,values,physics,atMost",
     [
-        ("jamesonPressure", {}, "euler"),
-        ("ducros", {"nu": 0.1, "floor": 0.0}, "navierStokes"),
+        ("jamesonPressure", {"gain": 5.0}, "euler", 0.008),
+        ("ducros", {"nu": 0.3, "floor": 0.0}, "navierStokes", 0.011),
     ],
 )
-def test_theSwitchCapturesTheShock(my_setup, switch, values, physics):
-    # the central scheme alone rings across the tube; blended by the switch
-    # its variation falls by more than half, and rusanov's is the monotone floor
-    alone = np.abs(np.diff(sod("KEPaEC", physics=physics))).sum()
-    blended = np.abs(
-        np.diff(
-            sod(
-                "KEPaEC",
-                secondary="rusanov",
-                switch=switch,
-                values=values,
-                physics=physics,
-            )
-        )
-    ).sum()
-    monotone = np.abs(np.diff(sod("rusanov", physics=physics))).sum()
-    assert np.isfinite(blended) and blended < 0.5 * alone
-    assert monotone < 0.9 and blended < 2.0 * monotone + 0.2
+def test_theSwitchCapturesTheShock(my_setup, switch, values, physics, atMost):
+    # the central scheme alone rings across the tube, about as far from the
+    # exact solution as rusanov's smearing; blended by the switch it is
+    # sharper than either (measured: KEPaEC 0.0189, rusanov 0.0183, jameson
+    # at gain 5 0.0063, ducros at nu 0.3 0.0089; muscl-vanLeer-rusanov 0.0040)
+    alone = sod("KEPaEC", physics=physics)
+    blended = sod(
+        "KEPaEC", secondary="rusanov", switch=switch, values=values, physics=physics
+    )
+    assert np.isfinite(blended) and blended < atMost
+    assert blended < 0.6 * alone and blended < 0.6 * sod("rusanov", physics=physics)
