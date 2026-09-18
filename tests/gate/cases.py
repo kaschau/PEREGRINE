@@ -60,6 +60,9 @@ def build(physics, gas, integrator, ranks=(1, 1), grid=None):
         prims.append(q)
     mb.setPrimitives(prims)
     mb.integrator.initialize()
+    # what each block started from, for the digest to refuse a state that stood still
+    for blk in mb.blocks:
+        blk.started = blk.Q.get()[mb.ng : -mb.ng, mb.ng : -mb.ng, mb.ng : -mb.ng].copy()
     return mb
 
 
@@ -70,14 +73,19 @@ def step(mb, n=12):
 
 
 def blockDigests(mb):
-    """Gives each block's interior state digest, by block number."""
+    """Gives each block's interior state digest, by block number. A NaN
+    hashes as steadily as a number, so the state is refused first if any
+    of it is not finite, or if it never moved from where it started."""
     ng = mb.ng
-    return {
-        blk.nblki: hashlib.sha256(
-            np.ascontiguousarray(blk.Q.get()[ng:-ng, ng:-ng, ng:-ng]).tobytes()
-        ).hexdigest()
-        for blk in mb.blocks
-    }
+    digests = {}
+    for blk in mb.blocks:
+        Q = np.ascontiguousarray(blk.Q.get()[ng:-ng, ng:-ng, ng:-ng])
+        assert np.isfinite(Q).all(), f"block {blk.nblki}: the state is not finite"
+        assert not np.array_equal(
+            Q, blk.started
+        ), f"block {blk.nblki}: the state never moved"
+        digests[blk.nblki] = hashlib.sha256(Q.tobytes()).hexdigest()
+    return digests
 
 
 def digest(blockDigests):
