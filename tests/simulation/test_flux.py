@@ -90,7 +90,8 @@ def test_theSchemeStringComposes():
     first = FluxKernel("hllc", 1)
     assert first.stencil == 1 and "PG_RECONSTRUCT=piecewiseConstant" in first.defines
     assert FluxKernel.composed("ausmPlusUp") and FluxKernel.composed("KEPaEC")
-    assert not FluxKernel.composed("fourthOrderKEEP")
+    fourth = FluxKernel("fourthOrderKEPaEC", 2)
+    assert fourth.stencil == 2 and "PG_RECONSTRUCT=fourCells" in fourth.defines
     with pytest.raises(ValueError):
         FluxKernel("muscl-rusanov", 0)
 
@@ -154,21 +155,29 @@ def test_aNearZeroWeightLeavesThePrimary(my_setup):
     assert abs(ducros - viscous) < 1e-6 * viscous
 
 
+def test_fourthOrderKEPaECIsFourthOrder(my_setup):
+    # measured 1.27e-4, 7.96e-6, 4.98e-7 at 40, 80, 160 cells
+    e40, e80 = wave("fourthOrderKEPaEC", 41), wave("fourthOrderKEPaEC", 81)
+    assert np.log2(e40 / e80) > 3.8
+
+
 @pytest.mark.parametrize(
-    "switch,values,physics,atMost",
+    "primary,switch,values,physics,atMost",
     [
-        ("jamesonPressure", {"gain": 5.0}, "euler", 0.008),
-        ("ducros", {"nu": 0.3, "floor": 0.0}, "navierStokes", 0.011),
+        ("KEPaEC", "jamesonPressure", {"gain": 5.0}, "euler", 0.008),
+        ("fourthOrderKEPaEC", "jamesonPressure", {"gain": 5.0}, "euler", 0.006),
+        ("KEPaEC", "ducros", {"nu": 0.3, "floor": 0.0}, "navierStokes", 0.011),
     ],
 )
-def test_theSwitchCapturesTheShock(my_setup, switch, values, physics, atMost):
+def test_theSwitchCapturesTheShock(my_setup, primary, switch, values, physics, atMost):
     # the central scheme alone rings across the tube, about as far from the
     # exact solution as rusanov's smearing; blended by the switch it is
     # sharper than either (measured: KEPaEC 0.0189, rusanov 0.0183, jameson
-    # at gain 5 0.0063, ducros at nu 0.3 0.0089; muscl-vanLeer-rusanov 0.0040)
-    alone = sod("KEPaEC", physics=physics)
+    # at gain 5 0.0063, fourth order 0.0047, ducros at nu 0.3 0.0089;
+    # muscl-vanLeer-rusanov 0.0040)
+    alone = sod(primary, physics=physics)
     blended = sod(
-        "KEPaEC", secondary="rusanov", switch=switch, values=values, physics=physics
+        primary, secondary="rusanov", switch=switch, values=values, physics=physics
     )
     assert np.isfinite(blended) and blended < atMost
     assert blended < 0.6 * alone and blended < 0.6 * sod("rusanov", physics=physics)

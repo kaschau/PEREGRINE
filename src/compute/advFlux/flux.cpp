@@ -1,3 +1,4 @@
+#include "advFlux/fluxOut.hpp"
 #include "faces.hpp"
 
 // One advective flux composed by the jit. The kernel struct is PG_BASE: the
@@ -14,29 +15,6 @@
 #endif
 #define PG_STRING_(a) #a
 #define PG_STRING(a) PG_STRING_(a)
-
-// a formula writes its flux through the face's column as it is, or a share
-// of the blend: set to its weight of the value, or that added
-struct weighted {
-  const cellFaceOut &F;
-  double w;
-  struct slot {
-    double &f;
-    double w;
-    KOKKOS_INLINE_FUNCTION void operator=(double v) const { f = w * v; }
-  };
-  KOKKOS_INLINE_FUNCTION slot operator()(int l) const { return {F(l), w}; }
-};
-struct added {
-  const cellFaceOut &F;
-  double w;
-  struct slot {
-    double &f;
-    double w;
-    KOKKOS_INLINE_FUNCTION void operator=(double v) const { f += w * v; }
-  };
-  KOKKOS_INLINE_FUNCTION slot operator()(int l) const { return {F(l), w}; }
-};
 
 PG_RANGE(cellFaces)
 struct flux : PG_BASE {

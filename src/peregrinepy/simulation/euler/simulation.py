@@ -64,12 +64,6 @@ class EulerSimulation(BaseSimulation):
             raise pgConfigError("chemistry", True, "not until the composition round")
         if rhs["primaryAdvFlux"] is None:
             raise pgConfigError("primaryAdvFlux", None, "a case has a primary flux")
-        if rhs["primaryAdvFlux"] == "fourthOrderKEEP":
-            raise pgConfigError(
-                "primaryAdvFlux",
-                "fourthOrderKEEP",
-                "not until it is written as a kernel",
-            )
         if sim["eos"] not in ("cpg", "tpg", "realGas"):
             raise pgConfigError("eos", sim["eos"])
         if ti["integrator"] == "dualTime":

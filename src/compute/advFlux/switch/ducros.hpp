@@ -19,7 +19,7 @@ struct ducros : PG_RECONSTRUCT {
   cellCenterL gradsL, cellLengthL;
   cellCenterR gradsR, cellLengthR;
   template <class P> KOKKOS_INLINE_FUNCTION void pin(const P &at) {
-    pinAll(static_cast<base &>(*this), at);
+    pinKernel(static_cast<base &>(*this), at);
     pinEach(at, gradsL, cellLengthL, gradsR, cellLengthR);
   }
 

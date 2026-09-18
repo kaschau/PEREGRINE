@@ -8,17 +8,18 @@
 #include "faces.hpp"
 
 struct KEPaEC {
-  template <class Recon, class Out>
-  static KOKKOS_INLINE_FUNCTION void flux(const Recon &r, const cellFaceIn &A,
-                                          const Out &F) {
-    static_assert(std::is_base_of_v<piecewiseConstant, Recon>,
-                  "KEPaEC is a central scheme: it takes no reconstruction");
+  // the flux of two cells, a and b, each its conserved state, its p and T,
+  // and what the eos keeps
+  template <class Ca, class Cb, class Out>
+  static KOKKOS_INLINE_FUNCTION void
+  twoPoint(const Ca &Qa, const Ca &qa, const Ca &qha, const Cb &Qb,
+           const Cb &qb, const Cb &qhb, const cellFaceIn &A, const Out &F) {
     // each side's velocity, off its conserved state
-    const double rhoinvL = 1.0 / r.QL(0), rhoinvR = 1.0 / r.QR(0);
-    const double uL = r.QL(1) * rhoinvL, vL = r.QL(2) * rhoinvL,
-                 wL = r.QL(3) * rhoinvL;
-    const double uR = r.QR(1) * rhoinvR, vR = r.QR(2) * rhoinvR,
-                 wR = r.QR(3) * rhoinvR;
+    const double rhoinvL = 1.0 / Qa(0), rhoinvR = 1.0 / Qb(0);
+    const double uL = Qa(1) * rhoinvL, vL = Qa(2) * rhoinvL,
+                 wL = Qa(3) * rhoinvL;
+    const double uR = Qb(1) * rhoinvR, vR = Qb(2) * rhoinvR,
+                 wR = Qb(3) * rhoinvR;
 
     // Compute face normal volume flux vector
     double uf = 0.5 * (uR + uL);
@@ -27,10 +28,10 @@ struct KEPaEC {
 
     double U = A(0) * uf + A(1) * vf + A(2) * wf;
 
-    double pf = 0.5 * (r.qR(0) + r.qL(0));
+    double pf = 0.5 * (qb(0) + qa(0));
 
     // Compute fluxes
-    double rho = 0.5 * (r.QR(0) + r.QL(0));
+    double rho = 0.5 * (Qb(0) + Qa(0));
 
     // Continuity rho*Ui
     double C = rho * U;
@@ -48,20 +49,27 @@ struct KEPaEC {
     // Total energy (rhoE+ p)*Ui)
     double Kj = C * 0.5 * (uR * uL + vR * vL + wR * wL);
 
-    double Pj = 0.5 * (r.qL(0) * (uR * A(0) + vR * A(1) + wR * A(2)) +
-                       r.qR(0) * (uL * A(0) + vL * A(1) + wL * A(2)));
+    double Pj = 0.5 * (qa(0) * (uR * A(0) + vR * A(1) + wR * A(2)) +
+                       qb(0) * (uL * A(0) + vL * A(1) + wL * A(2)));
 
     // solve for internal energy flux
-    double eR = r.qhR(4) * rhoinvR;
-    double eL = r.qhL(4) * rhoinvL;
+    double eR = qhb(4) * rhoinvR;
+    double eL = qha(4) * rhoinvL;
     double Ij = 2.0 * (eL * eR) / (eL + eR) * C;
 
     F(4) = Ij + Kj + Pj;
 
     // Species
     for (int n = 0; n < ne - 5; n++) {
-      F(5 + n) = 0.5 * (r.QR(5 + n) * rhoinvR + r.QL(5 + n) * rhoinvL) * C;
+      F(5 + n) = 0.5 * (Qb(5 + n) * rhoinvR + Qa(5 + n) * rhoinvL) * C;
     }
+  }
+  template <class Recon, class Out>
+  static KOKKOS_INLINE_FUNCTION void flux(const Recon &r, const cellFaceIn &A,
+                                          const Out &F) {
+    static_assert(std::is_base_of_v<piecewiseConstant, Recon>,
+                  "KEPaEC is a central scheme: it takes no reconstruction");
+    twoPoint(r.QL, r.qL, r.qhL, r.QR, r.qR, r.qhR, A, F);
   }
 };
 

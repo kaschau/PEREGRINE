@@ -417,11 +417,11 @@ class FluxKernel(CellFaceKernel):
     """An advective flux composed by the jit from the scheme the config
     names: a Riemann solver alone, piecewise constant -- rusanov, hllc,
     ausmPlusUp -- or reconstruct-limiter-riemann -- muscl-vanLeer-rusanov
-    -- or a central scheme, KEPaEC. For shock capturing a :secondary:
+    -- or a central scheme, KEPaEC, fourthOrderKEPaEC. For shock capturing a :secondary:
     formula is blended in by the weight of a :switch:, jamesonPressure or
     ducros, which the :switchValues: are baked into."""
 
-    reconstructions = ("piecewiseConstant", "muscl")
+    reconstructions = ("piecewiseConstant", "fourCells", "muscl")
 
     @classmethod
     def composed(cls, scheme):
@@ -434,8 +434,16 @@ class FluxKernel(CellFaceKernel):
     def __init__(self, scheme, direction, secondary=None, switch=None, switchValues=()):
         parts = scheme.split("-")
         formula = parts[-1]
-        reconstruct = parts[0] if len(parts) > 1 else "piecewiseConstant"
         limiter = parts[1] if len(parts) == 3 else None
+        if len(parts) == 1:
+            # a formula alone takes the cells as they are: the two about the
+            # face, or the four when it declares it reaches that far
+            reaches = self.stencilDeclaration.search(
+                Jit.header(f"advFlux/formula/{formula}.hpp")
+            )
+            reconstruct = "fourCells" if reaches else "piecewiseConstant"
+        else:
+            reconstruct = parts[0]
         if len(parts) not in (1, 3) or reconstruct not in self.reconstructions:
             raise ValueError(
                 f"{scheme!r} is not formula or reconstruct-limiter-formula"

@@ -219,14 +219,19 @@ KOKKOS_INLINE_FUNCTION void pinAll(K &kernel, const P &at) {
             m15, m16);
   }
 }
+// a kernel pinned as it says: by its own pin, or by walking its members
+template <class K, class P>
+KOKKOS_INLINE_FUNCTION void pinKernel(K &k, const P &at) {
+  if constexpr (requires { k.pin(at); })
+    k.pin(at);
+  else
+    pinAll(k, at);
+}
 // a copy of the kernel pinned to a position
 template <class K, class P>
 KOKKOS_INLINE_FUNCTION K pinned(const K &k, const P &at) {
   K p = k;
-  if constexpr (requires { p.pin(at); })
-    p.pin(at);
-  else
-    pinAll(p, at);
+  pinKernel(p, at);
   return p;
 }
 
