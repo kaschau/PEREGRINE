@@ -7,20 +7,20 @@ from ...files.configFile import pgConfigError
 from ...kernel import CellCenterKernel, CellFaceKernel, UnorderedKernelGroup
 from ...multiBlock.arrays import CellCenterArray
 from ...graph import BCNode, ExchangeGraphs, LaunchNode, RedoNode
-from ..euler import EulerSimulation
+from ..euler import EulerSimulator
 
 
-class NavierStokesSimulation(EulerSimulation):
+class NavierStokesSimulator(EulerSimulator):
     """The Navier-Stokes equations of a mixture: Euler's, the gradients of
     velocity, temperature and mass fractions, the transport properties,
     and the diffusive flux."""
 
-    physics = "navierStokes"
+    name = "navierStokes"
     viscous = True
     bcBase = BaseNSBC
     bcHooks = ("euler", "preDqDxyz", "postDqDxyz")
     # the cell length, which the ducros switch reads
-    metrics = EulerSimulation.metrics + ("cellLength",)
+    metrics = EulerSimulator.metrics + ("cellLength",)
 
     def validate(self, config):
         super().validate(config)

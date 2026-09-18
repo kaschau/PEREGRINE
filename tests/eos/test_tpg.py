@@ -134,5 +134,5 @@ def test_tpg(my_setup, ctfile):
     # every property rests on the refit, and the check asks exactly what the
     # fit achieved for these species (within the tolerance, or the best its
     # cap could do), in percent, plus the rounding the kernel adds
-    achieved = max(sp["cpFitError"] for sp in mb.simulation.mixture.species.values())
+    achieved = max(sp["cpFitError"] for sp in mb.simulator.mixture.species.values())
     assert np.all(np.array(pd) < achieved * 100 + 1e-6)

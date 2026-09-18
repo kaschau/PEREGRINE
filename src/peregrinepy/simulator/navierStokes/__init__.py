@@ -1,6 +1,6 @@
 """Compressible flow of a mixture with diffusion, and its boundaries."""
 
 from .boundaries import BaseNSBC
-from .simulation import NavierStokesSimulation
+from .simulator import NavierStokesSimulator
 
-__all__ = ["BaseNSBC", "NavierStokesSimulation"]
+__all__ = ["BaseNSBC", "NavierStokesSimulator"]

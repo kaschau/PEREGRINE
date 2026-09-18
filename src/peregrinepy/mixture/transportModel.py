@@ -1,11 +1,11 @@
 """How momentum and heat diffuse: each species' viscosity and conductivity."""
 
 import numpy as np
-from scipy import interpolate as intrp
 
 from . import Ru, Tref, anyOf, avogadro, database, debye
 from . import epsilon0 as eps0, kB as kb
 from .baseModel import BaseModel
+from .collisionIntegrals import CollisionIntegrals
 from .polyFitMixin import PolyFitMixin
 from .eosModel import RealGasModel
 from .species import Species
@@ -33,14 +33,7 @@ class KineticTheoryModel(BaseTransportModel, PolyFitMixin):
         """The temperatures every fit is made over, the collision integral
         interpolants, and each species' and each pair's reduced quantities."""
         Ts = np.linspace(*self.configSect["Trange"], 50)
-
-        ci = database("collisionIntegrals")
-        omega22 = intrp.RectBivariateSpline(
-            ci["tstar22"], ci["delta"], ci["omega22"], kx=5, ky=5
-        )
-        astar = intrp.RectBivariateSpline(
-            ci["tstar"], ci["delta"], ci["astar"], kx=5, ky=5
-        )
+        ci = CollisionIntegrals()
 
         MW = self.collect("MW", species)
         well = self.collect("well", species)
@@ -81,8 +74,7 @@ class KineticTheoryModel(BaseTransportModel, PolyFitMixin):
 
         return dict(
             Ts=Ts,
-            omega22=omega22,
-            astar=astar,
+            ci=ci,
             MW=MW,
             well=well,
             diam=diam,
@@ -103,7 +95,7 @@ class KineticTheoryModel(BaseTransportModel, PolyFitMixin):
         # (T, species): reduced temperature, and the collision integral there
         Tstar = np.outer(Ts, kb / well)
         delta = np.broadcast_to(m["rDeltaStar"].diagonal(), Tstar.shape)
-        omega22 = m["omega22"](Tstar, delta, grid=False)
+        omega22 = m["ci"].omega22At(Tstar, delta)
         visc = (
             (5.0 / 16.0)
             * np.sqrt(np.pi * mass * kb * Ts[:, None])
@@ -136,8 +128,8 @@ class KineticTheoryModel(BaseTransportModel, PolyFitMixin):
         T = Ts[:, None]
         Tstar = np.outer(Ts, kb / well)
         delta = np.broadcast_to(m["rDeltaStar"].diagonal(), Tstar.shape)
-        omega22 = m["omega22"](Tstar, delta, grid=False)
-        omega11 = omega22 / m["astar"](Tstar, delta, grid=False)
+        omega22 = m["ci"].omega22At(Tstar, delta)
+        omega11 = omega22 / m["ci"].astarAt(Tstar, delta)
 
         # self diffusion, and the Parker rotational relaxation at T and at Tref
         selfDiff = (

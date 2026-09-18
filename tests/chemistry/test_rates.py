@@ -39,7 +39,7 @@ def test_theRatesAreCanteras(my_setup, mechanism, within):
                 1800.0,
                 np.ones(gas.n_species) / gas.n_species,
             )
-            mixture = mb.simulation.mixture
+            mixture = mb.simulator.mixture
         p, T, Y = randomState(mixture, rng)
         mb = cell(mechanism, "explicit", p, T, Y)
         gas.TPY = T, p, Y
@@ -67,7 +67,7 @@ def test_singleFollowsDouble(my_setup):
     # ulp; the log-space form is what keeps single finite at all
     rng = np.random.default_rng(11)
     mb = cell("CH4_O2_FFCMY.yaml", "explicit", 10e5, 1800.0, np.ones(12) / 12)
-    p, T, Y = randomState(mb.simulation.mixture, rng)
+    p, T, Y = randomState(mb.simulator.mixture, rng)
     double = at(cell("CH4_O2_FFCMY.yaml", "explicit", p, T, Y), "omega")
     single = at(
         cell("CH4_O2_FFCMY.yaml", "explicit", p, T, Y, precision="single"), "omega"

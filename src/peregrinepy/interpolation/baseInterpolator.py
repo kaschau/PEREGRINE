@@ -8,7 +8,6 @@ is the only part a kind of interpolator writes.
 """
 
 import numpy as np
-from scipy import spatial
 
 from ..misc import Progress
 
@@ -24,7 +23,7 @@ class BaseInterpolator:
     block has been found in one, which is slower but catches grids that
     overlap in more places than the first hit."""
 
-    interpolatorName = None
+    name = None
 
     def __init__(self, verboseSearch=False):
         self.verboseSearch = verboseSearch
@@ -177,6 +176,9 @@ class BaseInterpolator:
         onSurface[[0, -1]] = True
         onSurface[:, [0, -1]] = True
         onSurface[:, :, [0, -1]] = True
+        # lazy import to avoid dependency
+        from scipy import spatial
+
         return spatial.ConvexHull(nodes[onSurface])
 
     @staticmethod

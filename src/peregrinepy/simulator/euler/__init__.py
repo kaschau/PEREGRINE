@@ -1,6 +1,6 @@
 """Compressible flow of a mixture without diffusion, and its boundaries."""
 
 from .boundaries import BaseEulerBC
-from .simulation import EulerSimulation
+from .simulator import EulerSimulator
 
-__all__ = ["BaseEulerBC", "EulerSimulation"]
+__all__ = ["BaseEulerBC", "EulerSimulator"]

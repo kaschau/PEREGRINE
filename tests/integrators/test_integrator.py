@@ -28,7 +28,7 @@ def solver(integrator="rk3", controller="fixed", **ti):
 def test_integratorOwnsItsController(my_setup):
     mb = solver("rk3", "cfl", maxCFL=0.5, maxDt=1e-3)
     integrator = mb.integrator
-    assert type(integrator.controller).controllerName == "cfl"
+    assert type(integrator.controller).name == "cfl"
     # the controller's kernel is the case's, through the integrator
     assert "CFLmax" in integrator.kernels and "CFLmax" in mb.kernels
     assert "CFLmax" not in solver("rk3", "fixed").kernels

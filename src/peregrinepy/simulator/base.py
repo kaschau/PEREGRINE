@@ -1,17 +1,17 @@
 """What a physics is, as a spec the solver interrogates: what it needs
 declared -- metrics of the grid, block arrays, kernels by tag, boundary
 conditions, what the jit bakes -- and recipes, taking the solver, for its
-graphs and its initial state. A simulation owns nothing: no
+graphs and its initial state. A simulator owns nothing: no
 solver, no arrays, no state, no graphs. A new physics is a new subclass;
-the config names it by its `physics`, and getSimulation makes it."""
+the config names it by its `physics`, and getSimulator makes it."""
 
 
-class BaseSimulation:
+class BaseSimulator:
     """One physics: the declarations a solver builds for, and the graphs
     the solver runs."""
 
     # what the config's simulation section calls it
-    physics = None
+    name = None
     # whether the physics solves diffusion, which the time integration reads
     viscous = False
     # the grid metrics it needs
@@ -77,4 +77,4 @@ class BaseSimulation:
 
     def report(self):
         """Says what this physics is, for the banner."""
-        return f"  Physics: {self.physics}\n"
+        return f"  Physics: {self.name}\n"

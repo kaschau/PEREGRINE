@@ -9,7 +9,7 @@ from . import misc
 from . import mixture
 from . import multiBlock
 from . import readers
-from . import simulation
+from . import simulator
 from . import writers
 from ._version import __version__
 

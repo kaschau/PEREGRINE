@@ -6,7 +6,7 @@ import pytest
 import peregrinepy as pg
 from peregrinepy.files.configFile import pgConfigError
 from peregrinepy.graph import BCNode, ExchangeGraphs, Graph, LaunchNode, RedoNode
-from peregrinepy.simulation import BaseEulerBC, BaseNSBC
+from peregrinepy.simulator import BaseEulerBC, BaseNSBC
 
 from ..gases import configure
 
@@ -16,7 +16,7 @@ def simulation(physics, gas="air", **rhs):
     configure(config, gas, physics)
     config["RHS"]["primaryAdvFlux"] = "KEPaEC"
     config["RHS"].update(rhs)
-    return pg.simulation.getSimulation(config)
+    return pg.simulator.getSimulator(config)
 
 
 def test_eulerDeclaresTheInviscidCase():
@@ -121,9 +121,9 @@ def test_aViscousCaseNeedsATransportModel():
     config["RHS"]["primaryAdvFlux"] = "KEPaEC"
     config["simulation"]["trans"] = None
     with pytest.raises(pgConfigError):
-        pg.simulation.getSimulation(config)
+        pg.simulator.getSimulator(config)
     config["simulation"]["physics"] = "euler"
-    pg.simulation.getSimulation(config)
+    pg.simulator.getSimulator(config)
 
 
 def test_theInitialStateNamesSpeciesByName():
@@ -131,7 +131,7 @@ def test_theInitialStateNamesSpeciesByName():
     configure(config, "CH4_O2", "euler")
     config["RHS"]["primaryAdvFlux"] = "KEPaEC"
     config["initialConditions"]["Y"] = {"CH4": 0.2, "O2": 0.8}
-    sim = pg.simulation.getSimulation(config)
+    sim = pg.simulator.getSimulator(config)
     state = sim.initialState()
     names = sim.mixture.speciesNames
     assert len(state) == sim.ne

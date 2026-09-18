@@ -47,7 +47,7 @@ class BaseBC:
     def __init__(self, adv, spdata):
         self.mb = create(self.bcType, adv, spdata)
         self.blk = self.mb.blocks[0]
-        self.ns = self.mb.simulation.mixture.ns
+        self.ns = self.mb.simulator.mixture.ns
         # the latest snapshot of each block array a stage wrote
         self.host = {}
 

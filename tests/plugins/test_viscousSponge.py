@@ -9,7 +9,7 @@ import peregrinepy as pg
 from peregrinepy.graph import LaunchNode
 from peregrinepy.plugins import BasePlugin
 
-from ..simulation.test_flux import sod
+from ..simulator.test_flux import sod
 
 
 def sponge(config):

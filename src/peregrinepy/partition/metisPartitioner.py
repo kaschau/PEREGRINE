@@ -7,7 +7,7 @@ class MetisPartitioner(BasePartitioner):
     """METIS multilevel k-way. Balances to a target rather than a cap, so it
     gives way once one block is a sizeable fraction of a rank's share."""
 
-    partitionerName = "metis"
+    name = "metis"
 
     def _assign(self, weights, edges, k):
         import pymetis

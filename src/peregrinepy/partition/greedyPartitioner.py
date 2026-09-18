@@ -8,7 +8,7 @@ class GreedyPartitioner(BasePartitioner):
     from several seeds and keeps the best, which costs nStarts passes and buys
     a placement that does not depend on which block happens to be first."""
 
-    partitionerName = "greedy"
+    name = "greedy"
 
     def _assign(self, weights, edges, k):
         if k <= 1:

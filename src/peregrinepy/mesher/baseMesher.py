@@ -12,7 +12,7 @@ import numpy as np
 
 
 class BaseMesher:
-    mesherName = None
+    name = None
     # a mesher makes its grid: it came from no file and no partition of one
     fileName = None
     partitionName = None

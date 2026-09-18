@@ -56,10 +56,8 @@ class TestPeriodics:
         w = np.random.uniform(low=1, high=1000, size=qshape)
         T = np.random.uniform(low=300 * 0.9, high=300 * 1.1)
 
-        if mb.simulation.mixture.ns > 1:
-            Y = np.random.uniform(
-                low=0.0, high=1.0, size=(mb.simulation.mixture.ns - 1)
-            )
+        if mb.simulator.mixture.ns > 1:
+            Y = np.random.uniform(low=0.0, high=1.0, size=(mb.simulator.mixture.ns - 1))
             Y = Y / np.sum(Y)
 
         q[:, :, :, 0] = p
@@ -67,7 +65,7 @@ class TestPeriodics:
         q[:, :, :, 2] = v
         q[:, :, :, 3] = w
         q[:, :, :, 4] = T
-        if mb.simulation.mixture.ns > 1:
+        if mb.simulator.mixture.ns > 1:
             q[:, :, :, 5::] = Y
         mb.setPrimitives([q])
 

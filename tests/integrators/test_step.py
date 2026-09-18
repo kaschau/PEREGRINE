@@ -51,8 +51,8 @@ def test_step(my_setup, integrator, physics, controller):
         return
     mb = pg.multiBlock.solver(config, mesh)
     assert type(mb.integrator).__name__ == integrator
-    assert type(mb.integrator.controller).controllerName == controller
-    assert type(mb.simulation).physics == physics
+    assert type(mb.integrator.controller).name == controller
+    assert type(mb.simulator).name == physics
     assert mb.integrator.controller.stepSize() > 0.0
 
     Q0 = mb.blocks[0].Q.get()
@@ -69,7 +69,7 @@ def test_dualTimeComposesItsPseudoScheme(my_setup, pseudo):
     config["timeIntegration"]["subIterations"] = 4
     mb = pg.multiBlock.solver(config, mesh)
     integrator = mb.integrator
-    assert integrator.pseudo.integratorName == pseudo
+    assert integrator.pseudo.name == pseudo
     assert integrator.subIterations == 4
     # the pseudo scheme's storage joins dual time's own
     assert ("Q0" in mb.arrays) == (pseudo != "rk1")

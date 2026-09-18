@@ -13,7 +13,7 @@ class BaseController:
     needs declared."""
 
     # what the config calls it
-    controllerName = None
+    name = None
 
     def __init__(self, solver):
         self.solver = solver
@@ -36,7 +36,7 @@ class BaseController:
 class Fixed(BaseController):
     """Every step the config's dt."""
 
-    controllerName = "fixed"
+    name = "fixed"
 
     def stepSize(self):
         return self.config["timeIntegration"]["dt"]
@@ -45,7 +45,7 @@ class Fixed(BaseController):
 class CFL(BaseController):
     """Each step as large as the config's max CFL allows, up to its max dt."""
 
-    controllerName = "cfl"
+    name = "cfl"
 
     def declKernels(self):
         return {"CFLmax": CellCenterKernel("utils/CFLmax.cpp")}

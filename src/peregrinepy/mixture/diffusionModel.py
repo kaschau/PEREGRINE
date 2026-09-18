@@ -36,9 +36,7 @@ class BinaryModel(BaseSpeciesDiffusionModel, PolyFitMixin):
         # (T, pair): reduced temperature, and the collision integrals there
         Tstar = np.outer(Ts, kB / rWell[k, j])
         delta = np.broadcast_to(m["rDeltaStar"][k, j], Tstar.shape)
-        omega11 = m["omega22"](Tstar, delta, grid=False) / m["astar"](
-            Tstar, delta, grid=False
-        )
+        omega11 = m["ci"].omega22At(Tstar, delta) / m["ci"].astarAt(Tstar, delta)
 
         # at unit pressure; the kernel divides by the real one
         diff = (

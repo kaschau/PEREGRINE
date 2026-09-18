@@ -8,8 +8,6 @@ which is why this builds on re-indexing.
 """
 
 import numpy as np
-from scipy.sparse import coo_matrix
-from scipy.sparse.csgraph import connected_components
 
 from .orientMixin import OrientMixin
 
@@ -190,6 +188,10 @@ class MergeMixin(OrientMixin):
         # every copy of one node in one group
         n = len(where)
         rows, cols = np.array(links).T
+        # an offline tool's need: scipy is not the solver's
+        from scipy.sparse import coo_matrix
+        from scipy.sparse.csgraph import connected_components
+
         graph = coo_matrix((np.ones(len(rows)), (rows, cols)), shape=(n, n))
         _, group = connected_components(graph, directed=False)
 

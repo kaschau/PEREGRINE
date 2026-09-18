@@ -8,7 +8,7 @@ class AutoPartitioner(BasePartitioner):
     not, per sub problem, since the node split and each node's fill are
     different shapes."""
 
-    partitionerName = "auto"
+    name = "auto"
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

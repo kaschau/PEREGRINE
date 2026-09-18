@@ -36,7 +36,7 @@ def simulate():
     # the middle, the temperatures making the masses equal
     q = np.zeros(blk.Q.shape[:3] + (mb.ne,))
     q[:, :, :, 0] = 101325.0
-    MWA, MWB = mb.simulation.mixture.speciesData()["MW"][:2]
+    MWA, MWB = mb.simulator.mixture.speciesData()["MW"][:2]
     xc = blk.cells.get()[..., 0]
     q[:, :, :, 4] = np.where(xc < 0.5, 300.0 * MWA / MWB, 300.0)
     q[:, :, :, 5] = np.where(xc < 0.5, 1.0, 0.0)

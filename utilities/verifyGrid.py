@@ -73,7 +73,7 @@ def verify(mb):
                     orientation is None
                 ), f"Block #{blk.nblki} face {nface} has no neighbor, but has orientation {orientation}"
 
-                if pg.simulation.BaseBC.named(bc).values:
+                if pg.simulator.BaseBC.named(bc).values:
                     assert (
                         bcName is not None
                     ), f"Block #{blk.nblki} face {nface} is {bc}, but has no bcName"

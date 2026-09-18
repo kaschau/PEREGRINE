@@ -33,12 +33,12 @@ class rungeKutta(BaseIntegrator):
 
 
 class rk1(rungeKutta):
-    integratorName = "rk1"
+    name = "rk1"
     stages = ((0.0, 0.0, 1.0, 1.0),)
 
 
 class rk2(rungeKutta):
-    integratorName = "rk2"
+    name = "rk2"
     storage = ("Q0",)
     stages = ((0.0, 0.0, 1.0, 1.0), (1.0, 0.5, 0.5, 0.5))
 
@@ -49,7 +49,7 @@ class rk3(rungeKutta):
     schemes. Mathematics of Computation, 67(221):73-85, 1998.
     """
 
-    integratorName = "rk3"
+    name = "rk3"
     storage = ("Q0",)
     stages = (
         (0.0, 0.0, 1.0, 1.0),
@@ -59,7 +59,7 @@ class rk3(rungeKutta):
 
 
 class rk34(rungeKutta):
-    integratorName = "rk34"
+    name = "rk34"
     storage = ("Q0",)
     stages = (
         (0.0, 0.0, 1.0, 0.5),
@@ -74,7 +74,7 @@ class maccormack(rungeKutta):
     corrector's weights are rk2's second stage; only the time it is evaluated
     at differs."""
 
-    integratorName = "maccormack"
+    name = "maccormack"
     storage = ("Q0",)
     stages = ((0.0, 0.0, 1.0, 1.0), (0.0, 0.5, 0.5, 0.5))
 
@@ -84,7 +84,7 @@ class rk4(rungeKutta):
     wdQ dt dQ, and wSum dt dQ of each derivative goes into a running sum,
     which is what the last stage steps by."""
 
-    integratorName = "rk4"
+    name = "rk4"
     storage = ("Q0", "Q1")
     # (fraction of dt, wdQ, wSum) per stage; the last has no wdQ of its own
     stages = (

@@ -76,7 +76,7 @@ def test_aBoundaryThePhysicsCannotHaveIsRefused(my_setup):
 
 def test_onlyTheMetricsThePhysicsAsksForAreMade(my_setup):
     mb = pg.multiBlock.solver(config("euler"), sided())
-    assert set(mb.metrics) == set(mb.simulation.metrics)
+    assert set(mb.metrics) == set(mb.simulator.metrics)
     blk = mb.blocks[0]
     # a grid used as a grid asks for none
     grid = pg.multiBlock.grid()
@@ -102,7 +102,7 @@ def test_exportDataDerivesFromTheState(my_setup):
     i = blk.interior
     assert np.array_equal(data["rho"][i], Q[i][..., 0])
     assert np.allclose(data["u"][i], Q[i][..., 1] / Q[i][..., 0])
-    species = mb.simulation.mixture.speciesNames
+    species = mb.simulator.mixture.speciesNames
     assert np.allclose(sum(data[s][i] for s in species), 1.0)
     # the primitive vector comes back as it was set, on the interior
     assert np.allclose(primitives(mb, blk)[i], q[i])

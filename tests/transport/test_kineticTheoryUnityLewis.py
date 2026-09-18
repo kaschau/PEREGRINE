@@ -53,7 +53,9 @@ def test_kineticTheoryUnityLewis(my_setup, ctfile):
     mb.setPrimitives([q])
 
     # Update transport
-    assert mb.kernels["trans"].__name__ == "kineticTheory" and mb.jit.diffusion == "lewis"
+    assert (
+        mb.kernels["trans"].__name__ == "kineticTheory" and mb.jit.diffusion == "lewis"
+    )
     q, qt = primitives(mb, blk), blk.qt.get()
     ng = blk.ng
 

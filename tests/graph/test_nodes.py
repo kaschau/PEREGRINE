@@ -47,9 +47,7 @@ def test_bcNodeTilesOnlyTheFacesCarryingEachType(my_setup):
 
 def test_redoNodeCoversRemoteFacesOnly(my_setup):
     mb = solver()
-    node = RedoNode(mb.kernels["stateFromCons"], mb.kernels["advFlux"]).bind(
-        *mb.means
-    )
+    node = RedoNode(mb.kernels["stateFromCons"], mb.kernels["advFlux"]).bind(*mb.means)
     # one rank: nothing is remote, so every tiling is empty
     assert [len(stage) for stage in node.stages] == [1, 3]
     assert all(tiling.count == 0 for stage in node.stages for _, _, tiling in stage)

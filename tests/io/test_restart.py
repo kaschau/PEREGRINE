@@ -96,6 +96,6 @@ def test_theFileHoldsEveryExportVariable(my_setup, tmp_path):
             stored = group[name][...]
             assert np.allclose(stored, data[name][blk.interior].T)
         # the last species is what the others leave
-        species = mb.simulation.mixture.speciesNames
+        species = mb.simulator.mixture.speciesNames
         total = sum(group[s][...] for s in species)
         assert np.allclose(total, 1.0)

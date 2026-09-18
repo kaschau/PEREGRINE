@@ -15,15 +15,15 @@ from ...kernel import (
 from ...mixture import getMixture
 from ...multiBlock.arrays import CellCenterArray, CellFaceArray
 from .boundaries import BaseEulerBC
-from ..base import BaseSimulation
+from ..base import BaseSimulator
 
 
-class EulerSimulation(BaseSimulation):
+class EulerSimulator(BaseSimulator):
     """The Euler equations of a mixture: the conserved state Q, its
     derivative dQ, the thermodynamic state -- p and T in q, what the eos
     keeps in qh -- and the cell-face fluxes of one advective scheme."""
 
-    physics = "euler"
+    name = "euler"
     viscous = False
     metrics = (
         "Jinv",
@@ -239,7 +239,7 @@ class EulerSimulation(BaseSimulation):
     def report(self):
         sim = self.config["simulation"]
         return (
-            f"  Physics: {self.physics}\n"
+            f"  Physics: {self.name}\n"
             f"  Species: {self.mixture.speciesNames}\n"
             f"  Equation of State: {sim['eos']}\n"
         )

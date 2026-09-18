@@ -31,7 +31,7 @@ def test_cubic(my_setup):
 
     p = np.random.uniform(low=10000, high=100000)
     T = np.random.uniform(low=300, high=1000)
-    Y = np.random.uniform(low=0.0, high=1.0, size=mb.simulation.mixture.ns)
+    Y = np.random.uniform(low=0.0, high=1.0, size=mb.simulator.mixture.ns)
     Y = Y / np.sum(Y)
 
     q = primitives(mb, blk)
@@ -55,11 +55,11 @@ def test_cubic(my_setup):
     pd = []
     pd.append(print_diff("p", p, pgprim[0]))
     pd.append(print_diff("T", T, pgprim[4]))
-    for i, n in enumerate(mb.simulation.mixture.speciesNames[0:-1]):
+    for i, n in enumerate(mb.simulator.mixture.speciesNames[0:-1]):
         pd.append(print_diff(n, Y[i], pgprim[5 + i]))
 
     # every property rests on the refit, and the check asks exactly what the
     # fit achieved for these species (within the tolerance, or the best its
     # cap could do), in percent, plus the rounding the kernel adds
-    achieved = max(sp["cpFitError"] for sp in mb.simulation.mixture.species.values())
+    achieved = max(sp["cpFitError"] for sp in mb.simulator.mixture.species.values())
     assert np.all(np.array(pd) < achieved * 100 + 1e-6)

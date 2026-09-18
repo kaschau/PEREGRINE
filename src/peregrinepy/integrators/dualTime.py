@@ -21,7 +21,7 @@ class dualTime(BaseIntegrator):
     increment invertDQ leaves in dQ, with the physical time derivative as a
     source. Which stepper, and how many pseudo steps, the config says."""
 
-    integratorName = "dualTime"
+    name = "dualTime"
     # a result carries the state one step back; Qn is this one
     restartArrays = ("Qnm1",)
     # the residual after each pseudo step, gathered when a report is due
@@ -37,7 +37,7 @@ class dualTime(BaseIntegrator):
         """Gives the pseudo time scheme the config names: its stages and its
         combination of them."""
         name = self.config["timeIntegration"]["pseudoIntegrator"]
-        return subclassWhere(rungeKutta, integratorName=name)
+        return subclassWhere(rungeKutta, name=name)
 
     @property
     def subIterations(self):
@@ -45,7 +45,7 @@ class dualTime(BaseIntegrator):
 
     @property
     def viscous(self):
-        return self.solver.simulation.viscous
+        return self.solver.simulator.viscous
 
     @property
     def storage(self):
@@ -59,7 +59,7 @@ class dualTime(BaseIntegrator):
         arrays = {**super().arrays(), "dtau": dict(kind=CellCenterArray)}
         # the preconditioning reads the transport properties, diffusion or not
         if not self.viscous:
-            ns = self.solver.simulation.mixture.ns
+            ns = self.solver.simulator.mixture.ns
             arrays["qt"] = dict(kind=CellCenterArray, components=2 + ns)
         return arrays
 

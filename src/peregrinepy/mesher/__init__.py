@@ -5,7 +5,7 @@ from .annulusMesher import AnnulusMesher
 
 
 def getMesher(name, **kwargs):
-    return subclassWhere(BaseMesher, mesherName=name)(**kwargs)
+    return subclassWhere(BaseMesher, name=name)(**kwargs)
 
 
 __all__ = ["AnnulusMesher", "BaseMesher", "CubeMesher", "getMesher"]

@@ -1,9 +1,9 @@
 """Compute over a grid: the backend, the kernels compiled for a physics,
 the tables, the halo exchanges, the state and the integrator, made in the
-order solver.__init__ lays out by interrogating the simulation and the
+order solver.__init__ lays out by interrogating the simulator and the
 integrator for what they need.
 
-What is not the solver's: the physics (the simulation's), taking and
+What is not the solver's: the physics (the simulator's), taking and
 sizing a step (the integrator's), and printing (the report plugin's)."""
 
 import numpy as np
@@ -19,14 +19,14 @@ from .. import integrators
 from .. import multiBlock
 from ..misc import getCommRankSize
 from ..plugins import getPlugins
-from ..simulation import getSimulation
+from ..simulator import getSimulator
 
 
 class solver(restart):
     """A runnable case: the blocks with the arrays a physics and its
     integrator need, every kernel compiled, the tables and tilings the
     launches run over, the halo exchanges, the boundary conditions applied
-    on the faces, the graphs the simulation and the integrator say, and
+    on the faces, the graphs the simulator and the integrator say, and
     the integrator that runs them. The one handle a plugin, a writer, a
     script or a test holds."""
 
@@ -34,7 +34,7 @@ class solver(restart):
     # Making a case
     ###########################################################################
     def __init__(self, config, mesh, state=None):
-        """Makes a case, ready to step: the simulation and the integrator
+        """Makes a case, ready to step: the simulator and the integrator
         the config names; every kernel they call, compiled; the blocks from
         :mesh: -- a mesher or a grid reader, anything that fills a
         multiBlock -- connected, haloed and metricked, with the boundary
@@ -45,9 +45,9 @@ class solver(restart):
         # the mesh this case came from: a mesher, or a grid file's reader
         # with the partition it took, which the results name
         self.mesh = mesh
-        self.simulation = getSimulation(config)
-        super().__init__(self.simulation.primVars)
-        self.exportVars = self.simulation.exportVars
+        self.simulator = getSimulator(config)
+        super().__init__(self.simulator.primVars)
+        self.exportVars = self.simulator.exportVars
         # its arrays are made where the kernels run
         self.backend = Backend.fromRuntime(config)
         self.integrator = integrators.getIntegrator(config, self)
@@ -74,25 +74,25 @@ class solver(restart):
         return solverBlock(nblki, self)
 
     ###########################################################################
-    # What the simulation and the integrator ask for
+    # What the simulator and the integrator ask for
     ###########################################################################
     def _declArrays(self):
         """Declares on every block the metrics and the arrays the
         simulation and the integrator need."""
-        for name in self.simulation.metrics:
+        for name in self.simulator.metrics:
             self.declMetric(name)
-        arrays = {**self.simulation.arrays(), **self.integrator.arrays()}
+        arrays = {**self.simulator.arrays(), **self.integrator.arrays()}
         for plugin in self.plugins.values():
             arrays.update(plugin.arrays())
         for name, spec in arrays.items():
             self.declArray(name, **spec)
 
     def _declKernels(self):
-        """Takes the simulation's and the integrator's kernels by tag, with
+        """Takes the simulator's and the integrator's kernels by tag, with
         the solver's own: the copy of a block array, and the pack and
         unpack of a halo exchange."""
         self.kernels = {
-            **self.simulation.declKernels(),
+            **self.simulator.declKernels(),
             **self.integrator.declKernels(),
             "copy": CellCenterKernel("utils/copy.cpp"),
             "pack": HaloExchangeKernel("utils/extractSendBuffer.cpp"),
@@ -105,10 +105,10 @@ class solver(restart):
                 self.kernels[tag] = kernel
 
     def _jit(self):
-        """Compiles every kernel with what the simulation bakes in, and the
+        """Compiles every kernel with what the simulator bakes in, and the
         halo as deep as the widest stencil among them."""
         self.ng = max(k.stencil for k in self.everyKernel)
-        self.jit = self.backend.jit(self.ng, *self.simulation.bakes())
+        self.jit = self.backend.jit(self.ng, *self.simulator.bakes())
         self.jit.compile(self.everyKernel)
 
     @property
@@ -139,7 +139,7 @@ class solver(restart):
             if "bcType" not in entry:
                 raise pgConfigError("bcValues", name, "names no bcType.")
             face.bcType = entry["bcType"]
-            bc = self.simulation.bcBase.named(face.bcType)(face)
+            bc = self.simulator.bcBase.named(face.bcType)(face)
             if bc.values:
                 bc.setValues(entry)
 
@@ -222,7 +222,7 @@ class solver(restart):
         return LaunchNode(self.kernels[tag], rangeName).bind(*self.means).run(**given)
 
     ###########################################################################
-    # The graphs, made from what the simulation and the integrator say
+    # The graphs, made from what the simulator and the integrator say
     ###########################################################################
     @property
     def means(self):
@@ -237,11 +237,11 @@ class solver(restart):
         )
 
     def _buildGraphs(self):
-        """Makes every graph the simulation and the integrator say, by
+        """Makes every graph the simulator and the integrator say, by
         stage, bound to this rank's means, with what the plugins add at the
         end of a stage after it."""
         specs = {
-            **self.simulation.graphs(self.integrator.dtOnDevice),
+            **self.simulator.graphs(self.integrator.dtOnDevice),
             **self.integrator.graphs(),
         }
         for plugin in self.plugins.values():
@@ -281,7 +281,7 @@ class solver(restart):
         """Sets the state from the primitive vector a fresh case or a result
         gives, and what the integrator keeps beyond it."""
         if state is None:
-            values = self.simulation.initialState()
+            values = self.simulator.initialState()
             for blk in self.blocks:
                 prims = blk.prims.get()
                 prims[...] = values
@@ -299,9 +299,9 @@ class solver(restart):
 
     def exportData(self, blk, names):
         """Gives the named variables of a block as host arrays over every
-        cell, halos included, as the simulation derives them from the
+        cell, halos included, as the simulator derives them from the
         state."""
-        return self.simulation.exportData(blk, names)
+        return self.simulator.exportData(blk, names)
 
     def setPrimitives(self, primitives):
         """Sets the state from :primitives:, a host array per block of the
@@ -382,7 +382,7 @@ class solver(restart):
             string += (
                 f"  Partition: {self.mesh.partitionName} (ranks x ranks per node)\n"
             )
-        string += self.simulation.report() + self.integrator.report()
+        string += self.simulator.report() + self.integrator.report()
         for stage in self.graphs.values():
             for graph in stage:
                 string += (

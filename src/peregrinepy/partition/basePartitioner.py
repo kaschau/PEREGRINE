@@ -20,7 +20,7 @@ from .mergeMixin import MergeMixin
 
 
 class BasePartitioner(CutMixin, MergeMixin):
-    partitionerName = None
+    name = None
 
     def __init__(self, tol=0.05, refinePasses=10, nStarts=6):
         # how far past an even share a rank may be loaded

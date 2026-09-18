@@ -17,7 +17,6 @@ install_requires = [
     "h5py >= 2.6",
     "mpi4py >= 3.0",
     "numpy >= 1.20",
-    "scipy >= 1.5",
     "lxml >= 4.6",
     "pyyaml >= 6.0",
     "pymetis >= 2023.1",

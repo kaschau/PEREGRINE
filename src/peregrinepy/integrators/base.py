@@ -2,7 +2,7 @@
 config names -- a Runge-Kutta table, or dual time around one -- holding
 the solver it steps and a controller that sizes each step. It declares
 what it alone needs, block arrays and kernels, and says its graphs in
-names, the way the simulation does; the solver makes them."""
+names, the way the simulator does; the solver makes them."""
 
 from ..graph import Graph, LaunchNode
 from ..kernel import CellCenterKernel
@@ -16,7 +16,7 @@ class BaseIntegrator:
     with its controller sizing each step and the plugins acting."""
 
     # what the config calls it
-    integratorName = None
+    name = None
     # the block arrays it keeps between stages, (cell, ne) each
     storage = ()
     # those of them a result file carries
@@ -141,6 +141,5 @@ class BaseIntegrator:
     def report(self):
         """Says how the case is integrated, for the banner."""
         return (
-            f"  Time Integrator: {self.integratorName}\n"
-            f"  Step Size: {self.controller.controllerName}\n"
+            f"  Time Integrator: {self.name}\n" f"  Step Size: {self.controller.name}\n"
         )

@@ -28,6 +28,6 @@ def getIntegrator(config, solver):
     """Makes the integrator the config names, with the controller it
     names, for this solver."""
     ti = config["timeIntegration"]
-    controller = subclassWhere(BaseController, controllerName=ti["controller"])
-    integrator = subclassWhere(BaseIntegrator, integratorName=ti["integrator"])
+    controller = subclassWhere(BaseController, name=ti["controller"])
+    integrator = subclassWhere(BaseIntegrator, name=ti["integrator"])
     return integrator(solver, controller(solver))

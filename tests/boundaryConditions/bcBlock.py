@@ -47,7 +47,7 @@ def create(bc, adv, gas):
         boundaryNames=dict.fromkeys(range(1, 7), "outer"),
     )
     mb = pg.multiBlock.solver(config, mesh)
-    mixture = mb.simulation.mixture
+    mixture = mb.simulator.mixture
     blk = mb.blocks[0]
     for face in blk.faces:
         if face.QBcVals is None:

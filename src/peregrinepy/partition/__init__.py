@@ -10,7 +10,7 @@ from .autoPartitioner import AutoPartitioner
 
 
 def getPartitioner(name="auto", **kwargs):
-    return subclassWhere(BasePartitioner, partitionerName=name)(**kwargs)
+    return subclassWhere(BasePartitioner, name=name)(**kwargs)
 
 
 __all__ = [

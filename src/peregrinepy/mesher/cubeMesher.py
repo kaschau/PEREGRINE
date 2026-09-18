@@ -6,7 +6,7 @@ from .baseMesher import BaseMesher
 class CubeMesher(BaseMesher):
     """A rectangular box, split into a lattice of boxes."""
 
-    mesherName = "cube"
+    name = "cube"
 
     def __init__(
         self,

@@ -8,7 +8,7 @@ class AnnulusMesher(BaseMesher):
     of wedges. p3 fixes where the sweep starts and how far the inner radius
     stands off the axis, and the wedge reaches :thickness: further out."""
 
-    mesherName = "annulus"
+    name = "annulus"
 
     def __init__(
         self,

@@ -1,5 +1,3 @@
-from scipy import interpolate
-
 from .baseInterpolator import BaseInterpolator
 
 
@@ -8,7 +6,7 @@ class RbfInterpolator(BaseInterpolator):
     -- linear, cubic, multiquadric and so on -- and :smooth: how closely it
     is held to the samples, zero being through them exactly."""
 
-    interpolatorName = "rbf"
+    name = "rbf"
 
     def __init__(self, function="linear", smooth=0.5, **kwargs):
         super().__init__(**kwargs)
@@ -20,6 +18,8 @@ class RbfInterpolator(BaseInterpolator):
         nearest neighbour's tree this cannot be built from the points alone."""
 
         def onto(values):
+            from scipy import interpolate
+
             rbf = interpolate.Rbf(
                 *fromPts.T, values, function=self.function, smooth=self.smooth
             )

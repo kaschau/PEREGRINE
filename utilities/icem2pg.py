@@ -25,7 +25,6 @@ import yaml
 
 from verifyGrid import verify
 import numpy as np
-from scipy.io import FortranFile
 
 parser = argparse.ArgumentParser(
     description="Convert ICEM Multioblock-Info files into grid and connectivity files used by PEREGRINE"
@@ -88,6 +87,8 @@ factor = conversion[args.units]
 
 if args.fmt == "tns3dmb":
     fileName = "tns3dmb.dat"
+    from scipy.io import FortranFile
+
     with FortranFile(fileName, "r") as f90:
         nblks = f90.read_ints(dtype=np.int32)[0]
         mb = pg.multiBlock.grid()
@@ -193,7 +194,7 @@ with open(args.topoFileName, "r") as f:
                 blk.getFace(thisFace).bcName = tag
                 bcType = bcTypeOf[tag]["bcType"]
                 assert (
-                    bcType in pg.simulation.BaseBC.bcTypes()
+                    bcType in pg.simulator.BaseBC.bcTypes()
                 ), f"{bcType} is not a valid PEREGRINE bcType."
                 blk.getFace(thisFace).bcType = bcType
 
