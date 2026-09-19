@@ -33,33 +33,38 @@ template <class T, int Rank> struct cellStrad : column<T, offset{0, 0, 0}> {
   KOKKOS_INLINE_FUNCTION auto R() const { return at<offset{0, 0, 0}>(); }
   KOKKOS_INLINE_FUNCTION auto LL() const { return at<-2 * N>(); }
   KOKKOS_INLINE_FUNCTION auto RR() const { return at<N>(); }
+  // with indices, that cell's element, through the column as it sees it:
+  // the offsets stay template arguments, so device code never refers to
+  // the direction's offset object itself (nvcc refuses that)
   template <class... X>
     requires(sizeof...(X) == Rank)
   KOKKOS_INLINE_FUNCTION decltype(auto) L(X... rest) const {
-    return this->element(-N, rest...);
+    return at<-N>()(rest...);
   }
   template <class... X>
     requires(sizeof...(X) == Rank)
   KOKKOS_INLINE_FUNCTION decltype(auto) R(X... rest) const {
-    return this->element(offset{0, 0, 0}, rest...);
+    return at<offset{0, 0, 0}>()(rest...);
   }
   template <class... X>
     requires(sizeof...(X) == Rank)
   KOKKOS_INLINE_FUNCTION decltype(auto) LL(X... rest) const {
-    return this->element(-2 * N, rest...);
+    return at<-2 * N>()(rest...);
   }
   template <class... X>
     requires(sizeof...(X) == Rank)
   KOKKOS_INLINE_FUNCTION decltype(auto) RR(X... rest) const {
-    return this->element(N, rest...);
+    return at<N>()(rest...);
   }
 };
 using cellStradVecIn = cellStrad<const fpdtype, 1>;
 using cellStradMatIn = cellStrad<const fpdtype, 2>;
 // one value per cell, either side, read as the value
-template <class T> struct cellStradScal : column<T, offset{0, 0, 0}> {
-  KOKKOS_INLINE_FUNCTION T L() const { return this->element(-N); }
-  KOKKOS_INLINE_FUNCTION T R() const { return this->element(offset{0, 0, 0}); }
+template <class T> struct cellStradScal : cellStrad<T, 0> {
+  KOKKOS_INLINE_FUNCTION T L() const { return this->template at<-N>()(); }
+  KOKKOS_INLINE_FUNCTION T R() const {
+    return this->template at<offset{0, 0, 0}>()();
+  }
 };
 using cellStradScalIn = cellStradScal<const fpdtype>;
 static_assert(sizeof(cellStradVecIn) == 56 && sizeof(cellStradScalIn) == 56);
