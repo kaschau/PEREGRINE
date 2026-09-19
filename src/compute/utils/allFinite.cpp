@@ -4,7 +4,7 @@
 // python combines the ranks.
 PG_RANGE(cellCenters, components = ne)
 struct allFinite {
-  cellCenterIn Q;
+  cellVecIn Q;
   KOKKOS_INLINE_FUNCTION void operator()(const int l, int &finite) const {
     finite = fmin(isfinite(Q(l)), finite);
   }

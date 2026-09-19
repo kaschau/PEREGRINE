@@ -118,9 +118,6 @@ class EulerSimulator(BaseSimulator):
         arrays["qh"] = dict(
             kind=CellCenterArray, components=self.mixture.eos.qhComponents(ns)
         )
-        # the net production rates, kept when they are the source as they are
-        if self.config["simulation"]["chemistry"] == "explicit":
-            arrays["omega"] = dict(kind=CellCenterArray, components=ns)
         return arrays
 
     def declKernels(self):
@@ -150,19 +147,24 @@ class EulerSimulator(BaseSimulator):
             ],
             name=scheme,
         )
-        k["applyFlux"] = CellCenterKernel("utils/applyFlux.cpp")
-        # finite-rate chemistry: the production rates and their apply, or the
-        # substepped source in one, the reactions baked in by the jit
+        # finite-rate chemistry begins dQ with the source -- the production
+        # rates of the state, or the source substepped over the step, the
+        # reactions baked in by the jit -- and the fluxes are appended to
+        # it; without, they begin it
         chemistry = self.config["simulation"]["chemistry"]
         if chemistry == "explicit":
-            k["omega"] = CellCenterKernel("chemistry/productionRates.cpp")
-            k["applyOmega"] = CellCenterKernel("chemistry/applyOmega.cpp")
+            k["productionRateSource"] = CellCenterKernel(
+                "chemistry/productionRateSource.cpp"
+            )
         if chemistry == "substepped":
             most = int(self.config["simulation"]["chemistryMaxSubSteps"])
             k["finiteRateSubstep"] = CellCenterKernel(
                 "chemistry/finiteRateSubstep.cpp",
                 defines=[f"PG_CHEMISTRY_MAX_SUBSTEPS={most}"],
             )
+        k["applyFlux"] = CellCenterKernel(
+            "utils/applyFlux.cpp", defines=["PG_FLUXES_APPEND=1"] if chemistry else []
+        )
         # boundary conditions by hook
         for bcHook in self.bcHooks:
             k[f"bcs {bcHook}"] = UnorderedKernelGroup(
@@ -177,40 +179,42 @@ class EulerSimulator(BaseSimulator):
     def bakes(self):
         return self.mixture, self.config["simulation"]
 
-    def chemistryNodes(self, dt):
-        """Gives the nodes of the chemistry source at the end of the
-        right-hand side, over the interior: a source is the cell's own."""
+    # The chemistry source is the cell's own, over the interior, and wants
+    # nothing of the fluxes: it begins dQ first in the right-hand side,
+    # which in a viscous case puts it under the gradient exchange with the
+    # fluxes, and their apply appends to it
+    def sourceNodes(self, dt):
+        """Gives what begins dQ with the chemistry source, ahead of the
+        fluxes: the production rates of the state, or the source
+        substepped over the step :dt:."""
         k = self.kernels
-        if "omega" in k:
-            return [
-                LaunchNode(k["omega"], "interior"),
-                LaunchNode(k["applyOmega"], "interior"),
-            ]
+        if "productionRateSource" in k:
+            return [LaunchNode(k["productionRateSource"], "interior")]
         if "finiteRateSubstep" in k:
             return [LaunchNode(k["finiteRateSubstep"], "interior", dt=dt)]
         return []
 
     def graphs(self, dt):
         """Gives consistify -- the Q exchange around the equation of state
-        and the euler boundary conditions, the halos a message brought done
-        again after it lands -- and the right-hand side, the advective flux,
-        its apply and the chemistry."""
+        and the euler boundary conditions, the halos a message brings left
+        out while it flies and done after it lands -- and the right-hand
+        side: the chemistry source, the advective flux and its apply."""
         k = self.kernels
         consistify = ExchangeGraphs(
             "consistify",
             "Q",
             during=[
-                LaunchNode(k["stateFromCons"], "all"),
-                BCNode(k["bcs euler"], "here"),
+                LaunchNode(k["stateFromCons"], "allLocal"),
+                BCNode(k["bcs euler"], "onRank"),
             ],
-            after=[BCNode(k["bcs euler"], "remote"), RedoNode(k["stateFromCons"])],
+            after=[BCNode(k["bcs euler"], "offRank"), RedoNode(k["stateFromCons"])],
         )
         rhs = Graph(
             "rhs",
             [
+                *self.sourceNodes(dt),
                 LaunchNode(k["advFlux"], "interior"),
                 LaunchNode(k["applyFlux"], "interior"),
-                *self.chemistryNodes(dt),
             ],
         )
         return {"consistify": [consistify], "rhs": [rhs]}

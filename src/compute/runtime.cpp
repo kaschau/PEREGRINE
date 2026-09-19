@@ -252,6 +252,10 @@ PG_ABI void pgCopyToDeviceAside(const void *host, void *device, size_t bytes) {
 }
 // the host waits for the copies alone
 PG_ABI void pgCopyWait() { copySpace().fence(); }
+// marks what the kernels have queued so far as what pgCopyWait waits for:
+// a message sent straight from a device pool waits on its pack this way,
+// beside whatever kernels are queued after it
+PG_ABI void pgMarkKernels() { copyAfterKernels(); }
 
 // whether an address is device memory to the device's driver; on a host
 // build nothing is

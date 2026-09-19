@@ -96,3 +96,29 @@ def test_cellFaceKindsHaveOneMoreAlongTheirAxis():
             assert start[axis] == (ng if nface % 2 == 1 else ng + faces[axis] - 1)
         with pytest.raises(AssertionError):
             CellFaceRange(extents, ng, axis).blockFacePlane(2 * ((axis + 1) % 3) + 1)
+
+
+def test_hereIsAllButWhatAMessageBrings():
+    # what a launch does while a message flies: every cell but the halos
+    # the message brings, once each
+    connOffRank = {1, 4}
+    cells = CellCenterRange(extents, ng, connOffRank)
+    hit = marked(cells, cells.allLocal())
+    assert hit.max() == 1
+    for n in range(1, 7):
+        ((start, extent),) = cells.halo(n)
+        slab = hit[tuple(slice(s, s + e) for s, e in zip(start, extent))]
+        assert (slab == (n not in connOffRank)).all()
+    # a face kernel leaves out the plane on a remote block face of its axis,
+    # which is what it does again once the message lands, and nothing else
+    for axis in range(3):
+        faces = CellFaceRange(extents, ng, axis, connOffRank)
+        leftOut = marked(faces, faces.interior()) - marked(faces, faces.interiorLocal())
+        assert leftOut.min() == 0
+        planes = [
+            p
+            for n in connOffRank
+            if (n - 1) // 2 == axis
+            for p in faces.blockFacePlane(n)
+        ]
+        assert np.array_equal(leftOut, marked(faces, planes))

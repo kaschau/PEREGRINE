@@ -9,9 +9,13 @@ layers behind one block face, over the block face proper -- the active
 halo, never its edges or corners; `all` is all anyone needs, the interior
 and the six halos, so a halo edge or corner cell is never generated -- by
 law nothing reads or writes one; `full` is the whole allocation, edges
-and corners included, for a copy and nothing else. A cell-face range also
-has `blockFacePlane(nface)`, the plane of cell faces lying on a block face of its
-axis."""
+and corners included, for a copy and nothing else. A range on a rank also
+knows which block faces' halos a message brings: `allLocal` is `all` less
+those halos -- what is settled on this rank -- what a launch does while
+the message flies, the rest done once it lands. A cell-face range also has `blockFacePlane(nface)`,
+the plane of cell faces lying on a block face of its axis, and
+`interiorLocal`, the interior less those planes on the faces a message
+brings."""
 
 
 class BaseRange:
@@ -24,9 +28,12 @@ class BaseRange:
     # shared across it
     exchangeStartPlane = 0
 
-    def __init__(self, extents, ng):
+    def __init__(self, extents, ng, connOffRank=()):
         self.ni, self.nj, self.nk = extents
         self.ng = ng
+        # the block faces connected off the rank, whose halos a message
+        # brings, by face number
+        self.connOffRank = frozenset(connOffRank)
 
     @property
     def interiorExtents(self):
@@ -58,6 +65,15 @@ class BaseRange:
 
     def all(self):
         return self.interior() + [range for n in range(1, 7) for range in self.halo(n)]
+
+    def allLocal(self):
+        """Gives all but the halos a message brings."""
+        return self.interior() + [
+            range
+            for n in range(1, 7)
+            if n not in self.connOffRank
+            for range in self.halo(n)
+        ]
 
     def haloExtents(self, nface, depth=None):
         """Gives the halo slab's extents as its planes are laid out, the
@@ -91,8 +107,8 @@ class CellFaceRange(BaseRange):
     """The cell faces of one direction: as many as the nodes along the axis,
     the cells across it."""
 
-    def __init__(self, extents, ng, axis):
-        super().__init__(extents, ng)
+    def __init__(self, extents, ng, axis, connOffRank=()):
+        super().__init__(extents, ng, connOffRank)
         self.axis = axis
 
     @property
@@ -100,6 +116,17 @@ class CellFaceRange(BaseRange):
         extents = [self.ni - 1, self.nj - 1, self.nk - 1]
         extents[self.axis] += 1
         return tuple(extents)
+
+    def interiorLocal(self):
+        """Gives the interior faces less the planes on the block faces of
+        this axis whose halos a message brings."""
+        start, extent = [self.ng] * 3, list(self.interiorExtents)
+        for nface in self.connOffRank:
+            axis, low = (nface - 1) // 2, nface % 2 == 1
+            if axis == self.axis:
+                extent[axis] -= 1
+                start[axis] += low
+        return [(tuple(start), tuple(extent))]
 
     def blockFacePlane(self, nface):
         """Gives the plane of cell faces lying on a block face of this

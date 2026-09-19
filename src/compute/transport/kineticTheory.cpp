@@ -9,8 +9,8 @@
 // species diffusion coefficients from the case's diffusion model.
 PG_RANGE(cellCenters)
 struct kineticTheory {
-  cellCenterIn Q, q, qh;
-  cellCenterOut qt;
+  cellVecIn Q, q, qh;
+  cellVecOut qt;
   KOKKOS_INLINE_FUNCTION void operator()() const {
     const fpdtype p = q(0);
     const fpdtype T = q(1);

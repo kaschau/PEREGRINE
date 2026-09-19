@@ -16,16 +16,16 @@
 
 struct ducros : PG_RECONSTRUCT {
   using base = PG_RECONSTRUCT;
-  cellCenterL gradsL, cellLengthL;
-  cellCenterR gradsR, cellLengthR;
+  cellStradMatIn grads;
+  cellStradScalIn cellLength;
   template <class P> KOKKOS_INLINE_FUNCTION void pin(const P &at) {
     pinKernel(static_cast<base &>(*this), at);
-    pinEach(at, gradsL, cellLengthL, gradsR, cellLengthR);
+    pinEach(at, grads, cellLength);
   }
 
-  template <class G, class Q, class L>
+  template <class G, class Q>
   static KOKKOS_INLINE_FUNCTION fpdtype sensor(const G &grads, const Q &Q_,
-                                               const L &cellLength) {
+                                               const fpdtype cellLength) {
     // the velocity gradient rows: u, v, w by x, y, z
     const fpdtype div = grads(0, 0) + grads(1, 1) + grads(2, 2);
     const fpdtype div2 = div * div;
@@ -39,14 +39,14 @@ struct ducros : PG_RECONSTRUCT {
     const fpdtype rhoinv = 1.0 / Q_(0);
     const fpdtype u2 =
         (Q_(1) * Q_(1) + Q_(2) * Q_(2) + Q_(3) * Q_(3)) * rhoinv * rhoinv;
-    const fpdtype l = cellLength();
+    const fpdtype l = cellLength;
     const fpdtype cutoff2 = PG_DUCROS_NU * PG_DUCROS_NU * u2 / (l * l);
     const fpdtype theta = div2 / (div2 + cutoff2 + tiny);
     return fmax(D - PG_DUCROS_FLOOR, 0.0) * theta + PG_DUCROS_FLOOR;
   }
   KOKKOS_INLINE_FUNCTION fpdtype weight() const {
-    return fmax(sensor(gradsL, this->QL, cellLengthL),
-                sensor(gradsR, this->QR, cellLengthR));
+    return fmax(sensor(grads.L(), this->Q.L(), cellLength.L()),
+                sensor(grads.R(), this->Q.R(), cellLength.R()));
   }
 };
 

@@ -6,8 +6,8 @@
 // coefficient, as in axpby. The arrays are ne wide.
 PG_RANGE(elements, components = ne)
 struct axpbypcz {
-  cellCenterInOut A;
-  cellCenterIn B, C;
+  cellVecInOut A;
+  cellVecIn B, C;
   fpdtype a, b;
   fpdtype c;
   caseIn dt;

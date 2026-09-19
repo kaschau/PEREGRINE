@@ -1,6 +1,7 @@
 """One rank, two blocks: after an exchange a block's halo holds its
 neighbor's cells, plane for plane, as deep as the array trades; the pair
-met on this rank shares one buffer; a wall's halo is untouched."""
+met on this rank is filled directly, with no buffer; a wall's halo
+is untouched."""
 
 import numpy as np
 
@@ -70,16 +71,18 @@ def test_aGradientTradesOnePlane(my_setup):
         assert np.array_equal(after[-ng, ng:-ng, ng:-ng], before[-ng, ng:-ng, ng:-ng])
 
 
-def test_theLocalPairSharesOneBuffer(my_setup):
+def test_theLocalPairHasNoBuffer(my_setup):
     mb = pair()
     a, b = mb.blocks
     ex = mb.exchanges["Q"]
     left, right = a.getFace(2), b.getFace(1)
-    assert getattr(right, ex.recvBuffer) is getattr(left, ex.sendBuffer)
-    assert getattr(left, ex.recvBuffer) is getattr(right, ex.sendBuffer)
-    assert not ex.remote and ex.ranks == []
-    assert set(mb.blockFacesBy["trading"]) == {left, right}
-    assert mb.blockFacesBy["remote"] == [] and len(mb.blockFacesBy["here"]) == 12
+    assert mb.neighborFace(left) is right and mb.neighborFace(right) is left
+    for face in (left, right):
+        assert getattr(face, ex.sendBuffer) is None
+        assert getattr(face, ex.recvBuffer) is None
+    assert not ex.messages and ex.ranks == []
+    assert set(mb.connOnRankFaces) == {left, right}
+    assert mb.connOffRankFaces == []
 
 
 def test_periodicHalosWrapAround(my_setup):

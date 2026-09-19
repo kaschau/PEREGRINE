@@ -53,37 +53,41 @@ class NavierStokesSimulator(EulerSimulator):
     def graphs(self, dt):
         """Gives consistify with the transport after the state, and the
         right-hand side as the gradient exchange: the gradient boundary
-        conditions and the gradients ahead of it, the fluxes while it
-        flies, then the remote faces done again, the apply and the
-        chemistry."""
+        conditions and the gradients ahead of it, the chemistry source and
+        the fluxes while it flies, then the apply. What a message brings is
+        left out while it flies and done once it lands: the halos, and the
+        planes of the fluxes that read the gradients -- the diffusive flux,
+        and the advective one only when its switch does."""
         k = self.kernels
         consistify = ExchangeGraphs(
             "consistify",
             "Q",
             during=[
-                LaunchNode(k["stateFromCons"], "all"),
-                BCNode(k["bcs euler"], "here"),
-                LaunchNode(k["trans"], "all"),
+                LaunchNode(k["stateFromCons"], "allLocal"),
+                BCNode(k["bcs euler"], "onRank"),
+                LaunchNode(k["trans"], "allLocal"),
             ],
             after=[
-                BCNode(k["bcs euler"], "remote"),
+                BCNode(k["bcs euler"], "offRank"),
                 RedoNode(k["stateFromCons"], k["trans"]),
             ],
         )
+        stale = [g for g in (k["advFlux"], k["diffFlux"]) if g.reads("grads")]
+        flight = lambda g: LaunchNode(g, "interiorLocal" if g in stale else "interior")
         rhs = ExchangeGraphs(
             "rhs",
             "grads",
             ahead=[BCNode(k["bcs preDqDxyz"]), LaunchNode(k["dqdxyz"], "interior")],
             during=[
-                LaunchNode(k["advFlux"], "interior"),
-                BCNode(k["bcs postDqDxyz"], "here"),
-                LaunchNode(k["diffFlux"], "interior"),
+                *self.sourceNodes(dt),
+                flight(k["advFlux"]),
+                BCNode(k["bcs postDqDxyz"], "onRank"),
+                flight(k["diffFlux"]),
             ],
             after=[
-                BCNode(k["bcs postDqDxyz"], "remote"),
-                RedoNode(k["advFlux"], k["diffFlux"]),
+                BCNode(k["bcs postDqDxyz"], "offRank"),
+                RedoNode(*stale),
                 LaunchNode(k["applyFlux"], "interior"),
-                *self.chemistryNodes(dt),
             ],
         )
         return {"consistify": [consistify], "rhs": [rhs]}

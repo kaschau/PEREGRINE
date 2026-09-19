@@ -22,8 +22,8 @@
 
 PG_RANGE(cellCenters)
 struct chungDenseGas {
-  cellCenterIn Q, q, qh;
-  cellCenterOut qt;
+  cellVecIn Q, q, qh;
+  cellVecOut qt;
   KOKKOS_INLINE_FUNCTION void operator()() const {
     const fpdtype &T = q(1);
     fpdtype X[ns];

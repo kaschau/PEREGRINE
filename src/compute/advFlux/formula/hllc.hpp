@@ -11,7 +11,7 @@ struct hllc {
   template <class Recon, class Out>
   static KOKKOS_INLINE_FUNCTION void
   own(const Recon &r, const typename Recon::sides &s, const faceState &X,
-      fpdtype U, fpdtype S, const cellFaceIn &A, const Out &F, bool left) {
+      fpdtype U, fpdtype S, const faceVecIn &A, const Out &F, bool left) {
     F(0) = U * X.rho * S;
     F(1) = U * X.rhou * S + X.p * A(0);
     F(2) = U * X.rhov * S + X.p * A(1);
@@ -27,7 +27,7 @@ struct hllc {
   static KOKKOS_INLINE_FUNCTION void
   star(const Recon &r, const typename Recon::sides &s, const faceState &X,
        fpdtype U, fpdtype SX, fpdtype Sstar, fpdtype S, fpdtype nx, fpdtype ny,
-       fpdtype nz, const cellFaceIn &A, const Out &F, bool left) {
+       fpdtype nz, const faceVecIn &A, const Out &F, bool left) {
     const fpdtype rhoinv = 1.0 / X.rho;
     const fpdtype Frho = U * X.rho * S;
     const fpdtype FU = U * X.rhou * S + X.p * A(0);
@@ -56,7 +56,7 @@ struct hllc {
   }
 
   template <class Recon, class Out>
-  static KOKKOS_INLINE_FUNCTION void flux(const Recon &r, const cellFaceIn &A,
+  static KOKKOS_INLINE_FUNCTION void flux(const Recon &r, const faceVecIn &A,
                                           const Out &F) {
     fpdtype S, nx, ny, nz;
     faceNormal(A(0), A(1), A(2), S, nx, ny, nz);

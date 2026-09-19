@@ -9,8 +9,9 @@
 // quotients is one division.
 PG_RANGE(cellCenters)
 struct dq2FD {
-  cellCenterIn dENCdxyz, Q, q;
-  cellCenterOut grads;
+  cellMatIn dENCdxyz;
+  cellVecIn Q, q;
+  cellMatOut grads;
   KOKKOS_INLINE_FUNCTION void operator()() const {
     // each direction's two neighbour densities and 1 / their product
     const fpdtype rIp = Q(+I, 0), rIm = Q(-I, 0), invI = 1.0 / (rIp * rIm);

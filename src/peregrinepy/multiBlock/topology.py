@@ -1,3 +1,4 @@
+from ..misc import getCommRankSize
 from ..readers import GridReader
 from .topologyBlock import topologyBlock
 
@@ -25,6 +26,30 @@ class topology:
         for blk in self.blocks:
             for face in blk.faces:
                 yield blk, face
+
+    def neighborFace(self, face):
+        """The face a connected block face meets, when the block across it
+        is on this rank; None for a boundary or a block held elsewhere."""
+        if face.neighbor is None:
+            return None
+        blk = self.getBlock(face.neighbor)
+        return blk.getFace(face.neighborNface) if blk else None
+
+    ###########################################################################
+    # The connected block faces, by where the block across them is
+    ###########################################################################
+    @property
+    def connOnRankFaces(self):
+        """The faces connected to a block on this rank."""
+        return [
+            f for _, f in self.faces() if f.neighbor is not None and not f.connOffRank
+        ]
+
+    @property
+    def connOffRankFaces(self):
+        """The faces connected to a block on another rank, whose halos come
+        by message."""
+        return [f for _, f in self.faces() if f.connOffRank]
 
     def getBlock(self, nblki):
         """The block numbered nblki, or None if this rank does not hold it. A

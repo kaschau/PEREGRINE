@@ -28,11 +28,11 @@ struct residualReducer {
 
 PG_RANGE(cellCenters)
 struct residual {
-  cellCenterIn Q, Q0;
+  cellVecIn Q, Q0;
 };
 // one component's residual; flat, so the shape can pin its columns
 struct residualOf {
-  cellCenterIn Q, Q0;
+  cellVecIn Q, Q0;
   int m;
   KOKKOS_INLINE_FUNCTION void operator()(maxAndSum &v) const {
     const fpdtype res = abs(Q(m) - Q0(m));

@@ -35,13 +35,20 @@ class BaseKernel:
     # a struct's members come first, then its operator
     structHead = r"struct\s+{name}\s*(?::\s*(?:public\s+)?(\w+))?\s*\{{(.*?)(?=KOKKOS_INLINE_FUNCTION|operator\(|\}};)"
     # the column aliases arrays.hpp and faces.hpp declare, read off the
-    # headers: an alias may stand on another, and the column it ends on
-    # says whether the member is pinned to a cell or to a halo cell of a
-    # block face
+    # headers: an alias may stand on another, and the kind it ends on says
+    # whether the member is pinned to a cell or to a halo cell of a block
+    # face
     alias = re.compile(r"^using (\w+) = (\w+)[<;]", re.M)
-    cellColumns = ("column", "cellFaceColumn")
+    cellColumns = (
+        "column",
+        "cellRank",
+        "cellScal",
+        "faceRank",
+        "faceStrad",
+        "cellStrad",
+        "cellStradScal",
+    )
     blockFaceColumns = ("haloColumn", "blockFaceColumn", "plainColumn")
-    side = re.compile(r"cellCenter(LL|RR|L|R)$")
 
     @classmethod
     @cache
@@ -141,6 +148,21 @@ class BaseKernel:
                 [(k, n, f, c) for (k, n, c, _), (f, _) in zip(members, fields)],
             )
 
+    @staticmethod
+    def connOffRankFaces(blk):
+        """Gives the numbers of a block's faces connected off the rank,
+        whose halos a message brings."""
+        return {f.nface for f in blk.faces if f.connOffRank}
+
+    def reads(self, name):
+        """Says whether this kernel names a column of the table's array
+        :name:, from any side."""
+        return any(
+            kind == "column" and self.columns.get(mname, mname) == name
+            for _, members in self.structs.values()
+            for kind, mname, *_ in members
+        )
+
     @property
     def tileKind(self):
         """Says which of the backend's tile knobs sizes a tile of this
@@ -216,16 +238,7 @@ class BaseKernel:
                     mname = mname.partition("=")[0].strip()
                     members.append(("own", mname, cls.scalars[head], head))
                 elif head in cls.columnHeads():
-                    # a cell-center column seen from a cell face ends in its
-                    # side, and so does the member's name: QL is the column Q
-                    side = cls.side.match(head)
-                    side = side.group(1) if side else ""
-                    if not mname.endswith(side):
-                        raise ValueError(
-                            f"struct {structName}: {mname} is {head}, so it ends in {side}"
-                        )
-                    twin = cls.columnHeads()[head]
-                    members.append(("column", mname.removesuffix(side), twin, head))
+                    members.append(("column", mname, cls.columnHeads()[head], head))
                 elif head == "dims":
                     members.append(("dims", mname, Dims, head))
                 elif head == "caseIn":
@@ -298,7 +311,7 @@ class BaseKernel:
             "view": lambda table, *_: table.arrayInfos(column),
             "dims": lambda table, *_: self._all(ctype, Dims, table.arrayInfos("dims")),
             "ints": lambda table, *_: self._all(
-                ctype, PerEntryInt, table.arrayInfos(name)
+                ctype, PerEntryInt, table.arrayInfos(column)
             ),
             "tiling": lambda table, tiling, *_: ctypes.addressof(tiling),
         }
@@ -393,7 +406,7 @@ class CellCenterKernel(BaseKernel):
 
     def rangeOf(self, blk):
         """Gives the range object of a block this kernel's items are over."""
-        return CellCenterRange(blk.extents, blk.ng)
+        return CellCenterRange(blk.extents, blk.ng, self.connOffRankFaces(blk))
 
     def concerns(self, face):
         """Says whether a block face's halo is this kernel's to do again
@@ -439,7 +452,9 @@ class CellFaceKernel(BaseKernel):
     def rangeOf(self, blk):
         """Gives the range object of a block this kernel's items are over:
         the cell faces of its direction."""
-        return CellFaceRange(blk.extents, blk.ng, self.direction)
+        return CellFaceRange(
+            blk.extents, blk.ng, self.direction, self.connOffRankFaces(blk)
+        )
 
     def concerns(self, face):
         """Says whether a block face's plane is this kernel's to do again:
@@ -462,7 +477,7 @@ class FluxKernel(CellFaceKernel):
     formula is blended in by the weight of a :switch:, jamesonPressure or
     ducros, which the :switchValues: are baked into."""
 
-    reconstructions = ("piecewiseConstant", "fourCells", "muscl")
+    reconstructions = ("piecewiseConstant", "muscl")
 
     @classmethod
     def composed(cls, scheme):
@@ -479,15 +494,9 @@ class FluxKernel(CellFaceKernel):
         parts = scheme.split("-")
         formula = parts[-1]
         limiter = parts[1] if len(parts) == 3 else None
-        if len(parts) == 1:
-            # a formula alone takes the cells as they are: the two about the
-            # face, or the four when it declares it reaches that far
-            reaches = self.stencilDeclaration.search(
-                getSources().header(f"advFlux/formula/{formula}.hpp")
-            )
-            reconstruct = "fourCells" if reaches else "piecewiseConstant"
-        else:
-            reconstruct = parts[0]
+        # a formula alone takes the cells as they are, as far as it declares
+        # it reaches
+        reconstruct = "piecewiseConstant" if len(parts) == 1 else parts[0]
         if len(parts) not in (1, 3) or reconstruct not in self.reconstructions:
             raise ValueError(
                 f"{scheme!r} is not formula or reconstruct-limiter-formula"
@@ -531,6 +540,10 @@ class BaseKernelGroup:
         self.kernels = kernels
         self.__name__ = name or kernels[0].__name__
         self.stencil = max(k.stencil for k in kernels)
+
+    def reads(self, name):
+        """Says whether any kernel of the group reads the array :name:."""
+        return any(k.reads(name) for stage in self.stages for k in stage)
 
 
 class OrderedKernelGroup(BaseKernelGroup):

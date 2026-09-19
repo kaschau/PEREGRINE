@@ -7,6 +7,8 @@ What is not the solver's: the physics (the simulator's), taking and
 sizing a step (the integrator's), and printing (the report plugin's)."""
 
 import numpy as np
+from functools import cached_property
+
 from mpi4py import MPI
 
 from .restart import restart
@@ -57,8 +59,6 @@ class solver(restart):
         self._declKernels()
         self._jit()
         mesh.fill(self)
-        self._alignBlockFaces()
-        self._sortBlockFaces()
         self._declComm()
         self._unifyGrid()
         self.computeMetrics()
@@ -89,14 +89,25 @@ class solver(restart):
 
     def _declKernels(self):
         """Takes the simulator's and the integrator's kernels by tag, with
-        the solver's own: the copy of a block array, and the pack and
-        unpack of a halo exchange."""
+        the solver's own: the copy of a block array, and the pack, unpack
+        and direct fill of a halo exchange."""
         self.kernels = {
             **self.simulator.declKernels(),
             **self.integrator.declKernels(),
             "copy": CellCenterKernel("utils/copy.cpp"),
             "pack": HaloExchangeKernel("utils/extractSendBuffer.cpp"),
             "unpack": HaloExchangeKernel("utils/placeRecvBuffer.cpp"),
+            # the partner's face and how it turns its plane, read off the
+            # face it meets
+            "directHaloFill": HaloExchangeKernel(
+                "utils/directHaloFill.cpp",
+                columns={
+                    "partnerNface": "nface@neighborFace",
+                    "partnerTranspose": "transpose@neighborFace",
+                    "partnerFlip0": "flip0@neighborFace",
+                    "partnerFlip1": "flip1@neighborFace",
+                },
+            ),
         }
         for plugin in self.plugins.values():
             for tag, kernel in plugin.declKernels().items():
@@ -143,37 +154,6 @@ class solver(restart):
             if bc.values:
                 bc.setValues(entry)
 
-    def _alignBlockFaces(self):
-        """Settles, for every block face with a neighbor, how the neighbor's
-        plane lies against it."""
-        for blk in self.blocks:
-            blk.alignBlockFaces()
-
-    def _sortBlockFaces(self):
-        """Sorts the block faces once, by kind, into what the tables, the
-        exchanges and the graphs take: all of them, the ones that trade,
-        the pairs met on this rank (local), the ones met on another
-        (remote), and the ones whose halos are here."""
-        rank = getCommRankSize()[1]
-        self.blockFaces = [face for _, face in self.faces()]
-        trading, local, remote = [], [], []
-        for face in self.blockFaces:
-            if face.neighbor is None:
-                continue
-            trading.append(face)
-            if face.commRank == rank:
-                theirs = self.getBlock(face.neighbor).getFace(face.neighborNface)
-                local.append((face, theirs))
-            else:
-                remote.append(face)
-        self.blockFacesBy = {
-            "all": self.blockFaces,
-            "trading": trading,
-            "local": local,
-            "remote": remote,
-            "here": [f for f in self.blockFaces if f not in remote],
-        }
-
     def _unifyGrid(self):
         """Fills every block's node halo from its neighbors, and moves a
         periodic halo to where its transform puts it."""
@@ -194,10 +174,12 @@ class solver(restart):
             name: HaloExchange(
                 name,
                 self.blockFaceArrayTable,
-                self.blockFacesBy,
+                self.connOnRankFaces,
+                self.connOffRankFaces,
                 self.ng if depth is True else depth,
                 k["pack"],
                 k["unpack"],
+                k["directHaloFill"],
             )
             for name, depth in self.exchangedArrays.items()
         }
@@ -205,15 +187,16 @@ class solver(restart):
     ###########################################################################
     # Tables and launches
     ###########################################################################
+    @cached_property
+    def blockFaceArrayTable(self):
+        """Gives the table of every block face on this rank, the backend's,
+        made once over the faces as they come."""
+        return self.backend.arrayTable([face for _, face in self.faces()])
+
     @property
     def blockArrayTable(self):
         """Gives the table of every block on this rank, the backend's."""
         return self.backend.arrayTable(self.blocks)
-
-    @property
-    def blockFaceArrayTable(self):
-        """Gives the table of every block face on this rank, the backend's."""
-        return self.backend.arrayTable(self.blockFaces)
 
     def launch(self, tag, rangeName, **given):
         """Launches the kernels under :tag: now, outside any graph, over the
@@ -227,14 +210,8 @@ class solver(restart):
     @property
     def means(self):
         """Gives what a node is bound to, in the order bind takes: the
-        block and block face tables, the block faces by kind, and the
-        exchanges by array."""
-        return (
-            self.blockArrayTable,
-            self.blockFaceArrayTable,
-            self.blockFacesBy,
-            self.exchanges,
-        )
+        block and block face tables, and the exchanges by array."""
+        return (self.blockArrayTable, self.blockFaceArrayTable, self.exchanges)
 
     def _buildGraphs(self):
         """Makes every graph the simulator and the integrator say, by
@@ -335,14 +312,15 @@ class solver(restart):
         array now, or none, and no captured graph launches over it."""
         self.blockArrayTable.forget(name)
         self.blockFaceArrayTable.forget(name)
+        self.blockFaceArrayTable.forget(f"{name}@neighborFace")
 
     ###########################################################################
     # The boundary conditions, on the faces
     ###########################################################################
     def applyBcs(self, bcHook, where="all"):
-        """Runs one bcHook now on the block faces :where: names -- all, here
-        or remote -- the way the step does; a bcHook no kernel of the case
-        has runs nothing."""
+        """Runs one bcHook now on the block faces :where: names -- all,
+        onRank or offRank -- the way the step does; a bcHook no kernel of
+        the case has runs nothing."""
         BCNode(self.kernels[f"bcs {bcHook}"], where).bind(*self.means).run()
 
     ###########################################################################

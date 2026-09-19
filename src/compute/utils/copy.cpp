@@ -6,8 +6,8 @@
 // card's copy rate. The arrays are ne wide.
 PG_RANGE(elements, components = ne)
 struct copy {
-  cellCenterOut A;
-  cellCenterIn B;
+  cellVecOut A;
+  cellVecIn B;
   KOKKOS_INLINE_FUNCTION void operator()(const int i) const { A[i] = B[i]; }
 };
 

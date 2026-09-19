@@ -46,6 +46,7 @@ class Library:
             None,
         ),
         "pgCopyWait": ([], None),
+        "pgMarkKernels": ([], None),
         "pgGraphBegin": ([], ctypes.c_int),
         "pgGraphEnd": ([], None),
         "pgGraphSubmit": ([ctypes.c_int], None),

@@ -7,8 +7,8 @@
 // written out so they can be checked against the state itself.
 PG_RANGE(cellCenters)
 struct densityDerivatives {
-  cellCenterIn Q, q;
-  cellCenterOut qj;
+  cellVecIn Q, q;
+  cellVecOut qj;
   KOKKOS_INLINE_FUNCTION void operator()() const {
     const fpdtype rho = Q(0);
     fpdtype Y[ns], rho_Y[ns];

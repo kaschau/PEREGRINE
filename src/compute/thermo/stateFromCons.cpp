@@ -6,8 +6,8 @@
 // last value is the iterative eos's guess.
 PG_RANGE(cellCenters)
 struct stateFromCons {
-  cellCenterInOut Q, q;
-  cellCenterOut qh;
+  cellVecInOut Q, q;
+  cellVecOut qh;
   KOKKOS_INLINE_FUNCTION void operator()() const {
     const fpdtype rho = Q(0);
     const fpdtype rhoinv = 1.0 / rho;

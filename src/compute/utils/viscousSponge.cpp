@@ -5,8 +5,8 @@
 // to mult a :length: further, and held there.
 PG_RANGE(cellCenters)
 struct viscousSponge {
-  cellCenterIn cells;
-  cellCenterInOut qt;
+  cellVecIn cells;
+  cellVecInOut qt;
   fpdtype nx, ny, nz, start, length, mult;
   KOKKOS_INLINE_FUNCTION void operator()() const {
     const fpdtype along =

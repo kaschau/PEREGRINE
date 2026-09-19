@@ -8,22 +8,22 @@
 
 #include "advFlux/fluxOut.hpp"
 #include "advFlux/formula/KEPaEC.hpp"
-#include "advFlux/reconstruct/fourCells.hpp"
+#include "advFlux/reconstruct/piecewiseConstant.hpp"
 
 PG_STENCIL(2);
 
 struct fourthOrderKEPaEC {
   template <class Recon, class Out>
-  static KOKKOS_INLINE_FUNCTION void flux(const Recon &r, const cellFaceIn &A,
+  static KOKKOS_INLINE_FUNCTION void flux(const Recon &r, const faceVecIn &A,
                                           const Out &F) {
-    static_assert(std::is_base_of_v<fourCells, Recon>,
+    static_assert(std::is_base_of_v<piecewiseConstant, Recon>,
                   "fourthOrderKEPaEC takes the four cells about the face");
-    KEPaEC::twoPoint(r.QL, r.qL, r.qhL, r.QR, r.qR, r.qhR, A,
+    KEPaEC::twoPoint(r.Q.L(), r.q.L(), r.qh.L(), r.Q.R(), r.q.R(), r.qh.R(), A,
                      weighted<Out>{F, 4.0 / 3.0});
-    KEPaEC::twoPoint(r.QLL, r.qLL, r.qhLL, r.QR, r.qR, r.qhR, A,
-                     added<Out>{F, -1.0 / 6.0});
-    KEPaEC::twoPoint(r.QL, r.qL, r.qhL, r.QRR, r.qRR, r.qhRR, A,
-                     added<Out>{F, -1.0 / 6.0});
+    KEPaEC::twoPoint(r.Q.LL(), r.q.LL(), r.qh.LL(), r.Q.R(), r.q.R(), r.qh.R(),
+                     A, added<Out>{F, -1.0 / 6.0});
+    KEPaEC::twoPoint(r.Q.L(), r.q.L(), r.qh.L(), r.Q.RR(), r.q.RR(), r.qh.RR(),
+                     A, added<Out>{F, -1.0 / 6.0});
   }
 };
 

@@ -19,6 +19,11 @@ cases = {
     "navierStokes rk3 CH4_O2": dict(
         physics="navierStokes", gas="CH4_O2", integrator="rk3"
     ),
+    # binary diffusion: distinct diffusivities, so the species correction
+    # velocity is not zero as it is at one Lewis number
+    "navierStokes rk3 CH4_O2 binary": dict(
+        physics="navierStokes", gas="CH4_O2", integrator="rk3", diffusion="binary"
+    ),
 }
 
 
@@ -33,11 +38,14 @@ def mesh():
     )
 
 
-def build(physics, gas, integrator, ranks=(1, 1), grid=None):
+def build(physics, gas, integrator, diffusion=None, ranks=(1, 1), grid=None):
     """Makes a case on a 2x2x1 box periodic in i and k, or on a grid file
-    partitioned for the ranks, its state perturbed by block."""
+    partitioned for the ranks, its state perturbed by block; :diffusion:
+    names a diffusion model over the config's."""
     config = pg.files.configFile()
     configure(config, gas, physics)
+    if diffusion:
+        config["simulation"]["diffusion"] = diffusion
     config["RHS"]["primaryAdvFlux"] = "KEPaEC"
     config["timeIntegration"]["integrator"] = integrator
     config["timeIntegration"]["dt"] = 1e-9

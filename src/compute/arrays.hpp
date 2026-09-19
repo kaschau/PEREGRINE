@@ -78,11 +78,11 @@ constexpr offset I{1, 0, 0}, J{0, 1, 0}, K{0, 0, 1};
 // arrayInfos, the launch shape pins it to the cell the thread is on, and the
 // body indexes what remains, whose count says the rank. A column is
 // declared by where the thread looks. In a cell-center launch a
-// cellCenterIn/Out/InOut column is the thread's own cell, q(l), or a fixed
+// cellVec/cellMat column is the thread's own cell, q(l), or a fixed
 // neighbor of it, q(+I, l). In a cell-face launch the thread traverses the
 // faces of one direction and a cell-center column looks to a side of the
-// face, cellCenterL/R (LL/RR one further), qL(l), qR(l); a face is indexed
-// like the cell to its right. A cellFaceIn/Out/InOut column is the face's
+// face, a cellStrad column, q.L(l), q.R(l) (LL/RR one further); a face is
+// indexed like the cell to its right. A faceVec column is the face's
 // own array, F(l), A(c), and has no neighbors.
 // a read of a const element, as a value, through the global address space
 // on AMD: a load through a generic pointer is a flat load, which may return
@@ -167,15 +167,66 @@ template <class T, offset O> struct column {
     return element(o, rest...);
   }
 };
-using cellCenterIn = column<const fpdtype, offset{0, 0, 0}>;
-using cellCenterOut = column<fpdtype, offset{0, 0, 0}>;
-using cellCenterInOut = cellCenterOut; // read and written, for python's graph
+// a cell-center array by what a cell holds of it: a vector (Q, q, the
+// fluxes' components) or a matrix (the gradients), read with exactly that
+// many indices, at the cell or at a fixed neighbor of it
+template <class T, offset O, int Rank> struct cellRank : column<T, O> {
+  template <class... X>
+    requires(sizeof...(X) == Rank && (std::is_integral_v<X> && ...))
+  KOKKOS_INLINE_FUNCTION decltype(auto) operator()(X... rest) const {
+    return this->element(offset{0, 0, 0}, rest...);
+  }
+  template <class... X>
+    requires(sizeof...(X) == Rank)
+  KOKKOS_INLINE_FUNCTION decltype(auto) operator()(const offset &o,
+                                                   X... rest) const {
+    return this->element(o, rest...);
+  }
+};
+using cellVecIn = cellRank<const fpdtype, offset{0, 0, 0}, 1>;
+using cellVecOut = cellRank<fpdtype, offset{0, 0, 0}, 1>;
+using cellVecInOut = cellVecOut; // read and written, for python's graph
+using cellMatIn = cellRank<const fpdtype, offset{0, 0, 0}, 2>;
+using cellMatOut = cellRank<fpdtype, offset{0, 0, 0}, 2>;
+
+// a cell-face array straddling the cell: L its face at the low end of
+// the axis, at the cell's index, R the one at the high end, a step over
+template <class T, offset A, int Rank>
+struct faceStrad : column<T, offset{0, 0, 0}> {
+  template <class... X>
+    requires(sizeof...(X) == Rank)
+  KOKKOS_INLINE_FUNCTION decltype(auto) L(X... rest) const {
+    return this->element(offset{0, 0, 0}, rest...);
+  }
+  template <class... X>
+    requires(sizeof...(X) == Rank)
+  KOKKOS_INLINE_FUNCTION decltype(auto) R(X... rest) const {
+    return this->element(A, rest...);
+  }
+};
+using iFaceStradVecIn = faceStrad<const fpdtype, I, 1>;
+using jFaceStradVecIn = faceStrad<const fpdtype, J, 1>;
+using kFaceStradVecIn = faceStrad<const fpdtype, K, 1>;
+
+// a cell-center array of one value per cell -- a metric, a length -- read
+// as the value itself and written by assignment: the body names the
+// column and has the number
+template <class T, offset O> struct cellScal : column<T, O> {
+  KOKKOS_INLINE_FUNCTION operator T() const {
+    return this->element(offset{0, 0, 0});
+  }
+  KOKKOS_INLINE_FUNCTION void operator=(const T v) const {
+    this->element(offset{0, 0, 0}) = v;
+  }
+};
+using cellScalIn = cellScal<const fpdtype, offset{0, 0, 0}>;
+using cellScalOut = cellScal<fpdtype, offset{0, 0, 0}>;
 
 // a cell-face array at the face the thread is on: the same pin and address
-// as a cell-center column with no step, and no neighbors
-template <class T> struct cellFaceColumn : column<T, offset{0, 0, 0}> {
+// as a cell-center column with no step, read by its rank, and no neighbors
+template <class T, int Rank> struct faceRank : column<T, offset{0, 0, 0}> {
   template <class... X>
-    requires(std::is_integral_v<X> && ...)
+    requires(sizeof...(X) == Rank && (std::is_integral_v<X> && ...))
   KOKKOS_INLINE_FUNCTION decltype(auto) operator()(X... rest) const {
     return this->element(offset{0, 0, 0}, rest...);
   }
@@ -183,9 +234,9 @@ template <class T> struct cellFaceColumn : column<T, offset{0, 0, 0}> {
   KOKKOS_INLINE_FUNCTION decltype(auto) operator()(const offset &,
                                                    X...) const = delete;
 };
-using cellFaceIn = cellFaceColumn<const fpdtype>;
-using cellFaceOut = cellFaceColumn<fpdtype>;
-using cellFaceInOut = cellFaceOut;
+using faceVecIn = faceRank<const fpdtype, 1>;
+using faceVecOut = faceRank<fpdtype, 1>;
+using faceVecInOut = faceVecOut;
 
 // one value per entry of the table (an integer column), pinned with the
 // columns so the body reads it as a value
@@ -399,7 +450,8 @@ KOKKOS_INLINE_FUNCTION out5 as5(const pgArrayOut &v) {
 }
 
 // the member twins python builds a kernel's argument from, laid out the same
-static_assert(sizeof(cellCenterIn) == 56 && sizeof(cellFaceIn) == 56 &&
+static_assert(sizeof(cellVecIn) == 56 && sizeof(faceVecIn) == 56 &&
+              sizeof(cellScalIn) == 56 && sizeof(iFaceStradVecIn) == 56 &&
               sizeof(haloIn) == 40 && sizeof(perEntry<int>) == 16 &&
               sizeof(dims) == 16 && sizeof(caseIn) == 8);
 

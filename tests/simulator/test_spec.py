@@ -103,6 +103,27 @@ def test_graphsAreSaidInNamesWithoutASolver():
 
 
 @pytest.mark.parametrize(
+    "chemistry,source",
+    [("explicit", "productionRateSource"), ("substepped", "finiteRateSubstep")],
+)
+def test_theChemistrySourceBeginsTheRightHandSide(chemistry, source):
+    config = pg.files.configFile()
+    configure(config, "CH4_O2", "navierStokes")
+    config["RHS"]["primaryAdvFlux"] = "KEPaEC"
+    config["simulation"]["chemistry"] = chemistry
+    sim = pg.simulator.getSimulator(config)
+    k = sim.declKernels()
+    (rhs,) = sim.graphs(dt=None)["rhs"]
+    # begins dQ first, under the gradient exchange with the fluxes, which
+    # append to it
+    assert rhs.during[0].kernel.__name__ == source
+    assert rhs.after[-1].kernel.__name__ == "applyFlux"
+    assert "PG_FLUXES_APPEND=1" in k["applyFlux"].defines
+    without = simulation("navierStokes", gas="CH4_O2").declKernels()
+    assert "PG_FLUXES_APPEND=1" not in without["applyFlux"].defines
+
+
+@pytest.mark.parametrize(
     "key,value",
     [
         ("secondaryAdvFlux", "rusanov"),

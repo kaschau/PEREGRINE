@@ -188,6 +188,29 @@ KOKKOS_INLINE_FUNCTION void fractionsOf(const Q &Qc, const fpdtype rhoinv,
   Y[ns - 1] = fmax(Y[ns - 1], 0.0);
 }
 
+// the net production rates of a cell from its conserved state and its
+// temperature: what a kernel puts wherever its caller keeps them
+template <class Conserved, class State>
+KOKKOS_INLINE_FUNCTION void productionRatesOf(const Conserved &Q,
+                                              const State &q, fpdtype *rate) {
+  const fpdtype rho = Q(0);
+  fpdtype Y[ns];
+  fractionsOf(Q, 1.0 / rho, Y);
+  const auto s = stateOf(rho, [&](const int n) { return Y[n]; }, q(1));
+  netProduction(s, rate);
+}
+
+// dQ begun with a species source, whatever rate it is: the species slots
+// the rate of the carried species, the rest nothing, for the fluxes to
+// append to
+template <class DQ>
+KOKKOS_INLINE_FUNCTION void beginWithSource(const DQ &dQ, const fpdtype *rate) {
+  for (int l = 0; l < 5; l++)
+    dQ(l) = 0.0;
+  for (int n = 0; n < ns - 1; n++)
+    dQ(5 + n) = rate[n];
+}
+
 } // namespace chemistry
 
 #endif

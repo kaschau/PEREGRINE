@@ -6,16 +6,16 @@
 // takes the state as far as the fastest species allows before it leaves
 // [0, 1], up to PG_CHEMISTRY_MAX_SUBSTEPS of them, the temperature
 // following at constant density; the source is the mean rate over the
-// step, which lands the state the substeps reached. PyFR's finite-rate
-// auto scheme.
+// step, which lands the state the substeps reached; dQ is begun with it.
+// PyFR's finite-rate auto scheme.
 #ifndef PG_CHEMISTRY_MAX_SUBSTEPS
 #error "the substepped chemistry takes chemistryMaxSubSteps from the config"
 #endif
 
 PG_RANGE(cellCenters)
 struct finiteRateSubstep {
-  cellCenterIn Q, q;
-  cellCenterInOut dQ;
+  cellVecIn Q, q;
+  cellVecOut dQ;
   caseIn dt;
   KOKKOS_INLINE_FUNCTION void operator()() const {
     constexpr fpdtype eps = std::numeric_limits<fpdtype>::epsilon();
@@ -61,8 +61,7 @@ struct finiteRateSubstep {
       T += dTdt / (cp * rho) * tSub;
       remaining -= share;
     }
-    for (int n = 0; n < ns - 1; n++)
-      dQ(5 + n) += src[n];
+    chemistry::beginWithSource(dQ, src);
   }
 };
 

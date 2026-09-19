@@ -5,30 +5,30 @@
 
 PG_RANGE(cellFaces)
 struct diffusiveFlux {
-  cellCenterL QL, gradsL, qL, qhL, qtL;
-  cellCenterR QR, gradsR, qR, qhR, qtR;
-  cellFaceInOut F;
-  cellFaceIn A;
+  cellStradVecIn Q, q, qh, qt;
+  cellStradMatIn grads;
+  faceVecInOut F;
+  faceVecIn A;
   static constexpr fpdtype bulkVisc = 0.0;
   KOKKOS_INLINE_FUNCTION void operator()() const {
-    fpdtype mu = 0.5 * (qtR(0) + qtL(0));
-    fpdtype kappa = 0.5 * (qtR(1) + qtL(1));
+    fpdtype mu = 0.5 * (qt.R(0) + qt.L(0));
+    fpdtype kappa = 0.5 * (qt.R(1) + qt.L(1));
     fpdtype lambda = bulkVisc - 2.0 / 3.0 * mu;
 
     // no mass diffuses, so the continuity flux is left alone
 
     // Derivatives on face
-    fpdtype dudx = 0.5 * (gradsR(0, 0) + gradsL(0, 0));
-    fpdtype dvdx = 0.5 * (gradsR(1, 0) + gradsL(1, 0));
-    fpdtype dwdx = 0.5 * (gradsR(2, 0) + gradsL(2, 0));
+    fpdtype dudx = 0.5 * (grads.R(0, 0) + grads.L(0, 0));
+    fpdtype dvdx = 0.5 * (grads.R(1, 0) + grads.L(1, 0));
+    fpdtype dwdx = 0.5 * (grads.R(2, 0) + grads.L(2, 0));
 
-    fpdtype dudy = 0.5 * (gradsR(0, 1) + gradsL(0, 1));
-    fpdtype dvdy = 0.5 * (gradsR(1, 1) + gradsL(1, 1));
-    fpdtype dwdy = 0.5 * (gradsR(2, 1) + gradsL(2, 1));
+    fpdtype dudy = 0.5 * (grads.R(0, 1) + grads.L(0, 1));
+    fpdtype dvdy = 0.5 * (grads.R(1, 1) + grads.L(1, 1));
+    fpdtype dwdy = 0.5 * (grads.R(2, 1) + grads.L(2, 1));
 
-    fpdtype dudz = 0.5 * (gradsR(0, 2) + gradsL(0, 2));
-    fpdtype dvdz = 0.5 * (gradsR(1, 2) + gradsL(1, 2));
-    fpdtype dwdz = 0.5 * (gradsR(2, 2) + gradsL(2, 2));
+    fpdtype dudz = 0.5 * (grads.R(0, 2) + grads.L(0, 2));
+    fpdtype dvdz = 0.5 * (grads.R(1, 2) + grads.L(1, 2));
+    fpdtype dwdz = 0.5 * (grads.R(2, 2) + grads.L(2, 2));
 
     fpdtype div = dudx + dvdy + dwdz;
 
@@ -55,19 +55,19 @@ struct diffusiveFlux {
 
     // energy
     //   heat conduction
-    fpdtype dTdx = 0.5 * (gradsR(3, 0) + gradsL(3, 0));
-    fpdtype dTdy = 0.5 * (gradsR(3, 1) + gradsL(3, 1));
-    fpdtype dTdz = 0.5 * (gradsR(3, 2) + gradsL(3, 2));
+    fpdtype dTdx = 0.5 * (grads.R(3, 0) + grads.L(3, 0));
+    fpdtype dTdy = 0.5 * (grads.R(3, 1) + grads.L(3, 1));
+    fpdtype dTdz = 0.5 * (grads.R(3, 2) + grads.L(3, 2));
 
     fpdtype heatFlux = -kappa * (dTdx * A(0) + dTdy * A(1) + dTdz * A(2));
 
     // flow work
     // Compute face normal volume flux vector
     // the face velocity, each side's off its conserved state
-    const fpdtype rhoinvL = 1.0 / QL(0), rhoinvR = 1.0 / QR(0);
-    fpdtype uf = 0.5 * (QR(1) * rhoinvR + QL(1) * rhoinvL);
-    fpdtype vf = 0.5 * (QR(2) * rhoinvR + QL(2) * rhoinvL);
-    fpdtype wf = 0.5 * (QR(3) * rhoinvR + QL(3) * rhoinvL);
+    const fpdtype rhoinvL = 1.0 / Q.L(0), rhoinvR = 1.0 / Q.R(0);
+    fpdtype uf = 0.5 * (Q.R(1) * rhoinvR + Q.L(1) * rhoinvL);
+    fpdtype vf = 0.5 * (Q.R(2) * rhoinvR + Q.L(2) * rhoinvL);
+    fpdtype wf = 0.5 * (Q.R(3) * rhoinvR + Q.L(3) * rhoinvL);
 
     F(4) += -(uf * txx + vf * txy + wf * txz) * A(0) -
             (uf * tyx + vf * tyy + wf * tyz) * A(1) -
@@ -75,18 +75,18 @@ struct diffusiveFlux {
 
     // Species
     // the species enthalpies from each side's eos
-    const auto hL = eos::enthalpies(qL(1), qhL);
-    const auto hR = eos::enthalpies(qR(1), qhR);
+    const auto hL = eos::enthalpies(q.L(1), qh.L());
+    const auto hR = eos::enthalpies(q.R(1), qh.R());
     fpdtype Dk, Vc = 0.0;
     fpdtype gradYns = 0.0;
-    fpdtype rho = 0.5 * (QR(0) + QL(0));
+    fpdtype rho = 0.5 * (Q.R(0) + Q.L(0));
     // Compute the species flux and correction term \sum(k=1,ns)
     // Dk*gradYk
     for (int n = 0; n < ne - 5; n++) {
-      Dk = 0.5 * (qtR(2 + n) + qtL(2 + n));
-      fpdtype dYdx = 0.5 * (gradsR(4 + n, 0) + gradsL(4 + n, 0));
-      fpdtype dYdy = 0.5 * (gradsR(4 + n, 1) + gradsL(4 + n, 1));
-      fpdtype dYdz = 0.5 * (gradsR(4 + n, 2) + gradsL(4 + n, 2));
+      Dk = 0.5 * (qt.R(2 + n) + qt.L(2 + n));
+      fpdtype dYdx = 0.5 * (grads.R(4 + n, 0) + grads.L(4 + n, 0));
+      fpdtype dYdy = 0.5 * (grads.R(4 + n, 1) + grads.L(4 + n, 1));
+      fpdtype dYdz = 0.5 * (grads.R(4 + n, 2) + grads.L(4 + n, 2));
 
       fpdtype gradYk = (dYdx * A(0) + dYdy * A(1) + dYdz * A(2));
       gradYns -= gradYk;
@@ -99,14 +99,14 @@ struct diffusiveFlux {
       F(4) += Jk * hk;
     }
     // Apply n=ns species to correction
-    Dk = 0.5 * (qtR(2 + ne - 5) + qtL(2 + ne - 5));
+    Dk = 0.5 * (qt.R(2 + ne - 5) + qt.L(2 + ne - 5));
     Vc += Dk * gradYns;
 
     // Apply correction and species thermal flux
     fpdtype Yk, hk;
     fpdtype Yns = 1.0;
     for (int n = 0; n < ne - 5; n++) {
-      Yk = 0.5 * (QR(5 + n) * rhoinvR + QL(5 + n) * rhoinvL);
+      Yk = 0.5 * (Q.R(5 + n) * rhoinvR + Q.L(5 + n) * rhoinvL);
       Yns -= Yk;
       // the correction, and its enthalpy with it
       fpdtype corr = Yk * rho * Vc;

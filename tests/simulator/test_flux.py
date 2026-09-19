@@ -101,7 +101,7 @@ def test_theSchemeStringComposes():
     assert first.stencil == 1 and "PG_RECONSTRUCT=piecewiseConstant" in first.defines
     assert FluxKernel.composed("ausmPlusUp") and FluxKernel.composed("KEPaEC")
     fourth = FluxKernel("fourthOrderKEPaEC", 2)
-    assert fourth.stencil == 2 and "PG_RECONSTRUCT=fourCells" in fourth.defines
+    assert fourth.stencil == 2 and "PG_RECONSTRUCT=piecewiseConstant" in fourth.defines
     with pytest.raises(ValueError):
         FluxKernel("muscl-rusanov", 0)
 

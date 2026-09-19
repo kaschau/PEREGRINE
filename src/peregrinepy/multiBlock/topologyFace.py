@@ -1,5 +1,7 @@
 import numpy as np
 
+from ..misc import getCommRankSize
+
 
 class topologyFace:
     def __init__(self, nface):
@@ -49,6 +51,17 @@ class topologyFace:
             m for m, (_, counterAligned) in enumerate(theirPlane) if counterAligned
         )
         return transposed, flipped
+
+    @property
+    def transposed(self):
+        """Whether the neighbor's face axes cross ours; not on a boundary."""
+        return self.neighbor is not None and self.neighborPlaneAlignment[0]
+
+    @property
+    def flipped(self):
+        """Which of the neighbor's face axes run backwards against ours;
+        none on a boundary."""
+        return self.neighborPlaneAlignment[1] if self.neighbor is not None else ()
 
     def alignToMe(self, plane):
         """Our neighbor's face plane, laid out so it matches ours element for
@@ -137,6 +150,11 @@ class topologyFace:
     def direction(self):
         """the letter of the axis this face bounds, i, j or k"""
         return "ijk"[self.myAxis]
+
+    @property
+    def connOffRank(self):
+        """Whether the block across this face is on another rank."""
+        return self.neighbor is not None and self.commRank != getCommRankSize()[1]
 
     @property
     def neighborNface(self):

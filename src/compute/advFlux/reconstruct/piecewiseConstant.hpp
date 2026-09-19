@@ -10,10 +10,9 @@
 #include "faces.hpp"
 
 struct piecewiseConstant {
-  cellCenterL QL, qL, qhL;
-  cellCenterR QR, qR, qhR;
-  cellFaceOut F;
-  cellFaceIn A;
+  cellStradVecIn Q, q, qh;
+  faceVecOut F;
+  faceVecIn A;
 
   template <class C>
   static KOKKOS_INLINE_FUNCTION faceState state(const C &Q, const C &q,
@@ -26,12 +25,12 @@ struct piecewiseConstant {
     faceState L, R;
   };
   KOKKOS_INLINE_FUNCTION sides states() const {
-    return {state(QL, qL, qhL), state(QR, qR, qhR)};
+    return {state(Q.L(), q.L(), qh.L()), state(Q.R(), q.R(), qh.R())};
   }
   KOKKOS_INLINE_FUNCTION void species(const sides &, int n, fpdtype &L,
                                       fpdtype &R) const {
-    L = QL(5 + n);
-    R = QR(5 + n);
+    L = Q.L(5 + n);
+    R = Q.R(5 + n);
   }
 };
 

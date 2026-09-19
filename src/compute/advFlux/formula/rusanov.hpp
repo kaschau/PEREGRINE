@@ -8,7 +8,7 @@
 
 struct rusanov {
   template <class Recon, class Out>
-  static KOKKOS_INLINE_FUNCTION void flux(const Recon &r, const cellFaceIn &A,
+  static KOKKOS_INLINE_FUNCTION void flux(const Recon &r, const faceVecIn &A,
                                           const Out &F) {
     fpdtype S, nx, ny, nz;
     faceNormal(A(0), A(1), A(2), S, nx, ny, nz);

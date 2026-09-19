@@ -6,8 +6,9 @@
 
 PG_RANGE(cellCenters)
 struct invertDQ {
-  cellCenterIn Q, dIJK, dtau, q, qh, qt;
-  cellCenterInOut dQ;
+  cellVecIn Q, dIJK, q, qh, qt;
+  cellScalIn dtau;
+  cellVecInOut dQ;
   dims d;
   caseIn dt;
   bool viscous;
@@ -87,7 +88,7 @@ struct invertDQ {
 
     // Prematrix multipliers (constants)
     mults[0] = 1.0;
-    mults[1] = 3.0 / 2.0 * dtau() / dt();
+    mults[1] = 3.0 / 2.0 * dtau / dt();
 
     // Reference velocity for preconditioning theta
     const fpdtype U = sqrt(u * u + v * v + w * w);
@@ -268,7 +269,7 @@ struct invertDQ {
     }
     // scaled by the cell's pseudo step, so a stage adds it as it is
     for (int l = 0; l < ne; l++) {
-      dQ(l) *= dtau();
+      dQ(l) *= dtau;
     }
 
     // the increment back in conserved variables, dQ = (dQ/dq) dq, the

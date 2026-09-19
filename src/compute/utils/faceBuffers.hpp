@@ -1,5 +1,6 @@
 // Packing every trading face's planes into its buffer turned onto the
-// neighbor's frame, and back, each in one launch.
+// neighbor's frame, and back, each in one launch; and a trade met on this
+// rank filled directly, with no buffer between.
 #ifndef __faceBuffers_H__
 #define __faceBuffers_H__
 
@@ -51,6 +52,50 @@ struct haloRecv {
   haloOut view;
   bufferIn buffer;
   int ndim;
+};
+
+// what python hands a direct fill: our block array and the same array of the
+// block across (the face's partner column), the partner's face and how it
+// would have turned its plane for us, and how far past the face the
+// planes start
+struct directHaloFill {
+  haloOut view;
+  haloIn theirs;
+  perEntry<int> partnerNface, partnerTranspose, partnerFlip0, partnerFlip1;
+  int skip, ndim;
+};
+// A trade met on this rank, with no buffer between: a thread stands on one
+// of our halo cells and reads the interior cell across that the partner
+// would have packed for it, at the position its pack would have turned
+// ours to
+template <int R> struct directFilling {
+  haloOut view;
+  haloIn theirs;
+  perEntry<int> partnerNface, partnerTranspose, partnerFlip0, partnerFlip1;
+  int skip;
+  KOKKOS_INLINE_FUNCTION void operator()() const {
+    const int g = view.p.g, a = view.p.i, b = view.p.j;
+    // our face plane's extents, what the buffer's would have been
+    int n[2], d = 0;
+    for (int k = 0; k < 3; k++)
+      if (k != view.axis())
+        n[d++] = view.extent(k) - 2 * ng;
+    const int aa = partnerFlip0() ? n[0] - 1 - a : a;
+    const int bb = partnerFlip1() ? n[1] - 1 - b : b;
+    haloIn src = theirs;
+    src.p.nface = partnerNface();
+    src.p.i = partnerTranspose() ? bb : aa;
+    src.p.j = partnerTranspose() ? aa : bb;
+    const int layer = g + skip;
+    const int nl = view.extent(3), nm = R == 5 ? view.extent(4) : 1;
+    for (int m = 0; m < nm; m++)
+      for (int l = 0; l < nl; l++) {
+        if constexpr (R == 4)
+          view.L(l) = src.at(layer, l);
+        else
+          view.L(l, m) = src.at(layer, l, m);
+      }
+  }
 };
 template <int R> struct unpacking {
   haloOut view;

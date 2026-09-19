@@ -6,8 +6,8 @@
 // renormalized, then the case's eos for the rest.
 PG_RANGE(cellCenters)
 struct stateFromPrims {
-  cellCenterIn prims;
-  cellCenterOut Q, q, qh;
+  cellVecIn prims;
+  cellVecOut Q, q, qh;
   KOKKOS_INLINE_FUNCTION void operator()() const {
     const fpdtype p = prims(0);
     const fpdtype u = prims(1);

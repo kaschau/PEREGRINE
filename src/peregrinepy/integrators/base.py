@@ -4,6 +4,8 @@ the solver it steps and a controller that sizes each step. It declares
 what it alone needs, block arrays and kernels, and says its graphs in
 names, the way the simulator does; the solver makes them."""
 
+import numpy as np
+
 from ..graph import Graph, LaunchNode
 from ..kernel import CellCenterKernel
 from ..multiBlock.arrays import CellCenterArray
@@ -37,6 +39,9 @@ class BaseIntegrator:
         # of one, for a combination whose derivative already carries the
         # step: rk4's sum, and every pseudo time stage
         self.dtOnDevice = solver.backend.allocate((1,), name="dt")
+        # the step's host copy, kept: it is copied in behind the queued
+        # kernels without waiting for them, so it has to stay
+        self.dtHost = np.zeros(1, solver.backend.fpdtype)
         self.one = solver.backend.allocate((1,), name="one")
         self.one.set([1.0])
 
@@ -108,7 +113,10 @@ class BaseIntegrator:
         """Takes one step of :dt:: the scheme's stages, and the solver's
         clock and count move on."""
         self.dt = dt
-        self.dtOnDevice.set([dt])
+        # queued behind the last step's kernels, ahead of this one's: no
+        # wait, which would drain the device before every step
+        self.dtHost[0] = dt
+        self.dtOnDevice.set(self.dtHost, wait=False)
         self.advance(dt)
         self.solver.nrt += 1
         self.solver.tme += dt

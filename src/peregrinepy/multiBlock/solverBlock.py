@@ -5,7 +5,7 @@ from .solverFace import solverFace
 
 class solverBlock(restartBlock):
     """A block of a solver: it puts its arrays in the tables the launches
-    read, and settles its trade with its neighbors."""
+    read."""
 
     def __init__(self, nblki, mb):
         # the solver this block belongs to
@@ -23,11 +23,3 @@ class solverBlock(restartBlock):
 
     def _newFace(self, nface):
         return solverFace(nface, self)
-
-    def alignBlockFaces(self):
-        """Settles how each neighbor's plane lies against the block face it
-        meets."""
-        for face in self.faces:
-            if face.neighbor is None:
-                continue
-            face.alignToNeighbor()

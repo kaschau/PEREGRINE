@@ -7,9 +7,9 @@ from .gridFace import gridFace
 class solverFace(gridFace):
     """A block face of a solver block. It owns only what only a block face
     does: its boundary condition and the values it holds on the face, and
-    its trade with the block across it -- how that block's plane lies
-    against this one and the buffers the trade travels in, which the halo
-    exchange makes. Everything else it reaches on its block."""
+    the buffers a trade with another rank travels in, which the halo
+    exchange makes. How the block across it is joined is the topology's;
+    everything else it reaches on its block."""
 
     def __init__(self, nface, blk):
         # its arrays are made where the block's are, as deep a halo
@@ -23,10 +23,6 @@ class solverFace(gridFace):
         for name in blk.mb.exchangedArrays:
             setattr(self, f"sendBuffer_{name}", None)
             setattr(self, f"recvBuffer_{name}", None)
-        # how our neighbor's face plane lies against ours: whether its two
-        # axes cross ours, and which of them run backwards
-        self._transposed = None
-        self._flipped = None
 
     ###########################################################################
     # The planes of a block array either side of this face, as the kernels
@@ -70,33 +66,38 @@ class solverFace(gridFace):
         """Gives what this block face puts in a table under a name: its own
         -- which side of its block it is, how its neighbor's plane lies,
         its values, its buffers, its rotation, the block's area vectors on
-        its axis as S -- else whatever its block puts."""
+        its axis as S -- else whatever its block puts; under a name ending
+        in @neighborFace, what the face it meets on this rank puts under
+        the name, and on a face that meets none nothing: no array, or zero
+        of a value."""
+        name, _, across = name.partition("@")
+        if across:
+            theirs = self.blk.mb.neighborFace(self)
+            if theirs:
+                return theirs.tableValue(name)
+            return (
+                0
+                if isinstance(self.tableValue(name), (bool, int, np.integer))
+                else None
+            )
         own = getattr(self, name, None)
         return own if own is not None else self.blk.tableValue(name)
 
+    # how the neighbor's face plane lies against ours, as the pack kernel
+    # takes it
     @property
     def transpose(self):
-        """Says whether the neighbor's face axes cross ours, as the pack
-        kernel takes it."""
-        return int(bool(self._transposed))
+        return int(self.transposed)
 
     @property
     def flip0(self):
-        return int(0 in (self._flipped or ()))
+        return int(0 in self.flipped)
 
     @property
     def flip1(self):
-        return int(1 in (self._flipped or ()))
+        return int(1 in self.flipped)
 
     @property
     def S(self):
         """Gives the block's cell-face area vectors of this face's axis."""
         return getattr(self.blk, f"{self.direction}S")
-
-    ###########################################################################
-    # Talking to our neighbor
-    ###########################################################################
-    def alignToNeighbor(self):
-        """Settles how the neighbor's plane lies against ours: which of our
-        two face axes it reads first, and which way round it reads each."""
-        self._transposed, self._flipped = self.neighborPlaneAlignment

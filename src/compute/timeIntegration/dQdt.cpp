@@ -5,8 +5,8 @@
 
 PG_RANGE(cellCenters, components = ne)
 struct dQdt {
-  cellCenterIn Q, Qn, Qnm1;
-  cellCenterInOut dQ;
+  cellVecIn Q, Qn, Qnm1;
+  cellVecInOut dQ;
   caseIn dt;
   KOKKOS_INLINE_FUNCTION void operator()(const int l) const {
     // the fpdtype time derivative, a source in pseudo time

@@ -8,9 +8,9 @@
 // The arrays are ne wide.
 PG_RANGE(elements, components = ne)
 struct axpby {
-  cellCenterInOut A;
+  cellVecInOut A;
   fpdtype a, b;
-  cellCenterIn B;
+  cellVecIn B;
   caseIn dt;
   KOKKOS_INLINE_FUNCTION void operator()(const int i) const {
     A[i] = a * A[i] + b * dt() * B[i];

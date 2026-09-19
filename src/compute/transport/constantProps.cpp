@@ -9,8 +9,8 @@
 // mean; the species diffusion coefficients from the case's diffusion model.
 PG_RANGE(cellCenters)
 struct constantProps {
-  cellCenterIn Q, q, qh;
-  cellCenterOut qt;
+  cellVecIn Q, q, qh;
+  cellVecOut qt;
   KOKKOS_INLINE_FUNCTION void operator()() const {
     // the mole fractions off the conserved state
     fpdtype X[ns];

@@ -21,8 +21,8 @@ struct jamesonPressure : PG_RECONSTRUCT {
     return fabs(pp - 2.0 * p + pm) / fabs(pp + 2.0 * p + pm);
   }
   KOKKOS_INLINE_FUNCTION fpdtype weight() const {
-    const fpdtype pLL = this->qL(-N, 0), pL = this->qL(0), pR = this->qR(0),
-                  pRR = this->qR(+N, 0);
+    const fpdtype pLL = this->q.LL(0), pL = this->q.L(0), pR = this->q.R(0),
+                  pRR = this->q.RR(0);
     const fpdtype s = fmax(sensor(pLL, pL, pR), sensor(pL, pR, pRR));
     return fmin(PG_JAMESONPRESSURE_GAIN * s, 1.0);
   }

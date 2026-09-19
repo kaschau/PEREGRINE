@@ -13,7 +13,7 @@ struct KEPaEC {
   template <class Ca, class Cb, class Out>
   static KOKKOS_INLINE_FUNCTION void
   twoPoint(const Ca &Qa, const Ca &qa, const Ca &qha, const Cb &Qb,
-           const Cb &qb, const Cb &qhb, const cellFaceIn &A, const Out &F) {
+           const Cb &qb, const Cb &qhb, const faceVecIn &A, const Out &F) {
     // each side's velocity, off its conserved state
     const fpdtype rhoinvL = 1.0 / Qa(0), rhoinvR = 1.0 / Qb(0);
     const fpdtype uL = Qa(1) * rhoinvL, vL = Qa(2) * rhoinvL,
@@ -65,11 +65,11 @@ struct KEPaEC {
     }
   }
   template <class Recon, class Out>
-  static KOKKOS_INLINE_FUNCTION void flux(const Recon &r, const cellFaceIn &A,
+  static KOKKOS_INLINE_FUNCTION void flux(const Recon &r, const faceVecIn &A,
                                           const Out &F) {
     static_assert(std::is_base_of_v<piecewiseConstant, Recon>,
                   "KEPaEC is a central scheme: it takes no reconstruction");
-    twoPoint(r.QL, r.qL, r.qhL, r.QR, r.qR, r.qhR, A, F);
+    twoPoint(r.Q.L(), r.q.L(), r.qh.L(), r.Q.R(), r.q.R(), r.qh.R(), A, F);
   }
 };
 

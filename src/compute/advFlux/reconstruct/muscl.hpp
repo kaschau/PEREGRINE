@@ -13,12 +13,9 @@
 PG_STENCIL(2);
 
 struct muscl {
-  cellCenterLL QLL, qhLL;
-  cellCenterL QL, qL, qhL;
-  cellCenterR QR, qR, qhR;
-  cellCenterRR QRR, qRR, qhRR;
-  cellFaceOut F;
-  cellFaceIn A;
+  cellStradVecIn Q, q, qh;
+  faceVecOut F;
+  faceVecIn A;
 
   // the limiter's phi of the slope ratio, guarding the flat side: a slope
   // against none is the limiter's limit, none against none is none
@@ -48,28 +45,29 @@ struct muscl {
   };
 
   KOKKOS_INLINE_FUNCTION sides states() const {
-    const fpdtype rhoLL = QLL(0), rhoL = QL(0), rhoR = QR(0), rhoRR = QRR(0);
+    const fpdtype rhoLL = Q.LL(0), rhoL = Q.L(0), rhoR = Q.R(0),
+                  rhoRR = Q.RR(0);
     sides s{{}, {}, slope(rhoLL, rhoL, rhoR, rhoRR)};
     faceState &L = s.L, &R = s.R;
     L.rho = s.rho.left(rhoL, rhoR);
     R.rho = s.rho.right(rhoR, rhoRR);
     fpdtype *uL[] = {&L.u, &L.v, &L.w}, *uR[] = {&R.u, &R.v, &R.w};
     for (int d = 0; d < 3; d++) {
-      const fpdtype vLL = QLL(1 + d) / rhoLL, vL = QL(1 + d) / rhoL,
-                    vR = QR(1 + d) / rhoR, vRR = QRR(1 + d) / rhoRR;
+      const fpdtype vLL = Q.LL(1 + d) / rhoLL, vL = Q.L(1 + d) / rhoL,
+                    vR = Q.R(1 + d) / rhoR, vRR = Q.RR(1 + d) / rhoRR;
       const slope u(vLL, vL, vR, vRR);
       *uL[d] = u.left(vL, vR);
       *uR[d] = u.right(vR, vRR);
     }
     // the internal energy per mass, whose limiter p and c take too
-    const slope e(qhLL(4) / rhoLL, qhL(4) / rhoL, qhR(4) / rhoR,
-                  qhRR(4) / rhoRR);
-    const fpdtype eL = e.left(qhL(4) / rhoL, qhR(4) / rhoR),
-                  eR = e.right(qhR(4) / rhoR, qhRR(4) / rhoRR);
-    L.p = e.left(qL(0), qR(0));
-    R.p = e.right(qR(0), qRR(0));
-    L.c = e.left(qhL(3), qhR(3));
-    R.c = e.right(qhR(3), qhRR(3));
+    const slope e(qh.LL(4) / rhoLL, qh.L(4) / rhoL, qh.R(4) / rhoR,
+                  qh.RR(4) / rhoRR);
+    const fpdtype eL = e.left(qh.L(4) / rhoL, qh.R(4) / rhoR),
+                  eR = e.right(qh.R(4) / rhoR, qh.RR(4) / rhoRR);
+    L.p = e.left(q.L(0), q.R(0));
+    R.p = e.right(q.R(0), q.RR(0));
+    L.c = e.left(qh.L(3), qh.R(3));
+    R.c = e.right(qh.R(3), qh.RR(3));
     L.rhou = L.rho * L.u, L.rhov = L.rho * L.v, L.rhow = L.rho * L.w;
     R.rhou = R.rho * R.u, R.rhov = R.rho * R.v, R.rhow = R.rho * R.w;
     L.E = L.rho * (eL + 0.5 * (L.u * L.u + L.v * L.v + L.w * L.w));
@@ -78,8 +76,8 @@ struct muscl {
   }
   KOKKOS_INLINE_FUNCTION void species(const sides &s, int n, fpdtype &L,
                                       fpdtype &R) const {
-    L = s.rho.left(QL(5 + n), QR(5 + n));
-    R = s.rho.right(QR(5 + n), QRR(5 + n));
+    L = s.rho.left(Q.L(5 + n), Q.R(5 + n));
+    R = s.rho.right(Q.R(5 + n), Q.RR(5 + n));
   }
 };
 
