@@ -31,17 +31,22 @@ class grid(topology):
         # cell centers are as much as a block with no solution on it can work out
         self.declArray("cells", CellCenterArray, components=3)
 
-    def declArray(self, name, kind, components=(), *, exchanged=False, **rangeArgs):
+    def declArray(
+        self, name, kind, components=(), *, exchanged=False, vectors=None, **rangeArgs
+    ):
         """Declares an array every block holds: its kind (a block array
         class) gives the shape and the ranges, the components what sits at
         each point of it, a cell-face kind takes its axis; :exchanged: says
         whether its halos are traded between blocks, True for the whole
-        halo or the planes to trade."""
+        halo or the planes to trade, and :vectors: which of an exchanged
+        array's components a rotational periodic turns as it lands: the
+        component a 3-vector starts at, or "rows" when every slot of a
+        two-index array is one."""
         if isinstance(components, int):
             components = (components,)
         self.arrays[name] = (kind, tuple(components), rangeArgs)
         if exchanged:
-            self.exchangedArrays[name] = exchanged
+            self.exchangedArrays[name] = (exchanged, vectors)
 
     def declMetric(self, name):
         """Declares one of the metrics a grid block can make, so every

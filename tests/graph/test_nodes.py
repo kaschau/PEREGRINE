@@ -36,13 +36,13 @@ def test_launchNodeBindsEveryBlockOverTheRange(my_setup):
 
 def test_bcNodeTilesOnlyTheFacesCarryingEachType(my_setup):
     mb = solver()
-    node = BCNode(mb.kernels["bcs euler"], "all").bind(*mb.means)
+    node = BCNode(mb.kernels["bcs euler"]).bind(*mb.means)
     (stage,) = node.stages
     byType = {kernel.bcType: tiling.count for kernel, _, tiling in stage}
     # every outer face is a no-slip wall; the two interior faces are none
     assert byType["adiabaticNoSlipWall"] == 10
     assert all(count == 0 for t, count in byType.items() if t != "adiabaticNoSlipWall")
-    assert node.name == "bcs euler all"
+    assert node.name == "bcs euler"
 
 
 def test_redoNodeCoversRemoteFacesOnly(my_setup):

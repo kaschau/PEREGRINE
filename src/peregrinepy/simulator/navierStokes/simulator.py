@@ -31,9 +31,10 @@ class NavierStokesSimulator(EulerSimulator):
     def arrays(self):
         ne, ns = self.ne, self.mixture.ns
         arrays = super().arrays()
-        # gradients of u, v, w, T, Y; one halo plane exchanged
+        # gradients of u, v, w, T, Y, every one a vector; one halo plane
+        # exchanged
         arrays["grads"] = dict(
-            kind=CellCenterArray, components=(ne - 1, 3), exchanged=1
+            kind=CellCenterArray, components=(ne - 1, 3), exchanged=1, vectors="rows"
         )
         # transport properties
         arrays["qt"] = dict(kind=CellCenterArray, components=2 + ns)
@@ -64,13 +65,10 @@ class NavierStokesSimulator(EulerSimulator):
             "Q",
             during=[
                 LaunchNode(k["stateFromCons"], "allLocal"),
-                BCNode(k["bcs euler"], "onRank"),
+                BCNode(k["bcs euler"]),
                 LaunchNode(k["trans"], "allLocal"),
             ],
-            after=[
-                BCNode(k["bcs euler"], "offRank"),
-                RedoNode(k["stateFromCons"], k["trans"]),
-            ],
+            after=[RedoNode(k["stateFromCons"], k["trans"])],
         )
         stale = [g for g in (k["advFlux"], k["diffFlux"]) if g.reads("grads")]
         flight = lambda g: LaunchNode(g, "interiorLocal" if g in stale else "interior")
@@ -81,11 +79,10 @@ class NavierStokesSimulator(EulerSimulator):
             during=[
                 *self.sourceNodes(dt),
                 flight(k["advFlux"]),
-                BCNode(k["bcs postDqDxyz"], "onRank"),
+                BCNode(k["bcs postDqDxyz"]),
                 flight(k["diffFlux"]),
             ],
             after=[
-                BCNode(k["bcs postDqDxyz"], "offRank"),
                 RedoNode(*stale),
                 LaunchNode(k["applyFlux"], "interior"),
             ],

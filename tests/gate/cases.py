@@ -24,6 +24,11 @@ cases = {
     "navierStokes rk3 CH4_O2 binary": dict(
         physics="navierStokes", gas="CH4_O2", integrator="rk3", diffusion="binary"
     ),
+    # reacting: the production rates as the source, which nothing else here
+    # exercises
+    "navierStokes rk3 CH4_O2 explicit": dict(
+        physics="navierStokes", gas="CH4_O2", integrator="rk3", chemistry="explicit"
+    ),
 }
 
 
@@ -38,14 +43,19 @@ def mesh():
     )
 
 
-def build(physics, gas, integrator, diffusion=None, ranks=(1, 1), grid=None):
+def build(
+    physics, gas, integrator, diffusion=None, chemistry=None, ranks=(1, 1), grid=None
+):
     """Makes a case on a 2x2x1 box periodic in i and k, or on a grid file
     partitioned for the ranks, its state perturbed by block; :diffusion:
-    names a diffusion model over the config's."""
+    names a diffusion model over the config's, :chemistry: a finite-rate
+    chemistry."""
     config = pg.files.configFile()
     configure(config, gas, physics)
     if diffusion:
         config["simulation"]["diffusion"] = diffusion
+    if chemistry:
+        config["simulation"]["chemistry"] = chemistry
     config["RHS"]["primaryAdvFlux"] = "KEPaEC"
     config["timeIntegration"]["integrator"] = integrator
     config["timeIntegration"]["dt"] = 1e-9

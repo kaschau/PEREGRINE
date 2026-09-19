@@ -109,7 +109,9 @@ class EulerSimulator(BaseSimulator):
         for axis, d in enumerate("ijk"):
             arrays[f"{d}F"] = dict(kind=CellFaceArray, components=ne, axis=axis)
         # the conserved state
-        arrays["Q"] = dict(kind=CellCenterArray, components=ne, exchanged=True)
+        arrays["Q"] = dict(
+            kind=CellCenterArray, components=ne, exchanged=True, vectors=1
+        )
         # time derivative (RHS)
         arrays["dQ"] = dict(kind=CellCenterArray, components=ne)
         # thermodynamic state, p and T
@@ -205,9 +207,9 @@ class EulerSimulator(BaseSimulator):
             "Q",
             during=[
                 LaunchNode(k["stateFromCons"], "allLocal"),
-                BCNode(k["bcs euler"], "onRank"),
+                BCNode(k["bcs euler"]),
             ],
-            after=[BCNode(k["bcs euler"], "offRank"), RedoNode(k["stateFromCons"])],
+            after=[RedoNode(k["stateFromCons"])],
         )
         rhs = Graph(
             "rhs",

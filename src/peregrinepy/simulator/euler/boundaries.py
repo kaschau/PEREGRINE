@@ -1,7 +1,7 @@
 """The boundaries of the Euler equations: a condition an inviscid flow
 can take -- a slip wall, an inlet, an exit -- with the values each reads
-out of its config entry, and the turned periodic, whose body turns what
-the exchange brought."""
+out of its config entry. A periodic is not one: what it does to its halo,
+the exchange does as the halo lands."""
 
 from ..boundaries import BaseBC, InletBC, MassFluxInletBC
 
@@ -47,12 +47,3 @@ class ConstantPressureSubsonicExit(BaseEulerBC):
 
 class SupersonicExit(BaseEulerBC):
     bcType = "supersonicExit"
-
-
-class PeriodicRot(BaseEulerBC):
-    """Meets a block turned onto it, so its body turns every vector in the
-    halo after the exchange; how far is the grid's to say, not the
-    case's. The only boundary with a neighbor that has a body: an interior
-    or translated periodic face is the exchange alone."""
-
-    bcType = "periodicRot"

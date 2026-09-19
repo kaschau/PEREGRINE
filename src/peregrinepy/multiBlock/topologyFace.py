@@ -152,6 +152,12 @@ class topologyFace:
         return "ijk"[self.myAxis]
 
     @property
+    def turned(self):
+        """Whether a halo arriving through this face is turned: a
+        rotational periodic."""
+        return self.bcType == "periodicRot"
+
+    @property
     def connOffRank(self):
         """Whether the block across this face is on another rank."""
         return self.neighbor is not None and self.commRank != getCommRankSize()[1]

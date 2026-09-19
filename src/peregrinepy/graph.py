@@ -69,31 +69,22 @@ class LaunchNode(BaseLaunchNode):
 
 
 class BCNode(BaseLaunchNode):
-    """The boundary conditions at one hook -- a group of bc kernels -- over
-    all the block faces, the ones whose halos are on this rank (onRank),
-    or the ones connected to another rank (offRank), whose halos a message
-    brings: each kernel over the halo cells behind the faces carrying its
-    bcType, as one stage since their faces are disjoint."""
+    """The boundary conditions at one hook -- a group of bc kernels -- each
+    over the halo cells behind the block faces carrying its bcType, as one
+    stage since their faces are disjoint. No boundary waits on a message:
+    a periodic, the one connected face with something to do to its halo,
+    is done by the exchange as the halo lands."""
 
-    wheres = ("all", "onRank", "offRank")
-
-    def __init__(self, group, where="all"):
-        if where not in self.wheres:
-            raise ValueError(f"a bc node runs over {self.wheres}, not {where!r}")
-        super().__init__(f"{group.__name__} {where}")
-        self.group, self.where = group, where
+    def __init__(self, group):
+        super().__init__(group.__name__)
+        self.group = group
 
     def _stages(self, blockTable, blockFaceTable, exchanges):
         table = blockFaceTable
-        faces = [
-            f
-            for f in table.entries
-            if self.where == "all" or f.connOffRank == (self.where == "offRank")
-        ]
         stage = []
         for kernel in self.group.kernels:
-            mine = [f for f in faces if f.bcType == kernel.bcType]
-            key = ("halo", kernel.bcType, self.where)
+            mine = [f for f in table.entries if f.bcType == kernel.bcType]
+            key = ("halo", kernel.bcType)
             stage.append((kernel, table, table.tilingOver(key, mine, kernel.behind)))
         return [stage]
 
@@ -137,40 +128,59 @@ class PackNode(BaseLaunchNode):
         return [[(exchange.pack, blockFaceTable, exchange.tilings["pack"])]]
 
 
-class UnpackNode(BaseLaunchNode):
-    """The unpack of one array's halos behind the block faces met on
+class BaseLandingNode(BaseLaunchNode):
+    """A launch that lands one array's halos behind some block faces, then
+    as a stage after it turns the vectors of those landed through a
+    rotational periodic: what a periodic does to its halo is the
+    exchange's. Each stage runs with its own scalars, the exchange's for
+    its kernel."""
+
+    def __init__(self, array):
+        super().__init__(f"{self.landing} {array}")
+        self.array = array
+
+    def _stages(self, blockTable, blockFaceTable, exchanges):
+        exchange = exchanges[self.array]
+        kernel, tiling, scalars = self._landing(exchange)
+        self.scalars = [scalars]
+        stages = [[(kernel, blockFaceTable, tiling)]]
+        if exchange.vectors is not None:
+            self.scalars.append(exchange.turnArgs)
+            turn = exchange.tilings[self.turning]
+            stages.append([(exchange.turnHalo, blockFaceTable, turn)])
+        return stages
+
+    def run(self, **given):
+        for stage, scalars in zip(self.stages, self.scalars):
+            lib.pgGraphFork()
+            for kernel, table, tiling in stage:
+                lib.pgGraphSibling()
+                kernel(table, tiling, **{**scalars, **given})
+            lib.pgGraphJoin()
+
+
+class UnpackNode(BaseLandingNode):
+    """The unpack of one array's halos behind the block faces connected to
     another rank, from what their messages brought."""
 
-    def __init__(self, array):
-        super().__init__(f"unpack {array}")
-        self.array = array
+    landing, turning = "unpack", "turnUnpacked"
 
-    def _stages(self, blockTable, blockFaceTable, exchanges):
-        exchange = exchanges[self.array]
-        self.fixed = exchange.unpackArgs
-        return [[(exchange.unpack, blockFaceTable, exchange.tilings["unpack"])]]
+    def _landing(self, exchange):
+        return exchange.unpack, exchange.tilings["unpack"], exchange.unpackArgs
 
 
-class DirectHaloFillNode(BaseLaunchNode):
-    """The direct fill of one array's halos behind the block faces met on
-    this rank, from the blocks across."""
+class DirectHaloFillNode(BaseLandingNode):
+    """The direct fill of one array's halos behind the block faces
+    connected on this rank, from the blocks across."""
 
-    def __init__(self, array):
-        super().__init__(f"directHaloFill {array}")
-        self.array = array
+    landing, turning = "directHaloFill", "turnFilled"
 
-    def _stages(self, blockTable, blockFaceTable, exchanges):
-        exchange = exchanges[self.array]
-        self.fixed = exchange.directHaloFillArgs
-        return [
-            [
-                (
-                    exchange.directHaloFill,
-                    blockFaceTable,
-                    exchange.tilings["directHaloFill"],
-                )
-            ]
-        ]
+    def _landing(self, exchange):
+        return (
+            exchange.directHaloFill,
+            exchange.tilings["directHaloFill"],
+            exchange.directHaloFillArgs,
+        )
 
 
 class Graph:

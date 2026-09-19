@@ -35,8 +35,8 @@ def test_eulerLaysOutItsGraphs(my_setup):
     mb = _solver("euler")
     assert _nodes(mb, "consistify") == [
         ["pack Q", "directHaloFill Q"],
-        ["stateFromCons", "bcs euler onRank"],
-        ["unpack Q", "bcs euler offRank", "redo stateFromCons"],
+        ["stateFromCons", "bcs euler"],
+        ["unpack Q", "redo stateFromCons"],
     ]
     assert _nodes(mb, "rhs") == [["KEPaEC", "applyFlux"]]
 
@@ -45,18 +45,13 @@ def test_navierStokesLaysOutItsGraphs(my_setup):
     mb = _solver("navierStokes")
     assert _nodes(mb, "consistify") == [
         ["pack Q", "directHaloFill Q"],
-        ["stateFromCons", "bcs euler onRank", "constantProps"],
-        ["unpack Q", "bcs euler offRank", "redo stateFromCons constantProps"],
+        ["stateFromCons", "bcs euler", "constantProps"],
+        ["unpack Q", "redo stateFromCons constantProps"],
     ]
     # the gradients go out; everything runs while they fly; what a message
     # brings is done again after it lands
     assert _nodes(mb, "rhs") == [
-        ["bcs preDqDxyz all", "dq2FD", "pack grads", "directHaloFill grads"],
-        ["KEPaEC", "bcs postDqDxyz onRank", "alphaDampingFlux"],
-        [
-            "unpack grads",
-            "bcs postDqDxyz offRank",
-            "redo alphaDampingFlux",
-            "applyFlux",
-        ],
+        ["bcs preDqDxyz", "dq2FD", "pack grads", "directHaloFill grads"],
+        ["KEPaEC", "bcs postDqDxyz", "alphaDampingFlux"],
+        ["unpack grads", "redo alphaDampingFlux", "applyFlux"],
     ]

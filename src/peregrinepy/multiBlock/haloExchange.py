@@ -41,17 +41,31 @@ class BaseHaloExchange:
     kind = None
 
     def __init__(
-        self, name, faces, connOnRank, connOffRank, depth, pack, unpack, directHaloFill
+        self,
+        name,
+        faces,
+        connOnRank,
+        connOffRank,
+        depth,
+        vectors,
+        pack,
+        unpack,
+        directHaloFill,
+        turnHalo,
     ):
         """Makes the exchange of the array :name: over the block faces of a
         table (:faces:, its entries): :connOnRank: the faces connected on
         this rank, :connOffRank: the ones connected to another; :depth: the
-        planes traded, ng for a state, one for a gradient;
+        planes traded, ng for a state, one for a gradient; :vectors: which
+        components a rotational periodic turns as the halo lands, as the
+        array declared them;
         :pack: and :unpack: the kernels that move the halos through the
         buffers, :directHaloFill: the one that moves a local trade's directly
-        across, which only a trade within the rank can."""
+        across, which only a trade within the rank can, :turnHalo: the one
+        that turns a landed halo's vectors on a rotational periodic."""
         self.name, self.depth = name, depth
         self.pack, self.unpack, self.directHaloFill = pack, unpack, directHaloFill
+        self.turnHalo = turnHalo
         self.comm, self.rank, self.size = getCommRankSize()
         self.faces = faces
         # the slots on a face its buffers of this array sit in
@@ -63,6 +77,11 @@ class BaseHaloExchange:
         self.components = array.components
         self.skip = array.range.exchangeStartPlane
         self.ndim = len(array.shape)
+        # as the turn kernel takes it: the component a 3-vector starts at,
+        # or, for a two-index array, 1 for every slot; None turns nothing
+        self.vectors = (
+            None if vectors is None else 1 if vectors == "rows" else int(vectors)
+        )
         self.backend = blk.backend
         # a face with its neighbor elsewhere has its buffers in that rank's pools
         self.ranks = sorted({f.commRank for f in connOffRank})
@@ -75,7 +94,8 @@ class BaseHaloExchange:
         self.recvs, self.sends = {}, {}
         # what the graph launches, over the faces each is for: the direct
         # fill over the ones connected on this rank, the pack and the
-        # unpack over the ones connected to another
+        # unpack over the ones connected to another, and the turn over the
+        # rotational periodics among each once their halo has landed
         self.tilings = {
             "directHaloFill": self._tiling("directHaloFill", connOnRank, self._planes),
             "pack": self._tiling(
@@ -83,6 +103,12 @@ class BaseHaloExchange:
             ),
             "unpack": self._tiling(
                 "unpack", connOffRank, lambda f: getattr(f, self.recvBuffer).shape[:3]
+            ),
+            "turnFilled": self._tiling(
+                "turnFilled", [f for f in connOnRank if f.turned], self._planes
+            ),
+            "turnUnpacked": self._tiling(
+                "turnUnpacked", [f for f in connOffRank if f.turned], self._planes
             ),
         }
         self.directHaloFillArgs = dict(
@@ -92,6 +118,7 @@ class BaseHaloExchange:
             view=name, buffer=self.sendBuffer, skip=self.skip, ndim=self.ndim
         )
         self.unpackArgs = dict(view=name, buffer=self.recvBuffer, ndim=self.ndim)
+        self.turnArgs = dict(view=name, vectors=self.vectors, ndim=self.ndim)
 
     def _planes(self, face):
         """Gives the planes a face trades, over its block face proper: the

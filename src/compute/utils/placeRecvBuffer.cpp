@@ -1,6 +1,7 @@
 #include "faceBuffers.hpp"
 
-// Every trading face's halo, from what its neighbor packed, in one launch.
+// Every face's halo connected to another rank, from what its neighbor
+// packed, in one launch.
 PG_RANGE(bufferPlanes)
 PG_ABI void pgPlaceRecvBuffer(const haloRecv &k, const pgTiling &t,
                               const int *nface) {

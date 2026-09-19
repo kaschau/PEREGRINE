@@ -50,15 +50,6 @@ class SupersonicExit(BaseNSBC):
     bcType = "supersonicExit"
 
 
-class PeriodicRot(BaseNSBC):
-    """Meets a block turned onto it, so its body turns every vector in the
-    halo after the exchange; how far is the grid's to say, not the
-    case's. The only boundary with a neighbor that has a body: an interior
-    or translated periodic face is the exchange alone."""
-
-    bcType = "periodicRot"
-
-
 class AdiabaticNoSlipWall(BaseNSBC):
     bcType = "adiabaticNoSlipWall"
 

@@ -92,7 +92,7 @@ def test_graphsAreSaidInNamesWithoutASolver():
     assert isinstance(rhs, ExchangeGraphs) and rhs.array == "grads"
     # the redo after a message covers what ran while it flew
     kinds = [type(n) for n in rhs.after]
-    assert kinds == [BCNode, RedoNode, LaunchNode]
+    assert kinds == [RedoNode, LaunchNode]
     euler = simulation("euler")
     euler.declKernels()
     (rhs,) = euler.graphs(dt=None)["rhs"]

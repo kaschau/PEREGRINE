@@ -1,6 +1,8 @@
 // Packing every trading face's planes into its buffer turned onto the
 // neighbor's frame, and back, each in one launch; and a trade met on this
-// rank filled directly, with no buffer between.
+// rank filled directly, with no buffer between; and the halo behind a
+// rotational periodic face turned by the face's rotation once it has
+// landed.
 #ifndef __faceBuffers_H__
 #define __faceBuffers_H__
 
@@ -52,6 +54,41 @@ struct haloRecv {
   haloOut view;
   bufferIn buffer;
   int ndim;
+};
+
+// what python hands a turn: the block array, the face's rotation, and
+// which of the array's components are vectors: for an array of one index
+// per cell the component a 3-vector starts at, for one of two the last
+// index of every slot
+struct haloTurn {
+  haloInOut view;
+  plainIn rotation;
+  int vectors, ndim;
+};
+// The vectors of a halo cell behind a rotational periodic face, turned by
+// the face's rotation once the halo has landed: a periodic is the
+// topology's, and the exchange is where it acts.
+template <int R> struct turning {
+  haloInOut view;
+  plainIn rotation;
+  int vectors;
+  KOKKOS_INLINE_FUNCTION void operator()() const {
+    const auto turn = [&](auto at) {
+      fpdtype v[3];
+      for (int m = 0; m < 3; m++)
+        v[m] = at(m);
+      for (int r = 0; r < 3; r++)
+        at(r) = rotation(r, 0) * v[0] + rotation(r, 1) * v[1] +
+                rotation(r, 2) * v[2];
+    };
+    if constexpr (R == 4) {
+      turn([&](const int m) -> fpdtype & { return view.L(vectors + m); });
+    } else {
+      const int nl = view.extent(3);
+      for (int l = 0; l < nl; l++)
+        turn([&](const int m) -> fpdtype & { return view.L(l, m); });
+    }
+  }
 };
 
 // what python hands a direct fill: our block array and the same array of the

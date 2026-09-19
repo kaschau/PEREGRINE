@@ -89,8 +89,8 @@ class solver(restart):
 
     def _declKernels(self):
         """Takes the simulator's and the integrator's kernels by tag, with
-        the solver's own: the copy of a block array, and the pack, unpack
-        and direct fill of a halo exchange."""
+        the solver's own: the copy of a block array, and the pack, unpack,
+        direct fill and turn of a halo exchange."""
         self.kernels = {
             **self.simulator.declKernels(),
             **self.integrator.declKernels(),
@@ -108,6 +108,7 @@ class solver(restart):
                     "partnerFlip1": "flip1@neighborFace",
                 },
             ),
+            "turnHalo": HaloExchangeKernel("utils/turnHalo.cpp"),
         }
         for plugin in self.plugins.values():
             for tag, kernel in plugin.declKernels().items():
@@ -168,7 +169,8 @@ class solver(restart):
     def _declComm(self):
         """Makes a halo exchange, of the kind the config names, for every
         array declared exchanged: the whole halo, ng, unless the
-        declaration says fewer planes."""
+        declaration says fewer planes, turning the vectors it declares
+        where a periodic turns."""
         k, HaloExchange = self.kernels, multiBlock.getHaloExchange(self.config)
         self.exchanges = {
             name: HaloExchange(
@@ -177,11 +179,13 @@ class solver(restart):
                 self.connOnRankFaces,
                 self.connOffRankFaces,
                 self.ng if depth is True else depth,
+                vectors,
                 k["pack"],
                 k["unpack"],
                 k["directHaloFill"],
+                k["turnHalo"],
             )
-            for name, depth in self.exchangedArrays.items()
+            for name, (depth, vectors) in self.exchangedArrays.items()
         }
 
     ###########################################################################
@@ -317,11 +321,10 @@ class solver(restart):
     ###########################################################################
     # The boundary conditions, on the faces
     ###########################################################################
-    def applyBcs(self, bcHook, where="all"):
-        """Runs one bcHook now on the block faces :where: names -- all,
-        onRank or offRank -- the way the step does; a bcHook no kernel of
+    def applyBcs(self, bcHook):
+        """Runs one bcHook now, the way the step does; a bcHook no kernel of
         the case has runs nothing."""
-        BCNode(self.kernels[f"bcs {bcHook}"], where).bind(*self.means).run()
+        BCNode(self.kernels[f"bcs {bcHook}"]).bind(*self.means).run()
 
     ###########################################################################
     # Running, counts and the banner
