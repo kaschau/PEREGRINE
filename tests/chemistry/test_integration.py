@@ -3,24 +3,10 @@ integration that lands the state within the species' bounds -- one
 substep within the fastest species' way is the explicit source to the bit;
 past it the step is cut and every mass fraction stays in [0, 1]."""
 
-from pathlib import Path
-
-import cantera as ct
 import numpy as np
 import pytest
 
-from .cases import at, cell
-
-mechanism = "CH4_O2_FFCMY.yaml"
-ct.add_directory(
-    str(Path(__file__).parent / "../../src/peregrinepy/mixture/database/mechanisms")
-)
-
-
-def stoichiometric():
-    gas = ct.Solution(mechanism)
-    gas.set_equivalence_ratio(1.0, "CH4", "O2")
-    return gas.Y
+from .cases import at, canterasDelay, cell, mechanism, oursDelay, stoichiometric
 
 
 def test_oneSubstepWithinTheBoundIsTheExplicitSource(my_setup):
@@ -35,6 +21,40 @@ def test_oneSubstepWithinTheBoundIsTheExplicitSource(my_setup):
     explicit = cell(mechanism, "explicit", 10e5, 1800.0, Y, dt=dt)
     substepped = cell(mechanism, "substepped", 10e5, 1800.0, Y, dt=dt, maxSubSteps=1)
     assert np.array_equal(at(explicit, "dQ")[5:], at(substepped, "dQ")[5:])
+
+
+@pytest.mark.parametrize("pseudo", ["rk1", "rk3"])
+def test_pointImplicitDualTimeIgnitesWhereExplicitCannot(my_setup, pseudo):
+    # at dt 1e-7 the explicit rk3 step breaks (non-finite by 2.4e-6 s);
+    # dual time with the source's Jacobian in its pseudo system, each
+    # species' own entry and its temperature's, twenty pseudo steps a step
+    # and no low-Mach preconditioner, reaches 1900 K at a measured 32.1 us
+    # with rk1 and 31.8 us with rk3 pseudo steps, Cantera at 31.75 us
+    # (examples/dualTimeIgnition.py has the matrix; the species entries
+    # alone broke with rk1 and landed 40 to 65 percent late with the
+    # preconditioner on)
+    p0, T0, dt = 20e5, 1500.0, 1e-7
+    Y = stoichiometric()
+    theirs = canterasDelay(p0, T0, Y, 400.0)
+    explicit = cell(mechanism, "explicit", p0, T0, Y, dt=dt, cells=2)
+    assert oursDelay(explicit, dt, T0, 400.0, 30 * dt) is None
+    assert not np.isfinite(at(explicit, "q")).all()
+    implicit = cell(
+        mechanism,
+        "explicit",
+        p0,
+        T0,
+        Y,
+        dt=dt,
+        cells=2,
+        integrator="dualTime",
+        pseudoIntegrator=pseudo,
+        subIterations=20,
+        chemistryJacobian="diagonal",
+        lowMach=False,
+    )
+    ours = oursDelay(implicit, dt, T0, 400.0, 4 * theirs)
+    assert ours is not None and abs(ours / theirs - 1.0) < 0.05
 
 
 @pytest.mark.parametrize("maxSubSteps", [1, 10, 50])
@@ -62,22 +82,8 @@ def test_ignitionFollowsCantera(my_setup):
     # explicit at that step is NaN by 2.4e-6 s, and at dt 1e-7 the ten
     # substep cap throttles the source and ignition lands at 7.6e-5 s)
     p0, T0 = 20e5, 1500.0
-    gas = ct.Solution(mechanism)
-    gas.set_equivalence_ratio(1.0, "CH4", "O2")
-    gas.TP = T0, p0
-    Y = gas.Y
-    reactor = ct.IdealGasReactor(gas)
-    net = ct.ReactorNet([reactor])
-    t, theirs = 0.0, None
-    while theirs is None:
-        t = net.step()
-        if reactor.T > T0 + 400:
-            theirs = t
+    theirs = canterasDelay(p0, T0, stoichiometric(), 400.0)
     dt = 1e-8
-    mb = cell(mechanism, "substepped", p0, T0, Y, dt=dt, maxSubSteps=10)
-    ours = None
-    while ours is None and mb.tme < 4 * theirs:
-        mb.integrator.step(dt)
-        if at(mb, "q")[1] > T0 + 400:
-            ours = mb.tme
+    mb = cell(mechanism, "substepped", p0, T0, stoichiometric(), dt=dt, maxSubSteps=10)
+    ours = oursDelay(mb, dt, T0, 400.0, 4 * theirs)
     assert ours is not None and abs(ours / theirs - 1.0) < 0.01

@@ -31,13 +31,9 @@ struct CFLmax {
   iFaceStradVecIn iS;
   jFaceStradVecIn jS;
   kFaceStradVecIn kS;
-  dims d;
   KOKKOS_INLINE_FUNCTION void operator()(cfl3 &m) const {
-    // a direction one cell thick is not marched in
-    const fpdtype iMult = d->ni == 2 ? 0.0 : 1.0;
-    const fpdtype jMult = d->nj == 2 ? 0.0 : 1.0;
-    const fpdtype kMult = d->nk == 2 ? 0.0 : 1.0;
     fpdtype CFLA = m.a, CFLC = m.c, CFLR = m.r;
+    // the cell lengths; an axis not marched in is infinitely long
     const fpdtype &dI = dIJK(0);
     const fpdtype &dJ = dIJK(1);
     const fpdtype &dK = dIJK(2);
@@ -69,15 +65,15 @@ struct CFLmax {
                             pow(0.5 * (knz0 + knz1) * w, 2.0));
     const fpdtype &c = qh(3);
 
-    CFLA = fmax(CFLA, iMult * c / dI);
-    CFLC = fmax(CFLC, iMult * uI / dI);
-    CFLR = fmax(CFLR, iMult * (uI + c) / dI);
-    CFLA = fmax(CFLA, jMult * c / dJ);
-    CFLC = fmax(CFLC, jMult * uJ / dJ);
-    CFLR = fmax(CFLR, jMult * (uJ + c) / dJ);
-    CFLA = fmax(CFLA, kMult * c / dK);
-    CFLC = fmax(CFLC, kMult * uK / dK);
-    CFLR = fmax(CFLR, kMult * (uK + c) / dK);
+    CFLA = fmax(CFLA, c / dI);
+    CFLC = fmax(CFLC, uI / dI);
+    CFLR = fmax(CFLR, (uI + c) / dI);
+    CFLA = fmax(CFLA, c / dJ);
+    CFLC = fmax(CFLC, uJ / dJ);
+    CFLR = fmax(CFLR, (uJ + c) / dJ);
+    CFLA = fmax(CFLA, c / dK);
+    CFLC = fmax(CFLC, uK / dK);
+    CFLR = fmax(CFLR, (uK + c) / dK);
     m.a = CFLA, m.c = CFLC, m.r = CFLR;
   }
 };

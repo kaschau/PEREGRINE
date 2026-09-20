@@ -208,8 +208,9 @@ class ReactingMixture(Mixture):
         and reversibility, ln A, b and Ea/Ru of its rate and, for a falloff,
         of k0/kinf; Troe's centering terms resolved to +-exp(c0 + cT T +
         cTinv/T); the forward exponents, the net stoichiometry (and times
-        MW) and the third-body efficiencies' deviations from the default as
-        (species, value) rows padded with (0, 0), which cost a rate nothing.
+        MW), the reverse orders of a reversible reaction and the third-body
+        efficiencies' deviations from the default as (species, value) rows
+        padded with (0, 0), which cost a rate nothing.
         Mechanism-wide: the concentration floor of an absent species and
         the largest gain from a rate of progress to a production rate."""
         names = self.speciesNames
@@ -259,6 +260,14 @@ class ReactingMixture(Mixture):
             for sp, v in r["products"].items():
                 nu[sp] = nu.get(sp, 0.0) + v
             net.append([(index[sp], v) for sp, v in nu.items() if v != 0])
+        # the reverse orders of a reversible reaction, d ln(reverse) / d ln c:
+        # the forward orders plus the net stoichiometry, its products
+        rev = []
+        for r, f, n in zip(reactions, fwd, net):
+            order = {}
+            for k, v in f + n if r["reversible"] else []:
+                order[k] = order.get(k, 0.0) + v
+            rev.append([(k, v) for k, v in order.items() if v != 0])
         eff = [
             [
                 (index[sp], e - r["defaultEfficiency"])
@@ -276,6 +285,10 @@ class ReactingMixture(Mixture):
         )
         tables["netNu"] = self._padded([[v for _, v in row] for row in net])
         tables["netNuMW"] = self._padded([[v * MW[k] for k, v in row] for row in net])
+        tables["revSpecies"] = self._padded(
+            [[k for k, _ in row] for row in rev], np.int32
+        )
+        tables["revExponent"] = self._padded([[v for _, v in row] for row in rev])
         tables["nuTotal"] = np.array([sum(v for _, v in row) for row in net])
         tables["effSpecies"] = self._padded(
             [[k for k, _ in row] for row in eff], np.int32

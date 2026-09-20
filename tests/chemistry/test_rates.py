@@ -3,17 +3,11 @@ constants to rounding (thermo-free), the net rates to the tolerance the
 eos's refit thermo sets for the equilibrium constants, and mass
 conservation."""
 
-from pathlib import Path
-
 import cantera as ct
 import numpy as np
 import pytest
 
 from .cases import at, cell, randomState
-
-ct.add_directory(
-    str(Path(__file__).parent / "../../src/peregrinepy/mixture/database/mechanisms")
-)
 
 
 @pytest.mark.parametrize(
@@ -60,6 +54,17 @@ def test_theRatesAreCanteras(my_setup, mechanism, within):
             np.abs(ours / gas.forward_rate_constants[np.array(kept)][plain] - 1.0).max()
             < 1e-10
         )
+        # a reversible reaction's reverse orders are its products' coefficients
+        index = {n: k for k, n in enumerate(mixture.speciesNames)}
+        for row, i in enumerate(kept):
+            rxn = mixture.reactions[i]
+            baked = {
+                int(k): v
+                for k, v in zip(r["revSpecies"][row], r["revExponent"][row])
+                if v != 0
+            }
+            products = {index[sp]: v for sp, v in rxn["products"].items()}
+            assert baked == (products if rxn["reversible"] else {})
 
 
 def test_singleFollowsDouble(my_setup):

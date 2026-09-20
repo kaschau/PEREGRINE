@@ -10,27 +10,12 @@ struct localDtau {
   jFaceStradVecIn jS;
   kFaceStradVecIn kS;
   cellScalOut dtau;
-  dims d;
   bool viscous;
   KOKKOS_INLINE_FUNCTION void operator()() const {
-    const int ni = d->ni, nj = d->nj, nk = d->nk;
     //-------------------------------------------------------------------------------------------|
     // Compute local pseudo time step
     //-------------------------------------------------------------------------------------------|
-    fpdtype iMult = 1.0;
-    fpdtype jMult = 1.0;
-    fpdtype kMult = 1.0;
-    if (ni == 2) {
-      iMult = Kokkos::Experimental::infinity<fpdtype>::value;
-    }
-    if (nj == 2) {
-      jMult = Kokkos::Experimental::infinity<fpdtype>::value;
-    }
-    if (nk == 2) {
-      kMult = Kokkos::Experimental::infinity<fpdtype>::value;
-    }
-
-    // Cell lengths
+    // Cell lengths; an axis not marched in is infinitely long
     const fpdtype &dI = dIJK(0);
     const fpdtype &dJ = dIJK(1);
     const fpdtype &dK = dIJK(2);
@@ -67,29 +52,34 @@ struct localDtau {
     fpdtype pseudoCFL = 0.5;
     fpdtype pseudoVNN = 0.1;
 
-    // the preconditioned system's wave speeds set the pseudo step
     const fpdtype nu = viscous ? qt(0) * rhoinv : 0.0;
-    const fpdtype Ur = referenceVelocity(sqrt(u * u + v * v + w * w), c, nu,
-                                         iMult * dI, jMult * dJ, kMult * dK);
-    // the preconditioned system propagates u' +- c', not u + c
+#ifdef PG_LOW_MACH
+    // the preconditioned system's wave speeds set the pseudo step: it
+    // propagates u' +- c', not u + c
+    const fpdtype Ur =
+        referenceVelocity(sqrt(u * u + v * v + w * w), c, nu, dI, dJ, dK);
     const fpdtype alpha = 0.5 * (1.0 - Ur * Ur / (c * c));
+#else
+    // unpreconditioned, the system propagates u +- c
+    const fpdtype Ur = c, alpha = 0.0;
+#endif
     const fpdtype a2 = alpha * alpha;
     const fpdtype Ur2 = Ur * Ur;
 
     fpdtype dtauCell = Kokkos::Experimental::infinity<fpdtype>::value;
     dtauCell = fmin(dtauCell,
-                    iMult * pseudoCFL * dI /
+                    pseudoCFL * dI /
                         (abs((1.0 - alpha) * uI) + sqrt(a2 * uI * uI + Ur2)));
     dtauCell = fmin(dtauCell,
-                    jMult * pseudoCFL * dJ /
+                    pseudoCFL * dJ /
                         (abs((1.0 - alpha) * uJ) + sqrt(a2 * uJ * uJ + Ur2)));
     dtauCell = fmin(dtauCell,
-                    kMult * pseudoCFL * dK /
+                    pseudoCFL * dK /
                         (abs((1.0 - alpha) * uK) + sqrt(a2 * uK * uK + Ur2)));
     if (viscous) {
-      dtauCell = fmin(dtauCell, iMult * pseudoVNN * pow(dI, 2.0) / nu);
-      dtauCell = fmin(dtauCell, jMult * pseudoVNN * pow(dJ, 2.0) / nu);
-      dtauCell = fmin(dtauCell, kMult * pseudoVNN * pow(dK, 2.0) / nu);
+      dtauCell = fmin(dtauCell, pseudoVNN * pow(dI, 2.0) / nu);
+      dtauCell = fmin(dtauCell, pseudoVNN * pow(dJ, 2.0) / nu);
+      dtauCell = fmin(dtauCell, pseudoVNN * pow(dK, 2.0) / nu);
     }
 
     dtau = dtauCell;

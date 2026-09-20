@@ -35,9 +35,12 @@ class configFile(frozenDict):
                 "mixingRule": "wilke",
                 # finite-rate chemistry: none, the production rates as the
                 # source, or substepped to the fastest species' bound, up to
-                # so many substeps
+                # so many substeps, each capped where the mixture's entropy
+                # stops rising along it, located by so many bisections (0:
+                # no cap)
                 "chemistry": None,
                 "chemistryMaxSubSteps": 200,
+                "chemistryEntropyBisections": 12,
                 # what every temperature-dependent property is refit over and
                 # to: the lowest degree within the tolerance, or the best at the
                 # cap, which is seven terms, the count the source data has, and
@@ -68,6 +71,11 @@ class configFile(frozenDict):
                 # and how many pseudo steps each physical step gets
                 "pseudoIntegrator": "rk3",
                 "subIterations": 20,
+                # dual time's per-cell pseudo system: the low-Mach (Weiss and
+                # Smith) preconditioner, and the chemistry source's Jacobian
+                # in it, none or each species' own entry with its temperature's
+                "lowMach": True,
+                "chemistryJacobian": None,
                 # how each step is sized: fixed at dt, or cfl up to maxDt
                 "controller": "fixed",
                 "dt": 1e-3,

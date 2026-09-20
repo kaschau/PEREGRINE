@@ -59,13 +59,16 @@ PG_REACTION_TERMS(fcentSign, fpdtype, PG_FCENT_SIGN_TERMS, PG_FCENT_SIGN)
 PG_REACTION_TERMS(fcentC0, fpdtype, PG_FCENT_C0_TERMS, PG_FCENT_C0)
 PG_REACTION_TERMS(fcentCT, fpdtype, PG_FCENT_CT_TERMS, PG_FCENT_CT)
 PG_REACTION_TERMS(fcentCTinv, fpdtype, PG_FCENT_CTINV_TERMS, PG_FCENT_CTINV)
-// the forward exponents, the net stoichiometry, and the third-body
-// deviations from the default efficiency, each (species, value)
+// the forward exponents, the net stoichiometry, the reverse orders of a
+// reversible reaction, and the third-body deviations from the default
+// efficiency, each (species, value)
 PG_REACTION_TERMS(fwdSpecies, int, PG_FWD_SPECIES_TERMS, PG_FWD_SPECIES)
 PG_REACTION_TERMS(fwdExponent, fpdtype, PG_FWD_EXPONENT_TERMS, PG_FWD_EXPONENT)
 PG_REACTION_TERMS(netSpecies, int, PG_NET_SPECIES_TERMS, PG_NET_SPECIES)
 PG_REACTION_TERMS(netNu, fpdtype, PG_NET_NU_TERMS, PG_NET_NU)
 PG_REACTION_TERMS(netNuMW, fpdtype, PG_NET_NU_MW_TERMS, PG_NET_NU_MW)
+PG_REACTION_TERMS(revSpecies, int, PG_REV_SPECIES_TERMS, PG_REV_SPECIES)
+PG_REACTION_TERMS(revExponent, fpdtype, PG_REV_EXPONENT_TERMS, PG_REV_EXPONENT)
 PG_REACTION_TERMS(effSpecies, int, PG_EFF_SPECIES_TERMS, PG_EFF_SPECIES)
 PG_REACTION_TERMS(effDeviation, fpdtype, PG_EFF_DEVIATION_TERMS,
                   PG_EFF_DEVIATION)

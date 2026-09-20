@@ -113,44 +113,62 @@ template <int R> KOKKOS_INLINE_FUNCTION fpdtype log10Fcent(const rateState &s) {
   }
 }
 
-// one reaction's net rate of progress, added to the production rates
+// what one reaction's rate of progress is made of, kept for its
+// derivatives: ln of the forward rate of progress, the affinity of a
+// reversible one, the net rate of progress; and, where the reaction has
+// them, its third body's concentration, ln Pr and Troe's pieces
+struct rateOfProgress {
+  fpdtype lrp, diff, rp, cTBC, logPr, lfc, A, N, f1;
+};
+
+// one reaction's rate of progress from the state of a cell
 template <int R>
-KOKKOS_INLINE_FUNCTION void reaction(const rateState &s, fpdtype *omega) {
+KOKKOS_INLINE_FUNCTION rateOfProgress progress(const rateState &s) {
+  rateOfProgress pr{};
   fpdtype lk = arrhenius<R>(s);
   if constexpr (type(R) == threeBody) {
-    lk += log(fmax(std::numeric_limits<fpdtype>::min(), thirdBody<R>(s)));
+    pr.cTBC = thirdBody<R>(s);
+    lk += log(fmax(std::numeric_limits<fpdtype>::min(), pr.cTBC));
   }
   if constexpr (type(R) == lindemann || type(R) == troe) {
-    const fpdtype logPr =
-        log(fmax(std::numeric_limits<fpdtype>::min(), thirdBody<R>(s))) +
-        pressureRatio<R>(s);
-    lk += logFalloff(logPr);
+    pr.cTBC = thirdBody<R>(s);
+    pr.logPr = log(fmax(std::numeric_limits<fpdtype>::min(), pr.cTBC)) +
+               pressureRatio<R>(s);
+    lk += logFalloff(pr.logPr);
     if constexpr (type(R) == troe) {
       constexpr fpdtype ln10 = 2.302585092994046;
-      const fpdtype lfc = log10Fcent<R>(s);
-      const fpdtype C = -0.4 - 0.67 * lfc, N = 0.75 - 1.27 * lfc;
-      const fpdtype A = logPr / ln10 + C;
-      const fpdtype f1 = A / (N - 0.14 * A);
-      lk += lfc / (1.0 + f1 * f1) * ln10;
+      pr.lfc = log10Fcent<R>(s);
+      const fpdtype C = -0.4 - 0.67 * pr.lfc;
+      pr.N = 0.75 - 1.27 * pr.lfc;
+      pr.A = pr.logPr / ln10 + C;
+      pr.f1 = pr.A / (pr.N - 0.14 * pr.A);
+      lk += pr.lfc / (1.0 + pr.f1 * pr.f1) * ln10;
     }
   }
   // the forward rate of progress, ln
-  fpdtype lrp = lk;
+  pr.lrp = lk;
   for (int k = 0; k < fwdSpeciesTerms; k++)
-    lrp += fwdExponent(R, k) * s.logc[fwdSpecies(R, k)];
-  fpdtype rp;
+    pr.lrp += fwdExponent(R, k) * s.logc[fwdSpecies(R, k)];
   if constexpr (reversible(R)) {
     // the affinity ln(forward / reverse); the surviving direction is
     // taken, and expm1 keeps the net rate near equilibrium
-    fpdtype diff = nuTotal(R) * s.logPrefRuT;
+    pr.diff = nuTotal(R) * s.logPrefRuT;
     for (int k = 0; k < netSpeciesTerms; k++)
-      diff -=
+      pr.diff -=
           netNu(R, k) * (s.gbs[netSpecies(R, k)] + s.logc[netSpecies(R, k)]);
-    rp = copysign(exp(fmin(lrp - fmin(diff, 0.0), s.expClamp)), diff) *
-         (-expm1(-fabs(diff)));
+    pr.rp =
+        copysign(exp(fmin(pr.lrp - fmin(pr.diff, 0.0), s.expClamp)), pr.diff) *
+        (-expm1(-fabs(pr.diff)));
   } else {
-    rp = exp(fmin(lrp, s.expClamp));
+    pr.rp = exp(fmin(pr.lrp, s.expClamp));
   }
+  return pr;
+}
+
+// one reaction's net rate of progress, added to the production rates
+template <int R>
+KOKKOS_INLINE_FUNCTION void reaction(const rateState &s, fpdtype *omega) {
+  const fpdtype rp = progress<R>(s).rp;
   for (int k = 0; k < netSpeciesTerms; k++)
     omega[netSpecies(R, k)] += netNuMW(R, k) * rp;
 }

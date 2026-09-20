@@ -11,7 +11,9 @@ from peregrinepy.files.configFile import pgConfigError
 from ..gases import configure, primitives
 
 
-def uniformBox(integrator, controller, physics):
+def uniformBox(
+    integrator, controller, physics, dims=[6, 6, 6], periodic=[True] * 3, names={}
+):
     config = pg.files.configFile()
     config["RHS"]["primaryAdvFlux"] = "KEPaEC"
     config["timeIntegration"]["integrator"] = integrator
@@ -20,7 +22,11 @@ def uniformBox(integrator, controller, physics):
     config["initialConditions"]["u"] = 10.0
     configure(config, "air", physics)
     mesh = pg.mesher.CubeMesher(
-        mbDims=[1, 1, 1], dimsPerBlock=[6, 6, 6], lengths=[1, 1, 1], periodic=[True] * 3
+        mbDims=[1, 1, 1],
+        dimsPerBlock=dims,
+        lengths=[1, 1, 1],
+        periodic=periodic,
+        boundaryNames=names,
     )
     return config, mesh
 
@@ -62,6 +68,33 @@ def test_step(my_setup, integrator, physics, controller):
     assert mb.nrt == 3
 
 
+@pytest.mark.parametrize(
+    "integrator,controller", [("rk3", "cfl"), ("dualTime", "fixed")]
+)
+def test_stepMarchesAOneCellThickBlock(my_setup, integrator, controller):
+    # the length across the one-cell axis is infinite, so neither the CFL
+    # step nor the pseudo step is limited by it; slip walls close that axis
+    config, mesh = uniformBox(
+        integrator,
+        controller,
+        "navierStokes",
+        dims=[6, 6, 2],
+        periodic=[True, True, False],
+        names={5: "slip", 6: "slip"},
+    )
+    config["bcValues"]["slip"] = {"bcType": "adiabaticSlipWall"}
+    mb = pg.multiBlock.solver(config, mesh)
+    blk = mb.blocks[0]
+    lengths = blk.dIJK.get()[blk.interior]
+    assert np.isinf(lengths[..., 2]).all() and np.isfinite(lengths[..., :2]).all()
+    dt = mb.integrator.controller.stepSize()
+    assert np.isfinite(dt) and dt > 0.0
+    Q0 = blk.Q.get()
+    for _ in range(3):
+        mb.integrator.step(dt)
+    assertUnchanged(mb, "Q", Q0)
+
+
 @pytest.mark.parametrize("pseudo", ["rk1", "rk2", "rk3", "rk34", "rk4", "maccormack"])
 def test_dualTimeComposesItsPseudoScheme(my_setup, pseudo):
     config, mesh = uniformBox("dualTime", "fixed", "navierStokes")
@@ -87,11 +120,14 @@ def test_dualTimeComposesItsPseudoScheme(my_setup, pseudo):
         pg.multiBlock.solver(config, mesh)
 
 
+@pytest.mark.parametrize("lowMach", [True, False])
 @pytest.mark.parametrize("eos", ["tpg", "realGas"])
-def test_dualTimeOnAnyEos(my_setup, eos):
+def test_dualTimeOnAnyEos(my_setup, eos, lowMach):
     # a perturbed dense cold state, far from ideal for the cubic: the pseudo
-    # iterations converge the step and the state stays finite and near
+    # iterations converge the step and the state stays finite and near,
+    # with the low-Mach preconditioner and without
     config, mesh = uniformBox("dualTime", "fixed", "euler")
+    config["timeIntegration"]["lowMach"] = lowMach
     config["simulation"]["mixture"] = ["O2", "N2", "CO2", "CH4"]
     config["simulation"]["eos"] = eos
     config["simulation"]["trans"] = None

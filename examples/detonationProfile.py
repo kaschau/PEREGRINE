@@ -33,7 +33,6 @@ def simulate():
     config["RHS"]["switchValues"] = {"gain": 5.0}
     config["timeIntegration"]["integrator"] = "rk3"
     config["simulation"]["chemistry"] = "substepped"
-    config["simulation"]["chemistryMaxSubSteps"] = 10
     config["simulation"]["eos"] = "tpg"
     config["simulation"]["mixture"] = "CH4_O2_FFCMY.yaml"
     config["simulation"]["Trange"] = (300.0, 3500.0)

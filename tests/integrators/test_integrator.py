@@ -87,7 +87,36 @@ def test_reportSaysWhatItIs(my_setup):
     mb = solver("dualTime", "fixed")
     text = mb.integrator.report()
     assert "dualTime" in text and "fixed" in text and "rk3" in text
+    assert "Low-Mach Preconditioning: on" in text and "Chemistry Jacobian: none" in text
     assert mb.integrator.stepReport() is None
     mb.integrator.reportDue = True
     mb.integrator.step(1e-6)
     assert "SubIter" in mb.integrator.stepReport()
+
+
+def test_dualTimeBakesItsPseudoSystem(my_setup):
+    # the preconditioner is a define on the pseudo kernels; a Jacobian names
+    # its rung and forces the chemistry header in
+    k = solver("dualTime").kernels
+    assert "PG_LOW_MACH=1" in k["invertDQ"].defines
+    assert "PG_LOW_MACH=1" in k["localDtau"].defines
+    assert k["invertDQ"].includes == ()
+    off = solver("dualTime", lowMach=False)
+    assert "PG_LOW_MACH=1" not in off.kernels["invertDQ"].defines
+    assert "PG_LOW_MACH=1" not in off.kernels["localDtau"].defines
+    assert "Low-Mach Preconditioning: off" in off.integrator.report()
+
+
+def test_dualTimeRefusesAJacobianItCannotUse(my_setup):
+    from peregrinepy.files.configFile import pgConfigError
+
+    # no chemistry to differentiate, an integrator without a pseudo system,
+    # a rung that is not one, a preconditioner that is neither on nor off
+    with pytest.raises(pgConfigError):
+        solver("dualTime", chemistryJacobian="diagonal")
+    with pytest.raises(pgConfigError):
+        solver("rk3", chemistryJacobian="diagonal")
+    with pytest.raises(pgConfigError):
+        solver("dualTime", chemistryJacobian="full")
+    with pytest.raises(pgConfigError):
+        solver("dualTime", lowMach="yes")

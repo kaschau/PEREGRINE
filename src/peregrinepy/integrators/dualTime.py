@@ -24,7 +24,8 @@ class dualTime(BaseIntegrator):
     name = "dualTime"
     # a result carries the state one step back; Qn is this one
     restartArrays = ("Qnm1",)
-    # the residual after each pseudo step, gathered when a report is due
+    # the residual after each pseudo step, the increment its last stage
+    # stepped by, gathered when a report is due
     residuals = ()
     # Qn and Qnm1 trade names at the end of every step, so the newest
     # state is never copied over the older; a captured graph keeps the
@@ -42,6 +43,14 @@ class dualTime(BaseIntegrator):
     @property
     def subIterations(self):
         return self.config["timeIntegration"]["subIterations"]
+
+    @property
+    def lowMach(self):
+        return self.config["timeIntegration"]["lowMach"]
+
+    @property
+    def chemistryJacobian(self):
+        return self.config["timeIntegration"]["chemistryJacobian"]
 
     @property
     def viscous(self):
@@ -64,9 +73,23 @@ class dualTime(BaseIntegrator):
         return arrays
 
     def declKernels(self):
+        """Makes the pseudo time kernels, the pseudo system's two baked in:
+        PG_LOW_MACH for the preconditioner, PG_CHEMISTRY_JACOBIAN naming the
+        Jacobian's rung with its header forced in -- forced, since a source
+        including it would reach the reaction tables in every case."""
         k = super().declKernels()
-        for name in ("dQdt", "localDtau", "invertDQ"):
-            k[name] = CellCenterKernel(f"timeIntegration/{name}.cpp")
+        lowMach = ["PG_LOW_MACH=1"] if self.lowMach else []
+        jacobian = self.chemistryJacobian
+        k["dQdt"] = CellCenterKernel("timeIntegration/dQdt.cpp")
+        k["localDtau"] = CellCenterKernel(
+            "timeIntegration/localDtau.cpp", defines=lowMach
+        )
+        k["invertDQ"] = CellCenterKernel(
+            "timeIntegration/invertDQ.cpp",
+            defines=lowMach
+            + ([f"PG_CHEMISTRY_JACOBIAN={jacobian}"] if jacobian else []),
+            includes=["chemistry/jacobian.hpp"] if jacobian else [],
+        )
         k["residual"] = CellCenterKernel("utils/residual.cpp")
         return k
 
@@ -153,6 +176,8 @@ class dualTime(BaseIntegrator):
         return (
             super().report()
             + f"  Pseudo Time: {ti['pseudoIntegrator']}, {ti['subIterations']} steps\n"
+            + f"  Low-Mach Preconditioning: {'on' if self.lowMach else 'off'}\n"
+            + f"  Chemistry Jacobian: {self.chemistryJacobian or 'none'}\n"
         )
 
     def initialize(self):

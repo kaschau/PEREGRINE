@@ -88,6 +88,17 @@ def test_onlyTheMetricsThePhysicsAsksForAreMade(my_setup):
         grid.declMetric("volumes")
 
 
+def test_anAxisOneCellThickIsInfinitelyLong(my_setup):
+    # a block is not marched across such an axis: no step limit binds on it
+    mesh = pg.mesher.CubeMesher(
+        mbDims=[1, 1, 1], dimsPerBlock=[5, 2, 5], lengths=[1, 1, 1]
+    )
+    blk = pg.multiBlock.solver(config("euler"), mesh).blocks[0]
+    lengths = blk.dIJK.get()
+    assert np.isinf(lengths[..., 1]).all()
+    assert np.allclose(lengths[blk.interior][..., (0, 2)], 1 / 4)
+
+
 def test_exportDataDerivesFromTheState(my_setup):
     mb = pg.multiBlock.solver(config(gas="CH4_O2"), sided())
     blk = mb.blocks[0]

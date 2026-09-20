@@ -132,7 +132,7 @@ PEREGRINE run in executable mode requires an input configuration file (in yaml f
       trans: null # transport model; a viscous case picks one
       diffusion: lewis # species diffusion model
       chemistry: null # finite-rate chemistry: null, explicit (the production rates as the source), or substepped
-      chemistryMaxSubSteps: 10 # substepped: the most substeps a step takes to the fastest species' bound
+      chemistryMaxSubSteps: 200 # substepped: the most substeps a step takes to the fastest species' bound
       Trange: null # [Tlow, Thigh] every temperature-dependent property is refit over
       reFitTol: 1.0e-3 # max relative error of each refit polynomial
       reFitMaxDegree: 8 # and the degree it may go to

@@ -29,6 +29,10 @@ class ArrayTable:
         # kept, and whose tiles say how many items of one range a team does
         self.backend = backend
         self._columns = {}
+        # every column ever uploaded, by name and content: a captured graph
+        # holds a column's address, so one forgotten is kept, and the same
+        # arrays under the name again take it back
+        self._uploaded = {}
         self.tilings = {}
 
     @property
@@ -37,7 +41,8 @@ class ArrayTable:
 
     def forget(self, name):
         """Drops a column that went stale: an entry's array of that name is
-        another array now."""
+        another array now. The column itself stays where it is, for the
+        captured graphs that hold it."""
         self._columns.pop(name, None)
 
     def _upload(self, host):
@@ -69,7 +74,10 @@ class ArrayTable:
                 raise KeyError(f"no entry of this table has {name}")
             arrayInfos = [self._infoOf(v) for v in values]
             host = (type(arrayInfos[0]) * len(arrayInfos))(*arrayInfos)
-            self._columns[name] = self._upload(host)
+            key = (name, bytes(host))
+            if key not in self._uploaded:
+                self._uploaded[key] = self._upload(host)
+            self._columns[name] = self._uploaded[key]
         return self._columns[name].ptr
 
     def tiling(self, kernel, rangeName):

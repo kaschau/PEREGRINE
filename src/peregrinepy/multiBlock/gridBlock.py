@@ -231,14 +231,18 @@ class gridBlock(topologyBlock):
     @metric(CellCenterArray, 3)
     def _dIJK(self, nodes):
         """Gives every cell's lengths along each axis, opposite face center
-        to opposite face center."""
+        to opposite face center; along an axis one cell thick, which is not
+        marched in, infinite, so no step limit binds on it."""
         lengths = []
         for a in range(3):
             centers = self._faceCenters(nodes, a)
             far, near = [slice(None)] * 3, [slice(None)] * 3
             far[a], near[a] = np.s_[1:], np.s_[:-1]
             span = centers[tuple(far)] - centers[tuple(near)]
-            lengths.append(np.sqrt((span**2).sum(axis=-1)))
+            length = np.sqrt((span**2).sum(axis=-1))
+            lengths.append(
+                np.full_like(length, np.inf) if self.extents[a] == 2 else length
+            )
         return np.stack(lengths, axis=-1)
 
     @metric(CellCenterArray)

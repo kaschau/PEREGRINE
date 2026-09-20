@@ -56,10 +56,31 @@ class EulerSimulator(BaseSimulator):
             )
         if sim["chemistry"] not in (None, "explicit", "substepped"):
             raise pgConfigError("chemistry", sim["chemistry"])
+        bisections = sim["chemistryEntropyBisections"]
+        if not isinstance(bisections, int) or bisections < 0:
+            raise pgConfigError(
+                "chemistryEntropyBisections", bisections, "is a count, none for no cap"
+            )
         if rhs["primaryAdvFlux"] is None:
             raise pgConfigError("primaryAdvFlux", None, "a case has a primary flux")
         if sim["eos"] not in ("cpg", "tpg", "realGas"):
             raise pgConfigError("eos", sim["eos"])
+        if ti["chemistryJacobian"] not in (None, "diagonal"):
+            raise pgConfigError("chemistryJacobian", ti["chemistryJacobian"])
+        if ti["chemistryJacobian"] and not sim["chemistry"]:
+            raise pgConfigError(
+                "chemistryJacobian",
+                ti["chemistryJacobian"],
+                "a chemistry Jacobian needs a chemistry",
+            )
+        if ti["chemistryJacobian"] and ti["integrator"] != "dualTime":
+            raise pgConfigError(
+                "chemistryJacobian",
+                ti["chemistryJacobian"],
+                "the chemistry Jacobian is dual time's pseudo system's",
+            )
+        if not isinstance(ti["lowMach"], bool):
+            raise pgConfigError("lowMach", ti["lowMach"], "is on or off")
         if ti["integrator"] == "dualTime":
             if ti["controller"] != "fixed":
                 raise pgConfigError(
@@ -159,10 +180,13 @@ class EulerSimulator(BaseSimulator):
                 "chemistry/productionRateSource.cpp"
             )
         if chemistry == "substepped":
-            most = int(self.config["simulation"]["chemistryMaxSubSteps"])
+            sim = self.config["simulation"]
             k["finiteRateSubstep"] = CellCenterKernel(
                 "chemistry/finiteRateSubstep.cpp",
-                defines=[f"PG_CHEMISTRY_MAX_SUBSTEPS={most}"],
+                defines=[
+                    f"PG_CHEMISTRY_MAX_SUBSTEPS={int(sim['chemistryMaxSubSteps'])}",
+                    f"PG_CHEMISTRY_ENTROPY_BISECTIONS={int(sim['chemistryEntropyBisections'])}",
+                ],
             )
         k["applyFlux"] = CellCenterKernel(
             "utils/applyFlux.cpp", defines=["PG_FLUXES_APPEND=1"] if chemistry else []

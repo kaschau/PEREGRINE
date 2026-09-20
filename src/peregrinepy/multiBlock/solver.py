@@ -312,8 +312,9 @@ class solver(restart):
         self._forget(b)
 
     def _forget(self, name):
-        """Drops what the tables hold of one block array: it is another
-        array now, or none, and no captured graph launches over it."""
+        """Drops what the tables hold under one block array's name: it is
+        another array now, or none; the tables keep the columns themselves
+        for the captured graphs that hold them."""
         self.blockArrayTable.forget(name)
         self.blockFaceArrayTable.forget(name)
         self.blockFaceArrayTable.forget(f"{name}@neighborFace")
