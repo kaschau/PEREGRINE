@@ -1,9 +1,9 @@
 """What a physics is, as a spec the solver interrogates: what it needs
 declared -- metrics of the grid, block arrays, kernels by tag, boundary
-conditions, what the jit bakes -- and recipes, taking the solver, for its
-graphs and its initial state. A simulator owns nothing: no
-solver, no arrays, no state, no graphs. A new physics is a new subclass;
-the config names it by its `physics`, and getSimulator makes it."""
+conditions -- and recipes, taking the solver, for its graphs and its
+initial state. A simulator owns nothing: no solver, no arrays, no state,
+no graphs. A new physics is a new subclass; the config names it by its
+`simulator`, and getSimulator makes it."""
 
 
 class BaseSimulator:
@@ -23,9 +23,9 @@ class BaseSimulator:
 
     def __init__(self, config):
         self.config = config
-        self.validate(config)
+        self.validate()
 
-    def validate(self, config):
+    def validate(self):
         """Refuses what this physics does not describe yet, rather than run
         it."""
 
@@ -58,11 +58,6 @@ class BaseSimulator:
         self.kernels = {}
         return self.kernels
 
-    def bakes(self):
-        """Gives what the jit bakes into every kernel beyond the halo
-        depth: the mixture's species data and the simulation section."""
-        raise NotImplementedError
-
     def graphs(self, dt):
         """Gives this physics' graphs by stage, of graph.py's nodes over
         its kernels, each stage a list of graphs cut where a message is
@@ -77,4 +72,4 @@ class BaseSimulator:
 
     def report(self):
         """Says what this physics is, for the banner."""
-        return f"  Physics: {self.name}\n"
+        return f"  Simulator: {self.name}\n"

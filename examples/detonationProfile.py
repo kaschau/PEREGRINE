@@ -26,16 +26,16 @@ def simulate():
     gas.set_equivalence_ratio(phi, "CH4", "O2")
 
     config = pg.files.configFile()
-    config["simulation"]["physics"] = "euler"
+    config["simulation"]["simulator"] = "euler"
     config["RHS"]["primaryAdvFlux"] = "KEPaEC"
     config["RHS"]["secondaryAdvFlux"] = "rusanov"
     config["RHS"]["switchAdvFlux"] = "jamesonPressure"
     config["RHS"]["switchValues"] = {"gain": 5.0}
     config["timeIntegration"]["integrator"] = "rk3"
-    config["simulation"]["chemistry"] = "substepped"
-    config["simulation"]["eos"] = "tpg"
-    config["simulation"]["mixture"] = "CH4_O2_FFCMY.yaml"
-    config["simulation"]["Trange"] = (300.0, 3500.0)
+    config["chemistry"]["source"] = "substepped"
+    config["mixture"]["eos"] = "tpg"
+    config["mixture"]["species"] = "CH4_O2_FFCMY.yaml"
+    config["mixture"]["Trange"] = (300.0, 3500.0)
     config["bcValues"]["walls"] = {"bcType": "adiabaticSlipWall"}
     config.validateConfig()
 
@@ -66,7 +66,7 @@ def simulate():
     mb.setPrimitives([q])
 
     dt = 1.0e-9
-    config["timeIntegration"]["dt"] = dt
+    config["simulation"]["dt"] = dt
     testIndex = int(nx / 2)
     print(mb)
     bar = pg.misc.Progress(testIndex)

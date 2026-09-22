@@ -24,10 +24,12 @@ __all__ = [
 ]
 
 
-def getIntegrator(config, solver):
-    """Makes the integrator the config names, with the controller it
-    names, for this solver."""
-    ti = config["timeIntegration"]
-    controller = subclassWhere(BaseController, name=ti["controller"])
-    integrator = subclassWhere(BaseIntegrator, name=ti["integrator"])
+def getIntegrator(solver):
+    """Makes the integrator the solver's config names, with the controller
+    its simulation section names."""
+    config = solver.config
+    controller = subclassWhere(BaseController, name=config["simulation"]["controller"])
+    integrator = subclassWhere(
+        BaseIntegrator, name=config["timeIntegration"]["integrator"]
+    )
     return integrator(solver, controller(solver))

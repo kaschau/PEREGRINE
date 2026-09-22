@@ -29,11 +29,9 @@ def line(
     """A case on a line of :nx: - 1 cells with the named fluxes; :configure:
     edits the config before the case is made."""
     config = pg.files.configFile()
-    config["simulation"]["physics"] = physics
-    config["simulation"]["mixture"] = air
-    config["simulation"]["trans"] = (
-        "constantProps" if physics == "navierStokes" else None
-    )
+    config["simulation"]["simulator"] = physics
+    config["mixture"]["species"] = air
+    config["mixture"]["trans"] = "constantProps" if physics == "navierStokes" else None
     config["RHS"]["primaryAdvFlux"] = scheme
     config["RHS"]["secondaryAdvFlux"] = secondary
     config["RHS"]["switchAdvFlux"] = switch

@@ -25,14 +25,14 @@ def test_herning(my_setup, ctfile):
     gas.TPY = T, p, Y
 
     config = pg.files.configFile()
-    mc = config["simulation"]
-    mc["mixture"] = ctfile
+    mc = config["mixture"]
+    mc["species"] = ctfile
     mc["eos"] = "tpg"
     mc["Trange"] = (300.0, 3500.0)
     mc["trans"] = "kineticTheory"
     mc["diffusion"] = "lewis"
     mc["mixingRule"] = "herning"
-    config["simulation"]["physics"] = "navierStokes"
+    config["simulation"]["simulator"] = "navierStokes"
     mb = pg.multiBlock.solver(
         config,
         mesh=pg.mesher.CubeMesher(

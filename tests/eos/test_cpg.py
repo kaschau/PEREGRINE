@@ -22,9 +22,9 @@ def test_cpg(my_setup):
     gas.TPY = T, p, Y
 
     config = pg.files.configFile()
-    config["simulation"]["mixture"] = ctfile
-    config["simulation"]["eos"] = "cpg"
-    config["simulation"]["physics"] = "euler"
+    config["mixture"]["species"] = ctfile
+    config["mixture"]["eos"] = "cpg"
+    config["simulation"]["simulator"] = "euler"
 
     mb = pg.multiBlock.solver(
         config,

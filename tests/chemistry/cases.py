@@ -54,15 +54,16 @@ def cell(
     config = pg.files.configFile()
     config["timeIntegration"].update(timeIntegration)
     sim = config["simulation"]
-    sim["physics"] = "euler"
-    sim["mixture"] = mechanism
-    sim["eos"] = "tpg"
-    sim["Trange"] = (300.0, 3500.0)
+    sim["simulator"] = "euler"
     sim["precision"] = precision
-    sim["chemistry"] = chemistry
-    sim["chemistryMaxSubSteps"] = maxSubSteps
+    sim["dt"] = dt
+    mixture = config["mixture"]
+    mixture["species"] = mechanism
+    mixture["eos"] = "tpg"
+    mixture["Trange"] = (300.0, 3500.0)
+    config["chemistry"]["source"] = chemistry
+    config["chemistry"]["maxSubSteps"] = maxSubSteps
     config["RHS"]["primaryAdvFlux"] = "KEPaEC"
-    config["timeIntegration"]["dt"] = dt
     config["bcValues"]["walls"] = {"bcType": "adiabaticSlipWall"}
     mesh = pg.mesher.CubeMesher(
         mbDims=[1, 1, 1],

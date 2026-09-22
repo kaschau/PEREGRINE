@@ -26,10 +26,10 @@ T = (300.0, 3000.0)
 
 
 def configSect(mixture, **choices):
-    """A simulation section as a case would write it: the config's defaults
+    """A mixture section as a case would write it: the config's defaults
     with the case's choices over them."""
-    sect = dict(pg.files.configFile()["simulation"])
-    sect.update({"mixture": mixture, "Trange": T, **choices})
+    sect = dict(pg.files.configFile()["mixture"])
+    sect.update({"species": mixture, "Trange": T, **choices})
     return sect
 
 
@@ -80,12 +80,14 @@ def test_mechanismWinsOverLibrary():
 def test_aReactingMixtureNeedsReactions():
     from peregrinepy.mixture import ReactingMixture, getMixture
 
-    sect = configSect("GRI30.yaml", eos="tpg")
-    sect["chemistry"] = "explicit"
-    m = getMixture(sect)
+    config = pg.files.configFile()
+    config["mixture"].update(configSect("GRI30.yaml", eos="tpg"))
+    config["chemistry"]["source"] = "explicit"
+    m = getMixture(config)
     assert isinstance(m, ReactingMixture) and "reactions" in m.tables()
-    assert "reactions" not in getMixture(configSect("GRI30.yaml", eos="tpg")).tables()
-    sect = configSect(air, eos="tpg")
-    sect["chemistry"] = "explicit"
+    config["chemistry"]["source"] = None
+    assert "reactions" not in getMixture(config).tables()
+    config["mixture"].update(configSect(air, eos="tpg"))
+    config["chemistry"]["source"] = "explicit"
     with pytest.raises(ValueError):
-        getMixture(sect)
+        getMixture(config)

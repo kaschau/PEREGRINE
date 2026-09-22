@@ -110,7 +110,7 @@ def test_theChemistrySourceBeginsTheRightHandSide(chemistry, source):
     config = pg.files.configFile()
     configure(config, "CH4_O2", "navierStokes")
     config["RHS"]["primaryAdvFlux"] = "KEPaEC"
-    config["simulation"]["chemistry"] = chemistry
+    config["chemistry"]["source"] = chemistry
     sim = pg.simulator.getSimulator(config)
     k = sim.declKernels()
     (rhs,) = sim.graphs(dt=None)["rhs"]
@@ -140,10 +140,10 @@ def test_aViscousCaseNeedsATransportModel():
     config = pg.files.configFile()
     configure(config, "air", "navierStokes")
     config["RHS"]["primaryAdvFlux"] = "KEPaEC"
-    config["simulation"]["trans"] = None
+    config["mixture"]["trans"] = None
     with pytest.raises(pgConfigError):
         pg.simulator.getSimulator(config)
-    config["simulation"]["physics"] = "euler"
+    config["simulation"]["simulator"] = "euler"
     pg.simulator.getSimulator(config)
 
 

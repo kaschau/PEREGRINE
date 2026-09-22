@@ -13,11 +13,11 @@ import matplotlib.pyplot as plt
 
 def simulate():
     config = pg.files.configFile()
-    config["simulation"]["physics"] = "navierStokes"
-    config["simulation"]["eos"] = "realGas"
-    config["simulation"]["mixture"] = ["CO2"]
-    config["simulation"]["trans"] = "chungDenseGas"
-    config["simulation"]["Trange"] = (300.0, 2000.0)
+    config["simulation"]["simulator"] = "navierStokes"
+    config["mixture"]["eos"] = "realGas"
+    config["mixture"]["species"] = ["CO2"]
+    config["mixture"]["trans"] = "chungDenseGas"
+    config["mixture"]["Trange"] = (300.0, 2000.0)
     config.validateConfig()
     mesh = pg.mesher.CubeMesher(
         mbDims=[1, 1, 1], dimsPerBlock=[2, 2, 2], lengths=[0.01, 0.01, 0.01]

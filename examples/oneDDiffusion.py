@@ -14,11 +14,11 @@ import matplotlib.pyplot as plt
 
 def simulate():
     config = pg.files.configFile()
-    config["simulation"]["physics"] = "navierStokes"
-    config["simulation"]["mixture"] = ["O2", "N2"]
-    config["simulation"]["eos"] = "tpg"
-    config["simulation"]["trans"] = "kineticTheory"
-    config["simulation"]["Trange"] = (200.0, 1000.0)
+    config["simulation"]["simulator"] = "navierStokes"
+    config["mixture"]["species"] = ["O2", "N2"]
+    config["mixture"]["eos"] = "tpg"
+    config["mixture"]["trans"] = "kineticTheory"
+    config["mixture"]["Trange"] = (200.0, 1000.0)
     config["RHS"]["primaryAdvFlux"] = "rusanov"
     config["bcValues"]["walls"] = {"bcType": "adiabaticSlipWall"}
     config.validateConfig()

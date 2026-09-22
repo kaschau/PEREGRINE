@@ -32,7 +32,7 @@ class TestPeriodics:
     def test_rotationalPeriodics(self, my_setup, adv, gas):
         config = pg.files.configFile()
         config["RHS"]["primaryAdvFlux"] = adv
-        config["simulation"]["physics"] = "navierStokes"
+        config["simulation"]["simulator"] = "navierStokes"
         configure(config, gas)
 
         axis = np.random.random(3)

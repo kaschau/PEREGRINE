@@ -20,7 +20,7 @@ def box(precision, gas="air", integrator="rk3"):
     config["simulation"]["precision"] = precision
     config["RHS"]["primaryAdvFlux"] = "KEPaEC"
     config["timeIntegration"]["integrator"] = integrator
-    config["timeIntegration"]["dt"] = 1e-9
+    config["simulation"]["dt"] = 1e-9
     config["bcValues"]["walls"] = {"bcType": "adiabaticNoSlipWall"}
     mb = pg.multiBlock.solver(config, cases.mesh())
     prims = []

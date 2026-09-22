@@ -13,20 +13,20 @@ air = {
 gases = {"air": air, "CH4_O2": "CH4_O2_FFCMY.yaml"}
 
 
-def configure(config, gas, physics="navierStokes"):
-    """Fills the simulation section for a named gas -- constants for air, a
+def configure(config, gas, simulator="navierStokes"):
+    """Fills the mixture section for a named gas -- constants for air, a
     refit thermally perfect gas with kinetic theory transport for a
-    mechanism -- and the physics."""
-    sim = config["simulation"]
-    sim["physics"] = physics
-    sim["mixture"] = gases[gas]
+    mechanism -- and names the simulator."""
+    config["simulation"]["simulator"] = simulator
+    mixture = config["mixture"]
+    mixture["species"] = gases[gas]
     if gas == "air":
-        sim["eos"] = "cpg"
-        sim["trans"] = "constantProps"
+        mixture["eos"] = "cpg"
+        mixture["trans"] = "constantProps"
     else:
-        sim["eos"] = "tpg"
-        sim["trans"] = "kineticTheory"
-        sim["Trange"] = (300.0, 3500.0)
+        mixture["eos"] = "tpg"
+        mixture["trans"] = "kineticTheory"
+        mixture["Trange"] = (300.0, 3500.0)
 
 
 def primitives(mb, blk):

@@ -26,17 +26,18 @@ class Jit:
     # what a source that reaches a data header is built with, by the table
     tableHeaders = (("species.hpp", "species"), ("reactions.hpp", "reactions"))
 
-    def __init__(self, ng, mixture, simulation, launch=None):
+    def __init__(self, ng, mixture, backend):
         """Makes the compiler for one case: its halo depth, its mixture --
-        the species count, species data and reactions -- and its simulation
-        section, which names the equation of state, the species diffusion
-        model and the mixing rule; on a device the backend's launch bound
-        too."""
+        the species count, species data and reactions, and the equation of
+        state, species diffusion model and mixing rule it names -- and its
+        backend, for the case's precision and, on a device, the launch
+        bound."""
         # a kernel is compiled for one species count and halo depth, and on
         # a device for one launch bound, (threads, waves) from the backend's
         # config section; none is the host's unbounded launch
         self.ne = 5 + mixture.ns - 1
-        self.fpdtype = {"double": "double", "single": "float"}[simulation["precision"]]
+        precision = backend.config["simulation"]["precision"]
+        self.fpdtype = {"double": "double", "single": "float"}[precision]
         self.fpctype = {"double": ctypes.c_double, "float": ctypes.c_float}[
             self.fpdtype
         ]
@@ -47,8 +48,8 @@ class Jit:
             f"PG_FPDTYPE={self.fpdtype}",
             *(["PG_SINGLE=1"] if self.fpdtype == "float" else []),
         )
-        if launch is not None:
-            threads, waves = launch
+        if backend.launchBound is not None:
+            threads, waves = backend.launchBound
             self.defines += (f"PG_LAUNCH_THREADS={threads}", f"PG_LAUNCH_WAVES={waves}")
         from . import getSources, getStore, getToolchain
 
@@ -66,9 +67,9 @@ class Jit:
             name: self.store.header(name, self.tablesText(name, tables))
             for name, tables in mixture.tables().items()
         }
-        self.eos = simulation["eos"]
-        self.diffusion = simulation["diffusion"]
-        self.mixingRule = simulation["mixingRule"]
+        self.eos = mixture.eos.name
+        self.diffusion = mixture.diffusion.name if mixture.diffusion else None
+        self.mixingRule = mixture.mixingRule
 
     ###########################################################################
     # What a case bakes and forces in

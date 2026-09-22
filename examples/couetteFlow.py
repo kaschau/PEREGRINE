@@ -54,10 +54,10 @@ def simulate(index, velo):
         assert ("y" in velo) or ("x" in velo)
 
     config = pg.files.configFile()
-    config["timeIntegration"]["dt"] = 10 * 1.0e-5 / nx
-    config["simulation"]["physics"] = "navierStokes"
-    config["simulation"]["trans"] = "constantProps"
-    config["simulation"]["mixture"] = air
+    config["simulation"]["dt"] = 10 * 1.0e-5 / nx
+    config["simulation"]["simulator"] = "navierStokes"
+    config["mixture"]["trans"] = "constantProps"
+    config["mixture"]["species"] = air
 
     rot = {"i": 0, "j": 1, "k": 2}
 
@@ -111,7 +111,7 @@ def simulate(index, velo):
     simTme = max(outputTimes) * h**2 / nu
     bar = pg.misc.Progress(simTme)
     while mb.tme < simTme:
-        mb.integrator.step(config["timeIntegration"]["dt"])
+        mb.integrator.step(config["simulation"]["dt"])
 
         if mb.nrt % 200 == 0:
             bar.at(mb.tme)

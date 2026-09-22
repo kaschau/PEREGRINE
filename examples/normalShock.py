@@ -36,9 +36,9 @@ T1 = 300.0
 
 def simulate():
     config = pg.files.configFile()
-    config["simulation"]["physics"] = "euler"
-    config["simulation"]["eos"] = "cpg"
-    config["simulation"]["mixture"] = air
+    config["simulation"]["simulator"] = "euler"
+    config["mixture"]["eos"] = "cpg"
+    config["mixture"]["species"] = air
     config["RHS"]["primaryAdvFlux"] = "rusanov"
     config["timeIntegration"]["integrator"] = "rk4"
 

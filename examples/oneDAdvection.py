@@ -23,8 +23,8 @@ air = {"Air": {"MW": 28.97, "cp0": 1000.0}}
 
 def simulate(index="i"):
     config = pg.files.configFile()
-    config["simulation"]["physics"] = "euler"
-    config["simulation"]["mixture"] = air
+    config["simulation"]["simulator"] = "euler"
+    config["mixture"]["species"] = air
     config["RHS"]["primaryAdvFlux"] = "KEPaEC"
     config["bcValues"]["walls"] = {"bcType": "adiabaticSlipWall"}
     config.validateConfig()

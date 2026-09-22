@@ -56,8 +56,8 @@ __all__ = [
 ]
 
 
-def getMixture(configSect, root=None):
-    """Makes the case's mixture from its simulation section: reacting when
-    the section names a chemistry."""
-    kind = ReactingMixture if configSect["chemistry"] else Mixture
-    return kind(configSect, root)
+def getMixture(config, root=None):
+    """Makes the case's mixture from its mixture section: reacting when the
+    chemistry section names a source."""
+    kind = ReactingMixture if config["chemistry"]["source"] else Mixture
+    return kind(config["mixture"], root)

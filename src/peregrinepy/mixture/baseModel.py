@@ -14,7 +14,7 @@ class BaseModel:
     name = None
 
     def __init__(self, configSect):
-        # the case's simulation section: what every fit is made over and to
+        # the case's mixture section: what every fit is made over and to
         self.configSect = configSect
         # what it reads off each species; everything needs MW
         self.fromSpecies = ("MW",)

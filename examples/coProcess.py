@@ -101,9 +101,9 @@ def simulate():
     """A channel of two blocks, fed at one end and let out the other, with
     Catalyst watching every step."""
     config = pg.files.configFile()
-    config["simulation"]["physics"] = "navierStokes"
-    config["simulation"]["mixture"] = air
-    config["simulation"]["trans"] = "constantProps"
+    config["simulation"]["simulator"] = "navierStokes"
+    config["mixture"]["species"] = air
+    config["mixture"]["trans"] = "constantProps"
     config["plugins"]["catalyst"] = {"script": "tempcoproc.py"}
     config["initialConditions"]["u"] = 10.0
     config["bcValues"]["inlet"] = {

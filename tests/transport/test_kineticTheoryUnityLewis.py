@@ -29,12 +29,12 @@ def test_kineticTheoryUnityLewis(my_setup, ctfile):
     Y = Y / np.sum(Y)
 
     config = pg.files.configFile()
-    config["simulation"]["mixture"] = ctfile
-    config["simulation"]["eos"] = "tpg"
-    config["simulation"]["Trange"] = (300.0, 3500.0)
-    config["simulation"]["trans"] = "kineticTheory"
-    config["simulation"]["diffusion"] = "lewis"
-    config["simulation"]["physics"] = "navierStokes"
+    config["mixture"]["species"] = ctfile
+    config["mixture"]["eos"] = "tpg"
+    config["mixture"]["Trange"] = (300.0, 3500.0)
+    config["mixture"]["trans"] = "kineticTheory"
+    config["mixture"]["diffusion"] = "lewis"
+    config["simulation"]["simulator"] = "navierStokes"
 
     mb = pg.multiBlock.solver(
         config,

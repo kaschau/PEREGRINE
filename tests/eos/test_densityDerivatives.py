@@ -42,10 +42,10 @@ mixtures = {
 
 def case(eos):
     config = pg.files.configFile()
-    config["simulation"]["mixture"] = mixtures[eos]
-    config["simulation"]["eos"] = eos
-    config["simulation"]["Trange"] = (300.0, 3500.0)
-    config["simulation"]["physics"] = "euler"
+    config["mixture"]["species"] = mixtures[eos]
+    config["mixture"]["eos"] = eos
+    config["mixture"]["Trange"] = (300.0, 3500.0)
+    config["simulation"]["simulator"] = "euler"
     mesh = pg.mesher.CubeMesher(
         mbDims=[1, 1, 1], dimsPerBlock=[2, 2, 2], lengths=[1, 1, 1]
     )

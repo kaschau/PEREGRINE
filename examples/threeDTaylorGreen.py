@@ -26,8 +26,8 @@ np.seterr(all="raise")
 
 def simulate():
     config = pg.files.configFile()
-    config["simulation"]["physics"] = "euler"
-    config["simulation"]["mixture"] = air
+    config["simulation"]["simulator"] = "euler"
+    config["mixture"]["species"] = air
     config.validateConfig()
 
     NE = 65

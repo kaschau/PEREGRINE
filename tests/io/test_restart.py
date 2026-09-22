@@ -15,7 +15,7 @@ def case(tmp_path, integrator="rk3", gas="air"):
     configure(config, gas, "navierStokes")
     config["RHS"]["primaryAdvFlux"] = "KEPaEC"
     config["timeIntegration"]["integrator"] = integrator
-    config["timeIntegration"]["dt"] = 1e-8
+    config["simulation"]["dt"] = 1e-8
     config["initialConditions"]["u"] = 10.0
     config["bcValues"]["walls"] = {"bcType": "adiabaticNoSlipWall"}
     mesh = pg.mesher.CubeMesher(
@@ -46,7 +46,7 @@ def interior(mb, name):
 @pytest.mark.parametrize("integrator", ["rk3", "dualTime"])
 def test_restartContinuesBitwise(my_setup, tmp_path, integrator):
     config, mb = case(tmp_path, integrator)
-    dt = config["timeIntegration"]["dt"]
+    dt = config["simulation"]["dt"]
     for _ in range(3):
         mb.integrator.step(dt)
     writer = pg.writers.RestartWriter(

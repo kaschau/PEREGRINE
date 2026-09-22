@@ -52,8 +52,8 @@ class SkewedSheet(pg.mesher.CubeMesher):
 
 def simulate():
     config = pg.files.configFile()
-    config["simulation"]["physics"] = "euler"
-    config["simulation"]["mixture"] = air
+    config["simulation"]["simulator"] = "euler"
+    config["mixture"]["species"] = air
     config["bcValues"]["sides"] = {"bcType": "adiabaticSlipWall"}
     config.validateConfig()
 

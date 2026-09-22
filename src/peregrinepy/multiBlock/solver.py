@@ -47,14 +47,14 @@ class solver(restart):
         # the mesh this case came from: a mesher, or a grid file's reader
         # with the partition it took, which the results name
         self.mesh = mesh
-        self.simulator = getSimulator(config)
+        self.simulator = getSimulator(self.config)
         super().__init__(self.simulator.primVars)
         self.exportVars = self.simulator.exportVars
         # its arrays are made where the kernels run
-        self.backend = Backend.fromRuntime(config)
-        self.integrator = integrators.getIntegrator(config, self)
+        self.backend = Backend.fromRuntime(self.config)
+        self.integrator = integrators.getIntegrator(self)
         # the plugins say what they need with the rest, and start once built
-        self.plugins = getPlugins(config)
+        self.plugins = getPlugins(self.config)
         self._declArrays()
         self._declKernels()
         self._jit()
@@ -117,10 +117,10 @@ class solver(restart):
                 self.kernels[tag] = kernel
 
     def _jit(self):
-        """Compiles every kernel with what the simulator bakes in, and the
+        """Compiles every kernel for the simulator's mixture, with the
         halo as deep as the widest stencil among them."""
         self.ng = max(k.stencil for k in self.everyKernel)
-        self.jit = self.backend.jit(self.ng, *self.simulator.bakes())
+        self.jit = self.backend.jit(self.ng, self.simulator.mixture)
         self.jit.compile(self.everyKernel)
 
     @property

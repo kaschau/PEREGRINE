@@ -15,7 +15,7 @@ from .transportModel import BaseTransportModel
 
 
 class Mixture:
-    """The gas a case is solving, from its simulation section of the config:
+    """The gas a case is solving, from its mixture section of the config:
     its species, with what every model works out on them."""
 
     def __init__(self, configSect, root=None):
@@ -30,9 +30,11 @@ class Mixture:
             if trans
             else None
         )
+        # how the species' viscosities mix, a switch the jit bakes by name
+        self.mixingRule = configSect["mixingRule"]
         self._checkCombination()
 
-        usersp, self.reactions = self.readMixture(configSect["mixture"], root)
+        usersp, self.reactions = self.readMixture(configSect, root)
         self.species = Species.build(usersp, self.models)
         self.speciesNames = list(self.species)
         self.ns = len(self.speciesNames)
@@ -155,9 +157,11 @@ class Mixture:
         return f"<{type(self).__name__} {self.ns} species, {' + '.join(models)}>"
 
     @staticmethod
-    def readMixture(mixture, root):
-        """({species: data}, reactions) from a dict, a list of library names,
-        or a Cantera file found in the case's input dir, cwd or the database."""
+    def readMixture(configSect, root):
+        """({species: data}, reactions) from the section's species: a dict, a
+        list of library names, or a Cantera file found in the case's input
+        dir, cwd or the database."""
+        mixture = configSect["species"]
         if isinstance(mixture, dict):
             return dict(mixture), []
         if isinstance(mixture, (list, tuple)):
@@ -189,7 +193,7 @@ class ReactingMixture(Mixture):
     def __init__(self, configSect, root=None):
         super().__init__(configSect, root)
         if not self.reactions:
-            raise ValueError(f"{configSect['mixture']} has no reactions to react by")
+            raise ValueError(f"{configSect['species']} has no reactions to react by")
 
     def tables(self):
         return {**super().tables(), "reactions": self.reactionData()}

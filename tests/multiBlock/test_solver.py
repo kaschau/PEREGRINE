@@ -124,7 +124,7 @@ def test_theCaseReportsItself(my_setup):
     text = repr(mb)
     for line in (
         "Blocks: 1 of 1",
-        "Physics: navierStokes",
+        "Simulator: navierStokes",
         "Time Integrator: rk3",
         "consistify: pack Q",
     ):

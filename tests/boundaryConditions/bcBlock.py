@@ -33,7 +33,7 @@ def create(bc, adv, gas):
         "mDotPerUnitArea": np.random.uniform(low=1, high=1000),
     }
     values["pt"], values["Tt"] = values["p"], values["T"]
-    speciesNames = pg.mixture.Mixture(config["simulation"]).speciesNames
+    speciesNames = pg.mixture.Mixture(config["mixture"]).speciesNames
     if len(speciesNames) > 1:
         Ybc = np.random.uniform(low=0.0, high=1.0, size=len(speciesNames))
         Ybc = Ybc / np.sum(Ybc)

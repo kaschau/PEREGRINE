@@ -39,7 +39,7 @@ class Fixed(BaseController):
     name = "fixed"
 
     def stepSize(self):
-        return self.config["timeIntegration"]["dt"]
+        return self.config["simulation"]["dt"]
 
 
 class CFL(BaseController):
@@ -53,8 +53,8 @@ class CFL(BaseController):
     def stepSize(self):
         """Gives the config's CFL over the max combined speed on any rank,
         which the speed of sound keeps finite."""
-        ti = self.config["timeIntegration"]
+        sim = self.config["simulation"]
         cfl = np.zeros(3, self.solver.backend.fpdtype)
         self.solver.launch("CFLmax", "interior", cfl=cfl)
         getCommRankSize()[0].Allreduce(MPI.IN_PLACE, cfl, op=MPI.MAX)
-        return min(ti["maxCFL"] / cfl[2], ti["maxDt"])
+        return min(sim["maxCFL"] / cfl[2], sim["maxDt"])

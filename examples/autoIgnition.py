@@ -28,12 +28,12 @@ def simulate():
 
     # PEREGRINE stuff
     config = pg.files.configFile()
-    config["simulation"]["physics"] = "euler"
+    config["simulation"]["simulator"] = "euler"
     config["timeIntegration"]["integrator"] = "rk4"
-    config["simulation"]["chemistry"] = "substepped"
-    config["simulation"]["eos"] = "tpg"
-    config["simulation"]["mixture"] = "CH4_O2_FFCMY.yaml"
-    config["simulation"]["Trange"] = (300.0, 3500.0)
+    config["chemistry"]["source"] = "substepped"
+    config["mixture"]["eos"] = "tpg"
+    config["mixture"]["species"] = "CH4_O2_FFCMY.yaml"
+    config["mixture"]["Trange"] = (300.0, 3500.0)
     # the reactor's state, uniform over the block
     config["initialConditions"]["p"] = gas.P
     config["initialConditions"]["T"] = gas.T
@@ -50,7 +50,7 @@ def simulate():
     ng = blk.ng
 
     dt = 1e-9
-    config["timeIntegration"]["dt"] = dt
+    config["simulation"]["dt"] = dt
     niterout = 1000
     pgT = []
     pgO2 = []

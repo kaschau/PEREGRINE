@@ -17,8 +17,8 @@ def uniformBox(
     config = pg.files.configFile()
     config["RHS"]["primaryAdvFlux"] = "KEPaEC"
     config["timeIntegration"]["integrator"] = integrator
-    config["timeIntegration"]["controller"] = controller
-    config["timeIntegration"]["dt"] = 1e-6
+    config["simulation"]["controller"] = controller
+    config["simulation"]["dt"] = 1e-6
     config["initialConditions"]["u"] = 10.0
     configure(config, "air", physics)
     mesh = pg.mesher.CubeMesher(
@@ -63,7 +63,7 @@ def test_step(my_setup, integrator, physics, controller):
 
     Q0 = mb.blocks[0].Q.get()
     for _ in range(3):
-        mb.integrator.step(config["timeIntegration"]["dt"])
+        mb.integrator.step(config["simulation"]["dt"])
     assertUnchanged(mb, "Q", Q0)
     assert mb.nrt == 3
 
@@ -112,7 +112,7 @@ def test_dualTimeComposesItsPseudoScheme(my_setup, pseudo):
 
     q0 = mb.blocks[0].q.get()
     for _ in range(2):
-        integrator.step(config["timeIntegration"]["dt"])
+        integrator.step(config["simulation"]["dt"])
     assertUnchanged(mb, "q", q0)
 
     config["timeIntegration"]["pseudoIntegrator"] = "dualTime"
@@ -128,15 +128,15 @@ def test_dualTimeOnAnyEos(my_setup, eos, lowMach):
     # with the low-Mach preconditioner and without
     config, mesh = uniformBox("dualTime", "fixed", "euler")
     config["timeIntegration"]["lowMach"] = lowMach
-    config["simulation"]["mixture"] = ["O2", "N2", "CO2", "CH4"]
-    config["simulation"]["eos"] = eos
-    config["simulation"]["trans"] = None
-    config["simulation"]["Trange"] = (300.0, 3500.0)
+    config["mixture"]["species"] = ["O2", "N2", "CO2", "CH4"]
+    config["mixture"]["eos"] = eos
+    config["mixture"]["trans"] = None
+    config["mixture"]["Trange"] = (300.0, 3500.0)
     config["initialConditions"].update(
         p=60e5, T=320.0, Y={"O2": 0.3, "N2": 0.4, "CO2": 0.2}
     )
     config["timeIntegration"]["subIterations"] = 8
-    config["timeIntegration"]["dt"] = 1e-7
+    config["simulation"]["dt"] = 1e-7
     mb = pg.multiBlock.solver(config, mesh)
     blk = mb.blocks[0]
     ng = blk.ng
@@ -148,7 +148,7 @@ def test_dualTimeOnAnyEos(my_setup, eos, lowMach):
     mb.integrator.initialize()
     mb.integrator.reportDue = True
     for _ in range(2):
-        mb.integrator.step(config["timeIntegration"]["dt"])
+        mb.integrator.step(config["simulation"]["dt"])
     residuals = np.array(mb.integrator.residuals)
     assert np.isfinite(blk.Q.get()[ng:-ng, ng:-ng, ng:-ng]).all()
     # the pseudo residual fell over the sub iterations of the last step

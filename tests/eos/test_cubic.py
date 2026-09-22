@@ -15,10 +15,10 @@ def print_diff(name, c, p, scale=None):
 
 def test_cubic(my_setup):
     config = pg.files.configFile()
-    config["simulation"]["mixture"] = ["O2", "N2", "CO2", "CH4"]
-    config["simulation"]["eos"] = "realGas"
-    config["simulation"]["Trange"] = (300.0, 3500.0)
-    config["simulation"]["physics"] = "euler"
+    config["mixture"]["species"] = ["O2", "N2", "CO2", "CH4"]
+    config["mixture"]["eos"] = "realGas"
+    config["mixture"]["Trange"] = (300.0, 3500.0)
+    config["simulation"]["simulator"] = "euler"
 
     mb = pg.multiBlock.solver(
         config,

@@ -26,14 +26,14 @@ np.seterr(all="raise")
 
 def simulate():
     config = pg.files.configFile()
-    config["simulation"]["physics"] = "navierStokes"
-    config["simulation"]["mixture"] = air
-    config["simulation"]["trans"] = "constantProps"
+    config["simulation"]["simulator"] = "navierStokes"
+    config["mixture"]["species"] = air
+    config["mixture"]["trans"] = "constantProps"
 
     config["simulation"]["niter"] = 100
 
     config["timeIntegration"]["integrator"] = "rk3"
-    config["timeIntegration"]["controller"] = "cfl"
+    config["simulation"]["controller"] = "cfl"
     config.validateConfig()
 
     ni = 30

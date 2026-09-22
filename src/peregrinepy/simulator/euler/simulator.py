@@ -43,31 +43,32 @@ class EulerSimulator(BaseSimulator):
 
     def __init__(self, config):
         super().__init__(config)
-        self.mixture = getMixture(config["simulation"])
+        self.mixture = getMixture(self.config)
         self.ne = 5 + self.mixture.ns - 1
 
-    def validate(self, config):
-        rhs, sim, ti = config["RHS"], config["simulation"], config["timeIntegration"]
+    def validate(self):
+        rhs, ti = self.config["RHS"], self.config["timeIntegration"]
+        mixture, chemistry = self.config["mixture"], self.config["chemistry"]
         if (rhs["secondaryAdvFlux"] is None) != (rhs["switchAdvFlux"] is None):
             raise pgConfigError(
                 "secondaryAdvFlux",
                 rhs["secondaryAdvFlux"],
                 "a secondary flux and a switch go together",
             )
-        if sim["chemistry"] not in (None, "explicit", "substepped"):
-            raise pgConfigError("chemistry", sim["chemistry"])
-        bisections = sim["chemistryEntropyBisections"]
+        if chemistry["source"] not in (None, "explicit", "substepped"):
+            raise pgConfigError("chemistry", chemistry["source"])
+        bisections = chemistry["entropyBisections"]
         if not isinstance(bisections, int) or bisections < 0:
             raise pgConfigError(
-                "chemistryEntropyBisections", bisections, "is a count, none for no cap"
+                "entropyBisections", bisections, "is a count, none for no cap"
             )
         if rhs["primaryAdvFlux"] is None:
             raise pgConfigError("primaryAdvFlux", None, "a case has a primary flux")
-        if sim["eos"] not in ("cpg", "tpg", "realGas"):
-            raise pgConfigError("eos", sim["eos"])
+        if mixture["eos"] not in ("cpg", "tpg", "realGas"):
+            raise pgConfigError("eos", mixture["eos"])
         if ti["chemistryJacobian"] not in (None, "diagonal"):
             raise pgConfigError("chemistryJacobian", ti["chemistryJacobian"])
-        if ti["chemistryJacobian"] and not sim["chemistry"]:
+        if ti["chemistryJacobian"] and not chemistry["source"]:
             raise pgConfigError(
                 "chemistryJacobian",
                 ti["chemistryJacobian"],
@@ -82,9 +83,10 @@ class EulerSimulator(BaseSimulator):
         if not isinstance(ti["lowMach"], bool):
             raise pgConfigError("lowMach", ti["lowMach"], "is on or off")
         if ti["integrator"] == "dualTime":
-            if ti["controller"] != "fixed":
+            controller = self.config["simulation"]["controller"]
+            if controller != "fixed":
                 raise pgConfigError(
-                    "dualTime", ti["controller"], "only a fixed time step is supported"
+                    "dualTime", controller, "only a fixed time step is supported"
                 )
             if ti["pseudoIntegrator"] == "dualTime":
                 raise pgConfigError(
@@ -174,22 +176,22 @@ class EulerSimulator(BaseSimulator):
         # rates of the state, or the source substepped over the step, the
         # reactions baked in by the jit -- and the fluxes are appended to
         # it; without, they begin it
-        chemistry = self.config["simulation"]["chemistry"]
-        if chemistry == "explicit":
+        source = self.config["chemistry"]["source"]
+        if source == "explicit":
             k["productionRateSource"] = CellCenterKernel(
                 "chemistry/productionRateSource.cpp"
             )
-        if chemistry == "substepped":
-            sim = self.config["simulation"]
+        if source == "substepped":
+            chemistry = self.config["chemistry"]
             k["finiteRateSubstep"] = CellCenterKernel(
                 "chemistry/finiteRateSubstep.cpp",
                 defines=[
-                    f"PG_CHEMISTRY_MAX_SUBSTEPS={int(sim['chemistryMaxSubSteps'])}",
-                    f"PG_CHEMISTRY_ENTROPY_BISECTIONS={int(sim['chemistryEntropyBisections'])}",
+                    f"PG_CHEMISTRY_MAX_SUBSTEPS={int(chemistry['maxSubSteps'])}",
+                    f"PG_CHEMISTRY_ENTROPY_BISECTIONS={int(chemistry['entropyBisections'])}",
                 ],
             )
         k["applyFlux"] = CellCenterKernel(
-            "utils/applyFlux.cpp", defines=["PG_FLUXES_APPEND=1"] if chemistry else []
+            "utils/applyFlux.cpp", defines=["PG_FLUXES_APPEND=1"] if source else []
         )
         # boundary conditions by hook
         for bcHook in self.bcHooks:
@@ -201,9 +203,6 @@ class EulerSimulator(BaseSimulator):
                 name=f"bcs {bcHook}",
             )
         return k
-
-    def bakes(self):
-        return self.mixture, self.config["simulation"]
 
     # The chemistry source is the cell's own, over the interior, and wants
     # nothing of the fluxes: it begins dQ first in the right-hand side,
@@ -267,9 +266,8 @@ class EulerSimulator(BaseSimulator):
         return values + [Y.get(name, 0.0) for name in names[:-1]]
 
     def report(self):
-        sim = self.config["simulation"]
         return (
-            f"  Physics: {self.name}\n"
+            f"  Simulator: {self.name}\n"
             f"  Species: {self.mixture.speciesNames}\n"
-            f"  Equation of State: {sim['eos']}\n"
+            f"  Equation of State: {self.config['mixture']['eos']}\n"
         )

@@ -22,9 +22,12 @@ class BaseBackend:
     # what the runtime calls it, lower case; its config section is backend-<name>
     name = None
 
-    def __init__(self, order="C", launch=None, precision="double"):
+    def __init__(self, order="C", config=None):
         self.order = order
-        # what every array it makes holds, the case's precision
+        self.config = config
+        # what every array it makes holds, the case's precision; double for
+        # a backend with no case, a grid's
+        precision = config["simulation"]["precision"] if config else "double"
         self.fpdtype = np.dtype({"double": np.float64, "single": np.float32}[precision])
         # how this backend launches, from its config section: the items of
         # one entry a team does, by what an item is, and on a device the
@@ -33,7 +36,8 @@ class BaseBackend:
         self.tiles = self.launchBound = None
         # the array tables made here, one per list of entries, kept
         self.arrayTables = {}
-        if launch is not None:
+        if config is not None:
+            launch = config[f"backend-{self.name}"]
             self.tiles = {
                 "cells": launch["tileSize"],
                 "elements": launch["tileElements"],
@@ -47,14 +51,12 @@ class BaseBackend:
     @classmethod
     def fromRuntime(cls, config):
         """The backend the runtime was built for, once it is up, in the
-        runtime's layout, with its section of the config."""
+        runtime's layout, with the config."""
         from ..misc import subclassWhere
 
         order = "F" if lib.pgLayoutLeft() else "C"
         name = lib.pgBackend().decode().lower()
-        return subclassWhere(cls, name=name)(
-            order, config[f"backend-{name}"], config["simulation"]["precision"]
-        )
+        return subclassWhere(cls, name=name)(order, config)
 
     def arrayTable(self, entries):
         """Gives the array table of these entries -- the list itself, not a
@@ -64,10 +66,9 @@ class BaseBackend:
             self.arrayTables[id(entries)] = ArrayTable(entries, self)
         return self.arrayTables[id(entries)]
 
-    def jit(self, ng, mixture, simulation):
-        """Makes the compiler for this backend's kernels, with its launch
-        bound."""
-        return Jit(ng, mixture, simulation, launch=self.launchBound)
+    def jit(self, ng, mixture):
+        """Makes the compiler for this backend's kernels."""
+        return Jit(ng, mixture, self)
 
     def allocate(self, shape, dtype=None, name=None):
         """Makes a zeroed array on this backend, of its precision unless

@@ -10,7 +10,7 @@ import numpy as np
 
 def test_constantProps(my_setup):
     config = pg.files.configFile()
-    config["simulation"]["mixture"] = {
+    config["mixture"]["species"] = {
         "Air": {
             "MW": 28.96,
             "cp0": 1005.0,
@@ -18,9 +18,9 @@ def test_constantProps(my_setup):
             "kappa0": 0.02625394405190068,
         }
     }
-    config["simulation"]["eos"] = "cpg"
-    config["simulation"]["trans"] = "constantProps"
-    config["simulation"]["physics"] = "navierStokes"
+    config["mixture"]["eos"] = "cpg"
+    config["mixture"]["trans"] = "constantProps"
+    config["simulation"]["simulator"] = "navierStokes"
 
     mb = pg.multiBlock.solver(
         config,

@@ -21,5 +21,5 @@ __all__ = [
 
 def getSimulator(config):
     """Makes the simulator the config names, validated."""
-    physics = config["simulation"]["physics"]
-    return subclassWhere(BaseSimulator, name=physics)(config)
+    name = config["simulation"]["simulator"]
+    return subclassWhere(BaseSimulator, name=name)(config)

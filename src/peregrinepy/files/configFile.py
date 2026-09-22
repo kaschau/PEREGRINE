@@ -16,31 +16,33 @@ class pgConfigError(Exception):
 
 class configFile(frozenDict):
     def __init__(self):
-        # The physics simulated, by the name of its simulation class, and
-        # what it is made of: the gas, its equation of state, its transport
-        # and diffusion models, and how their fits are made
+        # What is simulated: the simulator, by the name of its class, in what
+        # precision, for how many steps, and how each step is sized: fixed at
+        # dt, or cfl up to maxDt
         self["simulation"] = frozenDict(
             {
-                "physics": "navierStokes",
-                "niter": 1,
-                # a Cantera mechanism file, or a list of species from the library
-                "mixture": None,
-                "eos": "cpg",
-                # none, like the physics: a viscous case picks one
-                "trans": None,
-                "diffusion": "lewis",
+                "simulator": "navierStokes",
                 # what every array and kernel value is: double, or single
                 "precision": "double",
+                "niter": 1,
+                "controller": "fixed",
+                "dt": 1e-3,
+                "maxDt": 1e-3,
+                "maxCFL": 0.1,
+            }
+        )
+        # The gas: its species, its equation of state, its transport and
+        # diffusion models, and how their fits are made
+        self["mixture"] = frozenDict(
+            {
+                # a Cantera mechanism file, or a list of species from the library
+                "species": None,
+                "eos": "cpg",
+                # none: a viscous simulator picks one
+                "trans": None,
+                "diffusion": "lewis",
                 # how the species' viscosities mix: wilke or herning
                 "mixingRule": "wilke",
-                # finite-rate chemistry: none, the production rates as the
-                # source, or substepped to the fastest species' bound, up to
-                # so many substeps, each capped where the mixture's entropy
-                # stops rising along it, located by so many bisections (0:
-                # no cap)
-                "chemistry": None,
-                "chemistryMaxSubSteps": 200,
-                "chemistryEntropyBisections": 12,
                 # what every temperature-dependent property is refit over and
                 # to: the lowest degree within the tolerance, or the best at the
                 # cap, which is seven terms, the count the source data has, and
@@ -49,6 +51,13 @@ class configFile(frozenDict):
                 "reFitTol": 1e-3,
                 "reFitMaxDegree": 6,
             }
+        )
+        # Finite-rate chemistry: no source, the production rates as the
+        # source, or substepped to the fastest species' bound, up to so many
+        # substeps, each capped where the mixture's entropy stops rising
+        # along it, located by so many bisections (0: no cap)
+        self["chemistry"] = frozenDict(
+            {"source": None, "maxSubSteps": 200, "entropyBisections": 12}
         )
         # the uniform state a case starts from when it does not restart
         self["initialConditions"] = frozenDict(
@@ -64,6 +73,7 @@ class configFile(frozenDict):
             }
         )
 
+        # The time integrator, and what is its own
         self["timeIntegration"] = frozenDict(
             {
                 "integrator": "rk3",
@@ -76,11 +86,6 @@ class configFile(frozenDict):
                 # in it, none or each species' own entry with its temperature's
                 "lowMach": True,
                 "chemistryJacobian": None,
-                # how each step is sized: fixed at dt, or cfl up to maxDt
-                "controller": "fixed",
-                "dt": 1e-3,
-                "maxDt": 1e-3,
-                "maxCFL": 0.1,
             }
         )
 
@@ -167,8 +172,7 @@ class configFile(frozenDict):
     def validateConfig(self):
         """What the file's values have to be; whether they make a step is the
         step graph's to say."""
-        self["timeIntegration"]["dt"] = float(self["timeIntegration"]["dt"])
-        sim = self["simulation"]
+        self["simulation"]["dt"] = float(self["simulation"]["dt"])
         for section in (k for k in self if k.startswith("backend-")):
             launch = self[section]
             for key in launch:

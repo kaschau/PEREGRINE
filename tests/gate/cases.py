@@ -53,12 +53,12 @@ def build(
     config = pg.files.configFile()
     configure(config, gas, physics)
     if diffusion:
-        config["simulation"]["diffusion"] = diffusion
+        config["mixture"]["diffusion"] = diffusion
     if chemistry:
-        config["simulation"]["chemistry"] = chemistry
+        config["chemistry"]["source"] = chemistry
     config["RHS"]["primaryAdvFlux"] = "KEPaEC"
     config["timeIntegration"]["integrator"] = integrator
-    config["timeIntegration"]["dt"] = 1e-9
+    config["simulation"]["dt"] = 1e-9
     # the j sides are walls: no-slip where the flow sticks, slip where it cannot
     wall = "adiabaticNoSlipWall" if physics == "navierStokes" else "adiabaticSlipWall"
     config["bcValues"]["walls"] = {"bcType": wall}
@@ -85,7 +85,7 @@ def build(
 
 
 def step(mb, n=12):
-    dt = mb.config["timeIntegration"]["dt"]
+    dt = mb.config["simulation"]["dt"]
     for _ in range(n):
         mb.integrator.step(dt)
 

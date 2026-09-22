@@ -22,10 +22,9 @@ class NavierStokesSimulator(EulerSimulator):
     # the cell length, which the ducros switch reads
     metrics = EulerSimulator.metrics + ("cellLength",)
 
-    def validate(self, config):
-        super().validate(config)
-        sim = config["simulation"]
-        if sim["trans"] is None:
+    def validate(self):
+        super().validate()
+        if self.config["mixture"]["trans"] is None:
             raise pgConfigError("trans", None, "a viscous case has a transport model")
 
     def arrays(self):
@@ -41,10 +40,10 @@ class NavierStokesSimulator(EulerSimulator):
         return arrays
 
     def declKernels(self):
-        sim = self.config["simulation"]
+        trans = self.config["mixture"]["trans"]
         k = super().declKernels()
         # the jit bakes the diffusion model into this
-        k["trans"] = CellCenterKernel(f"transport/{sim['trans']}.cpp")
+        k["trans"] = CellCenterKernel(f"transport/{trans}.cpp")
         k["dqdxyz"] = CellCenterKernel("utils/dq2FD.cpp")
         k["diffFlux"] = UnorderedKernelGroup(
             [CellFaceKernel("diffFlux/alphaDampingFlux.cpp", d) for d in range(3)]

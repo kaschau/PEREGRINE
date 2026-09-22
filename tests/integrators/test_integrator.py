@@ -10,13 +10,17 @@ import peregrinepy as pg
 from ..gases import configure
 
 
-def solver(integrator="rk3", controller="fixed", **ti):
+def solver(integrator="rk3", controller="fixed", **settings):
+    """A viscous periodic box; each setting goes to the section that has
+    it, the step sizing's or the integrator's."""
     config = pg.files.configFile()
     config["RHS"]["primaryAdvFlux"] = "KEPaEC"
     config["timeIntegration"]["integrator"] = integrator
-    config["timeIntegration"]["controller"] = controller
-    config["timeIntegration"]["dt"] = 1e-6
-    config["timeIntegration"].update(ti)
+    config["simulation"]["controller"] = controller
+    config["simulation"]["dt"] = 1e-6
+    for key, value in settings.items():
+        section = "simulation" if key in config["simulation"] else "timeIntegration"
+        config[section][key] = value
     config["initialConditions"]["u"] = 10.0
     configure(config, "air", "navierStokes")
     mesh = pg.mesher.CubeMesher(
