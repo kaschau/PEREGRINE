@@ -32,18 +32,6 @@ PG_FPDTYPE_PAIR(pow)
 #undef PG_FPDTYPE_PAIR
 #endif
 
-// a face's area and unit normal, from its area vector
-KOKKOS_INLINE_FUNCTION
-void faceNormal(const fpdtype &sx, const fpdtype &sy, const fpdtype &sz,
-                fpdtype &S, fpdtype &nx, fpdtype &ny, fpdtype &nz) {
-  // a degenerate face is floored, we divide by this
-  S = sqrt(sx * sx + sy * sy + sz * sz);
-  fpdtype Sinv = 1.0 / S;
-  nx = sx * Sinv;
-  ny = sy * Sinv;
-  nz = sz * Sinv;
-}
-
 // a kernel with a wider stencil says so; the jit sizes the halo to the widest
 #define PG_STENCIL(n)                                                          \
   static_assert(NG >= (n), "this kernel needs " #n " halo layers")

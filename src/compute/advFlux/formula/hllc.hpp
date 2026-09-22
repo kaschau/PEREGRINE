@@ -5,6 +5,7 @@
 
 #include "advFlux/faceState.hpp"
 #include "faces.hpp"
+#include "utils/normal.hpp"
 
 struct hllc {
   // one side's own flux, and its star state's correction to it
@@ -62,8 +63,10 @@ struct hllc {
     faceNormal(A(0), A(1), A(2), S, nx, ny, nz);
     const auto s = r.states();
     const faceState &L = s.L, &R = s.R;
-    const fpdtype UR = nx * R.u + ny * R.v + nz * R.w;
-    const fpdtype UL = nx * L.u + ny * L.v + nz * L.w;
+    const fpdtype UR =
+        normalVelocity(R.rho, R.rhou, R.rhov, R.rhow, nx, ny, nz);
+    const fpdtype UL =
+        normalVelocity(L.rho, L.rhou, L.rhov, L.rhow, nx, ny, nz);
 
     // wave speed estimate
     const fpdtype SL = UL - L.c;

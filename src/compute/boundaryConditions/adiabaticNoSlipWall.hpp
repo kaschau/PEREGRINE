@@ -3,6 +3,7 @@
 
 #include "boundaryConditions/haloState.hpp"
 #include "kernel.hpp"
+#include "utils/normal.hpp"
 
 namespace adiabaticNoSlipWall {
 

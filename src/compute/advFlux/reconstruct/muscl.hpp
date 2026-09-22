@@ -51,13 +51,13 @@ struct muscl {
     faceState &L = s.L, &R = s.R;
     L.rho = s.rho.left(rhoL, rhoR);
     R.rho = s.rho.right(rhoR, rhoRR);
-    fpdtype *uL[] = {&L.u, &L.v, &L.w}, *uR[] = {&R.u, &R.v, &R.w};
+    fpdtype uL[3], uR[3];
     for (int d = 0; d < 3; d++) {
       const fpdtype vLL = Q.LL(1 + d) / rhoLL, vL = Q.L(1 + d) / rhoL,
                     vR = Q.R(1 + d) / rhoR, vRR = Q.RR(1 + d) / rhoRR;
       const slope u(vLL, vL, vR, vRR);
-      *uL[d] = u.left(vL, vR);
-      *uR[d] = u.right(vR, vRR);
+      uL[d] = u.left(vL, vR);
+      uR[d] = u.right(vR, vRR);
     }
     // the internal energy per mass, whose limiter p and c take too
     const slope e(qh.LL(4) / rhoLL, qh.L(4) / rhoL, qh.R(4) / rhoR,
@@ -68,10 +68,10 @@ struct muscl {
     R.p = e.right(q.R(0), q.RR(0));
     L.c = e.left(qh.L(3), qh.R(3));
     R.c = e.right(qh.R(3), qh.RR(3));
-    L.rhou = L.rho * L.u, L.rhov = L.rho * L.v, L.rhow = L.rho * L.w;
-    R.rhou = R.rho * R.u, R.rhov = R.rho * R.v, R.rhow = R.rho * R.w;
-    L.E = L.rho * (eL + 0.5 * (L.u * L.u + L.v * L.v + L.w * L.w));
-    R.E = R.rho * (eR + 0.5 * (R.u * R.u + R.v * R.v + R.w * R.w));
+    L.rhou = L.rho * uL[0], L.rhov = L.rho * uL[1], L.rhow = L.rho * uL[2];
+    R.rhou = R.rho * uR[0], R.rhov = R.rho * uR[1], R.rhow = R.rho * uR[2];
+    L.E = L.rho * (eL + 0.5 * (uL[0] * uL[0] + uL[1] * uL[1] + uL[2] * uL[2]));
+    R.E = R.rho * (eR + 0.5 * (uR[0] * uR[0] + uR[1] * uR[1] + uR[2] * uR[2]));
     return s;
   }
   KOKKOS_INLINE_FUNCTION void species(const sides &s, int n, fpdtype &L,

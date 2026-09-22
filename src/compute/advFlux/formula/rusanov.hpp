@@ -5,6 +5,7 @@
 
 #include "advFlux/faceState.hpp"
 #include "faces.hpp"
+#include "utils/normal.hpp"
 
 struct rusanov {
   template <class Recon, class Out>
@@ -14,8 +15,8 @@ struct rusanov {
     faceNormal(A(0), A(1), A(2), S, nx, ny, nz);
     const auto s = r.states();
     const faceState &L = s.L, &R = s.R;
-    fpdtype UR = nx * R.u + ny * R.v + nz * R.w;
-    fpdtype UL = nx * L.u + ny * L.v + nz * L.w;
+    fpdtype UR = normalVelocity(R.rho, R.rhou, R.rhov, R.rhow, nx, ny, nz);
+    fpdtype UL = normalVelocity(L.rho, L.rhou, L.rhov, L.rhow, nx, ny, nz);
 
     // wave speed estimate
     const fpdtype lam = fmax(fabs(UL) + R.c, fabs(UR) + L.c) * S;
@@ -25,11 +26,12 @@ struct rusanov {
     // Continuity rho*Ui
     F(0) = 0.5 * (UR * R.rho + UL * L.rho - lam * (R.rho - L.rho));
     // momentum rho*u*Ui + p*A, each side's own then the average
-    const fpdtype *uL[] = {&L.u, &L.v, &L.w}, *uR[] = {&R.u, &R.v, &R.w};
+    const fpdtype *mL[] = {&L.rhou, &L.rhov, &L.rhow},
+                  *mR[] = {&R.rhou, &R.rhov, &R.rhow};
     for (int d = 0; d < 3; d++) {
-      const fpdtype FUR = UR * *uR[d] * R.rho + R.p * A(d);
-      const fpdtype FUL = UL * *uL[d] * L.rho + L.p * A(d);
-      F(1 + d) = 0.5 * (FUR + FUL - lam * (R.rho * *uR[d] - L.rho * *uL[d]));
+      const fpdtype FUR = UR * *mR[d] + R.p * A(d);
+      const fpdtype FUL = UL * *mL[d] + L.p * A(d);
+      F(1 + d) = 0.5 * (FUR + FUL - lam * (*mR[d] - *mL[d]));
     }
     // Total energy (rhoE + p)*Ui
     F(4) = 0.5 * (UR * (R.E + R.p) + UL * (L.E + L.p) - lam * (R.E - L.E));

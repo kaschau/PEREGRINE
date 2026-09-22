@@ -1,4 +1,5 @@
 #include "kernel.hpp"
+#include "utils/normal.hpp"
 
 // The rank's max acoustic, convective and combined CFL speeds (speed/dx),
 // into cfl[3]; python combines the ranks.

@@ -1,6 +1,7 @@
 #include "array"
 #include "dualTime.hpp"
 #include "kernel.hpp"
+#include "utils/normal.hpp"
 #include "vector"
 
 PG_RANGE(cellCenters)

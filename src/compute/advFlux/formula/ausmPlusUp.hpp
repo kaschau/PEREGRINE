@@ -5,6 +5,7 @@
 
 #include "advFlux/faceState.hpp"
 #include "faces.hpp"
+#include "utils/normal.hpp"
 
 struct ausmPlusUp {
   template <class Recon, class Out>
@@ -14,8 +15,10 @@ struct ausmPlusUp {
     faceNormal(A(0), A(1), A(2), S, nx, ny, nz);
     const auto s = r.states();
     const faceState &L = s.L, &R = s.R;
-    const fpdtype UR = nx * R.u + ny * R.v + nz * R.w;
-    const fpdtype UL = nx * L.u + ny * L.v + nz * L.w;
+    const fpdtype UR =
+        normalVelocity(R.rho, R.rhou, R.rhov, R.rhow, nx, ny, nz);
+    const fpdtype UL =
+        normalVelocity(L.rho, L.rhou, L.rhov, L.rhow, nx, ny, nz);
 
     const fpdtype a12 = 0.5 * (R.c + L.c);
     const fpdtype ML = UL / a12;
@@ -70,9 +73,9 @@ struct ausmPlusUp {
     // Continuity rho*Ui
     F(0) = mDot12 * S;
     // momentum rho*u*Ui + p*A
-    F(1) = mDot12 * U.u * S + p12 * A(0);
-    F(2) = mDot12 * U.v * S + p12 * A(1);
-    F(3) = mDot12 * U.w * S + p12 * A(2);
+    F(1) = mDot12 * U.rhou * rhoinvU * S + p12 * A(0);
+    F(2) = mDot12 * U.rhov * rhoinvU * S + p12 * A(1);
+    F(3) = mDot12 * U.rhow * rhoinvU * S + p12 * A(2);
     // Total energy (rhoE + p)*Ui
     F(4) = mDot12 * (U.E + U.p) * rhoinvU * S;
     // Species

@@ -1,5 +1,6 @@
 #include "faces.hpp"
 #include "thermo/eos.hpp"
+#include "utils/normal.hpp"
 
 // References
 //

@@ -17,9 +17,7 @@ struct piecewiseConstant {
   template <class C>
   static KOKKOS_INLINE_FUNCTION faceState state(const C &Q, const C &q,
                                                 const C &qh) {
-    const fpdtype rhoinv = 1.0 / Q(0);
-    return {Q(0), Q(1) * rhoinv, Q(2) * rhoinv, Q(3) * rhoinv, Q(1),
-            Q(2), Q(3),          q(0),          Q(4),          qh(3)};
+    return {Q(0), Q(1), Q(2), Q(3), q(0), Q(4), qh(3)};
   }
   struct sides {
     faceState L, R;
