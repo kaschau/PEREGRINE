@@ -19,7 +19,7 @@ class Report(BasePlugin):
         " >>> ******************************** <<<\n"
         "              PEREGRINE CFD\n"
         " >>> ******************************** <<<\n"
-        "  Copyright (c) 2021-2024 Kyle A. Schau\n"
+        "  Copyright (c) 2021 Kyle A. Schau\n"
         "           All rights reserved.\n"
     )
 
