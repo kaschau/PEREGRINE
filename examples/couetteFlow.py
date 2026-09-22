@@ -54,7 +54,14 @@ def simulate(index, velo):
         assert ("y" in velo) or ("x" in velo)
 
     config = pg.files.configFile()
-    config["simulation"]["dt"] = 10 * 1.0e-5 / nx
+    # a viscous problem at Mach 0.015: dual time steps on the viscous clock,
+    # not the acoustic one, which would be a million steps
+    config["simulation"]["dt"] = 1e-3
+    config["timeIntegration"]["integrator"] = "dualTime"
+    config["timeIntegration"]["subIterations"] = 20
+    # twenty pseudo steps converge a physical step three orders at this
+    # pseudo CFL; 2.5 still held here and 3 did not
+    config["timeIntegration"]["pseudoCFL"] = 2.0
     config["simulation"]["simulator"] = "navierStokes"
     config["mixture"]["trans"] = "constantProps"
     config["mixture"]["species"] = air
@@ -113,7 +120,7 @@ def simulate(index, velo):
     while mb.tme < simTme:
         mb.integrator.step(config["simulation"]["dt"])
 
-        if mb.nrt % 200 == 0:
+        if mb.nrt % 20 == 0:
             bar.at(mb.tme)
             if np.any(np.isnan(blk.Q.get())):
                 raise ValueError("Nan detected")
@@ -127,12 +134,15 @@ def simulate(index, velo):
     # Analytical solution
     yplot = np.linspace(0, h, 100)
     anSol = []
-    for oT in outputTimes:
+    for oT, oU in zip(outputTimes, outputU):
         sol = []
         for yy in yplot:
             t = oT * h**2 / nu
             sol.append(analytical(yy, h, t, nu, wallSpeed))
         anSol.append(np.array(sol))
+        exact = np.array([analytical(yy, h, t, nu, wallSpeed) for yy in xc])
+        err = np.abs(oU - exact).max() / abs(wallSpeed)
+        print(f"t nu/h^2 = {oT}: max |u - exact| / U = {err:.3e}")
 
     fig, ax1 = plt.subplots()
     ax1.grid(True, linestyle="--")

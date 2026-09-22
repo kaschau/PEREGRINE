@@ -48,6 +48,8 @@ timeIntegration:
   subIterations: 20         # dual time: pseudo steps per physical step
   lowMach: true             # dual time: the low-Mach preconditioner
   chemistryJacobian: null   # dual time: null or diagonal
+  pseudoCFL: 1.5            # dual time: the pseudo step's CFL bound
+  pseudoVNN: 0.1            # dual time: and its viscous bound
 
 RHS:
   primaryAdvFlux: KEPaEC
@@ -135,6 +137,8 @@ The integrator, and the settings that are its own.
 | `subIterations` | `20` | Dual time: pseudo steps per physical step. A positive integer. |
 | `lowMach` | `true` | Dual time: the Weiss and Smith low-Mach preconditioner on the per-cell pseudo system. Off, the pseudo system is the plain time derivative. |
 | `chemistryJacobian` | `None` | Dual time with a chemistry source: `diagonal` adds each species' own production-rate derivative to the pseudo system, making the chemistry point implicit. Refused without a chemistry source or with another integrator. |
+| `pseudoCFL` | `1.5` | Dual time: the bound on each cell's pseudo step from the preconditioned wave speeds, as a CFL number. The larger the pseudo step, the fewer pseudo steps a physical step needs to converge, up to where the pseudo integrator goes unstable: on a viscous case with the rk3 pseudo scheme, 2.5 held and 3 did not, and each half-unit bought about half an order per twenty pseudo steps. |
+| `pseudoVNN` | `0.1` | Dual time: the bound on each cell's pseudo step from viscous diffusion, as a von Neumann number, in a viscous case. |
 
 Dual time keeps the state one step back, and a result written by the writer
 plugin carries it, so a restart continues exactly. Restarting from a result

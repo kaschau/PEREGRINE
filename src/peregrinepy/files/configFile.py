@@ -48,6 +48,8 @@ class configFile(frozenDict):
                 "subIterations": 20,
                 "lowMach": True,
                 "chemistryJacobian": None,
+                "pseudoCFL": 1.5,
+                "pseudoVNN": 0.1,
             }
         )
         self["RHS"] = frozenDict(

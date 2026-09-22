@@ -4,6 +4,10 @@
 #include "utils/normal.hpp"
 #include "vector"
 
+#if !defined(PG_PSEUDO_CFL) || !defined(PG_PSEUDO_VNN)
+#error "localDtau takes the pseudo CFL and VNN the config names"
+#endif
+
 PG_RANGE(cellCenters)
 struct localDtau {
   cellVecIn Q, dIJK, qh, qt;
@@ -50,8 +54,9 @@ struct localDtau {
 
     const fpdtype &c = qh(3);
 
-    fpdtype pseudoCFL = 0.5;
-    fpdtype pseudoVNN = 0.1;
+    // the pseudo step's bounds, the config's, baked in
+    const fpdtype pseudoCFL = PG_PSEUDO_CFL;
+    const fpdtype pseudoVNN = PG_PSEUDO_VNN;
 
     const fpdtype nu = viscous ? qt(0) * rhoinv : 0.0;
 #ifdef PG_LOW_MACH

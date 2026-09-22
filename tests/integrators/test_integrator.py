@@ -104,6 +104,8 @@ def test_dualTimeBakesItsPseudoSystem(my_setup):
     k = solver("dualTime").kernels
     assert "PG_LOW_MACH=1" in k["invertDQ"].defines
     assert "PG_LOW_MACH=1" in k["localDtau"].defines
+    assert "PG_PSEUDO_CFL=1.5" in k["localDtau"].defines
+    assert "PG_PSEUDO_VNN=0.1" in k["localDtau"].defines
     assert k["invertDQ"].includes == ()
     off = solver("dualTime", lowMach=False)
     assert "PG_LOW_MACH=1" not in off.kernels["invertDQ"].defines

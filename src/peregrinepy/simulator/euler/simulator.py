@@ -82,6 +82,9 @@ class EulerSimulator(BaseSimulator):
             )
         if not isinstance(ti["lowMach"], bool):
             raise pgConfigError("lowMach", ti["lowMach"], "is on or off")
+        for key in ("pseudoCFL", "pseudoVNN"):
+            if not isinstance(ti[key], (int, float)) or ti[key] <= 0:
+                raise pgConfigError(key, ti[key], "is a positive number")
         if ti["integrator"] == "dualTime":
             controller = self.config["simulation"]["controller"]
             if controller != "fixed":

@@ -78,11 +78,17 @@ class dualTime(BaseIntegrator):
         Jacobian's rung with its header forced in -- forced, since a source
         including it would reach the reaction tables in every case."""
         k = super().declKernels()
+        ti = self.config["timeIntegration"]
         lowMach = ["PG_LOW_MACH=1"] if self.lowMach else []
         jacobian = self.chemistryJacobian
         k["dQdt"] = CellCenterKernel("timeIntegration/dQdt.cpp")
         k["localDtau"] = CellCenterKernel(
-            "timeIntegration/localDtau.cpp", defines=lowMach
+            "timeIntegration/localDtau.cpp",
+            defines=lowMach
+            + [
+                f"PG_PSEUDO_CFL={float(ti['pseudoCFL'])!r}",
+                f"PG_PSEUDO_VNN={float(ti['pseudoVNN'])!r}",
+            ],
         )
         k["invertDQ"] = CellCenterKernel(
             "timeIntegration/invertDQ.cpp",
@@ -176,6 +182,7 @@ class dualTime(BaseIntegrator):
         return (
             super().report()
             + f"  Pseudo Time: {ti['pseudoIntegrator']}, {ti['subIterations']} steps\n"
+            + f"  Pseudo CFL, VNN: {ti['pseudoCFL']}, {ti['pseudoVNN']}\n"
             + f"  Low-Mach Preconditioning: {'on' if self.lowMach else 'off'}\n"
             + f"  Chemistry Jacobian: {self.chemistryJacobian or 'none'}\n"
         )
