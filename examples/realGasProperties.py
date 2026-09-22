@@ -50,14 +50,14 @@ def simulate():
             Q, qh, qt = blk.Q.get(), blk.qh.get(), blk.qt.get()
             rhos[j, i] = Q[ng, ng, ng, 0]
             cps[j, i] = qh[ng, ng, ng, 1]
-            hs[j, i] = qh[ng, ng, ng, 2]
+            hs[j, i] = qh[ng, ng, ng, 2] / Q[ng, ng, ng, 0]
             cs[j, i] = qh[ng, ng, ng, 3]
 
             mus[j, i] = qt[ng, ng, ng, 0]
             kappas[j, i] = qt[ng, ng, ng, 1]
 
     fig, axs = plt.subplots(2, 2, sharex=True)
-    fig.suptitle(f"Thermo Properties of {config['simulation']['mixture'][0]}")
+    fig.suptitle(f"Thermo Properties of {config['mixture']['species'][0]}")
     axs[0, 0].set_ylabel("rho [kg/m^3]")
     axs[0, 1].set_ylabel("Cp [J/kg.K]")
     axs[1, 0].set_ylabel("h [J/kg]")
@@ -74,10 +74,10 @@ def simulate():
         ax.grid()
     plt.show()
 
-    fig.suptitle(f"Transport Properties of {config['simulation']['mixture'][0]}")
     fig, (ax1, ax2) = plt.subplots(2, sharex=True)
+    fig.suptitle(f"Transport Properties of {config['mixture']['species'][0]}")
     ax2.set_xlabel("Temperature [K]")
-    ax1.set_ylabel("Thermal Cond. [W/m^2.K]")
+    ax1.set_ylabel("Thermal Cond. [W/m.K]")
     ax2.set_ylabel("Viscosity [Pa.s]")
     for i, p in enumerate(ps):
         ax1.plot(Ts, kappas[i, :], label=f"p={p} MPa")
