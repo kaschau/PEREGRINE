@@ -90,9 +90,10 @@ Kokkos_ROOT=/path/to/kokkos pytest tests/simulator
 `tests/gate` is the bit gate: every case's interior state after its steps
 hashes to what this platform's reference says. The references are recorded
 at the start of a round with `PG_GATE_RECORD=1` and kept out of the
-repository, so a hash that moves is evidence, not a verdict. On macOS run
-the suite one directory per process: a single process aborts silently past
-a few hundred loaded kernel libraries.
+repository, so a hash that moves is evidence, not a verdict. On macOS the
+suite runs itself one directory per process: every kernel library takes one
+of the 512 thread-local keys a process has, and the whole suite loads more
+than that. A run naming one directory, or files, runs in place.
 
 Python is formatted with `black`, C++ with `clang-format` at the LLVM
 default; `setup.cfg` carries the flake8 settings.
