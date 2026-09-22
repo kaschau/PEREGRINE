@@ -26,7 +26,7 @@ keep one install per backend you run and switch `Kokkos_ROOT`.
 ## Python
 
 Python 3.10 or later. From the checkout, an editable install brings the
-dependencies (`numpy`, `mpi4py`, `h5py`, `pyyaml`, `lxml`, `scipy`) and puts
+dependencies (`numpy`, `mpi4py`, `h5py`, `pyyaml`, `lxml`) and puts
 the `peregrine` command on the path:
 
 ```
@@ -36,9 +36,10 @@ pip install -e .
 The install is editable because the kernels are compiled from the
 checkout's `src/compute` at run time, so the checkout stays where it is.
 `mpi4py` builds against the MPI on the path, so on a cluster load the MPI
-module first. Extras: `pip install -e ".[metis]"` adds the METIS
-partitioner, `".[test]"` pytest and Cantera, `".[examples]"` matplotlib and
-Cantera. Cantera is not needed to read a mechanism; ParaView is imported
+module first. Extras: `pip install -e ".[tools]"` adds what the grid tools
+need, scipy, matplotlib and pymetis; `".[test]"` pytest and Cantera;
+`".[examples]"` matplotlib and Cantera. Cantera is not needed to read a
+mechanism; ParaView is imported
 only by a case that asks for the Catalyst plugin. Without network access
 pip cannot fetch the build backend, so use the setuptools already there:
 `pip install -e . --no-build-isolation`.
@@ -95,7 +96,7 @@ run as usual:
 
 ```
 export KOKKOS_PROFILE_LIBRARY=/path/to/kokkos-tools/kp_kernel_timer.so
-mpiexec -n 1 peregrine peregrine.yaml Grid/g.h5
+mpiexec -n 1 peregrine run peregrine.yaml g.h5
 ```
 
 The NVTX connector (`kp_nvprof_connector.so`) marks the launches for Nsight

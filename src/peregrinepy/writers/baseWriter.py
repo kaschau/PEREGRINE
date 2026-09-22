@@ -205,7 +205,7 @@ class BaseWriter:
         """What this kind of writer hangs on a block beyond its coordinates."""
 
     def getGridFileH5Location(self, coord, nblki):
-        return f"{self.gridPath}/g.h5:/coordinates_{nblki:06d}/{coord}"
+        return f"{self.gridFile}:/coordinates_{nblki:06d}/{coord}"
 
     def saveXdmf(self):
         if self.rank != 0:

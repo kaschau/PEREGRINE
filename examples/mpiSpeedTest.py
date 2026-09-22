@@ -8,7 +8,6 @@ A time trial test for testing and stuff.
 
 import peregrinepy as pg
 import numpy as np
-import os
 
 # a calorically perfect air, stated in full: the library carries no such species
 air = {
@@ -53,23 +52,9 @@ def simulate():
         prims[:, :, :, 4] = 300.0
         blk.prims.set(prims)
 
-    # Create the case structure
-    try:
-        os.mkdir("./Grid")
-    except FileExistsError:
-        pass
-    try:
-        os.mkdir("./Restart")
-    except FileExistsError:
-        pass
-    try:
-        os.mkdir("./Input")
-    except FileExistsError:
-        pass
-
-    pg.writers.GridWriter(mb, "./Grid").write(mb)
-    pg.writers.RestartWriter(mb, "./Restart", gridPath="../Grid").write(mb)
-    pg.writers.writeConfigFile(config, "./")
+    pg.writers.GridWriter(mb, "g.h5").write(mb)
+    pg.writers.RestartWriter(mb, "q.{n:08d}.h5", "g.h5").write(mb)
+    pg.writers.writeConfigFile(config, "peregrine.yaml")
 
 
 if __name__ == "__main__":

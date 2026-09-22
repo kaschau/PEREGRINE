@@ -11,14 +11,7 @@ class myDumper(yaml.SafeDumper):
             super().write_line_break()
 
 
-def writeConfigFile(config, filePath="./"):
+def writeConfigFile(config, fileName):
     """Writes a config as the yaml a run reads."""
-
-    connOut = {}
-    for k1 in config.keys():
-        connOut[k1] = {}
-        for k2 in config[k1].keys():
-            connOut[k1][k2] = config[k1][k2]
-
-    with open(f"{filePath}/peregrine.yaml", "w") as f:
-        yaml.dump(connOut, f, Dumper=myDumper, sort_keys=False)
+    with open(fileName, "w") as f:
+        yaml.dump(config.toDict(), f, Dumper=myDumper, sort_keys=False)

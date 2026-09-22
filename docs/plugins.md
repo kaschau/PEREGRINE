@@ -9,9 +9,9 @@ writes nothing.
 ```yaml
 plugins:
   report:
-    everyIter: 10
+    niterOut: 10
   writer:
-    everyTime: 1.0e-4
+    dtOut: 1.0e-4
     dir: Results
     precision: double
   nanCheck: {}
@@ -19,12 +19,13 @@ plugins:
 
 ## How often
 
-Every plugin takes one of two keys. Neither given means every step.
+Every plugin takes one of two keys, and neither given means every step. A
+trace may name its own, so one section can trace at several cadences.
 
 | key | what it does |
 |---|---|
-| `everyIter` | Act after every so many steps. |
-| `everyTime` | Act whenever the simulated time crosses a multiple of this many seconds. |
+| `niterOut` | Act after every so many steps. |
+| `dtOut` | Act at every multiple of this many seconds. The cfl controller shortens a step to land on the multiple; with a fixed step the plugin acts on the first step past it. |
 
 ## report
 
@@ -60,13 +61,41 @@ run raises. No options.
 
 ## trace
 
-The primitive variables at chosen cells, appended to one csv per point each
-time it acts, with the time in the first column.
+The primitive variables at the cells nearest chosen points, appended to one
+csv per trace each time it acts. A trace is a point, a line of `n` points
+from `p0` to `p1`, or a plane of `n01` by `n02` points spanned from `p0` by
+`p1` and `p2`, and names the file it writes. Each row is the time, the cell
+center, and the primitive variables there; the header names them.
 
-| key | default | what it does |
-|---|---|---|
-| `points` | required | A `.npy` file: an array of `(block, i, j, k)` rows, then an array of tags, one per row. `utilities/generateTracePoints.py` makes one from coordinates. |
-| `dir` | `Trace` | Where the csv files go, one per point, named `<tag>_<x>_<y>_<z>.csv`. |
+```yaml
+plugins:
+  trace:
+    niterOut: 10
+    traces:
+      probe:
+        type: point
+        p0: [0.5, 0.0, 0.0]
+        file: probe.csv
+        niterOut: 1           # its own cadence; the others act on the section's
+      centerline:
+        type: line
+        p0: [0.0, 0.0, 0.0]
+        p1: [1.0, 0.0, 0.0]
+        n: 50
+        file: centerline.csv
+      inlet:
+        type: plane
+        p0: [0.0, 0.0, 0.0]
+        p1: [0.0, 1.0, 0.0]
+        p2: [0.0, 0.0, 1.0]
+        n01: 20
+        n02: 20
+        file: inlet.csv
+```
+
+A point is traced at the cell whose center is nearest it, on whichever rank
+holds that cell, so a point outside the grid lands on the nearest cell there
+is. A file that exists is appended to, so a restart continues it.
 
 ## viscousSponge
 

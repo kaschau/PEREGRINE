@@ -43,7 +43,8 @@ class Fixed(BaseController):
 
 
 class CFL(BaseController):
-    """Each step as large as the config's max CFL allows, up to its max dt."""
+    """Each step as large as the config's max CFL allows, up to its max dt,
+    and no further than the next time a plugin acts at."""
 
     name = "cfl"
 
@@ -57,4 +58,8 @@ class CFL(BaseController):
         cfl = np.zeros(3, self.solver.backend.fpdtype)
         self.solver.launch("CFLmax", "interior", cfl=cfl)
         getCommRankSize()[0].Allreduce(MPI.IN_PLACE, cfl, op=MPI.MAX)
-        return min(sim["maxCFL"] / cfl[2], sim["maxDt"])
+        dt = min(sim["maxCFL"] / cfl[2], sim["maxDt"])
+        # shortened to land on the next time a plugin acts at
+        solver = self.solver
+        times = [p.nextTime(solver) for p in solver.plugins.values()]
+        return min([dt, *(t - solver.tme for t in times if t is not None)])

@@ -87,9 +87,9 @@ The `peregrine` command, which the install puts on the path, runs a case
 from files; `python -m peregrinepy` is the same thing:
 
 ```
-peregrine peregrine.yaml Grid/g.h5
-peregrine -r Results/q.00000100.h5
-mpiexec -n 64 peregrine peregrine.yaml Grid/g.h5
+peregrine run peregrine.yaml g.h5
+peregrine run -r q.00000100.h5
+mpiexec -n 64 peregrine run peregrine.yaml g.h5
 ```
 
 The first form takes a config and a grid, and starts from the config's
@@ -100,20 +100,11 @@ and prints nothing unless the config has the report plugin. A failure on
 any rank aborts the whole run.
 
 A grid run on more than one rank has to carry a partition for that rank
-count, made by `utilities/loadBalancer.py`; the run says so, and how to make
-one, if it does not. See [files](files.md#partitions).
+count, made by `peregrine partition`; the run says so, and how to make one,
+if it does not. See [files](files.md#partitions).
 
-A case directory tends to look like this, though nothing depends on the
-layout: the config names the results directory, and the result names the
-grid relative to itself.
-
-```
-myCase/
-├── peregrine.yaml
-├── Grid/g.h5, g.xmf
-├── Results/q.00000000.h5, q.00000000.xmf, ...
-└── Input/                 # trace points, boundary profiles
-```
+Nothing depends on where the files sit: the config names the results
+directory, and a result names its grid relative to itself.
 
 ## Starting from a state you make
 
@@ -121,13 +112,34 @@ To start a production case from a flow field built in Python, build the
 case in a script, set the state, and write a result to restart from:
 
 ```python
-mb = pg.multiBlock.solver(config, pg.readers.GridReader("Grid/g.h5"))
+mb = pg.multiBlock.solver(config, pg.readers.GridReader("g.h5"))
 q = [cases_own_field(blk) for blk in mb.blocks]   # (ni+2ng, nj+2ng, nk+2ng, ne) each
 mb.setPrimitives(q)
-pg.writers.RestartWriter(mb, "Results", gridPath="../Grid", precision="double").write(mb)
+pg.writers.RestartWriter(mb, "q.{n:08d}.h5", "g.h5", precision="double").write(mb)
 ```
 
-Then `peregrine -r Results/q.00000000.h5`.
+Then `peregrine run -r q.00000000.h5`.
+
+## The tools
+
+The rest of the `peregrine` command works on a case's files. Every input
+and output is a file named on the command line, and `peregrine <tool> -h`
+says what each takes.
+
+| | |
+|---|---|
+| `peregrine config peregrine.yaml` | Writes a config of every default to start a case from. |
+| `peregrine partition g.h5 -ranks 64 -ranksPerNode 4` | Adds a load-balanced partition to a grid; see [files](files.md#partitions). |
+| `peregrine verify g.h5` | Checks a grid's connectivity and that joined faces' coordinates match. |
+| `peregrine analyze g.h5` | Reports the block sizes and the partitions a grid carries. |
+| `peregrine interpolate q.h5 other.h5 out.h5` | Interpolates a result onto another grid. |
+| `peregrine gridpro2pg blk.tmp blk.tmp.conn blk.tmp.pty g.h5` | Translates a GridPro grid. |
+| `peregrine icem2pg info.topo g.h5` | Translates an ICEM Multi-Block Info grid. |
+| `peregrine channel channel.yaml g.h5` | Makes a channel or boundary layer grid spaced in wall units; `-template` writes the yaml. |
+| `peregrine rotate sector.h5 g.h5 -segments 8 -angle 45 -axis 1,0,0` | Copies a sector grid about its axis into more sectors. |
+
+What the tools need beyond the solver, scipy, matplotlib and pymetis, is
+the `tools` extra of the install.
 
 ## Examples
 

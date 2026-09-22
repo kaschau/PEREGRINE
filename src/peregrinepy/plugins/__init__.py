@@ -10,8 +10,9 @@ from . import (
 )  # noqa: F401  (registers the plugins)
 from ..misc import subclassWhere
 from .base import BasePlugin
+from .cadence import Cadence
 
-__all__ = ["BasePlugin", "getPlugins"]
+__all__ = ["BasePlugin", "Cadence", "getPlugins"]
 
 
 def getPlugins(config):

@@ -77,7 +77,7 @@ sized.
 | `simulator` | `navierStokes` | The equations solved. `euler` is inviscid: no transport model, no gradients, no diffusive flux. `navierStokes` adds the transport properties, the gradients of velocity, temperature and mass fractions, and the diffusive flux, and needs a transport model in `mixture.trans`. |
 | `precision` | `double` | What every array and kernel value is: `double` or `single`. The kernels are compiled for it. Results are written in the writer plugin's own precision, single unless it says otherwise. |
 | `niter` | `1` | How many steps `run()` takes. A script stepping by hand ignores it. |
-| `controller` | `fixed` | How each step is sized. `fixed` takes `dt` every step. `cfl` takes the largest step `maxCFL` allows, from the largest acoustic plus convective speed on any rank, capped at `maxDt`. Dual time takes `fixed` only. |
+| `controller` | `fixed` | How each step is sized. `fixed` takes `dt` every step. `cfl` takes the largest step `maxCFL` allows, from the largest acoustic plus convective speed on any rank, capped at `maxDt`, and shortened to land on the next time a plugin acts at by its `dtOut`. Dual time takes `fixed` only. |
 | `dt` | `1e-3` | The step, in seconds, for the fixed controller. Cast to a float when the config is validated, so `1e-7` in yaml is fine. |
 | `maxDt` | `1e-3` | The cfl controller's ceiling, in seconds. |
 | `maxCFL` | `0.1` | The cfl controller's target CFL number, on the combined acoustic and convective speed. |

@@ -74,7 +74,7 @@ class GridReader:
             raise ValueError(
                 f"this grid carries no {size} rank partition, only "
                 f"{['%dx%d' % p for p in self.partitions]}. Balance it with\n"
-                f"  loadBalancer.py {self.fileName} -numProcs {size}"
+                f"  peregrine partition {self.fileName} -ranks {size}"
                 f" -ranksPerNode {ranksPerNode}"
             )
         if ranksPerNode not in layouts:

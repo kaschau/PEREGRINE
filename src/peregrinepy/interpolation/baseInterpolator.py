@@ -67,10 +67,6 @@ class BaseInterpolator:
         None
             Updates attributes of parameter blkTo.
         """
-        for blk in blksFrom:
-            blk.computeMetrics()
-        blkTo.computeMetrics()
-
         # the points never change from one variable to the next, only what was
         # sampled at them, so the geometry is worked out once
         fromPts = np.concatenate([blk.cells.get().reshape(-1, 3) for blk in blksFrom])

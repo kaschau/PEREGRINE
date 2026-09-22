@@ -1,38 +1,24 @@
-#!/usr/bin/env python3
-
-"""
-This utility goes through a grid face by face,
-verifying that all the block's connectivities agree,
-and that the coordinates of matching faces are identical.
-
-Input is the path to the grid file.
-
-If you have periodicity in the grid, you must have the periodic
-information populated in the grid, i.e. the periodic transform
-
-Output will print any discrepencies to the screen
-
-"""
-
-import argparse
+"""A grid checked face by face: every connection agreed to from both
+sides, the coordinates of joined faces on top of each other, a periodic's
+partner where its transform puts it, and every block right handed."""
 
 import numpy as np
+
 import peregrinepy as pg
 
-faceToOrientIndexMapping = {
-    1: 0,
-    2: 0,
-    3: 1,
-    4: 1,
-    5: 2,
-    6: 2,
-}
+name = "verify"
+help = "check a grid's connectivity and that joined faces' coordinates match"
 
+faceToOrientIndexMapping = {1: 0, 2: 0, 3: 1, 4: 1, 5: 2, 6: 2}
 largeIndexMapping = {0: "k", 1: "k", 2: "j"}
 needToTranspose = {
     "k": {"k": [1, 2, 4, 5], "j": [1, 4]},
     "j": {"k": [1, 2, 4, 5], "j": [1, 4]},
 }
+
+
+def addArguments(parser):
+    parser.add_argument("grid", help="the grid file")
 
 
 def extractFace(blk, nface):
@@ -44,15 +30,13 @@ def extractFace(blk, nface):
         5: {"i": slice(None), "j": slice(None), "k": 0},
         6: {"i": slice(None), "j": slice(None), "k": -1},
     }
-
     face_i = faceSliceMapping[nface]
-
-    plane = blk.array["nodes"][face_i["i"], face_i["j"], face_i["k"]]
-
+    plane = blk.nodes.get()[face_i["i"], face_i["j"], face_i["k"]]
     return (np.copy(plane[..., n]) for n in range(3))
 
 
 def verify(mb):
+    """Says whether the grid is consistent, printing every discrepancy."""
     warn = False
     tol = 1e-7
     for blk in mb.blocks:
@@ -68,16 +52,13 @@ def verify(mb):
                     f"Block #{blk.nblki} face {nface} has no neighbor, "
                     f"but has bcType {bc}"
                 )
-
                 assert (
                     orientation is None
                 ), f"Block #{blk.nblki} face {nface} has no neighbor, but has orientation {orientation}"
-
                 if pg.simulator.BaseBC.named(bc).values:
                     assert (
                         bcName is not None
                     ), f"Block #{blk.nblki} face {nface} is {bc}, but has no bcName"
-
                 continue
 
             face_x, face_y, face_z = extractFace(blk, face.nface)
@@ -135,7 +116,6 @@ def verify(mb):
                 face_y = points[:, 1].reshape(shape)
                 face_z = points[:, 2].reshape(shape)
 
-            # Compare the face points to the neighbor face
             try:
                 off_x = np.max(np.abs(face_x - face2_x))
                 off_y = np.max(np.abs(face_y - face2_y))
@@ -145,64 +125,26 @@ def verify(mb):
                     f"Error when comparing block {blk.nblki} and block {blk2.nblki} connection"
                 )
 
-            if off_x > tol:
-                print(
-                    f"Warning, the x coordinates of face {nface} on block {blk.nblki} are not matching the x coordinates of face {nface2} of block {blk2.nblki}"
-                )
-                print(f"Off by average of {off_x}")
-                warn = True
+            for axis, off in zip("xyz", (off_x, off_y, off_z)):
+                if off > tol:
+                    print(
+                        f"Warning, the {axis} coordinates of face {nface} on block {blk.nblki} are not matching the {axis} coordinates of face {nface2} of block {blk2.nblki}"
+                    )
+                    print(f"Off by average of {off}")
+                    warn = True
 
-            if off_y > tol:
-                print(
-                    f"Warning, the y coordinates of face {nface} on block {blk.nblki} are not matching the y coordinates of face {nface2} of block {blk2.nblki}"
-                )
-                print(f"Off by average of {off_y}")
-                warn = True
-
-            if off_z > tol:
-                print(
-                    f"Warning, the z coordinates of face {nface} on block {blk.nblki} are not matching the z coordinates of face {nface2} of block {blk2.nblki}"
-                )
-                print(f"Off by average of {off_z}")
-                warn = True
-
-        # Now we check that all blocks are right handed
-        pO = blk.array["nodes"][0, 0, 0]
-        pI = blk.array["nodes"][1, 0, 0]
-        pJ = blk.array["nodes"][0, 1, 0]
-        pK = blk.array["nodes"][0, 0, 1]
-        vI = pI - pO
-        vJ = pJ - pO
-        vK = pK - pO
-
-        cross = np.cross(vI, vJ)
-        if np.dot(vK, cross) < 0.0:
+        # every block right handed
+        nodes = blk.nodes.get()
+        pO, pI, pJ, pK = nodes[0, 0, 0], nodes[1, 0, 0], nodes[0, 1, 0], nodes[0, 0, 1]
+        if np.dot(pK - pO, np.cross(pI - pO, pJ - pO)) < 0.0:
             print(f"Warning, block {blk.nblki} is left handed. This must be fixed.")
             warn = True
 
-    if warn:
-        return False
-    else:
-        return True
+    return not warn
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Verify grid is consistent in terms of connectivity and matching face coordinates."
-    )
-    parser.add_argument(
-        "-gpath",
-        action="store",
-        metavar="<gridPath>",
-        dest="gridPath",
-        default="./",
-        help="Path to grid files",
-        type=str,
-    )
-    args = parser.parse_args()
-
-    gp = args.gridPath
-    mb = pg.multiBlock.grid.fromGrid(f"{gp}/g.h5", quiet=False)
-
-    if verify(mb):
-        print("Grid is valid!")
+def main(args):
+    mb = pg.multiBlock.grid.fromGrid(args.grid, quiet=False)
+    if not verify(mb):
+        raise SystemExit(1)
+    print("Grid is valid!")

@@ -27,16 +27,14 @@ class Writer(BasePlugin):
         precision = cfgsect.get("precision", "single")
         gridFile = solver.mesh.fileName
         if gridFile is None:
-            GridWriter(solver, str(self.dir), precision).write(solver)
             gridFile = self.dir / "g.h5"
-        gridDir = os.path.relpath(Path(gridFile).parent, self.dir)
+            GridWriter(solver, str(gridFile), precision).write(solver)
         basename = cfgsect.get("basename", "q.{n:08d}")
         self.restart = RestartWriter(
             solver,
-            str(self.dir),
-            gridDir,
+            str(self.dir / f"{basename}.h5"),
+            os.path.relpath(gridFile, self.dir),
             precision,
-            basename=basename,
             extras=solver.integrator.restartArrays,
             config=solver.config,
         )

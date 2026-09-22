@@ -35,7 +35,7 @@ def case(tmp_path, integrator="rk3", gas="air"):
         prims.append(q)
     mb.setPrimitives(prims)
     mb.integrator.initialize()
-    pg.writers.GridWriter(mb, str(tmp_path), precision="double").write(mb)
+    pg.writers.GridWriter(mb, str(tmp_path / "g.h5"), precision="double").write(mb)
     return config, mb
 
 
@@ -51,8 +51,8 @@ def test_restartContinuesBitwise(my_setup, tmp_path, integrator):
         mb.integrator.step(dt)
     writer = pg.writers.RestartWriter(
         mb,
-        str(tmp_path),
-        str(tmp_path),
+        str(tmp_path / "q.{n:08d}.h5"),
+        "g.h5",
         "double",
         extras=mb.integrator.restartArrays,
         config=config,
@@ -83,7 +83,9 @@ def test_theFileHoldsEveryExportVariable(my_setup, tmp_path):
     import h5py
 
     config, mb = case(tmp_path, gas="CH4_O2")
-    pg.writers.RestartWriter(mb, str(tmp_path), str(tmp_path), "double").write(mb)
+    pg.writers.RestartWriter(
+        mb, str(tmp_path / "q.{n:08d}.h5"), "g.h5", "double"
+    ).write(mb)
     with h5py.File(tmp_path / "q.00000000.h5") as f:
         variables = [v.decode() for v in f.attrs["variables"]]
         assert variables == mb.exportVars

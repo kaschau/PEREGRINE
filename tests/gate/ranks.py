@@ -24,7 +24,7 @@ def make(directory, ranks):
     directory.mkdir(parents=True, exist_ok=True)
     mb = pg.multiBlock.grid()
     cases.mesh().fill(mb)
-    writer = pg.writers.GridWriter(mb, str(directory), precision="double")
+    writer = pg.writers.GridWriter(mb, str(directory / "g.h5"), precision="double")
     writer.write(mb)
     topology = pg.multiBlock.topology.fromGrid(f"{directory}/g.h5")
     groups = getPartitioner().partition(topology, ranks, ranks)

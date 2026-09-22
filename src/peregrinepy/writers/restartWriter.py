@@ -4,6 +4,7 @@ docs/files.md."""
 import numpy as np
 import yaml
 from copy import deepcopy
+from pathlib import Path
 from lxml import etree
 
 from ..misc import Progress
@@ -18,15 +19,16 @@ class RestartWriter(BaseWriter):
     def __init__(
         self,
         mb,
-        path="./",
-        gridPath="./",
+        fileName="q.{n:08d}.h5",
+        gridFile="g.h5",
         precision="single",
         quiet=True,
-        basename="q.{n:08d}",
         extras=(),
         config=None,
     ):
-        self.gridPath = gridPath
+        fileName = Path(fileName)
+        # the grid the result sits on, relative to the result or absolute
+        self.gridFile = str(gridFile)
         # the case that writes, as its yaml, when there is one
         self.config = yaml.safe_dump(config.toDict()) if config is not None else ""
         # block arrays written beside the state
@@ -35,9 +37,9 @@ class RestartWriter(BaseWriter):
         self.primVars = list(mb.primVars)
         self.exportVars = list(mb.exportVars)
         # what a result is called, from its step n and time t; set by every write
-        self.basename = basename
-        self.name = basename.format(n=mb.nrt, t=mb.tme)
-        super().__init__(mb, path, precision, quiet)
+        self.basename = fileName.stem
+        self.name = self.basename.format(n=mb.nrt, t=mb.tme)
+        super().__init__(mb, str(fileName.parent), precision, quiet)
         # the shape each extra has past its cells, which every rank needs to
         # create the datasets
         self.extraShapes = self._gatherExtraShapes(mb)
@@ -114,7 +116,7 @@ class RestartWriter(BaseWriter):
         qf.attrs["primVars"] = np.array(self.primVars, dtype="S")
         qf.attrs["variables"] = np.array(names, dtype="S")
         qf.attrs["extras"] = np.array(self.extras, dtype="S")
-        qf.attrs["grid"] = f"{self.gridPath}/g.h5"
+        qf.attrs["grid"] = self.gridFile
         qf.attrs["config"] = self.config
 
         # the file is collective, so every rank creates every block's datasets;

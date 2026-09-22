@@ -6,6 +6,8 @@ solver is built, so it can say what arrays and kernels it needs like the
 simulation does, and starts on the solver once it is. The report plugin is
 everything a run prints."""
 
+from .cadence import Cadence
+
 
 class BasePlugin:
     """Something a run does alongside the stepping, as often as its config
@@ -15,10 +17,7 @@ class BasePlugin:
     name = None
 
     def __init__(self, cfgsect):
-        self.everyIter = cfgsect.get("everyIter")
-        self.everyTime = cfgsect.get("everyTime")
-        if self.everyIter is None and self.everyTime is None:
-            self.everyIter = 1
+        self.cadence = Cadence(cfgsect)
 
     def arrays(self):
         """Gives the arrays this plugin needs on every block, name ->
@@ -40,19 +39,17 @@ class BasePlugin:
 
     def due(self, solver):
         """Whether the step just taken is one this plugin acts on."""
-        if self.everyTime is not None:
-            period = self.everyTime
-            dt = solver.integrator.dt
-            return int(solver.tme / period) != int((solver.tme - dt) / period)
-        return solver.nrt % self.everyIter == 0
+        return self.cadence.due(solver)
 
     def dueAfter(self, solver, dt):
         """Whether the step about to be taken, of :dt:, is one this plugin
         acts on."""
-        if self.everyTime is not None:
-            period = self.everyTime
-            return int((solver.tme + dt) / period) != int(solver.tme / period)
-        return (solver.nrt + 1) % self.everyIter == 0
+        return self.cadence.dueAfter(solver, dt)
+
+    def nextTime(self, solver):
+        """The next time this plugin acts at, for a controller to land a
+        step on; None when it acts by steps."""
+        return self.cadence.next(solver)
 
     def before(self, solver, dt):
         """Before a step of :dt:; nothing, for most."""

@@ -1,5 +1,7 @@
 """Writing a PEREGRINE grid, g.h5; what it holds is docs/files.md."""
 
+from pathlib import Path
+
 import numpy as np
 
 from ..partition import BasePartitioner
@@ -11,18 +13,13 @@ class GridWriter(BaseWriter):
     """Writes a multiBlock's coordinates, connectivity and partitions to the
     one file that is the grid."""
 
-    def __init__(self, mb, path="./", precision="single", quiet=True):
+    def __init__(self, mb, fileName="g.h5", precision="single", quiet=True):
+        fileName = Path(fileName)
+        self.h5FileName = fileName.name
+        self.xmfFileName = fileName.with_suffix(".xmf").name
         # a grid's xdmf sits beside the grid it points at
-        self.gridPath = "."
-        super().__init__(mb, path, precision, quiet)
-
-    @property
-    def h5FileName(self):
-        return "g.h5"
-
-    @property
-    def xmfFileName(self):
-        return "g.xmf"
+        self.gridFile = self.h5FileName
+        super().__init__(mb, str(fileName.parent), precision, quiet)
 
     def write(self, mb):
         gf = self._openCollective(self.h5FileName)

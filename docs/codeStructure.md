@@ -25,9 +25,10 @@ keep in step.
 | [kernel.py](../src/peregrinepy/kernel.py) | One compiled kernel, described by its own C++: what it runs on and over. |
 | [graph.py](../src/peregrinepy/graph.py) | What a step does, as device graphs captured once and submitted from then on, with the halo exchange's host steps between them. |
 | [plugins](../src/peregrinepy/plugins) | What runs alongside the stepping. |
+| [tools](../src/peregrinepy/tools) | The `peregrine` command's subcommands: running a case, and the grid tools, one module each. |
 | [mesher](../src/peregrinepy/mesher), [readers](../src/peregrinepy/readers), [writers](../src/peregrinepy/writers) | Meshes made in memory; grids, results and configs read and written. |
 | [partition](../src/peregrinepy/partition) | Balancing a grid's blocks over ranks, and conditioning a grid: merging interfaces away, orienting blocks. |
-| [interpolation](../src/peregrinepy/interpolation) | Moving a result from one grid to another, for `utilities/interpolate.py`. |
+| [interpolation](../src/peregrinepy/interpolation) | Moving a result from one grid to another, for `peregrine interpolate`. |
 | [misc](../src/peregrinepy/misc) | The frozen dict, the MPI helpers, the subclass lookup. |
 
 The [config reference](config.md) says how a case is described;

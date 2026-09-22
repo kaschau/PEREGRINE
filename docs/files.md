@@ -35,9 +35,9 @@ interior if it has a neighbor, periodic if it carries a transform, and an
 adiabatic slip wall otherwise.
 
 `pg.readers.GridReader(fileName, ranks=None)` reads a grid, every block or
-this rank's share of a partition; `pg.writers.GridWriter` writes one from a
-multiBlock. The mesh translators in [utilities/](../utilities) write grids
-from GridPro and ICEM output, and condition them on the way: every
+this rank's share of a partition; `pg.writers.GridWriter(mb, fileName)`
+writes one from a multiBlock. `peregrine gridpro2pg` and `peregrine icem2pg`
+write grids from GridPro and ICEM output, and condition them on the way: every
 interface that can be merged away is, and every block is re-indexed so its
 longest extent is i.
 
@@ -52,12 +52,12 @@ grid has it, else another layout of the same count. A grid with no partition
 for the rank count refuses to run and says how to add one:
 
 ```
-python utilities/loadBalancer.py -gridDir Grid -numProcs 64 -ranksPerNode 4
+peregrine partition g.h5 -ranks 64 -ranksPerNode 4
 ```
 
 Blocks are assigned whole, so the largest block sets a ceiling no assignment
 can beat. The load balancer reports when that, rather than the grouping, is
-what binds; `analyzeGrid.py` reports the same for a grid as it is. The
+what binds; `peregrine analyze` reports the same for a grid as it is. The
 partitioner is `auto` unless `-method` says `greedy` or `metis`.
 
 ## Results
@@ -88,7 +88,8 @@ read the result back. A result carries no grid of its own; its `.xmf`
 points at the grid it was run on.
 
 `pg.readers.RestartReader(fileName)` reads one, and is the `state` a solver
-starts from; `pg.writers.RestartWriter` writes one, which the writer plugin
+starts from; `pg.writers.RestartWriter(mb, fileName, gridFile)` writes one,
+its name a pattern of the step `n` or the time `t`, which the writer plugin
 does for a run.
 
 ## The config
@@ -97,7 +98,8 @@ In executable mode the config is a yaml file with the sections of the
 [config reference](config.md), read over the defaults by
 `pg.readers.readConfigFile(path)`; one rank reads it and every rank gets
 the text. A result carries the config that wrote it, so a restart needs no
-file. `pg.writers.writeConfigFile(config, path)` writes one out.
+file. `pg.writers.writeConfigFile(config, fileName)` writes one out, and
+`peregrine config peregrine.yaml` writes one of every default to start from.
 
 ## Boundary profiles
 
@@ -107,9 +109,3 @@ constants, with `profile: <directory>` in its `bcValues` entry. The file
 the other, the plane of primitive values then the plane of conserved values,
 each shaped like the face's value plane. See
 [boundary conditions](boundaryConditions.md#profiles).
-
-## Trace points
-
-The trace plugin reads a `.npy` of two arrays saved one after the other: the
-`(block, i, j, k)` rows of the cells to sample, and a tag per row.
-`utilities/generateTracePoints.py` makes one from coordinates.
