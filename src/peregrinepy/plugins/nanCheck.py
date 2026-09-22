@@ -9,8 +9,7 @@ from .base import BasePlugin
 
 
 class NanCheck(BasePlugin):
-    """Stop on a non-finite conserved value: every rank logs where its are,
-    the state is written if there is a writer, and the run is over."""
+    """Stops the run on a non-finite conserved value."""
 
     name = "nanCheck"
 

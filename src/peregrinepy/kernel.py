@@ -471,11 +471,8 @@ class CellFaceKernel(BaseKernel):
 
 class FluxKernel(CellFaceKernel):
     """An advective flux composed by the jit from the scheme the config
-    names: a Riemann solver alone, piecewise constant -- rusanov, hllc,
-    ausmPlusUp -- or reconstruct-limiter-riemann -- muscl-vanLeer-rusanov
-    -- or a central scheme, KEPaEC, fourthOrderKEPaEC. For shock capturing a :secondary:
-    formula is blended in by the weight of a :switch:, jamesonPressure or
-    ducros, which the :switchValues: are baked into."""
+    names, a formula or reconstruct-limiter-formula, with a :secondary:
+    formula blended in by a :switch: whose :switchValues: are baked in."""
 
     reconstructions = ("piecewiseConstant", "muscl")
 

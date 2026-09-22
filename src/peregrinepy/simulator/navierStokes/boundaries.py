@@ -1,8 +1,5 @@
-"""The boundaries of the Navier-Stokes equations: every one Euler has,
-its gradient bodies compiled as well, and the walls the flow sticks to,
-still or moving, which mean nothing without viscosity. Each is declared
-here under its own base, as PyFR does: what a physics may use is what
-sits under its base, and nothing else."""
+"""The boundaries of the Navier-Stokes equations: every one Euler has, with
+gradient bodies, and the walls the flow sticks to."""
 
 from ..boundaries import BaseBC, InletBC, MassFluxInletBC
 

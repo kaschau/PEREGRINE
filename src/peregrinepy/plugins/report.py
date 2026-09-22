@@ -10,11 +10,8 @@ from .base import BasePlugin
 
 
 class Report(BasePlugin):
-    """Everything a run prints: the banner and the case when it starts, each
-    step it is due on (number, time, size, CFL numbers, and whatever the
-    integrator has to say), and the timing when it is over. Without this plugin
-    a run prints nothing. The CFL is reduced over the ranks here, so a run
-    pays for it only when it asks."""
+    """Everything a run prints; without it a run prints nothing. The CFL is
+    reduced over the ranks here, so a run pays for it only when it asks."""
 
     name = "report"
 

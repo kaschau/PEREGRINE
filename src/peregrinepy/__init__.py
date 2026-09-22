@@ -25,7 +25,7 @@ __all__ = [
     "mixture",
     "multiBlock",
     "readers",
-    "simulation",
+    "simulator",
     "writers",
     "__version__",
 ]

@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "peregrinepy"
+description = "A multiblock, multiphysics CFD solver: Python over Kokkos kernels compiled per case"
+readme = "README.md"
+authors = [{name = "Kyle A. Schau", email = "kaschau89@gmail.com"}]
+requires-python = ">=3.10"
+dynamic = ["version"]
+dependencies = [
+    "numpy>=1.20",
+    "mpi4py>=3.0",
+    "h5py>=2.6",
+    "pyyaml>=6.0",
+    "lxml>=4.6",
+    "scipy>=1.8",
+]
+
+[project.optional-dependencies]
+metis = ["pymetis>=2023.1"]
+test = ["pytest", "cantera"]
+examples = ["matplotlib", "cantera"]
+
+[project.scripts]
+peregrine = "peregrinepy.__main__:main"
+
+[project.urls]
+Repository = "https://github.com/kaschau/PEREGRINE"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"peregrinepy.mixture" = ["database/*.yaml", "database/mechanisms/*.yaml"]
+
+[tool.setuptools.dynamic]
+version = {attr = "peregrinepy._version.__version__"}

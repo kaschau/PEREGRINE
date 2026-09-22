@@ -6,9 +6,8 @@ from .base import BasePlugin
 
 
 class ViscousSponge(BasePlugin):
-    """The viscosity raised along a line from origin to ending, to
-    multiplier times itself, once the transport properties are made:
-    after consistify, over every cell."""
+    """Raises the viscosity along a line, once the transport properties are
+    made each step."""
 
     name = "viscousSponge"
 

@@ -1,6 +1,6 @@
 """The physics a solver can simulate, each a package: the spec of what it
 needs and the graphs it runs, and its boundaries; the config's
-`simulation.physics` names one."""
+`simulation.simulator` names one."""
 
 from ..misc import subclassWhere
 from .base import BaseSimulator

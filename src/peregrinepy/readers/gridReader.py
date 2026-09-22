@@ -1,10 +1,4 @@
-"""
-Reading a PEREGRINE grid.
-
-One g.h5 holds the coordinates of every block, the connectivity between them,
-and any partitions the grid has been balanced into. See
-peregrinepy/writers/writeGrid.py for the layout.
-"""
+"""Reading a PEREGRINE grid, g.h5; what it holds is docs/files.md."""
 
 import h5py
 import numpy as np
@@ -46,9 +40,10 @@ class GridReader:
         """Fill mb from the file: its blocks, how big each is, its coordinates
         when the block has somewhere to hold them, and the connectivity of
         their faces."""
-        with h5py.File(self.fileName, "r") as self.f, Progress(
-            len(self.mine), self.quiet
-        ) as bar:
+        with (
+            h5py.File(self.fileName, "r") as self.f,
+            Progress(len(self.mine), self.quiet) as bar,
+        ):
             for nblki in self.mine:
                 blk = mb.addBlock(nblki)
                 coordS, extents = self._blockBaseInfo(blk)

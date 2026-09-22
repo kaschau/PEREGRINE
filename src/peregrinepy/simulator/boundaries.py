@@ -12,21 +12,9 @@ from ..misc import subclasses, subclassWhere
 
 
 class BaseBC:
-    """One boundary condition, on one face.
-
-    The class declares everything the rest of the code needs to know about a
-    kind of condition: the name it goes by in the input files, which folder of
-    boundaryConditions/ holds it, the bcHooks it has a kernel for,
-    what it reads out of its config entry, and whether it sits on a block
-    interface. Adding a bc means adding a subclass, under the physics it
-    serves, and nothing else has a list to keep in step: a physics finds
-    its conditions by name under its own base. An instance is a face's own:
-    it reads that face's config entry.
-
-    The gradient rules a bc applies are deliberately absent -- they live in the
-    C++ body alone. A second declaration of them here is what put v3's
-    isoTSlipWall out of step with its own kernel.
-    """
+    """One boundary condition, declared: its bcType, the values it reads,
+    and the hooks its header has a body at; an instance is one face's. The
+    gradient rules live in the C++ body alone, never restated here."""
 
     # what this bc is called, which is what the grid's connectivity stores
     bcType = None

@@ -1,11 +1,4 @@
 """Compiling the kernels a case needs, one library each, when it needs them.
-
-The runtime and every kernel are compiled the same way, with the toolchain
-of the Kokkos install, into the store, keyed by the source, the headers it
-reaches, the toolchain and the defines. A case loads only the libraries it
-will call, and each kernel is handed its own function out of its own
-library.
-
 The jit compiles and hands back callables; it knows nothing of tags, tables,
 arrays, or the order kernels run in."""
 

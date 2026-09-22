@@ -35,7 +35,10 @@ class BaseToolchain:
         cmake = root if (root / "KokkosConfig.cmake").is_file() else None
         cmake = cmake or next(root.glob("lib*/cmake/Kokkos"), None)
         if cmake is None:
-            raise FileNotFoundError(f"no Kokkos install at {root}")
+            raise FileNotFoundError(
+                f"no Kokkos install at {root}: Kokkos_ROOT names the prefix "
+                "holding lib*/cmake/Kokkos"
+            )
         return cmake
 
     @classmethod
@@ -77,14 +80,26 @@ class BaseToolchain:
         self.link = ["-shared"] + (
             ["-undefined", "dynamic_lookup"] if sys.platform == "darwin" else []
         )
-        archives = [str(next(self.root.glob(f"lib*/lib{l}.a"))) for l in self.libraries]
         linked = self._property(targets, "INTERFACE_LINK_LIBRARIES")
         self.runtimeLink = [
             "-shared",
             *self._property(targets, "INTERFACE_LINK_OPTIONS"),
-            *self.wholeArchive(archives),
+            *self.kokkosLink(cmake.parent.parent),
             *(["-ldl"] if "dl" in linked else []),
             *self.deviceLink(),
+        ]
+
+    def kokkosLink(self, libdir):
+        """The link words that put Kokkos into the runtime: every object of
+        a static build's archives, or a shared build's libraries, found where
+        they are when the runtime loads."""
+        archives = [libdir / f"lib{name}.a" for name in self.libraries]
+        if all(a.is_file() for a in archives):
+            return self.wholeArchive([str(a) for a in archives])
+        return [
+            f"-L{libdir}",
+            *(f"-l{name}" for name in self.libraries),
+            f"-Wl,-rpath,{libdir}",
         ]
 
     def wholeArchive(self, archives):

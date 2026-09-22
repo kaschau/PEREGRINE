@@ -12,21 +12,7 @@ class myDumper(yaml.SafeDumper):
 
 
 def writeConfigFile(config, filePath="./"):
-    """This function write a PEREGRINE input file dtms.inp from a peregrinepy.files.inputFile object
-
-    Parameters
-    ----------
-
-    config : peregrinepy.files.configFile
-
-    filePath : str
-       Path of location to write output PEREGRINE input file to
-
-    Returns
-    -------
-    None
-
-    """
+    """Writes a config as the yaml a run reads."""
 
     connOut = {}
     for k1 in config.keys():

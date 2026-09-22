@@ -1,9 +1,4 @@
-"""
-Reading a PEREGRINE restart.
-
-One q.<nrt>.h5 holds the primitives of every block at one time, and says
-what case wrote it and on which grid.
-"""
+"""Reading a PEREGRINE result, q.<nrt>.h5; what it holds is docs/files.md."""
 
 from pathlib import Path
 
@@ -42,9 +37,10 @@ class RestartReader:
         """Fill in the primitives of every block of mb, and the step and time
         they are at; and any array a block declares that the result stores
         beyond the state, an integrator's."""
-        with h5py.File(self.fileName, "r") as f, Progress(
-            len(mb.blocks), self.quiet
-        ) as bar:
+        with (
+            h5py.File(self.fileName, "r") as f,
+            Progress(len(mb.blocks), self.quiet) as bar,
+        ):
             for blk in mb.blocks:
                 variables = blk.primVars
 

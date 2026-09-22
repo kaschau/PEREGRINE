@@ -1,28 +1,5 @@
-"""
-Writing a PEREGRINE result.
-
-A result is one pair of files, <name>.h5 and its <name>.xmf, named from the
-step or the time it was written at (q.<nrt> unless the case says), in
-the case's results directory. There is no distinction between a restart and
-a frame of an animation -- a run writes as many results as it is asked for,
-and any one of them can be restarted from or animated through.
-
-    q.00000042.h5
-      nrt, tme                                           attributes: when this is from
-      primVars, variables, extras                        attributes: what each block group holds
-      grid                                               attribute: the grid file, relative to this one
-      config                                             attribute: the case, as its yaml
-      peregrine, commit, host, ranks, command, written   attributes: where it came from
-      results_000000/<variable>                          one group per block, one dataset per export variable
-      results_000000/<array>                             one dataset per extra
-
-Each variable is stored (nk-1, nj-1, ni-1) over the cells of a block of the
-*grid*, not of the partition that wrote it, so a rank holding a piece of a
-block writes its own hyperslab and any partition can read the result back.
-That is the same shape and the same reason as the grid's coordinates. A
-result carries no grid of its own -- the xdmf points at the g.h5 the case was
-run on for that, which is why the blocks here have to be the grid's.
-"""
+"""Writing a PEREGRINE result, a q.<name>.h5 and its .xmf; what it holds is
+docs/files.md."""
 
 import numpy as np
 import yaml

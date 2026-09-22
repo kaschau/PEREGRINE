@@ -7,8 +7,7 @@ from .base import BasePlugin
 
 
 class Trace(BasePlugin):
-    """The primitives at chosen cells, appended to one csv per point. The
-    points are a .npy of (nblki, i, j, k) rows followed by one of tags."""
+    """The primitives at chosen cells, appended to one csv per point."""
 
     name = "trace"
 

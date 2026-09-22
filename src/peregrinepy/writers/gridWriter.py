@@ -1,39 +1,4 @@
-"""
-Writing a PEREGRINE grid.
-
-g.h5 carries the grid and everything about it that does not change with the
-case: the coordinates of every block, how the blocks connect to each other,
-and any partitions the grid has been balanced into.
-
-    g.h5
-      totalBlocks                                        attribute
-      coordinates_000000/{x,y,z}                         one group per block
-      connectivity/{neighbor,orientation,bcName}             (totalBlocks, 6)
-      connectivity/{periodicRotation,periodicTranslation}    how a periodic moves
-      partitions/1x1/rank                                 the base grid
-      partitions/64x4/rank                                which rank owns each
-
-Coordinates are stored (nk, nj, ni), which is the order the device already
-holds them in -- the views are LayoutLeft on GPU, so i is fastest and the
-transpose to this shape is free. It also makes a block's extents the shape of
-its datasets rather than a second thing that can disagree with them.
-
-A grid carries as many partitions side by side as it has been balanced for,
-named ranks x ranksPerNode, so one grid runs on 64 ranks of 4 per node or of
-8 without being rebalanced -- the two place blocks differently, because what
-crosses a node costs more than what stays on one. Partition 1x1 is the base
-grid, every block on one rank, and is written with the grid so it is never a
-special case. How a periodic face reaches its partner is stored with the
-connectivity as the transform itself, a rotation and a translation, because it
-is the shape of the grid: a halo arriving through it lands at R @ p + t
-whether it was turned or moved.
-
-What kind of boundary a face is does not live here. The grid gives a face a
-name and the case says what that name means, so one grid runs as a wall on
-one case and an inlet on the next. A face the grid leaves unnamed says what
-it is by itself: one with a neighbor is interior, or periodic if it carries a
-transform, and one with neither is an adiabatic slip wall.
-"""
+"""Writing a PEREGRINE grid, g.h5; what it holds is docs/files.md."""
 
 import numpy as np
 
